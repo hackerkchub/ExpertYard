@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+     "make:page": "node scripts/makePage.js",
+     "make:layout": "node scripts/makeLayout.js",
+      "make:component": "node scripts/makeComponent.js",
+      "make:ctx": "node scripts/makeContext.js"
   },
   "dependencies": {
     "react": "^19.2.0",

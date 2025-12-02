@@ -1,5 +1,6 @@
+// src/pages/ExpertList/ExpertList.jsx
 import React, { useState, useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   PageWrap,
@@ -30,147 +31,47 @@ import {
   SuggestedSection,
   SuggestedHeader,
   SuggestedTitle,
-  SuggestedCaption,
   SuggestedStrip,
   SuggestedCard,
   SuggestedName,
   SuggestedMeta
 } from "./ExpertList.styles";
 
-/* -----------------------------------------
-   GET QUERY STRING
------------------------------------------ */
+import { useExperts } from "../../context/ExpertContext";
+import { SUBCATEGORIES } from "../../services/expertService";
+
+/* -------------------------------------------------------
+   Query Reader
+------------------------------------------------------- */
 const useQuery = () => {
   const { search } = useLocation();
   return new URLSearchParams(search);
 };
 
-/* -----------------------------------------
-   MAIN EXPERT DATA
------------------------------------------ */
-const EXPERTS = [
-  {
-    id: 1,
-    professionId: "engineers",
-    specialityId: "frontend",
-    name: "Riya Desai",
-    role: "Senior Frontend Engineer • React",
-    experienceYears: 6,
-    rating: 4.9,
-    pricePerMin: 35,
-    reviews: 120,
-    online: true,
-    img: "https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg"
-  },
-  {
-    id: 2,
-    professionId: "engineers",
-    specialityId: "frontend",
-    name: "Kabir Khanna",
-    role: "UI Engineer • Animations",
-    experienceYears: 7,
-    rating: 4.8,
-    pricePerMin: 40,
-    reviews: 98,
-    online: false,
-    img: "https://images.pexels.com/photos/3760852/pexels-photo-3760852.jpeg"
-  },
-  {
-    id: 3,
-    professionId: "engineers",
-    specialityId: "frontend",
-    name: "Neha Sharma",
-    role: "Frontend • Performance & Web Vitals",
-    experienceYears: 5,
-    rating: 4.7,
-    pricePerMin: 30,
-    reviews: 89,
-    online: true,
-    img: "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg"
-  },
-  {
-    id: 4,
-    professionId: "engineers",
-    specialityId: "frontend",
-    name: "Arjun Mehta",
-    role: "Frontend Architect • Design Systems",
-    experienceYears: 8,
-    rating: 4.9,
-    pricePerMin: 45,
-    reviews: 150,
-    online: true,
-    img: "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg"
-  }
-];
-
-/* -----------------------------------------
-   SUGGESTED EXPERTS (Enhanced Dummy Data)
------------------------------------------ */
-const SUGGESTED = [
-  {
-    id: 101,
-    name: "Siddharth Jain",
-    role: "Backend Engineer • Node",
-    rating: 4.8,
-    online: true,
-    pricePerMin: 32,
-    experienceYears: 6,
-    specialityId: "backend",
-    img: "https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg"
-  },
-  {
-    id: 102,
-    name: "Anjali Bansal",
-    role: "Full-Stack Developer • MERN",
-    rating: 4.9,
-    online: true,
-    pricePerMin: 38,
-    experienceYears: 7,
-    specialityId: "fullstack",
-    img: "https://images.pexels.com/photos/4937227/pexels-photo-4937227.jpeg"
-  },
-  {
-    id: 103,
-    name: "Priya Nair",
-    role: "Data Engineer • ML Pipelines",
-    rating: 4.7,
-    online: false,
-    pricePerMin: 42,
-    experienceYears: 5,
-    specialityId: "data",
-    img: "https://images.pexels.com/photos/7643745/pexels-photo-7643745.jpeg"
-  },
-  {
-    id: 104,
-    name: "Vikram Patil",
-    role: "DevOps • Cloud, CI/CD",
-    rating: 4.6,
-    online: true,
-    pricePerMin: 34,
-    experienceYears: 4,
-    specialityId: "devops",
-    img: "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg"
-  }
-];
-
-/* -----------------------------------------
+/* -------------------------------------------------------
    COMPONENT
------------------------------------------ */
+------------------------------------------------------- */
 const ExpertListPage = () => {
   const query = useQuery();
+  const navigate = useNavigate();
 
-  const initialSpeciality = query.get("speciality") || "frontend";
+  const profession = query.get("profession") || "engineers";
+  const speciality = query.get("speciality") || "frontend";
 
-  const [speciality] = useState(initialSpeciality);
+  const { experts, loading } = useExperts();
+
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("rating-high");
 
-  /* -----------------------------------------
-     FILTER + SORT LOGIC
-  ----------------------------------------- */
+  /* -------------------------------------------------------
+     FILTER MAIN EXPERTS (GLOBAL DATA)
+  ------------------------------------------------------- */
   const filteredExperts = useMemo(() => {
-    let list = EXPERTS.filter((e) => e.specialityId === speciality);
+    let list = experts.filter(
+      (e) => e.professionId === profession && e.specialityId === speciality
+    );
 
+    // Search filter
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -180,37 +81,44 @@ const ExpertListPage = () => {
       );
     }
 
+    // Sorting
     switch (sortBy) {
       case "rating-high":
         return [...list].sort((a, b) => b.rating - a.rating);
-
       case "rating-low":
         return [...list].sort((a, b) => a.rating - b.rating);
-
       case "experience-high":
         return [...list].sort((a, b) => b.experienceYears - a.experienceYears);
-
       case "budget-low":
-        return [...list].sort((a, b) => a.pricePerMin - b.pricePerMin);
-
+        return [...list].sort((a, b) => a.callPrice - b.callPrice);
       case "budget-high":
-        return [...list].sort((a, b) => b.pricePerMin - a.pricePerMin);
-
+        return [...list].sort((a, b) => b.callPrice - a.callPrice);
       default:
         return list;
     }
-  }, [speciality, search, sortBy]);
+  }, [profession, speciality, search, sortBy, experts]);
 
-  const suggestedExperts = SUGGESTED.filter(
-    (e) => e.specialityId !== speciality
-  );
+  /* -------------------------------------------------------
+     SUGGESTED = Same profession, different speciality
+  ------------------------------------------------------- */
+  const suggestedExperts = useMemo(() => {
+    return experts.filter(
+      (e) => e.professionId === profession && e.specialityId !== speciality
+    );
+  }, [profession, speciality, experts]);
+
+  const specialityLabel =
+    SUBCATEGORIES[profession]?.[speciality] || "Experts";
 
   return (
     <PageWrap>
       <HeaderWrap>
-        <PageTitle>Top {speciality} Experts</PageTitle>
+        <PageTitle>
+          Top {specialityLabel} • {profession}
+        </PageTitle>
+
         <PageSubtitle>
-          Find trusted specialists. Real-time availability. Professional insights.
+          Real-time availability • Verified professionals • Trusted guidance
         </PageSubtitle>
       </HeaderWrap>
 
@@ -220,7 +128,6 @@ const ExpertListPage = () => {
           <FilterTitle>Filter & Sort</FilterTitle>
 
           <FiltersForm>
-            {/* Search */}
             <Field>
               <FieldLabel>Search</FieldLabel>
               <SearchInput
@@ -230,7 +137,6 @@ const ExpertListPage = () => {
               />
             </Field>
 
-            {/* Sort Pills */}
             <PillsRow>
               <PillButton
                 $active={sortBy === "rating-high"}
@@ -274,7 +180,11 @@ const ExpertListPage = () => {
         <RightPanel>
           <ExpertsGrid>
             {filteredExperts.map((exp) => (
-              <ExpertCard key={exp.id}>
+              <ExpertCard
+                key={exp.id}
+                onClick={() => navigate(`/experts/${exp.id}`)}   // 🔥 CLEAN ROUTE
+                style={{ cursor: "pointer" }}
+              >
                 <AvatarImg src={exp.img} />
 
                 <ExpertBody>
@@ -286,14 +196,14 @@ const ExpertListPage = () => {
 
                   <MetaRow>
                     <Rating>★ {exp.rating}</Rating>
-                    <span>{exp.experienceYears}+ yrs exp.</span>
+                    <span>{exp.experienceYears}+ yrs</span>
                     <span>{exp.reviews} reviews</span>
                   </MetaRow>
 
                   <MetaRow>{exp.role}</MetaRow>
 
                   <PriceRow>
-                    <Price>₹{exp.pricePerMin}</Price>
+                    <Price>₹{exp.callPrice}</Price>
                     <PerMinute>/min</PerMinute>
                   </PriceRow>
                 </ExpertBody>
@@ -306,15 +216,18 @@ const ExpertListPage = () => {
       {/* ---------------- SUGGESTED SECTION ---------------- */}
       <SuggestedSection>
         <SuggestedHeader>
-          <SuggestedTitle>Suggested Experts</SuggestedTitle>
-          {/* <SuggestedCaption>
-            Backend, Data, DevOps & Full-Stack specialists you may also like
-          </SuggestedCaption> */}
+          <SuggestedTitle>
+            More {profession} Experts You May Like
+          </SuggestedTitle>
         </SuggestedHeader>
 
         <SuggestedStrip>
           {suggestedExperts.map((exp) => (
-            <SuggestedCard key={exp.id}>
+            <SuggestedCard
+              key={exp.id}
+              onClick={() => navigate(`/experts/${exp.id}`)}   // 🔥 CLEAN ROUTE
+              style={{ cursor: "pointer" }}
+            >
               <AvatarImg
                 src={exp.img}
                 style={{
@@ -327,16 +240,11 @@ const ExpertListPage = () => {
 
               <SuggestedName>{exp.name}</SuggestedName>
               <SuggestedMeta>{exp.role}</SuggestedMeta>
-
-              <SuggestedMeta>
-                ★ {exp.rating} • {exp.experienceYears} yrs
-              </SuggestedMeta>
-
+              <SuggestedMeta>★ {exp.rating}</SuggestedMeta>
               <SuggestedMeta>
                 {exp.online ? "🟢 Online" : "⚪ Offline"}
               </SuggestedMeta>
-
-              <SuggestedMeta>₹{exp.pricePerMin}/min</SuggestedMeta>
+              <SuggestedMeta>₹{exp.callPrice}/min</SuggestedMeta>
             </SuggestedCard>
           ))}
         </SuggestedStrip>

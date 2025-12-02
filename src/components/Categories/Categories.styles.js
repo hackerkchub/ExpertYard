@@ -114,22 +114,30 @@ export const TabsRow = styled.div`
   gap: 10px;
   margin-bottom: 18px;
 
-  /* --- Mobile: one row + horizontal scroll --- */
   @media (max-width: 600px) {
     flex-wrap: nowrap;
     overflow-x: auto;
     overflow-y: hidden;
-    gap: 8px;
-    padding-bottom: 6px;
 
-    -webkit-overflow-scrolling: touch;
+    padding: 4px; /* prevents first tab from being hidden */
+    gap: 8px;
+
     scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+
+    scroll-snap-type: x mandatory;
+
+    & > * {
+      scroll-snap-align: start;
+      flex-shrink: 0; /* VERY IMPORTANT */
+    }
 
     &::-webkit-scrollbar {
       display: none;
     }
   }
 `;
+
 
 
 export const TabButton = styled.button`
@@ -168,22 +176,24 @@ export const FiltersRow = styled.div`
   gap: 8px;
   margin-bottom: 18px;
   justify-content: center;
-  flex-wrap: wrap; 
+  flex-wrap: wrap;
 
-  /* --- Mobile Magic: convert to horizontal swipe strip --- */
   @media (max-width: 600px) {
     flex-wrap: nowrap;
     overflow-x: auto;
     overflow-y: hidden;
-    padding-bottom: 6px;
 
-    /* Momentum scrolling (iOS) */
+    padding: 4px;
+
     -webkit-overflow-scrolling: touch;
-
-    /* Prevent snapping back */
     scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
 
-    /* Hide scrollbar (optional aesthetic) */
+    & > * {
+      scroll-snap-align: start;
+      flex-shrink: 0;
+    }
+
     &::-webkit-scrollbar {
       display: none;
     }
@@ -221,15 +231,22 @@ export const FilterChip = styled.button`
 export const ExpertsStrip = styled.div`
   display: flex;
   gap: 18px;
-
   overflow-x: auto;
-  padding: 12px 4px 4px;
+  padding: 12px 6px 4px;
 
   scroll-behavior: smooth;
-  justify-content: flex-start; /* But still looks centered */
 
-  @media (max-width: 480px) {
+  & > * {
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 600px) {
     gap: 14px;
+    scroll-snap-type: x mandatory;
+
+    & > * {
+      scroll-snap-align: start;
+    }
   }
 
   &::-webkit-scrollbar {
@@ -240,6 +257,7 @@ export const ExpertsStrip = styled.div`
     border-radius: 999px;
   }
 `;
+
 
 export const ExpertCard = styled.div`
   min-width: 130px;

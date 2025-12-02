@@ -8,17 +8,18 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-     "make:page": "node scripts/makePage.js",
-     "make:layout": "node scripts/makeLayout.js",
-      "make:component": "node scripts/makeComponent.js",
-      "make:ctx": "node scripts/makeContext.js"
+    "make:page": "node scripts/makePage.js",
+    "make:layout": "node scripts/makeLayout.js",
+    "make:component": "node scripts/makeComponent.js",
+    "make:ctx": "node scripts/makeContext.js"
   },
   "dependencies": {
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.9.6",
-    "styled-components": "^6.1.19"
+    "styled-components": "^6.1.19",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

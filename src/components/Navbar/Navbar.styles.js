@@ -275,3 +275,22 @@ export const MobileItem = styled(NavLink)`
     font-size: 14px;
   }
 `;
+
+export const WalletBadge = styled.div`
+  position: absolute;
+  top: -6px;
+  right: -12px;
+
+  background: #00d4ff;
+  color: white;
+  padding: 2px 7px;
+  font-size: 11px;
+  border-radius: 10px;
+  font-weight: 600;
+  box-shadow: 0 0 8px rgba(0,200,255,0.5);
+
+  @media (max-width: 480px) {
+    font-size: 10px;
+    right: -8px;
+  }
+`;

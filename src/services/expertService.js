@@ -9,7 +9,7 @@ const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 /* ----------------------------------------------
    2. Base arrays for random generation
 ---------------------------------------------- */
-const firstNames = ["Riya", "Karan", "Ayesha", "Raghav", "Neha", "Siddharth", "Meera", "Arjun", "Tanvi", "Kabir"];
+const firstNames = ["Riya", "Karan", "Ayesha", "Raghav", "Neha", "Siddharth", "Meera", "Arjun", "Rahul", "Kabir"];
 const lastNames  = ["Desai", "Sharma", "Kapoor", "Verma", "Nair", "Patil", "Mehta", "Rao", "Gill", "Fernandes"];
 const languages  = ["English", "Hindi", "Marathi", "Gujarati", "Tamil", "Kannada"];
 const skillsBase = ["Communication", "Leadership", "Time Management", "Problem Solving", "Critical Thinking"];

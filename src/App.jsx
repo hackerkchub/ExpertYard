@@ -3,6 +3,7 @@ import { BrowserRouter } from "react-router-dom";
 import AppRouter from "./router/AppRouter";
 import GlobalStyles from "./styles/GlobalStyles";
 import { ExpertProvider } from "./context/ExpertContext.jsx";
+import { WalletProvider } from "./context/WalletContext";
 
 
 
@@ -12,9 +13,10 @@ export default function App() {
      
  <GlobalStyles />
  <ExpertProvider>
+  <WalletProvider>
       <AppRouter />
-      </ExpertProvider>
-      
+</WalletProvider>
+      </ExpertProvider> 
     </BrowserRouter>
   );
 }

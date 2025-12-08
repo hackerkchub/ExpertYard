@@ -1,0 +1,9 @@
+export { default as Button } from "./Button/Button";
+export { default as Input } from "./Input/Input";
+export { default as Modal } from "./Modal/Modal";
+export { default as Card } from "./Card/Card";
+export { default as Avatar } from "./Avatar/Avatar";
+export { default as Loader } from "./Loader/Loader";
+export { default as Tabs } from "./Tabs/Tabs";
+export { default as Dropdown } from "./Dropdown/Dropdown";
+export { default as ErrorBoundary } from "./ErrorBoundary/ErrorBoundary";

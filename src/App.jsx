@@ -1,22 +1,21 @@
-import React from "react";
-import { BrowserRouter } from "react-router-dom";
-import AppRouter from "./router/AppRouter";
-import GlobalStyles from "./styles/GlobalStyles";
-import { ExpertProvider } from "./context/ExpertContext.jsx";
-import { WalletProvider } from "./context/WalletContext";
+// import React from "react";
+// import { BrowserRouter } from "react-router-dom";
+// import AppRouter from "./routes/index.jsx";
+// import { ExpertProvider } from "./shared/context/ExpertContext.jsx";
+// import { WalletProvider } from "./shared/context/WalletContext.jsx";
 
 
 
-export default function App() {
-  return (
-    <BrowserRouter>
+// export default function App() {
+//   return (
+//     <BrowserRouter>
      
- <GlobalStyles />
- <ExpertProvider>
-  <WalletProvider>
-      <AppRouter />
-</WalletProvider>
-      </ExpertProvider> 
-    </BrowserRouter>
-  );
-}
+
+//  <ExpertProvider>
+//   <WalletProvider>
+//       <AppRouter />
+// </WalletProvider>
+//       </ExpertProvider> 
+//     </BrowserRouter>
+//   );
+// }

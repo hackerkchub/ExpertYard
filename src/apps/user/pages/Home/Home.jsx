@@ -1,85 +1,62 @@
-import React, { useState } from "react";
+// src/apps/user/pages/Home/HomePage.jsx
+import React from "react";
+import { useNavigate } from "react-router-dom";
+
 import Slider from "../../components/HomeSlider/HomeSlider";
-import LoginPopup from "../../components/LoginPopup/LoginPopup";
 import Categories from "../../components/Categories/Categories";
 
 import {
   Wrapper,
-  LoginSection,
-  Row,
-  CountrySelect,
-  MobileInput,
-  LoginBtnSmall,
-  ErrorText
+  HomeActionsSection,
+  HomeActionsTitle,
+  HomeActionsSubTitle,
+  HomeActions,
+  HomeActionCard,
+  HomeActionIcon,
+  HomeActionTitle,
 } from "./Home.styles";
 
+import { FiUserCheck, FiMessageCircle } from "react-icons/fi";
+
 const HomePage = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [openOtp, setOpenOtp] = useState(false);
-
-  const [mobile, setMobile] = useState("");
-  const [country, setCountry] = useState("+91");
-  const [error, setError] = useState("");
-
-  const validateMobile = () => {
-    if (mobile.length !== 10) {
-      setError("Please enter a valid 10-digit mobile number.");
-      return false;
-    }
-    setError("");
-    return true;
-  };
-
-  const handleSignInClick = () => {
-    if (validateMobile()) {
-      setOpenOtp(true);
-    }
-  };
-
-  const handleLoginSuccess = () => {
-    setIsLoggedIn(true);
-    setOpenOtp(false);
-  };
+  const navigate = useNavigate();
 
   return (
     <Wrapper>
       {/* Banner Slider */}
       <Slider />
 
-      {/* Login Section */}
-      {!isLoggedIn && (
-        <LoginSection>
-          <Row>
-            <CountrySelect value={country} onChange={(e) => setCountry(e.target.value)}>
-              <option value="+91">🇮🇳 +91</option>
-              <option value="+1">🇺🇸 +1</option>
-              <option value="+44">🇬🇧 +44</option>
-            </CountrySelect>
+      {/* ===== BEST EXPERTS SECTION ===== */}
+      <HomeActionsSection>
+        <HomeActionsTitle>Best Experts for You</HomeActionsTitle>
+        <HomeActionsSubTitle>
+          Talk or chat instantly with verified professionals
+        </HomeActionsSubTitle>
 
-            <MobileInput
-              placeholder="Enter mobile number"
-              value={mobile}
-              maxLength={10}
-              onChange={(e) => setMobile(e.target.value.replace(/\D/g, ""))}
-            />
+        <HomeActions>
+          <HomeActionCard
+  onClick={() => navigate("/user/call-chat?mode=call")}
+>
+  <HomeActionIcon>
+    <FiUserCheck size={26} />
+  </HomeActionIcon>
+  <HomeActionTitle>Talk to Experts</HomeActionTitle>
+</HomeActionCard>
 
-            <LoginBtnSmall onClick={handleSignInClick}>Sign In</LoginBtnSmall>
-          </Row>
+<HomeActionCard
+  onClick={() => navigate("/user/call-chat?mode=chat")}
+>
+  <HomeActionIcon>
+    <FiMessageCircle size={26} />
+  </HomeActionIcon>
+  <HomeActionTitle>Chat with Experts</HomeActionTitle>
+</HomeActionCard>
 
-          {error && <ErrorText>{error}</ErrorText>}
-        </LoginSection>
-      )}
+        </HomeActions>
+      </HomeActionsSection>
 
       {/* Categories */}
       <Categories />
-
-      {/* OTP Popup */}
-      {openOtp && (
-        <LoginPopup
-          close={() => setOpenOtp(false)}
-          success={handleLoginSuccess}
-        />
-      )}
     </Wrapper>
   );
 };

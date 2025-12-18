@@ -1,11 +1,15 @@
 // src/apps/expert/pages/register/StepPricing.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { v4 as uuid } from "uuid";
 
-import { useExpertRegister } from "../../context/ExpertRegisterContext";
+import { useExpert } from "../../../../shared/context/ExpertContext";
+import { setPriceApi } from "../../../../shared/api/expertapi/price.api";
+import useApi from "../../../../shared/hooks/useApi";
+
 import RegisterLayout from "../../components/RegisterLayout";
 import { getSmartPricing } from "../../utils/pricingEngine";
+import Loader from "../../../../shared/components/Loader/Loader";
+import ErrorMessage from "../../../../shared/components/ErrorMessage/ErrorMessage";
 
 import {
   Field,
@@ -16,60 +20,79 @@ import {
   SecondaryButton,
   FullRow,
   PriceInputRow,
+  TextArea
 } from "../../styles/Register.styles";
 
 export default function StepPricing() {
-  const { data, updateField, reset } = useExpertRegister();
-  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const { expertData } = useExpert();
+
+  const [pricePerMinute, setPricePerMinute] = useState("");
+  const [chatPrice, setChatPrice] = useState("");
+
+  // 🔥 AUTO GENERATED BUT EDITABLE
+  const [reasonForPrice, setReasonForPrice] = useState(
+    "Experienced professional in this domain"
+  );
+  const [handleCustomer, setHandleCustomer] = useState(
+    "Polite, professional and solution oriented"
+  );
+  const [strength, setStrength] = useState(
+    "Strong problem solving and communication skills"
+  );
+  const [weakness, setWeakness] = useState(
+    "Detail oriented, sometimes over explains"
+  );
+
   const [suggested, setSuggested] = useState(null);
 
-  const navigate = useNavigate();
+  const {
+    request: setPrice,
+    loading,
+    error
+  } = useApi(setPriceApi);
 
+  // 🔐 Route guard
   useEffect(() => {
-    if (!data.position) {
+    if (!expertData.expertId) {
       navigate("/expert/register/profile");
     }
-  }, [data.position, navigate]);
+  }, [expertData.expertId, navigate]);
 
-  const canFinish =
-    data.price_per_minute && data.chat_price;
-
+  // 💡 Smart pricing
   function handleSmartPricing() {
-    const s = getSmartPricing(data);
-    setSuggested(s);
+    const s = getSmartPricing({
+      price_per_minute: pricePerMinute,
+      chat_price: chatPrice
+    });
 
-    updateField("price_per_minute", s.call);
-    updateField("chat_price", s.chat);
+    setSuggested(s);
+    setPricePerMinute(s.call);
+    setChatPrice(s.chat);
   }
 
+  const canFinish =
+    Number(pricePerMinute) > 0 &&
+    Number(chatPrice) > 0;
+
+  // 🚀 Submit pricing
   const handleSubmit = async () => {
     try {
-      setSubmitting(true);
-
       const payload = {
-        ...data,
-        status: "active",
-        expert_id: undefined,
+        expert_id: expertData.expertId,
+        call_per_minute: Number(pricePerMinute),
+        chat_per_minute: Number(chatPrice),
+
+        // 🔥 UI GENERATED VALUES
+        reason_for_price: reasonForPrice,
+        handle_customer: handleCustomer,
+        strength,
+        weakness
       };
 
-      // dummy ID future scope placeholder
-      const dummyId = uuid();
-      localStorage.setItem("expert_id", dummyId);
-
-      console.log("Expert Registration Success!!");
-      console.log("Generated ID:", dummyId);
-      console.log("Payload:", payload);
-
-      // redirect to home page
-      navigate("/expert");
-
-      // clear context AFTER navigation
-      setTimeout(() => {
-        reset();
-      }, 300);
-    } finally {
-      setSubmitting(false);
-    }
+      await setPrice(payload);
+      navigate("/expert/home");
+    } catch (err) {}
   };
 
   return (
@@ -78,7 +101,10 @@ export default function StepPricing() {
       subtitle="You can always update your pricing later from the Earnings section."
       step={5}
     >
-      {/* Smart pricing button */}
+      {loading && <Loader />}
+      {error && <ErrorMessage message={error} />}
+
+      {/* Smart pricing */}
       <FullRow>
         <PrimaryButton
           style={{
@@ -92,17 +118,6 @@ export default function StepPricing() {
         </PrimaryButton>
       </FullRow>
 
-      {suggested && (
-        <FullRow style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 14, color: "#4b5563" }}>
-            Recommended Range:{" "}
-            <b>
-              ₹{suggested.range.min} – ₹{suggested.range.max}/min
-            </b>
-          </div>
-        </FullRow>
-      )}
-
       {/* Call pricing */}
       <FullRow>
         <Field>
@@ -111,8 +126,8 @@ export default function StepPricing() {
             <Input
               type="number"
               min={1}
-              value={data.price_per_minute || ""}
-              onChange={e => updateField("price_per_minute", e.target.value)}
+              value={pricePerMinute}
+              onChange={e => setPricePerMinute(e.target.value)}
               placeholder="e.g. 50"
               style={{ maxWidth: 160 }}
             />
@@ -129,8 +144,8 @@ export default function StepPricing() {
             <Input
               type="number"
               min={1}
-              value={data.chat_price || ""}
-              onChange={e => updateField("chat_price", e.target.value)}
+              value={chatPrice}
+              onChange={e => setChatPrice(e.target.value)}
               placeholder="e.g. 15"
               style={{ maxWidth: 160 }}
             />
@@ -139,16 +154,59 @@ export default function StepPricing() {
         </Field>
       </FullRow>
 
+      {/* AUTO GENERATED FIELDS (SAME CSS) */}
+      <FullRow>
+        <Field>
+          <Label>Reason for your price</Label>
+          <TextArea
+            value={reasonForPrice}
+            onChange={e => setReasonForPrice(e.target.value)}
+          />
+        </Field>
+      </FullRow>
+
+      <FullRow>
+        <Field>
+          <Label>How do you handle customers?</Label>
+          <TextArea
+            value={handleCustomer}
+            onChange={e => setHandleCustomer(e.target.value)}
+          />
+        </Field>
+      </FullRow>
+
+      <FullRow>
+        <Field>
+          <Label>Your Strength</Label>
+          <Input
+            value={strength}
+            onChange={e => setStrength(e.target.value)}
+          />
+        </Field>
+      </FullRow>
+
+      <FullRow>
+        <Field>
+          <Label>Your Weakness</Label>
+          <Input
+            value={weakness}
+            onChange={e => setWeakness(e.target.value)}
+          />
+        </Field>
+      </FullRow>
+
       <ActionsRow>
-        <SecondaryButton onClick={() => navigate("/expert/register/profile")}>
+        <SecondaryButton
+          onClick={() => navigate("/expert/register/profile")}
+        >
           ← Back
         </SecondaryButton>
 
         <PrimaryButton
-          disabled={!canFinish || submitting}
+          disabled={!canFinish || loading}
           onClick={handleSubmit}
         >
-          {submitting ? "Finishing..." : "Complete & go to home →"}
+          {loading ? "Finishing..." : "Complete & go to home →"}
         </PrimaryButton>
       </ActionsRow>
     </RegisterLayout>

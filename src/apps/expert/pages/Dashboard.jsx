@@ -1,5 +1,4 @@
 // src/apps/expert/pages/Dashboard.jsx
-
 import React from "react";
 import Sidebar from "../components/ExpertSidebar";
 import Topbar from "../components/ExpertTopbar";
@@ -8,6 +7,8 @@ import StatsCard from "../components/StatsCard";
 import QueueCard from "../components/QueueCard";
 import FeedCard from "../components/FeedCard";
 import WidgetCard from "../components/WidgetCard";
+
+import { useExpert } from "../../../shared/context/ExpertContext";
 
 import {
   Layout,
@@ -19,9 +20,19 @@ import {
 } from "../styles/Dashboard.styles";
 
 export default function Dashboard() {
+
+  const { expertData, profileLoading } = useExpert();
+
+  // 🔹 SAFE NAME HANDLING (NO FLASH / NO CRASH)
+ const expertName =
+  expertData?.profile?.name ||
+  expertData?.name ||
+  "Expert";
+
+
   return (
     <Layout>
-      
+
       <Sidebar />
 
       <MainContent>
@@ -30,9 +41,14 @@ export default function Dashboard() {
 
         <ContentInner>
 
-          <Welcome>Welcome back, Dr. Sharma.</Welcome>
+          {/* 🔥 DYNAMIC WELCOME */}
+          <Welcome>
+            {profileLoading
+              ? "Welcome back..."
+              : `Welcome back, ${expertName}`}
+          </Welcome>
 
-          {/* Stats Section */}
+          {/* 📊 STATS SECTION */}
           <StatsRow>
             <StatsCard label="Live Call Requests" value="03" />
             <StatsCard label="Pending Chats" value="12" />
@@ -40,18 +56,19 @@ export default function Dashboard() {
             <StatsCard label="Month's Earnings" value="₹45,500" />
           </StatsRow>
 
-          {/* Requests Queue */}
+          {/* 🧾 REQUEST QUEUE */}
           <QueueCard />
 
-          {/* Activity + Widget */}
+          {/* 📰 FEED + WIDGET */}
           <FeedArea>
             <FeedCard />
             <WidgetCard />
           </FeedArea>
 
         </ContentInner>
+
       </MainContent>
-      
+
     </Layout>
   );
 }

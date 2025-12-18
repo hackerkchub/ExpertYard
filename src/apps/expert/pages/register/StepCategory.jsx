@@ -1,9 +1,15 @@
 // src/apps/expert/pages/register/StepCategory.jsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useExpertRegister } from "../../context/ExpertRegisterContext";
-import { SUBCATEGORIES } from "../../../../shared/services/expertService";
+
+import { useExpert } from "../../../../shared/context/ExpertContext";
+import { getCategoriesApi } from "../../../../shared/api/expertapi/category.api";
+import useApi from "../../../../shared/hooks/useApi";
+
 import RegisterLayout from "../../components/RegisterLayout";
+import Loader from "../../../../shared/components/Loader/Loader";
+import ErrorMessage from "../../../../shared/components/ErrorMessage/ErrorMessage";
+
 import {
   CardGrid,
   SelectCard,
@@ -14,16 +20,45 @@ import {
   PrimaryButton,
   SecondaryButton,
 } from "../../styles/Register.styles";
+
 import { CATEGORY_ICON_MAP, prettyLabel } from "../../constants/categoryIcons";
 
 export default function StepCategory() {
-  const { data, updateField } = useExpertRegister();
   const navigate = useNavigate();
+  const { expertData, updateExpertData } = useExpert();
 
-  const categories = Object.keys(SUBCATEGORIES);
+  const [categories, setCategories] = useState([]);
 
-  const handleSelect = (key) => {
-    updateField("category_id", key);
+  const {
+    request: getCategories,
+    loading,
+    error
+  } = useApi(getCategoriesApi);
+
+  // 🔹 Load categories from API
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+   try {
+    const res = await getCategories();
+
+    // 🔥 IMPORTANT LINE
+    const list = Array.isArray(res?.data) ? res.data : [];
+
+    setCategories(list);
+  } catch (err) {
+    console.error("Category API failed", err);
+    setCategories([]);
+  }
+};
+
+  // 🔹 Select category
+  const handleSelect = (category) => {
+    updateExpertData({
+      categoryId: category.id
+    });
   };
 
   const IconFor = (key) => {
@@ -31,7 +66,10 @@ export default function StepCategory() {
     return Icon ? <Icon /> : null;
   };
 
-  const canNext = !!data.category_id;
+  const canNext = !!expertData.categoryId;
+
+  if (loading) return <Loader />;
+  if (error) return <ErrorMessage message={error} />;
 
   return (
     <RegisterLayout
@@ -40,37 +78,48 @@ export default function StepCategory() {
       step={2}
     >
       <CardGrid>
-        {categories.map((key) => (
+        {categories.map((cat) => (
           <SelectCard
-            key={key}
+            key={cat.id}
             type="button"
-            active={data.category_id === key}
-            onClick={() => handleSelect(key)}
+            active={expertData.categoryId === cat.id}
+            onClick={() => handleSelect(cat)}
           >
             <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-              <div style={{
-                width: 28,
-                height: 28,
-                borderRadius: 999,
-                background: "rgba(56,189,248,0.12)",
-                display:"flex",
-                alignItems:"center",
-                justifyContent:"center",
-                fontSize:16,
-                color:"#0ea5ff"
-              }}>
-                {IconFor(key)}
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 999,
+                  background: "rgba(56,189,248,0.12)",
+                  display:"flex",
+                  alignItems:"center",
+                  justifyContent:"center",
+                  fontSize:16,
+                  color:"#0ea5ff"
+                }}
+              >
+                {IconFor(cat.key || cat.slug || cat.name)}
               </div>
-              <CardTitle>{prettyLabel(key)}</CardTitle>
+
+              <CardTitle>
+                {prettyLabel(cat.name)}
+              </CardTitle>
             </div>
-            <CardMeta>Includes all specializations under this area.</CardMeta>
-            <Chip>Dynamic from service</Chip>
+
+            <CardMeta>
+              Includes all specializations under this area.
+            </CardMeta>
+
+            <Chip>Live</Chip>
           </SelectCard>
         ))}
       </CardGrid>
 
       <ActionsRow>
-        <SecondaryButton onClick={() => navigate("/expert/register")}>
+        <SecondaryButton
+          onClick={() => navigate("/expert/register")}
+        >
           ← Back
         </SecondaryButton>
 

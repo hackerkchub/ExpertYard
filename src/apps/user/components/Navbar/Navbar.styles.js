@@ -294,3 +294,134 @@ export const WalletBadge = styled.div`
     right: -8px;
   }
 `;
+  /* SEARCH OVERLAY */
+export const SearchOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(14px);
+  z-index: 2000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+/* SEARCH INPUT */
+export const SearchBox = styled.div`
+  width: 90%;
+  max-width: 520px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 18px;
+  padding: 14px 18px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.25);
+
+  svg {
+    font-size: 20px;
+    color: #2563eb;
+  }
+
+  input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+
+    font-size: 16px;
+    color: #020617;
+
+    &::placeholder {
+      color: #64748b;
+    }
+  }
+`;
+
+
+/* SEARCH */
+export const SearchWrap = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  background: ${({ $open }) =>
+    $open ? "rgba(255,255,255,0.85)" : "transparent"};
+
+  padding: ${({ $open }) => ($open ? "6px 10px" : "0")};
+  border-radius: 999px;
+
+  transition: 0.25s ease;
+  box-shadow: ${({ $open }) =>
+    $open ? "0 8px 30px rgba(15,23,42,0.15)" : "none"};
+
+  svg {
+    font-size: 18px;
+    cursor: pointer;
+    color: #0f172a;
+  }
+`;
+
+export const SearchInput = styled.input`
+  width: 180px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: #020617;
+
+  &::placeholder {
+    color: #64748b;
+  }
+`;
+
+/* AUTH BUTTON */
+export const AuthButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  outline: none;
+
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  color: #ffffff;
+
+  padding: 8px 18px;
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+
+  white-space: nowrap;        /* 🔥 SINGLE LINE FIX */
+  min-width: max-content;     /* 🔥 TEXT CUT FIX */
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.25);
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 28px rgba(37, 99, 235, 0.35);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
+  }
+`;
+
+export const RightActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  @media (max-width: 900px) {
+    display: none;
+  }
+`;

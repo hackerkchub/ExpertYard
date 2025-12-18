@@ -31,7 +31,7 @@ export default function ExpertSidebar({ mobileOpen, setMobileOpen }) {
           Dashboard
         </NavItem>
 
-        <NavItem to="/expert/content" onClick={() => setMobileOpen(false)}>
+        <NavItem to="/expert/my-content" onClick={() => setMobileOpen(false)}>
           <IconWrap><FiFileText /></IconWrap>
           My Content
         </NavItem>

@@ -1,5 +1,5 @@
 // src/components/Categories/Categories.jsx
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -27,122 +27,91 @@ import {
   SkeletonLine,
 } from "./Categories.styles";
 
-import { useExperts } from "../../../../shared/context/ExpertContext";
-import { SUBCATEGORIES } from "../../../../shared/services/expertService";
-// ICONS
-import {
-  FiUserCheck,
-  FiMessageCircle,
-  FiCpu,
-  FiHeart,
-  FiBriefcase,
-  FiTrendingUp,
-  FiActivity,
-  FiGlobe,
-} from "react-icons/fi";
-import { FaUserTie } from "react-icons/fa";
-
-const PROFESSION_TABS = [
-  { id: "doctors", label: "Doctors", icon: FiHeart },
-  { id: "engineers", label: "Engineers", icon: FiCpu },
-  { id: "mentors", label: "Career Mentors", icon: FiTrendingUp },
-  { id: "lawyers", label: "Lawyers", icon: FaUserTie },
-  { id: "therapists", label: "Therapists", icon: FiActivity },
-  { id: "fitness", label: "Fitness Coaches", icon: FiActivity },
-  { id: "business", label: "Business Advisors", icon: FiBriefcase },
-  { id: "global", label: "Global Experts", icon: FiGlobe },
-];
+import { useCategory } from "../../../../shared/context/CategoryContext";
+import { getExpertsBySubCategoryApi } from "../../../../shared/api/expertapi/auth.api";
 
 const Categories = () => {
   const navigate = useNavigate();
-  const { experts, loading: globalLoading } = useExperts();
 
-  const [activeProfession, setActiveProfession] = useState("doctors");
-  const [activeSpeciality, setActiveSpeciality] = useState("all");
-  const [localLoading, setLocalLoading] = useState(false);
+  const {
+    categories,
+    subCategories,
+    loadSubCategories,
+    loading: categoryLoading,
+  } = useCategory();
 
-  // LOAD SPECIALITY OPTIONS FOR TABS
-  const specialityOptions = useMemo(() => {
-    const subs = SUBCATEGORIES[activeProfession] || {};
-    return [
-      { id: "all", label: "All" },
-      ...Object.entries(subs).map(([id, label]) => ({ id, label })),
-    ];
-  }, [activeProfession]);
+  const [activeCategory, setActiveCategory] = useState(null);
+  const [activeSubCategory, setActiveSubCategory] = useState(null);
+  const [experts, setExperts] = useState([]);
+  const [expertsLoading, setExpertsLoading] = useState(false);
 
-  // SMALL LOADER WHEN TABS OR FILTER CHANGE
+  /* ================= LOAD DEFAULT CATEGORY ================= */
   useEffect(() => {
-    setLocalLoading(true);
-    const timeout = setTimeout(() => setLocalLoading(false), 350);
-    return () => clearTimeout(timeout);
-  }, [activeProfession, activeSpeciality]);
-
-  // FILTER EXPERTS BASED ON STATE (NO REDIRECT)
-  const filteredExperts = useMemo(() => {
-    let list = experts.filter((e) => e.professionId === activeProfession);
-    if (activeSpeciality !== "all") {
-      list = list.filter((e) => e.specialityId === activeSpeciality);
+    if (categories.length && !activeCategory) {
+      setActiveCategory(categories[0].id);
     }
-    return list.slice(0, 12);
-  }, [experts, activeProfession, activeSpeciality]);
+  }, [categories, activeCategory]);
 
-  const loading = globalLoading || localLoading;
+  /* ================= LOAD SUBCATEGORIES ================= */
+useEffect(() => {
+  if (!activeCategory) return;
+
+  setActiveSubCategory(null);
+  loadSubCategories(activeCategory);
+}, [activeCategory, loadSubCategories]);
+  /* ================= LOAD EXPERTS BY SUBCATEGORY ================= */
+  const loadExperts = async (subCategoryId) => {
+    if (!subCategoryId) return;
+
+    try {
+      setExpertsLoading(true);
+      const res = await getExpertsBySubCategoryApi(subCategoryId);
+      setExperts(res?.data?.data || []);
+    } catch (err) {
+      console.error("Experts load failed", err);
+    } finally {
+      setExpertsLoading(false);
+    }
+  };
+
+  /* ================= SUBCATEGORY CLICK ================= */
+ const handleSubCategoryChange = (id) => {
+  setActiveSubCategory(id);
+  setExperts([]);        // clear only when subcategory changes
+  loadExperts(id);
+};
+
+  const loading = categoryLoading || expertsLoading;
 
   return (
     <Wrap>
-      <SectionHeader>
-        <Title>India&apos;s Best Experts on ExpertYard</Title>
-        <Subtitle>
-          Choose a profession, filter by speciality and connect instantly.
-        </Subtitle>
-      </SectionHeader>
-
-      {/* QUICK ACTION */}
-      <ActionsRow>
-        <ActionCard>
-          <ActionIcon><FiUserCheck size={28} /></ActionIcon>
-          <ActionTitle>Talk to Experts</ActionTitle>
-        </ActionCard>
-        <ActionCard>
-          <ActionIcon><FiMessageCircle size={28} /></ActionIcon>
-          <ActionTitle>Chat with Experts</ActionTitle>
-        </ActionCard>
-      </ActionsRow>
-
-      {/* PROFESSION TABS */}
+      {/* ================= CATEGORY TABS ================= */}
       <TabsRow>
-        {PROFESSION_TABS.map((tab) => {
-          const IconComp = tab.icon;
-          return (
-            <TabButton
-              key={tab.id}
-              $active={tab.id === activeProfession}
-              onClick={() => {
-                setActiveProfession(tab.id);
-                setActiveSpeciality("all");
-              }}
-            >
-              <IconComp size={18} />
-              {tab.label}
-            </TabButton>
-          );
-        })}
+        {categories.map((cat) => (
+          <TabButton
+            key={cat.id}
+            $active={cat.id === activeCategory}
+            onClick={() => setActiveCategory(cat.id)}
+          >
+            {cat.name}
+          </TabButton>
+        ))}
       </TabsRow>
 
-      {/* SPECIALITY FILTERS */}
+      {/* ================= SUBCATEGORY FILTERS ================= */}
       <FiltersRow>
-        {specialityOptions.map((sp) => (
+        {subCategories.map((sc) => (
           <FilterChip
-            key={sp.id}
-            $active={sp.id === activeSpeciality}
-            onClick={() => setActiveSpeciality(sp.id)} // ❌ NO REDIRECT
+            key={sc.id}
+            $active={sc.id === activeSubCategory}
+            onClick={() => handleSubCategoryChange(sc.id)}
           >
-            {sp.label}
+            {sc.name}
           </FilterChip>
         ))}
       </FiltersRow>
 
-      {/* EXPERT CARDS STRIP */}
+      {/* ================= EXPERT LIST ================= */}
       {loading ? (
         <ExpertsStrip>
           {Array.from({ length: 8 }).map((_, i) => (
@@ -154,27 +123,22 @@ const Categories = () => {
           ))}
         </ExpertsStrip>
       ) : (
-        <ExpertsStrip>
-          {filteredExperts.map((exp) => (
-            <ExpertCard
-              key={exp.id}
-              onClick={() =>
-                navigate(
-                  `/user/experts?profession=${exp.professionId}&speciality=${exp.specialityId}`
-                )
-              } // ✅ REDIRECT ONLY ON CARD CLICK
-              style={{ cursor: "pointer" }}
-            >
-              <Avatar src={exp.img} />
-              <ExpertName>{exp.name}</ExpertName>
-              <ExpertProfession>
-                {PROFESSION_TABS.find((p) => p.id === exp.professionId)?.label}
-              </ExpertProfession>
-              <ExpertSpeciality>{exp.mainExpertise}</ExpertSpeciality>
-              <ExpertTag>Online • Verified</ExpertTag>
-            </ExpertCard>
-          ))}
-        </ExpertsStrip>
+       <ExpertsStrip>
+  {experts.map((exp) => (
+    <ExpertCard
+      key={exp.id}
+      onClick={() => navigate(`/experts/${exp.id}`)}
+      style={{ cursor: "pointer" }}
+    >
+      <Avatar src={exp.profile_image} alt={exp.name} />
+      <ExpertName>{exp.name}</ExpertName>
+      <ExpertProfession>{exp.category_name}</ExpertProfession>
+      <ExpertSpeciality>{exp.main_expertise}</ExpertSpeciality>
+      <ExpertTag>Online • Verified</ExpertTag>
+    </ExpertCard>
+  ))}
+</ExpertsStrip>
+
       )}
     </Wrap>
   );

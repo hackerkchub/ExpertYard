@@ -29,14 +29,14 @@ import {
   ActionButton,
 } from "./ExpertProfile.styles";
 
-import { useExperts } from "../../../../shared/context/ExpertContext";
+import { useExpert } from "../../../../shared/context/ExpertContext";
 
 
 const ExpertProfilePage = () => {
   const { expertId } = useParams();
   const navigate = useNavigate();
 
-  const { experts, loading } = useExperts();
+  const { experts, loading } = useExpert();
 
   const expert = experts.find((e) => e.id === expertId);
 

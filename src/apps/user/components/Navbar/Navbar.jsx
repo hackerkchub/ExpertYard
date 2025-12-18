@@ -5,16 +5,25 @@ import {
   BrandBox,
   BrandLogo,
   BrandName,
-  Menu,
-  NavItem,
   IconBox,
   MobileIcon,
   MobileMenu,
   MobileItem,
-  WalletBadge
+  WalletBadge,
+  SearchWrap,
+  SearchInput,
+  AuthButton,
+  RightActions
 } from "./Navbar.styles";
 
-import { FiMenu, FiX, FiSearch, FiShare2 } from "react-icons/fi";
+import {
+  FiMenu,
+  FiX,
+  FiSearch,
+  FiShare2,
+  FiHome
+} from "react-icons/fi";
+
 import { FaWallet } from "react-icons/fa";
 import { useWallet } from "../../../../shared/context/WalletContext";
 import { useNavigate } from "react-router-dom";
@@ -22,68 +31,92 @@ import logo from "../../../../assets/logo.png";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
-  const { balance, isLogged } = useWallet();
-  const navigate = useNavigate();
+  const [searchOpen, setSearchOpen] = useState(false);
 
-  const handleCloseMobile = () => setOpen(false);
+  const { balance, isLogged, logout } = useWallet();
+  const navigate = useNavigate();
 
   return (
     <Nav>
       <Container>
-        {/* Left Section - Logo */}
-        <BrandBox to="/" onClick={handleCloseMobile}>
-          <BrandLogo src={logo} alt="ExpertYard logo" />
+        {/* LOGO */}
+        <BrandBox to="/">
+          <BrandLogo src={logo} />
           <BrandName>
             Expert<span>Yard</span>
           </BrandName>
         </BrandBox>
 
-        {/* Desktop Menu */}
-        <Menu>
-          <NavItem to="/" end>Home</NavItem>
-          <NavItem to="/user/wallet">Wallet</NavItem>
-          <NavItem to="/user/profile">Profile</NavItem>
-          <NavItem to="/user/signin">Sign In</NavItem>
-        </Menu>
+        {/* DESKTOP RIGHT */}
+        <RightActions>
+          {/* ICONS */}
+          <IconBox>
+            <button onClick={() => navigate("/")}>
+              <FiHome />
+            </button>
 
-        {/* Desktop Icons */}
-        <IconBox>
-          {/* WALLET WITH BALANCE */}
-          <button
-            type="button"
-            aria-label="Wallet"
-            onClick={() => navigate("/user/wallet")}
-            style={{ position: "relative" }}
-          >
-            <FaWallet />
-            {isLogged && (
-              <WalletBadge>
-                ₹{balance.toFixed(0)}
-              </WalletBadge>
-            )}
-          </button>
+            <button onClick={() => navigate("/user/wallet")}>
+              <FaWallet />
+              {isLogged && (
+                <WalletBadge>₹{balance.toFixed(0)}</WalletBadge>
+              )}
+            </button>
 
-          <button type="button" aria-label="Share">
-            <FiShare2 />
-          </button>
-          <button type="button" aria-label="Search">
-            <FiSearch />
-          </button>
-        </IconBox>
+            <button>
+              <FiShare2 />
+            </button>
 
-        {/* Mobile Toggle */}
-        <MobileIcon onClick={() => setOpen((prev) => !prev)}>
+            {/* SEARCH */}
+            <SearchWrap $open={searchOpen}>
+              <FiSearch onClick={() => setSearchOpen((v) => !v)} />
+              {searchOpen && (
+                <SearchInput
+                  autoFocus
+                  placeholder="Search experts, skills..."
+                />
+              )}
+            </SearchWrap>
+          </IconBox>
+
+          {/* AUTH BUTTON */}
+          {!isLogged ? (
+            <AuthButton onClick={() => navigate("/user/auth")}>
+              Sign In/Up
+            </AuthButton>
+          ) : (
+            <AuthButton onClick={logout}>
+              Sign Out
+            </AuthButton>
+          )}
+        </RightActions>
+
+        {/* MOBILE ICON */}
+        <MobileIcon onClick={() => setOpen(!open)}>
           {open ? <FiX size={26} /> : <FiMenu size={26} />}
         </MobileIcon>
       </Container>
 
-      {/* Mobile Menu */}
+      {/* MOBILE MENU */}
       {open && (
         <MobileMenu>
-          <MobileItem to="/" end onClick={handleCloseMobile}>Home</MobileItem>
-          <MobileItem to="/user/wallet" onClick={handleCloseMobile}>Wallet</MobileItem>
-          <MobileItem to="/user/profile" onClick={handleCloseMobile}>Profile</MobileItem>
-          <MobileItem to="/user/signin" onClick={handleCloseMobile}>Sign In</MobileItem>
+          <MobileItem to="/" onClick={() => setOpen(false)}>Home</MobileItem>
+          <MobileItem to="/user/wallet" onClick={() => setOpen(false)}>Wallet</MobileItem>
+
+          {!isLogged ? (
+            <MobileItem to="/user/auth" onClick={() => setOpen(false)}>
+              Sign In/Up
+            </MobileItem>
+          ) : (
+            <MobileItem
+              as="button"
+              onClick={() => {
+                logout();
+                setOpen(false);
+              }}
+            >
+              Sign Out
+            </MobileItem>
+          )}
         </MobileMenu>
       )}
     </Nav>

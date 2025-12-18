@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import AdminLayout from "../layouts/adminLayout";
 import Dashboard from "../pages/Dashboard";
 import CategoryManagement from "../pages/CategoryManagement";
-import SubCategoryManagement from "../pages/SubCategoryManagement";
+import SubCategoryManagement from "../pages/SubcategoryManagement";
 import ExpertManagement from "../pages/ExpertManagement";
 import ExpertApproval from "../pages/ExpertApproval";
 

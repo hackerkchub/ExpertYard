@@ -1,6 +1,8 @@
 // src/apps/user/pages/UserExpertsPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { getAllExperts } from "../../../../shared/services/expertService";
+
 import {
   PageWrap,
   HeaderSection,
@@ -22,9 +24,16 @@ import {
   Grid,
   EmptyState,
   LoaderRow,
+  AIComingSoon,
+  AIIcon,
+  AITitle,
+  AIDesc,
+  AIHint,
 } from "./CallChatExpert.styles";
+
 import ExpertCard from "../../components/userExperts/ExpertCard";
-import { AI_EXPERTS } from "../../components/userExperts/aiExpertsData";
+
+/* ------------------ CONSTANTS ------------------ */
 
 const TABS = [
   { id: "call", label: "Call with Experts" },
@@ -44,44 +53,67 @@ const professionsMap = {
   global: "Global Strategy",
 };
 
-const languagesOptions = ["English", "Hindi", "Marathi", "Gujarati", "Tamil", "Kannada"];
+const languagesOptions = [
+  "English",
+  "Hindi",
+  "Marathi",
+  "Gujarati",
+  "Tamil",
+  "Kannada",
+];
+
+/* ------------------ COMPONENT ------------------ */
 
 export default function UserExpertsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const modeFromUrl = searchParams.get("mode"); // call | chat
+
   const [tab, setTab] = useState("call");
   const [loading, setLoading] = useState(true);
   const [experts, setExperts] = useState([]);
 
-  // filters
+  // Filters
   const [profession, setProfession] = useState("all");
   const [selectedLanguages, setSelectedLanguages] = useState([]);
   const [minRating, setMinRating] = useState("0");
-  const [maxPrice, setMaxPrice] = useState(""); // blank = no limit
+  const [maxPrice, setMaxPrice] = useState("");
+
+  /* ------------------ URL → TAB SYNC ------------------ */
 
   useEffect(() => {
-    let isMounted = true;
+    if (modeFromUrl === "call" || modeFromUrl === "chat") {
+      setTab(modeFromUrl);
+    }
+  }, [modeFromUrl]);
 
-    const load = async () => {
+  /* ------------------ DATA LOAD ------------------ */
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadExperts = async () => {
       try {
         setLoading(true);
         const data = await getAllExperts();
-        if (isMounted) setExperts(data);
+        if (mounted) setExperts(data || []);
       } catch (err) {
-        console.error("Error while loading experts", err);
+        console.error("Failed to load experts", err);
       } finally {
-        if (isMounted) setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
-    load();
-
-    return () => {
-      isMounted = false;
-    };
+    loadExperts();
+    return () => (mounted = false);
   }, []);
+
+  /* ------------------ HELPERS ------------------ */
 
   const toggleLanguage = (lang) => {
     setSelectedLanguages((prev) =>
-      prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]
+      prev.includes(lang)
+        ? prev.filter((l) => l !== lang)
+        : [...prev, lang]
     );
   };
 
@@ -92,84 +124,88 @@ export default function UserExpertsPage() {
     setMaxPrice("");
   };
 
+  /* ------------------ FILTER LOGIC ------------------ */
+
   const filteredList = useMemo(() => {
-    let list = [];
+    if (tab === "ai") return [];
 
-    if (tab === "ai") {
-      list = AI_EXPERTS;
-    } else {
-      list = experts;
+    let list = [...experts];
 
-      // tab wise filter (call / chat)
-      if (tab === "call") {
-        list = list.filter((e) => e.callPrice);
-      } else if (tab === "chat") {
-        list = list.filter((e) => e.chatPrice);
-      }
-    }
+    // Call / Chat availability
+    if (tab === "call") list = list.filter((e) => e.callPrice);
+    if (tab === "chat") list = list.filter((e) => e.chatPrice);
 
-    // profession filter (real experts only, AI में नहीं)
-    if (tab !== "ai" && profession !== "all") {
+    // Profession
+    if (profession !== "all") {
       list = list.filter((e) => e.professionId === profession);
     }
 
-    // language filter
+    // Language
     if (selectedLanguages.length > 0) {
       list = list.filter((e) =>
-        (e.languages || []).some((lng) => selectedLanguages.includes(lng))
+        (e.languages || []).some((l) =>
+          selectedLanguages.includes(l)
+        )
       );
     }
 
-    // rating filter
-    const mr = parseFloat(minRating || "0");
-    if (mr > 0) {
-      list = list.filter((e) => parseFloat(e.rating || 0) >= mr);
+    // Rating
+    const ratingMin = parseFloat(minRating || "0");
+    if (ratingMin > 0) {
+      list = list.filter(
+        (e) => parseFloat(e.rating || 0) >= ratingMin
+      );
     }
 
-    // price filter — tab के हिसाब से
+    // Price
     if (maxPrice) {
       const mp = parseInt(maxPrice, 10);
       if (tab === "call") list = list.filter((e) => e.callPrice <= mp);
       if (tab === "chat") list = list.filter((e) => e.chatPrice <= mp);
-      if (tab === "ai") list = list.filter((e) => e.chatPrice <= mp);
     }
 
     return list;
   }, [tab, experts, profession, selectedLanguages, minRating, maxPrice]);
 
+  /* ------------------ UI ------------------ */
+
   return (
     <PageWrap>
-      {/* top header */}
+      {/* HEADER */}
       <HeaderSection>
         <div>
           <Title>Find the right expert – instantly</Title>
           <SubTitle>
-            Talk 1:1 with verified professionals & smart AI specialists for
-            career, health, finance, legal and more.
+            Talk 1:1 with verified professionals & smart AI specialists
+            for career, health, finance, legal and more.
           </SubTitle>
         </div>
       </HeaderSection>
 
-      {/* tabs */}
+      {/* TABS */}
       <TabsRow>
         {TABS.map((t) => (
           <TabButton
             key={t.id}
             $active={tab === t.id}
-            onClick={() => setTab(t.id)}
+            onClick={() => {
+              setTab(t.id);
+              if (t.id !== "ai") {
+                setSearchParams({ mode: t.id });
+              }
+            }}
           >
             {t.label}
           </TabButton>
         ))}
       </TabsRow>
 
-      {/* page layout */}
+      {/* MAIN LAYOUT */}
       <Layout>
-        {/* Filters */}
+        {/* FILTERS */}
         <FilterWrap>
           <FilterTitle>Filters</FilterTitle>
 
-          {/* profession (only for human experts) */}
           {tab !== "ai" && (
             <FilterGroup>
               <FilterLabel>Profession</FilterLabel>
@@ -177,16 +213,15 @@ export default function UserExpertsPage() {
                 value={profession}
                 onChange={(e) => setProfession(e.target.value)}
               >
-                {Object.entries(professionsMap).map(([key, value]) => (
-                  <option key={key} value={key}>
-                    {value}
+                {Object.entries(professionsMap).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v}
                   </option>
                 ))}
               </FilterSelect>
             </FilterGroup>
           )}
 
-          {/* languages */}
           <FilterGroup>
             <FilterLabel>Language</FilterLabel>
             {languagesOptions.map((lang) => (
@@ -201,7 +236,6 @@ export default function UserExpertsPage() {
             ))}
           </FilterGroup>
 
-          {/* rating */}
           <FilterGroup>
             <FilterLabel>Minimum Rating</FilterLabel>
             <FilterSelect
@@ -215,35 +249,45 @@ export default function UserExpertsPage() {
             </FilterSelect>
           </FilterGroup>
 
-          {/* price */}
-          <FilterGroup>
-            <FilterLabel>
-              Max price ({tab === "call" ? "₹/min Call" : "₹/min Chat"})
-            </FilterLabel>
-            <FilterSelect
-              value={maxPrice}
-              onChange={(e) => setMaxPrice(e.target.value)}
-            >
-              <option value="">No limit</option>
-              <option value="30">Up to ₹30</option>
-              <option value="40">Up to ₹40</option>
-              <option value="60">Up to ₹60</option>
-              <option value="100">Up to ₹100</option>
-            </FilterSelect>
-          </FilterGroup>
+          {tab !== "ai" && (
+            <FilterGroup>
+              <FilterLabel>
+                Max price ({tab === "call" ? "₹/min Call" : "₹/min Chat"})
+              </FilterLabel>
+              <FilterSelect
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+              >
+                <option value="">No limit</option>
+                <option value="30">Up to ₹30</option>
+                <option value="40">Up to ₹40</option>
+                <option value="60">Up to ₹60</option>
+                <option value="100">Up to ₹100</option>
+              </FilterSelect>
+            </FilterGroup>
+          )}
 
-          <ResetFilterBtn type="button" onClick={resetFilters}>
+          <ResetFilterBtn onClick={resetFilters}>
             Reset Filters
           </ResetFilterBtn>
         </FilterWrap>
 
-        {/* Experts list */}
+        {/* CONTENT */}
         <ExpertsWrap>
-          {loading ? (
+          {tab === "ai" ? (
+            <AIComingSoon>
+              <AIIcon>🤖</AIIcon>
+              <AITitle>AI Experts Coming Soon</AITitle>
+              <AIDesc>
+                Our AI experts are currently under development.
+              </AIDesc>
+              <AIHint>🚀 Our team is actively working on this</AIHint>
+            </AIComingSoon>
+          ) : loading ? (
             <LoaderRow>Loading experts…</LoaderRow>
           ) : filteredList.length === 0 ? (
             <EmptyState>
-              No experts found for current filters. Try removing some filters.
+              No experts found for current filters.
             </EmptyState>
           ) : (
             <Grid>

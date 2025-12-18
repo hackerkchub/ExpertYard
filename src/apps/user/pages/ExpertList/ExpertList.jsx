@@ -1,5 +1,5 @@
 // src/pages/ExpertList/ExpertList.jsx
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
@@ -37,93 +37,108 @@ import {
   SuggestedMeta
 } from "./ExpertList.styles";
 
-import { useExperts } from "../../../../shared/context/ExpertContext";
-import { SUBCATEGORIES, getAllExperts } from "../../../../shared/services/expertService";
+import { useCategory } from "../../../../shared/context/CategoryContext";
+import { getExpertsBySubCategoryApi } from "../../../../shared/api/expertApi/auth.api";
 
-/* -------------------------------------------------------
-   Query Reader
-------------------------------------------------------- */
+/* ---------------- QUERY ---------------- */
 const useQuery = () => {
   const { search } = useLocation();
   return new URLSearchParams(search);
 };
 
-/* -------------------------------------------------------
-   COMPONENT
-------------------------------------------------------- */
 const ExpertListPage = () => {
   const query = useQuery();
   const navigate = useNavigate();
 
-  const profession = query.get("profession") || "engineers";
-  const speciality = query.get("speciality") || "frontend";
+  const categoryId = query.get("category");
+  const subCategoryId = query.get("sub_category");
 
-  const { experts, loading } = useExperts();
+  const { categories, subCategories, loadSubCategories } = useCategory();
+
+  const [experts, setExperts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("rating-high");
 
-  /* -------------------------------------------------------
-     FILTER MAIN EXPERTS (GLOBAL DATA)
-  ------------------------------------------------------- */
-  const filteredExperts = useMemo(() => {
-    let list = experts.filter(
-      (e) => e.professionId === profession && e.specialityId === speciality
-    );
+  /* ---------------- LOAD SUBCATEGORIES ---------------- */
+  useEffect(() => {
+    if (categoryId) loadSubCategories(categoryId);
+  }, [categoryId]);
 
-    // Search filter
+  /* ---------------- LOAD EXPERTS ---------------- */
+  useEffect(() => {
+    if (!subCategoryId) return;
+
+    const loadExperts = async () => {
+      try {
+        setLoading(true);
+        const res = await getExpertsBySubCategoryApi(subCategoryId);
+        setExperts(res.data?.data || []);
+      } catch (err) {
+        console.error(err);
+        setExperts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadExperts();
+  }, [subCategoryId]);
+
+  /* ---------------- TITLES ---------------- */
+  const categoryName =
+    categories.find((c) => c.id == categoryId)?.name || "Experts";
+
+  const subCategoryName =
+    subCategories.find((s) => s.id == subCategoryId)?.name || "";
+
+  /* ---------------- FILTER & SORT ---------------- */
+  const filteredExperts = useMemo(() => {
+    let list = [...experts];
+
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
         (e) =>
-          e.name.toLowerCase().includes(q) ||
-          e.role.toLowerCase().includes(q)
+          e.name?.toLowerCase().includes(q) ||
+          e.subcategory_name?.toLowerCase().includes(q)
       );
     }
 
-    // Sorting
     switch (sortBy) {
       case "rating-high":
-        return [...list].sort((a, b) => b.rating - a.rating);
+        return list.sort((a, b) => b.rating - a.rating);
       case "rating-low":
-        return [...list].sort((a, b) => a.rating - b.rating);
-      case "experience-high":
-        return [...list].sort((a, b) => b.experienceYears - a.experienceYears);
+        return list.sort((a, b) => a.rating - b.rating);
       case "budget-low":
-        return [...list].sort((a, b) => a.callPrice - b.callPrice);
+        return list.sort((a, b) => a.call_per_minute - b.call_per_minute);
       case "budget-high":
-        return [...list].sort((a, b) => b.callPrice - a.callPrice);
+        return list.sort((a, b) => b.call_per_minute - a.call_per_minute);
       default:
         return list;
     }
-  }, [profession, speciality, search, sortBy, experts]);
+  }, [experts, search, sortBy]);
 
-  /* -------------------------------------------------------
-     SUGGESTED = Same profession, different speciality
-  ------------------------------------------------------- */
-  const suggestedExperts = useMemo(() => {
-    return experts.filter(
-      (e) => e.professionId === profession && e.specialityId !== speciality
-    );
-  }, [profession, speciality, experts]);
-
-  const specialityLabel =
-    SUBCATEGORIES[profession]?.[speciality] || "Experts";
+  /* ---------------- SUGGESTED ---------------- */
+  const suggestedSubCategories = subCategories.filter(
+    (s) => s.id != subCategoryId
+  );
 
   return (
     <PageWrap>
+      {/* ================= HEADER ================= */}
       <HeaderWrap>
         <PageTitle>
-          Top {specialityLabel} • {profession}
+          Top {subCategoryName} • {categoryName}
         </PageTitle>
-
         <PageSubtitle>
-          Real-time availability • Verified professionals • Trusted guidance
+          Verified experts • Real-time availability • Trusted guidance
         </PageSubtitle>
       </HeaderWrap>
 
       <Layout>
-        {/* ---------------- LEFT FILTER BAR ---------------- */}
+        {/* ================= FILTER ================= */}
         <LeftSidebar>
           <FilterTitle>Filter & Sort</FilterTitle>
 
@@ -131,7 +146,7 @@ const ExpertListPage = () => {
             <Field>
               <FieldLabel>Search</FieldLabel>
               <SearchInput
-                placeholder="Search by name or skills…"
+                placeholder="Search expert name"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -153,13 +168,6 @@ const ExpertListPage = () => {
               </PillButton>
 
               <PillButton
-                $active={sortBy === "experience-high"}
-                onClick={() => setSortBy("experience-high")}
-              >
-                Experience High → Low
-              </PillButton>
-
-              <PillButton
                 $active={sortBy === "budget-low"}
                 onClick={() => setSortBy("budget-low")}
               >
@@ -176,75 +184,64 @@ const ExpertListPage = () => {
           </FiltersForm>
         </LeftSidebar>
 
-        {/* ---------------- EXPERT LIST ---------------- */}
+        {/* ================= EXPERT LIST ================= */}
         <RightPanel>
-          <ExpertsGrid>
-            {filteredExperts.map((exp) => (
-              <ExpertCard
-                key={exp.id}
-                onClick={() => navigate(`/user/experts/${exp.id}`)}   // 🔥 CLEAN ROUTE
-                style={{ cursor: "pointer" }}
-              >
-                <AvatarImg src={exp.img} />
+          {loading ? (
+            <div style={{ padding: 40 }}>Loading experts…</div>
+          ) : (
+            <ExpertsGrid>
+              {filteredExperts.map((exp) => (
+                <ExpertCard
+                  key={exp.expert_id}
+                  onClick={() => navigate(`/user/experts/${exp.expert_id}`)}
+                >
+                  <AvatarImg src={exp.profile_photo} />
 
-                <ExpertBody>
-                  <ExpertName>{exp.name}</ExpertName>
+                  <ExpertBody>
+                    <ExpertName>{exp.name}</ExpertName>
 
-                  <StatusPill $online={exp.online}>
-                    {exp.online ? "Online" : "Offline"}
-                  </StatusPill>
+                    <StatusPill $online>
+                      Online
+                    </StatusPill>
 
-                  <MetaRow>
-                    <Rating>★ {exp.rating}</Rating>
-                    <span>{exp.experienceYears}+ yrs</span>
-                    <span>{exp.reviews} reviews</span>
-                  </MetaRow>
+                    <MetaRow>
+                      <Rating>★ {exp.rating}</Rating>
+                      <span>{exp.reviews} reviews</span>
+                    </MetaRow>
 
-                  <MetaRow>{exp.role}</MetaRow>
+                    <MetaRow>{exp.subcategory_name}</MetaRow>
+                    <MetaRow>{exp.location}</MetaRow>
 
-                  <PriceRow>
-                    <Price>₹{exp.callPrice}</Price>
-                    <PerMinute>/min</PerMinute>
-                  </PriceRow>
-                </ExpertBody>
-              </ExpertCard>
-            ))}
-          </ExpertsGrid>
+                    <PriceRow>
+                      <Price>₹{exp.call_per_minute}</Price>
+                      <PerMinute>/min</PerMinute>
+                    </PriceRow>
+                  </ExpertBody>
+                </ExpertCard>
+              ))}
+            </ExpertsGrid>
+          )}
         </RightPanel>
       </Layout>
 
-      {/* ---------------- SUGGESTED SECTION ---------------- */}
+      {/* ================= SUGGESTED ================= */}
       <SuggestedSection>
         <SuggestedHeader>
           <SuggestedTitle>
-            More {profession} Experts You May Like
+            Explore other {categoryName} experts
           </SuggestedTitle>
         </SuggestedHeader>
 
         <SuggestedStrip>
-          {suggestedExperts.map((exp) => (
+          {suggestedSubCategories.map((sc) => (
             <SuggestedCard
-              key={exp.id}
-              onClick={() => navigate(`/user/experts/${exp.id}`)}   // 🔥 CLEAN ROUTE
-              style={{ cursor: "pointer" }}
+              key={sc.id}
+              onClick={() =>
+                navigate(`/user/experts?category=${categoryId}&sub_category=${sc.id}`)
+              }
             >
-              <AvatarImg
-                src={exp.img}
-                style={{
-                  width: 58,
-                  height: 58,
-                  borderRadius: "50%",
-                  marginBottom: 8
-                }}
-              />
-
-              <SuggestedName>{exp.name}</SuggestedName>
-              <SuggestedMeta>{exp.role}</SuggestedMeta>
-              <SuggestedMeta>★ {exp.rating}</SuggestedMeta>
-              <SuggestedMeta>
-                {exp.online ? "🟢 Online" : "⚪ Offline"}
-              </SuggestedMeta>
-              <SuggestedMeta>₹{exp.callPrice}/min</SuggestedMeta>
+              <SuggestedName>{sc.name}</SuggestedName>
+              <SuggestedMeta>View experts</SuggestedMeta>
             </SuggestedCard>
           ))}
         </SuggestedStrip>

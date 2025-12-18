@@ -7,7 +7,7 @@ import HomePage from "../pages/Home/Home";
 import ExpertList from "../pages/ExpertList/ExpertList";
 import ExpertProfile from "../pages/ExpertProfile/ExpertProfile";
 import CallChatExpert from "../pages/CallChat/CallChatExpert";
-
+import UserAuth from "../pages/UserAuth/UserAuth";
 // Auth pages
 import WalletPage from "../pages/Wallet/Wallet";
 import Chat from "../pages/Chat/Chat";
@@ -24,6 +24,7 @@ export default function UserAppRoutes() {
         <Route path="/experts" element={<ExpertList />} />
         <Route path="/experts/:expertId" element={<ExpertProfile />} />
         <Route path="/call-chat" element={<CallChatExpert />} />
+        <Route path="/auth" element={<UserAuth />} />
     </Route>
         {/* AUTH */}
         {!isLoggedIn ? (
@@ -37,7 +38,7 @@ export default function UserAppRoutes() {
             <Route path="/chat" element={<Chat />} />
           </>
         )}
-      {/* </Route> */}
+       
     </Routes>
   );
 }

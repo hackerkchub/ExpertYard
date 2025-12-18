@@ -6,28 +6,121 @@ import StepSubcategory from "../pages/register/StepSubcategory";
 import StepProfile from "../pages/register/StepProfile";
 import StepPricing from "../pages/register/StepPricing";
 import Dashboard from "../pages/Dashboard";
+import Profile from "../pages/Profile/ExpertProfile";
+import MyContent from "../pages/MyContent/MyContent";
+import ProtectedExpertRoute from "./ProtectedExpertRoute";
+import { useExpert } from "../../../shared/context/ExpertContext";
 
 export default function ExpertAppRoutes() {
+  const { expertData } = useExpert();
+
   return (
     <Routes>
-
-      {/* Expert Root */}
+      {/* Default */}
       <Route index element={<Navigate to="home" />} />
 
-      {/* Dashboard under layout */}
+      {/* 🔐 EXPERT DASHBOARD (WITH LAYOUT) */}
       <Route element={<ExpertLayout />}>
-        <Route path="home" element={<Dashboard />} />
+
+        <Route
+          path="home"
+          element={
+            <ProtectedExpertRoute
+              condition={expertData.expertId}
+              redirectTo="/expert/register"
+            >
+              <Dashboard />
+            </ProtectedExpertRoute>
+          }
+        />
+
+        <Route
+          path="profile"
+          element={
+            <ProtectedExpertRoute
+              condition={expertData.expertId}
+              redirectTo="/expert/register"
+            >
+              <Profile />
+            </ProtectedExpertRoute>
+          }
+        />
+
+        {/* ✅ MY CONTENT (FIXED & ADJUSTED) */}
+        <Route
+          path="my-content"
+          element={
+            <ProtectedExpertRoute
+              condition={expertData.expertId}
+              redirectTo="/expert/register"
+            >
+              <MyContent />
+            </ProtectedExpertRoute>
+          }
+        />
+
       </Route>
 
-      {/* Registration Pages */}
+      {/* 🔓 REGISTER FLOW (NO LAYOUT) */}
       <Route path="register" element={<StepAccount />} />
-      <Route path="register/category" element={<StepCategory />} />
-      <Route path="register/subcategory" element={<StepSubcategory />} />
-      <Route path="register/profile" element={<StepProfile />} />
-      <Route path="register/pricing" element={<StepPricing />} />
 
-      {/* fallback */}
-      <Route path="*" element={<h1>Expert 404 Not Found</h1>} />
+      <Route
+        path="register/category"
+        element={
+          <ProtectedExpertRoute
+            condition={expertData.expertId}
+            redirectTo="/expert/register"
+          >
+            <StepCategory />
+          </ProtectedExpertRoute>
+        }
+      />
+
+      <Route
+        path="register/subcategory"
+        element={
+          <ProtectedExpertRoute
+            condition={
+              expertData.expertId &&
+              expertData.categoryId
+            }
+            redirectTo="/expert/register/category"
+          >
+            <StepSubcategory />
+          </ProtectedExpertRoute>
+        }
+      />
+
+      <Route
+        path="register/profile"
+        element={
+          <ProtectedExpertRoute
+            condition={
+              expertData.expertId &&
+              expertData.categoryId &&
+              expertData.subCategoryIds.length > 0
+            }
+            redirectTo="/expert/register/subcategory"
+          >
+            <StepProfile />
+          </ProtectedExpertRoute>
+        }
+      />
+
+      <Route
+        path="register/pricing"
+        element={
+          <ProtectedExpertRoute
+            condition={expertData.expertId}
+            redirectTo="/expert/register/profile"
+          >
+            <StepPricing />
+          </ProtectedExpertRoute>
+        }
+      />
+
+      {/* Fallback */}
+      <Route path="*" element={<h1>Expert 404</h1>} />
     </Routes>
   );
 }

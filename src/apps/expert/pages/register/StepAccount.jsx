@@ -1,8 +1,14 @@
+// src/apps/expert/pages/register/Auth.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useExpertRegister } from "../../context/ExpertRegisterContext";
+import { useExpert } from "../../../../shared/context/ExpertContext";
+import { registerApi, loginApi } from "../../../../shared/api/expertApi/auth.api";
+import useApi from "../../../../shared/hooks/useApi";
+
 import RegisterLayout from "../../components/RegisterLayout";
 import OtpModal from "../../components/OtpModal";
+import Loader from "../../../../shared/components/Loader/Loader";
+import ErrorMessage from "../../../../shared/components/ErrorMessage/ErrorMessage";
 
 import {
   FormGrid,
@@ -16,77 +22,112 @@ import {
 
 export default function Auth() {
   const navigate = useNavigate();
-  const { data, updateField } = useExpertRegister();
+  const { updateExpertData } = useExpert();
 
-  const [mode, setMode] = React.useState("login"); // login | register
+  const [mode, setMode] = React.useState("login");
   const [showOtp, setShowOtp] = React.useState(false);
 
-  // login state
+  const [registerForm, setRegisterForm] = React.useState({
+    name: "",
+    email: "",
+    phone: "",
+    password: ""
+  });
+
   const [loginEmail, setLoginEmail] = React.useState("");
   const [loginPassword, setLoginPassword] = React.useState("");
 
-  const canRegister =
-    data.name && data.email && data.phone && data.password;
+  const { request: register, loading: registerLoading, error: registerError } =
+    useApi(registerApi);
 
-  const canLogin =
-    loginEmail && loginPassword;
+  const { request: login, loading: loginLoading, error: loginError } =
+    useApi(loginApi);
 
-  function handleRegister() {
-    // Send OTP API
-    setShowOtp(true);
+  const handleRegister = async () => {
+    try {
+      const res = await register(registerForm);
+
+      // 🔥 SAVE AUTH DATA IN CONTEXT
+      updateExpertData({
+        expertId: res.expert_id,
+        name: registerForm.name,
+        email: registerForm.email,
+        phone: registerForm.phone
+      });
+
+      setShowOtp(true);
+
+      setTimeout(() => {
+        setShowOtp(false);
+        navigate("/expert/register/category");
+      }, 700);
+    } catch (err) {}
+  };
+
+ const handleLogin = async () => {
+  try {
+    const res = await login({
+      email_or_phone: loginEmail,
+      password: loginPassword
+    });
+
+    /**
+     * ✅ REAL RESPONSE STRUCTURE
+     * res.data.id
+     * res.data.name
+     * res.data.email
+     * res.data.phone
+     */
+
+    updateExpertData({
+      expertId: res.data.id,
+      name: res.data.name,
+      email: res.data.email,
+      phone: res.data.phone
+    });
+
+    navigate("/expert/home");
+
+  } catch (err) {
+    console.error(err);
   }
+};
 
-  function handleOtpSuccess() {
-    setShowOtp(false);
-    navigate("/expert/register/category");
-  }
-
-  function handleLogin() {
-    // Login API
-    navigate("/expert");
-  }
+  const loading = registerLoading || loginLoading;
+  const error = registerError || loginError;
 
   return (
     <>
       <RegisterLayout
         title={mode === "login" ? "Welcome back" : "Create your Expert account"}
-        subtitle={mode === "login"
-          ? "Log in to continue as expert"
-          : "Start by creating your expert login"}
+        subtitle={
+          mode === "login"
+            ? "Log in to continue as expert"
+            : "Start by creating your expert login"
+        }
         step={1}
         tabs={[
-          { label: "Log In", active: mode === "login", onClick: ()=>setMode("login") },
-          { label: "Register", active: mode === "register", onClick: ()=>setMode("register") },
+          { label: "Log In", active: mode === "login", onClick: () => setMode("login") },
+          { label: "Register", active: mode === "register", onClick: () => setMode("register") },
         ]}
       >
+        {loading && <Loader />}
+        {error && <ErrorMessage message={error} />}
 
         {mode === "login" && (
           <FormGrid>
             <Field>
-              <Label>Email</Label>
-              <Input
-                type="email"
-                value={loginEmail}
-                onChange={e => setLoginEmail(e.target.value)}
-                placeholder="name@example.com"
-              />
+              <Label>Email or Phone</Label>
+              <Input value={loginEmail} onChange={e => setLoginEmail(e.target.value)} />
             </Field>
-
             <Field>
               <Label>Password</Label>
               <Input
                 type="password"
                 value={loginPassword}
                 onChange={e => setLoginPassword(e.target.value)}
-                placeholder="Your password"
               />
             </Field>
-
-            <FullRow>
-              <small style={{ fontSize: 12, color: "#6b7280" }}>
-                Forgot password?
-              </small>
-            </FullRow>
           </FormGrid>
         )}
 
@@ -95,38 +136,30 @@ export default function Auth() {
             <Field>
               <Label>Full Name</Label>
               <Input
-                value={data.name}
-                onChange={e => updateField("name", e.target.value)}
-                placeholder="e.g. Dr. Rohan Sharma"
+                value={registerForm.name}
+                onChange={e => setRegisterForm({ ...registerForm, name: e.target.value })}
               />
             </Field>
-
             <Field>
               <Label>Email</Label>
               <Input
-                type="email"
-                value={data.email}
-                onChange={e => updateField("email", e.target.value)}
-                placeholder="name@example.com"
+                value={registerForm.email}
+                onChange={e => setRegisterForm({ ...registerForm, email: e.target.value })}
               />
             </Field>
-
             <Field>
               <Label>Mobile</Label>
               <Input
-                value={data.phone}
-                onChange={e => updateField("phone", e.target.value)}
-                placeholder="+91-9876543210"
+                value={registerForm.phone}
+                onChange={e => setRegisterForm({ ...registerForm, phone: e.target.value })}
               />
             </Field>
-
             <Field>
               <Label>Password</Label>
               <Input
                 type="password"
-                value={data.password}
-                onChange={e => updateField("password", e.target.value)}
-                placeholder="Minimum 8 characters"
+                value={registerForm.password}
+                onChange={e => setRegisterForm({ ...registerForm, password: e.target.value })}
               />
             </Field>
           </FormGrid>
@@ -134,53 +167,33 @@ export default function Auth() {
 
         <ActionsRow>
           {mode === "login" ? (
-            <PrimaryButton disabled={!canLogin} onClick={handleLogin}>
+            <PrimaryButton disabled={!loginEmail || !loginPassword} onClick={handleLogin}>
               Log In →
             </PrimaryButton>
           ) : (
-            <PrimaryButton disabled={!canRegister} onClick={handleRegister}>
+            <PrimaryButton
+              disabled={!registerForm.name || !registerForm.email || !registerForm.phone || !registerForm.password}
+              onClick={handleRegister}
+            >
               Send OTP →
             </PrimaryButton>
           )}
         </ActionsRow>
 
-        {mode === "login" && (
-          <FullRow style={{ textAlign: "center" }}>
-            <small style={{ fontSize: 13, color: "#6b7280" }}>
-              Don’t have an account?
-              <span
-                style={{ color: "#0ea5ff", marginLeft: 4, cursor: "pointer" }}
-                onClick={() => setMode("register")}
-              >
-                Create one
-              </span>
-            </small>
-          </FullRow>
-        )}
-
-        {mode === "register" && (
-          <FullRow style={{ textAlign: "center" }}>
-            <small style={{ fontSize: 13, color: "#6b7280" }}>
-              Already registered?
-              <span
-                style={{ color: "#0ea5ff", marginLeft: 4, cursor: "pointer" }}
-                onClick={() => setMode("login")}
-              >
-                Log in
-              </span>
-            </small>
-          </FullRow>
-        )}
+        <FullRow style={{ textAlign: "center" }}>
+          <small style={{ color: "#6b7280" }}>
+            {mode === "login" ? "Don’t have an account?" : "Already registered?"}
+            <span
+              style={{ color: "#0ea5ff", cursor: "pointer", marginLeft: 4 }}
+              onClick={() => setMode(mode === "login" ? "register" : "login")}
+            >
+              {mode === "login" ? "Create one" : "Log in"}
+            </span>
+          </small>
+        </FullRow>
       </RegisterLayout>
 
-      {showOtp && (
-        <OtpModal
-          email={data.email}
-          phone={data.phone}
-          onClose={() => setShowOtp(false)}
-          onSuccess={handleOtpSuccess}
-        />
-      )}
+      {showOtp && <OtpModal onSuccess={() => setShowOtp(false)} />}
     </>
   );
 }

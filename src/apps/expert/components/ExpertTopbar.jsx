@@ -1,4 +1,3 @@
-// src/apps/expert/components/ExpertTopbar.jsx
 import React, { useEffect, useRef, useState } from "react";
 import {
   TopbarWrap,
@@ -7,8 +6,6 @@ import {
   SearchWrap,
   SearchRow,
   SearchBox,
-  SearchFilters,
-  FilterChip,
   RightActions,
   IconBtn,
   CreateBtn,
@@ -25,70 +22,30 @@ import SearchSuggestions from "./SearchSuggestions";
 import useDebounce from "../hooks/useDebounce";
 import { useNotifications } from "../hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
+import { useExpert } from "../../../shared/context/ExpertContext";
 
-
-// helper to build mock search suggestions
-const buildMockSuggestions = (term) => {
-  const base = term.trim();
-  if (!base) return [];
-
-  return [
-    {
-      id: 1,
-      label: `Client: Rahul Verma`,
-      meta: "3 sessions · Career Advice",
-      type: "client",
-      typeLabel: "Client",
-    },
-    {
-      id: 2,
-      label: `Report: ${base} – Monthly Summary`,
-      meta: "Report · Created yesterday",
-      type: "report",
-      typeLabel: "Report",
-    },
-    {
-      id: 3,
-      label: `Client: Neha Sharma`,
-      meta: "2 sessions · Parenting",
-      type: "client",
-      typeLabel: "Client",
-    },
-  ];
-};
-
+const DEFAULT_AVATAR = "https://i.pravatar.cc/40?img=12";
 
 export default function ExpertTopbar({ setMobileOpen }) {
   const navigate = useNavigate();
+  const { expertData, logoutExpert } = useExpert();
 
-  // Dummy user for now (in future use AuthContext)
+  // USER DATA
   const user = {
-    name: "Dr. Sharma",
-    role: "Expert · Career Coach",
-    avatar: "https://i.pravatar.cc/40?img=12",
+    name: expertData?.name || "Expert",
+    role: expertData?.position || "Expert",
+    avatar: expertData?.profile_photo || DEFAULT_AVATAR,
   };
 
-  /* ------------------------------------------------
-     LOGOUT ACTION
-     redirect → expert/register
-  ------------------------------------------------ */
+  /* LOGOUT */
   const handleLogout = () => {
-    // TODO: clear authentication tokens here
-    localStorage.removeItem("expert_id");
+    logoutExpert();
+    localStorage.removeItem("expert_session");
     sessionStorage.clear();
-
-    navigate("/expert/register");
+    navigate("/expert/register", { replace: true });
   };
 
-  const handleAvatarChange = (file) => {
-    // TODO: upload to server and update avatar URL
-    console.log("Avatar file selected:", file);
-  };
-
-
-  /* ------------------------------------------------
-     Notifications
-  ------------------------------------------------ */
+  /* NOTIFICATIONS */
   const {
     notifications,
     unreadCount,
@@ -104,7 +61,7 @@ export default function ExpertTopbar({ setMobileOpen }) {
   const profileRef = useRef(null);
   const searchRef = useRef(null);
 
-  // close popups on outside click
+  // OUTSIDE CLICK CLOSE
   useEffect(() => {
     function handleClick(e) {
       if (notifRef.current && !notifRef.current.contains(e.target)) {
@@ -118,11 +75,7 @@ export default function ExpertTopbar({ setMobileOpen }) {
     return () => document.removeEventListener("click", handleClick);
   }, []);
 
-
-  /* ------------------------------------------------
-     Search state
-  ------------------------------------------------ */
-  const [filter, setFilter] = useState("all"); // all | clients | reports
+  /* SEARCH */
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
@@ -134,47 +87,25 @@ export default function ExpertTopbar({ setMobileOpen }) {
     if (!debouncedTerm.trim()) {
       setSuggestions([]);
       setLoadingSuggestions(false);
+      setShowSuggestions(false);
       return;
     }
 
     setLoadingSuggestions(true);
-
-    // fake API timeout – replace with real fetch later
     const t = setTimeout(() => {
-      const all = buildMockSuggestions(debouncedTerm);
-      const filtered =
-        filter === "all"
-          ? all
-          : all.filter((s) =>
-              s.type === (filter === "clients" ? "client" : "report")
-            );
-
-      setSuggestions(filtered);
+      setSuggestions([]); // 🔜 later API
       setLoadingSuggestions(false);
       setShowSuggestions(true);
     }, 200);
 
     return () => clearTimeout(t);
-  }, [debouncedTerm, filter]);
+  }, [debouncedTerm]);
 
-
-  const handleSuggestionSelect = (s) => {
-    setSearchTerm(s.label);
-    setShowSuggestions(false);
-
-    if (s.type === "client") {
-      navigate("/expert/clients");
-    } else if (s.type === "report") {
-      navigate("/expert/reports");
-    }
-  };
-
-
+  /* ================= RENDER ================= */
   return (
     <TopbarWrap>
-      {/* LEFT: Menu + Brand + Search */}
+      {/* LEFT */}
       <LeftBlock>
-        {/* mobile menu */}
         <IconBtn
           onClick={() => setMobileOpen((prev) => !prev)}
           className="mobile-only"
@@ -182,66 +113,34 @@ export default function ExpertTopbar({ setMobileOpen }) {
           <FiMenu />
         </IconBtn>
 
-        {/* Logo */}
         <Brand>
           <img src={Logo} alt="ExpertYard" />
           ExpertYard
         </Brand>
 
-        {/* Search */}
         <SearchWrap ref={searchRef}>
           <SearchRow>
             <SearchBox
               placeholder="Search clients, or reports..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              onFocus={() => {
-                if (suggestions.length > 0) setShowSuggestions(true);
-              }}
             />
           </SearchRow>
-
-          <SearchFilters>
-            <FilterChip
-              active={filter === "all"}
-              onClick={() => setFilter("all")}
-            >
-              All
-            </FilterChip>
-
-            <FilterChip
-              active={filter === "clients"}
-              onClick={() => setFilter("clients")}
-            >
-              Clients
-            </FilterChip>
-
-            <FilterChip
-              active={filter === "reports"}
-              onClick={() => setFilter("reports")}
-            >
-              Reports
-            </FilterChip>
-          </SearchFilters>
 
           {showSuggestions && (
             <SearchSuggestions
               suggestions={suggestions}
               loading={loadingSuggestions}
-              onSelect={handleSuggestionSelect}
             />
           )}
         </SearchWrap>
       </LeftBlock>
 
-      {/* RIGHT: icons + create + profile */}
+      {/* RIGHT */}
       <RightActions>
         {/* Notifications */}
         <div ref={notifRef} style={{ position: "relative" }}>
-          <IconBtn
-            onClick={() => setShowNotif((prev) => !prev)}
-            aria-label="Notifications"
-          >
+          <IconBtn onClick={() => setShowNotif((p) => !p)}>
             <FiBell />
             {unreadCount > 0 && <UnreadDot />}
           </IconBtn>
@@ -258,27 +157,27 @@ export default function ExpertTopbar({ setMobileOpen }) {
         </div>
 
         {/* Messages */}
-        <IconBtn aria-label="Messages">
+        <IconBtn>
           <FiMessageSquare />
         </IconBtn>
 
-        {/* Create New */}
-        <CreateBtn>
+        {/* CREATE POST → ONLY NAVIGATION */}
+        <CreateBtn onClick={() => navigate("/expert/my-content?mode=create")}>
           <FiPlus /> Create New
         </CreateBtn>
 
-        {/* Profile Dropdown */}
+        {/* PROFILE */}
         <div ref={profileRef} style={{ position: "relative" }}>
-          <ProfileImg onClick={() => setShowProfile((prev) => !prev)}>
-            <img src={user.avatar} alt={user.name} />
+          <ProfileImg onClick={() => setShowProfile((p) => !p)}>
+            <img
+              src={user.avatar}
+              alt={user.name}
+              onError={(e) => (e.target.src = DEFAULT_AVATAR)}
+            />
           </ProfileImg>
 
           {showProfile && (
-            <ProfileDropdown
-              user={user}
-              onLogout={handleLogout}
-              onAvatarChange={handleAvatarChange}
-            />
+            <ProfileDropdown user={user} onLogout={handleLogout} />
           )}
         </div>
       </RightActions>

@@ -1,9 +1,13 @@
 // src/apps/expert/pages/register/StepSubcategory.jsx
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useExpertRegister } from "../../context/ExpertRegisterContext";
-import { SUBCATEGORIES } from "../../../../shared/services/expertService";
+import { useExpert } from "../../../../shared/context/ExpertContext";
+import { getSubCategoriesApi } from "../../../../shared/api/expertapi/category.api";
+import useApi from "../../../../shared/hooks/useApi";
 import RegisterLayout from "../../components/RegisterLayout";
+import Loader from "../../../../shared/components/Loader/Loader";
+import ErrorMessage from "../../../../shared/components/ErrorMessage/ErrorMessage";
+
 import {
   CardGrid,
   SelectCard,
@@ -15,23 +19,56 @@ import {
 } from "../../styles/Register.styles";
 
 export default function StepSubcategory() {
-  const { data, updateField } = useExpertRegister();
   const navigate = useNavigate();
+  const { expertData, updateExpertData } = useExpert();
 
+  const [subCategories, setSubCategories] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+
+  const {
+    request: getSubCategories,
+    loading,
+    error
+  } = useApi(getSubCategoriesApi);
+
+  // 🔐 Route Guard (Phase-2 Rule)
   useEffect(() => {
-    if (!data.category_id) {
+    if (!expertData.categoryId) {
       navigate("/expert/register/category");
+      return;
     }
-  }, [data.category_id, navigate]);
+    loadSubCategories();
+  }, [expertData.categoryId]);
 
-  const subs = SUBCATEGORIES[data.category_id] || {};
+  const loadSubCategories = async () => {
+  try {
+    const res = await getSubCategories(expertData.categoryId);
 
+    // 🔥 YAHI MAIN FIX HAI
+    const list = Array.isArray(res?.data) ? res.data : [];
+
+    setSubCategories(list);
+  } catch (err) {
+    console.error("SubCategory API failed", err);
+    setSubCategories([]);
+  }
+};
+
+
+  // 🔹 Select subcategory
   const handleSelect = (id, label) => {
-    updateField("subcategory_id", id);
-    updateField("position", label);
+    setSelectedId(id);
+
+    updateExpertData({
+      subCategoryIds: [id],
+      position: label   // optional (agar backend accept karta ho)
+    });
   };
 
-  const canNext = !!data.subcategory_id;
+  const canNext = !!selectedId;
+
+  if (loading) return <Loader />;
+  if (error) return <ErrorMessage message={error} />;
 
   return (
     <RegisterLayout
@@ -40,14 +77,14 @@ export default function StepSubcategory() {
       step={3}
     >
       <CardGrid>
-        {Object.entries(subs).map(([id, label]) => (
+        {subCategories.map((sub) => (
           <SelectCard
-            key={id}
+            key={sub.id}
             type="button"
-            active={data.subcategory_id === id}
-            onClick={() => handleSelect(id, label)}
+            active={selectedId === sub.id}
+            onClick={() => handleSelect(sub.id, sub.name)}
           >
-            <CardTitle>{label}</CardTitle>
+            <CardTitle>{sub.name}</CardTitle>
             <CardMeta>
               This will be your main tag shown on your public profile.
             </CardMeta>
@@ -56,7 +93,9 @@ export default function StepSubcategory() {
       </CardGrid>
 
       <ActionsRow>
-        <SecondaryButton onClick={() => navigate("/expert/register/category")}>
+        <SecondaryButton
+          onClick={() => navigate("/expert/register/category")}
+        >
           ← Back
         </SecondaryButton>
 

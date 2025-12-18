@@ -203,6 +203,8 @@ export const ExpertProvider = ({ children }) => {
         profileLoading,
         expertPrice,
         priceLoading,
+          fetchProfile,
+          fetchPrice,
         updateExpertData,
         refreshProfile,
         refreshPrice,

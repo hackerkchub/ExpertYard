@@ -4,13 +4,6 @@ import { useNavigate } from "react-router-dom";
 
 import {
   Wrap,
-  SectionHeader,
-  Title,
-  Subtitle,
-  ActionsRow,
-  ActionCard,
-  ActionIcon,
-  ActionTitle,
   TabsRow,
   TabButton,
   FiltersRow,
@@ -30,6 +23,8 @@ import {
 import { useCategory } from "../../../../shared/context/CategoryContext";
 import { getExpertsBySubCategoryApi } from "../../../../shared/api/expertapi/auth.api";
 
+const DEFAULT_AVATAR = "https://i.pravatar.cc/150?img=12";
+
 const Categories = () => {
   const navigate = useNavigate();
 
@@ -45,7 +40,7 @@ const Categories = () => {
   const [experts, setExperts] = useState([]);
   const [expertsLoading, setExpertsLoading] = useState(false);
 
-  /* ================= LOAD DEFAULT CATEGORY ================= */
+  /* ================= DEFAULT CATEGORY ================= */
   useEffect(() => {
     if (categories.length && !activeCategory) {
       setActiveCategory(categories[0].id);
@@ -53,13 +48,14 @@ const Categories = () => {
   }, [categories, activeCategory]);
 
   /* ================= LOAD SUBCATEGORIES ================= */
-useEffect(() => {
-  if (!activeCategory) return;
+  useEffect(() => {
+    if (!activeCategory) return;
+    setActiveSubCategory(null);
+    setExperts([]);
+    loadSubCategories(activeCategory);
+  }, [activeCategory, loadSubCategories]);
 
-  setActiveSubCategory(null);
-  loadSubCategories(activeCategory);
-}, [activeCategory, loadSubCategories]);
-  /* ================= LOAD EXPERTS BY SUBCATEGORY ================= */
+  /* ================= LOAD EXPERTS ================= */
   const loadExperts = async (subCategoryId) => {
     if (!subCategoryId) return;
 
@@ -69,36 +65,42 @@ useEffect(() => {
       setExperts(res?.data?.data || []);
     } catch (err) {
       console.error("Experts load failed", err);
+      setExperts([]);
     } finally {
       setExpertsLoading(false);
     }
   };
 
   /* ================= SUBCATEGORY CLICK ================= */
- const handleSubCategoryChange = (id) => {
-  setActiveSubCategory(id);
-  setExperts([]);        // clear only when subcategory changes
-  loadExperts(id);
-};
+  const handleSubCategoryChange = (id) => {
+    if (id === activeSubCategory) return;
+    setActiveSubCategory(id);
+    setExperts([]);
+    loadExperts(id);
+  };
 
   const loading = categoryLoading || expertsLoading;
 
   return (
     <Wrap>
-      {/* ================= CATEGORY TABS ================= */}
+      {/* CATEGORY TABS */}
       <TabsRow>
         {categories.map((cat) => (
           <TabButton
             key={cat.id}
             $active={cat.id === activeCategory}
-            onClick={() => setActiveCategory(cat.id)}
+            onClick={() => {
+              if (cat.id !== activeCategory) {
+                setActiveCategory(cat.id);
+              }
+            }}
           >
             {cat.name}
           </TabButton>
         ))}
       </TabsRow>
 
-      {/* ================= SUBCATEGORY FILTERS ================= */}
+      {/* SUBCATEGORY FILTERS */}
       <FiltersRow>
         {subCategories.map((sc) => (
           <FilterChip
@@ -111,7 +113,7 @@ useEffect(() => {
         ))}
       </FiltersRow>
 
-      {/* ================= EXPERT LIST ================= */}
+      {/* EXPERT LIST */}
       {loading ? (
         <ExpertsStrip>
           {Array.from({ length: 8 }).map((_, i) => (
@@ -123,22 +125,25 @@ useEffect(() => {
           ))}
         </ExpertsStrip>
       ) : (
-       <ExpertsStrip>
-  {experts.map((exp) => (
-    <ExpertCard
-      key={exp.id}
-      onClick={() => navigate(`/experts/${exp.id}`)}
-      style={{ cursor: "pointer" }}
-    >
-      <Avatar src={exp.profile_image} alt={exp.name} />
-      <ExpertName>{exp.name}</ExpertName>
-      <ExpertProfession>{exp.category_name}</ExpertProfession>
-      <ExpertSpeciality>{exp.main_expertise}</ExpertSpeciality>
-      <ExpertTag>Online • Verified</ExpertTag>
-    </ExpertCard>
-  ))}
-</ExpertsStrip>
-
+        <ExpertsStrip>
+          {experts.map((exp) => (
+            <ExpertCard
+              key={exp.expert_id}
+              onClick={() =>
+                navigate(`/user/experts/${exp.expert_id}`)
+              }
+            >
+              <Avatar
+                src={exp.profile_photo || DEFAULT_AVATAR}
+                alt={exp.name}
+              />
+              <ExpertName>{exp.name}</ExpertName>
+              <ExpertProfession>{exp.category_name}</ExpertProfession>
+              <ExpertSpeciality>{exp.main_expertise}</ExpertSpeciality>
+              <ExpertTag>Online • Verified</ExpertTag>
+            </ExpertCard>
+          ))}
+        </ExpertsStrip>
       )}
     </Wrap>
   );

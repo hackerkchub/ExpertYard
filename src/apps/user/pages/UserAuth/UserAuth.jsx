@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   PageWrap,
   Card,
@@ -25,17 +26,23 @@ import {
 
 import OtpModal from "../../../expert/components/OtpModal";
 
-// ✅ USER APIs
-import {
-  loginUserApi,
-  registerUserApi
-} from "../../../../shared/api/userApi";
+// APIs
+import { registerUserApi } from "../../../../shared/api/userApi";
+import { useAuth } from "../../../../shared/context/UserAuthContext";
 
 const UserAuth = () => {
   const [activeTab, setActiveTab] = useState("login");
   const [showOtp, setShowOtp] = useState(false);
-  const [verifyType, setVerifyType] = useState(null); // email | phone
+  const [verifyType, setVerifyType] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
+
+  // 🔁 Redirect path after login
+  const redirectTo = location.state?.from?.pathname || "/";
 
   const [verified, setVerified] = useState({
     email: false,
@@ -53,32 +60,34 @@ const UserAuth = () => {
   /* ================= HANDLERS ================= */
 
   const handleChange = (key) => (e) => {
-    setForm({ ...form, [key]: e.target.value });
+    setForm((prev) => ({ ...prev, [key]: e.target.value }));
   };
 
   /* ================= LOGIN ================= */
 
   const handleLogin = async () => {
-    if (!form.email || !form.password) {
-      alert("Email & password required");
-      return;
-    }
+    if (!form.email || !form.password) return;
 
     try {
       setLoading(true);
-      const res = await loginUserApi({
+      setSuccessMessage("");
+
+      const res = await login({
         email: form.email,
         password: form.password
       });
 
       if (res?.success) {
-        localStorage.setItem("token", res.token);
-        alert("Login successful");
+        setSuccessMessage("✅ Login successful. Redirecting...");
+
+        setTimeout(() => {
+          navigate(redirectTo, { replace: true });
+        }, 1200);
       } else {
-        alert(res?.message || "Login failed");
+        setSuccessMessage("❌ Invalid email or password");
       }
-    } catch (err) {
-      alert(err);
+    } catch {
+      setSuccessMessage("❌ Login failed. Try again.");
     } finally {
       setLoading(false);
     }
@@ -89,34 +98,33 @@ const UserAuth = () => {
   const handleRegister = async () => {
     const { first_name, last_name, email, phone, password } = form;
 
-    if (!first_name || !last_name || !email || !phone || !password) {
-      alert("All fields are required");
-      return;
-    }
-
-    if (!verified.email || !verified.phone) {
-      alert("Please verify email and phone");
-      return;
-    }
+    if (!first_name || !last_name || !email || !phone || !password) return;
+    if (!verified.email || !verified.phone) return;
 
     try {
       setLoading(true);
+      setSuccessMessage("");
+
       const res = await registerUserApi(form);
 
       if (res?.success) {
-        alert("Registration successful");
-        setActiveTab("login");
+        setSuccessMessage("🎉 Registration successful. Please login.");
+
+        setTimeout(() => {
+          setActiveTab("login");
+          setSuccessMessage("");
+        }, 1500);
       } else {
-        alert(res?.message || "Registration failed");
+        setSuccessMessage("❌ Registration failed.");
       }
-    } catch (err) {
-      alert(err);
+    } catch {
+      setSuccessMessage("❌ Something went wrong.");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ================= OTP (BYPASS) ================= */
+  /* ================= OTP ================= */
 
   const openOtp = (type) => {
     setVerifyType(type);
@@ -124,11 +132,7 @@ const UserAuth = () => {
   };
 
   const handleOtpVerify = () => {
-    // 🟢 BYPASS: any OTP accepted
-    setVerified((prev) => ({
-      ...prev,
-      [verifyType]: true
-    }));
+    setVerified((prev) => ({ ...prev, [verifyType]: true }));
     setShowOtp(false);
   };
 
@@ -150,6 +154,24 @@ const UserAuth = () => {
             Register
           </Tab>
         </Tabs>
+
+        {/* SUCCESS MESSAGE */}
+        {successMessage && (
+          <div
+            style={{
+              margin: "12px 0",
+              padding: "10px",
+              background: "rgba(34,197,94,0.12)",
+              border: "1px solid rgba(34,197,94,0.35)",
+              color: "#22c55e",
+              borderRadius: 8,
+              textAlign: "center",
+              fontSize: 14
+            }}
+          >
+            {successMessage}
+          </div>
+        )}
 
         {/* ================= LOGIN ================= */}
         {activeTab === "login" && (
@@ -217,24 +239,14 @@ const UserAuth = () => {
                   placeholder="Phone Number"
                   value={form.phone}
                   onChange={handleChange("phone")}
-                  disabled={verified.phone}   // 🔒 LOCK
+                  disabled={verified.phone}
                 />
               </InputWrap>
 
-              <VerifyBtn
-                onClick={() => openOtp("phone")}
-                disabled={verified.phone}
-                style={{
-                  background: verified.phone
-                    ? "linear-gradient(135deg,#16a34a,#22c55e)"
-                    : undefined,
-                  color: verified.phone ? "#fff" : undefined
-                }}
-              >
+              <VerifyBtn onClick={() => openOtp("phone")} disabled={verified.phone}>
                 {verified.phone ? (
                   <>
-                    <FiCheckCircle style={{ marginRight: 6 }} />
-                    Verified
+                    <FiCheckCircle /> Verified
                   </>
                 ) : (
                   "Verify"
@@ -250,24 +262,14 @@ const UserAuth = () => {
                   placeholder="Email Address"
                   value={form.email}
                   onChange={handleChange("email")}
-                  disabled={verified.email}   // 🔒 LOCK
+                  disabled={verified.email}
                 />
               </InputWrap>
 
-              <VerifyBtn
-                onClick={() => openOtp("email")}
-                disabled={verified.email}
-                style={{
-                  background: verified.email
-                    ? "linear-gradient(135deg,#16a34a,#22c55e)"
-                    : undefined,
-                  color: verified.email ? "#fff" : undefined
-                }}
-              >
+              <VerifyBtn onClick={() => openOtp("email")} disabled={verified.email}>
                 {verified.email ? (
                   <>
-                    <FiCheckCircle style={{ marginRight: 6 }} />
-                    Verified
+                    <FiCheckCircle /> Verified
                   </>
                 ) : (
                   "Verify"
@@ -299,7 +301,7 @@ const UserAuth = () => {
         )}
       </Card>
 
-      {/* ================= OTP MODAL ================= */}
+      {/* OTP MODAL */}
       {showOtp && (
         <OtpModal
           email={form.email}

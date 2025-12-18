@@ -97,7 +97,7 @@ const Chat = () => {
   return (
     <>
       {/* NAVBAR */}
-      <Navbar />
+    
 
       {/* CHAT PAGE */}
       <PageWrap>

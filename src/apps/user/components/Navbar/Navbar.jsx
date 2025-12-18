@@ -25,17 +25,31 @@ import {
 } from "react-icons/fi";
 
 import { FaWallet } from "react-icons/fa";
-import { useWallet } from "../../../../shared/context/WalletContext";
 import { useNavigate } from "react-router-dom";
 import logo from "../../../../assets/logo.png";
+
+// ✅ CONTEXTS
+import { useAuth } from "../../../../shared/context/UserAuthContext";
+import { useWallet } from "../../../../shared/context/WalletContext";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const { balance, isLogged, logout } = useWallet();
   const navigate = useNavigate();
 
+  // 🔐 AUTH
+  const { isLoggedIn, logout } = useAuth();
+
+  // 💰 WALLET
+  const { balance } = useWallet();
+
+  /* ================= LOGOUT ================= */
+  const handleLogout = () => {
+      
+    navigate("/", { replace: true }); // 🏠 always go Home
+     logout();     
+  };
   return (
     <Nav>
       <Container>
@@ -55,12 +69,14 @@ const Navbar = () => {
               <FiHome />
             </button>
 
-            <button onClick={() => navigate("/user/wallet")}>
-              <FaWallet />
-              {isLogged && (
-                <WalletBadge>₹{balance.toFixed(0)}</WalletBadge>
-              )}
-            </button>
+           <button onClick={() => navigate("/user/wallet")}>
+  <FaWallet />
+  {isLoggedIn && (
+    <WalletBadge>
+      ₹{Number(balance || 0).toFixed(0)}
+    </WalletBadge>
+  )}
+</button>
 
             <button>
               <FiShare2 />
@@ -79,12 +95,12 @@ const Navbar = () => {
           </IconBox>
 
           {/* AUTH BUTTON */}
-          {!isLogged ? (
+          {!isLoggedIn ? (
             <AuthButton onClick={() => navigate("/user/auth")}>
-              Sign In/Up
+              Sign In / Up
             </AuthButton>
           ) : (
-            <AuthButton onClick={logout}>
+            <AuthButton onClick={handleLogout}>
               Sign Out
             </AuthButton>
           )}
@@ -99,18 +115,29 @@ const Navbar = () => {
       {/* MOBILE MENU */}
       {open && (
         <MobileMenu>
-          <MobileItem to="/" onClick={() => setOpen(false)}>Home</MobileItem>
-          <MobileItem to="/user/wallet" onClick={() => setOpen(false)}>Wallet</MobileItem>
+          <MobileItem to="/" onClick={() => setOpen(false)}>
+            Home
+          </MobileItem>
 
-          {!isLogged ? (
-            <MobileItem to="/user/auth" onClick={() => setOpen(false)}>
-              Sign In/Up
+          <MobileItem
+            to="/user/wallet"
+            onClick={() => setOpen(false)}
+          >
+            Wallet
+          </MobileItem>
+
+          {!isLoggedIn ? (
+            <MobileItem
+              to="/user/auth"
+              onClick={() => setOpen(false)}
+            >
+              Sign In / Up
             </MobileItem>
           ) : (
             <MobileItem
               as="button"
               onClick={() => {
-                logout();
+                handleLogout();
                 setOpen(false);
               }}
             >

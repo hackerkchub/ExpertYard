@@ -1,4 +1,12 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+// src/shared/context/CategoryContext.jsx
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback
+} from "react";
+
 import {
   getCategoriesApi,
   getSubCategoriesApi
@@ -13,12 +21,12 @@ export const CategoryProvider = ({ children }) => {
   const [subCategories, setSubCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // load all categories once
+  /* ================= LOAD CATEGORIES (ONCE) ================= */
   useEffect(() => {
     const loadCategories = async () => {
       try {
         const res = await getCategoriesApi();
-        setCategories(res.data?.data || []);
+        setCategories(res?.data?.data || []);
       } catch (err) {
         console.error("Category load failed", err);
       } finally {
@@ -29,17 +37,18 @@ export const CategoryProvider = ({ children }) => {
     loadCategories();
   }, []);
 
-  // load subcategories when category changes
-  const loadSubCategories = async (categoryId) => {
+  /* ================= LOAD SUBCATEGORIES (MEMOIZED) ================= */
+  const loadSubCategories = useCallback(async (categoryId) => {
     if (!categoryId) return;
 
     try {
       const res = await getSubCategoriesApi(categoryId);
-      setSubCategories(res.data?.data || []);
+      setSubCategories(res?.data?.data || []);
     } catch (err) {
       console.error("Subcategory load failed", err);
+      setSubCategories([]);
     }
-  };
+  }, []);
 
   return (
     <CategoryContext.Provider

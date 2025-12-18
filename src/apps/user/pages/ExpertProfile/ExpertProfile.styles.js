@@ -6,7 +6,6 @@ export const PageWrap = styled.div`
   max-width: 860px;
   margin: auto;
   padding: 26px;
-
   background: #f5f7fa;
   min-height: 100vh;
 `;
@@ -23,15 +22,12 @@ export const BackButton = styled.button`
   display: flex;
   align-items: center;
   gap: 8px;
-
   background: #ffffff;
   border: 1px solid #e2e8f0;
   padding: 10px 16px;
   border-radius: 10px;
-
   font-size: 15px;
   font-weight: 500;
-
   cursor: pointer;
   transition: 0.25s ease;
   box-shadow: 0 3px 6px rgba(0,0,0,0.04);
@@ -55,7 +51,6 @@ export const TopSection = styled.div`
 
   @media (max-width: 600px) {
     flex-direction: column;
-    padding: 18px;
   }
 `;
 
@@ -65,11 +60,6 @@ export const LeftImage = styled.img`
   border-radius: 16px;
   object-fit: cover;
   flex-shrink: 0;
-
-  @media (max-width: 600px) {
-    width: 130px;
-    height: 130px;
-  }
 `;
 
 export const RightInfo = styled.div`
@@ -103,40 +93,35 @@ export const MetaRow = styled.div`
   font-size: 15px;
 `;
 
-export const PriceRow = styled.div`
-  display: flex;
-  gap: 26px;
-  margin: 18px 0;
+/* ---------------- PRICE TAGS ---------------- */
+
+export const PriceTag = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  color: #2563eb;
+  text-align: center;
+  margin-bottom: 6px;
 `;
 
-export const PriceItem = styled.div`
-  display: flex;
-  flex-direction: column;
-
-  strong {
-    font-size: 22px;
-    color: #0f172a;
-  }
-
-  span {
-    opacity: 0.7;
-    margin-top: 2px;
-  }
-`;
+/* ---------------- ACTION BUTTONS ---------------- */
 
 export const ActionButtons = styled.div`
   display: flex;
-  gap: 12px;
+  gap: 14px;
   margin-top: auto;
+
+  & > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
 `;
 
 export const ActionButton = styled.button`
-  flex: 1;
   padding: 14px;
   border-radius: 12px;
   border: none;
   cursor: pointer;
-
   font-size: 15px;
   font-weight: 600;
   transition: 0.25s ease;
@@ -147,8 +132,6 @@ export const ActionButton = styled.button`
       : "#e2e8f0"};
 
   color: ${(p) => (p.$primary ? "#fff" : "#0f172a")};
-  box-shadow: ${(p) =>
-    p.$primary ? "0 5px 15px rgba(37,99,235,0.25)" : "none"};
 
   &:hover {
     transform: translateY(-2px);
@@ -186,7 +169,6 @@ export const ListItem = styled.div`
   border-left: 3px solid #6366f1;
   color: #334155;
   font-size: 15px;
-  line-height: 1.45;
 `;
 
 export const TwoColumn = styled.div`
@@ -199,34 +181,36 @@ export const TwoColumn = styled.div`
   }
 `;
 
-export const TagRow = styled.div`
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-`;
+/* ---------------- RATINGS ---------------- */
 
-export const SkillTag = styled.div`
-  background: #eef2ff;
-  padding: 7px 14px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #4338ca;
+export const RatingRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #0f172a;
 `;
 
 /* ---------------- REVIEWS ---------------- */
 
-export const ReviewBlock = styled.div`
+export const ReviewBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+`;
+
+export const ReviewItem = styled.div`
   background: #f8fafc;
   padding: 16px;
   border-radius: 14px;
-  margin-bottom: 14px;
 `;
 
-export const ReviewName = styled.div`
+export const ReviewUser = styled.div`
   font-weight: 600;
-  margin-bottom: 4px;
-  font-size: 15px;
+  margin-bottom: 6px;
+  font-size: 14px;
   color: #0f172a;
 `;
 
@@ -235,4 +219,58 @@ export const ReviewText = styled.div`
   line-height: 1.5;
   font-size: 14px;
   color: #475569;
+`;
+
+/* ---------------- LEFT SIDE STACK ---------------- */
+
+export const LeftColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+`;
+
+/* ---------------- VERIFIED BADGE ---------------- */
+
+export const VerifiedBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ecfdf5;
+  color: #059669;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+`;
+
+/* ---------------- FOLLOW BUTTON ---------------- */
+
+export const FollowButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+  background: ${(p) => (p.$active ? "#ecfdf5" : "#ffffff")};
+  color: ${(p) => (p.$active ? "#059669" : "#0f172a")};
+
+  &:hover {
+    background: #f1f5f9;
+  }
+`;
+
+/* ---------------- MINI RATING ---------------- */
+
+export const MiniRating = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
 `;

@@ -17,13 +17,13 @@ export const registerUserApi = async (payload) => {
 };
 
 // SEND OTP (email / phone)
-export const sendOtpApi = async (payload) => {
-  const { data } = await api.post("/user/send-otp", payload);
-  return data;
-};
+// export const sendOtpApi = async (payload) => {
+//   const { data } = await api.post("/user/send-otp", payload);
+//   return data;
+// };
 
-// VERIFY OTP
-export const verifyOtpApi = async (payload) => {
-  const { data } = await api.post("/user/verify-otp", payload);
-  return data;
-};
+// // VERIFY OTP
+// export const verifyOtpApi = async (payload) => {
+//   const { data } = await api.post("/user/verify-otp", payload);
+//   return data;
+// };

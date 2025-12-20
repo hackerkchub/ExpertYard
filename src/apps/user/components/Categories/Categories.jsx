@@ -1,6 +1,5 @@
-// src/components/Categories/Categories.jsx
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import {
   Wrap,
@@ -27,6 +26,7 @@ const DEFAULT_AVATAR = "https://i.pravatar.cc/150?img=12";
 
 const Categories = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const {
     categories,
@@ -40,6 +40,8 @@ const Categories = () => {
   const [experts, setExperts] = useState([]);
   const [expertsLoading, setExpertsLoading] = useState(false);
 
+  const subCategoryFromUrl = searchParams.get("subCategory");
+
   /* ================= DEFAULT CATEGORY ================= */
   useEffect(() => {
     if (categories.length && !activeCategory) {
@@ -50,8 +52,6 @@ const Categories = () => {
   /* ================= LOAD SUBCATEGORIES ================= */
   useEffect(() => {
     if (!activeCategory) return;
-    setActiveSubCategory(null);
-    setExperts([]);
     loadSubCategories(activeCategory);
   }, [activeCategory, loadSubCategories]);
 
@@ -71,13 +71,36 @@ const Categories = () => {
     }
   };
 
-  /* ================= SUBCATEGORY CLICK ================= */
-  const handleSubCategoryChange = (id) => {
-    if (id === activeSubCategory) return;
-    setActiveSubCategory(id);
-    setExperts([]);
-    loadExperts(id);
+  /* ================= RESTORE FROM URL ================= */
+ useEffect(() => {
+  if (!subCategoryFromUrl) return;
+
+  setExperts([]);               // ✅ clear old experts
+  setExpertsLoading(true);
+
+  const fetchExperts = async () => {
+    try {
+      const res = await getExpertsBySubCategoryApi(subCategoryFromUrl);
+      setExperts(res?.data?.data || []);
+    } catch (e) {
+      setExperts([]);
+    } finally {
+      setExpertsLoading(false);
+    }
   };
+
+  fetchExperts();
+}, [subCategoryFromUrl]);
+
+
+  /* ================= SUBCATEGORY CLICK ================= */
+const handleSubCategoryChange = (id) => {
+  if (id === activeSubCategory) return;
+
+  setActiveSubCategory(id);
+  setExperts([]);              // ✅ old experts clear
+  setSearchParams({ subCategory: id }); // ✅ sirf URL update
+};
 
   const loading = categoryLoading || expertsLoading;
 
@@ -89,11 +112,7 @@ const Categories = () => {
           <TabButton
             key={cat.id}
             $active={cat.id === activeCategory}
-            onClick={() => {
-              if (cat.id !== activeCategory) {
-                setActiveCategory(cat.id);
-              }
-            }}
+            onClick={() => setActiveCategory(cat.id)}
           >
             {cat.name}
           </TabButton>
@@ -129,9 +148,7 @@ const Categories = () => {
           {experts.map((exp) => (
             <ExpertCard
               key={exp.expert_id}
-              onClick={() =>
-                navigate(`/user/experts/${exp.expert_id}`)
-              }
+              onClick={() => navigate(`/user/experts/${exp.expert_id}`)}
             >
               <Avatar
                 src={exp.profile_photo || DEFAULT_AVATAR}

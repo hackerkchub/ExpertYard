@@ -1,7 +1,6 @@
 // src/apps/user/pages/UserExpertsPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { getAllExperts } from "../../../../shared/services/expertService";
 
 import {
   PageWrap,
@@ -32,8 +31,8 @@ import {
 } from "./CallChatExpert.styles";
 
 import ExpertCard from "../../components/userExperts/ExpertCard";
-
-/* ------------------ CONSTANTS ------------------ */
+import { useExpert } from "../../../../shared/context/ExpertContext";
+import { useCategory } from "../../../../shared/context/CategoryContext";
 
 const TABS = [
   { id: "call", label: "Call with Experts" },
@@ -62,52 +61,27 @@ const languagesOptions = [
   "Kannada",
 ];
 
-/* ------------------ COMPONENT ------------------ */
-
 export default function UserExpertsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const modeFromUrl = searchParams.get("mode"); // call | chat
 
   const [tab, setTab] = useState("call");
-  const [loading, setLoading] = useState(true);
-  const [experts, setExperts] = useState([]);
 
-  // Filters
+  // all profiles from ExpertContext (mapped from /expert-profile/list)
+  const { experts, expertsLoading } = useExpert();
+  const { subCategories } = useCategory();
+
   const [profession, setProfession] = useState("all");
   const [selectedLanguages, setSelectedLanguages] = useState([]);
   const [minRating, setMinRating] = useState("0");
   const [maxPrice, setMaxPrice] = useState("");
 
-  /* ------------------ URL → TAB SYNC ------------------ */
-
+  // URL → TAB sync
   useEffect(() => {
     if (modeFromUrl === "call" || modeFromUrl === "chat") {
       setTab(modeFromUrl);
     }
   }, [modeFromUrl]);
-
-  /* ------------------ DATA LOAD ------------------ */
-
-  useEffect(() => {
-    let mounted = true;
-
-    const loadExperts = async () => {
-      try {
-        setLoading(true);
-        const data = await getAllExperts();
-        if (mounted) setExperts(data || []);
-      } catch (err) {
-        console.error("Failed to load experts", err);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-
-    loadExperts();
-    return () => (mounted = false);
-  }, []);
-
-  /* ------------------ HELPERS ------------------ */
 
   const toggleLanguage = (lang) => {
     setSelectedLanguages((prev) =>
@@ -124,50 +98,43 @@ export default function UserExpertsPage() {
     setMaxPrice("");
   };
 
-  /* ------------------ FILTER LOGIC ------------------ */
+  // helper: subcategory name from id
+  const getSubcategoryName = (subId) => {
+    const sc = subCategories.find((s) => Number(s.id) === Number(subId));
+    return sc ? sc.name : "";
+  };
 
+  // FILTER LOGIC (profession/lang/rating/price)
   const filteredList = useMemo(() => {
     if (tab === "ai") return [];
 
     let list = [...experts];
 
-    // Call / Chat availability
-    if (tab === "call") list = list.filter((e) => e.callPrice);
-    if (tab === "chat") list = list.filter((e) => e.chatPrice);
-
-    // Profession
+    // Profession (simple contains check on position)
     if (profession !== "all") {
-      list = list.filter((e) => e.professionId === profession);
-    }
-
-    // Language
-    if (selectedLanguages.length > 0) {
+      const key = profession.toLowerCase();
       list = list.filter((e) =>
-        (e.languages || []).some((l) =>
-          selectedLanguages.includes(l)
+        (e.position || "").toLowerCase().includes(
+          key === "doctors" ? "doctor" : key.slice(0, 3)
         )
       );
     }
 
-    // Rating
+    // Language: abhi API nahi, to filter skip; future me ExpertCard se language array aayega
+    if (selectedLanguages.length > 0) {
+      list = list.filter(() => true);
+    }
+
+    // Rating: card level pe avgRating aayega (prop), yahan sirf minRating respect karne ke liye
     const ratingMin = parseFloat(minRating || "0");
     if (ratingMin > 0) {
-      list = list.filter(
-        (e) => parseFloat(e.rating || 0) >= ratingMin
-      );
+      list = list.filter((e) => Number(e.avgRating || 0) >= ratingMin);
     }
 
-    // Price
-    if (maxPrice) {
-      const mp = parseInt(maxPrice, 10);
-      if (tab === "call") list = list.filter((e) => e.callPrice <= mp);
-      if (tab === "chat") list = list.filter((e) => e.chatPrice <= mp);
-    }
-
+    // Price: per expert price API se ExpertCard me load hoga;
+    // yahan sirf maxPrice prop pass karenge filter check ke liye card ke andar
     return list;
   }, [tab, experts, profession, selectedLanguages, minRating, maxPrice]);
-
-  /* ------------------ UI ------------------ */
 
   return (
     <PageWrap>
@@ -246,6 +213,7 @@ export default function UserExpertsPage() {
               <option value="3.5">3.5+</option>
               <option value="4.0">4.0+</option>
               <option value="4.5">4.5+</option>
+              <option value="5.0">5.0</option>
             </FilterSelect>
           </FilterGroup>
 
@@ -283,7 +251,7 @@ export default function UserExpertsPage() {
               </AIDesc>
               <AIHint>🚀 Our team is actively working on this</AIHint>
             </AIComingSoon>
-          ) : loading ? (
+          ) : expertsLoading ? (
             <LoaderRow>Loading experts…</LoaderRow>
           ) : filteredList.length === 0 ? (
             <EmptyState>
@@ -292,7 +260,29 @@ export default function UserExpertsPage() {
           ) : (
             <Grid>
               {filteredList.slice(0, 20).map((exp) => (
-                <ExpertCard key={exp.id} data={exp} mode={tab} />
+                <ExpertCard
+                  key={`${exp.expert_id || exp.id}`}
+                  mode={tab}
+                  // base data from /expert-profile/list
+                  data={{
+                    // detail page ke liye id: expert_id
+                    id: exp.expert_id || exp.id,
+                    profileId: exp.id,
+                    name: exp.name || exp.expert_name || "Expert",
+                    profile_photo: exp.profile_photo || null,
+                    position: exp.position || "Expert",
+                    speciality: getSubcategoryName(exp.subcategory_id),
+                    location: exp.location || "India",
+                    // default until API se card ke andar override
+                    callPrice: 0,
+                    chatPrice: 0,
+                    avgRating: 0,
+                    totalReviews: 0,
+                    followersCount: 0,
+                    languages: [], // abhi API nahi, so empty
+                  }}
+                  maxPrice={maxPrice}
+                />
               ))}
             </Grid>
           )}

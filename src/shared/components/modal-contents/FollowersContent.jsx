@@ -1,6 +1,7 @@
 // src/shared/components/modal-contents/FollowersContent.jsx
 import React from "react";
 import styled from "styled-components";
+import { FiUser } from "react-icons/fi";
 
 const List = styled.div`
   max-height: 320px;
@@ -72,14 +73,8 @@ export default function FollowersContent({
     <List>
       {followers.map(f => (
         <Item key={f.id}>
-          <Avatar>
-            <img
-              src={f.avatar}
-              alt={f.name}
-              onError={e =>
-                (e.target.src = "https://i.pravatar.cc/100")
-              }
-            />
+           <Avatar>
+            <FiUser size={35} />
           </Avatar>
           <Name>{f.name}</Name>
         </Item>

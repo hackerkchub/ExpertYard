@@ -25,6 +25,12 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+      // optional redirect
+      // window.location.href = "/login";
+    }
+
     const message =
       error?.response?.data?.message ||
       "Server error";

@@ -16,3 +16,7 @@ export const updateExpertProfileApi = (expertId, data) => {
     data
   );
 };
+
+export const getExpertsProfileListApi = () => {
+  return api.get("/expert-profile/list");
+};

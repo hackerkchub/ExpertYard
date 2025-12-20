@@ -1,6 +1,7 @@
+// src/shared/context/ExpertContext.jsx
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { getAllExperts } from "../services/expertService";
-import { getExpertProfileApi } from "../api/expertapi/profile.api";
+// import { getAllExperts } from "../services/expertService";  // ❌ ab old service ki jarurat nahi
+import { getExpertProfileApi, getExpertsProfileListApi } from "../api/expertapi/profile.api";
 import { getExpertPriceById } from "../api/expertapi/price.api";
 
 const ExpertContext = createContext(null);
@@ -9,9 +10,6 @@ export const useExpert = () => useContext(ExpertContext);
 const STORAGE_KEY = "expert_session";
 const DEFAULT_AVATAR = "https://i.pravatar.cc/40?img=12";
 
-/* -------------------------------
-   DEFAULT SHAPES (SAFE)
--------------------------------- */
 const DEFAULT_STATE = {
   expertId: null,
   name: "",
@@ -38,48 +36,51 @@ const DEFAULT_PRICE = {
 export const ExpertProvider = ({ children }) => {
   const BASE_URL = import.meta.env?.VITE_API_BASE_URL || "";
 
-  /* ----------------------------------
-     ALL EXPERTS
-  ---------------------------------- */
+  // ALL EXPERTS
   const [experts, setExperts] = useState([]);
   const [expertsLoading, setExpertsLoading] = useState(false);
 
-  /* ----------------------------------
-     LOGGED-IN EXPERT
-  ---------------------------------- */
+  // LOGGED-IN EXPERT
   const [expertData, setExpertData] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      return saved
-        ? { ...DEFAULT_STATE, ...JSON.parse(saved) }
-        : DEFAULT_STATE;
+      return saved ? { ...DEFAULT_STATE, ...JSON.parse(saved) } : DEFAULT_STATE;
     } catch {
       return DEFAULT_STATE;
     }
   });
 
-  /* ----------------------------------
-     PROFILE
-  ---------------------------------- */
+  // PROFILE
   const [profileLoading, setProfileLoading] = useState(false);
 
-  /* ----------------------------------
-     PRICE
-  ---------------------------------- */
+  // PRICE
   const [expertPrice, setExpertPrice] = useState(DEFAULT_PRICE);
   const [priceLoading, setPriceLoading] = useState(false);
 
-  /* ----------------------------------
-     LOAD ALL EXPERTS
-  ---------------------------------- */
+  // LOAD ALL EXPERTS (from /expert-profile/list)
   useEffect(() => {
     const loadExperts = async () => {
       try {
         setExpertsLoading(true);
-        const data = await getAllExperts();
-        setExperts(data || []);
+        const res = await getExpertsProfileListApi();
+        const raw = res?.data?.data || [];
+
+        // yahan se jo fields chahiye sirf wahi map karo
+        const mapped = raw.map((p) => ({
+          id: p.expert_id,                         // Expert id (route param ke liye)
+          profileId: p.id,                         // profile row id
+          name: p.name || p.expert_name || "Expert",
+          position: p.position || "",
+          profile_photo: p.profile_photo || DEFAULT_AVATAR,
+          category_id: p.category_id,
+          subcategory_id: p.subcategory_id,
+          // aage price/rating language etc UserExpertsPage me alag APIs se attach honge
+        }));
+
+        setExperts(mapped);
       } catch (err) {
         console.error("Experts load failed", err);
+        setExperts([]);
       } finally {
         setExpertsLoading(false);
       }
@@ -87,45 +88,45 @@ export const ExpertProvider = ({ children }) => {
     loadExperts();
   }, []);
 
-  /* ----------------------------------
-     FETCH PROFILE
-  ---------------------------------- */
-  const fetchProfile = useCallback(async (expertId) => {
-    if (!expertId) return;
+  // FETCH PROFILE (single expert page ke liye)
+  const fetchProfile = useCallback(
+    async (expertId) => {
+      if (!expertId) return;
 
-    try {
-      setProfileLoading(true);
+      try {
+        setProfileLoading(true);
 
-      const res = await getExpertProfileApi(expertId);
-      const profileData = res?.data?.data;
-      if (!profileData) return;
+        const res = await getExpertProfileApi(expertId);
+        const profileData = res?.data?.data;
+        if (!profileData) return;
 
-      let photoUrl = DEFAULT_AVATAR;
-      if (profileData.profile_photo) {
-        photoUrl = profileData.profile_photo.startsWith("http")
-          ? profileData.profile_photo
-          : `${BASE_URL}${profileData.profile_photo}`;
+        let photoUrl = DEFAULT_AVATAR;
+        if (profileData.profile_photo) {
+          photoUrl = profileData.profile_photo.startsWith("http")
+            ? profileData.profile_photo
+            : `${BASE_URL}${profileData.profile_photo}`;
+        }
+
+        updateExpertData({
+          expertId: profileData.expert_id || expertId,
+          profileId: profileData.id,
+          profile: profileData,
+          name: profileData.name || "",
+          email: profileData.email || "",
+          phone: profileData.phone || "",
+          position: profileData.position || "",
+          profile_photo: photoUrl,
+        });
+      } catch (err) {
+        console.error("Profile load failed", err);
+      } finally {
+        setProfileLoading(false);
       }
+    },
+    [BASE_URL]
+  );
 
-      updateExpertData({
-        profileId: profileData.id,
-        profile: profileData,
-        name: profileData.name || "",
-        email: profileData.email || "",
-        phone: profileData.phone || "",
-        position: profileData.position || "",
-        profile_photo: photoUrl,
-      });
-    } catch (err) {
-      console.error("Profile load failed", err);
-    } finally {
-      setProfileLoading(false);
-    }
-  }, [BASE_URL]);
-
-  /* ----------------------------------
-     FETCH PRICE
-  ---------------------------------- */
+  // FETCH PRICE
   const fetchPrice = useCallback(async (expertId) => {
     if (!expertId) return;
 
@@ -152,9 +153,7 @@ export const ExpertProvider = ({ children }) => {
     }
   }, []);
 
-  /* ----------------------------------
-     AUTO LOAD ON LOGIN
-  ---------------------------------- */
+  // AUTO LOAD ON LOGIN (dashboard side)
   useEffect(() => {
     if (expertData.expertId) {
       fetchProfile(expertData.expertId);
@@ -162,9 +161,6 @@ export const ExpertProvider = ({ children }) => {
     }
   }, [expertData.expertId, fetchProfile, fetchPrice]);
 
-  /* ----------------------------------
-     UPDATE + PERSIST
-  ---------------------------------- */
   const updateExpertData = (data) => {
     setExpertData((prev) => {
       const merged = { ...prev, ...data };
@@ -173,9 +169,6 @@ export const ExpertProvider = ({ children }) => {
     });
   };
 
-  /* ----------------------------------
-     HELPERS (IMPORTANT)
-  ---------------------------------- */
   const refreshProfile = async () => {
     if (expertData.expertId) {
       await fetchProfile(expertData.expertId);
@@ -203,8 +196,8 @@ export const ExpertProvider = ({ children }) => {
         profileLoading,
         expertPrice,
         priceLoading,
-          fetchProfile,
-          fetchPrice,
+        fetchProfile,
+        fetchPrice,
         updateExpertData,
         refreshProfile,
         refreshPrice,

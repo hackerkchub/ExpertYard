@@ -1,21 +1,16 @@
-import api from "./axiosInstance"; // 👈 same axios instance jo baaki APIs me use hota hai
+// shared/api/expertApi/follower.api.js
+import api from "./axiosInstance";
 
-
-// 🔹 FOLLOW EXPERT
-export const followExpertApi = (expertId) => {
-  return api.post("/followers/follow", {
-    expert_id: expertId
-  });
+// Body: { user_id, expert_id }
+export const followExpertApi = ({ user_id, expert_id }) => {
+  return api.post("/followers/follow", { user_id, expert_id });
 };
 
-// 🔹 UNFOLLOW EXPERT
-export const unfollowExpertApi = (expertId) => {
-  return api.post("/followers/unfollow", {
-    expert_id: expertId
-  });
+export const unfollowExpertApi = ({ user_id, expert_id }) => {
+  return api.post("/followers/unfollow", { user_id, expert_id });
 };
 
-// 🔹 GET FOLLOWERS LIST (OPTIONAL – future use)
+// GET /followers/expert/:id
 export const getExpertFollowersApi = (expertId) => {
   return api.get(`/followers/${expertId}/followers`);
 };

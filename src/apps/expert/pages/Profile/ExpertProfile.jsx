@@ -10,6 +10,12 @@ import {
 } from "../../../../shared/api/expertApi";
 
 import {
+  addOrUpdateReviewApi,
+  getReviewsByExpertApi,
+  deleteReviewApi,
+} from "../../../../shared/api/expertApi/reviews.api";
+
+import {
   PageWrap,
   Content,
   GlassCard,
@@ -44,7 +50,8 @@ import {
   FiX,
   FiCamera,
   FiPhoneCall,
-  FiMessageCircle
+  FiMessageCircle,
+  FiUser
 } from "react-icons/fi";
 
 // CONTEXTS
@@ -65,7 +72,7 @@ export default function ExpertProfile() {
     expertPrice,
     profileLoading,
     priceLoading,
-      refreshPrice,
+    refreshPrice,
     refreshProfile
   } = useExpert();
 
@@ -78,10 +85,15 @@ export default function ExpertProfile() {
   const [draft, setDraft] = useState(null);
 
   // Followers state
- const [followersList, setFollowersList] = useState([]);
-const [followersCount, setFollowersCount] = useState(0);
-const [followersLoading, setFollowersLoading] = useState(false);
+  const [followersList, setFollowersList] = useState([]);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followersLoading, setFollowersLoading] = useState(false);
 
+  // Reviews state
+  const [reviewsList, setReviewsList] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [avgRating, setAvgRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
 
   // followers / reviews modal
   const [modalConfig, setModalConfig] = useState({
@@ -89,53 +101,77 @@ const [followersLoading, setFollowersLoading] = useState(false);
     type: null // "followers" | "reviews"
   });
 
-   const expertId = expertData?.expertId || expertData?.id;
+  const expertId = expertData?.expertId || expertData?.id;
 
   // INIT DRAFT (PROFILE + PRICE)
- useEffect(() => {
-  if (!edit && expertData?.profile) {
-    setDraft({
-      name: expertData.name || "",
-      title: expertData.position || "",
-      email: expertData.email || "",
-      phone: expertData.phone || "",
-      description: expertData.profile.description || "",
-      education: expertData.profile.education || "",
-      location: expertData.profile.location || "",
-      callRate: expertPrice?.call_per_minute || 0,
-      chatRate: expertPrice?.chat_per_minute || 0,
-      documents: {
-        photo: expertData.profile_photo || DEFAULT_AVATAR,
-        experience_certificate: expertData.profile.experience_certificate,
-        marksheet: expertData.profile.marksheet,
-        aadhar_card: expertData.profile.aadhar_card
-      }
-    });
-  }
-}, [expertData, expertPrice, edit]);
+  useEffect(() => {
+    if (!edit && expertData?.profile) {
+      setDraft({
+        name: expertData.name || "",
+        title: expertData.position || "",
+        email: expertData.email || "",
+        phone: expertData.phone || "",
+        description: expertData.profile.description || "",
+        education: expertData.profile.education || "",
+        location: expertData.profile.location || "",
+        callRate: expertPrice?.call_per_minute || 0,
+        chatRate: expertPrice?.chat_per_minute || 0,
+        documents: {
+          photo: expertData.profile_photo || DEFAULT_AVATAR,
+          experience_certificate: expertData.profile.experience_certificate,
+          marksheet: expertData.profile.marksheet,
+          aadhar_card: expertData.profile.aadhar_card
+        }
+      });
+    }
+  }, [expertData, expertPrice, edit]);
 
   // LOAD SUBCATEGORIES (BY CATEGORY)
- useEffect(() => {
-  if (expertData?.profile?.category_id) {
-    loadSubCategories(expertData.profile.category_id);
-  }
-}, [expertData?.profile?.category_id]);
+  useEffect(() => {
+    if (expertData?.profile?.category_id) {
+      loadSubCategories(expertData.profile.category_id);
+    }
+  }, [expertData?.profile?.category_id, loadSubCategories]);
 
+  // FOLLOWER COUNT (header stat)
+  useEffect(() => {
+    if (!expertId) return;
 
-  // FOLLOWER COUNT
-useEffect(() => {
-  if (!expertId) return;
+    getExpertFollowersApi(expertId)
+      .then(res => {
+        const total = res.data.total_followers || 0;
+        setFollowersCount(total);
+      })
+      .catch(err => {
+        console.error("Followers count error", err);
+        setFollowersCount(0);
+      });
+  }, [expertId]);
 
-  getExpertFollowersApi(expertId)
-    .then(res => {
-      setFollowersCount(res.data.total_followers || 0);
-    })
-    .catch(err => {
-      console.error("Followers count error", err);
-      setFollowersCount(0);
-    });
-}, [expertId]);
+  // LOAD REVIEWS (for avg + count) – using new response shape
+  useEffect(() => {
+    if (!expertId) return;
 
+    setReviewsLoading(true);
+    getReviewsByExpertApi(expertId)
+      .then(res => {
+        // New API shape:
+        // { success: true, data: { reviews: [...], total_reviews, avg_rating } }
+        const data = res.data.data || {};
+        const list = data.reviews || [];
+
+        setReviewsList(list);
+        setTotalReviews(data.total_reviews || list.length || 0);
+        setAvgRating(Number(data.avg_rating || 0));
+      })
+      .catch(err => {
+        console.error("Reviews load error", err);
+        setReviewsList([]);
+        setAvgRating(0);
+        setTotalReviews(0);
+      })
+      .finally(() => setReviewsLoading(false));
+  }, [expertId]);
 
   if (profileLoading || priceLoading || !draft) {
     return <div style={{ padding: 40 }}>Loading profile...</div>;
@@ -180,103 +216,109 @@ useEffect(() => {
     }));
   };
 
-const contactChanged =
-  !!draft &&
-  (draft.email !== expertData.email || draft.phone !== expertData.phone);
+  const contactChanged =
+    !!draft &&
+    (draft.email !== expertData.email || draft.phone !== expertData.phone);
 
   // SAVE
-   // SAVE
   const handleSave = async () => {
-  try {
-    if (contactChanged && !isContactVerified) {
-      setShowOtp(true);
-      return;
+    try {
+      if (contactChanged && !isContactVerified) {
+        setShowOtp(true);
+        return;
+      }
+
+      if (!expertId) {
+        console.error("Missing expertId");
+        return;
+      }
+
+      const profilePayload = {
+        name: draft.name,
+        position: draft.title,
+        email: draft.email,
+        phone: draft.phone,
+        description: draft.description,
+        education: draft.education,
+        location: draft.location,
+        profile_photo: draft.documents.photo,
+        experience_certificate: draft.documents.experience_certificate,
+        marksheet: draft.documents.marksheet,
+        aadhar_card: draft.documents.aadhar_card
+      };
+
+      const pricePayload = {
+        expert_id: expertId,
+        call_per_minute: draft.callRate,
+        chat_per_minute: draft.chatRate,
+        reason_for_price: "",
+        handle_customer: "",
+        strength: "",
+        weakness: ""
+      };
+
+      await Promise.all([
+        updateExpertProfileApi(expertId, profilePayload),
+        updateExpertPriceApi(pricePayload)
+      ]);
+
+      await Promise.all([refreshProfile(), refreshPrice()]);
+      setEdit(false);
+    } catch (err) {
+      console.error("Save failed", err);
     }
+  };
 
-    if (!expertId) {
-      console.error("Missing expertId");
-      return;
+  // FOLLOWERS MODAL OPEN + LIST LOAD (dynamic)
+  const openFollowersModal = async () => {
+    if (!expertId) return;
+
+    setModalConfig({ open: true, type: "followers" });
+    setFollowersLoading(true);
+
+    try {
+      const res = await getExpertFollowersApi(expertId);
+      const mappedFollowers = (res.data.followers || []).map(f => ({
+        id: f.id,
+        name: `${f.first_name || ""} ${f.last_name || ""}`.trim() || "User",
+      }));
+
+      setFollowersList(mappedFollowers);
+      setFollowersCount(res.data.total_followers || mappedFollowers.length);
+    } catch (err) {
+      console.error("Failed to load followers", err);
+      setFollowersList([]);
+    } finally {
+      setFollowersLoading(false);
     }
+  };
 
-    const profilePayload = {
-      name: draft.name,
-      position: draft.title,
-      email: draft.email,
-      phone: draft.phone,
-      description: draft.description,
-      education: draft.education,
-      location: draft.location,
-      profile_photo: draft.documents.photo,
-      experience_certificate: draft.documents.experience_certificate,
-      marksheet: draft.documents.marksheet,
-      aadhar_card: draft.documents.aadhar_card
-    };
+  // REVIEWS MODAL OPEN (dynamic, with name + icon avatar)
+  const openReviewsModal = async () => {
+    if (!expertId) return;
 
-    const pricePayload = {
-      expert_id: expertId,
-      call_per_minute: draft.callRate,
-      chat_per_minute: draft.chatRate,
-      reason_for_price: "",
-      handle_customer: "",
-      strength: "",
-      weakness: ""
-    };
-
-    // 🔥 STEP 1: UPDATE BACKEND
-    await Promise.all([
-      updateExpertProfileApi(expertId, profilePayload),
-      updateExpertPriceApi(pricePayload)
-    ]);
-
-    // 🔥 STEP 2: REFRESH CONTEXT
-     const [profileRes, priceRes] = await Promise.all([
-      refreshProfile(),   // make sure ye updated data return kare ya context me set kare
-      refreshPrice()
-    ]);
-
-
-    setEdit(false);
-
-  } catch (err) {
-    console.error("Save failed", err);
-  }
-};
-
-  
-
-  // FOLLOWERS MODAL OPEN + LIST LOAD
- const openFollowersModal = async () => {
-  if (!expertId) return;
-
-  setModalConfig({ open: true, type: "followers" });
-  setFollowersLoading(true);
-
-  try {
-    // 🔴 MISSING API CALL (THIS WAS THE ISSUE)
-    const res = await getExpertFollowersApi(expertId);
-
-    const mappedFollowers = (res.data.followers || []).map(f => ({
-      id: f.id,
-      name: `${f.first_name} ${f.last_name}`,
-      avatar: `https://i.pravatar.cc/150?u=${f.id}` // dummy avatar
-    }));
-
-    setFollowersList(mappedFollowers);
-    setFollowersCount(res.data.total_followers || 0);
-
-  } catch (err) {
-    console.error("Failed to load followers", err);
-    setFollowersList([]);
-  } finally {
-    setFollowersLoading(false);
-  }
-};
-
-  const openReviewsModal = () =>
     setModalConfig({ open: true, type: "reviews" });
+    setReviewsLoading(true);
 
-  const closeModal = () =>
-    setModalConfig({ open: false, type: null });
+    try {
+      const res = await getReviewsByExpertApi(expertId);
+      const data = res.data.data || {};
+      const list = data.reviews || [];
+
+      setReviewsList(list);
+      setTotalReviews(data.total_reviews || list.length || 0);
+      setAvgRating(Number(data.avg_rating || 0));
+    } catch (err) {
+      console.error("Failed to load reviews", err);
+      setReviewsList([]);
+      setTotalReviews(0);
+      setAvgRating(0);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  const closeModal = () => setModalConfig({ open: false, type: null });
 
   return (
     <>
@@ -352,8 +394,9 @@ const contactChanged =
                     style={{ cursor: "pointer" }}
                   >
                     Ratings &amp; Reviews{" "}
-                    <span>{expertData.avg_rating || "4.8"} ★</span>
-                    {expertData.review_count || "250+"}
+                    <span>
+                      {avgRating ? avgRating.toFixed(1) : "—"} ★ • {totalReviews}
+                    </span>
                   </StatPill>
                 </StatRow>
               </div>
@@ -704,14 +747,31 @@ const contactChanged =
       >
         {modalConfig.type === "followers" && (
           <FollowersContent
-            followers={followersList}
+            followers={followersList.map((f) => ({
+              ...f,
+              avatar: <FiUser size={20} />,
+            }))}
             total={followersCount}
             loading={followersLoading}
           />
         )}
 
         {modalConfig.type === "reviews" && (
-          <ReviewsContent reviews={expertData.reviews || []} />
+          <ReviewsContent
+            avgRating={avgRating}
+            total={totalReviews}
+            loading={reviewsLoading}
+            reviews={reviewsList.map((r) => ({
+              id: r.id,
+              rating: r.rating_number,
+              text: r.review_text,
+              name:
+                `${r.first_name || ""} ${r.last_name || ""}`.trim() || "User",
+              avatar: <FiUser size={20} />,
+              userId: r.user_id,
+              createdAt: r.created_at,
+            }))}
+          />
         )}
       </AppModal>
     </>

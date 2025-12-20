@@ -10,6 +10,7 @@ import CallChatExpert from "../pages/CallChat/CallChatExpert";
 import UserAuth from "../pages/UserAuth/UserAuth";
 import WalletPage from "../pages/Wallet/Wallet";
 import Chat from "../pages/Chat/Chat";
+import MyOffer from "../pages/MyOffers/MyOffer";
 
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -23,6 +24,7 @@ export default function UserAppRoutes() {
         <Route path="/experts/:expertId" element={<ExpertProfile />} />
         <Route path="/call-chat" element={<CallChatExpert />} />
         <Route path="/auth" element={<UserAuth />} />
+        <Route path="/my-offers" element={<MyOffer />} />
 
         {/* PROTECTED */}
         <Route

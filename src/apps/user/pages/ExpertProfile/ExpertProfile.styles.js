@@ -274,3 +274,120 @@ export const MiniRating = styled.div`
   font-weight: 600;
   color: #0f172a;
 `;
+
+
+// Add these new styled components to your existing styles file
+
+export const StarRating = styled.div`
+  display: flex;
+  gap: 4px;
+  margin-left: 8px;
+`;
+
+export const Star = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: ${(p) => (p.$filled ? "#facc15" : "#d1d5db")};
+  transition: all 0.2s ease;
+  border-radius: 4px;
+
+  &:hover {
+    color: #facc15;
+    transform: scale(1.1);
+  }
+
+  svg {
+    width: 22px;
+    height: 22px;
+  }
+`;
+
+export const UnfollowModal = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+
+  > div {
+    background: white;
+    border-radius: 16px;
+    width: min(90vw, 420px);
+    max-width: 420px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+  }
+`;
+
+// Update existing FollowButton with better hover states
+// export const FollowButton = styled.button`
+//   display: flex;
+//   align-items: center;
+//   gap: 8px;
+//   padding: 12px 18px;
+//   font-size: 14px;
+//   font-weight: 600;
+//   border-radius: 12px;
+//   cursor: pointer;
+//   border: 2px solid;
+//   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+//   font-size: 14px;
+
+//   ${(p) => p.$active
+//     ? `
+//       background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+//       border-color: #10b981;
+//       color: #059669;
+//     `
+//     : `
+//       background: #ffffff;
+//       border-color: #e5e7eb;
+//       color: #0f172a;
+//     `}
+
+//   &:hover {
+//     transform: translateY(-2px);
+//     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+//   }
+
+//   &:active {
+//     transform: translateY(0);
+//   }
+// `;
+
+// // Enhanced ActionButton hover effect
+// export const ActionButton = styled.button`
+//   padding: 16px 20px;
+//   border-radius: 14px;
+//   border: none;
+//   cursor: pointer;
+//   font-size: 15px;
+//   font-weight: 600;
+//   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+//   display: flex;
+//   align-items: center;
+//   gap: 8px;
+
+//   background: ${(p) =>
+//     p.$primary
+//       ? "linear-gradient(135deg, #3b82f6, #1d4ed8)"
+//       : "linear-gradient(135deg, #f8fafc, #f1f5f9)"};
+//   color: ${(p) => (p.$primary ? "#ffffff" : "#0f172a")};
+//   border: ${(p) => (p.$primary ? "none" : "1px solid #e2e8f0")};
+
+//   &:hover {
+//     transform: translateY(-3px);
+//     box-shadow: ${(p) =>
+//       p.$primary
+//         ? "0 12px 30px rgba(59, 130, 246, 0.4)"
+//         : "0 8px 25px rgba(0, 0, 0, 0.08)"};
+//   }
+
+//   &:active {
+//     transform: translateY(-1px);
+//   }
+// `;

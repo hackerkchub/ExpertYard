@@ -1,16 +1,26 @@
-// shared/api/expertApi/follower.api.js
 import api from "./axiosInstance";
 
-// Body: { user_id, expert_id }
-export const followExpertApi = ({ user_id, expert_id }) => {
-  return api.post("/followers/follow", { user_id, expert_id });
-};
+/* =====================
+   FOLLOW / UNFOLLOW
+===================== */
 
-export const unfollowExpertApi = ({ user_id, expert_id }) => {
-  return api.post("/followers/unfollow", { user_id, expert_id });
-};
+// FOLLOW EXPERT
+// body: { user_id, expert_id }
+export const followExpertApi = ({ user_id, expert_id }) =>
+  api.post("/followers/follow", { user_id, expert_id });
 
-// GET /followers/expert/:id
-export const getExpertFollowersApi = (expertId) => {
-  return api.get(`/followers/${expertId}/followers`);
-};
+// UNFOLLOW EXPERT
+export const unfollowExpertApi = ({ user_id, expert_id }) =>
+  api.post("/followers/unfollow", { user_id, expert_id });
+
+/* =====================
+   FOLLOWERS / FOLLOWING
+===================== */
+
+// GET FOLLOWERS OF EXPERT
+export const getExpertFollowersApi = (expert_id) =>
+  api.get(`/followers/${expert_id}/followers`);
+
+// GET FOLLOWING EXPERTS BY USER (FOR AVATAR STRIP)
+export const getFollowingExpertsApi = (user_id) =>
+  api.get(`/followers/user/${user_id}/following`);

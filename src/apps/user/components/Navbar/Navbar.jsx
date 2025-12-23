@@ -1,3 +1,4 @@
+// Updated Navbar.jsx with My Offer icon
 import React, { useState } from "react";
 import {
   Nav,
@@ -21,7 +22,8 @@ import {
   FiX,
   FiSearch,
   FiShare2,
-  FiHome
+  FiHome,
+  FiGift  // 🎁 My Offer icon
 } from "react-icons/fi";
 
 import { FaWallet } from "react-icons/fa";
@@ -46,10 +48,10 @@ const Navbar = () => {
 
   /* ================= LOGOUT ================= */
   const handleLogout = () => {
-      
     navigate("/", { replace: true }); // 🏠 always go Home
-     logout();     
+    logout();     
   };
+
   return (
     <Nav>
       <Container>
@@ -69,14 +71,18 @@ const Navbar = () => {
               <FiHome />
             </button>
 
-           <button onClick={() => navigate("/user/wallet")}>
-  <FaWallet />
-  {isLoggedIn && (
-    <WalletBadge>
-      ₹{Number(balance || 0).toFixed(0)}
-    </WalletBadge>
-  )}
-</button>
+            <button onClick={() => navigate("/user/my-offers")}>
+              <FiGift title="My Offers" />
+            </button>
+
+            <button onClick={() => navigate("/user/wallet")}>
+              <FaWallet />
+              {isLoggedIn && (
+                <WalletBadge>
+                  ₹{Number(balance || 0).toFixed(0)}
+                </WalletBadge>
+              )}
+            </button>
 
             <button>
               <FiShare2 />
@@ -117,6 +123,13 @@ const Navbar = () => {
         <MobileMenu>
           <MobileItem to="/" onClick={() => setOpen(false)}>
             Home
+          </MobileItem>
+
+          <MobileItem 
+            to="/user/my-offers" 
+            onClick={() => setOpen(false)}
+          >
+            My Offers
           </MobileItem>
 
           <MobileItem

@@ -33,6 +33,7 @@ import {
 import ExpertCard from "../../components/userExperts/ExpertCard";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { useCategory } from "../../../../shared/context/CategoryContext";
+import { filterExpertsApi } from "../../../../shared/api/expertapi/filter.api";
 
 const TABS = [
   { id: "call", label: "Call with Experts" },
@@ -67,7 +68,7 @@ export default function UserExpertsPage() {
 
   const [tab, setTab] = useState("call");
 
-  // all profiles from ExpertContext (mapped from /expert-profile/list)
+  // base profiles from ExpertContext (/expert-profile/list)
   const { experts, expertsLoading } = useExpert();
   const { subCategories } = useCategory();
 
@@ -75,6 +76,11 @@ export default function UserExpertsPage() {
   const [selectedLanguages, setSelectedLanguages] = useState([]);
   const [minRating, setMinRating] = useState("0");
   const [maxPrice, setMaxPrice] = useState("");
+  const [sortPrice, setSortPrice] = useState(""); // optional asc/desc
+
+  // filtered experts from backend for rating/price
+  const [serverExperts, setServerExperts] = useState([]);
+  const [filterLoading, setFilterLoading] = useState(false);
 
   // URL → TAB sync
   useEffect(() => {
@@ -96,6 +102,8 @@ export default function UserExpertsPage() {
     setSelectedLanguages([]);
     setMinRating("0");
     setMaxPrice("");
+    setSortPrice("");
+    setServerExperts([]); // reset to base experts
   };
 
   // helper: subcategory name from id
@@ -104,11 +112,72 @@ export default function UserExpertsPage() {
     return sc ? sc.name : "";
   };
 
-  // FILTER LOGIC (profession/lang/rating/price)
+  // BACKEND FILTER CALL (price + rating + mode)
+  useEffect(() => {
+    // AI tab par koi expert nahi
+    if (tab === "ai") return;
+
+    const hasPrice = maxPrice && Number(maxPrice) > 0;
+    const hasRating = minRating && Number(minRating) > 0;
+
+    // agar price/rating dono empty hain -> backend filter API call mat karo
+    if (!hasPrice && !hasRating && !sortPrice) {
+      setServerExperts([]);
+      return;
+    }
+
+    const params = {};
+
+    if (hasPrice) {
+      // API expects price in number, call/chat dono ke liye same endpoint
+      params.price = Number(maxPrice);
+      if (tab === "call" || tab === "chat") {
+        params.mode = tab; // /experts/filter?price=200&mode=call
+      }
+    }
+
+    if (hasRating) {
+      params.rating = Number(minRating);
+    }
+
+    if (sortPrice) {
+      params.sort_price = sortPrice; // "asc" | "desc"
+    }
+
+    let cancelled = false;
+
+    const runFilter = async () => {
+      try {
+        setFilterLoading(true);
+        const res = await filterExpertsApi(params);
+        const list = res?.data?.data || [];
+        if (!cancelled) {
+          setServerExperts(list);
+        }
+      } catch (err) {
+        console.error("Filter experts failed", err);
+        if (!cancelled) setServerExperts([]);
+      } finally {
+        if (!cancelled) setFilterLoading(false);
+      }
+    };
+
+    runFilter();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, maxPrice, minRating, sortPrice]);
+
+  // FINAL LIST (profession + language filter front-end, price/rating from backend)
   const filteredList = useMemo(() => {
     if (tab === "ai") return [];
 
-    let list = [...experts];
+    // base list: agar serverExperts non-empty hai to woh, otherwise context experts
+    const baseList =
+      serverExperts && serverExperts.length > 0 ? serverExperts : experts;
+
+    let list = [...baseList];
 
     // Profession (simple contains check on position)
     if (profession !== "all") {
@@ -120,21 +189,15 @@ export default function UserExpertsPage() {
       );
     }
 
-    // Language: abhi API nahi, to filter skip; future me ExpertCard se language array aayega
+    // Language: abhi API nahi, to skip; future me data.languages array aayega
     if (selectedLanguages.length > 0) {
       list = list.filter(() => true);
     }
 
-    // Rating: card level pe avgRating aayega (prop), yahan sirf minRating respect karne ke liye
-    const ratingMin = parseFloat(minRating || "0");
-    if (ratingMin > 0) {
-      list = list.filter((e) => Number(e.avgRating || 0) >= ratingMin);
-    }
-
-    // Price: per expert price API se ExpertCard me load hoga;
-    // yahan sirf maxPrice prop pass karenge filter check ke liye card ke andar
     return list;
-  }, [tab, experts, profession, selectedLanguages, minRating, maxPrice]);
+  }, [tab, experts, serverExperts, profession, selectedLanguages]);
+
+  const overallLoading = expertsLoading || filterLoading;
 
   return (
     <PageWrap>
@@ -218,21 +281,35 @@ export default function UserExpertsPage() {
           </FilterGroup>
 
           {tab !== "ai" && (
-            <FilterGroup>
-              <FilterLabel>
-                Max price ({tab === "call" ? "₹/min Call" : "₹/min Chat"})
-              </FilterLabel>
-              <FilterSelect
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-              >
-                <option value="">No limit</option>
-                <option value="30">Up to ₹30</option>
-                <option value="40">Up to ₹40</option>
-                <option value="60">Up to ₹60</option>
-                <option value="100">Up to ₹100</option>
-              </FilterSelect>
-            </FilterGroup>
+            <>
+              <FilterGroup>
+                <FilterLabel>
+                  Max price ({tab === "call" ? "₹/min Call" : "₹/min Chat"})
+                </FilterLabel>
+                <FilterSelect
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                >
+                  <option value="">No limit</option>
+                  <option value="30">Up to ₹30</option>
+                  <option value="40">Up to ₹40</option>
+                  <option value="60">Up to ₹60</option>
+                  <option value="100">Up to ₹100</option>
+                </FilterSelect>
+              </FilterGroup>
+
+              <FilterGroup>
+                <FilterLabel>Sort by Price</FilterLabel>
+                <FilterSelect
+                  value={sortPrice}
+                  onChange={(e) => setSortPrice(e.target.value)}
+                >
+                  <option value="">Default</option>
+                  <option value="asc">Low to High</option>
+                  <option value="desc">High to Low</option>
+                </FilterSelect>
+              </FilterGroup>
+            </>
           )}
 
           <ResetFilterBtn onClick={resetFilters}>
@@ -251,7 +328,7 @@ export default function UserExpertsPage() {
               </AIDesc>
               <AIHint>🚀 Our team is actively working on this</AIHint>
             </AIComingSoon>
-          ) : expertsLoading ? (
+          ) : overallLoading ? (
             <LoaderRow>Loading experts…</LoaderRow>
           ) : filteredList.length === 0 ? (
             <EmptyState>
@@ -263,9 +340,7 @@ export default function UserExpertsPage() {
                 <ExpertCard
                   key={`${exp.expert_id || exp.id}`}
                   mode={tab}
-                  // base data from /expert-profile/list
                   data={{
-                    // detail page ke liye id: expert_id
                     id: exp.expert_id || exp.id,
                     profileId: exp.id,
                     name: exp.name || exp.expert_name || "Expert",
@@ -273,13 +348,12 @@ export default function UserExpertsPage() {
                     position: exp.position || "Expert",
                     speciality: getSubcategoryName(exp.subcategory_id),
                     location: exp.location || "India",
-                    // default until API se card ke andar override
                     callPrice: 0,
                     chatPrice: 0,
                     avgRating: 0,
                     totalReviews: 0,
                     followersCount: 0,
-                    languages: [], // abhi API nahi, so empty
+                    languages: [],
                   }}
                   maxPrice={maxPrice}
                 />

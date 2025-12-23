@@ -11,6 +11,7 @@ import { theme } from "./shared/styles/theme";
 import GlobalStyles from "./shared/styles/GlobalStyles";
 import AppRouter from "./routes";
 
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <ThemeProvider theme={theme}>
     <GlobalStyles />

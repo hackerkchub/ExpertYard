@@ -231,3 +231,12 @@ export const WidgetActions = styled.div`
     border: none;
   }
 `;
+
+export const RedDot = styled.span`
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  display: inline-block;
+  margin-left: 6px;
+`;

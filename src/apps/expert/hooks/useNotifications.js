@@ -1,77 +1,99 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { socket } from "../../../shared/api/socket";
 
-const MOCK_DATA = [
-  {
-    id: 1,
-    type: "request",
-    title: "New call request from Rahul Verma",
-    meta: "Carer Advice · 5 min ago",
-    unread: true,
-  },
-  {
-    id: 2,
-    type: "activity",
-    title: "Your post “Future of AI” got 24 new likes",
-    meta: "10 min ago",
-    unread: true,
-  },
-  {
-    id: 3,
-    type: "session",
-    title: "Today’s session with Nihar is confirmed",
-    meta: "30 min ago",
-    unread: false,
-  },
-];
+/*
+ Notification object shape:
+ {
+   id: request_id,
+   type: "chat_request",
+   title: string,
+   meta: string,
+   unread: boolean,
+   payload: { request_id, user_id }
+ }
+*/
 
 export function useNotifications() {
-  const [notifications, setNotifications] = useState(MOCK_DATA);
+  const [notifications, setNotifications] = useState([]);
 
+  /* =========================
+     DERIVED STATE
+  ========================= */
   const unreadCount = notifications.filter(n => n.unread).length;
 
+  /* =========================
+     SOCKET LISTENERS
+  ========================= */
   useEffect(() => {
-    // 👇 Correct Vite env var usage
-    const url = import.meta.env.VITE_WS_NOTIF_URL;
-    if (!url) return;
+    if (!socket) return;
 
-    const ws = new WebSocket(url);
+    // 🔔 Incoming chat request (USER → EXPERT)
+    const handleIncomingRequest = ({ request_id, user_id }) => {
+      setNotifications(prev => {
+        // 🛑 duplicate guard
+        if (prev.some(n => n.id === request_id)) return prev;
 
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        setNotifications(prev => [
-          { ...data, unread: true },
-          ...prev,
-        ]);
-      } catch (e) {
-        console.error("Invalid notification payload", e);
-      }
+        return [
+          {
+            id: request_id,
+            type: "chat_request",
+            title: "New chat request",
+            meta: `User #${user_id} wants to chat`,
+            unread: true,
+            payload: { request_id, user_id }
+          },
+          ...prev
+        ];
+      });
     };
 
-    return () => ws.close();
+    socket.on("incoming_chat_request", handleIncomingRequest);
+
+    return () => {
+      socket.off("incoming_chat_request", handleIncomingRequest);
+    };
   }, []);
 
-  const markAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
-  };
+  /* =========================
+     ACTIONS
+  ========================= */
 
-  const acceptRequest = (id) => {
+  // ✅ Mark all notifications read
+  const markAllRead = useCallback(() => {
     setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, unread: false } : n))
+      prev.map(n => ({ ...n, unread: false }))
     );
-  };
+  }, []);
 
-  const declineRequest = (id) => {
+  // ✅ Expert ACCEPT chat request
+  const acceptRequest = useCallback((requestId) => {
+    if (!requestId) return;
+
+    // backend notify
+    socket.emit("accept_chat", { request_id: requestId });
+
+    // ❌ remove notification completely (better UX)
     setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, unread: false } : n))
+      prev.filter(n => n.id !== requestId)
     );
-  };
+  }, []);
+
+  // ✅ Expert DECLINE chat request
+  const declineRequest = useCallback((requestId) => {
+    if (!requestId) return;
+
+    socket.emit("reject_chat", { request_id: requestId });
+
+    setNotifications(prev =>
+      prev.filter(n => n.id !== requestId)
+    );
+  }, []);
 
   return {
     notifications,
     unreadCount,
     markAllRead,
     acceptRequest,
-    declineRequest,
+    declineRequest
   };
 }

@@ -8,6 +8,7 @@ import StepPricing from "../pages/register/StepPricing";
 import Dashboard from "../pages/Dashboard";
 import Profile from "../pages/Profile/ExpertProfile";
 import MyContent from "../pages/MyContent/MyContent";
+import ExpertChat from "../pages/chat/ExpertChat";
 import ProtectedExpertRoute from "./ProtectedExpertRoute";
 import { useExpert } from "../../../shared/context/ExpertContext";
 
@@ -121,6 +122,7 @@ export default function ExpertAppRoutes() {
 
       {/* Fallback */}
       <Route path="*" element={<h1>Expert 404</h1>} />
+      <Route path="chat" element={<ExpertChat />} />
     </Routes>
   );
 }

@@ -1,13 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
-import { FiPhoneCall } from "react-icons/fi";
-
+// Chat.jsx - FINAL PERFECT FIX (No Footer + No Bounce + Full Control)
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { FiPhoneCall, FiPaperclip,  FiImage, FiVideo, FiFile } from "react-icons/fi";
+import { IoMdSend, IoMdClose } from "react-icons/io";
 
 import {
   PageWrap,
-  Layout,
-  LeftPanelToggle,
-  ChatContainer,
-  TypingBubble,
+  // ChatContainer,
   Header,
   ExpertInfo,
   Avatar,
@@ -19,173 +17,145 @@ import {
   MessageBubble,
   InputBar,
   InputBox,
-  SendButton
+  SendButton,
+  MessageTime,
+  TypingIndicator,
+  FileUploadMenu,
+  UploadButton,
+    ChatGlobalStyle 
 } from "./Chat.styles";
 
-import ConversationList from "../../components/ConversationList/ConversationList";
-import Navbar from "../../components/Navbar/Navbar";
-
 const Chat = () => {
-  const [showLeft, setShowLeft] = useState(false);
-
-  // Mock previous chats
-  const [conversations] = useState([
-    {
-      id: 1,
-      name: "Dr. Anya Sharma",
-      avatar: "https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg",
-      lastMsg: "Sure, let me help you.",
-      online: true,
-      messages: [
-        { sender: "expert", text: "Hello! How can I assist you today?" }
-      ]
-    },
-    {
-      id: 2,
-      name: "Rajeev Kumar",
-      avatar: "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg",
-      lastMsg: "I sent the document.",
-      online: false,
-      messages: [
-        { sender: "expert", text: "Send me your requirement file." }
-      ]
-    }
-  ]);
-
-  const [activeChat, setActiveChat] = useState(conversations[0]);
   const [input, setInput] = useState("");
-
-  const [typing, setTyping] = useState(false);
+  const [showFileMenu, setShowFileMenu] = useState(false);
+  const [messages, setMessages] = useState([
+    { sender: "expert", text: "Hello! How can I assist you today?", time: "10:30 AM" },
+    { sender: "user", text: "I need advice on my blood pressure.", time: "10:32 AM" }
+  ]);
   const scrollRef = useRef();
 
-  // When user replies -> expert typing simulation
   useEffect(() => {
-    const last = activeChat.messages[activeChat.messages.length - 1];
+    scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages]);
 
-    if (last?.sender === "user") {
-      setTyping(true);
-
-      setTimeout(() => {
-        setTyping(false);
-
-        setActiveChat((prev) => ({
-          ...prev,
-          messages: [...prev.messages, { sender: "expert", text: "Working on it..." }]
-        }));
-      }, 1200);
-    }
-  }, [activeChat]);
-
-  // Scroll to last message
-  useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [activeChat]);
-
-  // Send message
   const sendMessage = () => {
     if (!input.trim()) return;
-
-    const updated = {
-      ...activeChat,
-      messages: [...activeChat.messages, { sender: "user", text: input }]
-    };
-
-    setActiveChat(updated);
+    
+    const messageTime = new Date().toLocaleTimeString('en-US', { 
+      hour: '2-digit', minute: '2-digit', hour12: true 
+    });
+    
+    const newMessage = { sender: "user", text: input, time: messageTime };
+    setMessages(prev => [...prev, newMessage]);
     setInput("");
+    
+    setTimeout(() => {
+      const responses = [
+        "Understood. Let me analyze this for you.",
+        "Great question! Here's what I recommend:",
+        "Perfect. I'll prepare a detailed plan.",
+        "Thanks for sharing. Give me a moment."
+      ];
+      setMessages(prev => [...prev, {
+        sender: "expert", 
+        text: responses[Math.floor(Math.random() * responses.length)], 
+        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+      }]);
+    }, 1500);
   };
 
+  const handleFileUpload = (type) => {
+    console.log(`Uploading ${type}`);
+    setShowFileMenu(false);
+  };
   return (
-    <>
-      {/* NAVBAR */}
-    
+     <>
+      <ChatGlobalStyle />
+    <PageWrap>
+      {/* FIXED HEADER */}
+      <Header>
+        <ExpertInfo>
+          <AvatarWrapper>
+            <Avatar src="https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg" />
+            <StatusDot active={true} />
+          </AvatarWrapper>
+          <div>
+            <div className="expert-name">Dr. Anya Sharma</div>
+            <div className="expert-role">Cardiologist</div>
+            <div className="status">Online</div>
+          </div>
+        </ExpertInfo>
+        <CallButton title="Voice Call">
+          <FiPhoneCall size={20} />
+        </CallButton>
+      </Header>
 
-      {/* CHAT PAGE */}
-      <PageWrap>
+      {/* SCROLLABLE MESSAGES */}
+      <MessagesArea>
+        {messages.map((msg, index) => (
+          <MessageRow key={index} className={msg.sender}>
+            <MessageBubble className={msg.sender}>
+              <div className="message-text">{msg.text}</div>
+              <MessageTime>{msg.time}</MessageTime>
+            </MessageBubble>
+          </MessageRow>
+        ))}
+        <div ref={scrollRef} />
+      </MessagesArea>
 
-        {/* Mobile toggle */}
-        {/* <LeftPanelToggle onClick={() => setShowLeft(true)}>
-          ☰ Chats
-        </LeftPanelToggle> */}
+      {/* FIXED BOTTOM INPUT - No bounce */}
+     <InputBar>
+  <UploadButton onClick={() => setShowFileMenu(!showFileMenu)}>
+    <FiPaperclip size={20} />
+    {showFileMenu && (
+      <IoMdClose 
+        size={14} 
+        style={{ 
+          position: 'absolute', 
+          top: '50%', 
+          right: '50%', 
+          transform: 'translate(50%, -50%)',
+          background: '#ef4444',
+          borderRadius: '50%',
+          padding: '1px'
+        }} 
+      />
+    )}
+  </UploadButton>
 
-        <Layout>
+  {showFileMenu && (
+    <FileUploadMenu>
+      <div className="menu-item" onClick={() => handleFileUpload('image')}>
+        <FiImage size={18} /><span>Photos</span>
+      </div>
+      <div className="menu-item" onClick={() => handleFileUpload('video')}>
+        <FiVideo size={18} /><span>Videos</span>
+      </div>
+      <div className="menu-item" onClick={() => handleFileUpload('file')}>
+        <FiFile size={18} /><span>Documents</span>
+      </div>
+    </FileUploadMenu>
+  )}
 
-          {/* LEFT PANEL — conversations */}
-          <ConversationList
-            show={showLeft}
-            close={() => setShowLeft(false)}
-            items={conversations}
-            onSelect={(c) => {
-              setActiveChat(c);
-              setShowLeft(false);
-            }}
-          />
+  <InputBox
+    placeholder="Type your message..."
+    value={input}
+    onChange={(e) => setInput(e.target.value)}
+    onKeyDown={(e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    }}
+  />
 
-          {/* RIGHT — chat window */}
-          <ChatContainer>
+ 
+  <SendButton onClick={sendMessage} disabled={!input.trim()}>
+    <IoMdSend size={20} />
+  </SendButton>
+</InputBar>
 
-            {/* Header */}
-           <Header>
-
-  {/* LEFT SIDE: Avatar + Info */}
-  <ExpertInfo>
-    <AvatarWrapper>
-      <Avatar src={activeChat.avatar} />
-      <StatusDot active={activeChat.online} />
-    </AvatarWrapper>
-
-    <div className="expert-text">
-      <strong>{activeChat.name}</strong>
-      <span>{activeChat.online ? "Online" : "Offline"}</span>
-    </div>
-  </ExpertInfo>
-
-  {/* RIGHT SIDE: CALL BUTTON */}
-  <CallButton>
-    <FiPhoneCall size={20} />
-  </CallButton>
-
-</Header>
-
-
-            {/* MESSAGES */}
-            <MessagesArea>
-              {activeChat.messages.map((msg, index) => (
-                <MessageRow
-                  key={index}
-                  className={msg.sender === "user" ? "user" : "expert"}
-                >
-                  <MessageBubble className={msg.sender}>
-                    {msg.text}
-                  </MessageBubble>
-                </MessageRow>
-              ))}
-
-              {/* Typing animation */}
-              {typing && (
-                <MessageRow className="expert">
-                  <TypingBubble>
-                    <span></span><span></span><span></span>
-                  </TypingBubble>
-                </MessageRow>
-              )}
-
-              <div ref={scrollRef}></div>
-            </MessagesArea>
-
-            {/* INPUT BAR */}
-            <InputBar>
-              <InputBox
-                placeholder="Write a message..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              />
-              <SendButton onClick={sendMessage}>Send</SendButton>
-            </InputBar>
-
-          </ChatContainer>
-        </Layout>
-      </PageWrap>
+    </PageWrap>
     </>
   );
 };

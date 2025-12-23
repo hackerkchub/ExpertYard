@@ -23,6 +23,8 @@ import useDebounce from "../hooks/useDebounce";
 import { useNotifications } from "../hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
 import { useExpert } from "../../../shared/context/ExpertContext";
+import { socket } from "../../../shared/api/socket";
+
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/40?img=12";
 
@@ -60,6 +62,18 @@ export default function ExpertTopbar({ setMobileOpen }) {
   const notifRef = useRef(null);
   const profileRef = useRef(null);
   const searchRef = useRef(null);
+useEffect(() => {
+  const onChatStarted = ({ room_id }) => {
+    // Expert ko chat room me le jao
+    navigate(`/expert/chat/${room_id}`);
+  };
+
+  socket.on("chat_started", onChatStarted);
+
+  return () => {
+    socket.off("chat_started", onChatStarted);
+  };
+}, [navigate]);
 
   // OUTSIDE CLICK CLOSE
   useEffect(() => {

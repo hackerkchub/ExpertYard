@@ -8,7 +8,7 @@ import StepPricing from "../pages/register/StepPricing";
 import Dashboard from "../pages/Dashboard";
 import Profile from "../pages/Profile/ExpertProfile";
 import MyContent from "../pages/MyContent/MyContent";
-import ExpertChat from "../pages/chat/ExpertChat";
+import ExpertChat from "../pages/chat/ExpertChat"; // ✅ Import
 import ProtectedExpertRoute from "./ProtectedExpertRoute";
 import { useExpert } from "../../../shared/context/ExpertContext";
 
@@ -22,7 +22,6 @@ export default function ExpertAppRoutes() {
 
       {/* 🔐 EXPERT DASHBOARD (WITH LAYOUT) */}
       <Route element={<ExpertLayout />}>
-
         <Route
           path="home"
           element={
@@ -47,7 +46,6 @@ export default function ExpertAppRoutes() {
           }
         />
 
-        {/* ✅ MY CONTENT (FIXED & ADJUSTED) */}
         <Route
           path="my-content"
           element={
@@ -60,11 +58,35 @@ export default function ExpertAppRoutes() {
           }
         />
 
+        {/* ✅ CHAT ROUTE - INSIDE LAYOUT! */}
+        <Route
+          path="chat"
+          element={
+            <ProtectedExpertRoute
+              condition={expertData.expertId}
+              redirectTo="/expert/home"
+            >
+              <ExpertChat />
+            </ProtectedExpertRoute>
+          }
+        />
+
+        {/* ✅ CHAT ROOM ROUTE - DYNAMIC PARAMS */}
+        <Route
+          path="chat/:room_id"
+          element={
+            <ProtectedExpertRoute
+              condition={expertData.expertId}
+              redirectTo="/expert/home"
+            >
+              <ExpertChat />
+            </ProtectedExpertRoute>
+          }
+        />
       </Route>
 
       {/* 🔓 REGISTER FLOW (NO LAYOUT) */}
       <Route path="register" element={<StepAccount />} />
-
       <Route
         path="register/category"
         element={
@@ -76,7 +98,6 @@ export default function ExpertAppRoutes() {
           </ProtectedExpertRoute>
         }
       />
-
       <Route
         path="register/subcategory"
         element={
@@ -91,7 +112,6 @@ export default function ExpertAppRoutes() {
           </ProtectedExpertRoute>
         }
       />
-
       <Route
         path="register/profile"
         element={
@@ -107,7 +127,6 @@ export default function ExpertAppRoutes() {
           </ProtectedExpertRoute>
         }
       />
-
       <Route
         path="register/pricing"
         element={
@@ -122,7 +141,6 @@ export default function ExpertAppRoutes() {
 
       {/* Fallback */}
       <Route path="*" element={<h1>Expert 404</h1>} />
-      <Route path="chat" element={<ExpertChat />} />
     </Routes>
   );
 }

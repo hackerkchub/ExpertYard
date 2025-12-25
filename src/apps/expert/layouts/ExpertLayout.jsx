@@ -1,83 +1,120 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-
 import ExpertSidebar from "../components/ExpertSidebar";
 import ExpertTopbar from "../components/ExpertTopbar";
 import { LayoutWrapper, ContentWrapper } from "./expertLayout.styles";
-
-// ✅ CONTEXT
 import { ExpertProvider, useExpert } from "../../../shared/context/ExpertContext";
-
-// ✅ SHARED SOCKET
+import { useAuth } from "../../../shared/context/UserAuthContext";
 import { socket } from "../../../shared/api/socket";
+import { ExpertNotificationsProvider } from "../context/ExpertNotificationsContext"; 
 
-/* ======================================================
-   INNER LAYOUT
-====================================================== */
 function ExpertLayoutInner() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
-
   const { expertData } = useExpert();
-
-  // ✅ CORRECT expertId
-const expertId = expertData?.id;
-
+  const { user: expertUser } = useAuth();
+  
+  const expertId = expertData?.expertId || expertUser?.expert_id || expertUser?.id;
+  
+  console.log("🔍 ExpertLayout - expertId:", expertId);
 
   /* ===============================
-     EXPERT ONLINE (JOIN ROOM)
+     SOCKET CONNECTION MANAGER
   =============================== */
-  useEffect(() => {
-  if (!expertId) return;
+  const connectSocket = useCallback(() => {
+    if (!socket.connected) {
+      console.log("🔌 FORCING socket connect...");
+      socket.connect();
+    }
+  }, []);
 
-  socket.emit("expert_online", {
-    expert_id: expertId
-  });
-
-  console.log("🧑‍💼 Expert online:", expertId);
-}, [expertId]);
   /* ===============================
-     CHAT ACCEPTED → REDIRECT
+     EXPERT ONLINE STATUS - BULLETPROOF
   =============================== */
   useEffect(() => {
-    const handleChatStarted = ({ room_id }) => {
-      if (!room_id) return;
+    if (!expertId) {
+      console.log("⏳ Waiting for expertId...");
+      return;
+    }
 
-      console.log("🚀 Expert chat started:", room_id);
-      navigate(`/expert/chat/${room_id}`);
+    // ✅ STEP 1: Ensure socket connected
+    connectSocket();
+    
+    // ✅ STEP 2: Wait for connection + emit online status
+    const connectTimer = setTimeout(() => {
+      console.log("🟢 EMITTING expert_online:", expertId);
+      socket.emit("expert_online", { expert_id: expertId });
+    }, 500); // 500ms delay for stable connection
+
+    // ✅ STEP 3: Heartbeat
+    const handlePing = () => {
+      socket.emit("pong");
+    };
+    socket.on("ping", handlePing);
+
+    return () => {
+      clearTimeout(connectTimer);
+      console.log("🔴 EMITTING expert_offline:", expertId);
+      socket.emit("expert_offline", { expert_id: expertId });
+      socket.off("ping", handlePing);
+    };
+  }, [expertId, connectSocket]);
+
+  /* ===============================
+     CHAT ACCEPTED → AUTO REDIRECT
+  =============================== */
+  useEffect(() => {
+    const handleChatStarted = ({ room_id, user_id }) => {
+      console.log("🚀 AUTO REDIRECT → /expert/chat/", room_id);
+      navigate(`/expert/chat/${room_id}`, { replace: true });
     };
 
-    // ✅ SAME EVENT NAME AS BACKEND
     socket.on("chat_started", handleChatStarted);
-
     return () => {
       socket.off("chat_started", handleChatStarted);
     };
   }, [navigate]);
 
+  /* ===============================
+     GLOBAL ERROR HANDLING
+  =============================== */
+  useEffect(() => {
+    const handleSocketError = (error) => {
+      console.error("❌ Socket error:", error);
+    };
+
+    const handleDisconnect = (reason) => {
+      console.log("🔴 Socket disconnected:", reason);
+    };
+
+    socket.on("connect_error", handleSocketError);
+    socket.on("disconnect", handleDisconnect);
+
+    return () => {
+      socket.off("connect_error", handleSocketError);
+      socket.off("disconnect", handleDisconnect);
+    };
+  }, []);
+
+  /* ===============================
+     RENDER
+  =============================== */
   return (
     <LayoutWrapper>
       <ExpertTopbar setMobileOpen={setMobileOpen} />
-
-      <ExpertSidebar
-        mobileOpen={mobileOpen}
-        setMobileOpen={setMobileOpen}
-      />
-
+      <ExpertSidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
       <ContentWrapper>
         <Outlet />
       </ContentWrapper>
     </LayoutWrapper>
   );
 }
-
-/* ======================================================
-   PROVIDER WRAPPER
-====================================================== */
 export default function ExpertLayout() {
   return (
     <ExpertProvider>
-      <ExpertLayoutInner />
+      <ExpertNotificationsProvider> {/* ✅ SINGLE SOURCE OF TRUTH */}
+        <ExpertLayoutInner />
+      </ExpertNotificationsProvider>
     </ExpertProvider>
   );
 }

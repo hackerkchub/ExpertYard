@@ -391,3 +391,29 @@ export const UnfollowModal = styled.div`
 //     transform: translateY(-1px);
 //   }
 // `;
+
+
+// Add this to your ExpertProfile.styles.js file
+export const NotificationBadge = styled.div`
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 20px;
+  height: 20px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+  min-width: 20px;
+  animation: pulse 2s infinite;
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+`;

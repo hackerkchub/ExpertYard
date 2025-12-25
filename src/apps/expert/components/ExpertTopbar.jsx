@@ -20,11 +20,10 @@ import ProfileDropdown from "./ProfileDropdown";
 import SearchSuggestions from "./SearchSuggestions";
 
 import useDebounce from "../hooks/useDebounce";
-import { useNotifications } from "../hooks/useNotifications";
+import { useExpertNotifications } from "../context/ExpertNotificationsContext";
 import { useNavigate } from "react-router-dom";
 import { useExpert } from "../../../shared/context/ExpertContext";
 import { socket } from "../../../shared/api/socket";
-
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/40?img=12";
 
@@ -32,14 +31,30 @@ export default function ExpertTopbar({ setMobileOpen }) {
   const navigate = useNavigate();
   const { expertData, logoutExpert } = useExpert();
 
-  // USER DATA
   const user = {
     name: expertData?.name || "Expert",
     role: expertData?.position || "Expert",
     avatar: expertData?.profile_photo || DEFAULT_AVATAR,
   };
 
-  /* LOGOUT */
+  // STATES
+  const [showNotif, setShowNotif] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+
+  const notifRef = useRef(null);
+  const profileRef = useRef(null);
+  const searchRef = useRef(null);
+
+  // ✅ NOTIFICATIONS HOOK
+  const {
+    notifications,
+    unreadCount,
+    markAllRead,
+    acceptRequest,
+    declineRequest,
+  } = useExpertNotifications();
+
+  // LOGOUT
   const handleLogout = () => {
     logoutExpert();
     localStorage.removeItem("expert_session");
@@ -47,49 +62,32 @@ export default function ExpertTopbar({ setMobileOpen }) {
     navigate("/expert/register", { replace: true });
   };
 
-  /* NOTIFICATIONS */
-  const {
-    notifications,
-    unreadCount,
-    markAllRead,
-    acceptRequest,
-    declineRequest,
-  } = useNotifications();
-
-  const [showNotif, setShowNotif] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
-
-  const notifRef = useRef(null);
-  const profileRef = useRef(null);
-  const searchRef = useRef(null);
-useEffect(() => {
-  const onChatStarted = ({ room_id }) => {
-    // Expert ko chat room me le jao
-    navigate(`/expert/chat/${room_id}`);
-  };
-
-  socket.on("chat_started", onChatStarted);
-
-  return () => {
-    socket.off("chat_started", onChatStarted);
-  };
-}, [navigate]);
-
-  // OUTSIDE CLICK CLOSE
+  // CHAT REDIRECT
   useEffect(() => {
-    function handleClick(e) {
+    const onChatStarted = ({ room_id }) => {
+      console.log("🚀 Topbar redirecting to chat:", room_id);
+      navigate(`/expert/chat/${room_id}`);
+    };
+
+    socket.on("chat_started", onChatStarted);
+    return () => socket.off("chat_started", onChatStarted);
+  }, [navigate]);
+
+  // OUTSIDE CLICK
+  useEffect(() => {
+    const handleClick = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) {
         setShowNotif(false);
       }
       if (profileRef.current && !profileRef.current.contains(e.target)) {
         setShowProfile(false);
       }
-    }
+    };
     document.addEventListener("click", handleClick);
     return () => document.removeEventListener("click", handleClick);
   }, []);
 
-  /* SEARCH */
+  // SEARCH (unchanged)
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
@@ -107,7 +105,7 @@ useEffect(() => {
 
     setLoadingSuggestions(true);
     const t = setTimeout(() => {
-      setSuggestions([]); // 🔜 later API
+      setSuggestions([]);
       setLoadingSuggestions(false);
       setShowSuggestions(true);
     }, 200);
@@ -115,19 +113,17 @@ useEffect(() => {
     return () => clearTimeout(t);
   }, [debouncedTerm]);
 
-  /* ================= RENDER ================= */
   return (
     <TopbarWrap>
-      {/* LEFT */}
       <LeftBlock>
         <IconBtn
-          onClick={() => setMobileOpen((prev) => !prev)}
+          onClick={() => setMobileOpen(prev => !prev)}
           className="mobile-only"
         >
           <FiMenu />
         </IconBtn>
 
-        <Brand>
+        <Brand onClick={() => navigate("/expert/dashboard")}>
           <img src={Logo} alt="ExpertYard" />
           ExpertYard
         </Brand>
@@ -135,30 +131,26 @@ useEffect(() => {
         <SearchWrap ref={searchRef}>
           <SearchRow>
             <SearchBox
-              placeholder="Search clients, or reports..."
+              placeholder="Search clients..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </SearchRow>
-
           {showSuggestions && (
-            <SearchSuggestions
-              suggestions={suggestions}
-              loading={loadingSuggestions}
-            />
+            <SearchSuggestions suggestions={suggestions} loading={loadingSuggestions} />
           )}
         </SearchWrap>
       </LeftBlock>
 
-      {/* RIGHT */}
       <RightActions>
-        {/* Notifications */}
+        {/* 🔔 NOTIFICATIONS */}
         <div ref={notifRef} style={{ position: "relative" }}>
-          <IconBtn onClick={() => setShowNotif((p) => !p)}>
+          <IconBtn onClick={() => setShowNotif(p => !p)}>
             <FiBell />
             {unreadCount > 0 && <UnreadDot />}
           </IconBtn>
-
+          
+          {/* ✅ PROPS VERSION - MATCHES Hook */}
           {showNotif && (
             <NotificationPopover
               notifications={notifications}
@@ -170,29 +162,42 @@ useEffect(() => {
           )}
         </div>
 
-        {/* Messages */}
-        <IconBtn>
+        {/* 💬 CHATS */}
+        <IconBtn onClick={() => navigate("/expert/chat")}>
           <FiMessageSquare />
         </IconBtn>
 
-        {/* CREATE POST → ONLY NAVIGATION */}
         <CreateBtn onClick={() => navigate("/expert/my-content?mode=create")}>
-          <FiPlus /> Create New
+          <FiPlus /> Create
         </CreateBtn>
 
-        {/* PROFILE */}
+        {/* <div ref={notifRef} style={{ position: "relative" }}>
+        <IconBtn onClick={() => setShowNotif(p => !p)}>
+          <FiBell />
+          {unreadCount > 0 && <UnreadDot />}
+        </IconBtn>
+        
+        {showNotif && (
+          <NotificationPopover
+            notifications={notifications}
+            unreadCount={unreadCount}
+            markAllRead={markAllRead}
+            onAccept={acceptRequest}
+            onDecline={declineRequest}
+          />
+        )}
+      </div>  */}
+
+        {/* 👤 PROFILE */}
         <div ref={profileRef} style={{ position: "relative" }}>
-          <ProfileImg onClick={() => setShowProfile((p) => !p)}>
+          <ProfileImg onClick={() => setShowProfile(p => !p)}>
             <img
               src={user.avatar}
               alt={user.name}
               onError={(e) => (e.target.src = DEFAULT_AVATAR)}
             />
           </ProfileImg>
-
-          {showProfile && (
-            <ProfileDropdown user={user} onLogout={handleLogout} />
-          )}
+          {showProfile && <ProfileDropdown user={user} onLogout={handleLogout} />}
         </div>
       </RightActions>
     </TopbarWrap>

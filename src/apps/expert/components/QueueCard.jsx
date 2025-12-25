@@ -1,147 +1,62 @@
-// src/apps/expert/components/QueueCard.jsx
-
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { useExpertNotifications } from "../context/ExpertNotificationsContext";
 import {
   QueueCardWrap,
   QueueTabs,
   QueueItem,
   ActionBtn,
-  RedDot
+  RedDot,
+  StatusBadge // ✅ NEW IMPORT
 } from "../styles/Dashboard.styles";
 
-import { socket } from "../../../shared/api/socket";
-
 export default function QueueCard() {
-  const [activeTab, setActiveTab] = useState("call");
+  const [activeTab, setActiveTab] = useState("chat");
+  const { notifications, acceptRequest, declineRequest, unreadCount } = useExpertNotifications();
+  
+  const chatRequests = notifications.filter(n => n.type === "chat_request");
 
-  const [callRequests, setCallRequests] = useState([]);
-  const [chatRequests, setChatRequests] = useState([]);
+  const acceptQueueRequest = (req) => acceptRequest(req.id);
+  const declineQueueRequest = (req) => declineRequest(req.id);
 
-  /* =========================
-     SOCKET LISTENERS
-  ========================= */
-  useEffect(() => {
-    // 🔔 CHAT REQUEST
-    const onChatRequest = ({ request_id, user_id }) => {
-      setChatRequests(prev => {
-        if (prev.some(r => r.id === request_id)) return prev;
+  const activeList = chatRequests;
 
-        return [
-          {
-            id: request_id,
-            user_id,
-            type: "chat",
-            name: `User #${user_id}`,
-            meta: "Chat request · just now"
-          },
-          ...prev
-        ];
-      });
-    };
-
-    // 🔔 CALL REQUEST (future-ready)
-    const onCallRequest = ({ request_id, user_id }) => {
-      setCallRequests(prev => {
-        if (prev.some(r => r.id === request_id)) return prev;
-
-        return [
-          {
-            id: request_id,
-            user_id,
-            type: "call",
-            name: `User #${user_id}`,
-            meta: "Call request · just now"
-          },
-          ...prev
-        ];
-      });
-    };
-
-    socket.on("incoming_chat_request", onChatRequest);
-    socket.on("incoming_call_request", onCallRequest);
-
-    return () => {
-      socket.off("incoming_chat_request", onChatRequest);
-      socket.off("incoming_call_request", onCallRequest);
-    };
-  }, []);
-
-  /* =========================
-     ACTIONS
-  ========================= */
-  const acceptRequest = (req) => {
-    if (req.type === "chat") {
-      socket.emit("accept_chat", { request_id: req.id });
-      setChatRequests(prev => prev.filter(r => r.id !== req.id));
-    } else {
-      socket.emit("accept_call", { request_id: req.id });
-      setCallRequests(prev => prev.filter(r => r.id !== req.id));
-    }
-  };
-
-  const declineRequest = (req) => {
-    if (req.type === "chat") {
-      socket.emit("reject_chat", { request_id: req.id });
-      setChatRequests(prev => prev.filter(r => r.id !== req.id));
-    } else {
-      socket.emit("reject_call", { request_id: req.id });
-      setCallRequests(prev => prev.filter(r => r.id !== req.id));
-    }
-  };
-
-  const activeList =
-    activeTab === "call" ? callRequests : chatRequests;
-
-  /* =========================
-     RENDER
-  ========================= */
   return (
     <QueueCardWrap>
-      {/* ================= TABS ================= */}
       <QueueTabs>
-        <button
-          className={activeTab === "call" ? "active" : ""}
-          onClick={() => setActiveTab("call")}
-        >
-          Call Requests
-          {callRequests.length > 0 && <RedDot />}
-        </button>
-
-        <button
-          className={activeTab === "chat" ? "active" : ""}
-          onClick={() => setActiveTab("chat")}
-        >
-          Chat Requests
-          {chatRequests.length > 0 && <RedDot />}
+        <button className={activeTab === "chat" ? "active" : ""} onClick={() => setActiveTab("chat")}>
+          Chat Requests ({unreadCount})
+          {unreadCount > 0 && <RedDot />}
         </button>
       </QueueTabs>
 
-      {/* ================= LIST ================= */}
       {activeList.length === 0 ? (
-        <div style={{ padding: 14, fontSize: 13, color: "#64748b" }}>
-          No {activeTab} requests
+        <div style={{ padding: 24, textAlign: "center", color: "#64748b" }}>
+          No pending requests
         </div>
       ) : (
         activeList.map((req) => (
-          <QueueItem key={req.id}>
+          <QueueItem key={req.id} className={req.status || "pending"}>
             <div>
-              <strong>{req.name}</strong>
+              <strong>{req.title}</strong>
+              {/* ✅ STATUS BADGE */}
+              <StatusBadge status={req.status || "pending"}>
+                {req.status === "pending" ? "⏳ Pending" : "❌ Cancelled"}
+              </StatusBadge>
               <span>{req.meta}</span>
             </div>
-
             <div>
-              <ActionBtn
-                className="accept"
-                onClick={() => acceptRequest(req)}
-              >
-                Accept {req.type}
-              </ActionBtn>
-
-              <ActionBtn
-                onClick={() => declineRequest(req)}
-              >
-                Decline
-              </ActionBtn>
+              {req.status === "pending" ? ( // ✅ Only show buttons for pending
+                <>
+                  <ActionBtn className="accept" onClick={() => acceptQueueRequest(req)}>
+                    Accept
+                  </ActionBtn>
+                  <ActionBtn onClick={() => declineQueueRequest(req)}>
+                    Decline
+                  </ActionBtn>
+                </>
+              ) : (
+                <ActionBtn onClick={() => {}}>Closed</ActionBtn>
+              )}
             </div>
           </QueueItem>
         ))

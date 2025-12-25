@@ -12,6 +12,7 @@ import {
   ViewAll,
 } from "../styles/Notification.styles";
 
+// ✅ PROPS VERSION - NO INTERNAL HOOK!
 export default function NotificationPopover({
   notifications = [],
   unreadCount = 0,
@@ -25,78 +26,80 @@ export default function NotificationPopover({
   const visible = notifications.slice(0, page * pageSize);
   const hasMore = notifications.length > visible.length;
 
-  /* ================= HANDLERS ================= */
-
-  const handleAccept = async (n) => {
+  const handleAccept = (n) => {
     const requestId = n.payload?.request_id;
     if (!requestId) return;
-
-    // ✅ ONLY socket emit
-    await onAccept(requestId);
-
-    // ❌ NO navigate here
-    // redirect ExpertLayout me hoga (chat_started event)
+    console.log("🎯 Accepting:", requestId);
+    onAccept(requestId);
   };
 
   const handleDecline = (n) => {
     const requestId = n.payload?.request_id;
     if (!requestId) return;
-
+    console.log("❌ Declining:", requestId);
     onDecline(requestId);
   };
 
   return (
     <Popover>
-      {/* HEADER */}
       <TitleRow>
         <Title>Notifications</Title>
         {unreadCount > 0 && (
-          <MarkAll onClick={markAllRead}>Mark all as read</MarkAll>
+          <MarkAll onClick={markAllRead}>
+            Mark all read ({unreadCount})
+          </MarkAll>
         )}
       </TitleRow>
 
-      {/* LIST */}
-      {visible.length === 0 && (
+      {visible.length === 0 ? (
         <div style={{ padding: 16, color: "#64748b", fontSize: 13 }}>
           No notifications
         </div>
-      )}
-
-      {visible.map((n) => (
-        <PopItem key={n.id} unread={n.unread}>
-          <div style={{ fontWeight: 500 }}>{n.title}</div>
-
-          {n.meta && <Meta>{n.meta}</Meta>}
-
-          {n.type === "chat_request" && n.payload?.request_id && (
-            <ActionRow>
-              <ActionBtn onClick={() => handleAccept(n)}>
-                Accept
-              </ActionBtn>
-
-              <ActionBtn
-                variant="outline"
-                onClick={() => handleDecline(n)}
-              >
-                Decline
-              </ActionBtn>
-            </ActionRow>
-          )}
-        </PopItem>
-      ))}
-
-      {/* FOOTER */}
-      {hasMore ? (
-        <Footer>
-          <ViewAll onClick={() => setPage((p) => p + 1)}>
-            Load more
-          </ViewAll>
-        </Footer>
       ) : (
-        <Footer>
-          <ViewAll>View all notifications</ViewAll>
-        </Footer>
+        visible.map((n) => (
+         // NotificationPopover.jsx में ये changes:
+<PopItem key={n.id} unread={n.unread} status={n.status}>
+  <div style={{ fontWeight: 500, fontSize: 14 }}>
+    {n.title}
+    {/* ✅ STATUS BADGE */}
+    {n.status && n.status !== "pending" && (
+      <span style={{
+        padding: "2px 8px",
+        background: n.status === "cancelled" ? "#fecaca" : "#fed7aa",
+        color: n.status === "cancelled" ? "#dc2626" : "#d97706",
+        borderRadius: "12px",
+        fontSize: "11px",
+        fontWeight: "600",
+        marginLeft: "8px"
+      }}>
+        {n.status === "cancelled" ? "Cancelled" : "Rejected"}
+      </span>
+    )}
+  </div>
+  
+  {/* ✅ ONLY PENDING REQUESTS GET BUTTONS */}
+  {n.type === "chat_request" && n.status === "pending" && n.payload?.request_id && (
+    <ActionRow>
+      <ActionBtn onClick={() => handleAccept(n)} style={{ background: "#10b981", color: "white" }}>
+        Accept
+      </ActionBtn>
+      <ActionBtn variant="outline" onClick={() => handleDecline(n)} style={{ color: "#ef4444" }}>
+        Decline
+      </ActionBtn>
+    </ActionRow>
+  )}
+</PopItem>
+
+        ))
       )}
+
+      <Footer>
+        {hasMore ? (
+          <ViewAll onClick={() => setPage(p => p + 1)}>Load more</ViewAll>
+        ) : (
+          <ViewAll>View all</ViewAll>
+        )}
+      </Footer>
     </Popover>
   );
 }

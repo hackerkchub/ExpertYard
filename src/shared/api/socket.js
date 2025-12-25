@@ -1,11 +1,14 @@
 // src/shared/api/socket.js
 import { io } from "socket.io-client";
-// import { APP_CONFIG } from "../../config/appConfig";
 
-const SOCKET_URL = "http://localhost:5000";
+const SOCKET_URL = import.meta.env.VITE_API_BASE_URL || "https://softmaxs.com/";
 
 export const socket = io(SOCKET_URL, {
-  transports: ["polling", "websocket"],
-  autoConnect: true
+  autoConnect: true,
+  transports: ["websocket", "polling"],
+  // ✅ FORCE same namespace
+  forceNew: false
 });
 
+// ✅ Manual connect on app load
+socket.connect();

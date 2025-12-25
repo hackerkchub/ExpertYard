@@ -36,8 +36,19 @@ export default function UserAppRoutes() {
           }
         />
 
+        {/* ✅ FIXED CHAT ROUTES */}
         <Route
           path="/chat"
+          element={
+            <ProtectedRoute>
+              <Chat />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ✅ DYNAMIC ROOM ROUTE - MOST IMPORTANT! */}
+        <Route
+          path="/chat/:room_id"
           element={
             <ProtectedRoute>
               <Chat />

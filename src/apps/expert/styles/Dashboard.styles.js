@@ -140,21 +140,21 @@ export const QueueTabs = styled.div`
   }
 `;
 
-export const QueueItem = styled.div`
-  border-bottom: 1px solid rgba(18,18,18,0.06);
-  padding: 14px 0;
-  display: flex;
-  justify-content: space-between;
+// export const QueueItem = styled.div`
+//   border-bottom: 1px solid rgba(18,18,18,0.06);
+//   padding: 14px 0;
+//   display: flex;
+//   justify-content: space-between;
 
-  span {
-    font-size: 14px;
-    color: #4b5563;
-  }
+//   span {
+//     font-size: 14px;
+//     color: #4b5563;
+//   }
 
-  &:last-child {
-    border-bottom: none;
-  }
-`;
+//   &:last-child {
+//     border-bottom: none;
+//   }
+// `;
 
 export const ActionBtn = styled.button`
   padding: 6px 14px;
@@ -240,3 +240,75 @@ export const RedDot = styled.span`
   display: inline-block;
   margin-left: 6px;
 `;
+
+// src/apps/expert/pages/styles/Dashboard.styles.js me add karo:
+
+export const LiveRequests = styled.div`
+  background: ${({ theme }) => theme.white || "#fff"};
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+`;
+
+export const RequestCount = styled.div`
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  background: linear-gradient(135deg, #10b981, #059669);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+`;
+
+export const NotificationBell = styled.div`
+  background: ${({ theme }) => theme.white || "#fff"};
+  border: 1px solid #10b981;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  text-align: center;
+  
+  strong {
+    color: #10b981;
+    font-weight: 700;
+  }
+`;
+
+// Dashboard.styles.js में add करें:
+export const StatusBadge = styled.span`
+  padding: 4px 10px;
+  background: ${props => 
+    props.status === "pending" ? "#dbeafe" : 
+    props.status === "cancelled" ? "#fecaca" : "#fed7aa"
+  };
+  color: ${props => 
+    props.status === "pending" ? "#1e40af" : 
+    props.status === "cancelled" ? "#dc2626" : "#d97706"
+  };
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 8px;
+  display: inline-block;
+`;
+
+export const QueueItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-radius: 12px;
+  background: white;
+  margin-bottom: 12px;
+  border-left: 4px solid #e2e8f0;
+  transition: all 0.3s ease;
+
+  &.cancelled {
+    border-left-color: #ef4444;
+    background: #fef2f2;
+    opacity: 0.7;
+  }
+`;
+

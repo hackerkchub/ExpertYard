@@ -326,4 +326,80 @@ export const SendButton = styled.button`
   }
 `;
 
+// Add these styled components to Chat.styles.js
+export const LoadingSpinner = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  color: #64748b;
+  font-size: 16px;
+`;
 
+export const NoMessages = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  color: #64748b;
+  font-size: 16px;
+  text-align: center;
+`;
+
+export const ErrorMessage = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  color: #dc2626;
+  text-align: center;
+  gap: 16px;
+
+  svg { opacity: 0.7; }
+  h3 { margin: 0; color: #dc2626; }
+  button {
+    padding: 10px 20px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+`;
+
+// export const EndChatButton = styled.button`
+//   padding: 8px;
+//   background: #ef4444;
+//   color: white;
+//   border: none;
+//   border-radius: 8px;
+//   cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+//   opacity: ${props => props.disabled ? 0.5 : 1};
+// `;
+
+// Chat.styles.js में ये add करें (अगर नहीं हैं):
+export const EmptyChatMessage = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #64748b;
+  font-size: 16px;
+  text-align: center;
+  line-height: 1.5;
+`;
+
+export const EndChatButton = styled.button`
+  padding: 8px 12px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  opacity: ${props => props.disabled ? 0.5 : 1};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;

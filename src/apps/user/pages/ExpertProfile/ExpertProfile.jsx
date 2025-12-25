@@ -8,6 +8,7 @@ import {
   FiUserPlus,
   FiUserCheck,
   FiX,
+  FiBell,
 } from "react-icons/fi";
 
 import {
@@ -39,6 +40,7 @@ import {
   RatingRow,
   StarRating,
   Star,
+  NotificationBadge,
 } from "./ExpertProfile.styles";
 
 import {
@@ -97,6 +99,9 @@ const ExpertProfilePage = () => {
   const [chatRoomId, setChatRoomId] = useState(null);
   const [showWaitingPopup, setShowWaitingPopup] = useState(false);
   const [waitingText, setWaitingText] = useState("Waiting for expert to accept...");
+  const [isExpertOnline, setIsExpertOnline] = useState(false);
+  const [showChatCancelled, setShowChatCancelled] = useState(false);
+  const [chatRejectedMessage, setChatRejectedMessage] = useState("");
 
   // Memoized computed values (TOP LEVEL, AFTER STATES)
   const hasUserReview = useMemo(() => 
@@ -105,13 +110,47 @@ const ExpertProfilePage = () => {
   );
   const formattedAvgRating = useMemo(() => avgRating.toFixed(1), [avgRating]);
   const recentReviews = useMemo(() => reviews.slice(0, 5), [reviews]);
-useEffect(() => {
-  if (userId) {
-    socket.emit("user_online", { user_id: userId });
-  }
-}, [userId]);
 
-  // Effects (TOP LEVEL)
+  // ✅ EXPERT STATUS LISTENER
+  useEffect(() => {
+    console.log("👀 Listening for expert status:", numericExpertId);
+    
+    const handleExpertOnline = ({ expert_id }) => {
+      if (Number(expert_id) === numericExpertId) {
+        console.log("🟢 Expert online detected:", expert_id);
+        setIsExpertOnline(true);
+      }
+    };
+
+    const handleExpertOffline = ({ expert_id }) => {
+      if (Number(expert_id) === numericExpertId) {
+        console.log("🔴 Expert offline:", expert_id);
+        setIsExpertOnline(false);
+      }
+    };
+
+    socket.on("expert_online", handleExpertOnline);
+    socket.on("expert_offline", handleExpertOffline);
+
+    return () => {
+      socket.off("expert_online", handleExpertOnline);
+      socket.off("expert_offline", handleExpertOffline);
+    };
+  }, [numericExpertId]);
+
+  // ✅ USER ONLINE STATUS
+  useEffect(() => {
+    if (userId) {
+      socket.emit("user_online", { user_id: userId });
+      
+      return () => {
+        // Cleanup on unmount
+        socket.emit("user_offline", { user_id: userId });
+      };
+    }
+  }, [userId]);
+
+  // ✅ PROFILE DATA FETCH
   useEffect(() => {
     if (expertId) {
       fetchProfile(expertId);
@@ -119,6 +158,7 @@ useEffect(() => {
     }
   }, [expertId, fetchProfile, fetchPrice]);
 
+  // ✅ FOLLOWERS & REVIEWS LOADER
   const loadFollowersAndReviews = useCallback(() => {
     if (!expertId) return;
 
@@ -161,34 +201,61 @@ useEffect(() => {
     loadFollowersAndReviews();
   }, [loadFollowersAndReviews]);
 
-  // Socket effect (TOP LEVEL)
+  // ✅ SOCKET EVENTS - UPDATED FOR NEW BACKEND
   useEffect(() => {
+    // Request pending
     const handleRequestPending = ({ request_id }) => {
+      console.log("⏳ USER: Request pending:", request_id);
       setChatRequestId(request_id);
       setShowWaitingPopup(true);
       setWaitingText("Waiting for expert to accept...");
     };
 
-    const handleChatAccepted = ({ user_id, room_id }) => {
+    // Chat accepted → redirect
+    const handleChatAccepted = ({ user_id, room_id, expert_id }) => {
       if (Number(user_id) !== Number(userId)) return;
+      console.log("✅ USER: Chat accepted → /user/chat/", room_id);
       setShowWaitingPopup(false);
-      navigate(`/user/chat/${room_id}`);
+      setChatRequestId(null);
+      navigate(`/user/chat/${room_id}`, { replace: true });
     };
 
+    // Chat rejected by expert
     const handleChatRejected = ({ user_id, message }) => {
       if (Number(user_id) !== Number(userId)) return;
+      console.log("❌ USER: Chat rejected:", message);
       setShowWaitingPopup(false);
-      alert(message || "Expert rejected your request");
+      setChatRequestId(null);
+      setChatRejectedMessage(message || "Chat request was rejected");
+    };
+
+    // User cancelled confirmation
+    const handleChatCancelled = ({ user_id, message }) => {
+      if (Number(user_id) !== Number(userId)) return;
+      console.log("❌ USER: Chat cancelled:", message);
+      setShowWaitingPopup(false);
+      setChatRequestId(null);
+      setShowChatCancelled(true);
+    };
+
+    // Chat ended (low balance, etc.)
+    const handleChatEnded = ({ room_id, reason }) => {
+      console.log("🔚 USER: Chat ended:", reason);
+      // Handle chat end notifications
     };
 
     socket.on("request_pending", handleRequestPending);
     socket.on("chat_accepted", handleChatAccepted);
     socket.on("chat_rejected", handleChatRejected);
+    socket.on("chat_cancelled", handleChatCancelled);
+    socket.on("chat_ended", handleChatEnded);
 
     return () => {
       socket.off("request_pending", handleRequestPending);
       socket.off("chat_accepted", handleChatAccepted);
       socket.off("chat_rejected", handleChatRejected);
+      socket.off("chat_cancelled", handleChatCancelled);
+      socket.off("chat_ended", handleChatEnded);
     };
   }, [navigate, userId]);
 
@@ -297,11 +364,21 @@ useEffect(() => {
     setShowWaitingPopup(false);
     setChatRequestId(null);
   }, [chatRequestId, userId]);
+
   const handleRechargeClose = useCallback(() => {
     setShowRecharge(false);
     setRequiredAmount(0);
   }, []);
+
   const handleUnfollowClose = useCallback(() => setShowUnfollowModal(false), []);
+
+  const handleChatRejectedClose = useCallback(() => {
+    setChatRejectedMessage("");
+  }, []);
+
+  const handleChatCancelledClose = useCallback(() => {
+    setShowChatCancelled(false);
+  }, []);
 
   // ✅ EARLY RETURNS (AFTER ALL HOOKS)
   if (profileLoading || priceLoading) {
@@ -374,7 +451,9 @@ useEffect(() => {
               </VerifiedBadge>
             </Name>
             <Role>{profile.position || "Expert"}</Role>
-            <Status $online>🟢 Available Now</Status>
+            <Status $online={isExpertOnline}>
+              {isExpertOnline ? "🟢 Available Now" : "🔴 Offline"}
+            </Status>
 
             <ActionButtons>
               <div>
@@ -393,6 +472,7 @@ useEffect(() => {
           </RightInfo>
         </TopSection>
 
+        {/* Rest of the sections remain same - About, Education, Expertise, Reviews */}
         <Section>
           <SectionTitle>About</SectionTitle>
           <SectionBody>{profile.description || "—"}</SectionBody>
@@ -524,7 +604,7 @@ useEffect(() => {
           </ReviewBox>
         </Section>
 
-        {/* Modals */}
+        {/* Modals - UPDATED */}
         {showRecharge && (
           <div style={{ 
             position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", 
@@ -591,6 +671,7 @@ useEffect(() => {
           </div>
         )}
 
+        {/* ✅ WAITING POPUP */}
         {showWaitingPopup && (
           <div style={{ 
             position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", 
@@ -616,6 +697,52 @@ useEffect(() => {
               >
                 Cancel Request
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* ✅ CHAT REJECTED POPUP */}
+        {chatRejectedMessage && (
+          <div style={{ 
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", 
+            display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 
+          }}>
+            <div style={{ 
+              background: "#fff", padding: 24, borderRadius: 16, 
+              width: "min(90vw, 400px)", textAlign: "center", 
+              boxShadow: "0 25px 50px rgba(0,0,0,0.15)" 
+            }}>
+              <FiX size={24} color="#ef4444" style={{ marginBottom: 12 }} />
+              <h3 style={{ margin: 0, marginBottom: 8, color: "#dc2626" }}>Request Declined</h3>
+              <p style={{ margin: 0, marginBottom: 20, color: "#475569" }}>
+                {chatRejectedMessage}
+              </p>
+              <ActionButton onClick={handleChatRejectedClose} $primary>
+                OK
+              </ActionButton>
+            </div>
+          </div>
+        )}
+
+        {/* ✅ CHAT CANCELLED POPUP */}
+        {showChatCancelled && (
+          <div style={{ 
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", 
+            display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 
+          }}>
+            <div style={{ 
+              background: "#fff", padding: 24, borderRadius: 16, 
+              width: "min(90vw, 400px)", textAlign: "center", 
+              boxShadow: "0 25px 50px rgba(0,0,0,0.15)" 
+            }}>
+              <FiX size={24} color="#6b7280" style={{ marginBottom: 12 }} />
+              <h3 style={{ margin: 0, marginBottom: 8, color: "#475569" }}>Request Cancelled</h3>
+              <p style={{ margin: 0, marginBottom: 20, color: "#475569" }}>
+                Your chat request has been cancelled.
+              </p>
+              <ActionButton onClick={handleChatCancelledClose} $primary>
+                OK
+              </ActionButton>
             </div>
           </div>
         )}

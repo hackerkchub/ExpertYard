@@ -1,7 +1,7 @@
-// src/apps/user/components/userExperts/ExpertCard.jsx
-import React, { useEffect, useState, useMemo } from "react";
+// src/apps/user/components/userExperts/ExpertCard.jsx - ✅ FIXED NO SOCKET
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiStar, FiPhoneCall, FiMessageSquare, FiMapPin } from "react-icons/fi";
+import { FiStar, FiPhoneCall, FiMessageSquare, FiMapPin, FiX } from "react-icons/fi";
 
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
@@ -35,16 +35,15 @@ import {
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/150?img=12";
 
-const ExpertCard = ({ data, mode, maxPrice }) => {
+const ExpertCard = ({ data, mode, maxPrice, onStartChat }) => {
   const navigate = useNavigate();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
+  const userId = user?.id;
   const { balance } = useWallet();
 
   const [callPrice, setCallPrice] = useState(data.callPrice || 0);
   const [chatPrice, setChatPrice] = useState(data.chatPrice || 0);
-  const [followersCount, setFollowersCount] = useState(
-    data.followersCount || 0
-  );
+  const [followersCount, setFollowersCount] = useState(data.followersCount || 0);
   const [avgRating, setAvgRating] = useState(data.avgRating || 0);
   const [totalReviews, setTotalReviews] = useState(data.totalReviews || 0);
   const [loadingMeta, setLoadingMeta] = useState(true);
@@ -53,7 +52,9 @@ const ExpertCard = ({ data, mode, maxPrice }) => {
 
   const expertId = data.id;
 
-  // Load price + followers + rating/reviews for this expert
+  // ✅ NO SOCKET LISTENERS HERE - ONLY EMIT
+
+  // Load price + followers + rating/reviews
   useEffect(() => {
     let cancelled = false;
     if (!expertId) return;
@@ -62,7 +63,6 @@ const ExpertCard = ({ data, mode, maxPrice }) => {
       try {
         setLoadingMeta(true);
 
-        // 1) PRICE
         const priceRes = await getExpertPriceById(expertId);
         const priceData = priceRes?.data?.data;
         if (!cancelled && priceData) {
@@ -70,7 +70,6 @@ const ExpertCard = ({ data, mode, maxPrice }) => {
           setChatPrice(Number(priceData.chat_per_minute || 0));
         }
 
-        // 2) FOLLOWERS
         const followersRes = await getExpertFollowersApi(expertId);
         if (!cancelled && followersRes?.data) {
           setFollowersCount(
@@ -80,14 +79,11 @@ const ExpertCard = ({ data, mode, maxPrice }) => {
           );
         }
 
-        // 3) REVIEWS
         const reviewsRes = await getReviewsByExpertApi(expertId);
         const rData = reviewsRes?.data?.data || {};
         if (!cancelled) {
           setAvgRating(Number(rData.avg_rating || 0));
-          setTotalReviews(
-            rData.total_reviews || (rData.reviews || []).length || 0
-          );
+          setTotalReviews(rData.total_reviews || (rData.reviews || []).length || 0);
         }
       } catch (err) {
         console.error("ExpertCard meta load failed:", err);
@@ -102,64 +98,93 @@ const ExpertCard = ({ data, mode, maxPrice }) => {
     };
   }, [expertId]);
 
-  // Max price filter (card level) – agar price limit se upar ho to card hide
+  // Max price filter
   const isHiddenByPrice = useMemo(() => {
     if (!maxPrice) return false;
     const mp = Number(maxPrice);
     if (!mp) return false;
 
-    if (mode === "call") {
-      return callPrice > mp;
-    }
-    if (mode === "chat") {
-      return chatPrice > mp;
-    }
+    if (mode === "call") return callPrice > mp;
+    if (mode === "chat") return chatPrice > mp;
     return false;
   }, [maxPrice, mode, callPrice, chatPrice]);
 
-  if (isHiddenByPrice) {
-    return null;
-  }
+  if (isHiddenByPrice) return null;
 
-  const handleViewProfile = () => {
-    if (!expertId) return;
-    navigate(`/user/experts/${expertId}`);
-  };
-
-  const handleStart = (type) => {
+  // ✅ SIMPLIFIED START CHAT - ONLY CALL PARENT OR EMIT
+  const handleStartChatLocal = useCallback(() => {
     if (!isLoggedIn) {
       navigate("/user/auth", { state: { from: `/user/experts/${expertId}` } });
       return;
     }
 
-    const perMinute =
-      type === "chat" ? Number(chatPrice || 0) : Number(callPrice || 0);
+    if (onStartChat) {
+      // ✅ PARENT HANDLER (UserExpertsPage)
+      onStartChat(expertId);
+      return;
+    }
 
-    // 5 min minimum
+    // ✅ LOCAL EMIT (standalone)
+    const perMinute = Number(chatPrice || 0);
     const minRequired = perMinute * 5;
     const userBalance = Number(balance || 0);
 
     if (userBalance >= minRequired) {
-      if (type === "chat") {
-        navigate("/user/chat");
-      } else {
-        // Call under development – same as ExpertProfilePage
-        alert("Call feature coming soon 🚧");
-      }
+      window.socket?.emit("request_chat", { 
+        user_id: userId, 
+        expert_id: Number(expertId) 
+      });
+      console.log("🚀 CARD: Direct chat request:", expertId);
     } else {
-      setRequiredAmount(minRequired - userBalance);
+      setRequiredAmount(Math.max(0, minRequired - userBalance));
       setShowRecharge(true);
     }
-  };
+  }, [isLoggedIn, onStartChat, expertId, chatPrice, balance, userId, navigate]);
+
+  const handleStartCall = useCallback(() => {
+    if (!isLoggedIn) {
+      navigate("/user/auth", { state: { from: `/user/experts/${expertId}` } });
+      return;
+    }
+    alert("Call feature coming soon 🚧");
+  }, [isLoggedIn, expertId, navigate]);
+
+  const handleViewProfile = useCallback(() => {
+    navigate(`/user/experts/${expertId}`);
+  }, [expertId, navigate]);
+
+  const handleRechargeClose = useCallback(() => {
+    setShowRecharge(false);
+    setRequiredAmount(0);
+  }, []);
 
   const languages = data.languages && data.languages.length > 0
     ? data.languages
-    : ["English", "Hindi"]; // default for now
+    : ["English", "Hindi"];
+
+  const Spinner = () => (
+    <div
+      style={{
+        width: 28,
+        height: 28,
+        border: "3px solid #e2e8f0",
+        borderTopColor: "#10b981",
+        borderRadius: "50%",
+        animation: "spin 0.8s linear infinite",
+        margin: "0 auto",
+      }}
+    />
+  );
 
   return (
     <>
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+      
       <Card>
-        {/* HEADER */}
         <CardHeader>
           <AvatarWrap $isAI={false}>
             <AvatarImg src={data.profile_photo || DEFAULT_AVATAR} alt={data.name} />
@@ -187,7 +212,6 @@ const ExpertCard = ({ data, mode, maxPrice }) => {
           </div>
         </CardHeader>
 
-        {/* SPECIALITY / LANGUAGES */}
         {data.speciality && (
           <MetaRow style={{ marginTop: 4 }}>
             <MetaItem>{data.speciality}</MetaItem>
@@ -200,7 +224,6 @@ const ExpertCard = ({ data, mode, maxPrice }) => {
           ))}
         </LangRow>
 
-        {/* PRICE */}
         <PriceRow>
           <div>
             <PriceLabel>Call Rate</PriceLabel>
@@ -212,24 +235,22 @@ const ExpertCard = ({ data, mode, maxPrice }) => {
           </div>
         </PriceRow>
 
-        {/* ACTIONS */}
         <ActionRow>
           {mode === "chat" ? (
             <PrimaryBtn
-              disabled={loadingMeta || chatPrice <= 0}
-              onClick={() => handleStart("chat")}
+              disabled={loadingMeta || chatPrice <= 0 || !isLoggedIn}
+              onClick={handleStartChatLocal}
             >
               <FiMessageSquare size={14} /> Start Chat
             </PrimaryBtn>
           ) : (
             <PrimaryBtn
-              disabled={loadingMeta || callPrice <= 0}
-              onClick={() => handleStart("call")}
+              disabled={loadingMeta || callPrice <= 0 || !isLoggedIn}
+              onClick={handleStartCall}
             >
               <FiPhoneCall size={14} /> Start Call
             </PrimaryBtn>
           )}
-
           <GhostBtn type="button" onClick={handleViewProfile}>
             View Profile
           </GhostBtn>
@@ -242,7 +263,7 @@ const ExpertCard = ({ data, mode, maxPrice }) => {
         )}
       </Card>
 
-      {/* Low balance popup */}
+      {/* ✅ ONLY LOW BALANCE POPUP */}
       {showRecharge && (
         <div
           style={{
@@ -265,37 +286,17 @@ const ExpertCard = ({ data, mode, maxPrice }) => {
               boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
             }}
           >
-            <h3
-              style={{
-                margin: 0,
-                marginBottom: 12,
-                color: "#0f172a",
-              }}
-            >
+            <h3 style={{ margin: 0, marginBottom: 12, color: "#0f172a" }}>
               Low Balance
             </h3>
-            <p
-              style={{
-                margin: 0,
-                marginBottom: 20,
-                color: "#475569",
-              }}
-            >
-              Need <strong>₹{requiredAmount.toFixed(2)}</strong> more.
+            <p style={{ margin: 0, marginBottom: 20, color: "#475569" }}>
+              Need <strong>₹{requiredAmount.toFixed(2)}</strong> more for 5 minutes.
             </p>
-            <div
-              style={{
-                display: "flex",
-                gap: 12,
-                justifyContent: "center",
-              }}
-            >
+            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
               <PrimaryBtn onClick={() => navigate("/user/wallet")}>
                 Recharge Now
               </PrimaryBtn>
-              <GhostBtn onClick={() => setShowRecharge(false)}>
-                Cancel
-              </GhostBtn>
+              <GhostBtn onClick={handleRechargeClose}>Cancel</GhostBtn>
             </div>
           </div>
         </div>

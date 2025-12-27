@@ -1,4 +1,4 @@
-// src/apps/expert/pages/chat/ExpertChat.jsx - ✅ FIXED Earning + Pause on End
+// src/apps/expert/pages/chat/ExpertChat.jsx - ✅ FIXED: User Profile + Earning + Pause
 import React, {
   useState,
   useEffect,
@@ -43,10 +43,15 @@ import { socket } from "../../../../shared/api/socket";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { useExpertNotifications } from "../../context/ExpertNotificationsContext";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
+import { getUserProfileApi } from "../../../../shared/api/userApi"; // ✅ NEW: User API
 
 const ExpertChat = () => {
   const { room_id } = useParams();
   const navigate = useNavigate();
+
+  // ✅ NEW: User Profile States
+  const [userProfile, setUserProfile] = useState(null);
+  const [userProfileLoading, setUserProfileLoading] = useState(false);
 
   const [chatData, setChatData] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -58,9 +63,9 @@ const ExpertChat = () => {
   const [leftFilter, setLeftFilter] = useState("all");
   const [sessionActive, setSessionActive] = useState(false);
   const [sessionSeconds, setSessionSeconds] = useState(0);
-  const [displaySeconds, setDisplaySeconds] = useState(0); // ✅ Display value (pauses)
+  const [displaySeconds, setDisplaySeconds] = useState(0);
   const [sessionStartTime, setSessionStartTime] = useState(null);
-  const [timerPaused, setTimerPaused] = useState(false); // ✅ Pause state
+  const [timerPaused, setTimerPaused] = useState(false);
   const messagesEndRef = useRef(null);
   const timerIntervalRef = useRef(null);
 
@@ -87,6 +92,23 @@ const ExpertChat = () => {
     console.warn("⚠️ No expert id found");
     return null;
   }, [expert]);
+
+  /* ✅ NEW: FETCH USER PROFILE ========= */
+  const fetchUserProfile = useCallback(async (userId) => {
+    if (!userId) return;
+    
+    try {
+      setUserProfileLoading(true);
+      const response = await getUserProfileApi(userId);
+      if (response?.success) {
+        setUserProfile(response.data);
+      }
+    } catch (err) {
+      console.error("❌ User profile fetch failed:", err);
+    } finally {
+      setUserProfileLoading(false);
+    }
+  }, []);
 
   /* ========= FETCH CHAT DETAILS ========= */
   const fetchChatDetails = useCallback(async () => {
@@ -144,8 +166,12 @@ const ExpertChat = () => {
         setSessionStartTime(startTime);
         setTimerPaused(false);
       } else {
-        // ✅ Pause and keep final values on end
         setTimerPaused(true);
+      }
+
+      // ✅ NEW: Fetch user profile when chat loads
+      if (session.user_id) {
+        fetchUserProfile(session.user_id);
       }
       
     } catch (err) {
@@ -155,7 +181,7 @@ const ExpertChat = () => {
     } finally {
       setLoading(false);
     }
-  }, [room_id]);
+  }, [room_id, fetchUserProfile]);
 
   // ✅ Reset session completely
   const resetSession = () => {
@@ -193,7 +219,7 @@ const ExpertChat = () => {
     }
   }, [getCurrentExpertId]);
 
-  /* ========= LEFT PANEL DATA ========= */
+  /* ✅ UPDATED: LEFT PANEL DATA WITH USER PROFILES ========= */
   const leftPanelData = useMemo(() => {
     const pendingRequests = notifications?.filter(
       (n) => n.type === "chat_request" && n.status === "pending"
@@ -213,7 +239,7 @@ const ExpertChat = () => {
         id: chat.room_id,
         type: "current",
         user_id: chat.user_id,
-        userName: `User #${chat.user_id}`,
+        userName: `User #${chat.user_id}`, // Will be overridden if profile available
         lastMessage: chat.last_message || "No messages yet",
         time: new Date(chat.start_time).toLocaleTimeString([], {
           hour: "2-digit",
@@ -259,7 +285,7 @@ const ExpertChat = () => {
 
   const visibleList = useMemo(() => leftPanelData[leftFilter] || [], [leftPanelData, leftFilter]);
 
-  /* ========= PRECISE SESSION TIMER - PAUSES ON END ========= */
+  /* ========= PRECISE SESSION TIMER ========= */
   useEffect(() => {
     if (!sessionActive || !sessionStartTime || timerPaused) {
       if (timerIntervalRef.current) {
@@ -269,7 +295,6 @@ const ExpertChat = () => {
       return;
     }
 
-    // ✅ Start precise timer
     timerIntervalRef.current = setInterval(() => {
       const now = Date.now();
       const elapsed = Math.floor((now - sessionStartTime) / 1000);
@@ -321,10 +346,9 @@ const ExpertChat = () => {
       if (endedRoomId === roomId) {
         console.log('🔚 Expert: Chat ended:', reason);
         setSessionActive(false);
-        setTimerPaused(true); // ✅ PAUSE timer
+        setTimerPaused(true);
         setError(`Chat ended: ${reason}`);
         setChatData((prev) => prev ? { ...prev, is_active: 0 } : prev);
-        // ✅ Keep displaySeconds as final value
       }
     };
 
@@ -392,16 +416,33 @@ const ExpertChat = () => {
     }
   }, [navigate, room_id]);
 
-  const selectedUser = chatData ? {
-    id: chatData.user_id,
-    name: `User #${chatData.user_id}`,
-    avatar: `https://i.pravatar.cc/150?img=${chatData.user_id}`,
-  } : null;
+  /* ✅ UPDATED: selectedUser with Real Profile Data */
+  const selectedUser = useMemo(() => {
+    if (!chatData) return null;
+    
+    // Priority: API data > fallback
+    if (userProfile) {
+      return {
+        id: userProfile.id,
+        name: userProfile.full_name || `User #${chatData.user_id}`,
+        email: userProfile.email,
+        phone: userProfile.phone,
+        avatar: `https://i.pravatar.cc/150?img=${userProfile.id}`,
+      };
+    }
+    
+    // Fallback
+    return {
+      id: chatData.user_id,
+      name: `User #${chatData.user_id}`,
+      avatar: `https://i.pravatar.cc/150?img=${chatData.user_id}`,
+    };
+  }, [chatData, userProfile]);
 
-  // ✅ FIXED: Earning = price_per_min * (completed_minutes + 1)
+  // ✅ Earning calculation
   const perMinute = expertPrice?.chat_per_minute || chatData?.price_per_minute || 0;
   const completedMinutes = Math.floor(displaySeconds / 60);
-  const totalEarning = perMinute * (completedMinutes + 1); // ✅ +1 for current minute
+  const totalEarning = perMinute * (completedMinutes + 1);
 
   // ✅ Format display time MM:SS
   const formatSessionTime = () => {
@@ -468,12 +509,20 @@ const ExpertChat = () => {
                   <Avatar src={selectedUser.avatar} />
                   <UserMeta>
                     <h4>{selectedUser.name}</h4>
-                    <span>{loggedInUser?.email || "—"}</span>
-                    <span>{loggedInUser?.phone || "—"}</span>
+                    {/* ✅ Real user data */}
+                    {userProfile ? (
+                      <>
+                        <span>{selectedUser.email}</span>
+                        <span>{selectedUser.phone}</span>
+                      </>
+                    ) : userProfileLoading ? (
+                      <span>Loading user info...</span>
+                    ) : (
+                      <span>—</span>
+                    )}
                   </UserMeta>
                 </UserInfo>
                 <div style={{ textAlign: "right" }}>
-                  {/* ✅ Status with pause icon */}
                   <div style={{
                     fontSize: 13,
                     fontWeight: 600,
@@ -490,7 +539,6 @@ const ExpertChat = () => {
                       </>
                     )}
                   </div>
-                  {/* ✅ Paused time display */}
                   <div style={{ 
                     fontSize: 12, 
                     color: timerPaused ? "#6b7280" : "#10b981",
@@ -498,7 +546,6 @@ const ExpertChat = () => {
                   }}>
                     Session: {formatSessionTime()}
                   </div>
-                  {/* ✅ Perfect earning calculation */}
                   <div style={{ fontSize: 13, color: "#111827", marginTop: 2, fontWeight: 600 }}>
                     Earning: ₹{totalEarning}
                   </div>

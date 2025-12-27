@@ -16,14 +16,18 @@ export const registerUserApi = async (payload) => {
   return data;
 };
 
-// SEND OTP (email / phone)
-// export const sendOtpApi = async (payload) => {
-//   const { data } = await api.post("/user/send-otp", payload);
-//   return data;
-// };
+/* ========================= */
+/* 👤 USER PROFILE APIS */
+/* ========================= */
 
-// // VERIFY OTP
-// export const verifyOtpApi = async (payload) => {
-//   const { data } = await api.post("/user/verify-otp", payload);
-//   return data;
-// };
+// GET USER PROFILE
+export const getUserProfileApi = async (user_id) => {
+  const { data } = await api.get(`/user/${user_id}`);
+  return data;
+};
+
+// UPDATE USER PROFILE
+export const updateUserProfileApi = async (user_id, payload) => {
+  const { data } = await api.put(`/user/${user_id}`, payload);
+  return data;
+};

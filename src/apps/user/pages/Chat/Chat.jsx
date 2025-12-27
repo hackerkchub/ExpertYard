@@ -309,7 +309,7 @@ const Chat = () => {
   // Initial load
   useEffect(() => {
     fetchChatDetails();
-    const interval = setInterval(fetchChatDetails, 45000);
+    const interval = setInterval(fetchChatDetails, 6000);
     return () => clearInterval(interval);
   }, [fetchChatDetails]);
 

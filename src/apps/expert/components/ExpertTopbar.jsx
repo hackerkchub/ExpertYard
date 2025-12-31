@@ -11,24 +11,35 @@ import {
   CreateBtn,
   ProfileImg,
   UnreadDot,
-} from "../styles/Topbar.styles";
+  MobileMenuOverlay,
+  MobileMenu,
+  MobileMenuHeader,
+  MobileMenuTitle,
+  MobileMenuSubtitle,
+  MobileNavList,
+  MobileNavItem,
+  MobileNavIcon,
+  MobileSectionTitle,
+  PopoverContainer,        // ✅ NEW
+  ProfileDropdownContainer 
+} from "../styles/Topbar.styles"; // ✅ REMOVED SearchSuggestions
 
-import { FiBell, FiMessageSquare, FiMenu, FiPlus } from "react-icons/fi";
+import { FiBell, FiMessageSquare, FiMenu, FiPlus, FiHome, FiFileText, FiCalendar, FiBarChart2, FiSettings, FiX } from "react-icons/fi";
 import Logo from "../../../assets/logo.png";
 import NotificationPopover from "./NotificationPopover";
 import ProfileDropdown from "./ProfileDropdown";
-import SearchSuggestions from "./SearchSuggestions";
 
 import useDebounce from "../hooks/useDebounce";
 import { useExpertNotifications } from "../context/ExpertNotificationsContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useExpert } from "../../../shared/context/ExpertContext";
 import { socket } from "../../../shared/api/socket";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/40?img=12";
 
-export default function ExpertTopbar({ setMobileOpen }) {
+export default function ExpertTopbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { expertData, logoutExpert } = useExpert();
 
   const user = {
@@ -40,12 +51,13 @@ export default function ExpertTopbar({ setMobileOpen }) {
   // STATES
   const [showNotif, setShowNotif] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const notifRef = useRef(null);
   const profileRef = useRef(null);
   const searchRef = useRef(null);
 
-  // ✅ NOTIFICATIONS HOOK
+  // NOTIFICATIONS HOOK
   const {
     notifications,
     unreadCount,
@@ -87,119 +99,158 @@ export default function ExpertTopbar({ setMobileOpen }) {
     return () => document.removeEventListener("click", handleClick);
   }, []);
 
-  // SEARCH (unchanged)
-  const [searchTerm, setSearchTerm] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
-  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-
-  const debouncedTerm = useDebounce(searchTerm, 300);
-
+  // MOBILE MENU CLOSE ON ROUTE CHANGE
   useEffect(() => {
-    if (!debouncedTerm.trim()) {
-      setSuggestions([]);
-      setLoadingSuggestions(false);
-      setShowSuggestions(false);
-      return;
-    }
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
-    setLoadingSuggestions(true);
-    const t = setTimeout(() => {
-      setSuggestions([]);
-      setLoadingSuggestions(false);
-      setShowSuggestions(true);
-    }, 200);
+  // SEARCH STATES (KEEP FOR FUTURE)
+  const [searchTerm, setSearchTerm] = useState("");
 
-    return () => clearTimeout(t);
-  }, [debouncedTerm]);
+  // MOBILE NAV ITEMS
+  const mobileNavItems = [
+    { icon: FiHome, label: "Dashboard", path: "/expert/dashboard" },
+    { icon: FiFileText, label: "My Content", path: "/expert/my-content" },
+    { icon: FiCalendar, label: "Calendar", path: "/expert/calendar" },
+    { icon: FiBarChart2, label: "Earnings", path: "/expert/earnings" },
+    { icon: FiSettings, label: "Settings", path: "/expert/settings" },
+  ];
+
+  const isActivePath = (path) => location.pathname === path;
 
   return (
-    <TopbarWrap>
-      <LeftBlock>
-        <IconBtn
-          onClick={() => setMobileOpen(prev => !prev)}
-          className="mobile-only"
-        >
-          <FiMenu />
-        </IconBtn>
-
-        <Brand onClick={() => navigate("/expert/dashboard")}>
-          <img src={Logo} alt="ExpertYard" />
-          ExpertYard
-        </Brand>
-
-        <SearchWrap ref={searchRef}>
-          <SearchRow>
-            <SearchBox
-              placeholder="Search clients..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </SearchRow>
-          {showSuggestions && (
-            <SearchSuggestions suggestions={suggestions} loading={loadingSuggestions} />
-          )}
-        </SearchWrap>
-      </LeftBlock>
-
-      <RightActions>
-        {/* 🔔 NOTIFICATIONS */}
-        <div ref={notifRef} style={{ position: "relative" }}>
-          <IconBtn onClick={() => setShowNotif(p => !p)}>
-            <FiBell />
-            {unreadCount > 0 && <UnreadDot />}
+    <>
+      <TopbarWrap>
+        <LeftBlock>
+          {/* MOBILE HAMBURGER */}
+          <IconBtn 
+            onClick={() => setMobileMenuOpen(true)}
+            className="mobile-only"
+            title="Menu"
+          >
+            <FiMenu />
           </IconBtn>
-          
-          {/* ✅ PROPS VERSION - MATCHES Hook */}
-          {showNotif && (
-            <NotificationPopover
-              notifications={notifications}
-              unreadCount={unreadCount}
-              markAllRead={markAllRead}
-              onAccept={acceptRequest}
-              onDecline={declineRequest}
-            />
-          )}
-        </div>
 
-        {/* 💬 CHATS */}
-        <IconBtn onClick={() => navigate("/expert/chat")}>
-          <FiMessageSquare />
-        </IconBtn>
+          <Brand onClick={() => navigate("/expert/dashboard")}>
+            <img src={Logo} alt="ExpertYard" />
+            ExpertYard
+          </Brand>
 
-        <CreateBtn onClick={() => navigate("/expert/my-content?mode=create")}>
-          <FiPlus /> Create
-        </CreateBtn>
+          {/* DESKTOP SEARCH - SIMPLIFIED */}
+          <SearchWrap ref={searchRef}>
+            <SearchRow>
+              <SearchBox
+                placeholder="Search clients..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </SearchRow>
+          </SearchWrap>
+        </LeftBlock>
 
-        {/* <div ref={notifRef} style={{ position: "relative" }}>
-        <IconBtn onClick={() => setShowNotif(p => !p)}>
-          <FiBell />
-          {unreadCount > 0 && <UnreadDot />}
-        </IconBtn>
+        <RightActions>
+          {/* NOTIFICATIONS */}
+          <div ref={notifRef} style={{ position: "relative" }}>
+            <IconBtn onClick={() => setShowNotif(p => !p)} title="Notifications">
+              <FiBell />
+              {unreadCount > 0 && <UnreadDot />}
+            </IconBtn>
+            {showNotif && (
+              <NotificationPopover
+                notifications={notifications}
+                unreadCount={unreadCount}
+                markAllRead={markAllRead}
+                onAccept={acceptRequest}
+                onDecline={declineRequest}
+              />
+            )}
+          </div>
+
+          {/* CHATS */}
+          <IconBtn onClick={() => navigate("/expert/chat")} title="Messages">
+            <FiMessageSquare />
+          </IconBtn>
+
+          {/* CREATE */}
+          <CreateBtn onClick={() => navigate("/expert/my-content?mode=create")}>
+            <FiPlus /> Create
+          </CreateBtn>
+
+          {/* PROFILE */}
+          <div ref={profileRef} style={{ position: "relative" }}>
+            <ProfileImg onClick={() => setShowProfile(p => !p)} title="Profile">
+              <img
+                src={user.avatar}
+                alt={user.name}
+                onError={(e) => (e.target.src = DEFAULT_AVATAR)}
+              />
+            </ProfileImg>
+            {showProfile && <ProfileDropdown user={user} onLogout={handleLogout} />}
+          </div>
+        </RightActions>
+      </TopbarWrap>
+
+      {/* MOBILE MENU OVERLAY */}
+      {mobileMenuOpen && (
+        <MobileMenuOverlay 
+          open={mobileMenuOpen} 
+          onClick={() => setMobileMenuOpen(false)} 
+        />
+      )}
+
+      {/* MOBILE MENU */}
+      <MobileMenu open={mobileMenuOpen}>
+        <MobileMenuHeader>
+          <MobileMenuTitle>ExpertYard</MobileMenuTitle>
+          <MobileMenuSubtitle>Manage your account</MobileMenuSubtitle>
+        </MobileMenuHeader>
+
+        <MobileNavList>
+          {mobileNavItems.map(({ icon: Icon, label, path }) => (
+            <MobileNavItem
+              key={path}
+              onClick={() => {
+                navigate(path);
+                setMobileMenuOpen(false);
+              }}
+              className={isActivePath(path) ? 'active' : ''}
+            >
+              <MobileNavIcon>
+                <Icon />
+              </MobileNavIcon>
+              {label}
+            </MobileNavItem>
+          ))}
+        </MobileNavList>
+
+        <MobileSectionTitle>Quick Actions</MobileSectionTitle>
         
-        {showNotif && (
-          <NotificationPopover
-            notifications={notifications}
-            unreadCount={unreadCount}
-            markAllRead={markAllRead}
-            onAccept={acceptRequest}
-            onDecline={declineRequest}
-          />
-        )}
-      </div>  */}
-
-        {/* 👤 PROFILE */}
-        <div ref={profileRef} style={{ position: "relative" }}>
-          <ProfileImg onClick={() => setShowProfile(p => !p)}>
-            <img
-              src={user.avatar}
-              alt={user.name}
-              onError={(e) => (e.target.src = DEFAULT_AVATAR)}
-            />
-          </ProfileImg>
-          {showProfile && <ProfileDropdown user={user} onLogout={handleLogout} />}
-        </div>
-      </RightActions>
-    </TopbarWrap>
+        <MobileNavList style={{ paddingBottom: '24px' }}>
+          <MobileNavItem
+            onClick={() => {
+              navigate("/expert/chat");
+              setMobileMenuOpen(false);
+            }}
+          >
+            <MobileNavIcon>
+              <FiMessageSquare />
+            </MobileNavIcon>
+            Messages
+          </MobileNavItem>
+          
+          <MobileNavItem
+            onClick={() => {
+              navigate("/expert/my-content?mode=create");
+              setMobileMenuOpen(false);
+            }}
+          >
+            <MobileNavIcon>
+              <FiPlus />
+            </MobileNavIcon>
+            Create Content
+          </MobileNavItem>
+        </MobileNavList>
+      </MobileMenu>
+    </>
   );
 }

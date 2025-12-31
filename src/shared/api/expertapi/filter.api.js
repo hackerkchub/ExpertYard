@@ -4,6 +4,7 @@ import api from "./axiosInstance";
 export const filterExpertsApi = (params) => {
   // params: { price, rating, mode, sort_price }
   return api.get("/experts/filter", { params });
+  
 };
 
 export const getTopRatedExpertsApi = (limit = 5) => {

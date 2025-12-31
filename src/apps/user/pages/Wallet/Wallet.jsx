@@ -29,7 +29,7 @@ import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { getAllExperts } from "../../../../shared/services/expertService";
 
 const WalletPage = () => {
-  const { balance, fetchWallet, addMoney } = useWallet();
+  const { balance, addMoney } = useWallet();
   const { user } = useAuth(); // user?.id
 
  const userId = user?.id;
@@ -49,8 +49,6 @@ const WalletPage = () => {
 
   useEffect(() => {
   if (!userId) return;   // 🛑 no API call without login
-
-  fetchWallet(userId);
   loadExperts();
 }, [userId]);
 

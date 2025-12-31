@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import ExpertSidebar from "../components/ExpertSidebar";
-import ExpertTopbar from "../components/ExpertTopbar";
+import ExpertSidebar from "../components/ExpertSidebar"; // Desktop only
+import ExpertTopbar from "../components/ExpertTopbar";   // Handles mobile completely
 import { LayoutWrapper, ContentWrapper } from "./expertLayout.styles";
 import { ExpertProvider, useExpert } from "../../../shared/context/ExpertContext";
 import { useAuth } from "../../../shared/context/UserAuthContext";
@@ -9,7 +9,6 @@ import { socket } from "../../../shared/api/socket";
 import { ExpertNotificationsProvider } from "../context/ExpertNotificationsContext"; 
 
 function ExpertLayoutInner() {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const { expertData } = useExpert();
   const { user: expertUser } = useAuth();
@@ -44,7 +43,7 @@ function ExpertLayoutInner() {
     const connectTimer = setTimeout(() => {
       console.log("🟢 EMITTING expert_online:", expertId);
       socket.emit("expert_online", { expert_id: expertId });
-    }, 500); // 500ms delay for stable connection
+    }, 500);
 
     // ✅ STEP 3: Heartbeat
     const handlePing = () => {
@@ -97,22 +96,28 @@ function ExpertLayoutInner() {
   }, []);
 
   /* ===============================
-     RENDER
+     RESPONSIVE LAYOUT - NO PROPS NEEDED
   =============================== */
   return (
     <LayoutWrapper>
-      <ExpertTopbar setMobileOpen={setMobileOpen} />
-      <ExpertSidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
+      {/* ✅ Topbar: Handles ALL mobile menu logic */}
+      <ExpertTopbar />
+      
+      {/* ✅ Sidebar: Desktop ONLY (1024px+) */}
+      <ExpertSidebar />
+      
+      {/* ✅ Content: Perfect responsive spacing */}
       <ContentWrapper>
         <Outlet />
       </ContentWrapper>
     </LayoutWrapper>
   );
 }
+
 export default function ExpertLayout() {
   return (
     <ExpertProvider>
-      <ExpertNotificationsProvider> {/* ✅ SINGLE SOURCE OF TRUTH */}
+      <ExpertNotificationsProvider>
         <ExpertLayoutInner />
       </ExpertNotificationsProvider>
     </ExpertProvider>

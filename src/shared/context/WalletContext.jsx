@@ -2,7 +2,8 @@ import React, {
   createContext,
   useContext,
   useState,
-  useEffect
+  useEffect,
+  useCallback
 } from "react";
 
 import {
@@ -22,52 +23,62 @@ export const WalletProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
 
   /* ================= GET BALANCE ================= */
-  const fetchWallet = async (userId) => {
-    if (!userId) return;
+ const fetchWallet = useCallback(async (userId) => {
+  if (!userId) return;
 
-    try {
-      setLoading(true);
-      const res = await getWalletApi(userId);
+  try {
+    setLoading(true);
+    const res = await getWalletApi(userId);
 
-      if (res?.success) {
-        setBalance(Number(res.balance ?? res.new_balance ?? 0));
-      }
-    } catch (err) {
-      console.error("Wallet fetch failed", err);
-      setBalance(0);
-    } finally {
-      setLoading(false);
+    if (res?.success) {
+      setBalance(Number(res.balance ?? res.new_balance ?? 0));
     }
-  };
+  } catch (err) {
+    console.error("Wallet fetch failed", err);
+    setBalance(0);
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
   /* 🔥 AUTO FETCH AFTER LOGIN / REFRESH */
   useEffect(() => {
-    if (isLoggedIn && user?.id) {
-      fetchWallet(user.id);
-    } else {
-      setBalance(0);
-    }
-  }, [isLoggedIn, user?.id]);
+  if (isLoggedIn && user?.id) {
+    fetchWallet(user.id);
+  } else {
+    resetWallet(); // 🔥 important
+  }
+}, [isLoggedIn, user?.id, fetchWallet]);
+
 
   /* ================= ADD MONEY ================= */
-  const addMoney = async (user_id, amount) => {
-    const res = await addMoneyApi({ user_id, amount });
+ const addMoney = async (user_id, amount) => {
+  const res = await addMoneyApi({ user_id, amount });
 
-    if (res?.success) {
-      setBalance(Number(res.new_balance || 0));
-    }
-    return res;
-  };
+  if (res?.success) {
+    // ✅ optimistic update
+    setBalance(Number(res.new_balance || 0));
+
+    // 🔄 final sync (IMPORTANT)
+    await fetchWallet(user_id);
+  }
+
+  return res;
+};
+
 
   /* ================= DEDUCT MONEY ================= */
   const deductMoney = async (user_id, amount) => {
-    const res = await deductMoneyApi({ user_id, amount });
+  const res = await deductMoneyApi({ user_id, amount });
 
-    if (res?.success) {
-      setBalance(Number(res.new_balance || 0));
-    }
-    return res;
-  };
+  if (res?.success) {
+    setBalance(Number(res.new_balance || 0));
+    await fetchWallet(user_id);
+  }
+
+  return res;
+};
+
 
   /* ================= RESET ================= */
   const resetWallet = () => {

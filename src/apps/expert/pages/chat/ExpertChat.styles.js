@@ -15,8 +15,8 @@ export const PageWrap = styled.div`
 export const ChatLayout = styled.div`
   height: 100%;
   display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 18px;
+  grid-template-columns:1fr;
+  gap: 0 px;
 
   @media (max-width: 960px) {
     grid-template-columns: 1fr;

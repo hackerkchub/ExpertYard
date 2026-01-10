@@ -181,25 +181,51 @@ const Chat = () => {
         
         return newTime;
       });
-    }, 1000);
+    },  1000);
 
     return () => clearInterval(interval);
   }, [sessionActive, timerRunning, lastMinuteAlertShown, checkWalletAndExtend]);
 
   // ✅ Auto End Chat with POPUP
-  const handleAutoEndChat = useCallback(() => {
-    console.log('⏰ Timer expired - Showing end popup');
-    setSessionActive(false);
-    setTimerRunning(false);
-    setShowEndPopup(true);
-  }, []);
+ // ✅ Auto End Chat → redirect to history
+const handleAutoEndChat = useCallback(() => {
+  console.log("⏰ Timer expired - Auto ending chat");
 
-  // ✅ Manual End Chat
-  const handleEndChat = useCallback(() => {
-    console.log('🔚 Manual end chat');
-    setTimerRunning(false);
-    setShowEndPopup(true);
-  }, []);
+  setSessionActive(false);
+  setTimerRunning(false);
+
+  socket.emit("end_chat", {
+    room_id,
+    reason: "time_up"
+  });
+
+  navigate("/user/chat-history", { replace: true });
+}, [room_id, navigate]);
+
+
+ // ✅ Manual End Chat (UPDATED)
+const handleEndChat = useCallback(() => {
+  if (!room_id) return;
+
+  console.log("🔚 User manually ended chat");
+
+  // ⏱️ Stop timer immediately
+  setTimerRunning(false);
+  setSessionActive(false);
+
+  // 🔌 Inform server
+  socket.emit("end_chat", {
+    room_id,
+    reason: "user_ended"
+  });
+
+  // 🧹 Optional cleanup
+  setMessages([]);
+  setChatData(null);
+
+  // 🔁 Redirect to chat history
+  navigate("/user/chat-history", { replace: true });
+}, [room_id, navigate]);
 
   // ✅ Close popup and go home
   const handleGoHome = () => {
@@ -239,13 +265,14 @@ const Chat = () => {
       }
     };
 
-    const handleChatEnded = ({ room_id: endedRoomId, reason }) => {
-      if (endedRoomId === room_id) {
-        setSessionActive(false);
-        setTimerRunning(false);
-        setShowEndPopup(true);
-      }
-    };
+   const handleChatEnded = ({ room_id: endedRoomId }) => {
+  if (endedRoomId === room_id) {
+    setSessionActive(false);
+    setTimerRunning(false);
+    navigate("/user/chat-history", { replace: true });
+  }
+};
+
 
     socket.on("message", handleNewMessage);
     socket.on("message_sent", handleNewMessage);
@@ -303,13 +330,13 @@ const Chat = () => {
   useEffect(() => {
     setTimeout(() => {
       scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-    }, 100);
+    }, 6000);
   }, [messages]);
 
   // Initial load
   useEffect(() => {
     fetchChatDetails();
-    const interval = setInterval(fetchChatDetails, 6000);
+    const interval = setInterval(fetchChatDetails, null || 100); // Refresh every 30s
     return () => clearInterval(interval);
   }, [fetchChatDetails]);
 
@@ -406,9 +433,13 @@ const Chat = () => {
                   {walletLoading ? '💳' : '⏱️'} 
                   <span>{walletLoading ? 'Checking...' : formatTime(timeLeft)}</span>
                 </div>
-                <EndChatButton onClick={handleEndChat} disabled={!sessionActive || timeLeft <= 0 || walletLoading}>
-                  <FiX size={20} />
-                </EndChatButton>
+                <EndChatButton
+  onClick={handleEndChat}
+  disabled={!sessionActive || timeLeft <= 0 || walletLoading}
+>
+  <FiX size={20} />
+</EndChatButton>
+
               </div>
             </>
           ) : (

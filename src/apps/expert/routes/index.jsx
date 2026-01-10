@@ -8,7 +8,8 @@ import StepPricing from "../pages/register/StepPricing";
 import Dashboard from "../pages/Dashboard";
 import Profile from "../pages/Profile/ExpertProfile";
 import MyContent from "../pages/MyContent/MyContent";
-import ExpertChat from "../pages/chat/ExpertChat"; // ✅ Import
+import ExpertChat from "../pages/chat/ExpertChat";
+import ExpertChatHistory from "../pages/chat-history/ExpertChatHistory"; // ✅ NEW
 import ProtectedExpertRoute from "./ProtectedExpertRoute";
 import { useExpert } from "../../../shared/context/ExpertContext";
 
@@ -22,6 +23,7 @@ export default function ExpertAppRoutes() {
 
       {/* 🔐 EXPERT DASHBOARD (WITH LAYOUT) */}
       <Route element={<ExpertLayout />}>
+        {/* DASHBOARD */}
         <Route
           path="home"
           element={
@@ -34,6 +36,7 @@ export default function ExpertAppRoutes() {
           }
         />
 
+        {/* PROFILE */}
         <Route
           path="profile"
           element={
@@ -46,6 +49,7 @@ export default function ExpertAppRoutes() {
           }
         />
 
+        {/* MY CONTENT */}
         <Route
           path="my-content"
           element={
@@ -58,7 +62,7 @@ export default function ExpertAppRoutes() {
           }
         />
 
-        {/* ✅ CHAT ROUTE - INSIDE LAYOUT! */}
+        {/* ✅ LIVE CHAT ROUTES */}
         <Route
           path="chat"
           element={
@@ -71,7 +75,6 @@ export default function ExpertAppRoutes() {
           }
         />
 
-        {/* ✅ CHAT ROOM ROUTE - DYNAMIC PARAMS */}
         <Route
           path="chat/:room_id"
           element={
@@ -80,6 +83,31 @@ export default function ExpertAppRoutes() {
               redirectTo="/expert/home"
             >
               <ExpertChat />
+            </ProtectedExpertRoute>
+          }
+        />
+
+        {/* ✅ NEW: CHAT HISTORY ROUTES */}
+        <Route
+          path="chat-history"
+          element={
+            <ProtectedExpertRoute
+              condition={expertData.expertId}
+              redirectTo="/expert/home"
+            >
+              <ExpertChatHistory />
+            </ProtectedExpertRoute>
+          }
+        />
+
+        <Route
+          path="chat-history/:session_id"
+          element={
+            <ProtectedExpertRoute
+              condition={expertData.expertId}
+              redirectTo="/expert/home"
+            >
+              <ExpertChatHistory />
             </ProtectedExpertRoute>
           }
         />
@@ -140,7 +168,7 @@ export default function ExpertAppRoutes() {
       />
 
       {/* Fallback */}
-      <Route path="*" element={<h1>Expert 404</h1>} />
+      <Route path="*" element={<h1>Expert 404 - Page Not Found</h1>} />
     </Routes>
   );
 }

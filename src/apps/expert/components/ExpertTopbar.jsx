@@ -109,7 +109,7 @@ export default function ExpertTopbar() {
 
   // MOBILE NAV ITEMS
   const mobileNavItems = [
-    { icon: FiHome, label: "Dashboard", path: "/expert/dashboard" },
+    { icon: FiHome, label: "Dashboard", path: "/expert" },
     { icon: FiFileText, label: "My Content", path: "/expert/my-content" },
     { icon: FiCalendar, label: "Calendar", path: "/expert/calendar" },
     { icon: FiBarChart2, label: "Earnings", path: "/expert/earnings" },
@@ -131,7 +131,7 @@ export default function ExpertTopbar() {
             <FiMenu />
           </IconBtn>
 
-          <Brand onClick={() => navigate("/expert/dashboard")}>
+          <Brand onClick={() => navigate("/expert")}>
             <img src={Logo} alt="ExpertYard" />
             ExpertYard
           </Brand>
@@ -167,7 +167,7 @@ export default function ExpertTopbar() {
           </div>
 
           {/* CHATS */}
-          <IconBtn onClick={() => navigate("/expert/chat")} title="Messages">
+          <IconBtn onClick={() => navigate("/expert/chat-history")} title="Messages">
             <FiMessageSquare />
           </IconBtn>
 
@@ -228,7 +228,7 @@ export default function ExpertTopbar() {
         <MobileNavList style={{ paddingBottom: '24px' }}>
           <MobileNavItem
             onClick={() => {
-              navigate("/expert/chat");
+              navigate("/expert/chat-history");
               setMobileMenuOpen(false);
             }}
           >

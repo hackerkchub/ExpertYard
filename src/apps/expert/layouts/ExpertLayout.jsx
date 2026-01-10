@@ -13,7 +13,16 @@ function ExpertLayoutInner() {
   const { expertData } = useExpert();
   const { user: expertUser } = useAuth();
   
-  const expertId = expertData?.expertId || expertUser?.expert_id || expertUser?.id;
+const expertId = Number(
+  expertData?.expert_id ??
+  expertData?.profile?.expert_id ??
+  expertData?.id ??
+  expertUser?.expert_id ??
+  expertUser?.id ??
+  0
+);
+
+
   
   console.log("🔍 ExpertLayout - expertId:", expertId);
 
@@ -30,34 +39,28 @@ function ExpertLayoutInner() {
   /* ===============================
      EXPERT ONLINE STATUS - BULLETPROOF
   =============================== */
-  useEffect(() => {
-    if (!expertId) {
-      console.log("⏳ Waiting for expertId...");
-      return;
-    }
+ useEffect(() => {
+  if (!expertId) return;
 
-    // ✅ STEP 1: Ensure socket connected
-    connectSocket();
-    
-    // ✅ STEP 2: Wait for connection + emit online status
-    const connectTimer = setTimeout(() => {
-      console.log("🟢 EMITTING expert_online:", expertId);
-      socket.emit("expert_online", { expert_id: expertId });
-    }, 500);
+  const emitOnline = () => {
+    console.log("🟢 EXPERT ONLINE:", expertId);
+    socket.emit("expert_online", { expert_id: expertId });
+  };
 
-    // ✅ STEP 3: Heartbeat
-    const handlePing = () => {
-      socket.emit("pong");
-    };
-    socket.on("ping", handlePing);
+  if (socket.connected) {
+    emitOnline();
+  } else {
+    socket.once("connect", emitOnline);
+  }
 
-    return () => {
-      clearTimeout(connectTimer);
-      console.log("🔴 EMITTING expert_offline:", expertId);
-      socket.emit("expert_offline", { expert_id: expertId });
-      socket.off("ping", handlePing);
-    };
-  }, [expertId, connectSocket]);
+  socket.on("ping", () => socket.emit("pong"));
+
+  return () => {
+    socket.emit("expert_offline", { expert_id: expertId });
+    socket.off("ping");
+    socket.off("connect", emitOnline);
+  };
+}, [expertId]);
 
   /* ===============================
      CHAT ACCEPTED → AUTO REDIRECT

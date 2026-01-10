@@ -1,3 +1,5 @@
+// src/apps/admin/styles/expertApproval.jsx
+
 import styled from "styled-components";
 
 export const ProfileImage = styled.img`
@@ -21,13 +23,15 @@ export const ActionsBox = styled.div`
     gap: 6px;
     align-items: center;
     font-size: 14px;
+    border: none;
+    cursor: pointer;
   }
 
   .approve {
-    background: #10b981;
+    background: #10b981; /* green */
   }
 
   .disable {
-    background: #ef4444;
+    background: #ef4444; /* red */
   }
 `;

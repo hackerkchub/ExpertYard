@@ -236,11 +236,17 @@ export default function MyOffer() {
       });
 
       // ✅ Add user's comment to top (including own comment)
+     setPosts(prev =>
+  prev.map(p =>
+    p.post_id === post.post_id
+      ? { ...p, comments_count: p.comments_count + 1 }
+      : p
+  )
+);
       setComments((p) => ({
         ...p,
-        [post.post_id]: [res.data.data, ...(p[post.post_id] || [])]
+        [post.post_id]: [...(p[post.post_id] || []), res.data.data]
       }));
-
       setCommentText((p) => ({ ...p, [post.post_id]: "" }));
     } catch (err) {
       console.error("Add comment error:", err);
@@ -402,16 +408,24 @@ export default function MyOffer() {
                   {/* COMMENTS - Multiple allowed ✅ */}
                   {activeSection === `comments-${post.post_id}` && (
                     <InlineBox>
-                      {(comments[post.post_id] || []).map((c) => (
-                        <InlineComment key={c.id}>
-                          {c.comment}
-                          {c.user_id === userId && (
-                            <span style={{ color: "#9ca3af", fontSize: 11, marginLeft: 8 }}>
-                              You
-                            </span>
-                          )}
-                        </InlineComment>
-                      ))}
+                     {(comments[post.post_id] || [])
+  .filter(c => c && typeof c.comment === "string")
+  .map((c) => (
+    <InlineComment key={c.id}>
+      {c.comment}
+      {c.user_id === userId && (
+        <span
+          style={{
+            color: "#9ca3af",
+            fontSize: 11,
+            marginLeft: 8
+          }}
+        >
+          You
+        </span>
+      )}
+    </InlineComment>
+))}
 
                       <div
                         style={{

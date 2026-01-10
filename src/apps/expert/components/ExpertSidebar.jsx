@@ -28,7 +28,7 @@ export default function ExpertSidebar() {
 
       {/* Premium Navigation */}
       <NavList>
-        <NavItem to="/expert/dashboard" end>
+        <NavItem to="/expert" end>
           <IconWrap>
             <FiHome />
           </IconWrap>

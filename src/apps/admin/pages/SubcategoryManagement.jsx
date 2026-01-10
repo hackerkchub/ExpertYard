@@ -46,7 +46,14 @@ export default function SubCategoryManagement() {
       setLoading(true);
       const response = await getAllSubcategoriesApi();
       const dataArray = response.data || [];
-      setRows(Array.isArray(dataArray) ? dataArray : []);
+
+// ✅ SORT BY SUBCATEGORY ID ASC (1 → N)
+const sortedData = Array.isArray(dataArray)
+  ? [...dataArray].sort((a, b) => a.id - b.id)
+  : [];
+
+setRows(sortedData);
+
     } catch (error) {
       console.error("Error fetching subcategories:", error);
       setRows([]);

@@ -10,15 +10,15 @@ import CallChatExpert from "../pages/CallChat/CallChatExpert";
 import UserAuth from "../pages/UserAuth/UserAuth";
 import WalletPage from "../pages/Wallet/Wallet";
 import Chat from "../pages/Chat/Chat";
+import UserChatHistory from "../pages/chat-history/UserChatHistory"; // ✅ NEW
 import MyOffer from "../pages/MyOffers/MyOffer";
-
 import ProtectedRoute from "./ProtectedRoute";
 
 export default function UserAppRoutes() {
   return (
     <Routes>
       <Route element={<MainLayout />}>
-        {/* PUBLIC */}
+        {/* PUBLIC ROUTES */}
         <Route index element={<HomePage />} />
         <Route path="/experts" element={<ExpertList />} />
         <Route path="/experts/:expertId" element={<ExpertProfile />} />
@@ -26,7 +26,8 @@ export default function UserAppRoutes() {
         <Route path="/auth" element={<UserAuth />} />
         <Route path="/my-offers" element={<MyOffer />} />
 
-        {/* PROTECTED */}
+        {/* PROTECTED ROUTES */}
+        {/* WALLET */}
         <Route
           path="/wallet"
           element={
@@ -36,7 +37,7 @@ export default function UserAppRoutes() {
           }
         />
 
-        {/* ✅ FIXED CHAT ROUTES */}
+        {/* LIVE CHAT ROUTES */}
         <Route
           path="/chat"
           element={
@@ -46,7 +47,6 @@ export default function UserAppRoutes() {
           }
         />
 
-        {/* ✅ DYNAMIC ROOM ROUTE - MOST IMPORTANT! */}
         <Route
           path="/chat/:room_id"
           element={
@@ -55,7 +55,42 @@ export default function UserAppRoutes() {
             </ProtectedRoute>
           }
         />
+
+        {/* ✅ NEW: CHAT HISTORY ROUTES */}
+        <Route
+          path="/chat-history"
+          element={
+            <ProtectedRoute>
+              <UserChatHistory />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/chat-history/:session_id"
+          element={
+            <ProtectedRoute>
+              <UserChatHistory />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ✅ ADD MORE PROTECTED ROUTES HERE IF NEEDED */}
       </Route>
+
+      {/* FALLBACK 404 */}
+      <Route path="*" element={
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          flexDirection: 'column'
+        }}>
+          <h1>404 - Page Not Found</h1>
+          <p>The page you're looking for doesn't exist.</p>
+        </div>
+      } />
     </Routes>
   );
 }

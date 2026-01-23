@@ -5,6 +5,12 @@ const fade = keyframes`
   to { opacity:1; transform:translateY(0); }
 `;
 
+const ring = keyframes`
+  0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
+  70% { box-shadow: 0 0 0 12px rgba(34,197,94,0); }
+  100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+`;
+
 export const Popover = styled.div`
   position: absolute;
   top: 50px;
@@ -19,6 +25,12 @@ export const Popover = styled.div`
   flex-direction: column;
   gap: 8px;
   z-index: 1400;
+`;
+
+export const HeaderRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
 `;
 
 export const TitleRow = styled.div`
@@ -45,6 +57,23 @@ export const MarkAll = styled.button`
     text-decoration: underline;
   }
 `;
+export const Tabs = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+`;
+
+export const Tab = styled.div`
+  flex: 1;
+  padding: 8px;
+  text-align: center;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  background: ${({ active }) => (active ? "#e0e7ff" : "#f8fafc")};
+`;
+
+export const Section = styled.div``;
 
 export const PopItem = styled.div`
   padding: 8px;
@@ -86,6 +115,19 @@ export const ActionBtn = styled.button`
     opacity: 0.9;
   }
 `;
+
+export const RingDot = styled.span`
+  width: 8px;
+  height: 8px;
+  background: #22c55e;
+  border-radius: 50%;
+`;
+
+export const Empty = styled.div`
+  font-size: 12px;
+  color: #94a3b8;
+`;
+
 
 export const Footer = styled.div`
   margin-top: 4px;

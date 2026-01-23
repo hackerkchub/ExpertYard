@@ -53,39 +53,57 @@ export default function Dashboard() {
   });
 
   /* ============================
-     📊 STATS
-  ============================ */
-  const liveRequestsCount = useMemo(
-    () => notifications.filter((n) => n.status === "pending").length,
-    [notifications]
-  );
+   📊 REQUEST COUNTS
+============================ */
 
-  const pendingChatsCount = useMemo(
-    () => notifications.filter((n) => n.status !== "cancelled").length,
-    [notifications]
-  );
+// 🔥 Only CALL requests
+const callRequestsCount = useMemo(
+  () =>
+    notifications.filter(
+      (n) => n.type === "call" && n.status === "pending"
+    ).length,
+  [notifications]
+);
+
+// 🔥 Live = CALL + CHAT (pending)
+const liveRequestsCount = useMemo(
+  () =>
+    notifications.filter(
+      (n) => n.status === "pending"
+    ).length,
+  [notifications]
+);
+
+// 🔥 Pending chats (optional, agar QueueCard me use ho raha ho)
+const pendingChatsCount = useMemo(
+  () =>
+    notifications.filter(
+      (n) => n.type === "chat" && n.status === "pending"
+    ).length,
+  [notifications]
+);
+
 
   const stats = [
-    {
-      label: "Live Requests",
-      value: String(liveRequestsCount),
-      color: "#10b981",
-      trend: liveRequestsCount > 0 ? "+2" : "0",
-    },
-    {
-      label: "Pending Chats",
-      value: String(pendingChatsCount),
-      color: "#f59e0b",
-      trend: "+1",
-    },
-    { label: "Today's Sessions", value: "12", color: "#3b82f6", trend: "+3" },
-    {
-      label: "Month's Earnings",
-      value: "₹4,250",
-      color: "#8b5cf6",
-      trend: "+12%",
-    },
-  ];
+  {
+    label: "Live Requests",
+    value: String(liveRequestsCount),
+    color: "#10b981",
+    trend: liveRequestsCount > 0 ? "+1" : "0",
+  },
+  {
+    label: "Call Requests",
+    value: String(callRequestsCount),
+    color: "#3b82f6",
+    trend: callRequestsCount > 0 ? "+1" : "0",
+  },
+  {
+    label: "Pending Chats",
+    value: String(pendingChatsCount),
+    color: "#f59e0b",
+    trend: pendingChatsCount > 0 ? "+1" : "0",
+  },
+];
 
   /* ============================
      🧠 UI STATES

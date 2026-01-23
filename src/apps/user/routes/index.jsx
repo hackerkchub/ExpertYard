@@ -13,6 +13,9 @@ import Chat from "../pages/Chat/Chat";
 import UserChatHistory from "../pages/chat-history/UserChatHistory"; // ✅ NEW
 import MyOffer from "../pages/MyOffers/MyOffer";
 import ProtectedRoute from "./ProtectedRoute";
+import VoiceCall from "../pages/voice-call/VoiceCall";
+import Categories from "../components/HomeComponent/Categories";
+import SubcategoryPage from "../pages/Subcategory/SubcategoryPage";
 
 export default function UserAppRoutes() {
   return (
@@ -25,7 +28,16 @@ export default function UserAppRoutes() {
         <Route path="/call-chat" element={<CallChatExpert />} />
         <Route path="/auth" element={<UserAuth />} />
         <Route path="/my-offers" element={<MyOffer />} />
-
+        <Route path="/categories" element={<Categories />} />
+                <Route path="/subcategories/:categoryId" element={<SubcategoryPage />} />
+          <Route
+          path="/voice-call/:expertId"
+          element={
+            <ProtectedRoute>
+              <VoiceCall />
+            </ProtectedRoute>
+          }
+        />
         {/* PROTECTED ROUTES */}
         {/* WALLET */}
         <Route

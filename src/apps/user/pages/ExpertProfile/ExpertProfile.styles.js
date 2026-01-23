@@ -1,17 +1,15 @@
 import styled from "styled-components";
 
 /* ---------------- PAGE WRAPPER ---------------- */
-
 export const PageWrap = styled.div`
-  max-width: 860px;
+  max-width: 1000px;
   margin: auto;
-  padding: 26px;
-  background: #f5f7fa;
+  padding: 20px;
+  background: #f8fafc;
   min-height: 100vh;
 `;
 
 /* ---------------- HEADER ---------------- */
-
 export const HeaderBar = styled.div`
   display: flex;
   align-items: center;
@@ -38,250 +36,293 @@ export const BackButton = styled.button`
   }
 `;
 
-/* ---------------- TOP SECTION ---------------- */
-
-export const TopSection = styled.div`
-  background: #ffffffcc;
-  backdrop-filter: blur(6px);
+/* ---------------- MAIN PROFILE CARD ---------------- */
+export const ProfileCard = styled.div`
+  background: #ffffff;
   border-radius: 20px;
-  padding: 22px;
+  padding: 30px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  margin-bottom: 24px;
+`;
+
+export const LeftImage = styled.img`
+  width: 200px;
+  height: 200px;
+  border-radius: 16px;
+  object-fit: cover;
+  border: 4px solid white;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+`;
+
+export const Name = styled.h2`
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #1f2937;
+`;
+
+export const Role = styled.div`
+  font-size: 18px;
+  color: #6b7280;
+  margin-bottom: 12px;
+`;
+
+export const Status = styled.div`
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 20px;
+  color: ${(p) => (p.$online ? "#10b981" : "#9ca3af")};
+`;
+
+/* ---------------- VERIFIED BADGE ---------------- */
+export const VerifiedBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 20px;
+  margin-left: 12px;
+  vertical-align: middle;
+`;
+
+/* ---------------- QUICK STATS ---------------- */
+export const QuickStats = styled.div`
   display: flex;
-  gap: 22px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  gap: 20px;
+  background: #f9fafb;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 20px;
+`;
+
+export const StatItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #4b5563;
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  span {
+    font-weight: 500;
+    white-space: nowrap;
+  }
+`;
+
+/* ---------------- TAG LIST ---------------- */
+export const TagList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+`;
+
+export const Tag = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f3f4f6;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  color: #4b5563;
+  font-weight: 500;
+  border: 1px solid #e5e7eb;
+
+  svg {
+    color: #6b7280;
+  }
+`;
+
+/* ---------------- CALL TO ACTION ---------------- */
+export const CallToAction = styled.div`
+  display: flex;
+  gap: 20px;
+  margin-top: 30px;
+
+  & > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
 
   @media (max-width: 600px) {
     flex-direction: column;
   }
 `;
 
-export const LeftImage = styled.img`
-  width: 160px;
-  height: 160px;
-  border-radius: 16px;
-  object-fit: cover;
-  flex-shrink: 0;
-`;
-
-export const RightInfo = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-`;
-
-export const Name = styled.h2`
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 4px;
-  color: #0f172a;
-`;
-
-export const Role = styled.div`
-  opacity: 0.85;
+export const PriceTag = styled.div`
   font-size: 16px;
+  font-weight: 700;
+  color: #1f40af;
+  text-align: center;
   margin-bottom: 10px;
 `;
 
-export const Status = styled.div`
-  font-weight: 600;
-  margin-bottom: 12px;
-  color: ${(p) => (p.$online ? "#16a34a" : "#64748b")};
-`;
-
-export const MetaRow = styled.div`
-  color: #475569;
-  margin-bottom: 14px;
-  font-size: 15px;
-`;
-
-/* ---------------- PRICE TAGS ---------------- */
-
-export const PriceTag = styled.div`
-  font-size: 14px;
-  font-weight: 600;
-  color: #2563eb;
-  text-align: center;
-  margin-bottom: 6px;
-`;
-
-/* ---------------- ACTION BUTTONS ---------------- */
-
-export const ActionButtons = styled.div`
-  display: flex;
-  gap: 14px;
-  margin-top: auto;
-
-  & > div {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-`;
-
 export const ActionButton = styled.button`
-  padding: 14px;
-  border-radius: 12px;
+  width: 100%;
+  padding: 16px;
+  border-radius: 14px;
   border: none;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
-  transition: 0.25s ease;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 
   background: ${(p) =>
     p.$primary
       ? "linear-gradient(135deg, #2563eb, #1d4ed8)"
-      : "#e2e8f0"};
+      : "linear-gradient(135deg, #10b981, #059669)"};
 
-  color: ${(p) => (p.$primary ? "#fff" : "#0f172a")};
+  color: white;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.2);
 
   &:hover {
-    transform: translateY(-2px);
-    opacity: 0.9;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
   }
 `;
 
-/* ---------------- CONTENT SECTIONS ---------------- */
+/* ---------------- EXPERTISE SECTION ---------------- */
+export const ExpertiseGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-top: 20px;
 
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const ExpertiseCard = styled.div`
+  background: ${(p) => (p.$highlight ? 'linear-gradient(135deg, #f5f3ff, #ede9fe)' : '#ffffff')};
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid ${(p) => (p.$highlight ? '#c4b5fd' : '#e5e7eb')};
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+  }
+`;
+
+/* ---------------- SECTIONS ---------------- */
 export const Section = styled.div`
-  margin-top: 32px;
-  background: #fff;
-  padding: 22px;
-  border-radius: 18px;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+  background: #ffffff;
+  padding: 28px;
+  border-radius: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 `;
 
 export const SectionTitle = styled.h3`
-  font-size: 20px;
-  margin-bottom: 14px;
+  font-size: 24px;
   font-weight: 700;
-  color: #0f172a;
+  margin-bottom: 20px;
+  color: #1f2937;
 `;
 
 export const SectionBody = styled.p`
-  opacity: 0.9;
-  line-height: 1.6;
-  font-size: 15px;
-  color: #334155;
-`;
-
-export const ListItem = styled.div`
-  margin-bottom: 8px;
-  padding-left: 14px;
-  border-left: 3px solid #6366f1;
-  color: #334155;
-  font-size: 15px;
-`;
-
-export const TwoColumn = styled.div`
-  display: flex;
-  gap: 40px;
-  flex-wrap: wrap;
-
-  & > div {
-    flex: 1;
-  }
-`;
-
-/* ---------------- RATINGS ---------------- */
-
-export const RatingRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  line-height: 1.7;
   font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  color: #0f172a;
+  color: #4b5563;
 `;
 
-/* ---------------- REVIEWS ---------------- */
+/* ---------------- REVIEWS SECTION ---------------- */
+export const ReviewSection = styled(Section)`
+  background: #ffffff;
+`;
 
-export const ReviewBox = styled.div`
+export const ReviewHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 20px;
+`;
+
+export const ReviewList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 20px;
 `;
 
 export const ReviewItem = styled.div`
-  background: #f8fafc;
-  padding: 16px;
+  background: #f9fafb;
+  padding: 20px;
   border-radius: 14px;
+  border: 1px solid #e5e7eb;
 `;
 
 export const ReviewUser = styled.div`
-  font-weight: 600;
-  margin-bottom: 6px;
-  font-size: 14px;
-  color: #0f172a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 15px;
+  color: #374151;
 `;
 
 export const ReviewText = styled.div`
-  opacity: 0.85;
-  line-height: 1.5;
-  font-size: 14px;
-  color: #475569;
+  line-height: 1.6;
+  font-size: 15px;
+  color: #6b7280;
 `;
 
-/* ---------------- LEFT SIDE STACK ---------------- */
-
-export const LeftColumn = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-`;
-
-/* ---------------- VERIFIED BADGE ---------------- */
-
-export const VerifiedBadge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: #ecfdf5;
-  color: #059669;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 999px;
-`;
-
-/* ---------------- FOLLOW BUTTON ---------------- */
-
+/* ---------------- FOLLOW & RATING ---------------- */
 export const FollowButton = styled.button`
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 8px 14px;
-  font-size: 14px;
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
   font-weight: 600;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
-  border: 1px solid #e5e7eb;
-  background: ${(p) => (p.$active ? "#ecfdf5" : "#ffffff")};
-  color: ${(p) => (p.$active ? "#059669" : "#0f172a")};
+  border: 2px solid ${(p) => (p.$active ? '#10b981' : '#d1d5db')};
+  background: ${(p) => (p.$active ? '#d1fae5' : '#ffffff')};
+  color: ${(p) => (p.$active ? '#065f46' : '#374151')};
+  margin-top: 12px;
+  transition: all 0.3s ease;
 
   &:hover {
-    background: #f1f5f9;
+    background: ${(p) => (p.$active ? '#a7f3d0' : '#f3f4f6')};
   }
 `;
-
-/* ---------------- MINI RATING ---------------- */
 
 export const MiniRating = styled.div`
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 14px;
+  justify-content: center;
+  gap: 8px;
+  font-size: 16px;
   font-weight: 600;
-  color: #0f172a;
+  color: #1f2937;
+  padding: 8px 0;
 `;
 
-
-// Add these new styled components to your existing styles file
-
+/* ---------------- STAR RATING ---------------- */
 export const StarRating = styled.div`
   display: flex;
-  gap: 4px;
-  margin-left: 8px;
+  gap: 6px;
 `;
 
 export const Star = styled.button`
@@ -289,111 +330,22 @@ export const Star = styled.button`
   border: none;
   cursor: pointer;
   padding: 4px;
-  color: ${(p) => (p.$filled ? "#facc15" : "#d1d5db")};
+  color: ${(p) => (p.$filled ? '#facc15' : '#d1d5db')};
   transition: all 0.2s ease;
   border-radius: 4px;
 
   &:hover {
     color: #facc15;
-    transform: scale(1.1);
+    transform: scale(1.2);
   }
 
   svg {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
   }
 `;
 
-export const UnfollowModal = styled.div`
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(4px);
-
-  > div {
-    background: white;
-    border-radius: 16px;
-    width: min(90vw, 420px);
-    max-width: 420px;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-  }
-`;
-
-// Update existing FollowButton with better hover states
-// export const FollowButton = styled.button`
-//   display: flex;
-//   align-items: center;
-//   gap: 8px;
-//   padding: 12px 18px;
-//   font-size: 14px;
-//   font-weight: 600;
-//   border-radius: 12px;
-//   cursor: pointer;
-//   border: 2px solid;
-//   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-//   font-size: 14px;
-
-//   ${(p) => p.$active
-//     ? `
-//       background: linear-gradient(135deg, #ecfdf5, #d1fae5);
-//       border-color: #10b981;
-//       color: #059669;
-//     `
-//     : `
-//       background: #ffffff;
-//       border-color: #e5e7eb;
-//       color: #0f172a;
-//     `}
-
-//   &:hover {
-//     transform: translateY(-2px);
-//     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-//   }
-
-//   &:active {
-//     transform: translateY(0);
-//   }
-// `;
-
-// // Enhanced ActionButton hover effect
-// export const ActionButton = styled.button`
-//   padding: 16px 20px;
-//   border-radius: 14px;
-//   border: none;
-//   cursor: pointer;
-//   font-size: 15px;
-//   font-weight: 600;
-//   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-//   display: flex;
-//   align-items: center;
-//   gap: 8px;
-
-//   background: ${(p) =>
-//     p.$primary
-//       ? "linear-gradient(135deg, #3b82f6, #1d4ed8)"
-//       : "linear-gradient(135deg, #f8fafc, #f1f5f9)"};
-//   color: ${(p) => (p.$primary ? "#ffffff" : "#0f172a")};
-//   border: ${(p) => (p.$primary ? "none" : "1px solid #e2e8f0")};
-
-//   &:hover {
-//     transform: translateY(-3px);
-//     box-shadow: ${(p) =>
-//       p.$primary
-//         ? "0 12px 30px rgba(59, 130, 246, 0.4)"
-//         : "0 8px 25px rgba(0, 0, 0, 0.08)"};
-//   }
-
-//   &:active {
-//     transform: translateY(-1px);
-//   }
-// `;
-
-
-// Add this to your ExpertProfile.styles.js file
+/* ---------------- NOTIFICATION BADGE ---------------- */
 export const NotificationBadge = styled.div`
   position: absolute;
   top: -4px;
@@ -415,5 +367,346 @@ export const NotificationBadge = styled.div`
   @keyframes pulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.1); }
+  }
+`;
+
+/* ---------------- REMAINING STYLES ---------------- */
+export const TwoColumn = styled.div`
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+
+  & > div {
+    flex: 1;
+  }
+`;
+
+export const ListItem = styled.div`
+  margin-bottom: 8px;
+  padding-left: 14px;
+  border-left: 3px solid #6366f1;
+  color: #334155;
+  font-size: 15px;
+`;
+
+export const RatingRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #1f2937;
+`;
+
+export const ReviewBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+`;
+
+export const LeftColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+export const TopSection = styled.div`
+  /* Deprecated - using ProfileCard instead */
+`;
+
+export const RightInfo = styled.div`
+  /* Deprecated - restructured */
+`;
+
+/* ---------------- REVIEW FORM ---------------- */
+export const ReviewForm = styled.div`
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+`;
+
+export const ReviewFormTitle = styled.h4`
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+export const RatingInput = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+`;
+
+export const RatingLabel = styled.span`
+  font-size: 15px;
+  font-weight: 500;
+  color: #4b5563;
+  white-space: nowrap;
+`;
+
+export const RatingValue = styled.div`
+  font-size: 15px;
+  font-weight: 600;
+  color: ${(p) => (p.$active ? '#1f40af' : '#9ca3af')};
+  background: #f3f4f6;
+  padding: 6px 12px;
+  border-radius: 20px;
+  min-width: 100px;
+  text-align: center;
+`;
+
+export const TextAreaContainer = styled.div`
+  position: relative;
+  margin-bottom: 16px;
+`;
+
+export const ReviewTextarea = styled.textarea`
+  width: 100%;
+  min-height: 120px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid ${(p) => (p.disabled ? '#d1d5db' : '#e5e7eb')};
+  font-size: 15px;
+  resize: vertical;
+  font-family: inherit;
+  background: white;
+  transition: all 0.2s ease;
+  line-height: 1.6;
+
+  &:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  }
+
+  &:disabled {
+    background: #f9fafb;
+    cursor: not-allowed;
+  }
+
+  &::placeholder {
+    color: #9ca3af;
+  }
+`;
+
+export const CharCount = styled.div`
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  font-size: 12px;
+  color: #6b7280;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2px 8px;
+  border-radius: 10px;
+`;
+
+export const FormActions = styled.div`
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+`;
+
+export const SubmitButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: none;
+  background: ${(p) => (p.$disabled ? '#d1d5db' : 'linear-gradient(135deg, #f59e0b, #d97706)')};
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: ${(p) => (p.$disabled ? 'not-allowed' : 'pointer')};
+  transition: all 0.3s ease;
+  min-width: 140px;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
+  }
+
+  svg {
+    margin-right: 4px;
+  }
+`;
+
+export const DeleteButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: 1px solid #fca5a5;
+  background: white;
+  color: #dc2626;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    background: #fee2e2;
+    transform: translateY(-2px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+export const LoginPrompt = styled.div`
+  text-align: center;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  border: 1px dashed #d1d5db;
+  width: 100%;
+
+  p {
+    margin: 0 0 16px 0;
+    color: #6b7280;
+    font-size: 15px;
+  }
+`;
+
+export const LoginButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+  }
+`;
+
+/* ---------------- RECENT REVIEWS ---------------- */
+export const RecentReviewsTitle = styled.h4`
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 32px 0 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+export const LoadingReviews = styled.div`
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+
+  p {
+    margin-top: 16px;
+    font-size: 14px;
+  }
+`;
+
+export const NoReviews = styled.div`
+  text-align: center;
+  padding: 40px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 1px dashed #d1d5db;
+
+  h4 {
+    margin: 16px 0 8px 0;
+    color: #4b5563;
+    font-size: 16px;
+  }
+
+  p {
+    color: #9ca3af;
+    font-size: 14px;
+    margin: 0;
+  }
+`;
+
+export const UserAvatar = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 18px;
+  flex-shrink: 0;
+`;
+
+export const UserInfo = styled.div`
+  flex: 1;
+`;
+
+export const UserName = styled.div`
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 15px;
+`;
+
+export const ReviewMeta = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+`;
+
+export const ReviewDate = styled.div`
+  font-size: 13px;
+  color: #9ca3af;
+`;
+
+export const ViewAllButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px;
+  margin-top: 24px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #4b5563;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   }
 `;

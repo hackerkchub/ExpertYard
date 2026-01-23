@@ -131,7 +131,7 @@ export const StatusDot = styled.span`
   right: 2px;
   width: 12px;
   height: 12px;
-  background: ${(p) => (p.active ? "#10b981" : "#94a3b8")};
+  background: ${props => props.$active ? "green" : "red"};
   border-radius: 50%;
   border: 2px solid white;
   z-index: 2;

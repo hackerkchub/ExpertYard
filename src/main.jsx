@@ -7,6 +7,7 @@ import { WalletProvider } from "./shared/context/WalletContext";
 import { ExpertProvider } from "./shared/context/ExpertContext";
 import { CategoryProvider } from "./shared/context/CategoryContext";
 import { AuthProvider } from "./shared/context/UserAuthContext";
+import { ExpertNotificationsProvider } from "./apps/expert/context/ExpertNotificationsContext"; // ✅ ADD
 
 import { theme } from "./shared/styles/theme";
 import GlobalStyles from "./shared/styles/GlobalStyles";
@@ -30,12 +31,14 @@ if ("serviceWorker" in navigator) {
 
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
+  // <React.StrictMode>
     <ThemeProvider theme={theme}>
       <GlobalStyles />
 
       <CategoryProvider>
         <ExpertProvider>
+           <ExpertNotificationsProvider>
+
           <BrowserRouter>
             <AuthProvider>
               <WalletProvider>
@@ -43,9 +46,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               </WalletProvider>
             </AuthProvider>
           </BrowserRouter>
+           </ExpertNotificationsProvider>
         </ExpertProvider>
       </CategoryProvider>
 
     </ThemeProvider>
-  </React.StrictMode>
+  // </React.StrictMode>
 );

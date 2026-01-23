@@ -59,12 +59,14 @@ export default function ExpertTopbar() {
 
   // NOTIFICATIONS HOOK
   const {
-    notifications,
-    unreadCount,
-    markAllRead,
-    acceptRequest,
-    declineRequest,
-  } = useExpertNotifications();
+  notifications,
+  unreadCount,
+  markAllRead,
+  acceptChatRequest,
+  declineChatRequest,
+  acceptCall,
+  rejectCall,
+} = useExpertNotifications();
 
   // LOGOUT
   const handleLogout = () => {
@@ -155,15 +157,43 @@ export default function ExpertTopbar() {
               <FiBell />
               {unreadCount > 0 && <UnreadDot />}
             </IconBtn>
-            {showNotif && (
-              <NotificationPopover
-                notifications={notifications}
-                unreadCount={unreadCount}
-                markAllRead={markAllRead}
-                onAccept={acceptRequest}
-                onDecline={declineRequest}
-              />
-            )}
+           {showNotif && (
+  <NotificationPopover
+    notifications={notifications}
+    unreadCount={unreadCount}
+    markAllRead={markAllRead}
+
+    onAccept={(n) => {
+      // CHAT REQUEST
+      if (n.type === "chat_request") {
+        acceptChatRequest(n.id);
+      }
+
+      // VOICE CALL
+      if (n.type === "voice_call") {
+        acceptCall(n.payload.callId);
+        navigate(`/expert/voice-call/${n.payload.callId}`);
+      }
+
+      setShowNotif(false);
+    }}
+
+    onDecline={(n) => {
+      // CHAT REQUEST
+      if (n.type === "chat_request") {
+        declineChatRequest(n.id);
+      }
+
+      // VOICE CALL
+      if (n.type === "voice_call") {
+        rejectCall(n.payload.callId);
+      }
+
+      setShowNotif(false);
+    }}
+  />
+)}
+
           </div>
 
           {/* CHATS */}

@@ -59,9 +59,18 @@ const ExpertChat = () => {
   const messagesEndRef = useRef(null);
   const timerIntervalRef = useRef(null);
 
-  const { user: loggedInUser } = useAuth();
+  // const { user: loggedInUser } = useAuth();
   const { expert, expertPrice } = useExpert();
-  const { notifications } = useExpertNotifications();
+  // const { notifications } = useExpertNotifications();
+
+  const expertId = useMemo(() => {
+  return (
+    expert?.id ||
+    expert?.expert_id ||
+    chatData?.expert_id ||
+    null
+  );
+}, [expert, chatData]);
 
   /* ========= HELPER: CURRENT EXPERT ID ========= */
   const getCurrentExpertId = useCallback(() => {
@@ -233,7 +242,8 @@ const ExpertChat = () => {
     if (!room_id || !socket) return;
 
     const roomId = room_id;
-    socket.emit("join_chat", { room_id: roomId });
+    socket.emit("join_room", { room_id });
+
 
     const handleNewMessage = (msgData) => {
       if (msgData.room_id === roomId) {
@@ -277,16 +287,17 @@ const ExpertChat = () => {
     };
 
     socket.on("message", handleNewMessage);
-    socket.on("message_sent", handleNewMessage);
-    socket.on("chat_updated", handleChatUpdate);
+    // socket.on("message_sent", handleNewMessage);
+   
     socket.on("chat_ended", handleChatEnded);
 
     return () => {
       socket.off("message", handleNewMessage);
-      socket.off("message_sent", handleNewMessage);
-      socket.off("chat_updated", handleChatUpdate);
+      // socket.off("message_sent", handleNewMessage);
+      
       socket.off("chat_ended", handleChatEnded);
-      socket.emit("leave_chat", { room_id: roomId });
+     socket.emit("leave_room", { room_id });
+
 
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     };
@@ -307,24 +318,38 @@ const ExpertChat = () => {
     };
     init();
 
-    const interval = setInterval(fetchAllChats, 30000);
+    const interval = setInterval(fetchAllChats, null || 30000);
     return () => clearInterval(interval);
   }, [fetchChatDetails, fetchAllChats]);
 
   /* ========= SEND MESSAGE ========= */
-  const handleSendMessage = useCallback(() => {
-    if (!message.trim() || !chatData?.is_active || !room_id) return;
+ const handleSendMessage = () => {
+if (!message.trim() || !room_id || !expertId) return;
 
-    const payload = {
-      room_id,
+
+  setMessages(prev => [
+    ...prev,
+    {
+      id: Date.now(),
       sender_type: "expert",
-      sender_id: chatData.expert_id,
+      sender_id: expertId,
       message: message.trim(),
-    };
+      time: new Date().toLocaleTimeString([], {
+  hour: "2-digit",
+  minute: "2-digit",
+}),
 
-    socket.emit("sendMessage", payload);
-    setMessage("");
-  }, [message, chatData, room_id]);
+    }
+  ]);
+
+  socket.emit("sendMessage", {
+    room_id,
+    message: message.trim(),
+  });
+
+  setMessage("");
+};
+
 
   const handleKeyPress = useCallback(
     (e) => {
@@ -335,6 +360,12 @@ const ExpertChat = () => {
     },
     [handleSendMessage]
   );
+
+  const formatTime = (date) =>
+  new Date(date).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   /* ========= SELECTED USER ========= */
   const selectedUser = useMemo(() => {

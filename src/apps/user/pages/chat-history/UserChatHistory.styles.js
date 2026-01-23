@@ -4,7 +4,7 @@ import styled from 'styled-components';
 export const PageContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 80px;
   background: #f8fafc;
   min-height: 100vh;
 `;
@@ -339,4 +339,158 @@ export const ModalContent = styled.div`
     border-radius: 14px;
     max-height: calc(100vh - 20px);
   }
+`;
+
+// Add these to existing styles file
+export const SearchBar = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  border-radius: 12px;
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  margin-top: 16px;
+
+  input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+  }
+`;
+
+export const SessionCard = styled.div`
+  background: #fefefe;
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .session-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .date {
+    font-weight: 600;
+    color: #0f172a;
+    font-size: 14px;
+  }
+
+  .rate {
+    color: #475569;
+    font-size: 13px;
+  }
+
+  .duration {
+    color: #64748b;
+    font-size: 12px;
+  }
+
+  .amount {
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 18px;
+    text-align: right;
+  }
+`;
+
+export const ActionButtons = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+export const ActionButton = styled.button`
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #3b82f6; /* Blue as requested */
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #2563eb;
+  }
+`;
+
+// Add these new styles for REAL CHAT MODAL
+export const ChatHeaderBar = styled.div`
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+export const ChatAvatar = styled.img`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+`;
+
+export const ChatMessagesArea = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  max-height: calc(80vh - 140px);
+`;
+
+export const ChatMessageBubble = styled.div`
+  margin-bottom: 16px;
+  max-width: 70%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  position: relative;
+  
+  ${props => props.isExpert ? `
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+  ` : `
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    margin-right: auto;
+    border-bottom-left-radius: 4px;
+  `}
+
+  .message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    font-size: 12px;
+    
+    strong {
+      font-weight: 600;
+      ${props => props.isExpert ? 'color: #f8fafc;' : 'color: #1e293b;'}
+    }
+    
+    .message-time {
+      opacity: 0.8;
+    }
+  }
+  
+  .message-content {
+    font-size: 14px;
+    line-height: 1.4;
+    word-wrap: break-word;
+  }
+`;
+
+export const ChatInputArea = styled.div`
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
 `;

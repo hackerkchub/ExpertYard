@@ -1,115 +1,101 @@
-import React, { useState, useEffect, useCallback } from "react";
+// src/apps/expert/layout/ExpertLayout.jsx
+import React, { useEffect, useMemo } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import ExpertSidebar from "../components/ExpertSidebar"; // Desktop only
-import ExpertTopbar from "../components/ExpertTopbar";   // Handles mobile completely
+
+import ExpertSidebar from "../components/ExpertSidebar";
+import ExpertTopbar from "../components/ExpertTopbar";
 import { LayoutWrapper, ContentWrapper } from "./expertLayout.styles";
+
 import { ExpertProvider, useExpert } from "../../../shared/context/ExpertContext";
 import { useAuth } from "../../../shared/context/UserAuthContext";
 import { socket } from "../../../shared/api/socket";
-import { ExpertNotificationsProvider } from "../context/ExpertNotificationsContext"; 
 
+import { ExpertNotificationsProvider } from "../context/ExpertNotificationsContext";
+
+/* =====================================================
+   INNER LAYOUT
+===================================================== */
 function ExpertLayoutInner() {
   const navigate = useNavigate();
   const { expertData } = useExpert();
-  const { user: expertUser } = useAuth();
-  
-const expertId = Number(
-  expertData?.expert_id ??
-  expertData?.profile?.expert_id ??
-  expertData?.id ??
-  expertUser?.expert_id ??
-  expertUser?.id ??
-  0
-);
+  const { user: authUser } = useAuth();
 
+  /* ----------------------------------
+     ✅ SINGLE SOURCE EXPERT ID
+  ---------------------------------- */
+  const expertId = useMemo(() => {
+    return Number(
+      expertData?.expertId ||
+      expertData?.profile?.expert_id ||
+      authUser?.expert_id ||
+      0
+    );
+  }, [expertData, authUser]);
 
-  
-  console.log("🔍 ExpertLayout - expertId:", expertId);
+  /* ----------------------------------
+     🔌 EXPERT SOCKET REGISTER (ONLY HERE)
+  ---------------------------------- */
+  useEffect(() => {
+    if (!expertId) return;
 
-  /* ===============================
-     SOCKET CONNECTION MANAGER
-  =============================== */
-  const connectSocket = useCallback(() => {
+    const onConnect = () => {
+      console.log("🟢 EXPERT SOCKET CONNECTED");
+
+      socket.emit("register", {
+        userId: expertId,
+        role: "expert",
+      });
+
+      console.log("🟢 EXPERT REGISTERED:", expertId);
+    };
+
+    socket.on("connect", onConnect);
+
+    // ✅ socket.js already has auth token
     if (!socket.connected) {
-      console.log("🔌 FORCING socket connect...");
       socket.connect();
     }
-  }, []);
 
-  /* ===============================
-     EXPERT ONLINE STATUS - BULLETPROOF
-  =============================== */
- useEffect(() => {
-  if (!expertId) return;
+    return () => {
+      socket.off("connect", onConnect);
+    };
+  }, [expertId]);
 
-  const emitOnline = () => {
-    console.log("🟢 EXPERT ONLINE:", expertId);
-    socket.emit("expert_online", { expert_id: expertId });
-  };
-
-  if (socket.connected) {
-    emitOnline();
-  } else {
-    socket.once("connect", emitOnline);
-  }
-
-  socket.on("ping", () => socket.emit("pong"));
-
-  return () => {
-    socket.emit("expert_offline", { expert_id: expertId });
-    socket.off("ping");
-    socket.off("connect", emitOnline);
-  };
-}, [expertId]);
-
-  /* ===============================
-     CHAT ACCEPTED → AUTO REDIRECT
-  =============================== */
+  /* ----------------------------------
+     🚀 CHAT ACCEPT → AUTO REDIRECT
+  ---------------------------------- */
   useEffect(() => {
-    const handleChatStarted = ({ room_id, user_id }) => {
-      console.log("🚀 AUTO REDIRECT → /expert/chat/", room_id);
+    const handleChatStarted = ({ room_id }) => {
       navigate(`/expert/chat/${room_id}`, { replace: true });
     };
 
     socket.on("chat_started", handleChatStarted);
-    return () => {
-      socket.off("chat_started", handleChatStarted);
-    };
+    return () => socket.off("chat_started", handleChatStarted);
   }, [navigate]);
 
-  /* ===============================
-     GLOBAL ERROR HANDLING
-  =============================== */
+  /* ----------------------------------
+     ❌ SOCKET DEBUG LOGS
+  ---------------------------------- */
   useEffect(() => {
-    const handleSocketError = (error) => {
-      console.error("❌ Socket error:", error);
-    };
+    const onError = (e) =>
+      console.error("❌ Socket error:", e?.message || e);
 
-    const handleDisconnect = (reason) => {
-      console.log("🔴 Socket disconnected:", reason);
-    };
+    const onDisconnect = (r) =>
+      console.warn("🔴 Socket disconnected:", r);
 
-    socket.on("connect_error", handleSocketError);
-    socket.on("disconnect", handleDisconnect);
+    socket.on("connect_error", onError);
+    socket.on("disconnect", onDisconnect);
 
     return () => {
-      socket.off("connect_error", handleSocketError);
-      socket.off("disconnect", handleDisconnect);
+      socket.off("connect_error", onError);
+      socket.off("disconnect", onDisconnect);
     };
   }, []);
 
-  /* ===============================
-     RESPONSIVE LAYOUT - NO PROPS NEEDED
-  =============================== */
   return (
     <LayoutWrapper>
-      {/* ✅ Topbar: Handles ALL mobile menu logic */}
       <ExpertTopbar />
-      
-      {/* ✅ Sidebar: Desktop ONLY (1024px+) */}
       <ExpertSidebar />
-      
-      {/* ✅ Content: Perfect responsive spacing */}
       <ContentWrapper>
         <Outlet />
       </ContentWrapper>
@@ -117,12 +103,15 @@ const expertId = Number(
   );
 }
 
+/* =====================================================
+   ROOT EXPORT
+===================================================== */
 export default function ExpertLayout() {
   return (
     <ExpertProvider>
-      <ExpertNotificationsProvider>
+      {/* <ExpertNotificationsProvider> */}
         <ExpertLayoutInner />
-      </ExpertNotificationsProvider>
+      {/* </ExpertNotificationsProvider> */}
     </ExpertProvider>
   );
 }

@@ -1,5 +1,5 @@
 // src/apps/user/pages/chat/Chat.jsx - ✅ FIXED Wallet Balance Check + Auto-Deduct
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback,useLayoutEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiPaperclip, FiImage, FiVideo, FiFile, FiX } from "react-icons/fi";
 import { IoMdSend } from "react-icons/io";
@@ -239,25 +239,36 @@ const handleEndChat = useCallback(() => {
     if (!room_id || !socket) return;
 
     console.log(`🔌 User joining room: ${room_id}`);
-    socket.emit("join_chat", { room_id });
+    socket.emit("join_room", { room_id });
 
-    const handleNewMessage = (msgData) => {
-      if (msgData.room_id === room_id) {
-        setMessages(prev => {
-          const exists = prev.some(m => m.id === msgData.id);
-          if (exists) return prev;
-          return [...prev, {
-            id: msgData.id || Date.now() + Math.random(),
-            sender_type: msgData.sender_type,
-            sender_id: msgData.sender_id,
-            message: msgData.message,
-            time: new Date(msgData.time).toLocaleTimeString('en-US', { 
-              hour: '2-digit', minute: '2-digit', hour12: true 
-            })
-          }];
-        });
-      }
-    };
+   const handleNewMessage = (msgData) => {
+  if (msgData.room_id !== room_id) return;
+
+  setMessages(prev => {
+    if (
+      prev.some(
+        m =>
+          m.id === msgData.id ||
+          (msgData.client_id && m.client_id === msgData.client_id)
+      )
+    ) {
+      return prev;
+    }
+
+    return [...prev, {
+      id: msgData.id,
+      client_id: msgData.client_id,
+      sender_type: msgData.sender_type,
+      sender_id: msgData.sender_id,
+      message: msgData.message,
+      time: new Date(msgData.time).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    }];
+  });
+};
+
 
     const handleChatUpdate = ({ room_id: updatedRoomId }) => {
       if (updatedRoomId === room_id) {
@@ -275,16 +286,16 @@ const handleEndChat = useCallback(() => {
 
 
     socket.on("message", handleNewMessage);
-    socket.on("message_sent", handleNewMessage);
+    // socket.on("message_sent", handleNewMessage);
     socket.on("chat_updated", handleChatUpdate);
     socket.on("chat_ended", handleChatEnded);
 
     return () => {
       socket.off("message", handleNewMessage);
-      socket.off("message_sent", handleNewMessage);
+      // socket.off("message_sent", handleNewMessage);
       socket.off("chat_updated", handleChatUpdate);
       socket.off("chat_ended", handleChatEnded);
-      socket.emit("leave_chat", { room_id });
+      socket.emit("leave_room", { room_id });
     };
   }, [room_id, fetchChatDetails]);
 
@@ -326,14 +337,15 @@ const handleEndChat = useCallback(() => {
     }
   }, [sessionActive, chatData, timerRunning]);
 
-  // Auto-scroll
-  useEffect(() => {
-    setTimeout(() => {
-      scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-    }, 6000);
-  }, [messages]);
+ useLayoutEffect(() => {
+  if (!scrollRef.current) return;
 
-  // Initial load
+  scrollRef.current.scrollIntoView({
+    behavior: "smooth",
+    block: "end",
+  });
+}, [messages.length]);
+
   useEffect(() => {
     fetchChatDetails();
     const interval = setInterval(fetchChatDetails, null || 100); // Refresh every 30s
@@ -341,18 +353,29 @@ const handleEndChat = useCallback(() => {
   }, [fetchChatDetails]);
 
   const sendMessage = useCallback(() => {
-    if (!input.trim() || !chatData || !room_id || !sessionActive || timeLeft <= 0) return;
+  if (!input.trim() || !room_id) return;
 
-    const payload = {
-      room_id,
+  const tempId = Date.now();
+
+  // ✅ INSTANT UI UPDATE
+  setMessages(prev => [
+    ...prev,
+    {
+      id: tempId,
       sender_type: "user",
-      sender_id: user?.id || chatData.user_id,
-      message: input.trim()
-    };
+      sender_id: user.id,
+      message: input.trim(),
+      time: new Date().toLocaleTimeString(),
+    }
+  ]);
 
-    socket.emit("sendMessage", payload);
-    setInput("");
-  }, [input, chatData, room_id, sessionActive, timeLeft, user?.id]);
+  socket.emit("sendMessage", {
+    room_id,
+    message: input.trim(),
+  });
+
+  setInput("");
+}, [input, room_id, user?.id]);
 
   const handleKeyPress = useCallback((e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -393,7 +416,7 @@ const handleEndChat = useCallback(() => {
               <ExpertInfo>
                 <AvatarWrapper>
                   <Avatar src={expertInfo.avatar} alt={expertInfo.name} />
-                  <StatusDot active={sessionActive && timeLeft > 0 && !walletLoading} />
+                  {/* <StatusDot active={sessionActive && timeLeft > 0 && !walletLoading} /> */}
                 </AvatarWrapper>
                 <div>
                   <div className="expert-name">

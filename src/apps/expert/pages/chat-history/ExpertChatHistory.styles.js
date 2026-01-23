@@ -63,50 +63,22 @@ export const StatsCard = styled.div`
   }
 `;
 
-export const SearchBar = styled.input`
-  flex: 1;
-  padding: 12px 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 14px;
-  transition: all 0.2s;
-  
-  &:focus {
-    outline: none;
-    border-color: #8b5cf6;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-  }
-  
-  &::placeholder {
-    color: #94a3b8;
-  }
-`;
-
-export const FilterButtons = styled.div`
+// ✅ UPDATED: SearchBar as DIV container (matches UserChatHistory exactly)
+export const SearchBar = styled.div`
   display: flex;
-  gap: 8px;
-  
-  button {
-    padding: 10px 20px;
-    border: 2px solid #e2e8f0;
-    background: white;
-    border-radius: 8px;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  border-radius: 12px;
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  margin-top: 16px;
+
+  input {
+    flex: 1;
+    border: none;
+    outline: none;
     font-size: 14px;
-    font-weight: 500;
-    color: #64748b;
-    cursor: pointer;
-    transition: all 0.2s;
-    
-    &:hover {
-      border-color: #cbd5e1;
-      color: #475569;
-    }
-    
-    &.active {
-      background: #8b5cf6;
-      border-color: #8b5cf6;
-      color: white;
-    }
   }
 `;
 
@@ -172,37 +144,11 @@ export const ChatMeta = styled.div`
   svg {
     margin-right: 4px;
   }
-`;
-
-export const ChatPreview = styled.div`
-  font-size: 14px;
-  color: #475569;
-  line-height: 1.5;
-  background: #f8fafc;
-  padding: 12px;
-  border-radius: 8px;
-  margin-top: 8px;
-`;
-
-export const ChatDetails = styled.div`
-  margin-top: 16px;
-  font-size: 14px;
-  color: #475569;
-`;
-
-export const LoadMoreButton = styled.button`
-  width: 100%;
-  padding: 16px;
-  background: #f8fafc;
-  border: none;
-  border-top: 1px solid #e2e8f0;
-  color: #8b5cf6;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
   
-  &:hover {
-    background: #e2e8f0;
+  // ✅ Earnings styling (purple highlight)
+  span:last-child {
+    color: #7c3aed !important;
+    font-weight: 700 !important;
   }
 `;
 
@@ -262,7 +208,23 @@ export const ModalOverlay = styled.div`
   padding: 16px;
 `;
 
+export const ModalContent = styled.div`
+  background: #ffffff;
+  color: #0f172a;
+  border-radius: 16px;
+  width: min(900px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  display: flex;
+  flex-direction: column;
 
+  @media (max-width: 520px) {
+    border-radius: 14px;
+    max-height: calc(100vh - 20px);
+  }
+`;
 
 export const MessagesArea = styled.div`
   flex: 1;
@@ -281,25 +243,18 @@ export const MessageBubble = styled.div`
   
   .message-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     
-    > div {
-      flex: 1;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      
-      strong {
-        font-size: 14px;
-        color: ${props => props.isExpert ? '#7c3aed' : '#475569'};
-      }
-      
-      .message-time {
-        font-size: 12px;
-        color: #94a3b8;
-      }
+    strong {
+      font-size: 14px;
+      color: ${props => props.isExpert ? '#7c3aed' : '#475569'};
+    }
+    
+    .message-time {
+      font-size: 12px;
+      color: #94a3b8;
     }
   }
   
@@ -307,10 +262,10 @@ export const MessageBubble = styled.div`
     font-size: 14px;
     color: #334155;
     line-height: 1.5;
-    margin-left: 40px;
   }
 `;
 
+// ✅ NEW: SessionsWrap (grid container)
 export const SessionsWrap = styled.div`
   margin-top: 12px;
   border-top: 1px solid #e2e8f0;
@@ -319,87 +274,63 @@ export const SessionsWrap = styled.div`
   gap: 10px;
 `;
 
-export const SessionRow = styled.button`
-  width: 100%;
-  text-align: left;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  padding: 12px 14px;
+// ✅ NEW: SessionCard (main session display - matches UserChatHistory)
+export const SessionCard = styled.div`
+  background: #fefefe;
+  border: 1px solid #f1f5f9;
   border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-
-  &:hover {
-    border-color: #cbd5e1;
-    transform: translateY(-1px);
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
-  }
-`;
-
-export const TwoCol = styled.div`
+  padding: 16px;
+  margin-bottom: 12px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 12px;
 
-  .title {
-    font-weight: 700;
+  .session-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .date {
+    font-weight: 600;
     color: #0f172a;
     font-size: 14px;
   }
 
-  .sub {
-    margin-top: 2px;
+  .duration {
     color: #64748b;
     font-size: 12px;
-  }
-
-  .right {
-    text-align: right;
-    min-width: 96px;
   }
 
   .amount {
     font-weight: 800;
     color: #0f172a;
-    font-size: 14px;
-  }
-
-  @media (max-width: 520px) {
-    flex-direction: column;
-    align-items: flex-start;
-
-    .right {
-      text-align: left;
-      min-width: auto;
-    }
+    font-size: 18px;
+    text-align: right;
   }
 `;
 
-// small mobile polish
-export const ModalContent = styled.div`
-  background: #ffffff;
-  color: #0f172a; /* FIX: force visible text */
-  border-radius: 16px;
-  width: min(900px, 100%);
-  max-height: calc(100vh - 32px);
-  overflow: hidden;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
-  border: 1px solid rgba(148, 163, 184, 0.35);
+// ✅ NEW: ActionButton (View Chat only - purple theme)
+export const ActionButton = styled.button`
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #8b5cf6;
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 12px;
 
-  display: flex;
-  flex-direction: column;
-
-  h3 {
-    color: #0f172a;
-  }
-
-  p {
-    color: #475569;
-  }
-
-  @media (max-width: 520px) {
-    border-radius: 14px;
-    max-height: calc(100vh - 20px);
+  &:hover {
+    background: #7c3aed;
   }
 `;
+
+// ✅ REMOVED unused components:
+// - FilterButtons (no date filtering needed)
+// - SessionRow (using SessionCard instead)
+// - TwoCol (using flex layout in SessionCard)
+// - ChatPreview, ChatDetails, LoadMoreButton (not used)

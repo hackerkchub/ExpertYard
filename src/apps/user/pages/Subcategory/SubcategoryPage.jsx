@@ -8,6 +8,7 @@ import { getExpertFollowersApi } from "../../../../shared/api/expertApi/follower
 import { getReviewsByExpertApi } from "../../../../shared/api/expertApi/reviews.api";
 import ExpertCard from "../../components/userExperts/ExpertCard";
 import "./SubcategoryPage.css";
+import useChatRequest from "../../../../shared/hooks/useChatRequest";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/150?img=12";
 
@@ -21,6 +22,9 @@ const SubcategoryPage = () => {
     loadSubCategories,
     loading: categoryLoading,
   } = useCategory();
+
+  const { startChat, ChatPopups } = useChatRequest();
+
 
   const [activeSubCategory, setActiveSubCategory] = useState(null);
   const [experts, setExperts] = useState([]);
@@ -54,7 +58,7 @@ const SubcategoryPage = () => {
     }
     
     loadSubCategories(categoryId);
-    setPrevCategoryId(categoryId);
+    // setPrevCategoryId(categoryId);
   }, [categoryId, prevCategoryId, loadSubCategories]);
 
   useEffect(() => {
@@ -63,54 +67,87 @@ const SubcategoryPage = () => {
     }
   }, [categoryId, prevCategoryId, resetStateForNewCategory]);
 
-  useEffect(() => {
-    if (categoryId && prevCategoryId === categoryId) {
-      localStorage.setItem(`subcategory_${categoryId}`, activeSubCategory);
-      localStorage.setItem(`experts_${categoryId}`, JSON.stringify(experts));
-      localStorage.setItem(`expertDetails_${categoryId}`, JSON.stringify(expertDetails));
-      localStorage.setItem(`sortBy_${categoryId}`, sortBy);
-      localStorage.setItem(`selectedSubcategory_${categoryId}`, selectedSubcategory);
-    }
-  }, [categoryId, activeSubCategory, experts, expertDetails, sortBy, prevCategoryId, selectedSubcategory]);
+  // useEffect(() => {
+  //   if (categoryId && prevCategoryId === categoryId) {
+  //     localStorage.setItem(`subcategory_${categoryId}`, activeSubCategory);
+  //     localStorage.setItem(`experts_${categoryId}`, JSON.stringify(experts));
+  //     localStorage.setItem(`expertDetails_${categoryId}`, JSON.stringify(expertDetails));
+  //     localStorage.setItem(`sortBy_${categoryId}`, sortBy);
+  //     localStorage.setItem(`selectedSubcategory_${categoryId}`, selectedSubcategory);
+  //   }
+  // }, [categoryId, activeSubCategory, experts, expertDetails, sortBy, prevCategoryId, selectedSubcategory]);
+
+  // useEffect(() => {
+  //   if (categoryId && !categoryLoading && subCategories.length > 0) {
+  //     const savedSubCategory = localStorage.getItem(`selectedSubcategory_${categoryId}`);
+  //     const savedExperts = localStorage.getItem(`experts_${categoryId}`);
+  //     const savedExpertDetails = localStorage.getItem(`expertDetails_${categoryId}`);
+  //     const savedSortBy = localStorage.getItem(`sortBy_${categoryId}`);
+  //     const savedSelectedSubcategory = localStorage.getItem(`selectedSubcategory_${categoryId}`);
+      
+  //     const navigationState = location.state;
+  //     const isBackNavigation = navigationState?.fromBack || false;
+      
+  //     if (savedSubCategory && savedExperts && savedExpertDetails && !isBackNavigation) {
+  //       console.log("Loading saved state for category:", categoryId);
+  //       const savedActiveSubCat = parseInt(savedSubCategory);
+  //       setActiveSubCategory(savedActiveSubCat);
+  //       setExperts(JSON.parse(savedExperts));
+  //       setExpertDetails(JSON.parse(savedExpertDetails));
+  //       if (savedSortBy) setSortBy(savedSortBy);
+  //       if (savedSelectedSubcategory) {
+  //         setSelectedSubcategory(parseInt(savedSelectedSubcategory));
+  //       } else {
+  //         setSelectedSubcategory(savedActiveSubCat);
+  //       }
+  //     } else {
+  //       const firstSubCategory = subCategories[0];
+  //        let defaultId;
+
+  // if (saved) {
+  //   defaultId = Number(saved);
+  // } else {
+  //   defaultId = subCategories[0]?.id;
+  // }
+  // setSelectedSubcategory(defaultId);
+  // setActiveSubCategory(defaultId);
+  //       if (firstSubCategory) {
+  //         const firstId = firstSubCategory.id;
+  //         setActiveSubCategory(firstId);
+  //         setSelectedSubcategory(firstId);
+          
+  //         localStorage.removeItem(`subcategory_${categoryId}`);
+  //         localStorage.removeItem(`experts_${categoryId}`);
+  //         localStorage.removeItem(`expertDetails_${categoryId}`);
+  //         localStorage.removeItem(`selectedSubcategory_${categoryId}`);
+  //       }
+  //     }
+  //   }
+  // }, [categoryId, subCategories, categoryLoading, location.state]);
+
+ useEffect(() => {
+  if (!categoryId || subCategories.length === 0) return;
+
+  const savedId = localStorage.getItem(`selectedSubcategory_${categoryId}`);
+
+  const firstId = subCategories[0]?.id;
+
+  const defaultId = savedId ? Number(savedId) : firstId;
+
+  if (defaultId) {
+    setSelectedSubcategory(defaultId);
+    setActiveSubCategory(defaultId);
+  }
+}, [categoryId, subCategories]);
 
   useEffect(() => {
-    if (categoryId && !categoryLoading && subCategories.length > 0) {
-      const savedSubCategory = localStorage.getItem(`subcategory_${categoryId}`);
-      const savedExperts = localStorage.getItem(`experts_${categoryId}`);
-      const savedExpertDetails = localStorage.getItem(`expertDetails_${categoryId}`);
-      const savedSortBy = localStorage.getItem(`sortBy_${categoryId}`);
-      const savedSelectedSubcategory = localStorage.getItem(`selectedSubcategory_${categoryId}`);
-      
-      const navigationState = location.state;
-      const isBackNavigation = navigationState?.fromBack || false;
-      
-      if (savedSubCategory && savedExperts && savedExpertDetails && !isBackNavigation) {
-        console.log("Loading saved state for category:", categoryId);
-        const savedActiveSubCat = parseInt(savedSubCategory);
-        setActiveSubCategory(savedActiveSubCat);
-        setExperts(JSON.parse(savedExperts));
-        setExpertDetails(JSON.parse(savedExpertDetails));
-        if (savedSortBy) setSortBy(savedSortBy);
-        if (savedSelectedSubcategory) {
-          setSelectedSubcategory(parseInt(savedSelectedSubcategory));
-        } else {
-          setSelectedSubcategory(savedActiveSubCat);
-        }
-      } else {
-        const firstSubCategory = subCategories[0];
-        if (firstSubCategory) {
-          const firstId = firstSubCategory.id;
-          setActiveSubCategory(firstId);
-          setSelectedSubcategory(firstId);
-          
-          localStorage.removeItem(`subcategory_${categoryId}`);
-          localStorage.removeItem(`experts_${categoryId}`);
-          localStorage.removeItem(`expertDetails_${categoryId}`);
-          localStorage.removeItem(`selectedSubcategory_${categoryId}`);
-        }
-      }
-    }
-  }, [categoryId, subCategories, categoryLoading, location.state]);
+  if (selectedSubcategory && categoryId) {
+    localStorage.setItem(
+      `selectedSubcategory_${categoryId}`,
+      selectedSubcategory
+    );
+  }
+}, [selectedSubcategory, categoryId]);
 
   useEffect(() => {
     if (subCategories.length > 0) {
@@ -208,11 +245,12 @@ const SubcategoryPage = () => {
     }
   }, [categoryId]);
 
-  useEffect(() => {
-    if (selectedSubcategory && categoryId && categoryId === prevCategoryId) {
-      loadExpertsForSubcategory(selectedSubcategory);
-    }
-  }, [selectedSubcategory, categoryId, prevCategoryId, loadExpertsForSubcategory]);
+ useEffect(() => {
+  if (selectedSubcategory && categoryId) {
+    loadExpertsForSubcategory(selectedSubcategory);
+  }
+}, [selectedSubcategory, categoryId]);
+
 
   const handleSubCategoryClick = (subCategoryId) => {
     if (subCategoryId === selectedSubcategory) return;
@@ -529,11 +567,18 @@ const SubcategoryPage = () => {
               <>
                 <div className="experts-grid">
                   {filteredAndSortedExperts.map((expert) => (
-                    <ExpertCard
-                      key={expert.id}
-                      data={expert}
-                      mode="chat"
-                    />
+                  <ExpertCard
+  key={expert.id}
+  data={expert}
+  mode="chat"
+  onViewProfile={() => navigate(`/user/expert/${expert.id}`)}
+  onStartChat={() =>
+    startChat({
+      expertId: expert.id,
+      chatPrice: expert.chatPrice,
+    })
+  }
+/>
                   ))}
                 </div>
 
@@ -589,6 +634,8 @@ const SubcategoryPage = () => {
           </main>
         </div>
       </div>
+      <ChatPopups />
+
     </>
   );
 };

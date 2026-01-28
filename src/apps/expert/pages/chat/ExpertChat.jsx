@@ -433,7 +433,7 @@ if (!message.trim() || !room_id || !expertId) return;
                   </UserMeta>
                 </UserInfo>
 
-                <div style={{ textAlign: "right" }}>
+                {/* <div style={{ textAlign: "right" }}>
                   <div
                     style={{
                       fontSize: 13,
@@ -475,7 +475,7 @@ if (!message.trim() || !room_id || !expertId) return;
                   >
                     Earning: ₹{totalEarning}
                   </div>
-                </div>
+                </div> */}
               </UserHeader>
 
               <ChatArea>

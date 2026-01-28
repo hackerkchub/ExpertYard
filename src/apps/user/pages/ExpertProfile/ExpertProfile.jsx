@@ -142,6 +142,7 @@ const ExpertProfilePage = () => {
   const [showChatCancelled, setShowChatCancelled] = useState(false);
   const [chatRejectedMessage, setChatRejectedMessage] = useState("");
 const [calling, setCalling] = useState(false);
+const [requestingChat, setRequestingChat] = useState(false);
 
   // Memoized computed values
   const hasUserReview = useMemo(() => 
@@ -228,26 +229,37 @@ const [calling, setCalling] = useState(false);
   // Socket events
   useEffect(() => {
     const handleRequestPending = ({ request_id }) => {
-      setChatRequestId(request_id);
+       setRequestingChat(false);
+       setChatRequestId(request_id);
       setShowWaitingPopup(true);
       setWaitingText("Waiting for expert to accept...");
     };
 
    const handleChatAccepted = ({ room_id }) => {
+  if (!room_id) return;
+setRequestingChat(false);
   setShowWaitingPopup(false);
   setChatRequestId(null);
-  navigate(`/user/chat/${room_id}`, { replace: true });
+
+  navigate(`/user/chat/${room_id}`, {
+    replace: true,
+    state: { fromRequest: true }
+  });
 };
+
 
     const handleChatRejected = ({ user_id, message }) => {
       if (Number(user_id) !== Number(userId)) return;
-      setShowWaitingPopup(false);
+      
+  setRequestingChat(false);
+  setShowWaitingPopup(false);
       setChatRequestId(null);
       setChatRejectedMessage(message || "Chat request was rejected");
     };
 
     const handleChatCancelled = ({ user_id, message }) => {
       if (Number(user_id) !== Number(userId)) return;
+      setRequestingChat(false);
       setShowWaitingPopup(false);
       setChatRequestId(null);
       setShowChatCancelled(true);
@@ -288,6 +300,9 @@ const [calling, setCalling] = useState(false);
     const userBalance = Number(balance || 0);
 
     if (userBalance >= minRequired) {
+        if (requestingChat) return;
+ console.log("🔥 Start clicked", type);
+  setRequestingChat(true);
       if (type === "chat" && numericExpertId) {
        socket.emit("request_chat", {
   user_id: userId,

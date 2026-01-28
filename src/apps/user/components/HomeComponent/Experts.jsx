@@ -1,67 +1,129 @@
-import React, { useRef } from 'react';
-
-const experts = [
-  { name: "Dr. Sarah Chen", role: "Financial Advisor" },
-  { name: "Michael Roberts", role: "Career Coach" },
-  { name: "Lisa Patel", role: "Wellness Expert" },
-  { name: "David Kim", role: "Legal Consultant" },
-  { name: "Emma Wilson", role: "Health Specialist" },
-  { name: "James Taylor", role: "Tech Expert" },
-];
+import React, { useRef, useEffect, useState, useMemo } from "react";
+import { useExpert } from "../../../../shared/context/ExpertContext";
+import { getTopRatedExpertsApi } from "../../../../shared/api/expertapi/filter.api";
+import { useNavigate } from "react-router-dom";
+import useChatRequest from "../../../../shared/hooks/useChatRequest.jsx";
 
 export default function Experts() {
   const scrollContainerRef = useRef(null);
 
+  const { experts, expertsLoading } = useExpert();
+  const navigate = useNavigate();
+
+  /* ========= HOOK (ALL CHAT LOGIC HERE) ========= */
+  const { startChat, ChatPopups } = useChatRequest();
+
+  const [topIds, setTopIds] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  /* ================= FETCH TOP RATED ================= */
+  useEffect(() => {
+    const loadTopRated = async () => {
+      try {
+        setLoading(true);
+
+        const res = await getTopRatedExpertsApi(6);
+
+        const ids =
+          res?.data?.data?.map((e) => e.expert_id || e.id) || [];
+
+        setTopIds(ids);
+      } catch (err) {
+        console.error("Top rated load failed", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTopRated();
+  }, []);
+
+  /* ================= FILTER FROM CONTEXT ================= */
+  const topExperts = useMemo(() => {
+    if (!experts?.length) return [];
+
+    return experts.filter((e) => topIds.includes(e.id));
+  }, [experts, topIds]);
+
+  /* ================= SCROLL ================= */
   const scrollLeft = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({
-        left: -300,
-        behavior: 'smooth'
-      });
-    }
+    scrollContainerRef.current?.scrollBy({
+      left: -300,
+      behavior: "smooth",
+    });
   };
 
   const scrollRight = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({
-        left: 300,
-        behavior: 'smooth'
-      });
-    }
+    scrollContainerRef.current?.scrollBy({
+      left: 300,
+      behavior: "smooth",
+    });
   };
 
+  if (loading || expertsLoading) {
+    return <p style={{ padding: 20 }}>Loading experts...</p>;
+  }
+
   return (
-    <section className="section-expert">
-      <div className="section-header">
-        <h2>Popular Experts</h2>
-        <div className="scroll-controls">
-          <button className="scroll-btn left-btn" onClick={scrollLeft} aria-label="Scroll left">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          <button className="scroll-btn right-btn" onClick={scrollRight} aria-label="Scroll right">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+    <>
+      <section className="section-expert">
+        <div className="section-header">
+          <h2>Popular Experts</h2>
+
+          <div className="scroll-controls">
+            <button className="scroll-btn left-btn" onClick={scrollLeft}>
+              ◀
+            </button>
+            <button className="scroll-btn right-btn" onClick={scrollRight}>
+              ▶
+            </button>
+          </div>
         </div>
-      </div>
-      
-      <div className="expert-container">
-        <div className="expert-row" ref={scrollContainerRef}>
-          {experts.map((ex, index) => (
-            <div className="expert-card" key={`${ex.name}-${index}`}>
-              <div className="avatar">👤</div>
-              <h4>{ex.name}</h4>
-              <p>{ex.role}</p>
-              <div className="rating">★★★★★</div>
-              <p className="price">$2.99 / min</p>
-              <button className="btn-primary small">Chat Now</button>
-            </div>
-          ))}
+
+        <div className="expert-container">
+          <div className="expert-row" ref={scrollContainerRef}>
+            {topExperts.map((ex) => (
+              <div
+                className="expert-card"
+                key={ex.id}
+                onClick={() => navigate(`experts/${ex.id}`)}
+                style={{ cursor: "pointer" }}
+              >
+                <img
+                  src={ex.profile_photo}
+                  alt={ex.name}
+                  className="avatar"
+                />
+
+                <h4>{ex.name}</h4>
+                <p>{ex.position}</p>
+
+                <div className="rating">★★★★★</div>
+
+                <p className="price">
+                  ₹{ex.chat_per_minute || 0} / min
+                </p>
+
+                <button
+                  className="btn-primary small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    startChat({
+                      expertId: ex.id,
+                      chatPrice: ex.chat_per_minute,
+                    });
+                  }}
+                >
+                  Chat Now
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {/* 🔥 AUTO POPUPS FROM HOOK */}
+      <ChatPopups />
+    </>
   );
 }

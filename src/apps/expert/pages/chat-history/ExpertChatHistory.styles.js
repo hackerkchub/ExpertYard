@@ -1,336 +1,673 @@
 // src/apps/expert/pages/chat-history/ExpertChatHistory.styles.js
-import styled from 'styled-components';
+import styled from "styled-components";
+
+export const PremiumContainer = styled.div`
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: 24px;
+`;
 
 export const PageContainer = styled.div`
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 24px;
-  background: #f8fafc;
-  min-height: 100vh;
 `;
 
 export const Header = styled.div`
   margin-bottom: 32px;
-  
-  p {
-    color: #64748b;
-    font-size: 16px;
-    margin-top: 8px;
-  }
 `;
 
 export const Title = styled.h1`
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
   color: #1e293b;
-  margin: 0;
-`;
-
-export const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
-  margin-bottom: 32px;
-`;
-
-export const StatsCard = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin: 0 0 8px 0;
   display: flex;
   align-items: center;
-  gap: 16px;
   
   svg {
     color: #8b5cf6;
-    background: #f5f3ff;
-    padding: 12px;
-    border-radius: 10px;
-  }
-  
-  h3 {
-    font-size: 24px;
-    font-weight: 700;
-    color: #1e293b;
-    margin: 0;
-  }
-  
-  p {
-    color: #64748b;
-    font-size: 14px;
-    margin: 0;
   }
 `;
 
-// ✅ UPDATED: SearchBar as DIV container (matches UserChatHistory exactly)
+export const StatsContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin: 32px 0;
+`;
+
+export const StatCard = styled.div`
+  background: ${props => props.accent ? 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' : 
+               props.primary ? 'linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%)' : 
+               '#ffffff'};
+  border: 1px solid ${props => props.accent ? '#fbbf24' : props.primary ? '#8b5cf6' : '#e2e8f0'};
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  }
+  
+  .stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+  }
+  
+  .stat-content {
+    flex: 1;
+  }
+  
+  .stat-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.2;
+  }
+  
+  .stat-label {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+  }
+`;
+
+export const FilterBar = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+`;
+
 export const SearchBar = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  background: white;
+  background: ${props => props.premium ? '#f8fafc' : '#ffffff'};
+  border: 2px solid ${props => props.premium ? '#e2e8f0' : '#ddd'};
   border-radius: 12px;
-  padding: 12px 16px;
-  border: 1px solid #e2e8f0;
-  margin-top: 16px;
-
+  padding: ${props => props.premium ? '12px 20px' : '8px 16px'};
+  width: 300px;
+  transition: all 0.3s ease;
+  
+  &:focus-within {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  }
+  
   input {
     flex: 1;
     border: none;
-    outline: none;
-    font-size: 14px;
+    background: none;
+    font-size: ${props => props.premium ? '15px' : '14px'};
+    color: #1e293b;
+    
+    &::placeholder {
+      color: #94a3b8;
+    }
+    
+    &:focus {
+      outline: none;
+    }
+  }
+  
+  svg {
+    color: #94a3b8;
+  }
+`;
+
+export const PillBadge = styled.button`
+  padding: 8px 20px;
+  border: 2px solid ${props => props.active ? '#8b5cf6' : '#e2e8f0'};
+  background: ${props => props.active ? '#8b5cf6' : 'transparent'};
+  color: ${props => props.active ? '#ffffff' : '#64748b'};
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    border-color: #7c3aed;
+    background: ${props => props.active ? '#7c3aed' : '#f1f5f9'};
   }
 `;
 
 export const HistoryList = styled.div`
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 `;
 
 export const HistoryItem = styled.div`
-  padding: 20px;
-  border-bottom: 1px solid #e2e8f0;
-  cursor: pointer;
-  transition: all 0.2s;
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid ${props => props.premium ? '#e2e8f0' : '#ddd'};
+  transition: all 0.3s ease;
   
-  &:hover {
-    background: #f8fafc;
-    transform: translateX(4px);
-  }
-  
-  &:last-child {
-    border-bottom: none;
-  }
+  ${props => props.premium && `
+    &:hover {
+      border-color: #8b5cf6;
+    }
+  `}
 `;
 
 export const ChatHeader = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
+  justify-content: space-between;
+  padding: ${props => props.premium ? '24px' : '16px'};
+  cursor: pointer;
+  background: ${props => props.premium ? '#ffffff' : '#f8f9fa'};
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background: ${props => props.premium ? '#f8fafc' : '#e9ecef'};
+  }
   
   h4 {
-    font-size: 16px;
+    margin: 0;
+    font-size: 18px;
     font-weight: 600;
     color: #1e293b;
-    margin: 0;
   }
   
-  p {
-    font-size: 14px;
+  .meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
     color: #64748b;
-    margin: 0;
+    
+    svg {
+      margin-right: 4px;
+    }
+  }
+  
+  .chevron-icon {
+    color: #8b5cf6;
+    transition: transform 0.3s ease;
   }
 `;
 
-export const Avatar = styled.img`
-  width: ${props => props.size === 'small' ? '32px' : '48px'};
-  height: ${props => props.size === 'small' ? '32px' : '48px'};
-  border-radius: 50%;
-  object-fit: cover;
+export const Avatar = styled.div`
+  width: ${props => props.premium ? '60px' : '48px'};
+  height: ${props => props.premium ? '60px' : '48px'};
+  border-radius: ${props => props.premium ? '16px' : '12px'};
+  background: ${props => props.premium ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#8b5cf6'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: ${props => props.premium ? '20px' : '16px'};
+  background-image: ${props => props.src ? `url(${props.src})` : 'none'};
+  background-size: cover;
+  background-position: center;
+  border: ${props => props.premium ? '3px solid white' : '2px solid white'};
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 `;
 
-export const ChatMeta = styled.div`
+export const EarningsBadge = styled.span`
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+`;
+
+export const SessionHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  
+  h5 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e293b;
+  }
+`;
+
+export const SessionsWrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+export const SessionCard = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+  
+  ${props => props.premium && `
+    &:hover {
+      border-color: #8b5cf6;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+    }
+  `}
+  
+  .session-indicator {
+    .session-number {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+    }
+  }
+  
+  .session-info {
+    flex: 1;
+    
+    .session-details {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 8px;
+      
+      .date, .duration {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: #64748b;
+        
+        svg {
+          color: #8b5cf6;
+        }
+      }
+    }
+    
+    .session-meta {
+      .room-id {
+        font-size: 12px;
+        color: #94a3b8;
+        background: #f1f5f9;
+        padding: 4px 12px;
+        border-radius: 12px;
+      }
+    }
+  }
+  
+  .session-earnings {
+    text-align: center;
+    
+    .amount-label {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 4px;
+    }
+    
+    .amount {
+      font-size: 20px;
+      font-weight: 700;
+      color: #10b981;
+    }
+  }
+`;
+
+export const ActionButton = styled.button`
+  padding: ${props => props.premium ? '10px 20px' : '8px 16px'};
+  background: ${props => props.premium ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' : '#8b5cf6'};
+  color: white;
+  border: none;
+  border-radius: ${props => props.premium ? '10px' : '8px'};
+  font-size: ${props => props.premium ? '14px' : '13px'};
+  font-weight: 600;
+  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  color: #64748b;
-  margin-bottom: 8px;
-  flex-wrap: wrap;
+  transition: all 0.3s ease;
   
-  svg {
-    margin-right: 4px;
+  &:hover {
+    background: ${props => props.premium ? 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)' : '#7c3aed'};
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
   }
   
-  // ✅ Earnings styling (purple highlight)
-  span:last-child {
-    color: #7c3aed !important;
-    font-weight: 700 !important;
+  &:active {
+    transform: translateY(0);
   }
 `;
 
 export const EmptyState = styled.div`
-  padding: 64px 24px;
   text-align: center;
+  padding: 80px 40px;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 2px dashed #e2e8f0;
   
-  svg {
-    color: #cbd5e1;
-    margin-bottom: 16px;
-  }
+  ${props => props.premium && `
+    .empty-icon {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      
+      svg {
+        color: #94a3b8;
+      }
+    }
+  `}
   
   h3 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #475569;
-    margin: 0 0 8px;
+    font-size: 24px;
+    color: #1e293b;
+    margin-bottom: 12px;
   }
   
   p {
-    color: #94a3b8;
+    color: #64748b;
     margin-bottom: 24px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
   }
   
-  button {
-    background: #8b5cf6;
+  .premium-btn {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
     color: white;
     border: none;
-    padding: 10px 24px;
-    border-radius: 8px;
+    padding: 14px 32px;
+    border-radius: 12px;
+    font-size: 15px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.3s ease;
     
     &:hover {
-      background: #7c3aed;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
     }
   }
 `;
 
 export const LoadingSpinner = styled.div`
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  height: 200px;
-  color: #64748b;
+  justify-content: center;
+  min-height: 400px;
+  
+  .spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid #e2e8f0;
+    border-top: 4px solid #8b5cf6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 24px;
+  }
+  
+  p {
+    color: #64748b;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
 `;
 
 export const ModalOverlay = styled.div`
   position: fixed;
-  inset: 0;
-  background: rgba(2, 6, 23, 0.55);
+  inset: 0;              /* 🔥 full screen */
+  z-index: 9999;         /* 🔥 sabse upar */
+
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 99999;
-  padding: 16px;
+
+  padding: 24px;
+  animation: fadeIn 0.25s ease;
 `;
+
 
 export const ModalContent = styled.div`
   background: #ffffff;
-  color: #0f172a;
-  border-radius: 16px;
-  width: min(900px, 100%);
-  max-height: calc(100vh - 32px);
-  overflow: hidden;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
-
-  @media (max-width: 520px) {
-    border-radius: 14px;
-    max-height: calc(100vh - 20px);
+  overflow: hidden;
+  animation: slideUp 0.3s ease;
+  
+  ${props => props.premium && `
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  `}
+  
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  
+  .modal-header {
+    padding: 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    
+    .modal-user-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      
+      h3 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+        color: #1e293b;
+      }
+      
+      .modal-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 4px;
+        font-size: 14px;
+        color: #64748b;
+        
+        .earnings {
+          color: #10b981;
+          font-weight: 600;
+        }
+      }
+    }
+    
+    .modal-close {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: none;
+      background: #f1f5f9;
+      color: #64748b;
+      font-size: 24px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        background: #e2e8f0;
+        color: #1e293b;
+      }
+    }
+  }
+  
+  .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+    
+    .footer-note {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: #64748b;
+      font-size: 14px;
+      font-style: italic;
+      
+      svg {
+        color: #8b5cf6;
+      }
+    }
   }
 `;
 
 export const MessagesArea = styled.div`
   flex: 1;
-  overflow-y: auto;
-  padding: 16px;
-  background: #f8fafc;
+  overflow-y: auto;     /* 🔥 real scroll */
+  background: ${props => props.premium ? '#f8fafc' : '#f9f9f9'};
+  padding: 24px;
+
+  scrollbar-width: thin;
 `;
+
 
 export const MessageBubble = styled.div`
-  margin-bottom: 16px;
-  padding: 12px 16px;
-  background: ${props => props.isExpert ? '#ede9fe' : '#f1f5f9'};
-  border-radius: 12px;
-  border-top-left-radius: ${props => props.isExpert ? '12px' : '4px'};
-  border-top-right-radius: ${props => props.isExpert ? '4px' : '12px'};
+  max-width: 70%;
+  margin-bottom: 20px;
+  margin-left: ${props => props.isExpert ? 'auto' : '0'};
   
-  .message-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 4px;
+  ${props => props.premium && `
+    .message-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      
+      .sender-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        
+        strong {
+          font-size: 14px;
+          color: #1e293b;
+        }
+        
+        .sender-role {
+          font-size: 12px;
+          color: #64748b;
+          margin-left: 8px;
+        }
+      }
+      
+      .message-time {
+        font-size: 12px;
+        color: #94a3b8;
+      }
+    }
     
-    strong {
+    .message-content {
+      padding: 16px;
+      background: ${props.isExpert ? 
+        'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' : 
+        '#ffffff'};
+      color: ${props.isExpert ? '#ffffff' : '#1e293b'};
+      border-radius: 16px;
+      border-bottom-${props.isExpert ? 'left' : 'right'}-radius: 4px;
       font-size: 14px;
-      color: ${props => props.isExpert ? '#7c3aed' : '#475569'};
+      line-height: 1.5;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
-    
-    .message-time {
-      font-size: 12px;
-      color: #94a3b8;
-    }
-  }
-  
-  .message-content {
-    font-size: 14px;
-    color: #334155;
-    line-height: 1.5;
-  }
+  `}
 `;
 
-// ✅ NEW: SessionsWrap (grid container)
-export const SessionsWrap = styled.div`
-  margin-top: 12px;
-  border-top: 1px solid #e2e8f0;
-  padding-top: 12px;
-  display: grid;
-  gap: 10px;
-`;
-
-// ✅ NEW: SessionCard (main session display - matches UserChatHistory)
-export const SessionCard = styled.div`
-  background: #fefefe;
-  border: 1px solid #f1f5f9;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 12px;
+export const MessageAvatar = styled.div`
+  width: ${props => props.size === 'large' ? '56px' : 
+           props.small ? '28px' : '40px'};
+  height: ${props => props.size === 'large' ? '56px' : 
+           props.small ? '28px' : '40px'};
+  border-radius: ${props => props.size === 'large' ? '16px' : 
+                  props.small ? '8px' : '12px'};
+  background: ${props => props.isExpert ? 
+    'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' : 
+    'linear-gradient(135deg, #10b981 0%, #34d399 100%)'};
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-
-  .session-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .date {
-    font-weight: 600;
-    color: #0f172a;
-    font-size: 14px;
-  }
-
-  .duration {
-    color: #64748b;
-    font-size: 12px;
-  }
-
-  .amount {
-    font-weight: 800;
-    color: #0f172a;
-    font-size: 18px;
-    text-align: right;
-  }
-`;
-
-// ✅ NEW: ActionButton (View Chat only - purple theme)
-export const ActionButton = styled.button`
-  width: 100%;
-  padding: 10px 16px;
-  border-radius: 8px;
-  border: none;
-  background: #8b5cf6;
+  align-items: center;
+  justify-content: center;
   color: white;
   font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 12px;
-
-  &:hover {
-    background: #7c3aed;
-  }
+  font-size: ${props => props.small ? '12px' : '16px'};
+  background-image: ${props => props.src ? `url(${props.src})` : 'none'};
+  background-size: cover;
+  background-position: center;
+  border: ${props => props.size === 'large' ? '3px solid white' : '2px solid white'};
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 `;
 
-// ✅ REMOVED unused components:
-// - FilterButtons (no date filtering needed)
-// - SessionRow (using SessionCard instead)
-// - TwoCol (using flex layout in SessionCard)
-// - ChatPreview, ChatDetails, LoadMoreButton (not used)
+// Add this to ExpertChatHistory.styles.js
+export const ChatMeta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  background: #f8fafc;
+  border-radius: 0 0 12px 12px;
+  font-size: 14px;
+  color: #64748b;
+  
+  span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    
+    svg {
+      margin-right: 4px;
+    }
+  }
+`;
+// In ExpertChatHistory.styles.js - Add this export
+export const GradientTitle = styled(Title)`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  display: inline-block;
+`;

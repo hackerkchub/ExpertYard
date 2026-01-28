@@ -1,31 +1,46 @@
 import { useEffect, useState } from "react";
 import { socket } from "../api/socket";
 import {
-  fetchNotifications,
+  getNotifications,
   getUnreadCount,
 } from "../api/notification.api";
 
-export const useNotifications = (panel) => {
+export const useNotifications = ({ panel, userId }) => {
   const [notifications, setNotifications] = useState([]);
   const [unread, setUnread] = useState(0);
 
-  // 1️⃣ history load
+  /* ===============================
+     1️⃣ HISTORY LOAD
+  =============================== */
   useEffect(() => {
-    const load = async () => {
-      const res = await fetchNotifications(panel);
-      setNotifications(res.data);
+    if (!userId) return;
 
-      const count = await getUnreadCount();
-      setUnread(count.data.count);
+    const load = async () => {
+      try {
+        const res = await getNotifications({
+          userId,
+          panel,
+        });
+
+        setNotifications(res.data);
+
+        const count = await getUnreadCount({ userId });
+        setUnread(count.data.count);
+      } catch (err) {
+        console.log("notif load error", err);
+      }
     };
 
     load();
-  }, [panel]);
+  }, [panel, userId]);
 
-  // 2️⃣ realtime socket
+  /* ===============================
+     2️⃣ REALTIME
+  =============================== */
   useEffect(() => {
     const handler = (notif) => {
       if (notif.panel !== panel) return;
+      if (notif.user_id !== userId) return; // ⭐ important
 
       setNotifications((prev) => [notif, ...prev]);
       setUnread((c) => c + 1);
@@ -34,7 +49,7 @@ export const useNotifications = (panel) => {
     socket.on("notification:new", handler);
 
     return () => socket.off("notification:new", handler);
-  }, [panel]);
+  }, [panel, userId]);
 
   return {
     notifications,

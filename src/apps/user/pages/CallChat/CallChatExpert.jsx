@@ -42,7 +42,7 @@ import { filterExpertsApi } from "../../../../shared/api/expertapi/filter.api";
 const TABS = [
   { id: "call", label: "Call with Experts" },
   { id: "chat", label: "Chat with Experts" },
-  { id: "ai", label: "AI Experts" },
+  // { id: "ai", label: "AI Experts" },
 ];
 
 const professionsMap = {

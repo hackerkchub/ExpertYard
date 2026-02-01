@@ -52,20 +52,35 @@ export default function CategoryManagement() {
   const editImageRef = useRef(null);
   const addImageRef = useRef(null);
 
-  // ✅ FIXED: Image states - separate keys for better tracking
+  // Image states - separate keys for better tracking
   const [imageErrors, setImageErrors] = useState({});
   const [imageLoading, setImageLoading] = useState({});
 
-  // ✅ FIXED: Improved renderImage function
-  const renderImage = useCallback((imageUrl, size = 40, isEditing = false, onClick) => {
+  // Backend image URL base
+  const BASE_IMAGE_URL = "https://softmaxs.com/";
+
+  // ✅ FIXED: renderImage - Uses image_url from API + handles both URL/File
+  const renderImage = useCallback((imageData, size = 40, isEditing = false, onClick) => {
     // Generate unique key for each image
-    const imageKey = imageUrl ? `${imageUrl}-${size}` : `fallback-${size}`;
+    const imageKey = imageData ? `${imageData}-${size}` : `fallback-${size}`;
     
     // Check if image has error
     const hasError = imageErrors[imageKey];
     const isLoading = imageLoading[imageKey];
 
-    if (!imageUrl || hasError) {
+    // ✅ Handle image_url from API response OR File object
+    const isFile = imageData instanceof File;
+    
+    let finalSrc = null;
+    if (isFile) {
+      finalSrc = URL.createObjectURL(imageData);
+    } else if (imageData) {
+      // ✅ Use image_url field from API (handles both full URL or path)
+      finalSrc = imageData.startsWith('http') ? imageData : `${BASE_IMAGE_URL}${imageData}`;
+    }
+
+    // ✅ ICON ONLY when NO image OR load ERROR
+    if (!finalSrc || hasError) {
       return (
         <div 
           style={{ 
@@ -86,6 +101,7 @@ export default function CategoryManagement() {
       );
     }
 
+    // ✅ PURE IMAGE - No icon overlay when loading successfully
     return (
       <div 
         style={{ 
@@ -99,6 +115,7 @@ export default function CategoryManagement() {
         }}
         onClick={onClick}
       >
+        {/* Loading overlay ONLY during load */}
         {isLoading && (
           <div style={{
             position: 'absolute',
@@ -116,7 +133,7 @@ export default function CategoryManagement() {
         
         <img
           key={imageKey}
-          src={imageUrl}
+          src={finalSrc}
           alt="Category"
           style={{ 
             width: '100%', 
@@ -141,6 +158,7 @@ export default function CategoryManagement() {
           loading="lazy"
         />
         
+        {/* Camera icon ONLY in edit mode */}
         {isEditing && (
           <div style={{
             position: 'absolute',
@@ -161,23 +179,31 @@ export default function CategoryManagement() {
         )}
       </div>
     );
-  }, [imageErrors, imageLoading]);
+  }, [imageErrors, imageLoading, BASE_IMAGE_URL]);
 
   // Fetch categories on mount
   useEffect(() => {
     fetchCategories();
   }, []);
 
+  // ✅ FIXED: fetchCategories - Use image_url field
   const fetchCategories = async () => {
     try {
       setLoading(true);
       const response = await getCategoriesApi();
       const cats = response.data.data || response.data || [];
+      const sortedCats = [...cats].sort((a, b) => a.id - b.id);
+      // ✅ Normalize data - use image_url field
+       const normalizedCats = sortedCats.map(cat => ({
+      ...cat,
+        // Use image_url if exists, fallback to image
+        image_url: cat.image_url || cat.image
+      }));
       
-      // ✅ Reset image states on new data
+      // Reset image states on new data
       setImageErrors({});
       setImageLoading({});
-      setCategories(cats);
+      setCategories(normalizedCats);
     } catch (error) {
       console.error("Error fetching categories:", error);
     } finally {
@@ -223,14 +249,15 @@ export default function CategoryManagement() {
     }));
   };
 
-  // Edit handlers
+  // Edit handlers - proper image handling
   const startEdit = (category) => {
     setEditingId(category.id);
     setEditData({
       id: category.id,
       category_id: category.category_id || category.id,
       name: category.name,
-      image: category.image,
+      // ✅ Use image_url for edit preview
+      image: category.image_url || category.image,
       file: null,
       hasImageChange: false
     });
@@ -240,28 +267,41 @@ export default function CategoryManagement() {
     editImageRef.current?.click();
   };
 
+  // handleEditImageUpload - store both preview and actual file
   const handleEditImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const url = URL.createObjectURL(file);
-      setEditData({ 
-        ...editData, 
-        image: url, 
-        file,
-        hasImageChange: true 
-      });
+      const previewUrl = URL.createObjectURL(file);
+      
+      setEditData(prev => ({
+        ...prev,
+        image: previewUrl,    // Preview for UI
+        file,                 // Actual file for upload
+        hasImageChange: true
+      }));
     }
   };
 
+  // saveEdit - send only file to backend
   const saveEdit = async () => {
     try {
       setLoading(true);
-      await updateCategoryApi(editData);
-      await fetchCategories(); // Refresh all data
+
+      const payload = {
+        id: editData.id,
+        category_id: editData.category_id,
+        name: editData.name,
+        file: editData.file || null  // Backend generates new image_url
+      };
+
+      console.log("UPDATE CATEGORY PAYLOAD:", payload);
+
+      await updateCategoryApi(payload);
+      await fetchCategories(); // Refresh with new image_url
       cancelEdit();
     } catch (error) {
       console.error("Error updating category:", error);
-      alert("Error updating category. Please try again.");
+      alert("Error updating category");
     } finally {
       setLoading(false);
     }
@@ -306,39 +346,49 @@ export default function CategoryManagement() {
   const handleAddImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const url = URL.createObjectURL(file);
+      const previewUrl = URL.createObjectURL(file);
       setNewCategory({ 
         name: newCategory.name, 
-        image: url, 
-        file 
+        image: previewUrl,
+        file
       });
     }
   };
 
-  const addNewCategory = async () => {
-    if (!newCategory.name.trim() || !newCategory.file) {
-      alert("Please fill category name and select an image.");
-      return;
+ const addNewCategory = async () => {
+  if (!newCategory.name.trim() || !newCategory.file) {
+    alert("Please fill category name and select an image.");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    // ✅ IMPORTANT: FormData
+    const formData = new FormData();
+    formData.append("name", newCategory.name);
+    formData.append("image", newCategory.file); // 👈 backend expects image
+
+    // DEBUG (optional)
+    for (let pair of formData.entries()) {
+      console.log(pair[0], pair[1]);
     }
 
-    try {
-      setLoading(true);
-      await createCategoryApi({
-        name: newCategory.name,
-        image: newCategory.file
-      });
-      
-      setNewCategory({ name: "", image: null, file: null });
-      setShowAddModal(false);
-      if (addImageRef.current) addImageRef.current.value = "";
-      await fetchCategories();
-    } catch (error) {
-      console.error("Error creating category:", error);
-      alert("Error creating category. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    await createCategoryApi(formData);
+
+    setNewCategory({ name: "", image: null, file: null });
+    setShowAddModal(false);
+    if (addImageRef.current) addImageRef.current.value = "";
+
+    await fetchCategories();
+  } catch (error) {
+    console.error("Error creating category:", error);
+    alert("Error creating category. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   if (loading && categories.length === 0) {
     return (
@@ -409,7 +459,7 @@ export default function CategoryManagement() {
                     )}
                   </TableCell>
 
-                  {/* ✅ FIXED IMAGE COLUMN */}
+                  {/* ✅ FIXED: Use image_url for display */}
                   <TableCell>
                     {editingId === cat.id ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
@@ -423,7 +473,8 @@ export default function CategoryManagement() {
                         />
                       </div>
                     ) : (
-                      renderImage(cat.image, 40, false)
+                      // ✅ Use image_url field from API
+                      renderImage(cat.image_url || cat.image, 40, false)
                     )}
                   </TableCell>
 
@@ -448,7 +499,7 @@ export default function CategoryManagement() {
                     )}
                   </TableCell>
 
-                  {/* Subcategories - Lazy Load */}
+                  {/* Subcategories */}
                   <TableCell>
                     <div style={{ cursor: 'pointer' }} onClick={() => toggleSubcategories(cat.id)}>
                       <div style={{
@@ -465,9 +516,7 @@ export default function CategoryManagement() {
                         ) : (
                           <FaChevronDown size={14} />
                         )}
-                        <span>
-                          {cat.subcategories?.length} Subcategories
-                        </span>
+                        <span>{cat.subcategories?.length } Subcategories</span>
                       </div>
                     </div>
                     
@@ -485,7 +534,7 @@ export default function CategoryManagement() {
                           <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
                             Loading subcategories...
                           </div>
-                        ) : cat.subcategories && cat.subcategories.length > 0 ? (
+                        ) : cat.subcategories?.length > 0 ? (
                           cat.subcategories.map((sub, idx) => (
                             <div key={idx} style={{
                               padding: '4px 8px',
@@ -600,7 +649,7 @@ export default function CategoryManagement() {
         </div>
       </TableContainer>
 
-      {/* ✅ Add Category Modal - FIXED Preview */}
+      {/* Add Category Modal */}
       {showAddModal && (
         <div style={{
           position: 'fixed',
@@ -651,8 +700,7 @@ export default function CategoryManagement() {
                 Category Image
               </label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
-                {/* ✅ FIXED: Large preview with proper rendering */}
-                {renderImage(newCategory.image, 100, false)}
+                {renderImage(newCategory.image || newCategory.file, 100, false)}
                 <input
                   ref={addImageRef}
                   type="file"

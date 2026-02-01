@@ -1,14 +1,21 @@
 // src/shared/api/socket.js
 import { io } from "socket.io-client";
 
-const SOCKET_URL = import.meta.env.VITE_API_BASE_URL || "https://softmaxs.com/";
+const userToken = localStorage.getItem("user_token");
+const expertToken = localStorage.getItem("expert_token");
 
-export const socket = io(SOCKET_URL, {
-  autoConnect: true,
-  transports: ["websocket", "polling"],
-  // ✅ FORCE same namespace
-  forceNew: false
+// ⚠️ decide once
+const token = userToken || expertToken;
+
+export const socket = io("https://softmaxs.com", {
+  path: "/socket.io",
+  transports: ["websocket"],   // 🔥 polling hata do
+  autoConnect: false,
+  auth: {
+    token,                     // ✅ handshake-safe
+  },
 });
 
-// ✅ Manual connect on app load
-socket.connect();
+if (typeof window !== "undefined") {
+  window.__socket = socket;
+}

@@ -59,12 +59,14 @@ export default function ExpertTopbar() {
 
   // NOTIFICATIONS HOOK
   const {
-    notifications,
-    unreadCount,
-    markAllRead,
-    acceptRequest,
-    declineRequest,
-  } = useExpertNotifications();
+  notifications,
+  unreadCount,
+  markAllRead,
+  acceptChatRequest,
+  declineChatRequest,
+  acceptCall,
+  rejectCall,
+} = useExpertNotifications();
 
   // LOGOUT
   const handleLogout = () => {
@@ -109,7 +111,7 @@ export default function ExpertTopbar() {
 
   // MOBILE NAV ITEMS
   const mobileNavItems = [
-    { icon: FiHome, label: "Dashboard", path: "/expert/dashboard" },
+    { icon: FiHome, label: "Dashboard", path: "/expert" },
     { icon: FiFileText, label: "My Content", path: "/expert/my-content" },
     { icon: FiCalendar, label: "Calendar", path: "/expert/calendar" },
     { icon: FiBarChart2, label: "Earnings", path: "/expert/earnings" },
@@ -131,7 +133,7 @@ export default function ExpertTopbar() {
             <FiMenu />
           </IconBtn>
 
-          <Brand onClick={() => navigate("/expert/dashboard")}>
+          <Brand onClick={() => navigate("/expert")}>
             <img src={Logo} alt="ExpertYard" />
             ExpertYard
           </Brand>
@@ -155,19 +157,47 @@ export default function ExpertTopbar() {
               <FiBell />
               {unreadCount > 0 && <UnreadDot />}
             </IconBtn>
-            {showNotif && (
-              <NotificationPopover
-                notifications={notifications}
-                unreadCount={unreadCount}
-                markAllRead={markAllRead}
-                onAccept={acceptRequest}
-                onDecline={declineRequest}
-              />
-            )}
+           {showNotif && (
+  <NotificationPopover
+    notifications={notifications}
+    unreadCount={unreadCount}
+    markAllRead={markAllRead}
+
+    onAccept={(n) => {
+      // CHAT REQUEST
+      if (n.type === "chat_request") {
+        acceptChatRequest(n.id);
+      }
+
+      // VOICE CALL
+      if (n.type === "voice_call") {
+        acceptCall(n.payload.callId);
+        navigate(`/expert/voice-call/${n.payload.callId}`);
+      }
+
+      setShowNotif(false);
+    }}
+
+    onDecline={(n) => {
+      // CHAT REQUEST
+      if (n.type === "chat_request") {
+        declineChatRequest(n.id);
+      }
+
+      // VOICE CALL
+      if (n.type === "voice_call") {
+        rejectCall(n.payload.callId);
+      }
+
+      setShowNotif(false);
+    }}
+  />
+)}
+
           </div>
 
           {/* CHATS */}
-          <IconBtn onClick={() => navigate("/expert/chat")} title="Messages">
+          <IconBtn onClick={() => navigate("/expert/chat-history")} title="Messages">
             <FiMessageSquare />
           </IconBtn>
 
@@ -228,7 +258,7 @@ export default function ExpertTopbar() {
         <MobileNavList style={{ paddingBottom: '24px' }}>
           <MobileNavItem
             onClick={() => {
-              navigate("/expert/chat");
+              navigate("/expert/chat-history");
               setMobileMenuOpen(false);
             }}
           >

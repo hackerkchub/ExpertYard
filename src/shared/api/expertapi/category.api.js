@@ -17,15 +17,11 @@ export const getSubCategoriesApi = (categoryId) =>
    API: /api/category/create?name&image
    (FormData required)
 =========================== */
-export const createCategoryApi = ({ name, image }) => {
-  const formData = new FormData();
-  formData.append("name", name);
-  if (image) formData.append("image", image);
-
+export const createCategoryApi = (formData) => {
   return api.post("/category/create", formData, {
     headers: {
-      "Content-Type": "multipart/form-data"
-    }
+      "Content-Type": "multipart/form-data",
+    },
   });
 };
 
@@ -34,12 +30,11 @@ export const createCategoryApi = ({ name, image }) => {
    API: /api/category/update/:id
    (FormData: id, name, image)
 =========================== */
-export const updateCategoryApi = ({ id, name, image }) => {
+export const updateCategoryApi = ({ id, name, file }) => {
   const formData = new FormData();
   formData.append("id", id);
   formData.append("name", name);
-  if (image) formData.append("image", image);
-
+  if (file) formData.append("image", file);
   return api.put(`/category/update/${id}`, formData, {
     headers: {
       "Content-Type": "multipart/form-data"

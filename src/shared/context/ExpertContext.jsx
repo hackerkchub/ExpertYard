@@ -74,7 +74,8 @@ export const ExpertProvider = ({ children }) => {
           profile_photo: p.profile_photo || DEFAULT_AVATAR,
           category_id: p.category_id,
           subcategory_id: p.subcategory_id,
-          // aage price/rating language etc UserExpertsPage me alag APIs se attach honge
+           chat_per_minute: Number(p.chat_per_minute) || null,
+  call_per_minute: Number(p.call_per_minute) || null,
         }));
 
         setExperts(mapped);

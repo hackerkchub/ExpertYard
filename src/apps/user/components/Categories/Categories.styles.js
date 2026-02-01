@@ -5,7 +5,7 @@ import styled, { css, keyframes } from "styled-components";
 export const Wrap = styled.section`
   max-width: 1280px;
   margin: 40px auto 50px;
-  padding: 0 16px;
+  padding: 80px 0 16px;
 
   @media (max-width: 768px) {
     margin: 28px auto 40px;

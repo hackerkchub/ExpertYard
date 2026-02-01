@@ -8,9 +8,13 @@ import StepPricing from "../pages/register/StepPricing";
 import Dashboard from "../pages/Dashboard";
 import Profile from "../pages/Profile/ExpertProfile";
 import MyContent from "../pages/MyContent/MyContent";
-import ExpertChat from "../pages/chat/ExpertChat"; // ✅ Import
+import ExpertChat from "../pages/chat/ExpertChat";
+import ExpertChatHistory from "../pages/chat-history/ExpertChatHistory"; // ✅ NEW
 import ProtectedExpertRoute from "./ProtectedExpertRoute";
 import { useExpert } from "../../../shared/context/ExpertContext";
+import ExpertVoiceCall from "../pages/voice-call/ExpertVoiceCall";
+import ExpertNotificationPage from "../pages/notification/ExpertNotificationPage";
+import EarningDashboard from "../pages/earnings/ExpertEarningsDashboard";
 
 export default function ExpertAppRoutes() {
   const { expertData } = useExpert();
@@ -22,6 +26,7 @@ export default function ExpertAppRoutes() {
 
       {/* 🔐 EXPERT DASHBOARD (WITH LAYOUT) */}
       <Route element={<ExpertLayout />}>
+        {/* DASHBOARD */}
         <Route
           path="home"
           element={
@@ -34,6 +39,7 @@ export default function ExpertAppRoutes() {
           }
         />
 
+        {/* PROFILE */}
         <Route
           path="profile"
           element={
@@ -46,6 +52,7 @@ export default function ExpertAppRoutes() {
           }
         />
 
+        {/* MY CONTENT */}
         <Route
           path="my-content"
           element={
@@ -58,7 +65,7 @@ export default function ExpertAppRoutes() {
           }
         />
 
-        {/* ✅ CHAT ROUTE - INSIDE LAYOUT! */}
+        {/* ✅ LIVE CHAT ROUTES */}
         <Route
           path="chat"
           element={
@@ -71,7 +78,6 @@ export default function ExpertAppRoutes() {
           }
         />
 
-        {/* ✅ CHAT ROOM ROUTE - DYNAMIC PARAMS */}
         <Route
           path="chat/:room_id"
           element={
@@ -83,7 +89,57 @@ export default function ExpertAppRoutes() {
             </ProtectedExpertRoute>
           }
         />
+
+        {/* ✅ NEW: CHAT HISTORY ROUTES */}
+        <Route
+          path="chat-history"
+          element={
+            <ProtectedExpertRoute
+              condition={expertData.expertId}
+              redirectTo="/expert/home"
+            >
+              <ExpertChatHistory />
+            </ProtectedExpertRoute>
+          }
+        />
+
+        <Route
+          path="chat-history/:session_id"
+          element={
+            <ProtectedExpertRoute
+              condition={expertData.expertId}
+              redirectTo="/expert/home"
+            >
+              <ExpertChatHistory />
+            </ProtectedExpertRoute>
+          }
+        />
       </Route>
+
+      {/* 📞 VOICE CALL (IMPORTANT ✅) */}
+        <Route
+          path="voice-call/:callId"
+          element={
+            <ProtectedExpertRoute
+              condition={expertData.expertId}
+              redirectTo="/expert/home"
+            >
+              <ExpertVoiceCall />
+            </ProtectedExpertRoute>
+          }
+        />
+       <Route
+  path="notifications"
+  element={
+    <ProtectedExpertRoute
+      condition={expertData.expertId}
+      redirectTo="/expert/home"
+    >
+      <ExpertNotificationPage />
+    </ProtectedExpertRoute>
+  }
+/>
+
 
       {/* 🔓 REGISTER FLOW (NO LAYOUT) */}
       <Route path="register" element={<StepAccount />} />
@@ -140,7 +196,8 @@ export default function ExpertAppRoutes() {
       />
 
       {/* Fallback */}
-      <Route path="*" element={<h1>Expert 404</h1>} />
+     <Route path="earnings" element={<EarningDashboard />} />
+      <Route path="*" element={<h1>Expert 404 - Page Not Found</h1>} />
     </Routes>
   );
 }

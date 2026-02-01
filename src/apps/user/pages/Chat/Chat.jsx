@@ -1,5 +1,5 @@
 // src/apps/user/pages/chat/Chat.jsx - ✅ FIXED Wallet Balance Check + Auto-Deduct
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiPaperclip, FiImage, FiVideo, FiFile, FiX } from "react-icons/fi";
 import { IoMdSend } from "react-icons/io";
@@ -33,6 +33,7 @@ import { socket } from "../../../../shared/api/socket";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { useWallet } from "../../../../shared/context/WalletContext"; // ✅ CORRECT WalletContext
+import useChatTimer from "../../../../shared/hooks/useChatTimer"; // ✅ ADD hook
 
 const Chat = () => {
   const { room_id } = useParams();
@@ -43,18 +44,16 @@ const Chat = () => {
   const [chatData, setChatData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [sessionActive, setSessionActive] = useState(true);
+ const [sessionActive, setSessionActive] = useState(null);
+
   const [isInitialized, setIsInitialized] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes = 300 seconds
-  const [timerRunning, setTimerRunning] = useState(false);
-  const [lastMinuteAlertShown, setLastMinuteAlertShown] = useState(false);
   const [showEndPopup, setShowEndPopup] = useState(false);
-  const [walletLoading, setWalletLoading] = useState(false);
+  const [endTime, setEndTime] = useState(null); // ✅ ADD new state
   const scrollRef = useRef(null);
   
   const { user } = useAuth();
   const { experts, expertData, expertPrice } = useExpert();
-  const { balance: walletBalance, loading: walletLoadingContext, deductMoney, fetchWallet } = useWallet(); // ✅ CORRECT Wallet API
+  const { balance: walletBalance } = useWallet(); // ✅ CORRECT Wallet API
 
   // ✅ PERFECT fetchChatDetails
   const fetchChatDetails = useCallback(async () => {
@@ -98,7 +97,13 @@ const Chat = () => {
           hour: '2-digit', minute: '2-digit', hour12: true 
         })
       })));
-      setSessionActive(!!session.is_active);
+      // Only set false if really ended
+setSessionActive(Number(session.is_active) === 1);
+
+if (session?.end_time) {
+  setEndTime(session.end_time);
+}
+
       setError("");
       
     } catch (err) {
@@ -113,93 +118,73 @@ const Chat = () => {
     }
   }, [room_id]);
 
-  // ✅ FIXED Wallet Auto-Extend + Deduct
-  const checkWalletAndExtend = useCallback(async () => {
-    if (!user?.id) return false;
-    
-    const chatPricePerMin = expertPrice?.chat_per_minute || chatData?.price_per_minute || 0;
-    const costFor1Min = chatPricePerMin;
-    
-    console.log('💰 Wallet check:', { 
-      walletBalance, 
-      chatPricePerMin, 
-      costFor1Min,
-      userId: user.id 
-    });
-    
-    if (walletBalance >= costFor1Min) {
-      setWalletLoading(true);
-      
-      try {
-        // ✅ ACTUAL DEDUCT from WalletContext
-        const deductResult = await deductMoney(user.id, costFor1Min);
-        
-        if (deductResult?.success) {
-          // ✅ Extend by 1 minute
-          setTimeLeft(prev => prev + 60);
-          setLastMinuteAlertShown(false);
-          setSessionActive(true);
-          console.log('✅ ✅ Wallet deducted + Extended 1 more minute');
-          return true;
-        } else {
-          console.log('❌ Deduct failed:', deductResult);
-          return false;
-        }
-      } catch (err) {
-        console.error('❌ Wallet deduct error:', err);
-        return false;
-      } finally {
-        setWalletLoading(false);
-      }
-    } else {
-      console.log('❌ Insufficient wallet balance:', walletBalance, '<', costFor1Min);
-      return false;
-    }
-  }, [walletBalance, expertPrice?.chat_per_minute, chatData?.price_per_minute, user?.id, deductMoney]);
-
-  // ✅ 5min Timer Logic + Wallet Check
-  useEffect(() => {
-    if (!sessionActive || !timerRunning) return;
-
-    const interval = setInterval(() => {
-      setTimeLeft(prev => {
-        const newTime = prev - 1;
-        
-        if (newTime === 60 && !lastMinuteAlertShown) {
-          setLastMinuteAlertShown(true);
-        }
-        
-        if (newTime <= 0) {
-          // ✅ Check wallet before ending
-          checkWalletAndExtend().then(canExtend => {
-            if (!canExtend) {
-              handleAutoEndChat();
-            }
-          });
-          return 0; // Show 0:00 while checking
-        }
-        
-        return newTime;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [sessionActive, timerRunning, lastMinuteAlertShown, checkWalletAndExtend]);
-
-  // ✅ Auto End Chat with POPUP
+  // ✅ Auto End Chat → redirect to history
   const handleAutoEndChat = useCallback(() => {
-    console.log('⏰ Timer expired - Showing end popup');
-    setSessionActive(false);
-    setTimerRunning(false);
-    setShowEndPopup(true);
-  }, []);
+    console.log("⏰ Timer expired - Auto ending chat");
 
-  // ✅ Manual End Chat
-  const handleEndChat = useCallback(() => {
-    console.log('🔚 Manual end chat');
-    setTimerRunning(false);
-    setShowEndPopup(true);
-  }, []);
+    setSessionActive(false);
+
+    socket.emit("end_chat", {
+      room_id,
+      reason: "time_up"
+    });
+
+    navigate("/user/chat-history", { replace: true });
+  }, [room_id, navigate]);
+
+
+  // ✅ Manual End Chat (UPDATED)
+ const handleEndChat = useCallback(() => {
+  if (!room_id) return;
+
+  const ok = window.confirm("Are you sure you want to end this chat?");
+
+  if (!ok) return;
+
+  socket.emit("end_chat", {
+    room_id,
+    reason: "user_ended"
+  });
+
+  setSessionActive(false);
+  navigate("/user/chat-history", { replace: true });
+
+}, [room_id, navigate]);
+
+useEffect(() => {
+  if (!sessionActive) return;
+
+  const blockBack = () => {
+    const ok = window.confirm("Are you sure you want to leave and end this chat?");
+
+    if (ok) {
+      socket.emit("end_chat", { room_id, reason: "user_left" });
+      socket.disconnect();
+      navigate("/user/chat-history", { replace: true });
+    } else {
+      window.history.pushState(null, "", window.location.pathname);
+    }
+  };
+
+  // push dummy state once
+  window.history.pushState(null, "", window.location.pathname);
+
+  window.addEventListener("popstate", blockBack);
+
+  return () => {
+    window.removeEventListener("popstate", blockBack);
+  };
+}, [sessionActive, room_id, navigate]);
+
+
+  // ✅ use chat timer hook
+  const { formatted, secondsLeft, isExpired } = useChatTimer(
+    endTime,
+    handleAutoEndChat
+  );
+
+  // ✅ Timer color logic
+  const getTimerColor = () => secondsLeft <= 60 ? "#ef4444" : "#10b981";
 
   // ✅ Close popup and go home
   const handleGoHome = () => {
@@ -213,23 +198,40 @@ const Chat = () => {
     if (!room_id || !socket) return;
 
     console.log(`🔌 User joining room: ${room_id}`);
-    socket.emit("join_chat", { room_id });
+    socket.emit("join_room", { room_id });
 
     const handleNewMessage = (msgData) => {
-      if (msgData.room_id === room_id) {
-        setMessages(prev => {
-          const exists = prev.some(m => m.id === msgData.id);
-          if (exists) return prev;
-          return [...prev, {
-            id: msgData.id || Date.now() + Math.random(),
-            sender_type: msgData.sender_type,
-            sender_id: msgData.sender_id,
-            message: msgData.message,
-            time: new Date(msgData.time).toLocaleTimeString('en-US', { 
-              hour: '2-digit', minute: '2-digit', hour12: true 
-            })
-          }];
-        });
+      if (msgData.room_id !== room_id) return;
+
+      setMessages(prev => {
+        if (
+          prev.some(
+            m =>
+              m.id === msgData.id ||
+              (msgData.client_id && m.client_id === msgData.client_id)
+          )
+        ) {
+          return prev;
+        }
+
+        return [...prev, {
+          id: msgData.id,
+          client_id: msgData.client_id,
+          sender_type: msgData.sender_type,
+          sender_id: msgData.sender_id,
+          message: msgData.message,
+          time: new Date(msgData.time).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+        }];
+      });
+    };
+
+    const handleChatAccepted = (data) => {
+      if (data.room_id === room_id) {
+        setEndTime(data.endTime);
+         setSessionActive(true); 
       }
     };
 
@@ -239,25 +241,24 @@ const Chat = () => {
       }
     };
 
-    const handleChatEnded = ({ room_id: endedRoomId, reason }) => {
+    const handleChatEnded = ({ room_id: endedRoomId }) => {
       if (endedRoomId === room_id) {
         setSessionActive(false);
-        setTimerRunning(false);
-        setShowEndPopup(true);
+        navigate("/user/chat-history", { replace: true });
       }
     };
 
     socket.on("message", handleNewMessage);
-    socket.on("message_sent", handleNewMessage);
+    socket.on("chat_accepted", handleChatAccepted); // ✅ ADD listener
     socket.on("chat_updated", handleChatUpdate);
     socket.on("chat_ended", handleChatEnded);
 
     return () => {
       socket.off("message", handleNewMessage);
-      socket.off("message_sent", handleNewMessage);
+      socket.off("chat_accepted", handleChatAccepted); // ✅ cleanup
       socket.off("chat_updated", handleChatUpdate);
       socket.off("chat_ended", handleChatEnded);
-      socket.emit("leave_chat", { room_id });
+      socket.emit("leave_room", { room_id });
     };
   }, [room_id, fetchChatDetails]);
 
@@ -289,43 +290,45 @@ const Chat = () => {
     };
   }, [chatData?.expert_id, experts, expertData]);
 
-  // ✅ Start Timer
-  useEffect(() => {
-    if (sessionActive && chatData && !timerRunning) {
-      setTimeLeft(300);
-      setTimerRunning(true);
-      setLastMinuteAlertShown(false);
-      console.log('⏰ 5min timer started');
-    }
-  }, [sessionActive, chatData, timerRunning]);
+  useLayoutEffect(() => {
+    if (!scrollRef.current) return;
 
-  // Auto-scroll
-  useEffect(() => {
-    setTimeout(() => {
-      scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-    }, 100);
-  }, [messages]);
+    scrollRef.current.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    });
+  }, [messages.length]);
 
-  // Initial load
   useEffect(() => {
     fetchChatDetails();
-    const interval = setInterval(fetchChatDetails, 6000);
-    return () => clearInterval(interval);
+    // const interval = setInterval(fetchChatDetails, null || 30000); // Refresh every 30s
+    // return () => clearInterval(interval);
   }, [fetchChatDetails]);
 
   const sendMessage = useCallback(() => {
-    if (!input.trim() || !chatData || !room_id || !sessionActive || timeLeft <= 0) return;
+    if (!input.trim() || !room_id) return;
 
-    const payload = {
+    const tempId = Date.now();
+
+    // ✅ INSTANT UI UPDATE
+    setMessages(prev => [
+      ...prev,
+      {
+        id: tempId,
+        sender_type: "user",
+        sender_id: user.id,
+        message: input.trim(),
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      }
+    ]);
+
+    socket.emit("sendMessage", {
       room_id,
-      sender_type: "user",
-      sender_id: user?.id || chatData.user_id,
-      message: input.trim()
-    };
+      message: input.trim(),
+    });
 
-    socket.emit("sendMessage", payload);
     setInput("");
-  }, [input, chatData, room_id, sessionActive, timeLeft, user?.id]);
+  }, [input, room_id, user?.id]);
 
   const handleKeyPress = useCallback((e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -333,17 +336,6 @@ const Chat = () => {
       sendMessage();
     }
   }, [sendMessage]);
-
-  // Format time
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const getTimerColor = () => {
-    return timeLeft <= 60 ? '#ef4444' : '#10b981';
-  };
 
   if (loading && !isInitialized) {
     return (
@@ -356,6 +348,11 @@ const Chat = () => {
     );
   }
 
+  // Check if chat is disabled (either expired or session ended)
+const isChatDisabled = sessionActive !== true;
+
+
+
   return (
     <>
       <ChatGlobalStyle />
@@ -366,7 +363,6 @@ const Chat = () => {
               <ExpertInfo>
                 <AvatarWrapper>
                   <Avatar src={expertInfo.avatar} alt={expertInfo.name} />
-                  <StatusDot active={sessionActive && timeLeft > 0 && !walletLoading} />
                 </AvatarWrapper>
                 <div>
                   <div className="expert-name">
@@ -379,11 +375,10 @@ const Chat = () => {
                   </div>
                   <div className="status">
                     <span style={{ 
-                      color: sessionActive && timeLeft > 0 && !walletLoading ? '#10b981' : '#ef4444',
+                      color: sessionActive === true ? '#10b981' : '#ef4444',
                       fontWeight: '500'
                     }}>
-                      {walletLoading ? '⏳ Processing...' : 
-                       sessionActive && timeLeft > 0 ? '🟢 Active' : '🔴 Ended'}
+                     {sessionActive === true ? '🟢 Active' : '🔴 Ended'}
                     </span>
                   </div>
                 </div>
@@ -393,20 +388,22 @@ const Chat = () => {
                   display: "flex",
                   alignItems: "center",
                   gap: "4px",
-                  background: walletLoading ? "#fef3c7" : "#f8fafc",
+                  background: "#f8fafc",
                   padding: "8px 12px",
                   borderRadius: "8px",
-                  border: `2px solid ${walletLoading ? '#f59e0b' : getTimerColor()}`,
+                  border: `2px solid ${getTimerColor()}`,
                   fontSize: "14px",
                   fontWeight: "600",
-                  color: walletLoading ? '#b45309' : getTimerColor(),
+                  color: getTimerColor(),
                   minWidth: "80px",
                   justifyContent: "center"
                 }}>
-                  {walletLoading ? '💳' : '⏱️'} 
-                  <span>{walletLoading ? 'Checking...' : formatTime(timeLeft)}</span>
+                  <span>⏱️ {formatted}</span>
                 </div>
-                <EndChatButton onClick={handleEndChat} disabled={!sessionActive || timeLeft <= 0 || walletLoading}>
+                <EndChatButton
+                  onClick={handleEndChat}
+                  disabled={isChatDisabled}
+                >
                   <FiX size={20} />
                 </EndChatButton>
               </div>
@@ -426,7 +423,6 @@ const Chat = () => {
           ) : messages.length === 0 ? (
             <EmptyChatMessage>
               💬 Chat connected! Start typing to chat with {expertInfo?.name || 'expert'}.
-              {walletLoading && <div style={{fontSize:'12px', color:'#f59e0b'}}>Wallet being checked...</div>}
             </EmptyChatMessage>
           ) : (
             messages.map((msg, index) => (
@@ -442,7 +438,7 @@ const Chat = () => {
         </MessagesArea>
 
         <InputBar>
-          <UploadButton onClick={() => setShowFileMenu(!showFileMenu)} disabled={!sessionActive || timeLeft <= 0 || walletLoading}>
+          <UploadButton onClick={() => setShowFileMenu(!showFileMenu)} disabled={isChatDisabled}>
             <FiPaperclip size={20} />
           </UploadButton>
 
@@ -470,16 +466,15 @@ const Chat = () => {
           )}
 
           <InputBox
-            placeholder={walletLoading ? "Processing payment..." : 
-                        sessionActive && timeLeft > 0 ? "Type your message..." : "Chat session ended"}
+            placeholder={isChatDisabled ? "Chat session ended" : "Type your message..."}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyPress}
-            disabled={!sessionActive || timeLeft <= 0 || walletLoading}
+            disabled={isChatDisabled}
             maxLength={1000}
           />
 
-          <SendButton onClick={sendMessage} disabled={!input.trim() || !sessionActive || timeLeft <= 0 || walletLoading}>
+          <SendButton onClick={sendMessage} disabled={!input.trim() || isChatDisabled}>
             <IoMdSend size={20} />
           </SendButton>
         </InputBar>

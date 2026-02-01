@@ -1,62 +1,112 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useExpertNotifications } from "../context/ExpertNotificationsContext";
+
 import {
   QueueCardWrap,
   QueueTabs,
   QueueItem,
   ActionBtn,
   RedDot,
-  StatusBadge // ✅ NEW IMPORT
+  StatusBadge,
 } from "../styles/Dashboard.styles";
 
 export default function QueueCard() {
   const [activeTab, setActiveTab] = useState("chat");
-  const { notifications, acceptRequest, declineRequest, unreadCount } = useExpertNotifications();
-  
-  const chatRequests = notifications.filter(n => n.type === "chat_request");
 
-  const acceptQueueRequest = (req) => acceptRequest(req.id);
-  const declineQueueRequest = (req) => declineRequest(req.id);
+  const {
+    notifications,
+    onNotificationTap,
+    removeById,
+  } = useExpertNotifications();
 
-  const activeList = chatRequests;
+  /* ----------------------------------
+     SPLIT CHAT & CALL
+  ---------------------------------- */
+  const chatRequests = useMemo(
+    () => notifications.filter((n) => n.type === "chat_request"),
+    [notifications]
+  );
+
+  const callRequests = useMemo(
+    () => notifications.filter((n) => n.type === "voice_call"),
+    [notifications]
+  );
+
+  const activeList =
+    activeTab === "chat" ? chatRequests : callRequests;
 
   return (
     <QueueCardWrap>
+      {/* ---------------- TABS ---------------- */}
       <QueueTabs>
-        <button className={activeTab === "chat" ? "active" : ""} onClick={() => setActiveTab("chat")}>
-          Chat Requests ({unreadCount})
-          {unreadCount > 0 && <RedDot />}
+        <button
+          className={activeTab === "chat" ? "active" : ""}
+          onClick={() => setActiveTab("chat")}
+        >
+          💬 Chat ({chatRequests.length})
+        </button>
+
+        <button
+          className={activeTab === "call" ? "active" : ""}
+          onClick={() => setActiveTab("call")}
+        >
+          📞 Calls ({callRequests.length})
+          {callRequests.length > 0 && <RedDot />}
         </button>
       </QueueTabs>
 
+      {/* ---------------- LIST ---------------- */}
       {activeList.length === 0 ? (
         <div style={{ padding: 24, textAlign: "center", color: "#64748b" }}>
-          No pending requests
+          No pending {activeTab} requests
         </div>
       ) : (
         activeList.map((req) => (
           <QueueItem key={req.id} className={req.status || "pending"}>
             <div>
               <strong>{req.title}</strong>
-              {/* ✅ STATUS BADGE */}
+
               <StatusBadge status={req.status || "pending"}>
-                {req.status === "pending" ? "⏳ Pending" : "❌ Cancelled"}
+                {req.status === "pending" && "⏳ Pending"}
+                {req.status === "incoming" && "📞 Incoming"}
+                {req.status === "rejected" && "❌ Rejected"}
+                {req.status === "cancelled" && "🚫 Cancelled"}
+                {req.status === "ended" && "☎️ Ended"}
               </StatusBadge>
+
               <span>{req.meta}</span>
             </div>
-            <div>
-              {req.status === "pending" ? ( // ✅ Only show buttons for pending
-                <>
-                  <ActionBtn className="accept" onClick={() => acceptQueueRequest(req)}>
+
+            <div style={{ display: "flex", gap: 8 }}>
+              {/* CHAT */}
+              {req.type === "chat_request" &&
+                req.status === "pending" && (
+                  <ActionBtn
+                    className="accept"
+                    onClick={() => onNotificationTap(req)}
+                  >
                     Accept
                   </ActionBtn>
-                  <ActionBtn onClick={() => declineQueueRequest(req)}>
-                    Decline
+                )}
+
+              {/* CALL */}
+              {req.type === "voice_call" &&
+                req.status === "incoming" && (
+                  <ActionBtn
+                    className="accept"
+                    onClick={() => onNotificationTap(req)}
+                  >
+                    Tap to Answer
                   </ActionBtn>
-                </>
-              ) : (
-                <ActionBtn onClick={() => {}}>Closed</ActionBtn>
-              )}
+                )}
+
+              {/* ✅ CLOSE (ALWAYS ACTIVE) */}
+              <ActionBtn
+                className="decline"
+                onClick={() => removeById(req.id)}
+              >
+                Close
+              </ActionBtn>
             </div>
           </QueueItem>
         ))

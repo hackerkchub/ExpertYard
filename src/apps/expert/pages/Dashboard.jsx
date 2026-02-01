@@ -1,14 +1,14 @@
-import React from "react";
+import React, { useMemo } from "react";
 import Sidebar from "../components/ExpertSidebar";
 import Topbar from "../components/ExpertTopbar";
 import { useExpertNotifications } from "../context/ExpertNotificationsContext";
+import { useExpert } from "../../../shared/context/ExpertContext";
+import { useWebPush } from "../../../shared/hooks/useWebPush";
 
 import StatsCard from "../components/StatsCard";
 import QueueCard from "../components/QueueCard";
 import FeedCard from "../components/FeedCard";
 import WidgetCard from "../components/WidgetCard";
-
-import { useExpert } from "../../../shared/context/ExpertContext";
 
 import {
   Layout,
@@ -16,54 +16,111 @@ import {
   ContentInner,
   Welcome,
   StatsRow,
-  FeedArea,
-  LiveRequests,
-  RequestCount,
-  NotificationBell,
-  RedDot
 } from "../styles/Dashboard.styles";
 
 export default function Dashboard() {
   const { expertData, profileLoading } = useExpert();
-  const { unreadCount, notifications } = useExpertNotifications(); // ✅ Get notifications too
+  const { notifications } = useExpertNotifications();
 
+ const expertId = useMemo(() => {
+  if (!expertData) return null;
+
+  return (
+    expertData.expert_id ||
+    expertData.id ||
+    expertData?.expert?.id ||
+    expertData?.profile?.expert_id ||
+    null
+  );
+}, [expertData]);
   const expertName =
-    expertData?.profile?.name ||
-    expertData?.name ||
-    "Expert";
+    expertData?.profile?.name || expertData?.name || "Expert";
 
-  // ✅ LIVE COUNTS FROM NOTIFICATIONS
-  const liveRequestsCount = unreadCount; // All unread = live requests
-  const pendingChatsCount = notifications.length; // Total pending chats
-  const todaysSessionsCount = "12"; // Static for now (API later)
-  const monthsEarnings = "₹4,250"; // Static for now (API later)
+  /* ============================
+     🔔 WEB PUSH
+  ============================ */
+  const {
+    supported,
+    permission, // "default" | "granted" | "denied"
+    isSubscribed,
+    loading,
+    error,
+    enable,
+    disable,
+  } = useWebPush({
+    panel: "expert",
+    userId: expertId,
+  });
+
+  /* ============================
+   📊 REQUEST COUNTS
+============================ */
+
+// 🔥 Only CALL requests
+const callRequestsCount = useMemo(
+  () =>
+    notifications.filter(
+      (n) => n.type === "call" && n.status === "pending"
+    ).length,
+  [notifications]
+);
+
+// 🔥 Live = CALL + CHAT (pending)
+const liveRequestsCount = useMemo(
+  () =>
+    notifications.filter(
+      (n) => n.status === "pending"
+    ).length,
+  [notifications]
+);
+
+// 🔥 Pending chats (optional, agar QueueCard me use ho raha ho)
+const pendingChatsCount = useMemo(
+  () =>
+    notifications.filter(
+      (n) => n.type === "chat" && n.status === "pending"
+    ).length,
+  [notifications]
+);
+
 
   const stats = [
-    { 
-      label: "Live Requests", 
-      value: liveRequestsCount.toString(), 
-      color: "#10b981",
-      trend: liveRequestsCount > 0 ? "+2" : "0"
-    },
-    { 
-      label: "Pending Chats", 
-      value: pendingChatsCount.toString(), 
-      color: "#f59e0b",
-      trend: "+1"
-    },
-    { 
-      label: "Today's Sessions", 
-      value: todaysSessionsCount, 
-      color: "#3b82f6",
-      trend: "+3"
-    },
-    { 
-      label: "Month's Earnings", 
-      value: monthsEarnings, 
-      color: "#8b5cf6",
-      trend: "+12%"
-    }
-  ];
+  {
+    label: "Live Requests",
+    value: String(liveRequestsCount),
+    color: "#10b981",
+    trend: liveRequestsCount > 0 ? "+1" : "0",
+  },
+  {
+    label: "Call Requests",
+    value: String(callRequestsCount),
+    color: "#3b82f6",
+    trend: callRequestsCount > 0 ? "+1" : "0",
+  },
+  {
+    label: "Pending Chats",
+    value: String(pendingChatsCount),
+    color: "#f59e0b",
+    trend: pendingChatsCount > 0 ? "+1" : "0",
+  },
+];
+
+  /* ============================
+     🧠 UI STATES
+  ============================ */
+  const showUnsupported = !supported;
+
+const showDeniedBanner =
+  supported && permission === "denied";
+
+const showAskPermission =
+  supported && permission === "default";
+
+const showEnableBanner =
+  supported && permission === "granted" && !isSubscribed;
+
+const showEnabledInfo =
+  supported && permission === "granted" && isSubscribed;
 
   return (
     <Layout>
@@ -76,16 +133,169 @@ export default function Dashboard() {
           <Welcome>
             {profileLoading
               ? "Welcome back..."
-              : `Welcome back, ${expertName}!`
-            }
+              : `Welcome back, ${expertName}!`}
           </Welcome>
+{showAskPermission && (
+  <div
+    style={{
+      background: "#0f172a",
+      color: "white",
+      padding: "12px 16px",
+      borderRadius: 12,
+      marginBottom: 16,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+    }}
+  >
+    <div style={{ fontSize: 13 }}>
+      Enable notifications to receive chat requests.
+    </div>
 
-          {/* 📊 STATS - LIVE COUNTS! */}
+    <button
+      onClick={async () => {
+        try {
+          await enable();
+        } catch (e) {
+          alert(e?.message || "Permission failed");
+        }
+      }}
+      style={{
+        padding: "10px 14px",
+        borderRadius: 999,
+        border: "none",
+        background: "white",
+        color: "#0f172a",
+        fontWeight: 600,
+        cursor: "pointer",
+      }}
+    >
+      Allow Notifications
+    </button>
+  </div>
+)}
+
+          {/* ❌ Browser not supported */}
+          {showUnsupported && (
+            <div
+              style={{
+                background: "#fef3c7",
+                color: "#92400e",
+                padding: "12px 16px",
+                borderRadius: 12,
+                marginBottom: 16,
+                border: "1px solid #fde68a",
+                fontSize: 13,
+              }}
+            >
+              Your browser does not support system notifications.
+              Please use the latest version of Chrome, Edge, or Firefox.
+            </div>
+          )}
+
+          {/* ❌ Notifications blocked */}
+          {showDeniedBanner && (
+            <div
+              style={{
+                background: "#fee2e2",
+                color: "#991b1b",
+                padding: "12px 16px",
+                borderRadius: 12,
+                marginBottom: 16,
+                border: "1px solid #fecaca",
+                fontSize: 13,
+              }}
+            >
+              Notifications are blocked for this site.
+              Please allow them from browser settings (site permissions) and reload.
+            </div>
+          )}
+
+          {/* 🔔 Enable notifications */}
+         {showEnableBanner && (
+  <div  style={{
+                background: "#fef3c7",
+                color: "#92400e",
+                padding: "12px 16px",
+                borderRadius: 12,
+                marginBottom: 16,
+                border: "1px solid #fde68a",
+                fontSize: 13,
+              }}>
+    <div style={{ fontSize: 13 }}>
+      Notifications are off. Enable again to receive chat requests.
+    </div>
+
+    <button
+      disabled={loading || !expertId}
+      onClick={enable}
+      style={ 
+        {padding: "10px 14px",
+  borderRadius: 999,
+  border: "none",
+  background: "white",
+  color: "#0f172a",
+  fontWeight: 600,
+  cursor: "pointer",}}
+    >
+      {loading ? "Enabling..." : "Enable"}
+    </button>
+  </div>
+)}
+
+          {/* ✅ Enabled */}
+       {showEnabledInfo && (
+  <div
+    style={{
+      fontSize: 12,
+      color: "#16a34a",
+      marginBottom: 12,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+    }}
+  >
+    <span>Notifications enabled.</span>
+
+    <button
+      onClick={disable}
+      style={{
+        padding: "6px 10px",
+        borderRadius: 999,
+        border: "1px solid #16a34a",
+        background: "transparent",
+        color: "#16a34a",
+        fontSize: 12,
+        cursor: "pointer",
+      }}
+    >
+      Disable
+    </button>
+  </div>
+)}
+
+        
+
+          {/* ❌ Hook error */}
+          {error && (
+            <div
+              style={{
+                fontSize: 12,
+                color: "#dc2626",
+                marginBottom: 12,
+              }}
+            >
+              {error}
+            </div>
+          )}
+
           <StatsRow>
             {stats.map((stat, index) => (
-              <StatsCard 
+              <StatsCard
                 key={index}
-                label={stat.label} 
+                label={stat.label}
                 value={stat.value}
                 color={stat.color}
                 trend={stat.trend}
@@ -93,13 +303,18 @@ export default function Dashboard() {
             ))}
           </StatsRow>
 
-      
-
           <QueueCard />
-          <FeedArea>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 360px",
+              gap: 16,
+            }}
+          >
             <FeedCard />
             <WidgetCard />
-          </FeedArea>
+          </div>
         </ContentInner>
       </MainContent>
     </Layout>

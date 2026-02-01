@@ -22,13 +22,13 @@ export default function ExpertSidebar() {
   return (
     <SidebarWrap>
       {/* Premium Brand */}
-      <Logo onClick={() => window.location.href = "/expert/dashboard"}>
+      <Logo onClick={() => window.location.href = "/expert"}>
         <span>Expert</span>Yard
       </Logo>
 
       {/* Premium Navigation */}
       <NavList>
-        <NavItem to="/expert/dashboard" end>
+        <NavItem to="/expert" end>
           <IconWrap>
             <FiHome />
           </IconWrap>

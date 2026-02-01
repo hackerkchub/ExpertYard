@@ -76,7 +76,21 @@ export const getExpertsBySubCategoryApi = async (subCategoryId) => {
  * PUT {{baseURL}}/api/expert-profile/expert/:id
  * FormData required
  */
-export const updateExpertProfileApi = async (expertId, formData) => {
+// export const updateExpertProfileApi = async (expertId, formData) => {
+//   const { data } = await api.put(
+//     `/expert-profile/expert/${expertId}`,
+//     formData,
+//     {
+//       headers: {
+//         "Content-Type": "multipart/form-data"
+//       }
+//     }
+//   );
+//   return data;
+// };
+
+
+export const uploadExpertPhotoApi = async (expertId, formData) => {
   const { data } = await api.put(
     `/expert-profile/expert/${expertId}`,
     formData,

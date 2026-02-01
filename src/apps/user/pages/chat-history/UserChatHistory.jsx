@@ -675,8 +675,8 @@ export const UserChatHistory = () => {
                             <FiBriefcase size={12} />
                             {c.expert_position}
                           </ExpertBadge>
-                          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-                            {renderStars(c.rating)}
+                          {/* <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            {renderStars(c.rating)} */}
                             <div style={{ 
                               background: 'linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%)',
                               color: 'white',
@@ -697,11 +697,11 @@ export const UserChatHistory = () => {
                             <FiMessageSquare size={12} /> {totalSessions} sessions
                           </span>
                           <span className="meta-item">
-                            <FiDollarSign size={12} /> ₹{totalSpent.toFixed(0)} spent
+                             ₹{totalSpent.toFixed(0)} spent
                           </span>
                         </div>
                       </div>
-                    </div>
+                    
                     
                     <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
                       <div style={{ textAlign: 'right' }}>
@@ -753,9 +753,9 @@ export const UserChatHistory = () => {
                                   <span className="rate-label">
                                     @ ₹{ppm}/min
                                   </span>
-                                  <span className="room-id">
+                                  {/* <span className="room-id">
                                     Session ID: #{s.room_id?.slice(-6) || 'N/A'}
-                                  </span>
+                                  </span> */}
                                 </div>
                               </div>
                               
@@ -804,13 +804,13 @@ export const UserChatHistory = () => {
                       <span>{formatDate(selectedSession.end_time)}</span>
                       <span>•</span>
                       <span>{formatTime(selectedSession.duration_minutes)} duration</span>
-                      <span>•</span>
-                      <span className="spent">
+                      {/* <span>•</span> */}
+                      {/* <span className="spent">
                         ₹{calculateBilledAmount(
                           selectedSession.duration_minutes,
                           selectedSession.price_per_minute || selectedSession.chat_per_minute || 16
                         )} spent
-                      </span>
+                      </span> */}
                     </div>
                   </div>
                 </div>
@@ -907,7 +907,7 @@ export const UserChatHistory = () => {
           <div className="recharge-popup-overlay">
             <div className="recharge-popup">
               <div className="popup-icon warning">
-                <FiDollarSign size={32} />
+                {/* <FiDollarSign size={32} /> */}
               </div>
               <h3>Insufficient Balance</h3>
               <p>

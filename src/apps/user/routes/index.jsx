@@ -14,8 +14,12 @@ import UserChatHistory from "../pages/chat-history/UserChatHistory"; // ✅ NEW
 import MyOffer from "../pages/MyOffers/MyOffer";
 import ProtectedRoute from "./ProtectedRoute";
 import VoiceCall from "../pages/voice-call/VoiceCall";
-import Categories from "../components/HomeComponent/Categories";
+import Categories from "../pages/Category/Categories";
 import SubcategoryPage from "../pages/Subcategory/SubcategoryPage";
+import AboutUs from "../pages/About-Us/AboutUs"; // NEW
+import HowItWorks from "../pages/how-it-work/HowItWorks"; // NEW
+import Reviews from "../pages/reviews/Reviews";
+import ExpertGuidelines from "../pages/Expert-Guideline/ExpertGuidelines";
 
 export default function UserAppRoutes() {
   return (
@@ -29,7 +33,12 @@ export default function UserAppRoutes() {
         <Route path="/auth" element={<UserAuth />} />
         <Route path="/my-offers" element={<MyOffer />} />
         <Route path="/categories" element={<Categories />} />
-                <Route path="/subcategories/:categoryId" element={<SubcategoryPage />} />
+        <Route path="/about" element={<AboutUs />} /> 
+        <Route path="/how-it-works" element={<HowItWorks />} /> 
+        <Route path="/reviews" element={<Reviews />} />
+        <Route path="/guidelines" element={<ExpertGuidelines />} />
+
+        <Route path="/subcategories/:categoryId" element={<SubcategoryPage />} />
           <Route
           path="/voice-call/:expertId"
           element={
@@ -89,7 +98,9 @@ export default function UserAppRoutes() {
 
         {/* ✅ ADD MORE PROTECTED ROUTES HERE IF NEEDED */}
       </Route>
+      {/* <Route path="/earnings" element={<EarningDashboard />} /> */}
 
+{/* NEW */}
       {/* FALLBACK 404 */}
       <Route path="*" element={
         <div style={{

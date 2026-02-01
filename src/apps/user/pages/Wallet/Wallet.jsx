@@ -1,4 +1,7 @@
 import React, { useEffect, useState } from "react";
+import { FaUserCircle, FaFilter, FaHistory, FaPlus, FaWallet, FaCalendarAlt } from "react-icons/fa";
+import { MdAccountBalanceWallet, MdPayments, MdTrendingUp } from "react-icons/md";
+import { RiMoneyRupeeCircleFill } from "react-icons/ri";
 
 import {
   PageWrap,
@@ -17,10 +20,17 @@ import {
   TopupSection,
   AddBalanceBtn,
   QuickAddRow,
-  QuickAddBtn
+  QuickAddBtn,
+  StatsGrid,
+  StatCard,
+  ChartContainer,
+  FilterDropdown,
+  DateRangePicker,
+  TransactionBadge,
+  ProgressBar,
+  EmptyState
 } from "./Wallet.styles";
 
-import { FaUserCircle } from "react-icons/fa";
 import AddBalancePopup from "../../components/AddBalancePopup/AddBalancePopup";
 
 // ✅ CONTEXTS
@@ -29,66 +39,91 @@ import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { getAllExperts } from "../../../../shared/services/expertService";
 
 const WalletPage = () => {
-  const { balance, addMoney } = useWallet();
-  const { user } = useAuth(); // user?.id
-
- const userId = user?.id;
+  const { balance, addMoney, transactions } = useWallet();
+  const { user } = useAuth();
+  const userId = user?.id;
 
   const [experts, setExperts] = useState([]);
   const [expenseHistory, setExpenseHistory] = useState([]);
   const [filteredExpenses, setFilteredExpenses] = useState([]);
   const [topupHistory, setTopupHistory] = useState([]);
+  const [stats, setStats] = useState({
+    monthlySpent: 0,
+    avgTransaction: 0,
+    topExpert: null
+  });
 
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupAmount, setPopupAmount] = useState(null);
 
   const [filterType, setFilterType] = useState("thisMonth");
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [customRange, setCustomRange] = useState({ from: "", to: "" });
 
   /* ================= LOAD DATA ================= */
-
   useEffect(() => {
-  if (!userId) return;   // 🛑 no API call without login
-  loadExperts();
-}, [userId]);
-
+    if (!userId) return;
+    loadExperts();
+    loadWalletStats();
+  }, [userId]);
 
   const loadExperts = async () => {
     const data = await getAllExperts();
 
-    // fallback safe data
-    const expense = (data || []).slice(0, 6).map((ex) => ({
-      id: ex.id,
+    const expense = (data || []).slice(0, 8).map((ex, index) => ({
+      id: ex.id || index,
       name: ex.name || "Expert",
-      role: ex.role || "Consultant",
-      avatar: ex.img || "/avatar.png",
+      role: ex.role || ex.position || "Consultant",
+      avatar: ex.profile_photo || ex.img || "/avatar.png",
       amount: Math.floor(Math.random() * 500) + 100,
-      date: new Date()
+      date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
+      type: Math.random() > 0.5 ? "call" : "chat",
+      status: Math.random() > 0.3 ? "completed" : "pending"
     }));
 
     setExperts(data || []);
     setExpenseHistory(expense);
-    setFilteredExpenses(expense);
+    setFilteredExpenses(expense.filter(e => sameMonth(e.date, new Date())));
 
-    const topups = (data || []).slice(0, 3).map((ex) => ({
-      id: ex.id,
+    const topups = (data || []).slice(0, 4).map((ex, index) => ({
+      id: ex.id || index,
       amount: Math.floor(Math.random() * 1000) + 100,
-      mode: "UPI",
-      date: new Date()
+      mode: ["UPI", "Card", "Net Banking", "Wallet"][index % 4],
+      date: new Date(Date.now() - Math.random() * 15 * 24 * 60 * 60 * 1000),
+      status: "success"
     }));
 
     setTopupHistory(topups);
   };
 
+  const loadWalletStats = () => {
+    const monthlySpent = expenseHistory
+      .filter(e => sameMonth(e.date, new Date()))
+      .reduce((sum, item) => sum + item.amount, 0);
+    
+    const avgTransaction = expenseHistory.length > 0 
+      ? expenseHistory.reduce((sum, item) => sum + item.amount, 0) / expenseHistory.length
+      : 0;
+    
+    const topExpert = expenseHistory.reduce((max, item) => 
+      item.amount > (max?.amount || 0) ? item : max, null
+    );
+
+    setStats({
+      monthlySpent,
+      avgTransaction: Math.round(avgTransaction),
+      topExpert
+    });
+  };
+
   /* ================= FILTER ================= */
+  const sameMonth = (d1, d2) =>
+    d1.getMonth() === d2.getMonth() &&
+    d1.getFullYear() === d2.getFullYear();
 
   useEffect(() => {
     applyFilters();
   }, [filterType, customRange, expenseHistory]);
-
-  const sameMonth = (d1, d2) =>
-    d1.getMonth() === d2.getMonth() &&
-    d1.getFullYear() === d2.getFullYear();
 
   const applyFilters = () => {
     const now = new Date();
@@ -99,6 +134,12 @@ const WalletPage = () => {
       const last = new Date();
       last.setMonth(last.getMonth() - 1);
       setFilteredExpenses(expenseHistory.filter((e) => sameMonth(e.date, last)));
+    } else if (filterType === "last3Months") {
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+      setFilteredExpenses(
+        expenseHistory.filter((e) => e.date >= threeMonthsAgo && e.date <= now)
+      );
     } else if (filterType === "custom") {
       if (!customRange.from || !customRange.to) return;
       const from = new Date(customRange.from);
@@ -112,7 +153,6 @@ const WalletPage = () => {
   };
 
   /* ================= POPUP ================= */
-
   const openPopup = (amount = null) => {
     setPopupAmount(amount);
     setPopupOpen(true);
@@ -124,133 +164,275 @@ const WalletPage = () => {
   };
 
   /* ================= ADD MONEY ================= */
-
   const handleAddMoney = async (amount) => {
     await addMoney(userId, amount);
     closePopup();
   };
 
-  /* ================= UI ================= */
+  /* ================= FORMATTING ================= */
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
 
+  const getTransactionTypeColor = (type) => {
+    const colors = {
+      call: "#3b82f6",
+      chat: "#10b981",
+      consultation: "#8b5cf6"
+    };
+    return colors[type] || "#64748b";
+  };
+
+  /* ================= UI ================= */
   return (
     <PageWrap>
       <WalletBox>
-        {/* HEADER */}
+        {/* PREMIUM HEADER */}
         <HeaderRow>
-          <img src="/logo.png" alt="logo" height="42" />
-          <span className="wallet-label">WALLET</span>
+          <div className="header-left">
+            <div className="logo-container">
+              <MdAccountBalanceWallet className="logo-icon" />
+              <span className="logo-text">ExpertConnect</span>
+            </div>
+            <h1 className="page-title">Wallet Management</h1>
+          </div>
+          {/* <div className="header-right">
+            <div className="user-badge">
+              <FaUserCircle className="user-icon" />
+              <span className="user-name">{user?.name || "User"}</span>
+            </div>
+          </div> */}
         </HeaderRow>
 
-        {/* BALANCE */}
+        {/* PREMIUM BALANCE CARD */}
         <BalanceCard>
-          <h3>WALLET BALANCE:</h3>
+          <div className="balance-header">
+            <h3>Available Balance</h3>
+            <span className="balance-label">Live Balance</span>
+          </div>
           <BalanceAmount>
-            ₹{balance || 0} <span>INR</span>
+            <RiMoneyRupeeCircleFill className="currency-icon" />
+            <span className="amount">{balance || 0}</span>
+            <span className="currency">INR</span>
           </BalanceAmount>
+          {/* <div className="balance-footer">
+            <div className="balance-stat">
+              <MdTrendingUp className="stat-icon" />
+              <div>
+                <span className="stat-label">Monthly Spent</span>
+                <span className="stat-value">₹{stats.monthlySpent}</span>
+              </div>
+            </div>
+            <div className="balance-stat">
+              <MdPayments className="stat-icon" />
+              <div>
+                <span className="stat-label">Avg. Transaction</span>
+                <span className="stat-value">₹{stats.avgTransaction}</span>
+              </div>
+            </div>
+          </div> */}
         </BalanceCard>
+
+        {/* STATS GRID */}
+        <StatsGrid>
+          <StatCard className="stat-1">
+            <div className="stat-icon">
+              <FaWallet />
+            </div>
+            <div className="stat-content">
+              <span className="stat-label">Total Transactions</span>
+              <span className="stat-value">{expenseHistory.length}</span>
+            </div>
+          </StatCard>
+          <StatCard className="stat-2">
+            <div className="stat-icon">
+              <FaHistory />
+            </div>
+            <div className="stat-content">
+              <span className="stat-label">Most Spent On</span>
+              <span className="stat-value">
+                {stats.topExpert?.name || "N/A"}
+              </span>
+            </div>
+          </StatCard>
+          <StatCard className="stat-3">
+            <div className="stat-icon">
+              <FaCalendarAlt />
+            </div>
+            <div className="stat-content">
+              <span className="stat-label">Active Since</span>
+              <span className="stat-value">{formatDate(new Date())}</span>
+            </div>
+          </StatCard>
+        </StatsGrid>
 
         {/* EXPENSE HISTORY */}
         <ExpenseSection>
           <SectionTitle>
-            <span>EXPENSE HISTORY BY EXPERT</span>
-
-            <div className="filter">
-              {["thisMonth", "lastMonth", "custom", "all"].map((f) => (
-                <button
-                  key={f}
-                  className={filterType === f ? "active" : ""}
-                  onClick={() => setFilterType(f)}
+            <div className="section-header">
+              <h2>Expense History</h2>
+              <p className="section-subtitle">Track your expert consultations</p>
+            </div>
+            
+            <div className="filter-section">
+              <FilterDropdown>
+                <select 
+                  value={filterType}
+                  onChange={(e) => {
+                    setFilterType(e.target.value);
+                    if (e.target.value === 'custom') {
+                      setShowDatePicker(true);
+                    }
+                  }}
                 >
-                  {f === "thisMonth"
-                    ? "This Month"
-                    : f === "lastMonth"
-                    ? "Last Month"
-                    : f === "custom"
-                    ? "Custom Range"
-                    : "All Time"}
-                </button>
-              ))}
+                  <option value="thisMonth">This Month</option>
+                  <option value="lastMonth">Last Month</option>
+                  <option value="last3Months">Last 3 Months</option>
+                  <option value="custom">Custom Range</option>
+                  <option value="all">All Time</option>
+                </select>
+                <FaFilter className="filter-icon" />
+              </FilterDropdown>
             </div>
           </SectionTitle>
 
           {filterType === "custom" && (
-            <div style={{ marginBottom: 14 }}>
+            <DateRangePicker>
               <input
                 type="date"
                 value={customRange.from}
                 onChange={(e) =>
                   setCustomRange({ ...customRange, from: e.target.value })
                 }
+                className="date-input"
+                placeholder="From Date"
               />
+              <span className="date-separator">to</span>
               <input
                 type="date"
                 value={customRange.to}
                 onChange={(e) =>
                   setCustomRange({ ...customRange, to: e.target.value })
                 }
-                style={{ marginLeft: 10 }}
+                className="date-input"
+                placeholder="To Date"
               />
+            </DateRangePicker>
+          )}
+
+          {filteredExpenses.length === 0 ? (
+            <EmptyState>
+              <div className="empty-icon">📊</div>
+              <h3>No expenses found</h3>
+              <p>Try adjusting your filters or add balance to get started</p>
+            </EmptyState>
+          ) : (
+            <div className="expenses-list">
+              {filteredExpenses.map((item) => (
+                <ExpertCard key={item.id}>
+                  <ExpertLeft>
+                    <Avatar src={item.avatar}>
+                      {!item.avatar && <FaUserCircle />}
+                    </Avatar>
+                    <ExpertInfo>
+                      <div className="expert-header">
+                        <strong>{item.name}</strong>
+                        <TransactionBadge 
+                          style={{ backgroundColor: getTransactionTypeColor(item.type) }}
+                        >
+                          {item.type.toUpperCase()}
+                        </TransactionBadge>
+                      </div>
+                      <small className="expert-role">{item.role}</small>
+                      <div className="expert-meta">
+                        <span className="date">{formatDate(item.date)}</span>
+                        <span className={`status ${item.status}`}>
+                          {item.status}
+                        </span>
+                      </div>
+                    </ExpertInfo>
+                  </ExpertLeft>
+
+                  <ExpertRight>
+                    <AmountBox>
+                      <span className="amount-label">Spent</span>
+                      <span className="amount-value">₹{item.amount}</span>
+                      <div className="amount-progress">
+                        <ProgressBar 
+                          width={(item.amount / 500) * 100}
+                          color={getTransactionTypeColor(item.type)}
+                        />
+                      </div>
+                    </AmountBox>
+                  </ExpertRight>
+                </ExpertCard>
+              ))}
+            </div>
+          )}
+        </ExpenseSection>
+
+        {/* TOPUP SECTION */}
+        <TopupSection>
+          <SectionTitle>
+            <div className="section-header">
+              <h2>Top-up History</h2>
+              <p className="section-subtitle">Your recharge transactions</p>
+            </div>
+          </SectionTitle>
+
+          {topupHistory.length === 0 ? (
+            <EmptyState className="small">
+              <div className="empty-icon">💳</div>
+              <p>No top-up history yet</p>
+            </EmptyState>
+          ) : (
+            <div className="topup-list">
+              {topupHistory.map((item) => (
+                <ExpertCard key={item.id} className="topup-card">
+                  <ExpertLeft>
+                    <div className="topup-icon">
+                      <FaPlus />
+                    </div>
+                    <ExpertInfo>
+                      <strong>₹{item.amount}</strong>
+                      <small>Added via {item.mode}</small>
+                      <small className="topup-date">{formatDate(item.date)}</small>
+                    </ExpertInfo>
+                  </ExpertLeft>
+
+                  <ExpertRight>
+                    <AmountBox className={`status-${item.status}`}>
+                      {item.status === 'success' ? '✅ Success' : '🔄 Pending'}
+                    </AmountBox>
+                  </ExpertRight>
+                </ExpertCard>
+              ))}
             </div>
           )}
 
-          {filteredExpenses.length === 0 && (
-            <p style={{ color: "#9bdfff" }}>No expenses found</p>
-          )}
+          <div className="action-section">
+            <AddBalanceBtn onClick={() => openPopup(null)}>
+              <FaPlus className="btn-icon" />
+              ADD BALANCE
+            </AddBalanceBtn>
 
-          {filteredExpenses.map((item) => (
-            <ExpertCard key={item.id}>
-              <ExpertLeft>
-                <Avatar src={item.avatar} />
-                <ExpertInfo>
-                  <strong>{item.name}</strong>
-                  <small>{item.role}</small>
-                  <small>{item.date.toDateString()}</small>
-                </ExpertInfo>
-              </ExpertLeft>
-
-              <ExpertRight>
-                <AmountBox>₹{item.amount}</AmountBox>
-              </ExpertRight>
-            </ExpertCard>
-          ))}
-        </ExpenseSection>
-
-        {/* TOPUP */}
-        <TopupSection>
-          <SectionTitle>BALANCE TOP-UP HISTORY</SectionTitle>
-
-          {topupHistory.length === 0 && (
-            <p style={{ color: "#9bdfff" }}>No top-ups yet</p>
-          )}
-
-          {topupHistory.map((item) => (
-            <ExpertCard key={item.id}>
-              <ExpertLeft>
-                <FaUserCircle size={46} color="#a8f7ff" />
-                <ExpertInfo>
-                  <strong>₹{item.amount}</strong>
-                  <small>User</small>
-                  <small>{item.date.toDateString()}</small>
-                </ExpertInfo>
-              </ExpertLeft>
-
-              <ExpertRight>
-                <AmountBox>Added: {item.mode}</AmountBox>
-              </ExpertRight>
-            </ExpertCard>
-          ))}
-
-          <AddBalanceBtn onClick={() => openPopup(null)}>
-            ADD BALANCE
-          </AddBalanceBtn>
-
-          <QuickAddRow>
-            {[50, 100, 200, 500, 1000, 2000, 5000].map((amt) => (
-              <QuickAddBtn key={amt} onClick={() => openPopup(amt)}>
-                ₹{amt} +
-              </QuickAddBtn>
-            ))}
-          </QuickAddRow>
+            <QuickAddRow>
+              <span className="quick-label">Quick Add:</span>
+              {[100, 250, 500, 1000, 2000, 5000].map((amt) => (
+                <QuickAddBtn 
+                  key={amt} 
+                  onClick={() => openPopup(amt)}
+                  className={amt >= 1000 ? "premium" : ""}
+                >
+                  + ₹{amt}
+                </QuickAddBtn>
+              ))}
+            </QuickAddRow>
+          </div>
         </TopupSection>
       </WalletBox>
 

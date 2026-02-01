@@ -1,16 +1,119 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { FiFilter, FiSearch, FiCheck, FiX } from "react-icons/fi";
+import { FiFilter, FiSearch, FiCheck, FiX, FiChevronRight } from "react-icons/fi";
+import { 
+  IoStar, 
+  IoPeople, 
+  IoChatbubble, 
+  IoCall, 
+  IoTime,
+  IoCalendar,
+  IoTrendingUp,
+  IoShieldCheckmark
+} from "react-icons/io5";
 import { useCategory } from "../../../../shared/context/CategoryContext";
 import { getExpertsBySubCategoryApi } from "../../../../shared/api/expertapi/auth.api";
 import { getExpertPriceById } from "../../../../shared/api/expertapi/price.api";
 import { getExpertFollowersApi } from "../../../../shared/api/expertApi/follower.api";
 import { getReviewsByExpertApi } from "../../../../shared/api/expertApi/reviews.api";
 import ExpertCard from "../../components/userExperts/ExpertCard";
-import "./SubcategoryPage.css";
 import useChatRequest from "../../../../shared/hooks/useChatRequest";
+import {
+  PageContainer,
+  PageHeader,
+  HeaderContent,
+  HeaderTitle,
+  HeaderSubtitle,
+  SearchContainer,
+  SearchInput,
+  SearchButton,
+  PageLayout,
+  FiltersSidebar,
+  FilterSection,
+  FilterSectionTitle,
+  SubcategoryFilterList,
+  SubcategoryFilterItem,
+  SubcategoryRadio,
+  SubcategoryFilterLabel,
+  SubcategoryCount,
+  SortSelect,
+  ClearFiltersButton,
+  MainContent,
+  FilterChipsContainer,
+  FilterChip,
+  PageTitleSection,
+  PageTitle,
+  ResultsInfo,
+  SelectedInfo,
+  DesktopInfo,
+  ExpertsGrid,
+  LoadingGrid,
+  SkeletonCard,
+  SkeletonAvatar,
+  SkeletonLine,
+  SkeletonButton,
+  NoResults,
+  NoResultsTitle,
+  NoResultsText,
+  CtaSection,
+  RatingBanner,
+  Stars,
+  RatingText,
+  CtaBanner,
+  CtaTitle,
+  CtaDescription,
+  PrimaryButton,
+  SecondaryButton,
+  MobileFilterToggle,
+  FilterToggleButton,
+  MobileResultsInfo,
+  MobileFilterOverlay,
+  MobileFilterHeader,
+  MobileFilterClose,
+  ExpertStats,
+  StatItem,
+  StatIcon,
+  StatValue,
+  StatLabel,
+  PremiumBadge,
+  BadgeIcon,
+  BadgeText,
+  ExpertCardPremium,
+  ExpertHeader,
+  ExpertAvatar,
+  ExpertInfo,
+  ExpertName,
+  ExpertTitle,
+  ExpertSpeciality,
+  ExpertLocation,
+  ExpertPricing,
+  PriceTag,
+  PriceIcon,
+  PriceAmount,
+  PriceUnit,
+  ActionButtons,
+  ViewProfileButton,
+  StartChatButton,
+  HoroscopeSection,
+  HoroscopeTitle,
+  HoroscopeGrid,
+  HoroscopeCard,
+  HoroscopeSign,
+  ReadButton,
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbSeparator,
+  ExpertVerified,
+  VerificationBadge,
+  ExpertRating,
+  RatingStars,
+  RatingValue,
+  NoCategories,
+  CategoryErrorTitle,
+  CategoryErrorText
+} from "./SubcategoryPage.styles";
 
-const DEFAULT_AVATAR = "https://i.pravatar.cc/150?img=12";
+const DEFAULT_AVATAR = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face";
 
 const SubcategoryPage = () => {
   const { categoryId } = useParams();
@@ -25,7 +128,6 @@ const SubcategoryPage = () => {
 
   const { startChat, ChatPopups } = useChatRequest();
 
-
   const [activeSubCategory, setActiveSubCategory] = useState(null);
   const [experts, setExperts] = useState([]);
   const [expertsLoading, setExpertsLoading] = useState(false);
@@ -35,8 +137,8 @@ const SubcategoryPage = () => {
   const [prevCategoryId, setPrevCategoryId] = useState(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [expertDetails, setExpertDetails] = useState({});
-  
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
+  const [hoveredExpert, setHoveredExpert] = useState(null);
 
   const resetStateForNewCategory = useCallback(() => {
     console.log("Resetting state for new category:", categoryId);
@@ -58,7 +160,7 @@ const SubcategoryPage = () => {
     }
     
     loadSubCategories(categoryId);
-    // setPrevCategoryId(categoryId);
+    setPrevCategoryId(categoryId);
   }, [categoryId, prevCategoryId, loadSubCategories]);
 
   useEffect(() => {
@@ -67,87 +169,27 @@ const SubcategoryPage = () => {
     }
   }, [categoryId, prevCategoryId, resetStateForNewCategory]);
 
-  // useEffect(() => {
-  //   if (categoryId && prevCategoryId === categoryId) {
-  //     localStorage.setItem(`subcategory_${categoryId}`, activeSubCategory);
-  //     localStorage.setItem(`experts_${categoryId}`, JSON.stringify(experts));
-  //     localStorage.setItem(`expertDetails_${categoryId}`, JSON.stringify(expertDetails));
-  //     localStorage.setItem(`sortBy_${categoryId}`, sortBy);
-  //     localStorage.setItem(`selectedSubcategory_${categoryId}`, selectedSubcategory);
-  //   }
-  // }, [categoryId, activeSubCategory, experts, expertDetails, sortBy, prevCategoryId, selectedSubcategory]);
+  useEffect(() => {
+    if (!categoryId || subCategories.length === 0) return;
 
-  // useEffect(() => {
-  //   if (categoryId && !categoryLoading && subCategories.length > 0) {
-  //     const savedSubCategory = localStorage.getItem(`selectedSubcategory_${categoryId}`);
-  //     const savedExperts = localStorage.getItem(`experts_${categoryId}`);
-  //     const savedExpertDetails = localStorage.getItem(`expertDetails_${categoryId}`);
-  //     const savedSortBy = localStorage.getItem(`sortBy_${categoryId}`);
-  //     const savedSelectedSubcategory = localStorage.getItem(`selectedSubcategory_${categoryId}`);
-      
-  //     const navigationState = location.state;
-  //     const isBackNavigation = navigationState?.fromBack || false;
-      
-  //     if (savedSubCategory && savedExperts && savedExpertDetails && !isBackNavigation) {
-  //       console.log("Loading saved state for category:", categoryId);
-  //       const savedActiveSubCat = parseInt(savedSubCategory);
-  //       setActiveSubCategory(savedActiveSubCat);
-  //       setExperts(JSON.parse(savedExperts));
-  //       setExpertDetails(JSON.parse(savedExpertDetails));
-  //       if (savedSortBy) setSortBy(savedSortBy);
-  //       if (savedSelectedSubcategory) {
-  //         setSelectedSubcategory(parseInt(savedSelectedSubcategory));
-  //       } else {
-  //         setSelectedSubcategory(savedActiveSubCat);
-  //       }
-  //     } else {
-  //       const firstSubCategory = subCategories[0];
-  //        let defaultId;
+    const savedId = localStorage.getItem(`selectedSubcategory_${categoryId}`);
+    const firstId = subCategories[0]?.id;
+    const defaultId = savedId ? Number(savedId) : firstId;
 
-  // if (saved) {
-  //   defaultId = Number(saved);
-  // } else {
-  //   defaultId = subCategories[0]?.id;
-  // }
-  // setSelectedSubcategory(defaultId);
-  // setActiveSubCategory(defaultId);
-  //       if (firstSubCategory) {
-  //         const firstId = firstSubCategory.id;
-  //         setActiveSubCategory(firstId);
-  //         setSelectedSubcategory(firstId);
-          
-  //         localStorage.removeItem(`subcategory_${categoryId}`);
-  //         localStorage.removeItem(`experts_${categoryId}`);
-  //         localStorage.removeItem(`expertDetails_${categoryId}`);
-  //         localStorage.removeItem(`selectedSubcategory_${categoryId}`);
-  //       }
-  //     }
-  //   }
-  // }, [categoryId, subCategories, categoryLoading, location.state]);
-
- useEffect(() => {
-  if (!categoryId || subCategories.length === 0) return;
-
-  const savedId = localStorage.getItem(`selectedSubcategory_${categoryId}`);
-
-  const firstId = subCategories[0]?.id;
-
-  const defaultId = savedId ? Number(savedId) : firstId;
-
-  if (defaultId) {
-    setSelectedSubcategory(defaultId);
-    setActiveSubCategory(defaultId);
-  }
-}, [categoryId, subCategories]);
+    if (defaultId) {
+      setSelectedSubcategory(defaultId);
+      setActiveSubCategory(defaultId);
+    }
+  }, [categoryId, subCategories]);
 
   useEffect(() => {
-  if (selectedSubcategory && categoryId) {
-    localStorage.setItem(
-      `selectedSubcategory_${categoryId}`,
-      selectedSubcategory
-    );
-  }
-}, [selectedSubcategory, categoryId]);
+    if (selectedSubcategory && categoryId) {
+      localStorage.setItem(
+        `selectedSubcategory_${categoryId}`,
+        selectedSubcategory
+      );
+    }
+  }, [selectedSubcategory, categoryId]);
 
   useEffect(() => {
     if (subCategories.length > 0) {
@@ -245,12 +287,11 @@ const SubcategoryPage = () => {
     }
   }, [categoryId]);
 
- useEffect(() => {
-  if (selectedSubcategory && categoryId) {
-    loadExpertsForSubcategory(selectedSubcategory);
-  }
-}, [selectedSubcategory, categoryId]);
-
+  useEffect(() => {
+    if (selectedSubcategory && categoryId) {
+      loadExpertsForSubcategory(selectedSubcategory);
+    }
+  }, [selectedSubcategory, categoryId]);
 
   const handleSubCategoryClick = (subCategoryId) => {
     if (subCategoryId === selectedSubcategory) return;
@@ -261,7 +302,7 @@ const SubcategoryPage = () => {
   const handleSubcategoryFilterChange = (subCategoryId) => {
     setSelectedSubcategory(subCategoryId);
     setActiveSubCategory(subCategoryId);
-    setShowMobileFilters(false); // Close mobile filters when item is selected
+    setShowMobileFilters(false);
   };
 
   const resetFilters = () => {
@@ -350,8 +391,18 @@ const SubcategoryPage = () => {
   const loading = categoryLoading || expertsLoading;
 
   const horoscopeSigns = [
-    "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", 
-    "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
+    { sign: "Aries", date: "Mar 21 - Apr 19" },
+    { sign: "Taurus", date: "Apr 20 - May 20" },
+    { sign: "Gemini", date: "May 21 - Jun 20" },
+    { sign: "Cancer", date: "Jun 21 - Jul 22" },
+    { sign: "Leo", date: "Jul 23 - Aug 22" },
+    { sign: "Virgo", date: "Aug 23 - Sep 22" },
+    { sign: "Libra", date: "Sep 23 - Oct 22" },
+    { sign: "Scorpio", date: "Oct 23 - Nov 21" },
+    { sign: "Sagittarius", date: "Nov 22 - Dec 21" },
+    { sign: "Capricorn", date: "Dec 22 - Jan 19" },
+    { sign: "Aquarius", date: "Jan 20 - Feb 18" },
+    { sign: "Pisces", date: "Feb 19 - Mar 20" }
   ];
 
   const selectedSubcategoryName = useMemo(() => {
@@ -360,282 +411,390 @@ const SubcategoryPage = () => {
     return sc ? sc.name : "";
   }, [selectedSubcategory, subCategories]);
 
+  const renderExpertCard = (expert) => (
+    <ExpertCardPremium
+      key={expert.id}
+      onMouseEnter={() => setHoveredExpert(expert.id)}
+      onMouseLeave={() => setHoveredExpert(null)}
+      isHovered={hoveredExpert === expert.id}
+    >
+      <ExpertHeader>
+        <ExpertAvatar src={expert.profile_photo} alt={expert.name} />
+        <ExpertInfo>
+          <ExpertName>
+            {expert.name}
+            <ExpertVerified>
+              <VerificationBadge>
+                <IoShieldCheckmark size={14} />
+                Verified
+              </VerificationBadge>
+            </ExpertVerified>
+          </ExpertName>
+          <ExpertTitle>{expert.position}</ExpertTitle>
+          <ExpertSpeciality>{expert.speciality}</ExpertSpeciality>
+          <ExpertLocation>
+            <IoPeople size={14} /> {expert.location}
+          </ExpertLocation>
+        </ExpertInfo>
+      </ExpertHeader>
+
+      <ExpertStats>
+        <StatItem>
+          <StatIcon>
+            <IoStar size={16} />
+          </StatIcon>
+          <StatValue>{expert.avgRating.toFixed(1)}</StatValue>
+          <StatLabel>({expert.totalReviews} reviews)</StatLabel>
+        </StatItem>
+        <StatItem>
+          <StatIcon>
+            <IoPeople size={16} />
+          </StatIcon>
+          <StatValue>{expert.followersCount}</StatValue>
+          <StatLabel>Followers</StatLabel>
+        </StatItem>
+      </ExpertStats>
+
+      <ExpertPricing>
+        <PriceTag>
+          <PriceIcon>
+            <IoChatbubble size={16} />
+          </PriceIcon>
+          <PriceAmount>₹{expert.chatPrice}</PriceAmount>
+          <PriceUnit>/min chat</PriceUnit>
+        </PriceTag>
+        <PriceTag>
+          <PriceIcon>
+            <IoCall size={16} />
+          </PriceIcon>
+          <PriceAmount>₹{expert.callPrice}</PriceAmount>
+          <PriceUnit>/min call</PriceUnit>
+        </PriceTag>
+      </ExpertPricing>
+
+      <ActionButtons>
+        <ViewProfileButton onClick={() => navigate(`/user/experts/${expert.id}`)}>
+          View Profile
+        </ViewProfileButton>
+        <StartChatButton onClick={() => startChat({
+          expertId: expert.id,
+          chatPrice: expert.chatPrice,
+        })}>
+          <IoChatbubble size={16} />
+          Start Chat
+        </StartChatButton>
+      </ActionButtons>
+    </ExpertCardPremium>
+  );
+
+  const renderLoadingSkeletons = () => (
+    <LoadingGrid>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <SkeletonCard key={i}>
+          <SkeletonAvatar />
+          <SkeletonLine width="70%" />
+          <SkeletonLine width="50%" />
+          <SkeletonLine width="60%" />
+          <SkeletonButton />
+        </SkeletonCard>
+      ))}
+    </LoadingGrid>
+  );
+
   if (loading && !categoryName) {
     return (
-      <div className="subcategory-page">
-        <header className="subcategory-header skeleton">
-          <div className="skeleton-line large"></div>
-          <div className="skeleton-line medium"></div>
-          <div className="search-container skeleton">
-            <div className="skeleton-input"></div>
-            <div className="skeleton-button"></div>
-          </div>
-        </header>
-        <div className="subcategory-layout">
-          <aside className="filters-sidebar skeleton">
-            <div className="skeleton-line"></div>
-          </aside>
-          <main className="subcategory-main">
-            <div className="experts-grid">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div className="expert-card skeleton" key={i}>
-                  <div className="expert-avatar skeleton"></div>
-                  <div className="skeleton-line"></div>
-                  <div className="skeleton-line short"></div>
-                </div>
-              ))}
-            </div>
-          </main>
-        </div>
-      </div>
+      <PageContainer>
+        <PageHeader>
+          <HeaderContent>
+            <SkeletonLine width="200px" height="32px" />
+            <SkeletonLine width="300px" height="20px" />
+          </HeaderContent>
+        </PageHeader>
+        <PageLayout>
+          {renderLoadingSkeletons()}
+        </PageLayout>
+      </PageContainer>
     );
   }
 
   if (!categoryLoading && subCategories.length === 0) {
     return (
-      <div className="subcategory-page">
-        <div className="no-categories">
-          <h2>No subcategories found</h2>
-          <p>Please check back later or try another category.</p>
-          <button onClick={() => navigate(-1)} className="primary-btn">
+      <PageContainer>
+        <NoCategories>
+          <CategoryErrorTitle>No Subcategories Found</CategoryErrorTitle>
+          <CategoryErrorText>
+            Please check back later or try another category.
+          </CategoryErrorText>
+          <SecondaryButton onClick={() => navigate(-1)}>
             Go Back
-          </button>
-        </div>
-      </div>
+          </SecondaryButton>
+        </NoCategories>
+      </PageContainer>
     );
   }
 
   return (
     <>
-      
-      <div className="subcategory-page">
-        <header className="subcategory-header">
-          <h1>{categoryName || "Category"} Experts</h1>
-          <p>Get personalized insights from verified {categoryName.toLowerCase() || "category"} experts</p>
-          
-          <div className="search-container">
-            <input 
-              type="text" 
-              placeholder="Search for experts..." 
-              className="search-input"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button className="search-btn">
-              <FiSearch size={18} style={{ marginRight: '8px' }} />
-              Search
-            </button>
-          </div>
-        </header>
+      <PageContainer>
+        <Breadcrumb>
+          <BreadcrumbItem onClick={() => navigate('/')}>Home</BreadcrumbItem>
+          <BreadcrumbSeparator><FiChevronRight /></BreadcrumbSeparator>
+          <BreadcrumbItem onClick={() => navigate('/user/categories')}>Categories</BreadcrumbItem>
+          <BreadcrumbSeparator><FiChevronRight /></BreadcrumbSeparator>
+          <BreadcrumbItem active>{categoryName}</BreadcrumbItem>
+        </Breadcrumb>
 
-        {/* Mobile Filter Toggle */}
-        <div className="mobile-filter-toggle">
-          <button 
-            className="filter-toggle-btn"
-            onClick={() => setShowMobileFilters(true)}
-          >
+        <PageHeader>
+          <HeaderContent>
+            <HeaderTitle>
+              {categoryName} Experts
+            </HeaderTitle>
+            <HeaderSubtitle>
+              Connect with verified {categoryName.toLowerCase()} experts for personalized insights and guidance
+            </HeaderSubtitle>
+            
+            <SearchContainer>
+              <SearchInput 
+                type="text" 
+                placeholder="Search experts by name, specialty, or keyword..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <SearchButton>
+                <FiSearch size={18} />
+                Search
+              </SearchButton>
+            </SearchContainer>
+          </HeaderContent>
+        </PageHeader>
+
+        <MobileFilterToggle>
+          <FilterToggleButton onClick={() => setShowMobileFilters(true)}>
             <FiFilter size={16} />
             Filter & Sort
-          </button>
-          <div className="results-info">
-            {loading ? "Loading..." : `${filteredAndSortedExperts.length} experts`}
-          </div>
-        </div>
+          </FilterToggleButton>
+          <MobileResultsInfo>
+            {loading ? "Loading..." : `${filteredAndSortedExperts.length} experts available`}
+          </MobileResultsInfo>
+        </MobileFilterToggle>
 
-        {/* Mobile Filter Overlay */}
-        <div 
-          className={`mobile-filter-overlay ${showMobileFilters ? 'show' : ''}`}
+        <MobileFilterOverlay 
+          show={showMobileFilters} 
           onClick={() => setShowMobileFilters(false)}
         />
 
-        <div className="subcategory-layout">
-          {/* Sidebar Filters */}
-          <aside className={`filters-sidebar ${showMobileFilters ? 'show' : ''}`}>
+        <PageLayout>
+          <FiltersSidebar show={showMobileFilters}>
             {showMobileFilters && (
-              <button 
-                className="mobile-filter-close"
-                onClick={() => setShowMobileFilters(false)}
-              >
-                <FiX />
-              </button>
+              <MobileFilterHeader>
+                <h3>Filters</h3>
+                <MobileFilterClose onClick={() => setShowMobileFilters(false)}>
+                  <FiX size={24} />
+                </MobileFilterClose>
+              </MobileFilterHeader>
             )}
             
-            {/* Subcategory Filter Section */}
-            <div className="filter-section">
-              <h3>Filter by Subcategory</h3>
+            <FilterSection>
+              <FilterSectionTitle>
+                <FiFilter size={18} />
+                Subcategories
+              </FilterSectionTitle>
               
-              <div className="subcategory-filter-list">
+              <SubcategoryFilterList>
                 {subCategories.map((sc) => {
                   const isSelected = sc.id === selectedSubcategory;
                   const expertCount = experts.filter(exp => exp.subcategory_id === sc.id).length;
                   
                   return (
-                    <div 
+                    <SubcategoryFilterItem
                       key={sc.id}
-                      className="subcategory-filter-item"
                       onClick={() => handleSubcategoryFilterChange(sc.id)}
+                      isSelected={isSelected}
                     >
-                      <div className={`subcategory-radio ${isSelected ? 'checked' : ''}`} />
-                      <span className="subcategory-filter-label">
+                      <SubcategoryRadio isSelected={isSelected} />
+                      <SubcategoryFilterLabel isSelected={isSelected}>
                         {sc.name}
-                      </span>
-                      <span className="subcategory-count">
+                      </SubcategoryFilterLabel>
+                      <SubcategoryCount>
                         {expertCount}
-                      </span>
-                    </div>
+                      </SubcategoryCount>
+                    </SubcategoryFilterItem>
                   );
                 })}
-              </div>
-            </div>
+              </SubcategoryFilterList>
+            </FilterSection>
 
-            {/* Sort By Section */}
-            <div className="filter-section">
-              <h3>Sort By</h3>
-              <select 
-                className="sort-select"
+            <FilterSection>
+              <FilterSectionTitle>
+                <IoTrendingUp size={18} />
+                Sort By
+              </FilterSectionTitle>
+              <SortSelect 
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
               >
                 <option value="price-high">Price: High to Low</option>
                 <option value="price-low">Price: Low to High</option>
-                <option value="rating">Rating: High to Low</option>
-              </select>
+                <option value="rating">Highest Rated</option>
+              </SortSelect>
               
-              <button 
-                className="clear-filters-btn"
-                onClick={() => {
-                  resetFilters();
-                  setShowMobileFilters(false);
-                }}
-              >
-                Reset All Filters
-              </button>
-            </div>
-          </aside>
+              <ClearFiltersButton onClick={resetFilters}>
+                Clear All Filters
+              </ClearFiltersButton>
+            </FilterSection>
 
-          {/* Main Content */}
-          <main className="subcategory-main">
-            {/* Subcategory Filter Chips */}
-            <div className="subcategory-filters">
+            <PremiumBadge>
+              <BadgeIcon>
+                <IoShieldCheckmark size={20} />
+              </BadgeIcon>
+              <BadgeText>
+                <strong>Premium Verified</strong>
+                <span>All experts are verified and background checked</span>
+              </BadgeText>
+            </PremiumBadge>
+          </FiltersSidebar>
+
+          <MainContent>
+            <FilterChipsContainer>
               {subCategories.map((sc) => {
                 const isActive = sc.id === selectedSubcategory;
+                const expertCount = experts.filter(exp => exp.subcategory_id === sc.id).length;
                 
                 return (
-                  <button
+                  <FilterChip
                     key={sc.id}
-                    className={`filter-chip ${isActive ? 'active' : ''}`}
+                    isActive={isActive}
                     onClick={() => handleSubCategoryClick(sc.id)}
                   >
                     {sc.name}
-                  </button>
+                    {expertCount > 0 && (
+                      <span className="count">{expertCount}</span>
+                    )}
+                  </FilterChip>
                 );
               })}
-            </div>
+            </FilterChipsContainer>
 
-            {/* Page Title and Results */}
-            <div className="page-title-section">
-              <h2>
-                {selectedSubcategoryName ? `${selectedSubcategoryName} Experts` : `Top ${categoryName || "Category"} Experts`}
-              </h2>
-              <div className="results-info">
-                <span>{loading ? "Loading..." : `${filteredAndSortedExperts.length} experts found`}</span>
-                <span className="selected-info">
-                  {selectedSubcategoryName || "Select a subcategory"}
+            <PageTitleSection>
+              <PageTitle>
+                {selectedSubcategoryName ? (
+                  <>
+                    {selectedSubcategoryName} Experts
+                    <ExpertRating>
+                      <RatingStars>
+                        <IoStar size={18} />
+                        <IoStar size={18} />
+                        <IoStar size={18} />
+                        <IoStar size={18} />
+                        <IoStar size={18} />
+                      </RatingStars>
+                      <RatingValue>4.9/5 from 1.2k+ reviews</RatingValue>
+                    </ExpertRating>
+                  </>
+                ) : (
+                  `Top ${categoryName} Experts`
+                )}
+              </PageTitle>
+              <ResultsInfo>
+                <span>
+                  {loading ? (
+                    "Loading experts..."
+                  ) : (
+                    `${filteredAndSortedExperts.length} expert${filteredAndSortedExperts.length !== 1 ? 's' : ''} available`
+                  )}
                 </span>
-                <span className="desktop-only">
+                <SelectedInfo>
+                  <FiCheck size={14} />
+                  {selectedSubcategoryName || "Select a subcategory"}
+                </SelectedInfo>
+                <DesktopInfo>
                   Sorted by: {
                     sortBy === 'price-high' ? 'Price: High to Low' :
                     sortBy === 'price-low' ? 'Price: Low to High' :
-                    'Rating: High to Low'
+                    'Highest Rated'
                   }
-                </span>
-              </div>
-            </div>
+                </DesktopInfo>
+              </ResultsInfo>
+            </PageTitleSection>
 
-            {/* Experts Grid */}
             {loading && currentSubcategoryExperts.length === 0 ? (
-              <div className="experts-grid">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div className="expert-card skeleton" key={i}>
-                    <div className="expert-avatar skeleton"></div>
-                    <div className="skeleton-line"></div>
-                    <div className="skeleton-line short"></div>
-                  </div>
-                ))}
-              </div>
+              renderLoadingSkeletons()
             ) : filteredAndSortedExperts.length > 0 ? (
               <>
-                <div className="experts-grid">
-                  {filteredAndSortedExperts.map((expert) => (
-                  <ExpertCard
-  key={expert.id}
-  data={expert}
-  mode="chat"
-  onViewProfile={() => navigate(`/user/expert/${expert.id}`)}
-  onStartChat={() =>
-    startChat({
-      expertId: expert.id,
-      chatPrice: expert.chatPrice,
-    })
-  }
-/>
-                  ))}
-                </div>
+                <ExpertsGrid>
+                  {filteredAndSortedExperts.map(renderExpertCard)}
+                </ExpertsGrid>
 
-                {/* Daily Horoscopes Section */}
                 {categoryName && categoryName.toLowerCase().includes('astrology') && (
-                  <div className="horoscope-section">
-                    <h2 style={{ marginBottom: '24px', color: '#1a202c', fontSize: '22px' }}>
-                      Daily Horoscopes
-                    </h2>
-                    <div className="horoscope-grid">
-                      {horoscopeSigns.slice(0, 8).map((sign) => (
-                        <div key={sign} className="horoscope-card">
-                          <h4>{sign}</h4>
-                          <button className="read-btn">Read Now</button>
-                        </div>
+                  <HoroscopeSection>
+                    <HoroscopeTitle>
+                      <IoCalendar size={24} />
+                      Today's Horoscope
+                    </HoroscopeTitle>
+                    <HoroscopeGrid>
+                      {horoscopeSigns.map(({ sign, date }) => (
+                        <HoroscopeCard key={sign}>
+                          <HoroscopeSign>
+                            <h4>{sign}</h4>
+                            <span>{date}</span>
+                          </HoroscopeSign>
+                          <ReadButton>Read Now</ReadButton>
+                        </HoroscopeCard>
                       ))}
-                    </div>
-                  </div>
+                    </HoroscopeGrid>
+                  </HoroscopeSection>
                 )}
 
-                {/* Footer CTA */}
-                <div className="cta-section">
-                  <div className="rating-banner">
-                    <span className="stars">★★★★★</span>
-                    <span className="rating-text">Rated 4.9 out of 5 based on 1,300+ reviews</span>
-                  </div>
+                <CtaSection>
+                  <RatingBanner>
+                    <Stars>
+                      <IoStar size={20} />
+                      <IoStar size={20} />
+                      <IoStar size={20} />
+                      <IoStar size={20} />
+                      <IoStar size={20} />
+                    </Stars>
+                    <RatingText>
+                      Rated 4.9 out of 5 based on 1,300+ customer reviews
+                    </RatingText>
+                  </RatingBanner>
                   
-                  <div className="cta-banner">
-                    <h2>Start Your {selectedSubcategoryName || categoryName || "Category"} Journey Today</h2>
-                    <p>Chat with verified {selectedSubcategoryName?.toLowerCase() || categoryName?.toLowerCase() || "category"} experts anytime, anywhere.</p>
-                    <button 
-                      className="primary-btn"
+                  <CtaBanner>
+                    <CtaTitle>
+                      Start Your {selectedSubcategoryName || categoryName} Journey Today
+                    </CtaTitle>
+                    <CtaDescription>
+                      Get personalized insights from verified experts. 
+                      Connect instantly via chat or call.
+                    </CtaDescription>
+                    <PrimaryButton
                       onClick={() => filteredAndSortedExperts.length > 0 && 
                         navigate(`/user/experts/${filteredAndSortedExperts[0].id}`)}
                     >
-                      Chat with an Expert
-                    </button>
-                  </div>
-                </div>
+                      <IoChatbubble size={20} />
+                      Start Free Consultation
+                    </PrimaryButton>
+                  </CtaBanner>
+                </CtaSection>
               </>
             ) : !loading ? (
-              <div className="no-results">
-                <h3>No experts found in {selectedSubcategoryName || "this subcategory"}</h3>
-                <p>Try selecting a different subcategory or adjusting your search criteria</p>
-                <button 
-                  className="primary-btn"
-                  onClick={resetFilters}
-                >
+              <NoResults>
+                <NoResultsTitle>
+                  No Experts Found
+                </NoResultsTitle>
+                <NoResultsText>
+                  We couldn't find any experts in {selectedSubcategoryName.toLowerCase()}. 
+                  Try selecting a different subcategory or adjusting your search.
+                </NoResultsText>
+                <SecondaryButton onClick={resetFilters}>
                   Reset Filters
-                </button>
-              </div>
+                </SecondaryButton>
+              </NoResults>
             ) : null}
-          </main>
-        </div>
-      </div>
+          </MainContent>
+        </PageLayout>
+      </PageContainer>
       <ChatPopups />
-
     </>
   );
 };

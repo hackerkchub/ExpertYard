@@ -14,7 +14,7 @@ import ProtectedExpertRoute from "./ProtectedExpertRoute";
 import { useExpert } from "../../../shared/context/ExpertContext";
 import ExpertVoiceCall from "../pages/voice-call/ExpertVoiceCall";
 import ExpertNotificationPage from "../pages/notification/ExpertNotificationPage";
-
+import EarningDashboard from "../pages/earnings/ExpertEarningsDashboard";
 
 export default function ExpertAppRoutes() {
   const { expertData } = useExpert();
@@ -196,7 +196,7 @@ export default function ExpertAppRoutes() {
       />
 
       {/* Fallback */}
-     
+     <Route path="earnings" element={<EarningDashboard />} />
       <Route path="*" element={<h1>Expert 404 - Page Not Found</h1>} />
     </Routes>
   );

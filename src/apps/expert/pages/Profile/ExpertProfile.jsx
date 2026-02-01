@@ -189,18 +189,19 @@ export default function ExpertProfile() {
   );
 
   // PHOTO PREVIEW (sirf edit mode)
-  const handlePhotoChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+ const handlePhotoChange = (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-    setDraft(prev => ({
-      ...prev,
-      documents: {
-        ...prev.documents,
-        photo: URL.createObjectURL(file)
-      }
-    }));
-  };
+  setDraft(prev => ({
+    ...prev,
+    documents: {
+      ...prev.documents,
+      photoFile: file, // actual file
+      photo: URL.createObjectURL(file) // preview
+    }
+  }));
+};
 
   // DOCUMENT PREVIEW UPDATE (edit mode)
   const handleDocChange = (field, e) => {
@@ -241,7 +242,7 @@ export default function ExpertProfile() {
         description: draft.description,
         education: draft.education,
         location: draft.location,
-        profile_photo: draft.documents.photo,
+        profile_photo: draft.documents.photoFile,
         experience_certificate: draft.documents.experience_certificate,
         marksheet: draft.documents.marksheet,
         aadhar_card: draft.documents.aadhar_card
@@ -335,13 +336,14 @@ export default function ExpertProfile() {
                   <label
                     style={{
                       position: "absolute",
-                      bottom: -6,
-                      right: -6,
+                      bottom: 0,
+                      right: 40,
+                      zIndex: 5,
                       background: "#38bdf8",
-                      padding: 6,
+                      padding: "6px",
                       borderRadius: "50%",
                       cursor: "pointer",
-                      boxShadow: "0 6px 20px rgba(15,23,42,0.35)"
+                      boxShadow: "0 6px 20px rgba(107, 110, 116, 0.35)"
                     }}
                   >
                     <FiCamera color="#fff" size={16} />

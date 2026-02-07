@@ -7,13 +7,13 @@ import {
   updateExpertProfileApi,
   updateExpertPriceApi,
   getExpertFollowersApi
-} from "../../../../shared/api/expertApi";
+} from "../../../../shared/api/expertapi";
 
 import {
   addOrUpdateReviewApi,
   getReviewsByExpertApi,
   deleteReviewApi,
-} from "../../../../shared/api/expertApi/reviews.api";
+} from "../../../../shared/api/expertapi/reviews.api";
 
 import {
   PageWrap,

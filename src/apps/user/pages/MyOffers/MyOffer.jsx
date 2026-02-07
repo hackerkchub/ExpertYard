@@ -55,7 +55,7 @@ import {
 import {
   getReviewsByExpertApi,
   addOrUpdateReviewApi
-} from "../../../../shared/api/expertApi/reviews.api";
+} from "../../../../shared/api/expertapi/reviews.api";
 
 /* ================== AUTH ================== */
 import { useAuth } from "../../../../shared/context/UserAuthContext";

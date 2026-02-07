@@ -7,8 +7,8 @@ import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
 
 import { getExpertPriceById } from "../../../../shared/api/expertapi/price.api";
-import { getExpertFollowersApi } from "../../../../shared/api/expertApi/follower.api";
-import { getReviewsByExpertApi } from "../../../../shared/api/expertApi/reviews.api";
+import { getExpertFollowersApi } from "../../../../shared/api/expertapi/follower.api";
+import { getReviewsByExpertApi } from "../../../../shared/api/expertapi/reviews.api";
 
 import {
   Card,

@@ -10,7 +10,7 @@ import React, {
 import {
   getCategoriesApi,
   getSubCategoriesApi
-} from "../api/expertApi/category.api";
+} from "../api/expertapi/category.api";
 
 const CategoryContext = createContext(null);
 

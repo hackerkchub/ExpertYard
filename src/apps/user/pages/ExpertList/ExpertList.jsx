@@ -38,7 +38,7 @@ import {
 } from "./ExpertList.styles";
 
 import { useCategory } from "../../../../shared/context/CategoryContext";
-import { getExpertsBySubCategoryApi } from "../../../../shared/api/expertApi/auth.api";
+import { getExpertsBySubCategoryApi } from "../../../../shared/api/expertapi/auth.api";
 
 /* ---------------- QUERY ---------------- */
 const useQuery = () => {

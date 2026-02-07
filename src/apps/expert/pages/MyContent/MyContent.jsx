@@ -50,7 +50,7 @@ import {
   createPostApi,
   updatePostApi,
   deletePostApi
-} from "../../../../shared/api/expertApi";
+} from "../../../../shared/api/expertapi";
 import { useSearchParams } from "react-router-dom";
 
 

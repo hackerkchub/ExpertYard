@@ -85,13 +85,13 @@ import {
   followExpertApi,
   unfollowExpertApi,
   getExpertFollowersApi,
-} from "../../../../shared/api/expertApi/follower.api";
+} from "../../../../shared/api/expertapi/follower.api";
 
 import {
   addOrUpdateReviewApi,
   getReviewsByExpertApi,
   deleteReviewApi,
-} from "../../../../shared/api/expertApi/reviews.api";
+} from "../../../../shared/api/expertapi/reviews.api";
 
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { useAuth } from "../../../../shared/context/UserAuthContext";

@@ -24,7 +24,7 @@ export default function NotificationPopover({
   unreadCount = 0,
   markAllRead,
   onNotificationTap,
-  removeById,
+  removeNotificationEverywhere, // ✅ Changed from removeById
 }) {
   const [activeTab, setActiveTab] = useState("calls");
   const [showAll, setShowAll] = useState(false);
@@ -88,20 +88,28 @@ export default function NotificationPopover({
                 ringing={n.status === "incoming"}
                 style={bgStyle(n.unread)}
                 clickable
-                onClick={() => onNotificationTap(n)} // ✅ redirect
+                onClick={() => onNotificationTap(n)}
               >
                 <strong>{n.title}</strong>
                 {n.meta && <Meta>{n.meta}</Meta>}
 
                 <ActionRow>
-                  <ActionBtn success>Tap to answer</ActionBtn>
+                  <ActionBtn
+                    success
+                    onClick={(e) => {
+                      e.stopPropagation(); // ✅ Prevents event conflict
+                      onNotificationTap(n);
+                    }}
+                  >
+                    Tap to answer
+                  </ActionBtn>
 
                   <ActionBtn
                     danger
                     outline
                     onClick={(e) => {
-                      e.stopPropagation(); // 🔥 IMPORTANT
-                      removeById(n.id);
+                      e.stopPropagation();
+                      removeNotificationEverywhere(n.id); // ✅ Removes from frontend + backend
                     }}
                   >
                     Decline
@@ -129,8 +137,8 @@ export default function NotificationPopover({
                     <ActionBtn
                       success
                       onClick={(e) => {
-                        e.stopPropagation();
-                        onNotificationTap(n); // accept chat
+                        e.stopPropagation(); // ✅ Prevents event conflict
+                        onNotificationTap(n);
                       }}
                     >
                       Accept
@@ -141,7 +149,7 @@ export default function NotificationPopover({
                       outline
                       onClick={(e) => {
                         e.stopPropagation();
-                        removeById(n.id);
+                        removeNotificationEverywhere(n.id); // ✅ Removes from frontend + backend
                       }}
                     >
                       Decline
@@ -153,7 +161,7 @@ export default function NotificationPopover({
                       outline
                       onClick={(e) => {
                         e.stopPropagation();
-                        removeById(n.id);
+                        removeNotificationEverywhere(n.id); // ✅ Removes from frontend + backend
                       }}
                     >
                       Close

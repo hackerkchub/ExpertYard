@@ -56,3 +56,7 @@ export const saveNotification = ({
     meta,
   });
 };
+
+
+export const deleteNotification = (id, userId) =>
+  axios.delete(`/notifications/${id}?userId=${userId}`);

@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-// import { socket } from "../../../../shared/api/socket";
 import { CALL_EVENTS } from "../../../../shared/constants/call.constants";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { useSocket } from "../../../../shared/hooks/useSocket";
@@ -27,7 +26,7 @@ import {
   setRemote,
   addIce,
   toggleMute,
-  createAnswer, // ✅ ADDED: Import createAnswer from voicePeer
+  createAnswer,
 } from "../../../../shared/webrtc/voicePeer";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/300?img=44";
@@ -37,7 +36,14 @@ export default function ExpertVoiceCall() {
   const navigate = useNavigate();
   const { expertData } = useExpert();
 
-
+  const normalizedCallId = Number(callId);
+  const socket = useSocket(expertData?.expertId, "expert");
+  
+  // ✅ FIX 2: Add streamRef to store media stream
+  const streamRef = useRef(null);
+  const callIdRef = useRef(normalizedCallId);
+  const callStartedRef = useRef(false);
+  
   const [callState, setCallState] = useState("incoming");
   const [seconds, setSeconds] = useState(0);
   const [muted, setMuted] = useState(false);
@@ -46,37 +52,59 @@ export default function ExpertVoiceCall() {
   const timerRef = useRef(null);
 
   const [caller, setCaller] = useState({
-  name: "Incoming Caller",
-  role: "User",
-  avatar: DEFAULT_AVATAR,
-});
+    name: "Incoming Caller",
+    role: "User",
+    avatar: DEFAULT_AVATAR,
+  });
 
-  const normalizedCallId = Number(callId);
-const socket = useSocket(expertData?.expertId, "expert");
   useEffect(() => {
-  const onIncoming = (data) => {
-    // data = { callId, fromUserId, user_name, pricePerMinute }
+    callIdRef.current = normalizedCallId;
+  }, [normalizedCallId]);
 
-    if (Number(data.callId) !== normalizedCallId) return;
+  // ✅ FIX 3: Cleanup mic tracks properly
+  const cleanupMedia = useCallback(() => {
+    console.log("🧹 Expert cleaning up media tracks");
+    // Stop all tracks in the stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => {
+        track.stop();
+        console.log(`🛑 Stopped expert track: ${track.kind}`);
+      });
+      streamRef.current = null;
+    }
+    
+    // Clear audio element srcObject
+    if (audioRef.current) {
+      audioRef.current.srcObject = null;
+    }
+    
+    closePeer();
+  }, []);
 
-    console.log("📞 Incoming call data:", data);
+  // ✅ Handle incoming call data
+  useEffect(() => {
+    const onIncoming = (data) => {
+      if (Number(data.callId) !== callIdRef.current) return;
 
-    setCaller({
-      name: data.user_name || "User",
-      role: "User",
-      avatar: DEFAULT_AVATAR,
-    });
+      console.log("📞 Incoming call data:", data);
 
-    setCallState("incoming");
-  };
+      setCaller({
+        name: data.user_name || "User",
+        role: "User",
+        avatar: DEFAULT_AVATAR,
+      });
 
-  socket.on(CALL_EVENTS.INCOMING, onIncoming);
+      setCallState("incoming");
+    };
 
-  return () => {
-    socket.off(CALL_EVENTS.INCOMING, onIncoming);
-  };
-}, [normalizedCallId, socket]);
+    socket.on(CALL_EVENTS.INCOMING, onIncoming);
 
+    return () => {
+      socket.off(CALL_EVENTS.INCOMING, onIncoming);
+    };
+  }, [socket]);
+
+  // ✅ Timer
   useEffect(() => {
     if (callState === "connected") {
       timerRef.current = setInterval(() => {
@@ -97,30 +125,31 @@ const socket = useSocket(expertData?.expertId, "expert");
     };
   }, [callState]);
 
-  /* ================= SOCKET CORE ================= */
+  // ✅ Socket core events
   useEffect(() => {
     if (!callId) return;
 
-  const onConnected = ({ callId: connectedId }) => {
-  if (Number(connectedId) !== normalizedCallId) return;
-  setCallState("connected");
-};
+    const onConnected = ({ callId: connectedId }) => {
+      if (Number(connectedId) !== callIdRef.current) return;
+      setSeconds(0);
+      setCallState("connected");
+    };
 
+    const onEnded = ({ callId: endedId }) => {
+      if (Number(endedId) !== callIdRef.current) return;
+      setCallState("ended");
+      callStartedRef.current = false;
+      
+      cleanupMedia();
+      
+      setTimeout(() => navigate("/expert/home", { replace: true }), 1000);
+    };
 
-
-  const onEnded = ({ callId: endedId }) => {
-  if (Number(endedId) !== normalizedCallId) return;
-  setCallState("ended");
-  closePeer();
-  setTimeout(() => navigate("/expert/home", { replace: true }), 1000);
-};
-
-
-    // Optional: Handle if call is rejected from user side
     const onBusy = () => {
       console.log("🚫 Expert: Call rejected/busy");
       setCallState("ended");
-      closePeer();
+      
+      cleanupMedia();
       
       setTimeout(() => {
         navigate("/expert/home", { replace: true });
@@ -136,29 +165,35 @@ const socket = useSocket(expertData?.expertId, "expert");
       socket.off(CALL_EVENTS.ENDED, onEnded);
       socket.off(CALL_EVENTS.BUSY, onBusy);
     };
-  }, [callId, navigate]);
+  }, [socket, navigate, callId, cleanupMedia]);
 
-  /* ================= WEBRTC ================= */
+  // ✅ WebRTC events
   useEffect(() => {
     if (!callId) return;
 
-   const onOffer = async ({ callId: incomingId, offer }) => {
-  if (Number(incomingId) !== normalizedCallId) return;
+    const onOffer = async ({ callId: incomingId, offer }) => {
+      if (Number(incomingId) !== callIdRef.current) return;
 
-  console.log("📡 Expert: Received WebRTC offer");
+      console.log("📡 Expert: Received WebRTC offer");
 
-  await createPeer({ socket, callId: normalizedCallId, audioRef });
-  await setRemote(offer);
+      // ✅ FIX 2: Pass stream to createPeer
+      await createPeer({ 
+        socket, 
+        callId: callIdRef.current, 
+        audioRef,
+        stream: streamRef.current // ⭐ CRITICAL: Pass the stored stream
+      });
+      
+      await setRemote(offer);
 
-  const answer = await createAnswer();
-  socket.emit("webrtc:answer", { callId: normalizedCallId, answer });
-};
-
+      const answer = await createAnswer();
+      socket.emit("webrtc:answer", { callId: callIdRef.current, answer });
+    };
 
     const onIce = ({ callId: iceId, candidate }) => {
-  if (Number(iceId) !== normalizedCallId) return;
-  addIce(candidate);
-};
+      if (Number(iceId) !== callIdRef.current) return;
+      addIce(candidate);
+    };
 
     socket.on("webrtc:offer", onOffer);
     socket.on("webrtc:ice", onIce);
@@ -167,28 +202,53 @@ const socket = useSocket(expertData?.expertId, "expert");
       socket.off("webrtc:offer", onOffer);
       socket.off("webrtc:ice", onIce);
     };
-  }, [callId]);
+  }, [socket, callId]);
 
-  /* ================= ACTIONS ================= */
- const acceptCall = useCallback(() => {
-  if (callState !== "incoming") return;
- socket.emit(CALL_EVENTS.ACCEPT, { callId: normalizedCallId });
- },[normalizedCallId, callState, socket]);
+  // ✅ Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      console.log("🧹 Expert cleanup");
+      cleanupMedia();
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [cleanupMedia]);
 
+  // ✅ Actions
+  const acceptCall = useCallback(async () => {
+    if (callState !== "incoming") return;
+
+    try {
+      // ✅ FIX 2: Store stream in ref
+      streamRef.current = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      });
+      console.log("✅ Expert microphone permission granted, stream:", streamRef.current);
+      
+      socket.emit(CALL_EVENTS.ACCEPT, { callId: callIdRef.current });
+    } catch (error) {
+      console.error("❌ Failed to get microphone permission:", error);
+    }
+  }, [callState, socket]);
 
   const rejectCall = useCallback(() => {
-    console.log("❌ Expert: Rejecting call", callId);
-    socket.emit(CALL_EVENTS.REJECT, { callId: normalizedCallId });
-    closePeer();
+    console.log("❌ Expert: Rejecting call", callIdRef.current);
+    socket.emit(CALL_EVENTS.REJECT, { callId: callIdRef.current });
+    
+    cleanupMedia();
     navigate("/expert/home", { replace: true });
-  }, [callId, navigate]);
+  }, [socket, navigate, cleanupMedia]);
 
   const endCall = useCallback(() => {
-    console.log("🔚 Expert: Ending call", callId);
-    socket.emit(CALL_EVENTS.END, { callId });
-    closePeer();
+    console.log("🔚 Expert: Ending call", callIdRef.current);
+    socket.emit(CALL_EVENTS.END, { callId: callIdRef.current });
+    
+    cleanupMedia();
     navigate("/expert/home", { replace: true });
-  }, [callId, navigate]);
+  }, [socket, navigate, cleanupMedia]);
 
   const toggleMuteClick = useCallback(() => {
     setMuted((m) => {
@@ -197,12 +257,10 @@ const socket = useSocket(expertData?.expertId, "expert");
     });
   }, []);
 
-  /* ================= RENDER ================= */
   return (
     <PageWrapper>
       <CallCard>
-        {/* ✅ FIX 4: Add muted={false} for browser autoplay policy */}
-        <audio ref={audioRef} muted={false} />
+        <audio ref={audioRef} autoPlay playsInline />
 
         <ExpertAvatarWrapper>
           <ExpertAvatar src={caller.avatar} />
@@ -215,15 +273,15 @@ const socket = useSocket(expertData?.expertId, "expert");
           <>
             <StatusText>INCOMING VOICE CALL</StatusText>
             <IncomingActions>
-             <ActionBtn
-  $accept
-  onClick={() => {
-    console.log("🔥 ACCEPT CLICKED", normalizedCallId);
-    acceptCall();
-  }}
->
-  ✔ Accept
-</ActionBtn>
+              <ActionBtn
+                $accept
+                onClick={() => {
+                  console.log("🔥 ACCEPT CLICKED", callIdRef.current);
+                  acceptCall();
+                }}
+              >
+                ✔ Accept
+              </ActionBtn>
 
               <ActionBtn onClick={rejectCall}>
                 ✕ Reject

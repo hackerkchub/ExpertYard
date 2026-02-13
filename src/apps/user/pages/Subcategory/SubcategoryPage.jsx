@@ -615,9 +615,9 @@ const SubcategoryPage = () => {
                       <SubcategoryFilterLabel isSelected={isSelected}>
                         {sc.name}
                       </SubcategoryFilterLabel>
-                      <SubcategoryCount>
+                      {/* <SubcategoryCount>
                         {expertCount}
-                      </SubcategoryCount>
+                      </SubcategoryCount> */}
                     </SubcategoryFilterItem>
                   );
                 })}

@@ -16,7 +16,7 @@ export default function QueueCard() {
   const {
     notifications,
     onNotificationTap,
-    removeById,
+    removeById: removeNotificationEverywhere, // ✅ Renamed for clarity
   } = useExpertNotifications();
 
   /* ----------------------------------
@@ -32,8 +32,7 @@ export default function QueueCard() {
     [notifications]
   );
 
-  const activeList =
-    activeTab === "chat" ? chatRequests : callRequests;
+  const activeList = activeTab === "chat" ? chatRequests : callRequests;
 
   return (
     <QueueCardWrap>
@@ -103,7 +102,7 @@ export default function QueueCard() {
               {/* ✅ CLOSE (ALWAYS ACTIVE) */}
               <ActionBtn
                 className="decline"
-                onClick={() => removeById(req.id)}
+                onClick={() => removeNotificationEverywhere(req.id)}
               >
                 Close
               </ActionBtn>

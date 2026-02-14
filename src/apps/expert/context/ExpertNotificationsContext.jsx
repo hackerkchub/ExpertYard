@@ -10,7 +10,7 @@ import React, {
 import { socket } from "../../../shared/api/socket";
 import { useExpert } from "../../../shared/context/ExpertContext";
 import { saveNotification, getNotifications,
-  getUnreadCount} from "../../../shared/api/notification.api"; // ⭐ NEW
+  getUnreadCount, deleteNotification} from "../../../shared/api/notification.api"; // ⭐ NEW
 
 const Ctx = createContext(null);
 const STORAGE_KEY = "expert_notifications_v2";
@@ -224,9 +224,23 @@ useEffect(() => {
 }, [expertId]);
 
   /* ---------------------------------- HELPERS ---------------------------------- */
-  const removeById = useCallback((id) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  }, []);
+ const removeById = useCallback(
+  async (id) => {
+    try {
+      // 👉 DB se delete
+      if (expertId) {
+        await deleteNotification(id, expertId);
+      }
+
+      // 👉 local state clean
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    } catch (err) {
+      console.log("delete notification failed", err);
+    }
+  },
+  [expertId]
+);
+
 
   /* ---------------------------------- TAP ---------------------------------- */
   const onNotificationTap = useCallback(

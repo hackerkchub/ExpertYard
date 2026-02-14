@@ -1,35 +1,59 @@
+/*********************************************************
+  🌿 ExpertYard – Stable WebRTC Voice Peer (FINAL)
+  Production safe version - Self-contained mic handling
+**********************************************************/
+
 let pc = null;
 let localStream = null;
 let remoteAudioEl = null;
 let pendingIce = [];
 
-/* =========================
-   CREATE PEER
-========================= */
-export async function createPeer({ socket, callId, audioRef }) {
-  if (pc) return pc; // safety
+/* =====================================================
+   CREATE PEER - SELF CONTAINED, ALWAYS HAS MIC
+   👉 stream is OPTIONAL, will get mic if not provided
+===================================================== */
+export async function createPeer({ socket, callId, audioRef, stream }) {
+  // prevent duplicate / closed peer reuse
+  if (pc && pc.connectionState !== "closed") return pc;
 
   pc = new RTCPeerConnection({
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    iceServers: [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" },
+    ],
   });
 
-  /* 🎤 Get microphone */
-  localStream = await navigator.mediaDevices.getUserMedia({
-    audio: true,
-    video: false,
-  });
+  /* 🎤 ALWAYS ensure stream exists - SELF CONTAINED */
+  try {
+    localStream = stream || await navigator.mediaDevices.getUserMedia({ 
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      } 
+    });
+    
+    console.log("✅ WebRTC: Got audio stream", localStream.id);
+  } catch (err) {
+    console.error("❌ WebRTC: Failed to get microphone:", err);
+    throw new Error("Microphone access denied");
+  }
 
-  localStream.getTracks().forEach((track) => {
+  // Add all audio tracks to peer connection
+  localStream.getTracks().forEach(track => {
     pc.addTrack(track, localStream);
+    console.log(`🎤 Added track: ${track.kind}`, track.enabled ? 'enabled' : 'disabled');
   });
 
-  /* 🔊 Remote audio */
+  /* 🔊 Remote audio - FIXED: Always set srcObject correctly */
   pc.ontrack = (event) => {
+    console.log("🔊 Received remote track:", event.track.kind);
+    
     if (!remoteAudioEl) {
       remoteAudioEl = audioRef?.current || document.createElement("audio");
       remoteAudioEl.autoplay = true;
       remoteAudioEl.playsInline = true;
-      remoteAudioEl.muted = false;
+      remoteAudioEl.muted = false; // ⭐ CRITICAL: Don't mute remote audio
 
       if (!audioRef?.current) {
         document.body.appendChild(remoteAudioEl);
@@ -37,9 +61,10 @@ export async function createPeer({ socket, callId, audioRef }) {
     }
 
     remoteAudioEl.srcObject = event.streams[0];
+    console.log("🔊 Remote audio attached");
   };
 
-  /* ❄ ICE */
+  /* ❄ ICE Candidate handling */
   pc.onicecandidate = (event) => {
     if (event.candidate) {
       socket.emit("webrtc:ice", {
@@ -49,34 +74,56 @@ export async function createPeer({ socket, callId, audioRef }) {
     }
   };
 
-  /* 🔁 Connection state logs (debug) */
+  /* 🧠 Connection state logging */
   pc.onconnectionstatechange = () => {
     console.log("📡 PC state:", pc.connectionState);
+    
+    if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
+      console.warn("⚠️ WebRTC connection failed");
+    }
   };
+
+  pc.oniceconnectionstatechange = () => {
+    console.log("❄️ ICE state:", pc.iceConnectionState);
+  };
+
+  // Apply any pending ICE candidates
+  for (const candidate of pendingIce) {
+    await pc.addIceCandidate(candidate).catch(console.warn);
+  }
+  pendingIce = [];
 
   return pc;
 }
 
-/* =========================
-   OFFER / ANSWER HELPERS
-========================= */
+/* =====================================================
+   OFFER / ANSWER
+===================================================== */
 export async function createOffer() {
   if (!pc) return null;
-  const offer = await pc.createOffer();
+
+  const offer = await pc.createOffer({
+    offerToReceiveAudio: true,
+    offerToReceiveVideo: false
+  });
+  
   await pc.setLocalDescription(offer);
+  console.log("📤 Offer created");
   return offer;
 }
 
 export async function createAnswer() {
   if (!pc) return null;
+
   const answer = await pc.createAnswer();
   await pc.setLocalDescription(answer);
+  console.log("📤 Answer created");
   return answer;
 }
 
-/* =========================
+/* =====================================================
    REMOTE DESCRIPTION
-========================= */
+===================================================== */
 export async function setRemote(description) {
   if (!pc || !description) return;
 
@@ -86,60 +133,76 @@ export async function setRemote(description) {
       : new RTCSessionDescription(description);
 
   await pc.setRemoteDescription(rtcDesc);
-
-  // 🔁 Apply queued ICE
-  pendingIce.forEach((c) => pc.addIceCandidate(c));
-  pendingIce = [];
+  console.log("📥 Remote description set");
 }
 
-/* =========================
+/* =====================================================
    ICE HANDLING
-========================= */
+===================================================== */
 export async function addIce(candidate) {
-  if (!pc || !candidate) return;
+  if (!candidate) return;
 
   try {
-    if (pc.remoteDescription) {
+    if (pc && pc.remoteDescription) {
       await pc.addIceCandidate(candidate);
+      console.log("🧊 ICE candidate added");
     } else {
       pendingIce.push(candidate);
+      console.log("🧊 ICE candidate queued");
     }
   } catch (err) {
-    console.error("ICE error:", err);
+    console.error("❌ ICE error:", err);
   }
 }
 
-/* =========================
+/* =====================================================
    MUTE / UNMUTE
-========================= */
+===================================================== */
 export function toggleMute(muted) {
   if (!localStream) return;
+
   localStream.getAudioTracks().forEach((t) => {
     t.enabled = !muted;
   });
+  
+  console.log(`🎤 ${muted ? 'Muted' : 'Unmuted'}`);
 }
 
-/* =========================
-   CLEANUP
-========================= */
+/* =====================================================
+   CLEANUP - COMPLETE RESET
+===================================================== */
 export function closePeer() {
+  console.log("🧹 WebRTC cleanup");
+  
+  // Close peer connection
   if (pc) {
     pc.ontrack = null;
     pc.onicecandidate = null;
+    pc.onconnectionstatechange = null;
+    pc.oniceconnectionstatechange = null;
     pc.close();
+    pc = null;
   }
 
-  pc = null;
-
+  // Stop all tracks in local stream
   if (localStream) {
-    localStream.getTracks().forEach((t) => t.stop());
+    localStream.getTracks().forEach((t) => {
+      t.stop();
+      console.log(`🛑 Stopped track: ${t.kind}`);
+    });
     localStream = null;
   }
 
-  if (remoteAudioEl && !remoteAudioEl.srcObject) {
-    remoteAudioEl.remove();
+  // Clean up audio element
+  if (remoteAudioEl) {
+    remoteAudioEl.srcObject = null;
+    remoteAudioEl.pause?.();
+    if (!remoteAudioEl.hasAttribute('data-keep')) {
+      remoteAudioEl.remove?.();
+    }
+    remoteAudioEl = null;
   }
 
-  remoteAudioEl = null;
   pendingIce = [];
+  console.log("✅ WebRTC cleanup complete");
 }

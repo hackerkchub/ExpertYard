@@ -134,7 +134,7 @@ const ExpertChat = () => {
       setLoading(true);
       setError("");
 
-      const response = await fetch(`/api/chat/details/${room_id}`);
+      const response = await fetch(`https://softmaxs.com/api/chat/details/${room_id}`);
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP ${response.status}: ${errorText || "Unknown error"}`);
@@ -196,7 +196,7 @@ const ExpertChat = () => {
       if (!expertId) return;
 
       const response = await fetch(
-        `/api/chat/expert-chats?expert_id=${encodeURIComponent(expertId)}`
+        `https://softmaxs.com/api/chat/expert-chats?expert_id=${encodeURIComponent(expertId)}`
       );
 
       if (!response.ok) {

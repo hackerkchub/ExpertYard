@@ -99,7 +99,7 @@ const {
      
 
       <HowItWorks />
-      <Testimonials />
+      {/* <Testimonials /> */}
     </>
   );
 };

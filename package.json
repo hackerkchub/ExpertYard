@@ -14,7 +14,7 @@
     "make:ctx": "node scripts/makeContext.js"
   },
   "dependencies": {
-    "axios": "^1.13.2",
+    "axios": "^1.13.5",
     "firebase": "^12.7.0",
     "framer-motion": "^12.23.26",
     "react": "^19.2.0",

@@ -7,7 +7,7 @@ import {
   SearchInput, AuthButton, RightActions
 } from "./Navbar.styles";
 
-import { FiMenu, FiX, FiSearch, FiShare2, FiHome, FiGift, FiUser, FiLogOut, FiMail, FiPhone } from "react-icons/fi";
+import { FiMenu, FiX, FiSearch, FiShare2, FiHome, FiGift, FiUser, FiLogOut, FiMail, FiPhone, FiMessageSquare } from "react-icons/fi";
 import { FaWallet } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import logo from "../../../../assets/logo.png";
@@ -144,7 +144,9 @@ const Navbar = () => {
               <button onClick={() => navigate("/user/my-offers")} title="My Offers">
                 <FiGift />
               </button>
-              
+              <button onClick={() => navigate("/user/chat-history")} title="Messages">
+                <FiMessageSquare />
+              </button>
               <WalletIconWrap onClick={() => navigate("/user/wallet")} title="Wallet">
                 <FaWallet />
                 {isLoggedIn && balance > 0 && (
@@ -152,11 +154,11 @@ const Navbar = () => {
                 )}
               </WalletIconWrap>
 
-              <button title="Share">
+              {/* <button title="Share">
                 <FiShare2 />
-              </button>
+              </button> */}
 
-              <SearchWrap>
+              {/* <SearchWrap>
                 <button onClick={toggleSearch} title="Search">
                   <FiSearch />
                 </button>
@@ -189,7 +191,7 @@ const Navbar = () => {
                     ⏎ Enter to search, Esc to close
                   </div>
                 )}
-              </SearchWrap>
+              </SearchWrap> */}
 
               {/* ✅ User icon ONLY when logged in */}
               {isLoggedIn && (
@@ -226,6 +228,13 @@ const Navbar = () => {
               navigate("/user/my-offers");
             }}>
               <FiGift size={20} /> My Offers
+            </MobileItem>
+
+            <MobileItem onClick={() =>{
+              closeAllMenus();
+              navigate("/user/chat-history");
+            }}>
+              <FiMessageSquare size={20} /> Messages
             </MobileItem>
             
             <MobileItem onClick={() => {

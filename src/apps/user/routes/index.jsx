@@ -20,6 +20,11 @@ import AboutUs from "../pages/About-Us/AboutUs"; // NEW
 import HowItWorks from "../pages/how-it-work/HowItWorks"; // NEW
 import Reviews from "../pages/reviews/Reviews";
 import ExpertGuidelines from "../pages/Expert-Guideline/ExpertGuidelines";
+import TermsAndConditions from "../pages/T&C/T&C";
+import PrivacyPolicy from "../pages/Privacy-Policy/PrivacyPolicy";
+import FAQ from "../pages/FAQ/Faq";
+import ContactUs from "../pages/Contact-Us/ContactUs";
+import Careers from "../pages/Careers/Career";
 
 export default function UserAppRoutes() {
   return (
@@ -37,8 +42,12 @@ export default function UserAppRoutes() {
         <Route path="/how-it-works" element={<HowItWorks />} /> 
         <Route path="/reviews" element={<Reviews />} />
         <Route path="/guidelines" element={<ExpertGuidelines />} />
-
+        <Route path="/terms" element={<TermsAndConditions />} />
         <Route path="/subcategories/:categoryId" element={<SubcategoryPage />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/contact" element={<ContactUs />} />
+        <Route path="/careers" element={<Careers />} />
           <Route
           path="/voice-call/:expertId"
           element={

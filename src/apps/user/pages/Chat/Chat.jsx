@@ -64,7 +64,7 @@ const Chat = () => {
       setError("");
       const token = localStorage.getItem('user_token');
       
-      const response = await fetch(`https//softmaxs.com/api/chat/details/${room_id}`, {
+      const response = await fetch(`https://softmaxs.com/api/chat/details/${room_id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

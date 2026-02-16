@@ -25,7 +25,7 @@ function urlBase64ToUint8Array(base64String) {
 export function useWebPush({
   panel,
   userId,
-  subscribeUrl = "/api/push/subscription",
+  subscribeUrl = "https://softmaxs.com/api/push/subscription",
 } = {}) {
   const supported = useMemo(
     () =>

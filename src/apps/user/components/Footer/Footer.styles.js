@@ -64,14 +64,19 @@ export const Wrapper = styled.footer`
 `;
 
 export const Container = styled.div`
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 1rem;
   display: flex;
-  flex-direction: column;
-  gap: 2.5rem;
-  position: relative;
-  z-index: 1;
+  flex-direction: column; 
+  gap: 2rem;
+
+  max-width: 1200px;     
+  margin: 0 auto;        
+  padding: 0 1.5rem;     
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+  }
+;
+  
 
   ${media.minSm} {
     padding: 0 1.25rem;
@@ -98,34 +103,18 @@ export const Container = styled.div`
 
 export const Section = styled.div`
   flex: 1;
-  min-width: 100%;
-
-  ${media.minSm} {
-    min-width: calc(50% - 1rem);
-  }
-
-  ${media.minMd} {
-    min-width: calc(25% - 1.5rem);
-  }
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; 
 
   ${media.minLg} {
     min-width: calc(20% - 1.8rem);
   }
 `;
 
-export const BrandSection = styled(Section)`
-  ${media.minSm} {
-    min-width: 100%;
-  }
-
-  ${media.minMd} {
-    min-width: calc(50% - 1.5rem);
-    flex: 1.5;
-  }
-
-  ${media.minLg} {
-    min-width: calc(35% - 2rem);
-  }
+export const BrandSection = styled.div`
+width: 100%;  
 `;
 
 export const SectionTitle = styled.h4`
@@ -135,6 +124,9 @@ export const SectionTitle = styled.h4`
   color: #1e293b;
   text-transform: uppercase;
   letter-spacing: 1px;
+  min-height: 48px;   
+  display: flex;
+  align-items: flex-end;
   position: relative;
   padding-bottom: 0.625rem;
 
@@ -188,13 +180,23 @@ export const SectionTitle = styled.h4`
   }
 `;
 
+export const LinksRow = styled.div`
+ display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  width: 100%;
+  align-items: flex-start;
+  @media (max-width: 768px) {
+    flex-direction: column; 
+}
+`;
+
+
 export const LinkList = styled.ul`
   list-style: none;
   padding: 0;
   margin: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 0.5rem;
+  
 
   ${media.minSm} {
     grid-template-columns: 1fr;
@@ -215,15 +217,21 @@ export const LinkList = styled.ul`
 `;
 
 export const FooterLink = styled(Link)`
-  display: block;
+  display: flex;
   color: #64748b;
   text-decoration: none;
   font-size: 0.875rem;
   transition: all 0.3s ease;
-  line-height: 1.5;
+  line-height: 1.4;
   padding: 0.375rem 0;
   position: relative;
-  -webkit-tap-highlight-color: transparent;
+   min-height: 48px;              
+  display: flex;                 
+  align-items: left; 
+  -webkit-tap-highlight-color: transparent;          
+
+  word-break: break-word;        
+  text-align: left;
 
   &:hover {
     color: #3b82f6;
@@ -307,7 +315,12 @@ export const SocialLinks = styled.div`
   }
 
   @media (max-width: ${breakpoints.sm}) {
-    justify-content: center;
+    text-align: left;     
+  
+  &::after {
+    left: 0;
+    transform: none;
+  }
   }
 `;
 
@@ -690,23 +703,32 @@ export const SimpleFooterContainer = styled.div`
   margin: 0 auto;
   padding: 0 1rem;
 
+  display: flex;
+    gap: 1rem;
+
   @media (min-width: 768px) {
     padding: 0 2rem;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 2rem;
   }
 `;
 
+export const FooterColumn = styled.div`
+  flex: 1;                
+`;
+
+export const FooterList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  display: flex;
+  flex-direction: column;   /* Links vertical rahenge */
+`;
+
+
 export const SimpleSection = styled.div`
   margin-bottom: 2rem;
+  flex: 0 0 33.33%;  
 
-  @media (min-width: 768px) {
-    flex: 1;
-    min-width: 200px;
-    margin-bottom: 0;
-  }
 `;
 
 export const SimpleSectionTitle = styled.h4`

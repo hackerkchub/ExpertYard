@@ -5,15 +5,18 @@ import React, {
   useMemo,
   useState,
   useCallback,
+  useRef,
 } from "react";
+// import { useNavigate } from "react-router-dom"; // ⚠️ 2️⃣ Added for SPA navigation
 
 import { socket } from "../../../shared/api/socket";
 import { useExpert } from "../../../shared/context/ExpertContext";
 import { saveNotification, getNotifications,
-  getUnreadCount, deleteNotification} from "../../../shared/api/notification.api"; // ⭐ NEW
+  getUnreadCount, deleteNotification} from "../../../shared/api/notification.api";
 
 const Ctx = createContext(null);
-const STORAGE_KEY = "expert_notifications_v2";
+const getStorageKey = (expertId) =>
+  expertId ? `expert_notifications_${expertId}` : "expert_notifications_guest";
 
 const getSafeUserName = (user_name, user_id) => {
   if (typeof user_name === "string" && user_name.trim()) {
@@ -22,24 +25,68 @@ const getSafeUserName = (user_name, user_id) => {
   return `User #${user_id}`;
 };
 
+const FINAL_STATES = ["missed", "rejected", "ended", "low_balance", "cancelled"];
+
 export function ExpertNotificationsProvider({ children }) {
   const { expertData } = useExpert();
-  const expertId = expertData?.expertId || null; // ⭐ important
+  const expertId = expertData?.expertId || null;
+  
+  // Use Map for timers
+  const timers = useRef(new Map());
+  
+  // Track if history has loaded
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  
+  // const navigate = useNavigate();
 
   /* ---------------------------------- STATE ---------------------------------- */
-  const [notifications, setNotifications] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [notifications, setNotifications] = useState([]);
 
-  /* ---------------------------------- PERSIST ---------------------------------- */
+  /* ---------------------------------- TIMER CLEANUP ---------------------------------- */
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
-  }, [notifications]);
+    return () => {
+      // Clear all pending timeouts on unmount
+      timers.current.forEach((timerId) => clearTimeout(timerId));
+      timers.current.clear();
+    };
+  }, []);
+
+  /* ---------------------------------- RESET ON EXPERT CHANGE ---------------------------------- */
+  useEffect(() => {
+    console.log("🔄 Expert changed, resetting notifications state");
+    setNotifications([]);
+    setHistoryLoaded(false);
+    timers.current.forEach(clearTimeout);
+    timers.current.clear();
+  }, [expertId]);
+
+  /* ---------------------------------- LOAD FROM STORAGE (temporary until DB loads) ---------------------------------- */
+  useEffect(() => {
+    if (!expertId) return;
+    
+    if (historyLoaded) return;
+    
+    const key = getStorageKey(expertId);
+
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        setNotifications(JSON.parse(saved));
+      }
+    } catch {
+      // Ignore storage errors
+    }
+  }, [expertId, historyLoaded]);
+
+  /* ---------------------------------- PERSIST TO STORAGE ---------------------------------- */
+  useEffect(() => {
+    if (!expertId) return;
+    
+    if (!historyLoaded) return;
+    
+    const key = getStorageKey(expertId);
+    localStorage.setItem(key, JSON.stringify(notifications));
+  }, [notifications, expertId, historyLoaded]);
 
   /* ---------------------------------- UNREAD ---------------------------------- */
   const unreadCount = useMemo(
@@ -47,7 +94,7 @@ export function ExpertNotificationsProvider({ children }) {
       notifications.filter(
         (n) =>
           n.unread &&
-          !["cancelled", "rejected", "ended"].includes(n.status)
+          !["cancelled", "rejected", "ended", "read", "missed", "low_balance"].includes(n.status)
       ).length,
     [notifications]
   );
@@ -56,7 +103,7 @@ export function ExpertNotificationsProvider({ children }) {
      🔔 CHAT REQUEST
   ===================================================== */
   useEffect(() => {
-    const onIncomingChat = async ({ request_id, user_id, user_name }) => {
+    const onIncomingChat = ({ request_id, user_id, user_name }) => {
       const safeName = getSafeUserName(user_name, user_id);
 
       const newNotif = {
@@ -70,23 +117,21 @@ export function ExpertNotificationsProvider({ children }) {
         createdAt: Date.now(),
       };
 
+      // 🟢 OPTIONAL: Performance optimization - avoid re-render if same notification
       setNotifications((prev) => {
         if (prev.some((n) => n.id === request_id)) return prev;
         return [newNotif, ...prev];
       });
 
-      // ⭐⭐ SAVE TO DB (HYBRID)
-     if (expertId != null) {
-  console.log("Saving notif for expert:", expertId);
-
-      await saveNotification({
+      if (expertId != null && !document.hidden) {
+        saveNotification({
           userId: expertId,
           panel: "expert",
           title: newNotif.title,
           message: "Tap to open",
           type: "chat_request",
           meta: { request_id },
-        });
+        }).catch((err) => console.log("Failed to save chat request to DB", err));
       }
     };
 
@@ -98,180 +143,285 @@ export function ExpertNotificationsProvider({ children }) {
      📞 VOICE CALL
   ===================================================== */
   useEffect(() => {
-    const onIncomingCall = async ({ callId, user_id, user_name }) => {
-      const safeName = getSafeUserName(user_name, user_id);
+    const onIncomingCall = ({
+      callId,
+      fromUserId,
+      user_name,
+      pricePerMinute,
+      status
+    }) => {
+      const safeName = getSafeUserName(user_name, fromUserId);
 
       const newNotif = {
         id: callId,
         type: "voice_call",
-        status: "incoming",
+        status: status || "ringing",
         title: `Incoming call from ${safeName}`,
-        meta: "Tap to answer",
+        meta: pricePerMinute ? `₹${pricePerMinute}/min` : "Tap to answer",
         unread: true,
         payload: { callId },
         createdAt: Date.now(),
       };
 
+      // 🟢 OPTIONAL: Performance optimization - avoid re-render if latest notification is same
       setNotifications((prev) => {
-        if (prev.some((n) => n.id === callId)) return prev;
-        return [newNotif, ...prev];
+        if (prev[0]?.id === callId) return prev;
+        return [newNotif, ...prev.filter((n) => n.id !== callId)];
+      });
+    };
+
+    socket.on("call:incoming", onIncomingCall);
+    return () => socket.off("call:incoming", onIncomingCall);
+  }, []);
+
+  /* =====================================================
+     STATUS EVENTS
+  ===================================================== */
+  useEffect(() => {
+    const handleMissed = ({ callId, status }) => {
+      updateStatus(callId, status || "missed");
+    };
+
+    const handleRejected = ({ callId, status }) => {
+      updateStatus(callId, status || "rejected");
+    };
+
+    const handleTaken = ({ callId }) => {
+      setNotifications((prev) => prev.filter((n) => n.id !== callId));
+    };
+
+    const handleEnded = ({ callId, status }) => {
+      updateStatus(callId, status || "ended");
+    };
+
+    const handleConnected = ({ callId }) => {
+      setNotifications((prev) => prev.filter((n) => n.id !== callId));
+    };
+
+    // 1️⃣ FIXED: Timer overwrite protection
+    const updateStatus = (id, status) => {
+      setNotifications((prev) => {
+        if (!prev.some((n) => n.id === id)) {
+          console.log(`⚠️ Notification ${id} not found, skipping status update`);
+          return prev;
+        }
+
+        return prev.map((n) =>
+          n.id === id 
+            ? { 
+                ...n, 
+                status, 
+                unread: status === "ringing" ? true : false 
+              } 
+            : n
+        );
       });
 
-      // ⭐⭐ SAVE TO DB
-      if (expertId) {
-        saveNotification({
-          userId: expertId,
-          panel: "expert",
-          title: newNotif.title,
-          message: "Tap to answer",
-          type: "voice_call",
-          meta: { callId },
-        });
+      if (FINAL_STATES.includes(status)) {
+        // 1️⃣ Clear existing timer if any
+        const existing = timers.current.get(id);
+        if (existing) {
+          clearTimeout(existing);
+          console.log(`⏰ Cleared existing timer for ${id}`);
+        }
+
+        const timerId = setTimeout(() => {
+          setNotifications((prev) => prev.filter((n) => n.id !== id));
+          timers.current.delete(id);
+        }, 60000);
+        
+        timers.current.set(id, timerId);
       }
     };
 
-    socket.off("call:incoming");
-    socket.on("call:incoming", onIncomingCall);
-
-    return () => socket.off("call:incoming", onIncomingCall);
-  }, [expertId]);
-
-  /* =====================================================
-     STATUS UPDATES
-  ===================================================== */
-  useEffect(() => {
-    const markDone = (id, status) => {
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n.id === id ? { ...n, status, unread: false } : n
-        )
-      );
-
-      setTimeout(() => {
-        setNotifications((prev) => prev.filter((n) => n.id !== id));
-      }, 60000);
-    };
-
-    socket.on("chat_cancelled", ({ request_id }) =>
-      markDone(request_id, "cancelled")
-    );
-    socket.on("chat_rejected", ({ request_id }) =>
-      markDone(request_id, "rejected")
-    );
-    socket.on("chat_ended", ({ request_id }) =>
-      markDone(request_id, "ended")
-    );
-    socket.on("call:ended", ({ callId }) =>
-      markDone(callId, "ended")
-    );
+    socket.on("call:missed", handleMissed);
+    socket.on("call:rejected", handleRejected);
+    socket.on("call:taken", handleTaken);
+    socket.on("call:ended", handleEnded);
+    socket.on("call:connected", handleConnected);
 
     return () => {
-      socket.off("chat_cancelled");
-      socket.off("chat_rejected");
-      socket.off("chat_ended");
-      socket.off("call:ended");
+      socket.off("call:missed", handleMissed);
+      socket.off("call:rejected", handleRejected);
+      socket.off("call:taken", handleTaken);
+      socket.off("call:ended", handleEnded);
+      socket.off("call:connected", handleConnected);
     };
   }, []);
 
+  /* =====================================================
+     LEGACY STATUS UPDATES (for chat)
+  ===================================================== */
+  useEffect(() => {
+    const handleChatCancelled = ({ request_id }) => markDone(request_id, "cancelled");
+    const handleChatRejected = ({ request_id }) => markDone(request_id, "rejected");
+    const handleChatEnded = ({ request_id }) => markDone(request_id, "ended");
+
+    // 2️⃣ FIXED: Added guard and timer overwrite protection
+    const markDone = (id, status) => {
+      setNotifications((prev) => {
+        if (!prev.some((n) => n.id === id)) return prev;
+
+        return prev.map((n) =>
+          n.id === id ? { ...n, status, unread: false } : n
+        );
+      });
+
+      if (FINAL_STATES.includes(status)) {
+        // 1️⃣ Clear existing timer if any
+        const existing = timers.current.get(id);
+        if (existing) {
+          clearTimeout(existing);
+          console.log(`⏰ Cleared existing chat timer for ${id}`);
+        }
+
+        const timerId = setTimeout(() => {
+          setNotifications((prev) => prev.filter((n) => n.id !== id));
+          timers.current.delete(id);
+        }, 60000);
+        
+        timers.current.set(id, timerId);
+      }
+    };
+
+    socket.on("chat_cancelled", handleChatCancelled);
+    socket.on("chat_rejected", handleChatRejected);
+    socket.on("chat_ended", handleChatEnded);
+
+    return () => {
+      socket.off("chat_cancelled", handleChatCancelled);
+      socket.off("chat_rejected", handleChatRejected);
+      socket.off("chat_ended", handleChatEnded);
+    };
+  }, []);
 
   /* =====================================================
-   🆕 LOAD HISTORY FROM DB (on mount)
-===================================================== */
-useEffect(() => {
-  if (!expertId) return;
+     LOAD HISTORY FROM DB (merge with live)
+  ===================================================== */
+  useEffect(() => {
+    if (!expertId) return;
 
-  const loadHistory = async () => {
-    try {
-      const res = await getNotifications({
-        userId: expertId,
-        panel: "expert",
-      });
+    const loadHistory = async () => {
+      try {
+        const res = await getNotifications({
+          userId: expertId,
+          panel: "expert",
+        });
 
-      const dbData = res.data || [];
+        const mapped = (res.data || []).map((n) => ({
+          id: n.id,
+          type: n.type,
+          status: n.status || "pending",
+          title: n.title,
+          meta: n.message,
+          unread: !n.is_read,
+          payload: n.meta || {},
+          createdAt: new Date(n.created_at).getTime(),
+        }));
 
-      // DB format → UI format map
-      const mapped = dbData.map((n) => ({
-        id: n.id,
-        type: n.type,
-        status: n.is_read ? "read" : "pending",
-        title: n.title,
-        meta: n.message,
-        unread: !n.is_read,
-        payload: n.meta || {},
-        createdAt: new Date(n.created_at).getTime(),
-      }));
+        // Merge with live notifications
+        setNotifications((prev) => {
+          const liveMap = new Map(prev.map((n) => [n.id, n]));
 
-      // merge (avoid duplicates)
-      setNotifications((prev) => {
-        const existingIds = new Set(prev.map((n) => n.id));
-        const merged = [
-          ...mapped.filter((n) => !existingIds.has(n.id)),
-          ...prev,
-        ];
-        return merged;
-      });
+          mapped.forEach((n) => {
+            liveMap.set(n.id, n);
+          });
 
-      // unread count
-      const countRes = await getUnreadCount({ userId: expertId });
-      // optional if you want backend count sync
-      // setUnreadCount(countRes.data.count);
-    } catch (err) {
-      console.log("history load failed", err);
-    }
-  };
+          return Array.from(liveMap.values()).sort((a, b) => b.createdAt - a.createdAt);
+        });
 
-  loadHistory();
-}, [expertId]);
+        // Clear localStorage if DB empty
+        if (mapped.length === 0) {
+          localStorage.removeItem(getStorageKey(expertId));
+        }
+
+        setHistoryLoaded(true);
+
+        await getUnreadCount({ userId: expertId });
+      } catch (err) {
+        console.log("history load failed", err);
+        setHistoryLoaded(true);
+      }
+    };
+
+    loadHistory();
+  }, [expertId]);
 
   /* ---------------------------------- HELPERS ---------------------------------- */
- const removeById = useCallback(
-  async (id) => {
-    try {
-      // 👉 DB se delete
-      if (expertId) {
-        await deleteNotification(id, expertId);
-      }
+  const removeById = useCallback(
+    async (id) => {
+      try {
+        if (expertId) {
+          try {
+            await deleteNotification(id, expertId);
+          } catch (err) {
+            console.log("DB delete failed", err);
+          }
+        }
 
-      // 👉 local state clean
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    } catch (err) {
-      console.log("delete notification failed", err);
-    }
-  },
-  [expertId]
-);
+        // Clear timer for this notification
+        const timer = timers.current.get(id);
+        if (timer) {
+          clearTimeout(timer);
+          timers.current.delete(id);
+        }
 
-
-  /* ---------------------------------- TAP ---------------------------------- */
-  const onNotificationTap = useCallback(
-    (notification) => {
-      if (!notification) return;
-
-      if (notification.type === "chat_request") {
-        socket.emit("accept_chat", {
-          request_id: notification.payload.request_id,
-        });
-        removeById(notification.id);
-      }
-
-      if (notification.type === "voice_call") {
-        removeById(notification.id);
-        window.location.href = `/expert/voice-call/${notification.payload.callId}`;
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+      } catch (err) {
+        console.log("delete notification failed", err);
       }
     },
-    [removeById]
+    [expertId]
   );
 
+  const acceptNotification = useCallback((notification) => {
+    if (!notification) return;
+
+    if (notification.type === "voice_call") {
+      window.dispatchEvent(
+        new CustomEvent("go_to_call_page", {
+          detail: notification.payload.callId,
+        })
+      );
+      return;
+    }
+
+    if (notification.type === "chat_request") {
+      socket.emit("accept_chat", {
+        request_id: notification.payload.request_id,
+      });
+    }
+
+    removeById(notification.id);
+  }, [removeById]);
+
+  const rejectNotification = useCallback((notification) => {
+    if (!notification) return;
+
+    if (notification.type === "chat_request") {
+      socket.emit("reject_chat", {
+        request_id: notification.payload.request_id,
+      });
+    }
+
+    if (notification.type === "voice_call") {
+      socket.emit("call:reject", {
+        callId: notification.payload.callId,
+      });
+    }
+
+    removeById(notification.id);
+  }, [removeById]);
+
   /* ---------------------------------- CONTEXT ---------------------------------- */
-  const value = useMemo(
-    () => ({
-      notifications,
-      unreadCount,
-      onNotificationTap,
-      removeById,
-    }),
-    [notifications, unreadCount, onNotificationTap, removeById]
-  );
+  const value = useMemo(() => ({
+    notifications,
+    unreadCount,
+    acceptNotification,
+    rejectNotification,
+    removeById,
+    historyLoaded,
+  }), [notifications, unreadCount, acceptNotification, rejectNotification, removeById, historyLoaded]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

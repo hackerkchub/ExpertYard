@@ -58,23 +58,41 @@ export default function ExpertTopbar() {
   const searchRef = useRef(null);
 
   // NOTIFICATIONS HOOK
-  const {
+ const {
   notifications,
   unreadCount,
-  markAllRead,
-  acceptChatRequest,
-  declineChatRequest,
-  acceptCall,
-  rejectCall,
+  acceptNotification,
+  rejectNotification,
+  removeById,
 } = useExpertNotifications();
 
   // LOGOUT
   const handleLogout = () => {
-    logoutExpert();
-    localStorage.removeItem("expert_session");
+  try {
+    // 🧠 1️⃣ socket disconnect (VERY IMPORTANT)
+    if (socket?.connected) {
+      socket.disconnect();
+    }
+
+    // 🧹 2️⃣ clear storage
+    localStorage.clear();
     sessionStorage.clear();
+
+    // 🧠 3️⃣ reset expert context
+    logoutExpert();
+
+    // 🚀 4️⃣ redirect
     navigate("/expert/register", { replace: true });
-  };
+
+    // 💣 5️⃣ optional hard reload (recommended for realtime apps)
+    setTimeout(() => {
+      window.location.reload();
+    }, 50);
+
+  } catch (err) {
+    console.error("Logout error:", err);
+  }
+};
 
   // CHAT REDIRECT
   useEffect(() => {
@@ -101,6 +119,38 @@ export default function ExpertTopbar() {
     return () => document.removeEventListener("click", handleClick);
   }, []);
 
+useEffect(() => {
+  const handleConnected = ({ callId }) => {
+    setShowNotif(false);
+
+    if (!location.pathname.includes("/expert/voice-call/")) {
+      navigate(`/expert/voice-call/${callId}`);
+    }
+  };
+
+  const handleEnded = () => {
+    setShowNotif(false);
+  };
+
+  socket.on("call:connected", handleConnected);
+  socket.on("call:ended", handleEnded);
+
+  return () => {
+    socket.off("call:connected", handleConnected);
+    socket.off("call:ended", handleEnded);
+  };
+}, [navigate, location.pathname]);
+
+useEffect(() => {
+  const handler = (e) => {
+    navigate(`/expert/voice-call/${e.detail}`);
+  };
+
+  window.addEventListener("go_to_call_page", handler);
+  return () => window.removeEventListener("go_to_call_page", handler);
+}, [navigate]);
+
+
   // MOBILE MENU CLOSE ON ROUTE CHANGE
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -119,6 +169,9 @@ export default function ExpertTopbar() {
   ];
 
   const isActivePath = (path) => location.pathname === path;
+const hasRingingCall = notifications.some(
+  (n) => n.type === "voice_call" && n.status === "ringing"
+);
 
   return (
     <>
@@ -154,44 +207,26 @@ export default function ExpertTopbar() {
           {/* NOTIFICATIONS */}
           <div ref={notifRef} style={{ position: "relative" }}>
             <IconBtn onClick={() => setShowNotif(p => !p)} title="Notifications">
-              <FiBell />
-              {unreadCount > 0 && <UnreadDot />}
-            </IconBtn>
+  <FiBell />
+  {hasRingingCall && <UnreadDot />}
+</IconBtn>
+
            {showNotif && (
-  <NotificationPopover
-    notifications={notifications}
-    unreadCount={unreadCount}
-    markAllRead={markAllRead}
+ <NotificationPopover
+  notifications={notifications}
+  unreadCount={unreadCount}
+  acceptNotification={(n) => {
+    acceptNotification(n);
+    setShowNotif(false);
+  }}
+  rejectNotification={(n) => {
+    rejectNotification(n);
+    setShowNotif(false);
+  }}
+  removeById={removeById}
+/>
 
-    onAccept={(n) => {
-      // CHAT REQUEST
-      if (n.type === "chat_request") {
-        acceptChatRequest(n.id);
-      }
 
-      // VOICE CALL
-      if (n.type === "voice_call") {
-        acceptCall(n.payload.callId);
-        navigate(`/expert/voice-call/${n.payload.callId}`);
-      }
-
-      setShowNotif(false);
-    }}
-
-    onDecline={(n) => {
-      // CHAT REQUEST
-      if (n.type === "chat_request") {
-        declineChatRequest(n.id);
-      }
-
-      // VOICE CALL
-      if (n.type === "voice_call") {
-        rejectCall(n.payload.callId);
-      }
-
-      setShowNotif(false);
-    }}
-  />
 )}
 
           </div>

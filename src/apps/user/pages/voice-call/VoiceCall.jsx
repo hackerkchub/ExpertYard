@@ -21,6 +21,7 @@ import {
   Controls,
   ControlBtn,
   Timer,
+  ReconnectingBadge, // ⭐ Optional UI
 } from "./VoiceCall.styles";
 
 import { useExpert } from "../../../../shared/context/ExpertContext";
@@ -33,6 +34,7 @@ import {
   setRemote,
   addIce,
   toggleMute,
+  handleSocketReconnect,
 } from "../../../../shared/webrtc/voicePeer";
 
 import { CALL_EVENTS } from "../../../../shared/constants/call.constants";
@@ -48,8 +50,15 @@ export default function VoiceCall() {
   const socket = useSocket(userId, "user");
   const audioRef = useRef(null);
   
+  // Refs for stability
   const callIdRef = useRef(null);
   const callStartedRef = useRef(false);
+  // 2️⃣ Ref for latest callState
+  const callStateRef = useRef("idle");
+  // 3️⃣ Offer spam protection
+  const makingOfferRef = useRef(false);
+  // 6️⃣ Cleanup guard (optional)
+  const isCleaningUpRef = useRef(false);
 
   const expert = useMemo(() => {
     if (!expertId || !experts?.length) return null;
@@ -63,7 +72,14 @@ export default function VoiceCall() {
   const [seconds, setSeconds] = useState(0);
   const timerRef = useRef(null);
   const [muted, setMuted] = useState(false);
+  // ⭐ Reconnecting UI state
+  const [reconnecting, setReconnecting] = useState(false);
   const navigatedRef = useRef(false);
+
+  // 2️⃣ Sync callState to ref
+  useEffect(() => {
+    callStateRef.current = callState;
+  }, [callState]);
 
   const goBackToProfile = useCallback(() => {
     if (navigatedRef.current) return;
@@ -75,9 +91,9 @@ export default function VoiceCall() {
     callIdRef.current = callId;
   }, [callId]);
 
-  // ✅ SIMPLIFIED: Just emit START, voicePeer handles mic
+  // ✅ 1️⃣ FIXED: Simplified dependencies, uses ref for guard
   const startCall = useCallback(async () => {
-    if (callStartedRef.current || callState !== "idle") return;
+    if (callStartedRef.current) return;
     
     setCallState("calling");
     callStartedRef.current = true;
@@ -85,7 +101,6 @@ export default function VoiceCall() {
     try {
       console.log("📞 Starting call for expert:", expertId);
       
-      // VoicePeer will request mic when createPeer is called
       socket.emit(CALL_EVENTS.START, {
         expertId: Number(expertId),
       });
@@ -95,9 +110,14 @@ export default function VoiceCall() {
       setCallState("ended");
       setTimeout(() => goBackToProfile(), 1500);
     }
-  }, [expertId, socket, goBackToProfile, callState]);
+  }, [expertId, socket, goBackToProfile]); // ✅ Removed callState dependency
 
-  // Expose startCall to parent component
+  // Auto-start on mount
+  useEffect(() => {
+    startCall();
+  }, [startCall]);
+
+  // Expose startCall to parent component (optional)
   useEffect(() => {
     window.__startVoiceCall = startCall;
     return () => {
@@ -105,21 +125,31 @@ export default function VoiceCall() {
     };
   }, [startCall]);
 
+  // ✅ 3️⃣ OFFER SPAM PROTECTION
   const handleWebRTCOffer = useCallback(async (currentCallId) => {
     if (!currentCallId) return;
+    
+    // Prevent multiple simultaneous offers
+    if (makingOfferRef.current) {
+      console.log("🛡️ Offer already in progress, skipping");
+      return;
+    }
 
     console.log("📡 Creating WebRTC offer for call:", currentCallId);
     
+    makingOfferRef.current = true;
+
     try {
-      // ✅ SIMPLIFIED: voicePeer handles mic internally
       const pc = await createPeer({
         socket,
         callId: currentCallId,
         audioRef,
-        // No stream passed - voicePeer gets it automatically
       });
 
-      const offer = await pc.createOffer();
+      const offer = await pc.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: false,
+      });
       await pc.setLocalDescription(offer);
 
       socket.emit("webrtc:offer", {
@@ -132,18 +162,37 @@ export default function VoiceCall() {
       console.error("❌ WebRTC offer failed:", err);
       setCallState("ended");
       closePeer();
+    } finally {
+      makingOfferRef.current = false;
     }
   }, [socket]);
+
+  // 4️⃣ Preload devices for speaker toggle
+  useEffect(() => {
+    // Pre-audio permission for speaker device enumeration
+    if (!localStorage.getItem('audio_permission_granted')) {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          stream.getTracks().forEach(t => t.stop());
+          localStorage.setItem('audio_permission_granted', 'true');
+        })
+        .catch(console.warn);
+    }
+  }, []);
 
   useEffect(() => {
     console.log("📡 Setting up voice call listeners");
 
     const onConnected = ({ callId: connectedCallId }) => {
       console.log("✅ Call connected:", connectedCallId);
+      setReconnecting(false); // ⭐ Clear reconnecting state
       setCallId(connectedCallId);
       setSeconds(0);
       setCallState("connected");
-      handleWebRTCOffer(connectedCallId);
+      
+      setTimeout(() => {
+        handleWebRTCOffer(connectedCallId);
+      }, 300);
     };
 
     const onWebRTCAnswer = async ({ callId: answerCallId, answer }) => {
@@ -203,6 +252,31 @@ export default function VoiceCall() {
     };
   }, [socket, handleWebRTCOffer]);
 
+  // ✅ 2️⃣ RECONNECT HANDLER WITH REF
+  useEffect(() => {
+    if (!socket) return;
+
+    const onReconnect = () => {
+      console.log("🔄 Socket reconnected – reinitializing peer");
+      setReconnecting(true); // ⭐ Show reconnecting UI
+      
+      handleSocketReconnect();
+      
+      // 2️⃣ Use ref for current call state
+      if (callIdRef.current && callStateRef.current === "connected") {
+        setTimeout(() => {
+          handleWebRTCOffer(callIdRef.current);
+        }, 500);
+      }
+    };
+
+    socket.io?.on("reconnect", onReconnect);
+
+    return () => {
+      socket.io?.off("reconnect", onReconnect);
+    };
+  }, [socket, handleWebRTCOffer]); // ✅ No callState dependency, uses ref
+
   useEffect(() => {
     if (callState === "connected" && !timerRef.current) {
       timerRef.current = setInterval(() => {
@@ -229,7 +303,11 @@ export default function VoiceCall() {
     return `${m}:${s}`;
   };
 
+  // ✅ 5️⃣ SAFE END CALL WITH DELAY
   const handleEnd = useCallback(() => {
+    if (isCleaningUpRef.current) return;
+    isCleaningUpRef.current = true;
+
     console.log("🔚 Ending call:", callIdRef.current);
     
     if (callIdRef.current) {
@@ -239,10 +317,57 @@ export default function VoiceCall() {
       });
     }
     
-    closePeer();
-    goBackToProfile();
-    callStartedRef.current = false;
+    // Give time for packet to send before cleanup
+    setTimeout(() => {
+      closePeer();
+      goBackToProfile();
+      callStartedRef.current = false;
+      isCleaningUpRef.current = false;
+    }, 200);
   }, [goBackToProfile, socket]);
+
+  const handleMute = useCallback(() => {
+    const newMuted = !muted;
+    setMuted(newMuted);
+    toggleMute(newMuted);
+    
+    if (callIdRef.current) {
+      socket.emit("call:mute", {
+        callId: callIdRef.current,
+        muted: newMuted
+      });
+    }
+  }, [muted, socket]);
+
+  // ✅ 4️⃣ FIXED SPEAKER TOGGLE
+  const handleSpeakerToggle = useCallback(async () => {
+    if (!audioRef.current) return;
+    
+    try {
+      // Ensure we have device permissions
+      if (!localStorage.getItem('audio_permission_granted')) {
+        await navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(stream => stream.getTracks().forEach(t => t.stop()));
+      }
+
+      // @ts-ignore - setSinkId not in all browsers
+      if (audioRef.current.setSinkId) {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const speakers = devices.filter(d => d.kind === 'audiooutput');
+        
+        if (speakers.length > 1) {
+          // @ts-ignore
+          const currentId = audioRef.current.sinkId;
+          const nextSpeaker = speakers.find(s => s.deviceId !== currentId) || speakers[0];
+          // @ts-ignore
+          await audioRef.current.setSinkId(nextSpeaker.deviceId);
+          console.log(`🔊 Switched to speaker: ${nextSpeaker.label}`);
+        }
+      }
+    } catch (err) {
+      console.warn("Speaker toggle not supported:", err);
+    }
+  }, []);
 
   useEffect(() => {
     if (callState === "ended" || callState === "busy" || callState === "offline") {
@@ -270,6 +395,11 @@ export default function VoiceCall() {
               <span>📞</span>
             </CallIconRing>
           )}
+          
+          {/* ⭐ Reconnecting UI */}
+          {reconnecting && callState === "connected" && (
+            <ReconnectingBadge>🔄 Reconnecting...</ReconnectingBadge>
+          )}
         </TopSection>
 
         {callState === "calling" && (
@@ -287,19 +417,14 @@ export default function VoiceCall() {
 
             <Controls>
               <ControlBtn
-                $active={muted}  // ✅ FIXED: $active instead of active
-                onClick={() => {
-                  setMuted(m => {
-                    toggleMute(!m);
-                    return !m;
-                  });
-                }}
+                $active={muted}
+                onClick={handleMute}
               >
                 {muted ? "🔇" : "🎤"}
                 <span>Mute</span>
               </ControlBtn>
 
-              <ControlBtn disabled>
+              <ControlBtn onClick={handleSpeakerToggle}>
                 🔊
                 <span>Speaker</span>
               </ControlBtn>

@@ -27,6 +27,7 @@ import {
   addIce,
   toggleMute,
   createAnswer,
+  handleSocketReconnect,
 } from "../../../../shared/webrtc/voicePeer";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/300?img=44";
@@ -36,17 +37,24 @@ export default function ExpertVoiceCall() {
   const navigate = useNavigate();
   const { expertData } = useExpert();
 
+  // ✅ 1️⃣ Use normalizedCallId for all checks
   const normalizedCallId = Number(callId);
   const socket = useSocket(expertData?.expertId, "expert");
   
-  // ✅ FIX 2: Add streamRef to store media stream
+  // Refs for stability
   const streamRef = useRef(null);
   const callIdRef = useRef(normalizedCallId);
   const callStartedRef = useRef(false);
   
+  // Refs for protection
+  const callStateRef = useRef("incoming");
+  const makingAnswerRef = useRef(false);
+  const isCleaningUpRef = useRef(false);
+  
   const [callState, setCallState] = useState("incoming");
   const [seconds, setSeconds] = useState(0);
   const [muted, setMuted] = useState(false);
+  const [reconnecting, setReconnecting] = useState(false);
 
   const audioRef = useRef(null);
   const timerRef = useRef(null);
@@ -57,14 +65,18 @@ export default function ExpertVoiceCall() {
     avatar: DEFAULT_AVATAR,
   });
 
+  // Keep callState in sync with ref
+  useEffect(() => {
+    callStateRef.current = callState;
+  }, [callState]);
+
   useEffect(() => {
     callIdRef.current = normalizedCallId;
   }, [normalizedCallId]);
 
-  // ✅ FIX 3: Cleanup mic tracks properly
+  // Cleanup media tracks
   const cleanupMedia = useCallback(() => {
     console.log("🧹 Expert cleaning up media tracks");
-    // Stop all tracks in the stream
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => {
         track.stop();
@@ -73,7 +85,6 @@ export default function ExpertVoiceCall() {
       streamRef.current = null;
     }
     
-    // Clear audio element srcObject
     if (audioRef.current) {
       audioRef.current.srcObject = null;
     }
@@ -81,12 +92,15 @@ export default function ExpertVoiceCall() {
     closePeer();
   }, []);
 
-  // ✅ Handle incoming call data
+  // Handle incoming call data
   useEffect(() => {
     const onIncoming = (data) => {
       if (Number(data.callId) !== callIdRef.current) return;
 
       console.log("📞 Incoming call data:", data);
+
+      // ✅ 3️⃣ Clear reconnecting state on new incoming
+      setReconnecting(false);
 
       setCaller({
         name: data.user_name || "User",
@@ -104,12 +118,14 @@ export default function ExpertVoiceCall() {
     };
   }, [socket]);
 
-  // ✅ Timer
+  // ✅ 4️⃣ Timer with extra safety
   useEffect(() => {
     if (callState === "connected") {
-      timerRef.current = setInterval(() => {
-        setSeconds((s) => s + 1);
-      }, 1000);
+      if (!timerRef.current) {
+        timerRef.current = setInterval(() => {
+          setSeconds((s) => s + 1);
+        }, 1000);
+      }
     } else {
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -125,12 +141,13 @@ export default function ExpertVoiceCall() {
     };
   }, [callState]);
 
-  // ✅ Socket core events
+  // ✅ 1️⃣ Socket core events (using normalizedCallId)
   useEffect(() => {
-    if (!callId) return;
+    if (!normalizedCallId) return;
 
     const onConnected = ({ callId: connectedId }) => {
       if (Number(connectedId) !== callIdRef.current) return;
+      setReconnecting(false);
       setSeconds(0);
       setCallState("connected");
     };
@@ -165,29 +182,79 @@ export default function ExpertVoiceCall() {
       socket.off(CALL_EVENTS.ENDED, onEnded);
       socket.off(CALL_EVENTS.BUSY, onBusy);
     };
-  }, [socket, navigate, callId, cleanupMedia]);
+  }, [socket, navigate, cleanupMedia, normalizedCallId]); // ✅ Using normalizedCallId
 
-  // ✅ WebRTC events
+  // Socket reconnect handler
   useEffect(() => {
-    if (!callId) return;
+    if (!socket) return;
+
+    const onReconnect = () => {
+      console.log("🔄 Expert socket reconnected");
+      setReconnecting(true);
+
+      handleSocketReconnect(); // peer reset
+
+      if (callIdRef.current && callStateRef.current === "connected") {
+        setTimeout(() => {
+          console.log("♻ Recreating answer after reconnect");
+          // The offer will come from user automatically
+          setReconnecting(false);
+        }, 400);
+      }
+    };
+
+    socket.io?.on("reconnect", onReconnect);
+    return () => socket.io?.off("reconnect", onReconnect);
+  }, [socket]);
+
+  // ✅ 1️⃣ & 2️⃣ WebRTC events with ANSWER SPAM PROTECTION + STREAM GUARD
+  useEffect(() => {
+    if (!normalizedCallId) return;
 
     const onOffer = async ({ callId: incomingId, offer }) => {
       if (Number(incomingId) !== callIdRef.current) return;
 
-      console.log("📡 Expert: Received WebRTC offer");
+      // ✅ 3️⃣ Clear reconnecting when offer arrives
+      setReconnecting(false);
 
-      // ✅ FIX 2: Pass stream to createPeer
-      await createPeer({ 
-        socket, 
-        callId: callIdRef.current, 
-        audioRef,
-        stream: streamRef.current // ⭐ CRITICAL: Pass the stored stream
-      });
-      
-      await setRemote(offer);
+      if (makingAnswerRef.current) {
+        console.log("🛡 Answer already in progress");
+        return;
+      }
 
-      const answer = await createAnswer();
-      socket.emit("webrtc:answer", { callId: callIdRef.current, answer });
+      // ✅ 2️⃣ GUARD: Wait for mic stream to be ready
+      if (!streamRef.current) {
+        console.log("⏳ Waiting for mic before answering");
+        return;
+      }
+
+      makingAnswerRef.current = true;
+
+      try {
+        console.log("📡 Expert: Received WebRTC offer");
+
+        await createPeer({ 
+          socket, 
+          callId: callIdRef.current, 
+          audioRef,
+          stream: streamRef.current
+        });
+
+        await setRemote(offer);
+
+        const answer = await createAnswer();
+
+        socket.emit("webrtc:answer", { 
+          callId: callIdRef.current, 
+          answer 
+        });
+
+        console.log("✅ Expert: Answer sent");
+      } catch (err) {
+        console.error("❌ Answer failed", err);
+      } finally {
+        makingAnswerRef.current = false;
+      }
     };
 
     const onIce = ({ callId: iceId, candidate }) => {
@@ -202,9 +269,9 @@ export default function ExpertVoiceCall() {
       socket.off("webrtc:offer", onOffer);
       socket.off("webrtc:ice", onIce);
     };
-  }, [socket, callId]);
+  }, [socket, normalizedCallId]); // ✅ Using normalizedCallId
 
-  // ✅ Cleanup on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       console.log("🧹 Expert cleanup");
@@ -213,17 +280,18 @@ export default function ExpertVoiceCall() {
     };
   }, [cleanupMedia]);
 
-  // ✅ Actions
+  // ACCEPT CALL - DOUBLE CLICK GUARD
   const acceptCall = useCallback(async () => {
-    if (callState !== "incoming") return;
+    if (callStateRef.current !== "incoming") return;
 
     try {
-      // ✅ FIX 2: Store stream in ref
       streamRef.current = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: true
+          autoGainControl: true,
+          channelCount: { ideal: 1 },
+          sampleRate: { ideal: 16000 },
         }
       });
       console.log("✅ Expert microphone permission granted, stream:", streamRef.current);
@@ -232,8 +300,9 @@ export default function ExpertVoiceCall() {
     } catch (error) {
       console.error("❌ Failed to get microphone permission:", error);
     }
-  }, [callState, socket]);
+  }, [socket]);
 
+  // REJECT CALL
   const rejectCall = useCallback(() => {
     console.log("❌ Expert: Rejecting call", callIdRef.current);
     socket.emit(CALL_EVENTS.REJECT, { callId: callIdRef.current });
@@ -242,20 +311,36 @@ export default function ExpertVoiceCall() {
     navigate("/expert/home", { replace: true });
   }, [socket, navigate, cleanupMedia]);
 
+  // SAFE END CALL (billing safe)
   const endCall = useCallback(() => {
+    if (isCleaningUpRef.current) return;
+    isCleaningUpRef.current = true;
+
     console.log("🔚 Expert: Ending call", callIdRef.current);
     socket.emit(CALL_EVENTS.END, { callId: callIdRef.current });
-    
-    cleanupMedia();
-    navigate("/expert/home", { replace: true });
+
+    setTimeout(() => {
+      cleanupMedia();
+      navigate("/expert/home", { replace: true });
+      isCleaningUpRef.current = false;
+    }, 200);
   }, [socket, navigate, cleanupMedia]);
 
   const toggleMuteClick = useCallback(() => {
     setMuted((m) => {
       toggleMute(!m);
+      
+      // Optional: Emit mute status to server
+      if (callIdRef.current) {
+        socket.emit("call:mute", {
+          callId: callIdRef.current,
+          muted: !m
+        });
+      }
+      
       return !m;
     });
-  }, []);
+  }, [socket]);
 
   return (
     <PageWrapper>
@@ -269,16 +354,20 @@ export default function ExpertVoiceCall() {
         <ExpertName>{caller.name}</ExpertName>
         <ExpertRole>{caller.role}</ExpertRole>
 
+        {/* Reconnecting UI */}
+        {reconnecting && callState === "connected" && (
+          <StatusText>🔄 RECONNECTING...</StatusText>
+        )}
+
         {callState === "incoming" && (
           <>
             <StatusText>INCOMING VOICE CALL</StatusText>
             <IncomingActions>
               <ActionBtn
                 $accept
-                onClick={() => {
-                  console.log("🔥 ACCEPT CLICKED", callIdRef.current);
-                  acceptCall();
-                }}
+                // ✅ 5️⃣ Disable button when not in incoming state
+                disabled={callState !== "incoming"}
+                onClick={acceptCall}
               >
                 ✔ Accept
               </ActionBtn>

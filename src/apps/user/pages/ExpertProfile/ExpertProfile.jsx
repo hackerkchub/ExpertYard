@@ -154,6 +154,7 @@ const [requestingChat, setRequestingChat] = useState(false);
 
   // Expert status listener
   useEffect(() => {
+     if (!socket.connected) socket.connect();
     const handleExpertOnline = ({ expert_id }) => {
       if (Number(expert_id) === numericExpertId) {
         setIsExpertOnline(true);
@@ -174,6 +175,33 @@ const [requestingChat, setRequestingChat] = useState(false);
       socket.off("expert_offline", handleExpertOffline);
     };
   }, [numericExpertId]);
+
+  useEffect(() => {
+  if (expertData?.profile?.is_online !== undefined) {
+    setIsExpertOnline(expertData.profile.is_online);
+  }
+}, [expertData]);
+
+useEffect(() => {
+  setIsExpertOnline(false);
+}, [numericExpertId]);
+
+
+useEffect(() => {
+  if (!numericExpertId) return;
+
+  socket.emit("check_expert_online", {
+    expertId: numericExpertId,
+  });
+
+  socket.on("expert_status", ({ expertId, online }) => {
+    if (Number(expertId) === numericExpertId) {
+      setIsExpertOnline(online);
+    }
+  });
+
+  return () => socket.off("expert_status");
+}, [numericExpertId]);
 
   // Profile data fetch
   useEffect(() => {

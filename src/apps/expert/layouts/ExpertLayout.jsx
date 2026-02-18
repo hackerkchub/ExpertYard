@@ -54,7 +54,10 @@ function ExpertLayoutInner() {
     // ✅ socket.js already has auth token
     if (!socket.connected) {
       socket.connect();
-    }
+    }else {
+  onConnect();
+}
+
 
     return () => {
       socket.off("connect", onConnect);

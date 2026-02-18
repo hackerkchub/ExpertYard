@@ -187,3 +187,22 @@ export const Brand = styled.div`
   opacity: 0.85;
   margin-top: 10px;
 `;
+
+export const ReconnectingBadge = styled.div`
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #ffb020;
+  color: #000;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  animation: pulse 1.2s infinite;
+
+  @keyframes pulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+`;

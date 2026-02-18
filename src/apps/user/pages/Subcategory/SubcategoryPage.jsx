@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { FiFilter, FiSearch, FiCheck, FiX, FiChevronRight } from "react-icons/fi";
 import { 
@@ -119,6 +119,8 @@ const SubcategoryPage = () => {
   const { categoryId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const latestRequestRef = useRef(0);
+
   
   const {
     subCategories,
@@ -163,67 +165,29 @@ const SubcategoryPage = () => {
     setPrevCategoryId(categoryId);
   }, [categoryId, prevCategoryId, loadSubCategories]);
 
-  useEffect(() => {
-    if (categoryId && categoryId !== prevCategoryId) {
-      resetStateForNewCategory();
-    }
-  }, [categoryId, prevCategoryId, resetStateForNewCategory]);
+   const loadExpertsForSubcategory = useCallback(async (subCategoryId) => {
+  if (!subCategoryId || !categoryId) return;
 
-  useEffect(() => {
-    if (!categoryId || subCategories.length === 0) return;
+  const requestId = ++latestRequestRef.current;   // ✅ ADD THIS
 
-    const savedId = localStorage.getItem(`selectedSubcategory_${categoryId}`);
-    const firstId = subCategories[0]?.id;
-    const defaultId = savedId ? Number(savedId) : firstId;
+  try {
+    setExpertsLoading(true);
 
-    if (defaultId) {
-      setSelectedSubcategory(defaultId);
-      setActiveSubCategory(defaultId);
-    }
-  }, [categoryId, subCategories]);
+    const res = await getExpertsBySubCategoryApi(subCategoryId);
 
-  useEffect(() => {
-    if (selectedSubcategory && categoryId) {
-      localStorage.setItem(
-        `selectedSubcategory_${categoryId}`,
-        selectedSubcategory
-      );
-    }
-  }, [selectedSubcategory, categoryId]);
+    if (requestId !== latestRequestRef.current) return;  // ✅ ADD THIS
 
-  useEffect(() => {
-    if (subCategories.length > 0) {
-      const firstSubCategory = subCategories[0];
-      if (firstSubCategory) {
-        if (firstSubCategory.category_name) {
-          setCategoryName(firstSubCategory.category_name);
-        } else if (firstSubCategory.category_name_from_parent) {
-          setCategoryName(firstSubCategory.category_name_from_parent);
-        } else {
-          const name = firstSubCategory.name.split(' ')[0];
-          setCategoryName(name);
-        }
-      }
-    }
-  }, [subCategories]);
+    const expertsList = res?.data?.data || [];
 
-  const loadExpertsForSubcategory = useCallback(async (subCategoryId) => {
-    if (!subCategoryId || !categoryId) return;
+    const expertsWithCategory = expertsList.map(exp => ({
+      ...exp,
+      category_id: categoryId,
+      subcategory_id: subCategoryId
+    }));
 
-    try {
-      setExpertsLoading(true);
-      console.log("Loading experts for subcategory:", subCategoryId);
-      
-      const res = await getExpertsBySubCategoryApi(subCategoryId);
-      console.log("Experts API response:", res?.data?.data);
-      const expertsList = res?.data?.data || [];
-      
-      const expertsWithCategory = expertsList.map(exp => ({
-        ...exp,
-        category_id: categoryId,
-        subcategory_id: subCategoryId
-      }));
-      
+    setExperts(expertsWithCategory);
+
+   
       const newExpertDetails = {};
       const expertPromises = expertsList.map(async (expert) => {
         const expertId = expert.expert_id || expert.id;
@@ -273,11 +237,10 @@ const SubcategoryPage = () => {
         }
       });
       
-      setExperts(prev => {
-        const otherExperts = prev.filter(exp => exp.subcategory_id !== subCategoryId);
-        return [...otherExperts, ...expertsWithCategory];
-      });
-      
+    //  setExperts(expertsWithCategory);
+
+      if (requestId !== latestRequestRef.current) return;
+
       setExpertDetails(prev => ({ ...prev, ...newExpertDetails }));
       
     } catch (err) {
@@ -288,10 +251,62 @@ const SubcategoryPage = () => {
   }, [categoryId]);
 
   useEffect(() => {
-    if (selectedSubcategory && categoryId) {
-      loadExpertsForSubcategory(selectedSubcategory);
+    if (categoryId && categoryId !== prevCategoryId) {
+      resetStateForNewCategory();
     }
-  }, [selectedSubcategory, categoryId]);
+  }, [categoryId, prevCategoryId, resetStateForNewCategory]);
+
+//   useEffect(() => {
+//   setExperts([]);
+//   setExpertDetails({});
+// }, [categoryId]);
+
+// useEffect(() => {
+//   setSelectedSubcategory(null);
+//   setActiveSubCategory(null);
+// }, [categoryId]);
+
+
+  useEffect(() => {
+    if (!categoryId || subCategories.length === 0) return;
+
+    const savedId = localStorage.getItem(`selectedSubcategory_${categoryId}`);
+    const firstId = subCategories[0]?.id;
+    const defaultId = savedId ? Number(savedId) : firstId;
+
+    if (defaultId) {
+      setSelectedSubcategory(defaultId);
+      setActiveSubCategory(defaultId);
+    }
+  }, [categoryId, subCategories]);
+
+  useEffect(() => {
+  if (selectedSubcategory && categoryId) {
+    loadExpertsForSubcategory(selectedSubcategory);
+  }
+}, [selectedSubcategory, categoryId, loadExpertsForSubcategory]);
+
+  useEffect(() => {
+    if (subCategories.length > 0) {
+      const firstSubCategory = subCategories[0];
+      if (firstSubCategory) {
+        if (firstSubCategory.category_name) {
+          setCategoryName(firstSubCategory.category_name);
+        } else if (firstSubCategory.category_name_from_parent) {
+          setCategoryName(firstSubCategory.category_name_from_parent);
+        } else {
+          const name = firstSubCategory.name.split(' ')[0];
+          setCategoryName(name);
+        }
+      }
+    }
+  }, [subCategories]);
+
+  // useEffect(() => {
+  //   if (selectedSubcategory && categoryId) {
+  //     loadExpertsForSubcategory(selectedSubcategory);
+  //   }
+  // }, [selectedSubcategory, categoryId]);
 
   const handleSubCategoryClick = (subCategoryId) => {
     if (subCategoryId === selectedSubcategory) return;

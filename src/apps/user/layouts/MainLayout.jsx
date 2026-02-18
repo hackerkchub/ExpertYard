@@ -32,12 +32,15 @@ useEffect(() => {
 
   if (!socket.connected) {
     socket.connect();
+  } else {
+    onConnect();   // ⭐ important
   }
 
   return () => {
     socket.off("connect", onConnect);
   };
 }, [user?.id]);
+
 
 
 

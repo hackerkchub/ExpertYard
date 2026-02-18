@@ -2,15 +2,15 @@ import styled from "styled-components";
 
 /* PAGE + LAYOUT */
 
-export const PageWrap = styled.div`
-  height: 100vh;
-  background: linear-gradient(135deg, #f9fafb, #e5edff);
-  padding: 12px;
-  overflow: hidden;
-  @media (min-width: 1024px) {
-    padding: 20px;
-  }
-`;
+// export const PageWrap = styled.div`
+//   height: 100vh;
+//   background: linear-gradient(135deg, #f9fafb, #e5edff);
+//   padding: 12px;
+//   overflow: hidden;
+//   @media (min-width: 1024px) {
+//     padding: 20px;
+//   }
+// `;
 
 export const ChatLayout = styled.div`
   height: 100%;
@@ -163,16 +163,16 @@ export const RightPanel = styled.div`
 
 /* HEADER – fixed inside panel, page itself not scrolling */
 
-export const UserHeader = styled.div`
-  flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 14px 18px;
-  border-bottom: 1px solid #e5e7eb;
-  background: linear-gradient(135deg, #eef2ff, #e0f2fe);
-  z-index: 10;
-`;
+// export const UserHeader = styled.div`
+//   flex-shrink: 0;
+//   display: flex;
+//   justify-content: space-between;
+//   align-items: flex-start;
+//   padding: 14px 18px;
+//   border-bottom: 1px solid #e5e7eb;
+//   background: linear-gradient(135deg, #eef2ff, #e0f2fe);
+//   z-index: 10;
+// `;
 
 export const UserInfo = styled.div`
   display: flex;
@@ -269,19 +269,19 @@ export const Bubble = styled.div`
 
 /* INPUT FOOTER – fixed to bottom of right panel */
 
-export const ChatInputWrap = styled.div`
-  flex-shrink: 0;
-  background: #ffffff;
-  padding: 10px 12px 12px;
-  border-top: 1px solid #e5e7eb;
-  display: flex;
-  gap: 8px;
+// export const ChatInputWrap = styled.div`
+//   flex-shrink: 0;
+//   background: #ffffff;
+//   padding: 10px 12px 12px;
+//   border-top: 1px solid #e5e7eb;
+//   display: flex;
+//   gap: 8px;
 
-  @media (min-width: 1024px) {
-    padding: 12px 16px 14px;
-    gap: 10px;
-  }
-`;
+//   @media (min-width: 1024px) {
+//     padding: 12px 16px 14px;
+//     gap: 10px;
+//   }
+// `;
 
 export const ChatInput = styled.input`
   flex: 1;
@@ -409,3 +409,51 @@ export const EmptyChatMessage = styled.div`
   text-align: center;
   line-height: 1.5;
 `;
+
+/* Page + Layout */
+
+export const PageWrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 60px;   
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #f9fafb, #e5edff);
+
+  @media (min-width: 1024px) {
+    padding: 20px;
+  }
+`;
+
+/* HEADER – fixed inside panel, page itself not scrolling */
+
+export const UserHeader = styled.div`
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #eef2ff, #e0f2fe);
+`;
+
+/* INPUT FOOTER – fixed to bottom of right panel */
+
+export const ChatInputWrap = styled.div`
+  flex-shrink: 0;
+  background: #ffffff;
+  padding: 10px 12px 12px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 10px;
+
+  @media (min-width: 1024px) {
+    padding: 12px 16px 14px;
+    gap: 10px;
+  }
+`;
+
+
+

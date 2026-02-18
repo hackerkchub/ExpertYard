@@ -16,36 +16,72 @@ import {
   Empty,
   RingDot,
 } from "../styles/Notification.styles";
+import { useNavigate } from "react-router-dom";
+
 
 const DEFAULT_LIMIT = 5;
+const FINAL_STATES = ["missed", "rejected", "ended", "low_balance", "cancelled"];
 
 export default function NotificationPopover({
   notifications = [],
   unreadCount = 0,
   markAllRead,
-  onNotificationTap,
-  removeNotificationEverywhere, // ✅ Changed from removeById
+  acceptNotification,
+  rejectNotification,
+  removeById,
 }) {
   const [activeTab, setActiveTab] = useState("calls");
   const [showAll, setShowAll] = useState(false);
   const ringAudioRef = useRef(null);
+  const prevRingingRef = useRef(0);
 
-  /* ---------------- SPLIT DATA ---------------- */
+  const [, forceUpdate] = useState(0);
+  const navigate = useNavigate();
+
+
+  useEffect(() => {
+    const interval = setInterval(() => forceUpdate((n) => n + 1), 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  /* ---------------- TIME AGO ---------------- */
+  const getTimeAgo = (timestamp) => {
+    const seconds = Math.floor((Date.now() - timestamp) / 1000);
+    if (seconds < 60) return `${seconds}s ago`;
+
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
+
+  /* ---------------- SPLIT + SORT ---------------- */
   const { calls, chats } = useMemo(() => ({
-    calls: notifications.filter((n) => n.type === "voice_call"),
-    chats: notifications.filter((n) => n.type === "chat_request"),
+    calls: notifications
+      .filter((n) => n.type === "voice_call")
+      .sort((a, b) => b.createdAt - a.createdAt),
+
+    chats: notifications
+      .filter((n) => n.type === "chat_request")
+      .sort((a, b) => b.createdAt - a.createdAt),
   }), [notifications]);
 
-  /* ---------------- LIMIT ---------------- */
   const visibleCalls = showAll ? calls : calls.slice(0, DEFAULT_LIMIT);
   const visibleChats = showAll ? chats : chats.slice(0, DEFAULT_LIMIT);
 
-  /* ---------------- RING ---------------- */
+  /* ---------------- RING SOUND ---------------- */
   useEffect(() => {
-    const hasIncoming = calls.some((c) => c.status === "incoming");
-    if (hasIncoming && ringAudioRef.current) {
-      ringAudioRef.current.play().catch(() => {});
+    const ringingCount = calls.filter((c) => c.status === "ringing").length;
+
+    if (ringingCount > prevRingingRef.current) {
+      ringAudioRef.current?.play().catch(() => {});
     }
+
+    prevRingingRef.current = ringingCount;
   }, [calls]);
 
   /* ---------------- STYLE ---------------- */
@@ -69,8 +105,9 @@ export default function NotificationPopover({
       {/* TABS */}
       <Tabs>
         <Tab active={activeTab === "calls"} onClick={() => setActiveTab("calls")}>
-          📞 Calls {calls.length > 0 && <RingDot />}
+          📞 Calls {calls.some((c) => c.status === "ringing") && <RingDot />}
         </Tab>
+
         <Tab active={activeTab === "chats"} onClick={() => setActiveTab("chats")}>
           💬 Chats
         </Tab>
@@ -85,36 +122,63 @@ export default function NotificationPopover({
             visibleCalls.map((n) => (
               <PopItem
                 key={n.id}
-                ringing={n.status === "incoming"}
+                ringing={n.status === "ringing"}
                 style={bgStyle(n.unread)}
-                clickable
-                onClick={() => onNotificationTap(n)}
+                clickable={n.status === "ringing"}
+                onClick={() =>
+  n.status === "ringing" &&
+  navigate(`/expert/voice-call/${n.payload.callId}`)
+}
+
               >
                 <strong>{n.title}</strong>
-                {n.meta && <Meta>{n.meta}</Meta>}
 
-                <ActionRow>
-                  <ActionBtn
-                    success
-                    onClick={(e) => {
-                      e.stopPropagation(); // ✅ Prevents event conflict
-                      onNotificationTap(n);
-                    }}
-                  >
-                    Tap to answer
-                  </ActionBtn>
+                <Meta>
+                  {n.meta} •{" "}
+                  {n.status === "ringing"
+                    ? "Ringing..."
+                    : getTimeAgo(n.createdAt)}
+                </Meta>
 
-                  <ActionBtn
-                    danger
-                    outline
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeNotificationEverywhere(n.id); // ✅ Removes from frontend + backend
-                    }}
-                  >
-                    Decline
-                  </ActionBtn>
-                </ActionRow>
+                {n.status === "ringing" && (
+                  <ActionRow>
+                    <ActionBtn
+                      success
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/expert/voice-call/${n.payload.callId}`)
+
+                      }}
+                    >
+                      Tap to answer
+                    </ActionBtn>
+
+                    <ActionBtn
+                      danger
+                      outline
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        rejectNotification(n);
+                      }}
+                    >
+                      Decline
+                    </ActionBtn>
+                  </ActionRow>
+                )}
+
+                {FINAL_STATES.includes(n.status) && (
+                  <ActionRow>
+                    <ActionBtn
+                      outline
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeById(n.id);
+                      }}
+                    >
+                      Close
+                    </ActionBtn>
+                  </ActionRow>
+                )}
               </PopItem>
             ))
           )}
@@ -130,15 +194,18 @@ export default function NotificationPopover({
             visibleChats.map((n) => (
               <PopItem key={n.id} style={bgStyle(n.unread)}>
                 <strong>{n.title}</strong>
-                {n.meta && <Meta>{n.meta}</Meta>}
+
+                <Meta>
+                  {n.meta} • {getTimeAgo(n.createdAt)}
+                </Meta>
 
                 {n.status === "pending" ? (
                   <ActionRow>
                     <ActionBtn
                       success
                       onClick={(e) => {
-                        e.stopPropagation(); // ✅ Prevents event conflict
-                        onNotificationTap(n);
+                        e.stopPropagation();
+                        acceptNotification(n);
                       }}
                     >
                       Accept
@@ -149,7 +216,7 @@ export default function NotificationPopover({
                       outline
                       onClick={(e) => {
                         e.stopPropagation();
-                        removeNotificationEverywhere(n.id); // ✅ Removes from frontend + backend
+                        rejectNotification(n);
                       }}
                     >
                       Decline
@@ -161,7 +228,7 @@ export default function NotificationPopover({
                       outline
                       onClick={(e) => {
                         e.stopPropagation();
-                        removeNotificationEverywhere(n.id); // ✅ Removes from frontend + backend
+                        removeById(n.id);
                       }}
                     >
                       Close

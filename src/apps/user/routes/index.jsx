@@ -1,7 +1,7 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
-
+import ScrollToTop from "../components/ScrollToTop";
 // Pages
 import HomePage from "../pages/Home/Home";
 import ExpertList from "../pages/ExpertList/ExpertList";
@@ -28,6 +28,8 @@ import Careers from "../pages/Careers/Career";
 
 export default function UserAppRoutes() {
   return (
+    <>
+    <ScrollToTop/>
     <Routes>
       <Route element={<MainLayout />}>
         {/* PUBLIC ROUTES */}
@@ -124,5 +126,6 @@ export default function UserAppRoutes() {
         </div>
       } />
     </Routes>
+    </>
   );
 }

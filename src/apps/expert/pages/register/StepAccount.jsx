@@ -88,10 +88,10 @@ export default function Auth() {
         phone: registerForm.phone
       });
 
-      setShowOtp(true);
+      // setShowOtp(true);
 
       setTimeout(() => {
-        setShowOtp(false);
+        // setShowOtp(false);
         navigate("/expert/register/category");
       }, 700);
     } catch (err) {}
@@ -247,7 +247,7 @@ export default function Auth() {
               disabled={!isRegisterValid}
               onClick={handleRegister}
             >
-              Send Verification OTP →
+              Continue to Category →
             </PrimaryButton>
           )}
           

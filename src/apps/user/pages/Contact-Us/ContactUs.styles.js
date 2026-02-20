@@ -80,11 +80,14 @@ export const MainContent = styled.main`
   margin: 0 auto;
   padding: 60px 20px;
   display: grid;
-  grid-template-columns: 1fr 400px;
+  grid-template-columns: minmax(0, 1fr) 360px;
   gap: 40px;
+  box-sizing: border-box;
 
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
+    padding: 40px 15px;
+    gap: 25px;
   }
 `;
 
@@ -105,6 +108,10 @@ export const FormContainer = styled.div`
       opacity: 1;
       transform: translateX(0);
     }
+      @media (max-width: 768px) {
+            padding: 25px;
+           border-radius: 20px;
+       }
   }
 `;
 
@@ -169,6 +176,8 @@ export const Input = styled.input`
   font-size: 16px;
   transition: all 0.3s ease;
   background: white;
+  width: 100%;
+box-sizing: border-box;
 
   &:focus {
     outline: none;
@@ -190,6 +199,8 @@ export const TextArea = styled.textarea`
   resize: vertical;
   transition: all 0.3s ease;
   background: white;
+  width: 100%;
+box-sizing: border-box;
 
   &:focus {
     outline: none;
@@ -234,6 +245,7 @@ export const InfoContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 30px;
+  min-width: 0;
   animation: slideInRight 0.8s ease;
 
   @keyframes slideInRight {
@@ -253,6 +265,8 @@ export const InfoCard = styled.div`
   backdrop-filter: blur(10px);
   border-radius: 25px;
   padding: 30px;
+  width: 100%;
+box-sizing: border-box;
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   border: 1px solid rgba(102, 126, 234, 0.1);

@@ -12,7 +12,7 @@ import React, {
 import { socket } from "../../../shared/api/socket";
 import { useExpert } from "../../../shared/context/ExpertContext";
 import { saveNotification, getNotifications,
-  getUnreadCount, deleteNotification} from "../../../shared/api/notification.api";
+   deleteNotification} from "../../../shared/api/notification.api";
 
 const Ctx = createContext(null);
 const getStorageKey = (expertId) =>
@@ -34,6 +34,9 @@ export function ExpertNotificationsProvider({ children }) {
   // Use Map for timers
   const timers = useRef(new Map());
   
+  // ✅ REF for accessing latest notifications in callbacks
+  const notificationsRef = useRef([]);
+  
   // Track if history has loaded
   const [historyLoaded, setHistoryLoaded] = useState(false);
   
@@ -41,6 +44,11 @@ export function ExpertNotificationsProvider({ children }) {
 
   /* ---------------------------------- STATE ---------------------------------- */
   const [notifications, setNotifications] = useState([]);
+
+  /* ---------------------------------- SYNC REF WITH STATE ---------------------------------- */
+  useEffect(() => {
+    notificationsRef.current = notifications;
+  }, [notifications]);
 
   /* ---------------------------------- TIMER CLEANUP ---------------------------------- */
   useEffect(() => {
@@ -94,20 +102,42 @@ export function ExpertNotificationsProvider({ children }) {
       notifications.filter(
         (n) =>
           n.unread &&
-          !["cancelled", "rejected", "ended", "read", "missed", "low_balance"].includes(n.status)
+          !FINAL_STATES.includes(n.status)
       ).length,
     [notifications]
   );
+
+  const chatUnreadCount = useMemo(
+  () =>
+    notifications.filter(
+      (n) =>
+        n.type === "chat_request" &&
+        n.unread &&
+        !FINAL_STATES.includes(n.status)
+    ).length,
+  [notifications]
+);
+
+const callUnreadCount = useMemo(
+  () =>
+    notifications.filter(
+      (n) =>
+        n.type === "voice_call" &&
+        n.unread &&
+        !FINAL_STATES.includes(n.status)
+    ).length,
+  [notifications]
+);
 
   /* =====================================================
      🔔 CHAT REQUEST
   ===================================================== */
   useEffect(() => {
-    const onIncomingChat = ({ request_id, user_id, user_name }) => {
+    const onIncomingChat = async ({ request_id, user_id, user_name }) => {
       const safeName = getSafeUserName(user_name, user_id);
 
       const newNotif = {
-        id: request_id,
+        id: request_id,                    // Local ID (request_id)
         type: "chat_request",
         status: "pending",
         title: `Chat request from ${safeName}`,
@@ -117,22 +147,32 @@ export function ExpertNotificationsProvider({ children }) {
         createdAt: Date.now(),
       };
 
-      // 🟢 OPTIONAL: Performance optimization - avoid re-render if same notification
+      // ✅ FIXED: Remove document.hidden check - always save to DB
+      if (expertId != null) {
+        try {
+          const res = await saveNotification({
+            userId: expertId,
+            panel: "expert",
+            title: newNotif.title,
+            message: "Tap to open",
+            type: "chat_request",
+            meta: { request_id },
+          });
+          
+          // ✅ Store DB ID in notification
+          if (res?.data?.data?.id) {
+            newNotif.dbId = res.data.data.id;
+          }
+        } catch (err) {
+          console.log("Failed to save chat request to DB", err);
+        }
+      }
+
+      // ✅ Now add to state with dbId
       setNotifications((prev) => {
         if (prev.some((n) => n.id === request_id)) return prev;
         return [newNotif, ...prev];
       });
-
-      if (expertId != null && !document.hidden) {
-        saveNotification({
-          userId: expertId,
-          panel: "expert",
-          title: newNotif.title,
-          message: "Tap to open",
-          type: "chat_request",
-          meta: { request_id },
-        }).catch((err) => console.log("Failed to save chat request to DB", err));
-      }
     };
 
     socket.on("incoming_chat_request", onIncomingChat);
@@ -143,7 +183,7 @@ export function ExpertNotificationsProvider({ children }) {
      📞 VOICE CALL
   ===================================================== */
   useEffect(() => {
-    const onIncomingCall = ({
+    const onIncomingCall = async ({
       callId,
       fromUserId,
       user_name,
@@ -153,7 +193,7 @@ export function ExpertNotificationsProvider({ children }) {
       const safeName = getSafeUserName(user_name, fromUserId);
 
       const newNotif = {
-        id: callId,
+        id: callId,                         // Local ID (callId)
         type: "voice_call",
         status: status || "ringing",
         title: `Incoming call from ${safeName}`,
@@ -163,51 +203,123 @@ export function ExpertNotificationsProvider({ children }) {
         createdAt: Date.now(),
       };
 
-      // 🟢 OPTIONAL: Performance optimization - avoid re-render if latest notification is same
+      // ✅ FIXED: Remove document.hidden check - always save to DB
+      if (expertId != null) {
+        try {
+          const res = await saveNotification({
+            userId: expertId,
+            panel: "expert",
+            title: newNotif.title,
+            message: newNotif.meta,
+            type: "voice_call",
+            meta: { callId },
+          });
+          
+          // ✅ Store DB ID
+          if (res?.data?.data?.id) {
+            newNotif.dbId = res.data.data.id;
+          }
+        } catch (err) {
+          console.log("Failed to save voice call to DB", err);
+        }
+      }
+
       setNotifications((prev) => {
-        if (prev[0]?.id === callId) return prev;
+      if (prev.some(n => n.id === callId)) return prev;
         return [newNotif, ...prev.filter((n) => n.id !== callId)];
       });
     };
 
     socket.on("call:incoming", onIncomingCall);
     return () => socket.off("call:incoming", onIncomingCall);
-  }, []);
+  }, [expertId]);
 
   /* =====================================================
      STATUS EVENTS
   ===================================================== */
+  const removeById = useCallback(
+    async (notification) => {
+      if (!notification?.id) return;
+      
+      try {
+        // Clear timer for this notification first
+        const timer = timers.current.get(notification.id);
+        if (timer) {
+          clearTimeout(timer);
+          timers.current.delete(notification.id);
+        }
+
+        // UI instant remove
+        setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
+
+        // DB delete using dbId
+        if (expertId && notification.dbId) {
+          try {
+            await deleteNotification(notification.dbId, expertId);
+          } catch (err) {
+            console.log("DB delete failed", err);
+          }
+        }
+      } catch (err) {
+        console.log("delete notification failed", err);
+      }
+    },
+    [expertId]
+  );
+
+  // ✅ Helper to get full notification from ref
+  const getNotification = useCallback((id) => {
+    return notificationsRef.current.find(n => n.id === id);
+  }, []);
+
   useEffect(() => {
     const handleMissed = ({ callId, status }) => {
-      updateStatus(callId, status || "missed");
+      const notif = getNotification(callId);
+      if (notif) {
+        updateStatus(notif, status || "missed");
+      }
     };
 
     const handleRejected = ({ callId, status }) => {
-      updateStatus(callId, status || "rejected");
+      const notif = getNotification(callId);
+      if (notif) {
+        updateStatus(notif, status || "rejected");
+      }
     };
 
     const handleTaken = ({ callId }) => {
-      setNotifications((prev) => prev.filter((n) => n.id !== callId));
+      const notif = getNotification(callId);
+      if (notif) {
+        removeById(notif);
+      }
     };
 
     const handleEnded = ({ callId, status }) => {
-      updateStatus(callId, status || "ended");
+      const notif = getNotification(callId);
+      if (notif) {
+        updateStatus(notif, status || "ended");
+      }
     };
 
     const handleConnected = ({ callId }) => {
-      setNotifications((prev) => prev.filter((n) => n.id !== callId));
+      const notif = getNotification(callId);
+      if (notif) {
+        removeById(notif);
+      }
     };
 
-    // 1️⃣ FIXED: Timer overwrite protection
-    const updateStatus = (id, status) => {
+    // ✅ Timer overwrite protection with full notification
+    const updateStatus = (notification, status) => {
+      if (!notification?.id) return;
+      
       setNotifications((prev) => {
-        if (!prev.some((n) => n.id === id)) {
-          console.log(`⚠️ Notification ${id} not found, skipping status update`);
+        if (!prev.some((n) => n.id === notification.id)) {
+          console.log(`⚠️ Notification ${notification.id} not found, skipping status update`);
           return prev;
         }
 
         return prev.map((n) =>
-          n.id === id 
+          n.id === notification.id 
             ? { 
                 ...n, 
                 status, 
@@ -218,19 +330,22 @@ export function ExpertNotificationsProvider({ children }) {
       });
 
       if (FINAL_STATES.includes(status)) {
-        // 1️⃣ Clear existing timer if any
-        const existing = timers.current.get(id);
+        // Clear existing timer if any
+        const existing = timers.current.get(notification.id);
         if (existing) {
           clearTimeout(existing);
-          console.log(`⏰ Cleared existing timer for ${id}`);
+          console.log(`⏰ Cleared existing timer for ${notification.id}`);
         }
 
         const timerId = setTimeout(() => {
-          setNotifications((prev) => prev.filter((n) => n.id !== id));
-          timers.current.delete(id);
+          const notif = getNotification(notification.id);
+          if (notif) {
+            removeById(notif);
+            timers.current.delete(notification.id);
+          }
         }, 60000);
         
-        timers.current.set(id, timerId);
+        timers.current.set(notification.id, timerId);
       }
     };
 
@@ -247,40 +362,56 @@ export function ExpertNotificationsProvider({ children }) {
       socket.off("call:ended", handleEnded);
       socket.off("call:connected", handleConnected);
     };
-  }, []);
+  }, [getNotification, removeById]);
 
   /* =====================================================
      LEGACY STATUS UPDATES (for chat)
   ===================================================== */
   useEffect(() => {
-    const handleChatCancelled = ({ request_id }) => markDone(request_id, "cancelled");
-    const handleChatRejected = ({ request_id }) => markDone(request_id, "rejected");
-    const handleChatEnded = ({ request_id }) => markDone(request_id, "ended");
+    const handleChatCancelled = ({ request_id }) => {
+      const notif = getNotification(request_id);
+      if (notif) markDone(notif, "cancelled");
+    };
+    
+    const handleChatRejected = ({ request_id }) => {
+      const notif = getNotification(request_id);
+      if (notif) markDone(notif, "rejected");
+    };
+    
+    const handleChatEnded = ({ request_id }) => {
+      const notif = getNotification(request_id);
+      if (notif) markDone(notif, "ended");
+    };
 
-    // 2️⃣ FIXED: Added guard and timer overwrite protection
-    const markDone = (id, status) => {
+    // ✅ Added guard and timer overwrite protection
+    const markDone = (notification, status) => {
+      if (!notification?.id) return;
+      
       setNotifications((prev) => {
-        if (!prev.some((n) => n.id === id)) return prev;
+        if (!prev.some((n) => n.id === notification.id)) return prev;
 
         return prev.map((n) =>
-          n.id === id ? { ...n, status, unread: false } : n
+          n.id === notification.id ? { ...n, status, unread: false } : n
         );
       });
 
       if (FINAL_STATES.includes(status)) {
-        // 1️⃣ Clear existing timer if any
-        const existing = timers.current.get(id);
+        // Clear existing timer if any
+        const existing = timers.current.get(notification.id);
         if (existing) {
           clearTimeout(existing);
-          console.log(`⏰ Cleared existing chat timer for ${id}`);
+          console.log(`⏰ Cleared existing chat timer for ${notification.id}`);
         }
 
         const timerId = setTimeout(() => {
-          setNotifications((prev) => prev.filter((n) => n.id !== id));
-          timers.current.delete(id);
+          const notif = getNotification(notification.id);
+          if (notif) {
+            removeById(notif);
+            timers.current.delete(notification.id);
+          }
         }, 60000);
         
-        timers.current.set(id, timerId);
+        timers.current.set(notification.id, timerId);
       }
     };
 
@@ -293,7 +424,7 @@ export function ExpertNotificationsProvider({ children }) {
       socket.off("chat_rejected", handleChatRejected);
       socket.off("chat_ended", handleChatEnded);
     };
-  }, []);
+  }, [getNotification, removeById]);
 
   /* =====================================================
      LOAD HISTORY FROM DB (merge with live)
@@ -308,16 +439,24 @@ export function ExpertNotificationsProvider({ children }) {
           panel: "expert",
         });
 
-        const mapped = (res.data || []).map((n) => ({
-          id: n.id,
-          type: n.type,
-          status: n.status || "pending",
-          title: n.title,
-          meta: n.message,
-          unread: !n.is_read,
-          payload: n.meta || {},
-          createdAt: new Date(n.created_at).getTime(),
-        }));
+        // ✅ FIXED: Smart ID mapping to prevent duplicates
+        const mapped = (res.data || []).map((n) => {
+          const meta = n.meta || {};
+          // Use request_id or callId from meta as local ID, fallback to DB ID
+          const localId = meta.request_id || meta.callId || n.id;
+
+          return {
+            id: localId,                    // Local ID for UI matching
+            dbId: n.id,                      // DB ID for delete
+            type: n.type,
+           status: FINAL_STATES.includes(n.status) ? n.status : "missed",
+            title: n.title,
+            meta: n.message,
+            unread: !n.is_read,
+            payload: meta,
+            createdAt: new Date(n.created_at).getTime(),
+          };
+        });
 
         // Merge with live notifications
         setNotifications((prev) => {
@@ -337,7 +476,8 @@ export function ExpertNotificationsProvider({ children }) {
 
         setHistoryLoaded(true);
 
-        await getUnreadCount({ userId: expertId });
+        // ✅ Get unread count (optional - remove if not needed)
+        
       } catch (err) {
         console.log("history load failed", err);
         setHistoryLoaded(true);
@@ -347,33 +487,7 @@ export function ExpertNotificationsProvider({ children }) {
     loadHistory();
   }, [expertId]);
 
-  /* ---------------------------------- HELPERS ---------------------------------- */
-  const removeById = useCallback(
-    async (id) => {
-      try {
-        if (expertId) {
-          try {
-            await deleteNotification(id, expertId);
-          } catch (err) {
-            console.log("DB delete failed", err);
-          }
-        }
-
-        // Clear timer for this notification
-        const timer = timers.current.get(id);
-        if (timer) {
-          clearTimeout(timer);
-          timers.current.delete(id);
-        }
-
-        setNotifications((prev) => prev.filter((n) => n.id !== id));
-      } catch (err) {
-        console.log("delete notification failed", err);
-      }
-    },
-    [expertId]
-  );
-
+  /* ---------------------------------- ACCEPT / REJECT ---------------------------------- */
   const acceptNotification = useCallback((notification) => {
     if (!notification) return;
 
@@ -383,6 +497,8 @@ export function ExpertNotificationsProvider({ children }) {
           detail: notification.payload.callId,
         })
       );
+      // ✅ Remove notification after dispatch
+      removeById(notification);
       return;
     }
 
@@ -392,7 +508,7 @@ export function ExpertNotificationsProvider({ children }) {
       });
     }
 
-    removeById(notification.id);
+    removeById(notification);
   }, [removeById]);
 
   const rejectNotification = useCallback((notification) => {
@@ -410,18 +526,20 @@ export function ExpertNotificationsProvider({ children }) {
       });
     }
 
-    removeById(notification.id);
+    removeById(notification);
   }, [removeById]);
 
   /* ---------------------------------- CONTEXT ---------------------------------- */
   const value = useMemo(() => ({
     notifications,
     unreadCount,
+    chatUnreadCount,   // ⭐ add
+  callUnreadCount,   // ⭐ add
     acceptNotification,
     rejectNotification,
     removeById,
     historyLoaded,
-  }), [notifications, unreadCount, acceptNotification, rejectNotification, removeById, historyLoaded]);
+  }), [notifications, unreadCount, chatUnreadCount, callUnreadCount, acceptNotification, rejectNotification, removeById, historyLoaded]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

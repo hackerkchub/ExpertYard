@@ -8,11 +8,6 @@ import {
   Section,
   SectionTitle,
   Paragraph,
-  Sidebar,
-  SidebarTitle,
-  NavList,
-  NavItem,
-  NavLink,
   ScrollToTop,
   ProgressBar
 } from './T&C.styles';
@@ -64,7 +59,7 @@ const TermsAndConditions = () => {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [sections]);
+  }, []);
 
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
@@ -253,25 +248,7 @@ const TermsAndConditions = () => {
         </ContentWrapper>
       </MainContent>
 
-      <Sidebar>
-        <SidebarTitle>Terms & Conditions</SidebarTitle>
-        <NavList>
-          {sections.map((section) => (
-            <NavItem key={section.id}>
-              <NavLink
-                href={`#${section.id}`}
-                active={activeSection === section.id}
-                onClick={(e) => {
-                  e.preventDefault();
-                  scrollToSection(section.id);
-                }}
-              >
-                {section.title}
-              </NavLink>
-            </NavItem>
-          ))}
-        </NavList>
-      </Sidebar>
+
 
       <ScrollToTop
         visible={showScrollTop}

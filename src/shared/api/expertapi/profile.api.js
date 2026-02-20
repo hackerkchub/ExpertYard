@@ -11,9 +11,22 @@ export const updateExpertProfileApi = (expertId, data) => {
     throw new Error("expertId is required to update profile");
   }
 
+  const formData = new FormData();
+
+  Object.keys(data).forEach(key => {
+    if (data[key] !== undefined && data[key] !== null) {
+      formData.append(key, data[key]);
+    }
+  });
+
   return api.put(
     `/expert-profile/expert/${expertId}`,
-    data
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    }
   );
 };
 

@@ -42,6 +42,7 @@ export default function StepCategory() {
     error
   } = useApi(getCategoriesApi);
 
+  const DEFAULT_CATEGORY_IMAGE = "/default-category.png";
   // 🔹 Load categories from API
   useEffect(() => {
     loadCategories();
@@ -82,10 +83,10 @@ export default function StepCategory() {
     });
   }, [updateExpertData]);
 
-  const IconFor = (key) => {
-    const Icon = CATEGORY_ICON_MAP[key];
-    return Icon ? <Icon style={{ fontSize: 16 }} /> : null;
-  };
+  // const IconFor = (key) => {
+  //   const Icon = CATEGORY_ICON_MAP[key];
+  //   return Icon ? <Icon style={{ fontSize: 16 }} /> : null;
+  // };
 
   const canNext = !!expertData.categoryId;
   const selectedCategory = categories.find(cat => cat.id === expertData.categoryId);
@@ -187,13 +188,40 @@ export default function StepCategory() {
                         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
                       }}
                     >
-                      <div style={{
-                        color: expertData.categoryId === cat.id ? "white" : "#0ea5ff",
-                        fontSize: 18,
-                        fontWeight: "bold"
-                      }}>
-                        {IconFor(cat.key || cat.slug || cat.name)}
-                      </div>
+                      <div
+  style={{
+    width: 40,
+    height: 40,
+    borderRadius: "50%",
+    background:
+      expertData.categoryId === cat.id
+        ? "linear-gradient(135deg, #0ea5ff, #38bdf8)"
+        : "rgba(56,189,248,0.12)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow:
+      expertData.categoryId === cat.id
+        ? "0 4px 16px rgba(14,165,233,0.4)"
+        : "0 2px 8px rgba(56,189,248,0.2)",
+    overflow: "hidden"
+  }}
+>
+  <img
+    src={cat.image_url || DEFAULT_CATEGORY_IMAGE}
+    alt={cat.name}
+    style={{
+      width: "70%",
+      height: "70%",
+      objectFit: "cover",
+      borderRadius: "50%"
+    }}
+    onError={(e) => {
+      e.target.style.display = "none";
+      e.target.parentElement.innerHTML = cat.name.charAt(0);
+    }}
+  />
+</div>
                     </div>
 
                     <div>
@@ -211,7 +239,7 @@ export default function StepCategory() {
 
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <Chip>Live Sessions</Chip>
-                    <Chip>Video Calls</Chip>
+                    <Chip>Voice Calls</Chip>
                     <Chip>High Demand</Chip>
                   </div>
                 </SelectCard>
@@ -259,7 +287,11 @@ export default function StepCategory() {
             backdropFilter: "blur(16px)"
           }}
         >
-          <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
+          <img
+  src={selectedCategory.image_url || DEFAULT_CATEGORY_IMAGE}
+  alt={selectedCategory.name}
+  style={{ width: 64, height: 64, borderRadius: "50%" }}
+/>
           <h3 style={{ margin: "0 0 8px 0", color: "#1e293b" }}>
             {prettyLabel(selectedCategory.name)} selected!
           </h3>

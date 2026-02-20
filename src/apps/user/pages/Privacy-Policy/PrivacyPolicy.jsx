@@ -17,11 +17,6 @@ import {
   ImportantNoteText,
   DataList,
   DataListItem,
-  Sidebar,
-  SidebarTitle,
-  NavList,
-  NavItem,
-  NavLink,
   ProgressBar,
   ScrollToTop,
   FooterNote,
@@ -319,26 +314,6 @@ const PrivacyPolicy = () => {
             </p>
           </FooterNote>
         </ContentWrapper>
-
-        <Sidebar>
-          <SidebarTitle>Privacy Policy</SidebarTitle>
-          <NavList>
-            {sections.map((section) => (
-              <NavItem key={section.id}>
-                <NavLink
-                  href={`#${section.id}`}
-                  active={activeSection === section.id}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    scrollToSection(section.id);
-                  }}
-                >
-                  {section.title}
-                </NavLink>
-              </NavItem>
-            ))}
-          </NavList>
-        </Sidebar>
       </MainContainer>
 
       <ScrollToTop

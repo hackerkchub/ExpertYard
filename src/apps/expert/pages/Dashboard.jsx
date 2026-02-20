@@ -20,8 +20,11 @@ import {
 
 export default function Dashboard() {
   const { expertData, profileLoading } = useExpert();
-  const { notifications } = useExpertNotifications();
-
+  const {
+  unreadCount,
+  chatUnreadCount,
+  callUnreadCount
+} = useExpertNotifications();
  const expertId = useMemo(() => {
   if (!expertData) return null;
 
@@ -56,52 +59,52 @@ export default function Dashboard() {
    📊 REQUEST COUNTS
 ============================ */
 
-// 🔥 Only CALL requests
-const callRequestsCount = useMemo(
-  () =>
-    notifications.filter(
-      (n) => n.type === "call" && n.status === "pending"
-    ).length,
-  [notifications]
-);
+// // 🔥 Only CALL requests
+// const callRequestsCount = useMemo(
+//   () =>
+//     notifications.filter(
+//       (n) => n.type === "call" && n.status === "pending"
+//     ).length,
+//   [notifications]
+// );
 
-// 🔥 Live = CALL + CHAT (pending)
-const liveRequestsCount = useMemo(
-  () =>
-    notifications.filter(
-      (n) => n.status === "pending"
-    ).length,
-  [notifications]
-);
+// // 🔥 Live = CALL + CHAT (pending)
+// const liveRequestsCount = useMemo(
+//   () =>
+//     notifications.filter(
+//       (n) => n.status === "pending"
+//     ).length,
+//   [notifications]
+// );
 
-// 🔥 Pending chats (optional, agar QueueCard me use ho raha ho)
-const pendingChatsCount = useMemo(
-  () =>
-    notifications.filter(
-      (n) => n.type === "chat" && n.status === "pending"
-    ).length,
-  [notifications]
-);
+// // 🔥 Pending chats (optional, agar QueueCard me use ho raha ho)
+// const pendingChatsCount = useMemo(
+//   () =>
+//     notifications.filter(
+//       (n) => n.type === "chat" && n.status === "pending"
+//     ).length,
+//   [notifications]
+// );
 
 
-  const stats = [
+ const stats = [
   {
     label: "Live Requests",
-    value: String(liveRequestsCount),
+    value: String(unreadCount),
     color: "#10b981",
-    trend: liveRequestsCount > 0 ? "+1" : "0",
+    trend: unreadCount > 0 ? "+1" : "0",
   },
   {
     label: "Call Requests",
-    value: String(callRequestsCount),
+    value: String(callUnreadCount),
     color: "#3b82f6",
-    trend: callRequestsCount > 0 ? "+1" : "0",
+    trend: callUnreadCount > 0 ? "+1" : "0",
   },
   {
     label: "Pending Chats",
-    value: String(pendingChatsCount),
+    value: String(chatUnreadCount),
     color: "#f59e0b",
-    trend: pendingChatsCount > 0 ? "+1" : "0",
+    trend: chatUnreadCount > 0 ? "+1" : "0",
   },
 ];
 

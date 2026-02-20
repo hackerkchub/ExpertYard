@@ -374,11 +374,11 @@ const handleQuickSend = async () => {
               <strong>{posts.length}</strong>
             </MetricChip>
 
-            <MetricChip>
+            {/* <MetricChip>
               <FiEye size={14} />
               <span>Total Views</span>
               <strong>–</strong>
-            </MetricChip>
+            </MetricChip> */}
           </MetricsRow>
         </HeaderRow>
 

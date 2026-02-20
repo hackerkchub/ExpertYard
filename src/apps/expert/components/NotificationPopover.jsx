@@ -147,7 +147,7 @@ export default function NotificationPopover({
                       onClick={(e) => {
                         e.stopPropagation();
                         navigate(`/expert/voice-call/${n.payload.callId}`)
-
+                        removeById(n);
                       }}
                     >
                       Tap to answer
@@ -172,7 +172,7 @@ export default function NotificationPopover({
                       outline
                       onClick={(e) => {
                         e.stopPropagation();
-                        removeById(n.id);
+                        removeById(n);
                       }}
                     >
                       Close
@@ -228,7 +228,7 @@ export default function NotificationPopover({
                       outline
                       onClick={(e) => {
                         e.stopPropagation();
-                        removeById(n.id);
+                        removeById(n);
                       }}
                     >
                       Close

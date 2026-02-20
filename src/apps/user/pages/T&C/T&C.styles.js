@@ -6,6 +6,7 @@ export const Container = styled.div`
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   position: relative;
+  width: 100%;
 
   &::before {
     content: '';
@@ -23,6 +24,7 @@ export const MainContent = styled.main`
   max-width: 900px;
   margin: 40px auto;
   padding: 0 40px;
+  width: 100%
 `;
 
 export const ContentWrapper = styled.div`

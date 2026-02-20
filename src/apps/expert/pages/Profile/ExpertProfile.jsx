@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import OtpModal from "../../components/OtpModal";
 import AppModal from "../../../../shared/components/AppModal";
 import FollowersContent from "../../../../shared/components/modal-contents/FollowersContent";
@@ -8,41 +8,10 @@ import {
   updateExpertPriceApi,
   getExpertFollowersApi
 } from "../../../../shared/api/expertapi";
-
 import {
-  addOrUpdateReviewApi,
   getReviewsByExpertApi,
-  deleteReviewApi,
 } from "../../../../shared/api/expertapi/reviews.api";
-
-import {
-  PageWrap,
-  Content,
-  GlassCard,
-  HeaderRow,
-  HexAvatar,
-  StatusDot,
-  Name,
-  Title,
-  Badge,
-  UpdateBtn,
-  RateGrid,
-  RateCard,
-  RateValue,
-  Tabs,
-  Tab,
-  Section,
-  Label,
-  Value,
-  Input,
-  Slider,
-  DocRow,
-  DocPreview,
-  EditActions,
-  StatRow,
-  StatPill,
-  ChipButton
-} from "./ExpertProfile.styles";
+import { toast } from "react-hot-toast"; // or your preferred toast library
 
 import {
   FiEdit,
@@ -51,20 +20,44 @@ import {
   FiCamera,
   FiPhoneCall,
   FiMessageCircle,
-  FiUser
+  FiUser,
+  FiMail,
+  FiPhone,
+  FiMapPin,
+  FiBookOpen,
+  FiAward,
+  FiFileText,
+  FiStar,
+  FiUsers,
+  FiChevronRight,
+  FiTrendingUp,
+  FiShield,
+  FiBriefcase,
+  FiDownload,
+  FiEye,
+  FiFile
 } from "react-icons/fi";
 
-// CONTEXTS
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { useCategory } from "../../../../shared/context/CategoryContext";
-
-// MAPPERS
 import {
   getCategoryNameById,
   getSubCategoryNameById
 } from "../../../../shared/utils/categoryMapper";
 
+import * as S from "./ExpertProfile.styles";
+
 const DEFAULT_AVATAR = "https://i.pravatar.cc/150?img=12";
+
+// Utility function to check if URL is an image
+const isImageUrl = (url) => {
+  if (!url) return false;
+  return url.match(/\.(jpeg|jpg|gif|png|webp|svg|bmp|ico)$/i) !== null;
+};
+
+// Utility to check if string is a blob URL
+const isBlobUrl = (url) =>
+  typeof url === "string" && url.startsWith("blob:");
 
 export default function ExpertProfile() {
   const {
@@ -83,6 +76,8 @@ export default function ExpertProfile() {
   const [activeTab, setActiveTab] = useState("overview");
   const [isContactVerified, setIsContactVerified] = useState(true);
   const [draft, setDraft] = useState(null);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [hoveredDoc, setHoveredDoc] = useState(null);
 
   // Followers state
   const [followersList, setFollowersList] = useState([]);
@@ -98,12 +93,31 @@ export default function ExpertProfile() {
   // followers / reviews modal
   const [modalConfig, setModalConfig] = useState({
     open: false,
-    type: null // "followers" | "reviews"
+    type: null
   });
 
   const expertId = expertData?.expertId || expertData?.id;
+  
+const draftRef = useRef();
 
-  // INIT DRAFT (PROFILE + PRICE)
+useEffect(() => {
+  draftRef.current = draft;
+}, [draft]);
+
+useEffect(() => {
+  return () => {
+    const docs = draftRef.current?.documents;
+    if (!docs) return;
+
+    Object.values(docs).forEach(v => {
+      if (typeof v === "string" && v.startsWith("blob:")) {
+        URL.revokeObjectURL(v);
+      }
+    });
+  };
+}, []);
+
+  // INIT DRAFT
   useEffect(() => {
     if (!edit && expertData?.profile) {
       setDraft({
@@ -126,14 +140,14 @@ export default function ExpertProfile() {
     }
   }, [expertData, expertPrice, edit]);
 
-  // LOAD SUBCATEGORIES (BY CATEGORY)
+  // LOAD SUBCATEGORIES
   useEffect(() => {
     if (expertData?.profile?.category_id) {
       loadSubCategories(expertData.profile.category_id);
     }
   }, [expertData?.profile?.category_id, loadSubCategories]);
 
-  // FOLLOWER COUNT (header stat)
+  // FOLLOWER COUNT
   useEffect(() => {
     if (!expertId) return;
 
@@ -148,18 +162,15 @@ export default function ExpertProfile() {
       });
   }, [expertId]);
 
-  // LOAD REVIEWS (for avg + count) – using new response shape
+  // LOAD REVIEWS
   useEffect(() => {
     if (!expertId) return;
 
     setReviewsLoading(true);
     getReviewsByExpertApi(expertId)
       .then(res => {
-        // New API shape:
-        // { success: true, data: { reviews: [...], total_reviews, avg_rating } }
         const data = res.data.data || {};
         const list = data.reviews || [];
-
         setReviewsList(list);
         setTotalReviews(data.total_reviews || list.length || 0);
         setAvgRating(Number(data.avg_rating || 0));
@@ -172,11 +183,6 @@ export default function ExpertProfile() {
       })
       .finally(() => setReviewsLoading(false));
   }, [expertId]);
-
-  if (profileLoading || priceLoading || !draft) {
-    return <div style={{ padding: 40 }}>Loading profile...</div>;
-  }
-
   // RESOLVE CATEGORY NAMES
   const categoryName = getCategoryNameById(
     expertData?.profile?.category_id,
@@ -188,30 +194,41 @@ export default function ExpertProfile() {
     subCategories
   );
 
-  // PHOTO PREVIEW (sirf edit mode)
- const handlePhotoChange = (e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
-
-  setDraft(prev => ({
-    ...prev,
-    documents: {
-      ...prev.documents,
-      photoFile: file, // actual file
-      photo: URL.createObjectURL(file) // preview
-    }
-  }));
-};
-
-  // DOCUMENT PREVIEW UPDATE (edit mode)
-  const handleDocChange = (field, e) => {
+  // PHOTO CHANGE
+  const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Cleanup old blob URL if exists
+    if (isBlobUrl(draft.documents.photo)) {
+      URL.revokeObjectURL(draft.documents.photo);
+    }
 
     setDraft(prev => ({
       ...prev,
       documents: {
         ...prev.documents,
+        photoFile: file,
+        photo: URL.createObjectURL(file)
+      }
+    }));
+  };
+
+  // DOCUMENT CHANGE
+  const handleDocChange = (field, e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Cleanup old blob URL if exists
+    if (isBlobUrl(draft.documents[field])) {
+      URL.revokeObjectURL(draft.documents[field]);
+    }
+
+    setDraft(prev => ({
+      ...prev,
+      documents: {
+        ...prev.documents,
+        [`${field}File`]: file,
         [field]: URL.createObjectURL(file)
       }
     }));
@@ -221,32 +238,46 @@ export default function ExpertProfile() {
     !!draft &&
     (draft.email !== expertData.email || draft.phone !== expertData.phone);
 
-  // SAVE
+  // SAVE - FIX #1: Reset loading state on OTP condition
   const handleSave = async () => {
     try {
+      setSaveLoading(true);
+      
+      // FIX #1: Handle OTP case properly
       if (contactChanged && !isContactVerified) {
         setShowOtp(true);
+        setSaveLoading(false); // Reset loading before return
         return;
       }
 
       if (!expertId) {
         console.error("Missing expertId");
+        toast.error("Expert ID not found");
+        setSaveLoading(false);
         return;
       }
+const profilePayload = {
+  name: draft.name,
+  position: draft.title,
+  email: draft.email,
+  phone: draft.phone,
+  description: draft.description,
+  education: draft.education,
+  location: draft.location
+};
 
-      const profilePayload = {
-        name: draft.name,
-        position: draft.title,
-        email: draft.email,
-        phone: draft.phone,
-        description: draft.description,
-        education: draft.education,
-        location: draft.location,
-        profile_photo: draft.documents.photoFile,
-        experience_certificate: draft.documents.experience_certificate,
-        marksheet: draft.documents.marksheet,
-        aadhar_card: draft.documents.aadhar_card
-      };
+if (draft.documents.photoFile)
+  profilePayload.profile_photo = draft.documents.photoFile;
+
+if (draft.documents.experience_certificateFile)
+  profilePayload.experience_certificate =
+    draft.documents.experience_certificateFile;
+
+if (draft.documents.marksheetFile)
+  profilePayload.marksheet = draft.documents.marksheetFile;
+
+if (draft.documents.aadhar_cardFile)
+  profilePayload.aadhar_card = draft.documents.aadhar_cardFile;
 
       const pricePayload = {
         expert_id: expertId,
@@ -264,14 +295,27 @@ export default function ExpertProfile() {
       ]);
 
       await Promise.all([refreshProfile(), refreshPrice()]);
+      
+      // FIX #8: Add toast notifications
+      toast.success("Profile updated successfully!");
+      
+      // FIX #4: Clean cancel - just set edit to false, useEffect will reset draft
       setEdit(false);
+      setDraft(null);
     } catch (err) {
       console.error("Save failed", err);
+      toast.error(err.response?.data?.message || "Failed to update profile");
+    } finally {
+      setSaveLoading(false);
     }
   };
 
-  // FOLLOWERS MODAL OPEN + LIST LOAD (dynamic)
-  const openFollowersModal = async () => {
+const handleCancel = () => {
+  setEdit(false);
+  setDraft(null);
+};
+  // OPEN FOLLOWERS MODAL
+  const openFollowersModal = useCallback(async () => {
     if (!expertId) return;
 
     setModalConfig({ open: true, type: "followers" });
@@ -289,13 +333,14 @@ export default function ExpertProfile() {
     } catch (err) {
       console.error("Failed to load followers", err);
       setFollowersList([]);
+      toast.error("Failed to load followers");
     } finally {
       setFollowersLoading(false);
     }
-  };
+  }, [expertId]);
 
-  // REVIEWS MODAL OPEN (dynamic, with name + icon avatar)
-  const openReviewsModal = async () => {
+  // OPEN REVIEWS MODAL
+  const openReviewsModal = useCallback(async () => {
     if (!expertId) return;
 
     setModalConfig({ open: true, type: "reviews" });
@@ -314,419 +359,563 @@ export default function ExpertProfile() {
       setReviewsList([]);
       setTotalReviews(0);
       setAvgRating(0);
+      toast.error("Failed to load reviews");
     } finally {
       setReviewsLoading(false);
     }
-  };
+  }, [expertId]);
 
   const closeModal = () => setModalConfig({ open: false, type: null });
 
+  // FIX #9: Memoize stats to prevent unnecessary re-renders
+  const stats = useMemo(() => [
+    {
+      icon: <FiUsers />,
+      label: "Total Followers",
+      value: followersCount,
+      onClick: openFollowersModal,
+      color: "#3b82f6"
+    },
+    {
+      icon: <FiStar />,
+      label: "Average Rating",
+      value: avgRating ? avgRating.toFixed(1) : "0.0",
+      suffix: "★",
+      onClick: openReviewsModal,
+      color: "#f59e0b"
+    },
+    {
+      icon: <FiMessageCircle />,
+      label: "Total Reviews",
+      value: totalReviews,
+      onClick: openReviewsModal,
+      color: "#10b981"
+    },
+    {
+      icon: <FiTrendingUp />,
+      label: "Response Rate",
+      value: "98%",
+      // FIX #7: No onClick for this stat
+      color: "#8b5cf6"
+    }
+  ], [followersCount, avgRating, totalReviews, openFollowersModal, openReviewsModal]);
+
+if (profileLoading || priceLoading || !draft) {
+  return (
+    <S.LoadingContainer>
+      <S.LoadingSpinner />
+      <S.LoadingText>Loading premium profile...</S.LoadingText>
+    </S.LoadingContainer>
+  );
+}
+
+  const renderDocument = (docUrl, altText) => {
+    if (!docUrl) {
+      return <S.NoDocument>No document</S.NoDocument>;
+    }
+
+    if (isImageUrl(docUrl)) {
+      return <img src={docUrl} alt={altText} />;
+    }
+
+    return (
+      <S.PdfPreview>
+        <FiFile size={24} />
+        <span>PDF Document</span>
+      </S.PdfPreview>
+    );
+  };
+
   return (
     <>
-      <PageWrap>
-        <Content>
-          {/* HEADER */}
-          <GlassCard>
-            <HeaderRow>
-              <HexAvatar>
-                <img src={draft.documents.photo} alt="profile" />
-                <StatusDot />
-
-                {edit && (
-                  <label
-                    style={{
-                      position: "absolute",
-                      bottom: 0,
-                      right: 40,
-                      zIndex: 5,
-                      background: "#38bdf8",
-                      padding: "6px",
-                      borderRadius: "50%",
-                      cursor: "pointer",
-                      boxShadow: "0 6px 20px rgba(107, 110, 116, 0.35)"
-                    }}
-                  >
-                    <FiCamera color="#fff" size={16} />
-                    <input
-                      type="file"
-                      hidden
-                      accept="image/*"
-                      onChange={handlePhotoChange}
-                    />
-                  </label>
-                )}
-              </HexAvatar>
-
-              <div style={{ flex: 1, minWidth: 220 }}>
-                {edit ? (
-                  <Input
-                    value={draft.name}
-                    onChange={e =>
-                      setDraft({ ...draft, name: e.target.value })
-                    }
-                  />
-                ) : (
-                  <Name>{draft.name}</Name>
-                )}
-
-                {edit ? (
-                  <Input
-                    value={draft.title}
-                    onChange={e =>
-                      setDraft({ ...draft, title: e.target.value })
-                    }
-                    style={{ marginTop: 10 }}
-                  />
-                ) : (
-                  <Title>{draft.title}</Title>
-                )}
-
-                <Badge>✔ Verified Expert</Badge>
-
-                <StatRow>
-                  <StatPill
-                    onClick={openFollowersModal}
-                    style={{ cursor: "pointer" }}
-                  >
-                    Followers <span>{followersCount}</span>
-                  </StatPill>
-
-                  <StatPill
-                    onClick={openReviewsModal}
-                    style={{ cursor: "pointer" }}
-                  >
-                    Ratings &amp; Reviews{" "}
-                    <span>
-                      {avgRating ? avgRating.toFixed(1) : "—"} ★ • {totalReviews}
-                    </span>
-                  </StatPill>
-                </StatRow>
-              </div>
-
-              {!edit && (
-                <UpdateBtn onClick={() => setEdit(true)}>
-                  <FiEdit /> Update Profile
-                </UpdateBtn>
-              )}
-            </HeaderRow>
-          </GlassCard>
-
-          {/* PRICING */}
-          <RateGrid>
-            <RateCard>
-              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <div
-                  style={{
-                    width: 46,
-                    height: 46,
-                    borderRadius: 18,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background:
-                      "radial-gradient(circle at 0 0,#e0f2fe,rgba(255,255,255,0.4))"
-                  }}
+      <S.PageWrap>
+        <S.Content>
+          {/* Premium Header with Gradient */}
+          <S.PremiumHeader>
+            <S.HeaderGlow />
+            <S.HeaderContent>
+              <S.HeaderGreeting>Welcome back,</S.HeaderGreeting>
+              <S.HeaderTitle>{draft.name}</S.HeaderTitle>
+              <S.HeaderBadge>
+                <FiShield /> Verified Expert
+              </S.HeaderBadge>
+            </S.HeaderContent>
+            <S.HeaderStats>
+              {stats.slice(0, 2).map((stat, index) => (
+                <S.HeaderStat 
+                  key={index} 
+                  onClick={stat.onClick}
+                  clickable={!!stat.onClick}
                 >
-                  <FiPhoneCall size={26} color="#0284c7" />
-                </div>
-                <div>
-                  <Label>Voice Call Rate</Label>
-                  <Value>Per minute</Value>
-                </div>
-              </div>
+                  <S.HeaderStatIcon style={{ background: `${stat.color}20`, color: stat.color }}>
+                    {stat.icon}
+                  </S.HeaderStatIcon>
+                  <S.HeaderStatInfo>
+                    <S.HeaderStatLabel>{stat.label}</S.HeaderStatLabel>
+                    <S.HeaderStatValue>
+                      {stat.value}{stat.suffix || ""}
+                    </S.HeaderStatValue>
+                  </S.HeaderStatInfo>
+                </S.HeaderStat>
+              ))}
+            </S.HeaderStats>
+          </S.PremiumHeader>
 
-              <div style={{ flex: 1, marginLeft: 24 }}>
-                {edit && (
-                  <Slider
+          {/* Main Profile Card */}
+          <S.ProfileCard>
+            <S.ProfileCardInner>
+              {/* Left Column - Avatar & Basic Info */}
+              <S.ProfileLeftColumn>
+                <S.AvatarContainer>
+                  <S.PremiumAvatar>
+                    <img src={draft.documents.photo || DEFAULT_AVATAR} alt={draft.name} />
+                    <S.AvatarBadge>
+                      <FiShield />
+                    </S.AvatarBadge>
+                    {edit && (
+                      <S.AvatarUploadButton htmlFor="photo-upload">
+                        <FiCamera />
+                        <input
+                          id="photo-upload"
+                          type="file"
+                          hidden
+                          accept="image/*"
+                          onChange={handlePhotoChange}
+                        />
+                      </S.AvatarUploadButton>
+                    )}
+                  </S.PremiumAvatar>
+                </S.AvatarContainer>
+
+                <S.ExpertNameSection>
+                  {edit ? (
+                    <S.PremiumInput
+                      value={draft.name}
+                      onChange={e => setDraft({ ...draft, name: e.target.value })}
+                      placeholder="Full Name"
+                    />
+                  ) : (
+                    <S.ExpertName>{draft.name}</S.ExpertName>
+                  )}
+                  
+                  {edit ? (
+                    <S.PremiumInput
+                      value={draft.title}
+                      onChange={e => setDraft({ ...draft, title: e.target.value })}
+                      placeholder="Professional Title"
+                      style={{ marginTop: 8 }}
+                    />
+                  ) : (
+                    <S.ExpertTitle>{draft.title}</S.ExpertTitle>
+                  )}
+
+                  <S.ExpertCategories>
+                    <S.CategoryPill>
+                      {categoryName || "Category"}
+                    </S.CategoryPill>
+                    {subCategoryName && (
+                      <>
+                        <FiChevronRight size={14} />
+                        <S.CategoryPill>
+                          {subCategoryName}
+                        </S.CategoryPill>
+                      </>
+                    )}
+                  </S.ExpertCategories>
+                </S.ExpertNameSection>
+
+                {/* Quick Stats */}
+                <S.QuickStatsGrid>
+                  {stats.map((stat, index) => (
+                    <S.QuickStatCard 
+                      key={index} 
+                      onClick={stat.onClick} 
+                      clickable={!!stat.onClick}
+                    >
+                      <S.QuickStatIcon style={{ background: `${stat.color}15`, color: stat.color }}>
+                        {stat.icon}
+                      </S.QuickStatIcon>
+                      <S.QuickStatContent>
+                        <S.QuickStatValue>{stat.value}{stat.suffix || ""}</S.QuickStatValue>
+                        <S.QuickStatLabel>{stat.label}</S.QuickStatLabel>
+                      </S.QuickStatContent>
+                    </S.QuickStatCard>
+                  ))}
+                </S.QuickStatsGrid>
+              </S.ProfileLeftColumn>
+
+              {/* Right Column - Action Buttons */}
+              <S.ProfileRightColumn>
+                {!edit ? (
+                  <S.ActionButton primary onClick={() => setEdit(true)}>
+                    <FiEdit /> Edit Profile
+                  </S.ActionButton>
+                ) : (
+                  <S.ActionButtonGroup>
+                    <S.ActionButton primary onClick={handleSave} disabled={saveLoading}>
+                      {saveLoading ? <S.LoadingSpinnerSmall /> : <FiCheck />}
+                      {saveLoading ? "Saving..." : "Save Changes"}
+                    </S.ActionButton>
+                    <S.ActionButton onClick={handleCancel}>
+                      <FiX /> Cancel
+                    </S.ActionButton>
+                  </S.ActionButtonGroup>
+                )}
+              </S.ProfileRightColumn>
+            </S.ProfileCardInner>
+          </S.ProfileCard>
+
+          {/* Pricing Cards */}
+          <S.PricingSection>
+            <S.PricingCard gradient="call">
+              <S.PricingIconWrapper gradient="call">
+                <FiPhoneCall />
+              </S.PricingIconWrapper>
+              <S.PricingContent>
+                <S.PricingLabel>Voice Call Rate</S.PricingLabel>
+                <S.PricingValue>₹{draft.callRate}</S.PricingValue>
+                <S.PricingPeriod>per minute</S.PricingPeriod>
+              </S.PricingContent>
+              {edit && (
+                <S.PricingSlider>
+                  <S.SliderLabel>Adjust rate: ₹{draft.callRate}</S.SliderLabel>
+                  <S.PremiumSlider
                     type="range"
                     min="10"
                     max="500"
                     value={draft.callRate}
-                    onChange={e =>
-                      setDraft({ ...draft, callRate: Number(e.target.value) })
-                    }
+                    onChange={e => setDraft({ ...draft, callRate: Number(e.target.value) })}
                   />
-                )}
-              </div>
+                </S.PricingSlider>
+              )}
+            </S.PricingCard>
 
-              <RateValue>₹{draft.callRate} / min</RateValue>
-            </RateCard>
-
-            <RateCard>
-              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <div
-                  style={{
-                    width: 46,
-                    height: 46,
-                    borderRadius: 18,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background:
-                      "radial-gradient(circle at 0 0,#dcfce7,rgba(255,255,255,0.4))"
-                  }}
-                >
-                  <FiMessageCircle size={26} color="#16a34a" />
-                </div>
-                <div>
-                  <Label>Chat Rate</Label>
-                  <Value>Text consultation</Value>
-                </div>
-              </div>
-
-              <div style={{ flex: 1, marginLeft: 24 }}>
-                {edit && (
-                  <Slider
+            <S.PricingCard gradient="chat">
+              <S.PricingIconWrapper gradient="chat">
+                <FiMessageCircle />
+              </S.PricingIconWrapper>
+              <S.PricingContent>
+                <S.PricingLabel>Chat Rate</S.PricingLabel>
+                <S.PricingValue>₹{draft.chatRate}</S.PricingValue>
+                <S.PricingPeriod>per minute</S.PricingPeriod>
+              </S.PricingContent>
+              {edit && (
+                <S.PricingSlider>
+                  <S.SliderLabel>Adjust rate: ₹{draft.chatRate}</S.SliderLabel>
+                  <S.PremiumSlider
                     type="range"
                     min="5"
                     max="200"
                     value={draft.chatRate}
-                    onChange={e =>
-                      setDraft({ ...draft, chatRate: Number(e.target.value) })
-                    }
+                    onChange={e => setDraft({ ...draft, chatRate: Number(e.target.value) })}
                   />
-                )}
-              </div>
+                </S.PricingSlider>
+              )}
+            </S.PricingCard>
+          </S.PricingSection>
 
-              <RateValue>₹{draft.chatRate} / min</RateValue>
-            </RateCard>
-          </RateGrid>
-
-          {/* TABS */}
-          <Tabs>
-            <Tab
+          {/* Premium Tabs */}
+          <S.PremiumTabs>
+            <S.PremiumTab
               active={activeTab === "overview"}
               onClick={() => setActiveTab("overview")}
             >
-              Overview
-            </Tab>
-            <Tab
+              <FiUser /> Overview
+            </S.PremiumTab>
+            <S.PremiumTab
               active={activeTab === "experience"}
               onClick={() => setActiveTab("experience")}
             >
-              Experience &amp; Education
-            </Tab>
-          </Tabs>
+              <FiBriefcase /> Experience & Documents
+            </S.PremiumTab>
+          </S.PremiumTabs>
 
-          {/* OVERVIEW */}
-          {activeTab === "overview" && (
-            <Section>
-              <Label>Email</Label>
-              {edit ? (
-                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                  <Input
-                    value={draft.email}
-                    onChange={e =>
-                      setDraft({ ...draft, email: e.target.value })
-                    }
-                  />
-                  {draft.email !== expertData.email && (
-                    <ChipButton
-                      type="button"
-                      onClick={() => {
-                        setIsContactVerified(false);
-                        setShowOtp(true);
-                      }}
-                    >
-                      Verify
-                    </ChipButton>
+          {/* Tab Content */}
+          <S.TabContent>
+            {activeTab === "overview" && (
+              <S.OverviewGrid>
+                {/* Contact Information */}
+                <S.InfoCard>
+                  <S.CardHeader>
+                    <FiMail /> Contact Information
+                  </S.CardHeader>
+                  <S.InfoList>
+                    <S.InfoItem>
+                      <S.InfoIcon>
+                        <FiMail />
+                      </S.InfoIcon>
+                      <S.InfoContent>
+                        <S.InfoLabel>Email Address</S.InfoLabel>
+                        {edit ? (
+                          <S.InputGroup>
+                            <S.PremiumInput
+                              value={draft.email}
+                              onChange={e => setDraft({ ...draft, email: e.target.value })}
+                              placeholder="email@example.com"
+                            />
+                            {draft.email !== expertData.email
+                              // <S.VerifyButton onClick={() => {
+                              //   setIsContactVerified(false);
+                              //   setShowOtp(true);
+                              // }}>
+                              //   Verify
+                              // </S.VerifyButton>
+                            }
+                          </S.InputGroup>
+                        ) : (
+                          <S.InfoValue>{draft.email}</S.InfoValue>
+                        )}
+                      </S.InfoContent>
+                    </S.InfoItem>
+
+                    <S.InfoItem>
+                      <S.InfoIcon>
+                        <FiPhone />
+                      </S.InfoIcon>
+                      <S.InfoContent>
+                        <S.InfoLabel>Phone Number</S.InfoLabel>
+                        {edit ? (
+                          <S.InputGroup>
+                            <S.PremiumInput
+                              value={draft.phone}
+                              onChange={e => setDraft({ ...draft, phone: e.target.value })}
+                              placeholder="+91 0000000000"
+                            />
+                            {draft.phone !== expertData.phone 
+                              // <S.VerifyButton onClick={() => {
+                              //   setIsContactVerified(false);
+                              //   setShowOtp(true);
+                              // }}>
+                              //   Verify
+                              // </S.VerifyButton>
+                            }
+                          </S.InputGroup>
+                        ) : (
+                          <S.InfoValue>{draft.phone}</S.InfoValue>
+                        )}
+                      </S.InfoContent>
+                    </S.InfoItem>
+
+                    <S.InfoItem>
+                      <S.InfoIcon>
+                        <FiMapPin />
+                      </S.InfoIcon>
+                      <S.InfoContent>
+                        <S.InfoLabel>Location</S.InfoLabel>
+                        {edit ? (
+                          <S.PremiumInput
+                            value={draft.location}
+                            onChange={e => setDraft({ ...draft, location: e.target.value })}
+                            placeholder="City, Country"
+                          />
+                        ) : (
+                          <S.InfoValue>{draft.location || "Not specified"}</S.InfoValue>
+                        )}
+                      </S.InfoContent>
+                    </S.InfoItem>
+                  </S.InfoList>
+                </S.InfoCard>
+
+                {/* About & Description */}
+                <S.InfoCard>
+                  <S.CardHeader>
+                    <FiFileText /> About Me
+                  </S.CardHeader>
+                  {edit ? (
+                    <S.TextArea
+                      value={draft.description}
+                      onChange={e => setDraft({ ...draft, description: e.target.value })}
+                      placeholder="Tell us about yourself, your expertise, and experience..."
+                      rows={6}
+                    />
+                  ) : (
+                    <S.Description>
+                      {draft.description || "No description provided."}
+                    </S.Description>
                   )}
-                </div>
-              ) : (
-                <Value>{draft.email}</Value>
-              )}
+                </S.InfoCard>
 
-              <Label>Phone</Label>
-              {edit ? (
-                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                  <Input
-                    value={draft.phone}
-                    onChange={e =>
-                      setDraft({ ...draft, phone: e.target.value })
-                    }
-                  />
-                  {draft.phone !== expertData.phone && (
-                    <ChipButton
-                      type="button"
-                      onClick={() => {
-                        setIsContactVerified(false);
-                        setShowOtp(true);
-                      }}
-                    >
-                      Verify
-                    </ChipButton>
+                {/* Categories */}
+                <S.InfoCard>
+                  <S.CardHeader>
+                    <FiAward /> Expertise Areas
+                  </S.CardHeader>
+                  <S.CategoriesList>
+                    <S.CategoryTag>
+                      {categoryName || "Category"}
+                    </S.CategoryTag>
+                    {subCategoryName && (
+                      <S.CategoryTag>
+                        {subCategoryName}
+                      </S.CategoryTag>
+                    )}
+                  </S.CategoriesList>
+                </S.InfoCard>
+              </S.OverviewGrid>
+            )}
+
+            {activeTab === "experience" && (
+              <S.ExperienceGrid>
+                {/* Education */}
+                <S.InfoCard>
+                  <S.CardHeader>
+                    <FiBookOpen /> Education
+                  </S.CardHeader>
+                  {edit ? (
+                    <S.TextArea
+                      value={draft.education}
+                      onChange={e => setDraft({ ...draft, education: e.target.value })}
+                      placeholder="Your educational background..."
+                      rows={4}
+                    />
+                  ) : (
+                    <S.Description>
+                      {draft.education || "No education information provided."}
+                    </S.Description>
                   )}
-                </div>
-              ) : (
-                <Value>{draft.phone}</Value>
-              )}
+                </S.InfoCard>
 
-              <Label>Category</Label>
-              <Value>{categoryName || "—"}</Value>
+                {/* Documents Grid */}
+                <S.DocumentsGrid>
+                  {/* Experience Certificate */}
+                  <S.DocumentCard
+                    onMouseEnter={() => setHoveredDoc('experience')}
+                    onMouseLeave={() => setHoveredDoc(null)}
+                  >
+                    <S.DocumentPreview>
+                      {renderDocument(draft.documents.experience_certificate, "Experience Certificate")}
+                      {hoveredDoc === 'experience' && draft.documents.experience_certificate && (
+                        <S.DocumentOverlay>
+                          <S.DocumentActions>
+                            <S.DocumentAction 
+                              href={draft.documents.experience_certificate} 
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <FiEye />
+                            </S.DocumentAction>
+                            <S.DocumentAction 
+                              as="a" 
+                              href={draft.documents.experience_certificate} 
+                              download="experience_certificate"
+                            >
+                              <FiDownload />
+                            </S.DocumentAction>
+                          </S.DocumentActions>
+                        </S.DocumentOverlay>
+                      )}
+                    </S.DocumentPreview>
+                    <S.DocumentInfo>
+                      <S.DocumentTitle>Experience Certificate</S.DocumentTitle>
+                      {edit && (
+                        <S.DocumentUploadButton>
+                          <FiCamera />
+                          <input
+                            type="file"
+                            hidden
+                            accept="image/*,.pdf"
+                            onChange={e => handleDocChange("experience_certificate", e)}
+                          />
+                        </S.DocumentUploadButton>
+                      )}
+                    </S.DocumentInfo>
+                  </S.DocumentCard>
 
-              <Label>Sub Category</Label>
-              <Value>{subCategoryName || "—"}</Value>
+                  {/* Marksheet */}
+                  <S.DocumentCard
+                    onMouseEnter={() => setHoveredDoc('marksheet')}
+                    onMouseLeave={() => setHoveredDoc(null)}
+                  >
+                    <S.DocumentPreview>
+                      {renderDocument(draft.documents.marksheet, "Marksheet")}
+                      {hoveredDoc === 'marksheet' && draft.documents.marksheet && (
+                        <S.DocumentOverlay>
+                          <S.DocumentActions>
+                            <S.DocumentAction 
+                              href={draft.documents.marksheet} 
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <FiEye />
+                            </S.DocumentAction>
+                            <S.DocumentAction 
+                              as="a" 
+                              href={draft.documents.marksheet} 
+                              download="marksheet"
+                            >
+                              <FiDownload />
+                            </S.DocumentAction>
+                          </S.DocumentActions>
+                        </S.DocumentOverlay>
+                      )}
+                    </S.DocumentPreview>
+                    <S.DocumentInfo>
+                      <S.DocumentTitle>Marksheet</S.DocumentTitle>
+                      {edit && (
+                        <S.DocumentUploadButton>
+                          <FiCamera />
+                          <input
+                            type="file"
+                            hidden
+                            accept="image/*,.pdf"
+                            onChange={e => handleDocChange("marksheet", e)}
+                          />
+                        </S.DocumentUploadButton>
+                      )}
+                    </S.DocumentInfo>
+                  </S.DocumentCard>
 
-              <Label>Location</Label>
-              {edit ? (
-                <Input
-                  value={draft.location}
-                  onChange={e =>
-                    setDraft({ ...draft, location: e.target.value })
-                  }
-                />
-              ) : (
-                <Value>{draft.location}</Value>
-              )}
+                  {/* Aadhar Card */}
+                  <S.DocumentCard
+                    onMouseEnter={() => setHoveredDoc('aadhar')}
+                    onMouseLeave={() => setHoveredDoc(null)}
+                  >
+                    <S.DocumentPreview>
+                      {renderDocument(draft.documents.aadhar_card, "Aadhar Card")}
+                      {hoveredDoc === 'aadhar' && draft.documents.aadhar_card && (
+                        <S.DocumentOverlay>
+                          <S.DocumentActions>
+                            <S.DocumentAction 
+                              href={draft.documents.aadhar_card} 
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <FiEye />
+                            </S.DocumentAction>
+                            <S.DocumentAction 
+                              as="a" 
+                              href={draft.documents.aadhar_card} 
+                              download="aadhar_card"
+                            >
+                              <FiDownload />
+                            </S.DocumentAction>
+                          </S.DocumentActions>
+                        </S.DocumentOverlay>
+                      )}
+                    </S.DocumentPreview>
+                    <S.DocumentInfo>
+                      <S.DocumentTitle>Aadhar Card</S.DocumentTitle>
+                      {edit && (
+                        <S.DocumentUploadButton>
+                          <FiCamera />
+                          <input
+                            type="file"
+                            hidden
+                            accept="image/*,.pdf"
+                            onChange={e => handleDocChange("aadhar_card", e)}
+                          />
+                        </S.DocumentUploadButton>
+                      )}
+                    </S.DocumentInfo>
+                  </S.DocumentCard>
+                </S.DocumentsGrid>
+              </S.ExperienceGrid>
+            )}
+          </S.TabContent>
+        </S.Content>
+      </S.PageWrap>
 
-              <Label>Description</Label>
-              {edit ? (
-                <Input
-                  value={draft.description}
-                  onChange={e =>
-                    setDraft({ ...draft, description: e.target.value })
-                  }
-                />
-              ) : (
-                <Value>{draft.description}</Value>
-              )}
-            </Section>
-          )}
-
-          {/* EXPERIENCE + DOCUMENTS */}
-          {activeTab === "experience" && (
-            <Section>
-              <Label>Education</Label>
-              {edit ? (
-                <Input
-                  value={draft.education}
-                  onChange={e =>
-                    setDraft({ ...draft, education: e.target.value })
-                  }
-                />
-              ) : (
-                <Value>{draft.education}</Value>
-              )}
-
-              <Label style={{ marginTop: 24 }}>Experience Certificate</Label>
-              <DocRow>
-                <div style={{ position: "relative" }}>
-                  <DocPreview src={draft.documents.experience_certificate} />
-                  {edit && (
-                    <label
-                      style={{
-                        position: "absolute",
-                        bottom: 6,
-                        right: 6,
-                        background: "#0ea5e9",
-                        color: "#fff",
-                        padding: "4px 8px",
-                        borderRadius: 999,
-                        fontSize: 10,
-                        cursor: "pointer"
-                      }}
-                    >
-                      Change
-                      <input
-                        type="file"
-                        hidden
-                        accept="image/*,.pdf"
-                        onChange={e =>
-                          handleDocChange("experience_certificate", e)
-                        }
-                      />
-                    </label>
-                  )}
-                </div>
-              </DocRow>
-
-              <Label>Marksheet</Label>
-              <DocRow>
-                <div style={{ position: "relative" }}>
-                  <DocPreview src={draft.documents.marksheet} />
-                  {edit && (
-                    <label
-                      style={{
-                        position: "absolute",
-                        bottom: 6,
-                        right: 6,
-                        background: "#0ea5e9",
-                        color: "#fff",
-                        padding: "4px 8px",
-                        borderRadius: 999,
-                        fontSize: 10,
-                        cursor: "pointer"
-                      }}
-                    >
-                      Change
-                      <input
-                        type="file"
-                        hidden
-                        accept="image/*,.pdf"
-                        onChange={e => handleDocChange("marksheet", e)}
-                      />
-                    </label>
-                  )}
-                </div>
-              </DocRow>
-
-              <Label>Aadhar Card</Label>
-              <DocRow>
-                <div style={{ position: "relative" }}>
-                  <DocPreview src={draft.documents.aadhar_card} />
-                  {edit && (
-                    <label
-                      style={{
-                        position: "absolute",
-                        bottom: 6,
-                        right: 6,
-                        background: "#0ea5e9",
-                        color: "#fff",
-                        padding: "4px 8px",
-                        borderRadius: 999,
-                        fontSize: 10,
-                        cursor: "pointer"
-                      }}
-                    >
-                      Change
-                      <input
-                        type="file"
-                        hidden
-                        accept="image/*,.pdf"
-                        onChange={e => handleDocChange("aadhar_card", e)}
-                      />
-                    </label>
-                  )}
-                </div>
-              </DocRow>
-            </Section>
-          )}
-
-          {/* SAVE / CANCEL */}
-          {edit && (
-            <EditActions>
-              <button
-                style={{ background: "#0ea5ff", color: "#fff" }}
-                onClick={handleSave}
-              >
-                <FiCheck /> Save Changes
-              </button>
-
-              <button
-                style={{ background: "#f1f5f9" }}
-                onClick={() => {
-                  setEdit(false);
-                  setDraft(null);
-                }}
-              >
-                <FiX /> Cancel
-              </button>
-            </EditActions>
-          )}
-        </Content>
-      </PageWrap>
-
-      {/* OTP modal */}
+      {/* OTP Modal */}
       {showOtp && (
         <OtpModal
           onClose={() => setShowOtp(false)}
@@ -737,7 +926,7 @@ export default function ExpertProfile() {
         />
       )}
 
-      {/* Followers / Reviews modal */}
+      {/* Followers/Reviews Modal */}
       <AppModal
         isOpen={modalConfig.open}
         title={

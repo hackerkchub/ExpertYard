@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   FiArrowLeft,
@@ -143,6 +143,7 @@ const ExpertProfilePage = () => {
   const [chatRejectedMessage, setChatRejectedMessage] = useState("");
 const [calling, setCalling] = useState(false);
 const [requestingChat, setRequestingChat] = useState(false);
+const requestIdRef = useRef(null);
 
   // Memoized computed values
   const hasUserReview = useMemo(() => 
@@ -151,6 +152,7 @@ const [requestingChat, setRequestingChat] = useState(false);
   );
   const formattedAvgRating = useMemo(() => avgRating.toFixed(1), [avgRating]);
   const recentReviews = useMemo(() => reviews.slice(0, 3), [reviews]);
+// const requestIdRef = useRef(null);
 
   // Expert status listener
   useEffect(() => {
@@ -254,11 +256,20 @@ useEffect(() => {
     loadFollowersAndReviews();
   }, [loadFollowersAndReviews]);
 
+  useEffect(() => {
+  setChatRequestId(null);
+  requestIdRef.current = null;
+  setRequestingChat(false);
+  setShowWaitingPopup(false);
+}, [numericExpertId]);
+
+
   // Socket events
   useEffect(() => {
     const handleRequestPending = ({ request_id }) => {
        setRequestingChat(false);
        setChatRequestId(request_id);
+requestIdRef.current = request_id;
       setShowWaitingPopup(true);
       setWaitingText("Waiting for expert to accept...");
     };
@@ -268,6 +279,8 @@ useEffect(() => {
 setRequestingChat(false);
   setShowWaitingPopup(false);
   setChatRequestId(null);
+  requestIdRef.current = null;
+
 
   navigate(`/user/chat/${room_id}`, {
     replace: true,
@@ -276,22 +289,50 @@ setRequestingChat(false);
 };
 
 
-    const handleChatRejected = ({ user_id, message }) => {
-      if (Number(user_id) !== Number(userId)) return;
-      
+   const handleChatRejected = ({ request_id, reason }) => {
+
+  // 🟢 OFFLINE CASE (no request_id from backend)
+  if (reason === "offline") {
+    setRequestingChat(false);
+    setChatRejectedMessage("Expert is currently offline");
+    return;
+  }
+
+  // 🟢 NORMAL FLOW
+  if (request_id !== requestIdRef.current) return;
+
   setRequestingChat(false);
   setShowWaitingPopup(false);
-      setChatRequestId(null);
-      setChatRejectedMessage(message || "Chat request was rejected");
-    };
+  setChatRequestId(null);
+  requestIdRef.current = null;
 
-    const handleChatCancelled = ({ user_id, message }) => {
-      if (Number(user_id) !== Number(userId)) return;
-      setRequestingChat(false);
-      setShowWaitingPopup(false);
-      setChatRequestId(null);
-      setShowChatCancelled(true);
-    };
+  if (reason === "busy") {
+    setChatRejectedMessage("Expert is busy on another chat");
+  } else {
+    setChatRejectedMessage("Expert rejected your request");
+  }
+};
+
+
+
+    const handleChatCancelled = ({ request_id, reason }) => {
+  if (request_id !== requestIdRef.current) return;
+  setRequestingChat(false);
+  setShowWaitingPopup(false);
+  setChatRequestId(null);
+  requestIdRef.current = null;
+
+
+  if (reason === "timeout") {
+    setChatRejectedMessage("Expert did not respond");
+    return;
+  }
+
+  if (reason === "user_cancelled") {
+    setShowChatCancelled(true);
+  }
+};
+
 
     const handleChatEnded = ({ room_id, reason }) => {
       // Handle chat end notifications
@@ -310,7 +351,7 @@ setRequestingChat(false);
       socket.off("chat_cancelled", handleChatCancelled);
       socket.off("chat_ended", handleChatEnded);
     };
-  }, [navigate, userId]);
+  }, [navigate]);
 
   // Callbacks
   const handleStart = useCallback((type) => {
@@ -331,6 +372,8 @@ setRequestingChat(false);
         if (requestingChat) return;
  console.log("🔥 Start clicked", type);
   setRequestingChat(true);
+  setWaitingText("Waiting for expert to accept...");
+
       if (type === "chat" && numericExpertId) {
        socket.emit("request_chat", {
   user_id: userId,
@@ -438,11 +481,11 @@ setRequestingChat(false);
     request_id: chatRequestId,
   });
 
-  // ✅ LOCAL UI CLEANUP
+  setRequestingChat(false);
   setShowWaitingPopup(false);
   setChatRequestId(null);
+  requestIdRef.current = null;
 }, [chatRequestId]);
-
 
   const handleRechargeClose = useCallback(() => {
     setShowRecharge(false);
@@ -451,9 +494,10 @@ setRequestingChat(false);
 
   const handleUnfollowClose = useCallback(() => setShowUnfollowModal(false), []);
 
-  const handleChatRejectedClose = useCallback(() => {
-    setChatRejectedMessage("");
-  }, []);
+ const handleChatRejectedClose = useCallback(() => {
+  setChatRejectedMessage("");
+  setRequestingChat(false);
+}, []);
 
   const handleChatCancelledClose = useCallback(() => {
     setShowChatCancelled(false);

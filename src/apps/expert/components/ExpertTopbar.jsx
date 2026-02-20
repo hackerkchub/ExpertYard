@@ -36,6 +36,7 @@ import { useExpert } from "../../../shared/context/ExpertContext";
 import { socket } from "../../../shared/api/socket";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/40?img=12";
+const FINAL_STATES = ["missed", "rejected", "ended", "low_balance", "cancelled"];
 
 export default function ExpertTopbar() {
   const navigate = useNavigate();
@@ -169,8 +170,12 @@ useEffect(() => {
   ];
 
   const isActivePath = (path) => location.pathname === path;
+const hasUnreadChat = notifications.some(
+  n => n.type === "chat_request" && n.unread && !FINAL_STATES.includes(n.status)
+);
+
 const hasRingingCall = notifications.some(
-  (n) => n.type === "voice_call" && n.status === "ringing"
+  n => n.type === "voice_call" && n.status === "ringing"
 );
 
   return (
@@ -208,7 +213,7 @@ const hasRingingCall = notifications.some(
           <div ref={notifRef} style={{ position: "relative" }}>
             <IconBtn onClick={() => setShowNotif(p => !p)} title="Notifications">
   <FiBell />
-  {hasRingingCall && <UnreadDot />}
+  {(hasUnreadChat || hasRingingCall) && <UnreadDot />}
 </IconBtn>
 
            {showNotif && (

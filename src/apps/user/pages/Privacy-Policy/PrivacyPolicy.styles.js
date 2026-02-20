@@ -93,6 +93,7 @@ export const MainContainer = styled.div`
   margin: 0 auto;
   padding: 60px 20px;
   gap: 40px;
+   width: 100%;
 
   @media (max-width: 1024px) {
     flex-direction: column;
@@ -105,6 +106,9 @@ export const ContentWrapper = styled.div`
   backdrop-filter: blur(10px);
   border-radius: 30px;
   padding: 50px;
+   width: 100%;
+max-width: 900px;
+margin: 0 auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   animation: slideInLeft 0.8s ease;
 

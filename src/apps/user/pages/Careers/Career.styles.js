@@ -2,6 +2,7 @@ import styled from 'styled-components';
 
 export const PageContainer = styled.div`
   min-height: 100vh;
+  width: 100%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   position: relative;
@@ -24,6 +25,8 @@ export const HeroSection = styled.section`
   padding: 120px 20px 80px;
   text-align: center;
   color: white;
+  width: 100%;
+box-sizing: border-box;
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
   overflow: hidden;
 
@@ -110,15 +113,19 @@ export const StatLabel = styled.div`
 `;
 
 export const MainContent = styled.main`
+  width: 100%;
   max-width: 1400px;
   margin: 0 auto;
   padding: 60px 20px;
   display: grid;
   grid-template-columns: 1fr 350px;
   gap: 40px;
+  box-sizing: border-box;
 
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
+    gap: 25px;              
+    padding: 40px 15px;
   }
 `;
 
@@ -127,8 +134,14 @@ export const LeftColumn = styled.div`
   backdrop-filter: blur(10px);
   border-radius: 30px;
   padding: 40px;
+  width: 100%;
+  box-sizing: border-box;
+  @media (max-width: 768px) {
+  padding: 20px;
+}
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   animation: slideInLeft 0.8s ease;
+
 
   @keyframes slideInLeft {
     from {
@@ -146,8 +159,11 @@ export const RightColumn = styled.div`
   display: flex;
   flex-direction: column;
   gap: 30px;
+   width: 100%;              
+  box-sizing: border-box;
   animation: slideInRight 0.8s ease;
 
+ 
   @keyframes slideInRight {
     from {
       opacity: 0;
@@ -182,9 +198,13 @@ export const SectionTitle = styled.h2`
 
 export const JobGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 25px;
   margin-bottom: 50px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 export const JobCard = styled.div`
@@ -195,6 +215,9 @@ export const JobCard = styled.div`
   transition: all 0.3s ease;
   border: 1px solid rgba(102, 126, 234, 0.1);
   cursor: pointer;
+   width: 100%;
+   max-width: 100%;
+  box-sizing: border-box;
 
   &:hover {
     transform: translateY(-5px);
@@ -249,6 +272,12 @@ export const FormContainer = styled.div`
   border-radius: 20px;
   padding: 30px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+   width: 100%;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    padding: 20px;
+  }
 `;
 
 export const FormTitle = styled.h3`
@@ -287,6 +316,8 @@ export const Label = styled.label`
 `;
 
 export const Input = styled.input`
+  width: 100%;
+  box-sizing: border-box;
   padding: 15px;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
@@ -301,6 +332,8 @@ export const Input = styled.input`
 `;
 
 export const TextArea = styled.textarea`
+  width: 100%;
+  box-sizing: border-box;
   padding: 15px;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
@@ -317,6 +350,8 @@ export const TextArea = styled.textarea`
 `;
 
 export const FileInput = styled.input`
+  width: 100%;
+  box-sizing: border-box;
   padding: 10px;
   border: 2px dashed #e2e8f0;
   border-radius: 12px;
@@ -369,6 +404,13 @@ export const InfoCard = styled.div`
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
   border: 1px solid rgba(102, 126, 234, 0.1);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+
+  @media (max-width: 480px) {
+  padding: 20px;
+}
 
   &:hover {
     transform: translateY(-5px);

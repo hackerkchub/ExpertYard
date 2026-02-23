@@ -1,28 +1,42 @@
-// src/apps/expert/layout/ExpertLayout.jsx
 import React, { useEffect, useMemo } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 
 import ExpertSidebar from "../components/ExpertSidebar";
 import ExpertTopbar from "../components/ExpertTopbar";
+import IncomingCallPopup from "../components/IncomingCallPopup";
+
 import { LayoutWrapper, ContentWrapper } from "./expertLayout.styles";
 
 import { ExpertProvider, useExpert } from "../../../shared/context/ExpertContext";
 import { useAuth } from "../../../shared/context/UserAuthContext";
 import { socket } from "../../../shared/api/socket";
 
-import { ExpertNotificationsProvider } from "../context/ExpertNotificationsContext";
+import {
+  ExpertNotificationsProvider,
+  useExpertNotifications,
+} from "../context/ExpertNotificationsContext";
 
-/* =====================================================
-   INNER LAYOUT
-===================================================== */
+/* ===================================================== */
 function ExpertLayoutInner() {
   const navigate = useNavigate();
   const { expertData } = useExpert();
   const { user: authUser } = useAuth();
+  const location = useLocation();
 
-  /* ----------------------------------
-     ✅ SINGLE SOURCE EXPERT ID
-  ---------------------------------- */
+const isOnCallPage = location.pathname.startsWith("/expert/voice-call/");
+
+  const {
+    notifications,
+    acceptNotification,
+    rejectNotification,
+  } = useExpertNotifications();
+
+ const activeIncomingCall =
+  !isOnCallPage &&
+  notifications.find(
+    (n) => n.type === "voice_call" && n.status === "ringing"
+  );
+
   const expertId = useMemo(() => {
     return Number(
       expertData?.expertId ||
@@ -32,41 +46,26 @@ function ExpertLayoutInner() {
     );
   }, [expertData, authUser]);
 
-  /* ----------------------------------
-     🔌 EXPERT SOCKET REGISTER (ONLY HERE)
-  ---------------------------------- */
+  /* SOCKET REGISTER */
   useEffect(() => {
     if (!expertId) return;
 
     const onConnect = () => {
-      console.log("🟢 EXPERT SOCKET CONNECTED");
-
       socket.emit("register", {
         userId: expertId,
         role: "expert",
       });
-
-      console.log("🟢 EXPERT REGISTERED:", expertId);
     };
 
     socket.on("connect", onConnect);
 
-    // ✅ socket.js already has auth token
-    if (!socket.connected) {
-      socket.connect();
-    }else {
-  onConnect();
-}
+    if (!socket.connected) socket.connect();
+    else onConnect();
 
-
-    return () => {
-      socket.off("connect", onConnect);
-    };
+    return () => socket.off("connect", onConnect);
   }, [expertId]);
 
-  /* ----------------------------------
-     🚀 CHAT ACCEPT → AUTO REDIRECT
-  ---------------------------------- */
+  /* CHAT REDIRECT */
   useEffect(() => {
     const handleChatStarted = ({ room_id }) => {
       navigate(`/expert/chat/${room_id}`, { replace: true });
@@ -76,45 +75,51 @@ function ExpertLayoutInner() {
     return () => socket.off("chat_started", handleChatStarted);
   }, [navigate]);
 
-  /* ----------------------------------
-     ❌ SOCKET DEBUG LOGS
-  ---------------------------------- */
   useEffect(() => {
-    const onError = (e) =>
-      console.error("❌ Socket error:", e?.message || e);
+  const handler = (e) => {
+    navigate(`/expert/voice-call/${e.detail}`);
+  };
 
-    const onDisconnect = (r) =>
-      console.warn("🔴 Socket disconnected:", r);
-
-    socket.on("connect_error", onError);
-    socket.on("disconnect", onDisconnect);
-
-    return () => {
-      socket.off("connect_error", onError);
-      socket.off("disconnect", onDisconnect);
-    };
-  }, []);
+  window.addEventListener("go_to_call_page", handler);
+  return () => window.removeEventListener("go_to_call_page", handler);
+}, [navigate]);
 
   return (
     <LayoutWrapper>
       <ExpertTopbar />
       <ExpertSidebar />
+
       <ContentWrapper>
         <Outlet />
       </ContentWrapper>
+
+      {/* 🌍 GLOBAL INCOMING CALL POPUP */}
+      <IncomingCallPopup
+  caller={
+    activeIncomingCall && {
+      name:
+        activeIncomingCall.payload?.user_name ||
+        activeIncomingCall.title?.replace("Incoming call from ", ""),
+    }
+  }
+  onAccept={() =>
+    activeIncomingCall && acceptNotification(activeIncomingCall)
+  }
+  onReject={() =>
+    activeIncomingCall && rejectNotification(activeIncomingCall)
+  }
+/>
     </LayoutWrapper>
   );
 }
 
-/* =====================================================
-   ROOT EXPORT
-===================================================== */
+/* ROOT */
 export default function ExpertLayout() {
   return (
     <ExpertProvider>
-      {/* <ExpertNotificationsProvider> */}
+      <ExpertNotificationsProvider>
         <ExpertLayoutInner />
-      {/* </ExpertNotificationsProvider> */}
+      </ExpertNotificationsProvider>
     </ExpertProvider>
   );
 }

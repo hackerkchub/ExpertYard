@@ -1,5 +1,4 @@
-// src/apps/expert/pages/earnings/ExpertEarningsDashboard.jsx
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   FiDollarSign,
   FiClock,
@@ -11,18 +10,15 @@ import {
   FiMail,
   FiPhone,
   FiMapPin,
-//   FiCheckCircle,
   FiDownload,
   FiShare2,
-//   FiFilter,
   FiChevronRight,
-//   FiChevronDown,
   FiAlertCircle,
   FiLock,
   FiShield,
 } from "react-icons/fi";
 import { HiOutlineCurrencyRupee } from "react-icons/hi";
-import { MdAttachMoney, MdAccountBalance, MdVerified } from "react-icons/md";
+import { MdAttachMoney, MdVerified } from "react-icons/md";
 import { BsGraphUp, BsLightningCharge } from "react-icons/bs";
 import { TbPigMoney } from "react-icons/tb";
 
@@ -31,31 +27,46 @@ import {
   DashboardContainer,
   Header,
   Title,
+  HeaderContent,
+  HeaderLeft,
+  HeaderRight,
+  BalanceDisplay,
+  PayoutButton,
   StatsGrid,
   StatCard,
+  ContentGrid,
   ChartContainer,
-//   EarningsChart,
-//   PayoutCard,
+  SectionTitle,
+  TimeFilter,
+  FilterPill,
+  ChartPlaceholder,
+  TransactionHistory,
+  TransactionItem,
+  RightColumn,
+  AccountStatus,
+  VerificationBadge,
+  PayoutProgress,
+  SetupButton,
+  SummaryCard,
+  SecurityNote,
+  BankDetailsCard,
+  InfoCard,
+  InfoButton,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalClose,
   AccountForm,
+  FormGrid,
   InputGroup,
   FormLabel,
   FormInput,
   SelectInput,
+  FormActions,
   FormButton,
-//   VerificationBadge,
-  SectionTitle,
-  TransactionHistory,
-  TransactionItem,
-  TimeFilter,
-  FilterPill,
-  SummaryCard,
-  AccountStatus,
-  PayoutProgress,
-  InfoCard,
-  ModalOverlay,
-  ModalContent,
-//   SuccessMessage,
-  BankDetailsCard,
+  PayoutOption,
+  Loader,
+  SuccessMessage,
 } from "./ExpertEarningsDashboard.styles";
 
 import { useExpert } from "../../../../shared/context/ExpertContext";
@@ -88,6 +99,7 @@ const ExpertEarningsDashboard = () => {
   const [showPayoutModal, setShowPayoutModal] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState("pending"); // pending, verified, rejected
+  const [showSuccess, setShowSuccess] = useState(false);
 
   // Account form state
   const [accountDetails, setAccountDetails] = useState({
@@ -163,7 +175,10 @@ const ExpertEarningsDashboard = () => {
       setIsVerifying(false);
       setVerificationStatus("verified");
       setShowAccountModal(false);
-      // Show success message
+      setShowSuccess(true);
+      
+      // Hide success message after 3 seconds
+      setTimeout(() => setShowSuccess(false), 3000);
     }, 2000);
   };
 
@@ -171,7 +186,8 @@ const ExpertEarningsDashboard = () => {
     e.preventDefault();
     // Handle payout request
     setShowPayoutModal(false);
-    // Show success message
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3000);
   };
 
   const handleInputChange = (e) => {
@@ -217,201 +233,82 @@ const ExpertEarningsDashboard = () => {
 
   return (
     <PremiumContainer>
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-        
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.7; }
-        }
-        
-        .gradient-text {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-        }
-        
-        .verification-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 6px 12px;
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: 600;
-          margin-left: 12px;
-        }
-        
-        .verified-badge {
-          background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-          color: #065f46;
-        }
-        
-        .pending-badge {
-          background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-          color: #92400e;
-        }
-        
-        .rejected-badge {
-          background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-          color: #991b1b;
-        }
-        
-        .chart-placeholder {
-          height: 200px;
-          background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #94a3b8;
-          font-style: italic;
-        }
-        
-        .payout-option {
-          padding: 16px;
-          border: 2px solid #e2e8f0;
-          border-radius: 12px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          margin-bottom: 12px;
-        }
-        
-        .payout-option:hover {
-          border-color: #8b5cf6;
-          background: #f8fafc;
-        }
-        
-        .payout-option.selected {
-          border-color: #8b5cf6;
-          background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(124, 58, 237, 0.05) 100%);
-        }
-        
-        .security-note {
-          display: flex;
-          align-items: flex-start;
-          gap: 12px;
-          padding: 16px;
-          background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-          border-radius: 12px;
-          margin-top: 20px;
-          color: #92400e;
-        }
-        
-        .success-animation {
-          animation: fadeIn 0.5s ease;
-        }
-        
-        .loader {
-          width: 20px;
-          height: 20px;
-          border: 2px solid #e2e8f0;
-          border-top-color: #8b5cf6;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-
       <DashboardContainer>
         {/* Header Section */}
         <Header>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-            <div>
+          <HeaderContent>
+            <HeaderLeft>
               <Title>
-                <MdAttachMoney style={{ marginRight: 12, color: '#8b5cf6' }} />
-                <span className="gradient-text">Earnings Dashboard</span>
+                <MdAttachMoney />
+                <span>Earnings Dashboard</span>
               </Title>
-              <p style={{ color: '#64748b', marginTop: 8, fontSize: 15 }}>
+              <p style={{ 
+                color: '#64748b', 
+                marginTop: 8, 
+                fontSize: '14px',
+                lineHeight: 1.5 
+              }}>
                 Track your earnings, manage payouts, and update account details
               </p>
-            </div>
+            </HeaderLeft>
             
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>Available Balance</div>
-                <div style={{ fontSize: 28, fontWeight: 700, color: '#1e293b' }}>
+            <HeaderRight>
+              <BalanceDisplay>
+                <div className="balance-label">Available Balance</div>
+                <div className="balance-value">
                   {formatCurrency(earningsStats.pendingPayout)}
                 </div>
-              </div>
+              </BalanceDisplay>
               
-              <button
+              <PayoutButton
                 onClick={() => setShowPayoutModal(true)}
-                style={{
-                  padding: '12px 24px',
-                  background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '12px',
-                  fontWeight: 600,
-                  fontSize: 14,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  transition: 'all 0.3s ease',
-                }}
-                onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
-                onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
               >
-                <HiOutlineCurrencyRupee size={18} />
+                <HiOutlineCurrencyRupee />
                 Request Payout
-              </button>
-            </div>
-          </div>
+              </PayoutButton>
+            </HeaderRight>
+          </HeaderContent>
         </Header>
 
         {/* Stats Grid */}
         <StatsGrid>
-          <StatCard primary>
+          <StatCard $primary>
             <div className="stat-icon">
-              <MdAttachMoney size={24} />
+              <MdAttachMoney />
             </div>
             <div className="stat-content">
               <div className="stat-label">Total Earnings</div>
               <div className="stat-value">{earningsStats.formattedTotal}</div>
               <div className="stat-change">
-                <FiTrendingUp size={14} />
+                <FiTrendingUp />
                 <span>+{earningsStats.growthPercentage}% this month</span>
               </div>
             </div>
           </StatCard>
 
-          <StatCard accent>
+          <StatCard $accent>
             <div className="stat-icon">
-              <FiClock size={24} />
+              <FiClock />
             </div>
             <div className="stat-content">
               <div className="stat-label">Total Time</div>
               <div className="stat-value">{earningsStats.totalMinutes} min</div>
               <div className="stat-change">
-                <BsGraphUp size={14} />
-                <span>{earningsStats.avgPerMinute.toFixed(2)}/min avg</span>
+                <BsGraphUp />
+                <span>₹{earningsStats.avgPerMinute.toFixed(2)}/min avg</span>
               </div>
             </div>
           </StatCard>
 
           <StatCard>
             <div className="stat-icon">
-              <FiTrendingUp size={24} />
+              <FiTrendingUp />
             </div>
             <div className="stat-content">
               <div className="stat-label">This Month</div>
               <div className="stat-value">{earningsStats.formattedThisMonth}</div>
               <div className="stat-change">
-                <BsLightningCharge size={14} />
+                <BsLightningCharge />
                 <span>{earningsStats.completedSessions} sessions</span>
               </div>
             </div>
@@ -419,41 +316,49 @@ const ExpertEarningsDashboard = () => {
 
           <StatCard>
             <div className="stat-icon">
-              <TbPigMoney size={24} />
+              <TbPigMoney />
             </div>
             <div className="stat-content">
               <div className="stat-label">Pending Payout</div>
               <div className="stat-value">{earningsStats.formattedPending}</div>
               <div className="stat-change">
-                <FiCalendar size={14} />
+                <FiCalendar />
                 <span>Ready for withdrawal</span>
               </div>
             </div>
           </StatCard>
         </StatsGrid>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: 24, marginTop: 32 }}>
+        {/* Main Content Grid */}
+        <ContentGrid>
           {/* Left Column - Chart & Transactions */}
           <div>
             {/* Earnings Chart */}
             <ChartContainer>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: window.innerWidth < 640 ? 'column' : 'row',
+                justifyContent: 'space-between', 
+                alignItems: window.innerWidth < 640 ? 'flex-start' : 'center',
+                gap: '16px',
+                marginBottom: '20px'
+              }}>
                 <SectionTitle>Earnings Overview</SectionTitle>
                 <TimeFilter>
                   <FilterPill 
-                    active={timeFilter === 'week'} 
+                    $active={timeFilter === 'week'} 
                     onClick={() => setTimeFilter('week')}
                   >
                     Week
                   </FilterPill>
                   <FilterPill 
-                    active={timeFilter === 'month'} 
+                    $active={timeFilter === 'month'} 
                     onClick={() => setTimeFilter('month')}
                   >
                     Month
                   </FilterPill>
                   <FilterPill 
-                    active={timeFilter === 'year'} 
+                    $active={timeFilter === 'year'} 
                     onClick={() => setTimeFilter('year')}
                   >
                     Year
@@ -461,47 +366,60 @@ const ExpertEarningsDashboard = () => {
                 </TimeFilter>
               </div>
               
-              <div className="chart-placeholder">
+              <ChartPlaceholder>
                 <div style={{ textAlign: 'center' }}>
-                  <BsGraphUp size={32} style={{ marginBottom: 12, opacity: 0.5 }} />
+                  <BsGraphUp size={28} />
                   <div>Earnings chart will appear here</div>
-                  <div style={{ fontSize: 12, marginTop: 4 }}>Visual representation of your earnings over time</div>
+                  <div style={{ fontSize: '12px', marginTop: '4px' }}>
+                    Visual representation of your earnings over time
+                  </div>
                 </div>
-              </div>
+              </ChartPlaceholder>
             </ChartContainer>
 
             {/* Transaction History */}
             <TransactionHistory>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: window.innerWidth < 480 ? 'column' : 'row',
+                justifyContent: 'space-between', 
+                alignItems: window.innerWidth < 480 ? 'flex-start' : 'center',
+                gap: '12px',
+                marginBottom: '20px'
+              }}>
                 <SectionTitle>Recent Transactions</SectionTitle>
                 <button
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 8,
+                    gap: '8px',
                     padding: '8px 16px',
                     background: '#f8fafc',
                     border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
+                    borderRadius: '10px',
                     color: '#64748b',
-                    fontSize: 14,
+                    fontSize: '13px',
                     fontWeight: 500,
                     cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    whiteSpace: 'nowrap',
                   }}
+                  onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                  onMouseOut={(e) => e.currentTarget.style.background = '#f8fafc'}
                 >
                   <FiDownload size={14} />
                   Export CSV
                 </button>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {filteredTransactions.map(transaction => (
                   <TransactionItem key={transaction.id}>
                     <div className="transaction-icon">
                       {transaction.type === 'chat' ? (
-                        <FiMail size={18} />
+                        <FiMail size={16} />
                       ) : (
-                        <FiPhone size={18} />
+                        <FiPhone size={16} />
                       )}
                     </div>
                     
@@ -521,7 +439,7 @@ const ExpertEarningsDashboard = () => {
                     </div>
                     
                     <button className="transaction-action">
-                      <FiChevronRight size={18} />
+                      <FiChevronRight />
                     </button>
                   </TransactionItem>
                 ))}
@@ -530,17 +448,24 @@ const ExpertEarningsDashboard = () => {
           </div>
 
           {/* Right Column - Account & Payout */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <RightColumn>
             {/* Account Status */}
             <AccountStatus>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '12px',
+                marginBottom: '20px'
+              }}>
                 <SectionTitle>Account Status</SectionTitle>
-                <div className={`verification-badge ${verificationStatus}-badge`}>
+                <VerificationBadge $status={verificationStatus}>
                   {verificationStatus === 'verified' && <MdVerified size={14} />}
                   {verificationStatus === 'pending' && <FiAlertCircle size={14} />}
                   {verificationStatus === 'rejected' && <FiAlertCircle size={14} />}
                   {verificationStatus.charAt(0).toUpperCase() + verificationStatus.slice(1)}
-                </div>
+                </VerificationBadge>
               </div>
 
               <PayoutProgress>
@@ -552,38 +477,21 @@ const ExpertEarningsDashboard = () => {
                   <div className="progress-fill" style={{ width: '75%' }}></div>
                 </div>
                 <div className="progress-steps">
-                  <div className={`step ${verificationStatus === 'verified' ? 'completed' : ''}`}>
-                    <div className="step-number">1</div>
-                    <div className="step-label">Account Details</div>
-                  </div>
-                  <div className={`step ${verificationStatus === 'verified' ? 'completed' : ''}`}>
-                    <div className="step-number">2</div>
-                    <div className="step-label">KYC Verification</div>
-                  </div>
-                  <div className="step">
-                    <div className="step-number">3</div>
-                    <div className="step-label">First Payout</div>
-                  </div>
+                  {[
+                    { number: 1, label: 'Account Details', completed: verificationStatus === 'verified' },
+                    { number: 2, label: 'KYC Verification', completed: verificationStatus === 'verified' },
+                    { number: 3, label: 'First Payout', completed: false }
+                  ].map((step, index) => (
+                    <div key={index} className="step">
+                      <div className="step-number">{step.number}</div>
+                      <div className="step-label">{step.label}</div>
+                    </div>
+                  ))}
                 </div>
 
-                <button
+                <SetupButton
+                  $verified={verificationStatus === 'verified'}
                   onClick={() => setShowAccountModal(true)}
-                  style={{
-                    width: '100%',
-                    padding: '14px',
-                    background: verificationStatus === 'verified' ? '#f8fafc' : 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                    color: verificationStatus === 'verified' ? '#64748b' : 'white',
-                    border: verificationStatus === 'verified' ? '1px solid #e2e8f0' : 'none',
-                    borderRadius: '12px',
-                    fontWeight: 600,
-                    fontSize: 14,
-                    cursor: 'pointer',
-                    marginTop: 20,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 8,
-                  }}
                 >
                   {verificationStatus === 'verified' ? (
                     <>
@@ -596,125 +504,111 @@ const ExpertEarningsDashboard = () => {
                       Complete Account Setup
                     </>
                   )}
-                </button>
+                </SetupButton>
               </PayoutProgress>
             </AccountStatus>
 
             {/* Payout Summary */}
             <SummaryCard>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                marginBottom: '20px'
+              }}>
                 <SectionTitle>Payout Summary</SectionTitle>
                 <FiShare2 size={18} color="#64748b" style={{ cursor: 'pointer' }} />
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div className="summary-item">
-                  <div className="summary-label">Available Balance</div>
-                  <div className="summary-value">{formatCurrency(earningsStats.pendingPayout)}</div>
-                </div>
-                <div className="summary-item">
-                  <div className="summary-label">Next Payout Date</div>
-                  <div className="summary-value">15 March 2024</div>
-                </div>
-                <div className="summary-item">
-                  <div className="summary-label">Min. Withdrawal</div>
-                  <div className="summary-value">{formatCurrency(1000)}</div>
-                </div>
-                <div className="summary-item">
-                  <div className="summary-label">Processing Time</div>
-                  <div className="summary-value">3-5 business days</div>
-                </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {[
+                  { label: 'Available Balance', value: formatCurrency(earningsStats.pendingPayout) },
+                  { label: 'Next Payout Date', value: '15 March 2024' },
+                  { label: 'Min. Withdrawal', value: formatCurrency(1000) },
+                  { label: 'Processing Time', value: '3-5 business days' }
+                ].map((item, index) => (
+                  <div key={index} className="summary-item">
+                    <div className="summary-label">{item.label}</div>
+                    <div className="summary-value">{item.value}</div>
+                  </div>
+                ))}
               </div>
 
-              <div className="security-note">
-                <FiShield size={20} />
-                <div>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Secure & Encrypted</div>
-                  <div style={{ fontSize: 13 }}>All transactions are protected with bank-level security</div>
+              <SecurityNote>
+                <FiShield />
+                <div className="security-text">
+                  <div className="security-title">Secure & Encrypted</div>
+                  <div className="security-description">
+                    All transactions are protected with bank-level security
+                  </div>
                 </div>
-              </div>
+              </SecurityNote>
             </SummaryCard>
 
             {/* Bank Details Preview */}
             {verificationStatus === 'verified' && (
               <BankDetailsCard>
                 <SectionTitle>Bank Details</SectionTitle>
-                <div style={{ marginTop: 16 }}>
-                  <div className="bank-detail">
-                    <div className="detail-label">Bank Name</div>
-                    <div className="detail-value">HDFC Bank</div>
-                  </div>
-                  <div className="bank-detail">
-                    <div className="detail-label">Account Number</div>
-                    <div className="detail-value">●●●● ●●●● 1234</div>
-                  </div>
-                  <div className="bank-detail">
-                    <div className="detail-label">IFSC Code</div>
-                    <div className="detail-value">HDFC0001234</div>
-                  </div>
+                <div style={{ marginTop: '16px' }}>
+                  {[
+                    { label: 'Bank Name', value: 'HDFC Bank' },
+                    { label: 'Account Number', value: '●●●● ●●●● 1234' },
+                    { label: 'IFSC Code', value: 'HDFC0001234' }
+                  ].map((detail, index) => (
+                    <div key={index} className="bank-detail">
+                      <div className="detail-label">{detail.label}</div>
+                      <div className="detail-value">{detail.value}</div>
+                    </div>
+                  ))}
                 </div>
               </BankDetailsCard>
             )}
 
             {/* Info Card */}
             <InfoCard>
-              <FiDollarSign size={24} color="#8b5cf6" />
-              <div>
-                <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: 4 }}>
-                  Need Help With Payouts?
-                </div>
-                <div style={{ fontSize: 14, color: '#64748b' }}>
+              <FiDollarSign />
+              <div className="info-content">
+                <div className="info-title">Need Help With Payouts?</div>
+                <div className="info-description">
                   Contact our support team for payout-related queries
                 </div>
               </div>
-              <button
-                style={{
-                  padding: '8px 16px',
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  color: '#64748b',
-                  fontSize: 13,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                }}
-              >
-                Contact
-              </button>
+              <InfoButton>Contact</InfoButton>
             </InfoCard>
-          </div>
-        </div>
+          </RightColumn>
+        </ContentGrid>
       </DashboardContainer>
+
+      {/* Success Message */}
+      {showSuccess && (
+        <SuccessMessage>
+          <MdVerified size={32} />
+          <h3>Success!</h3>
+          <p>Your request has been processed successfully.</p>
+        </SuccessMessage>
+      )}
 
       {/* Account Setup Modal */}
       {showAccountModal && (
         <ModalOverlay onClick={() => !isVerifying && setShowAccountModal(false)}>
           <ModalContent onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-              <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: '#1e293b' }}>
+            <ModalHeader>
+              <h2>
                 {verificationStatus === 'verified' ? 'Update Account Details' : 'Complete Account Setup'}
               </h2>
-              <button
+              <ModalClose
                 onClick={() => !isVerifying && setShowAccountModal(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: 24,
-                  color: '#64748b',
-                  cursor: 'pointer',
-                  padding: 4,
-                }}
                 disabled={isVerifying}
               >
                 ×
-              </button>
-            </div>
+              </ModalClose>
+            </ModalHeader>
 
             <AccountForm onSubmit={handleAccountSubmit}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+              <FormGrid>
                 <InputGroup>
                   <FormLabel>
-                    <FiUser size={16} />
+                    <FiUser />
                     Full Name
                   </FormLabel>
                   <FormInput
@@ -724,12 +618,13 @@ const ExpertEarningsDashboard = () => {
                     onChange={handleInputChange}
                     placeholder="Enter your full name"
                     required
+                    disabled={isVerifying}
                   />
                 </InputGroup>
 
                 <InputGroup>
                   <FormLabel>
-                    <FiMail size={16} />
+                    <FiMail />
                     Email Address
                   </FormLabel>
                   <FormInput
@@ -739,12 +634,13 @@ const ExpertEarningsDashboard = () => {
                     onChange={handleInputChange}
                     placeholder="Enter your email"
                     required
+                    disabled={isVerifying}
                   />
                 </InputGroup>
 
                 <InputGroup>
                   <FormLabel>
-                    <FiPhone size={16} />
+                    <FiPhone />
                     Phone Number
                   </FormLabel>
                   <FormInput
@@ -754,12 +650,13 @@ const ExpertEarningsDashboard = () => {
                     onChange={handleInputChange}
                     placeholder="Enter phone number"
                     required
+                    disabled={isVerifying}
                   />
                 </InputGroup>
 
                 <InputGroup>
                   <FormLabel>
-                    <FiCreditCard size={16} />
+                    <FiCreditCard />
                     PAN Number
                   </FormLabel>
                   <FormInput
@@ -769,12 +666,13 @@ const ExpertEarningsDashboard = () => {
                     onChange={handleInputChange}
                     placeholder="ABCDE1234F"
                     required
+                    disabled={isVerifying}
                   />
                 </InputGroup>
 
-                <InputGroup style={{ gridColumn: 'span 2' }}>
+                <InputGroup $fullWidth>
                   <FormLabel>
-                    <FiMapPin size={16} />
+                    <FiMapPin />
                     Address
                   </FormLabel>
                   <FormInput
@@ -784,107 +682,116 @@ const ExpertEarningsDashboard = () => {
                     onChange={handleInputChange}
                     placeholder="Enter your complete address"
                     required
+                    disabled={isVerifying}
                   />
                 </InputGroup>
-              </div>
 
-              <div style={{ marginTop: 32 }}>
-                <SectionTitle>Bank Account Details</SectionTitle>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginTop: 16 }}>
-                  <InputGroup>
-                    <FormLabel>
-                      <FiHome size={16} />
-                      Bank Name
-                    </FormLabel>
-                    <FormInput
-                      type="text"
-                      name="bankName"
-                      value={accountDetails.bankName}
-                      onChange={handleInputChange}
-                      placeholder="e.g., HDFC Bank"
-                      required
-                    />
-                  </InputGroup>
+                <InputGroup $fullWidth>
+                  <SectionTitle style={{ marginBottom: '16px' }}>
+                    Bank Account Details
+                  </SectionTitle>
+                </InputGroup>
 
-                  <InputGroup>
-                    <FormLabel>
-                      <FiCreditCard size={16} />
-                      Account Number
-                    </FormLabel>
-                    <FormInput
-                      type="text"
-                      name="accountNumber"
-                      value={accountDetails.accountNumber}
-                      onChange={handleInputChange}
-                      placeholder="Enter account number"
-                      required
-                    />
-                  </InputGroup>
+                <InputGroup>
+                  <FormLabel>
+                    <FiHome />
+                    Bank Name
+                  </FormLabel>
+                  <FormInput
+                    type="text"
+                    name="bankName"
+                    value={accountDetails.bankName}
+                    onChange={handleInputChange}
+                    placeholder="e.g., HDFC Bank"
+                    required
+                    disabled={isVerifying}
+                  />
+                </InputGroup>
 
-                  <InputGroup>
-                    <FormLabel>
-                      <FiLock size={16} />
-                      IFSC Code
-                    </FormLabel>
-                    <FormInput
-                      type="text"
-                      name="ifscCode"
-                      value={accountDetails.ifscCode}
-                      onChange={handleInputChange}
-                      placeholder="e.g., HDFC0001234"
-                      required
-                    />
-                  </InputGroup>
+                <InputGroup>
+                  <FormLabel>
+                    <FiCreditCard />
+                    Account Number
+                  </FormLabel>
+                  <FormInput
+                    type="text"
+                    name="accountNumber"
+                    value={accountDetails.accountNumber}
+                    onChange={handleInputChange}
+                    placeholder="Enter account number"
+                    required
+                    disabled={isVerifying}
+                  />
+                </InputGroup>
 
-                  <InputGroup>
-                    <FormLabel>
-                      <FiCreditCard size={16} />
-                      Account Type
-                    </FormLabel>
-                    <SelectInput
-                      name="accountType"
-                      value={accountDetails.accountType}
-                      onChange={handleInputChange}
-                      required
-                    >
-                      <option value="savings">Savings Account</option>
-                      <option value="current">Current Account</option>
-                    </SelectInput>
-                  </InputGroup>
+                <InputGroup>
+                  <FormLabel>
+                    <FiLock />
+                    IFSC Code
+                  </FormLabel>
+                  <FormInput
+                    type="text"
+                    name="ifscCode"
+                    value={accountDetails.ifscCode}
+                    onChange={handleInputChange}
+                    placeholder="e.g., HDFC0001234"
+                    required
+                    disabled={isVerifying}
+                  />
+                </InputGroup>
 
-                  <InputGroup style={{ gridColumn: 'span 2' }}>
-                    <FormLabel>
-                      <HiOutlineCurrencyRupee size={16} />
-                      UPI ID (Optional)
-                    </FormLabel>
-                    <FormInput
-                      type="text"
-                      name="upiId"
-                      value={accountDetails.upiId}
-                      onChange={handleInputChange}
-                      placeholder="username@bank"
-                    />
-                  </InputGroup>
+                <InputGroup>
+                  <FormLabel>
+                    <FiCreditCard />
+                    Account Type
+                  </FormLabel>
+                  <SelectInput
+                    name="accountType"
+                    value={accountDetails.accountType}
+                    onChange={handleInputChange}
+                    required
+                    disabled={isVerifying}
+                  >
+                    <option value="savings">Savings Account</option>
+                    <option value="current">Current Account</option>
+                  </SelectInput>
+                </InputGroup>
+
+                <InputGroup $fullWidth>
+                  <FormLabel>
+                    <HiOutlineCurrencyRupee />
+                    UPI ID (Optional)
+                  </FormLabel>
+                  <FormInput
+                    type="text"
+                    name="upiId"
+                    value={accountDetails.upiId}
+                    onChange={handleInputChange}
+                    placeholder="username@bank"
+                    disabled={isVerifying}
+                  />
+                </InputGroup>
+              </FormGrid>
+
+              <SecurityNote style={{ marginTop: '24px' }}>
+                <FiShield />
+                <div className="security-text">
+                  <div className="security-title">Secure Information</div>
+                  <div className="security-description">
+                    Your bank details are encrypted and stored securely. We never share your information with third parties.
+                  </div>
                 </div>
-              </div>
+              </SecurityNote>
 
-              <div className="security-note" style={{ marginTop: 24 }}>
-                <FiShield size={20} />
-                <div>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Secure Information</div>
-                  <div style={{ fontSize: 13 }}>Your bank details are encrypted and stored securely. We never share your information with third parties.</div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: 12, marginTop: 32 }}>
+              <FormActions>
                 <FormButton
                   type="submit"
-                  primary
+                  $primary
                   disabled={isVerifying}
                 >
                   {isVerifying ? (
                     <>
-                      <div className="loader" style={{ marginRight: 8 }}></div>
+                      <Loader />
                       Verifying...
                     </>
                   ) : (
@@ -899,7 +806,7 @@ const ExpertEarningsDashboard = () => {
                 >
                   Cancel
                 </FormButton>
-              </div>
+              </FormActions>
             </AccountForm>
           </ModalContent>
         </ModalOverlay>
@@ -908,29 +815,21 @@ const ExpertEarningsDashboard = () => {
       {/* Payout Request Modal */}
       {showPayoutModal && (
         <ModalOverlay onClick={() => setShowPayoutModal(false)}>
-          <ModalContent style={{ maxWidth: 500 }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-              <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: '#1e293b' }}>
-                Request Payout
-              </h2>
-              <button
-                onClick={() => setShowPayoutModal(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: 24,
-                  color: '#64748b',
-                  cursor: 'pointer',
-                  padding: 4,
-                }}
-              >
-                ×
-              </button>
-            </div>
+          <ModalContent style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
+            <ModalHeader>
+              <h2>Request Payout</h2>
+              <ModalClose onClick={() => setShowPayoutModal(false)}>×</ModalClose>
+            </ModalHeader>
 
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 14, color: '#64748b', marginBottom: 8 }}>Available Balance</div>
-              <div style={{ fontSize: 32, fontWeight: 700, color: '#1e293b' }}>
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ fontSize: '14px', color: '#64748b', marginBottom: '8px' }}>
+                Available Balance
+              </div>
+              <div style={{ 
+                fontSize: window.innerWidth < 480 ? '28px' : '32px', 
+                fontWeight: 700, 
+                color: '#1e293b' 
+              }}>
                 {formatCurrency(earningsStats.pendingPayout)}
               </div>
             </div>
@@ -948,88 +847,74 @@ const ExpertEarningsDashboard = () => {
                   max={earningsStats.pendingPayout}
                   required
                 />
-                <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
+                <div style={{ 
+                  fontSize: '12px', 
+                  color: '#64748b', 
+                  marginTop: '6px' 
+                }}>
                   Minimum withdrawal: {formatCurrency(1000)}
                 </div>
               </InputGroup>
 
-              <div style={{ marginTop: 24 }}>
+              <div style={{ marginTop: '24px' }}>
                 <FormLabel>Payout Method</FormLabel>
-                <div
-                  className={`payout-option ${payoutRequest.method === 'bank' ? 'selected' : ''}`}
+                <PayoutOption
+                  $selected={payoutRequest.method === 'bank'}
                   onClick={() => setPayoutRequest(prev => ({ ...prev, method: 'bank' }))}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ 
-                      width: 40, 
-                      height: 40, 
-                      background: 'linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%)', 
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white'
-                    }}>
-                      <FiHome size={20} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div 
+                      className="option-icon"
+                      style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%)' }}
+                    >
+                      <FiHome size={18} />
                     </div>
                     <div>
-                      <div style={{ fontWeight: 600, color: '#1e293b' }}>Bank Transfer</div>
-                      <div style={{ fontSize: 13, color: '#64748b' }}>3-5 business days processing</div>
+                      <div className="option-title">Bank Transfer</div>
+                      <div className="option-subtitle">3-5 business days processing</div>
                     </div>
                   </div>
-                </div>
+                </PayoutOption>
 
-                <div
-                  className={`payout-option ${payoutRequest.method === 'upi' ? 'selected' : ''}`}
+                <PayoutOption
+                  $selected={payoutRequest.method === 'upi'}
                   onClick={() => setPayoutRequest(prev => ({ ...prev, method: 'upi' }))}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ 
-                      width: 40, 
-                      height: 40, 
-                      background: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)', 
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white'
-                    }}>
-                      <HiOutlineCurrencyRupee size={20} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div 
+                      className="option-icon"
+                      style={{ background: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)' }}
+                    >
+                      <HiOutlineCurrencyRupee size={18} />
                     </div>
                     <div>
-                      <div style={{ fontWeight: 600, color: '#1e293b' }}>UPI Instant</div>
-                      <div style={{ fontSize: 13, color: '#64748b' }}>Within 24 hours</div>
+                      <div className="option-title">UPI Instant</div>
+                      <div className="option-subtitle">Within 24 hours</div>
                     </div>
                   </div>
-                </div>
+                </PayoutOption>
               </div>
 
-              <div className="security-note" style={{ marginTop: 24 }}>
-                <FiShield size={20} />
-                <div>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>Processing Information</div>
-                  <div style={{ fontSize: 13 }}>Payouts are processed every Monday and Thursday. A 2% processing fee applies to all withdrawals.</div>
+              <SecurityNote style={{ marginTop: '24px' }}>
+                <FiShield />
+                <div className="security-text">
+                  <div className="security-title">Processing Information</div>
+                  <div className="security-description">
+                    Payouts are processed every Monday and Thursday. A 2% processing fee applies to all withdrawals.
+                  </div>
                 </div>
-              </div>
+              </SecurityNote>
 
-              <div style={{ display: 'flex', gap: 12, marginTop: 32 }}>
-                <FormButton
-                  type="submit"
-                  primary
-                  style={{ flex: 1 }}
-                >
+              <FormActions>
+                <FormButton type="submit" $primary>
                   <HiOutlineCurrencyRupee size={18} />
                   Request Payout
                 </FormButton>
                 
-                <FormButton
-                  type="button"
-                  onClick={() => setShowPayoutModal(false)}
-                  style={{ flex: 1 }}
-                >
+                <FormButton type="button" onClick={() => setShowPayoutModal(false)}>
                   Cancel
                 </FormButton>
-              </div>
+              </FormActions>
             </form>
           </ModalContent>
         </ModalOverlay>

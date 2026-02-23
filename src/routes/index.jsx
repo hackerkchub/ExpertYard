@@ -1,13 +1,14 @@
 import { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { socket } from "../shared/api/socket";
+ import { useSoundInit } from "../shared/services/sound/useSoundInit";
 
 import UserAppRoutes from "../apps/user/routes";
 import ExpertAppRoutes from "../apps/expert/routes";
 import AdminAppRoutes from "../apps/admin/routes";
 
 export default function AppRouter() {
-
+useSoundInit();
   /* ---------------------------------------------
      👁️ TAB VISIBILITY → AUTO RECONNECT
   --------------------------------------------- */

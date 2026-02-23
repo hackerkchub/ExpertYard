@@ -9,22 +9,23 @@ import Dashboard from "../pages/Dashboard";
 import Profile from "../pages/Profile/ExpertProfile";
 import MyContent from "../pages/MyContent/MyContent";
 import ExpertChat from "../pages/chat/ExpertChat";
-import ExpertChatHistory from "../pages/chat-history/ExpertChatHistory"; // ✅ NEW
+import ExpertChatHistory from "../pages/chat-history/ExpertChatHistory";
 import ProtectedExpertRoute from "./ProtectedExpertRoute";
 import { useExpert } from "../../../shared/context/ExpertContext";
 import ExpertVoiceCall from "../pages/voice-call/ExpertVoiceCall";
 import ExpertNotificationPage from "../pages/notification/ExpertNotificationPage";
 import EarningDashboard from "../pages/earnings/ExpertEarningsDashboard";
+import Calendar from "../pages/calendar/Calendar";
 
 export default function ExpertAppRoutes() {
   const { expertData } = useExpert();
 
   return (
     <Routes>
-      {/* Default */}
+      {/* Default redirect */}
       <Route index element={<Navigate to="home" />} />
 
-      {/* 🔐 EXPERT DASHBOARD (WITH LAYOUT) */}
+      {/* 🔐 PROTECTED ROUTES WITH EXPERT LAYOUT (SIDEBAR + TOPBAR) */}
       <Route element={<ExpertLayout />}>
         {/* DASHBOARD */}
         <Route
@@ -45,7 +46,7 @@ export default function ExpertAppRoutes() {
           element={
             <ProtectedExpertRoute
               condition={expertData.expertId}
-              redirectTo="/expert/register"
+              redirectTo="/expert/home"
             >
               <Profile />
             </ProtectedExpertRoute>
@@ -58,14 +59,40 @@ export default function ExpertAppRoutes() {
           element={
             <ProtectedExpertRoute
               condition={expertData.expertId}
-              redirectTo="/expert/register"
+              redirectTo="/expert/home"
             >
               <MyContent />
             </ProtectedExpertRoute>
           }
         />
 
-        {/* ✅ LIVE CHAT ROUTES */}
+        {/* 📅 CALENDAR - NOW INSIDE LAYOUT ✅ */}
+        <Route
+          path="calendar"
+          element={
+            <ProtectedExpertRoute
+              condition={expertData.expertId}
+              redirectTo="/expert/home"
+            >
+              <Calendar />
+            </ProtectedExpertRoute>
+          }
+        />
+
+        {/* 💰 EARNINGS - NOW INSIDE LAYOUT ✅ */}
+        <Route
+          path="earnings"
+          element={
+            <ProtectedExpertRoute
+              condition={expertData.expertId}
+              redirectTo="/expert/home"
+            >
+              <EarningDashboard />
+            </ProtectedExpertRoute>
+          }
+        />
+
+        {/* 💬 LIVE CHAT ROUTES */}
         <Route
           path="chat"
           element={
@@ -90,7 +117,7 @@ export default function ExpertAppRoutes() {
           }
         />
 
-        {/* ✅ NEW: CHAT HISTORY ROUTES */}
+        {/* 📋 CHAT HISTORY ROUTES */}
         <Route
           path="chat-history"
           element={
@@ -114,60 +141,61 @@ export default function ExpertAppRoutes() {
             </ProtectedExpertRoute>
           }
         />
-      </Route>
 
-      {/* 📞 VOICE CALL (IMPORTANT ✅) */}
+        {/* 🔔 NOTIFICATIONS - INSIDE LAYOUT (with sidebar) */}
         <Route
-          path="voice-call/:callId"
+          path="notifications"
           element={
             <ProtectedExpertRoute
               condition={expertData.expertId}
               redirectTo="/expert/home"
             >
-              <ExpertVoiceCall />
+              <ExpertNotificationPage />
             </ProtectedExpertRoute>
           }
         />
-       <Route
-  path="notifications"
-  element={
-    <ProtectedExpertRoute
-      condition={expertData.expertId}
-      redirectTo="/expert/home"
-    >
-      <ExpertNotificationPage />
-    </ProtectedExpertRoute>
-  }
-/>
+      </Route>
 
+      {/* 📞 VOICE CALL - OUTSIDE LAYOUT (FULL SCREEN) ✅ */}
+      <Route
+        path="voice-call/:callId"
+        element={
+          <ProtectedExpertRoute
+            condition={expertData.expertId}
+            redirectTo="/expert/home"
+          >
+            <ExpertVoiceCall />
+          </ProtectedExpertRoute>
+        }
+      />
 
-      {/* 🔓 REGISTER FLOW (NO LAYOUT) */}
+      {/* 🔓 REGISTER FLOW - NO LAYOUT */}
       <Route path="register" element={<StepAccount />} />
+      
       <Route
         path="register/category"
         element={
           <ProtectedExpertRoute
             condition={expertData.expertId}
-            redirectTo="/expert/register"
+            redirectTo="/expert/home"
           >
             <StepCategory />
           </ProtectedExpertRoute>
         }
       />
+      
       <Route
         path="register/subcategory"
         element={
           <ProtectedExpertRoute
-            condition={
-              expertData.expertId &&
-              expertData.categoryId
-            }
+            condition={expertData.expertId && expertData.categoryId}
             redirectTo="/expert/register/category"
           >
             <StepSubcategory />
           </ProtectedExpertRoute>
         }
       />
+      
       <Route
         path="register/profile"
         element={
@@ -183,6 +211,7 @@ export default function ExpertAppRoutes() {
           </ProtectedExpertRoute>
         }
       />
+      
       <Route
         path="register/pricing"
         element={
@@ -195,8 +224,7 @@ export default function ExpertAppRoutes() {
         }
       />
 
-      {/* Fallback */}
-     <Route path="earnings" element={<EarningDashboard />} />
+      {/* 404 Fallback */}
       <Route path="*" element={<h1>Expert 404 - Page Not Found</h1>} />
     </Routes>
   );

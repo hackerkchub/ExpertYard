@@ -18,6 +18,11 @@ import {
   Controls,
   ControlBtn,
   Brand,
+  WaveContainer,
+  WaveBar,
+  ReconnectingBadge,
+  NetworkIndicator,
+  Spinner,
 } from "./ExpertVoiceCall.styles";
 
 import {
@@ -29,6 +34,7 @@ import {
   createAnswer,
   handleSocketReconnect,
 } from "../../../../shared/webrtc/voicePeer";
+import { soundManager } from "../../../../shared/services/sound/soundManager";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/300?img=44";
 
@@ -37,7 +43,7 @@ export default function ExpertVoiceCall() {
   const navigate = useNavigate();
   const { expertData } = useExpert();
 
-  // ✅ 1️⃣ Use normalizedCallId for all checks
+  // ✅ Normalized callId for all checks
   const normalizedCallId = Number(callId);
   const socket = useSocket(expertData?.expertId, "expert");
   
@@ -47,14 +53,15 @@ export default function ExpertVoiceCall() {
   const callStartedRef = useRef(false);
   
   // Refs for protection
-  const callStateRef = useRef("incoming");
+  const callStateRef = useRef("connecting");
   const makingAnswerRef = useRef(false);
   const isCleaningUpRef = useRef(false);
   
-  const [callState, setCallState] = useState("incoming");
+  const [callState, setCallState] = useState("connecting");
   const [seconds, setSeconds] = useState(0);
   const [muted, setMuted] = useState(false);
   const [reconnecting, setReconnecting] = useState(false);
+  const [networkQuality, setNetworkQuality] = useState("good");
 
   const audioRef = useRef(null);
   const timerRef = useRef(null);
@@ -64,6 +71,11 @@ export default function ExpertVoiceCall() {
     role: "User",
     avatar: DEFAULT_AVATAR,
   });
+
+  // Stop all sounds on mount
+  useEffect(() => {
+    soundManager.stopAll();
+  }, []);
 
   // Keep callState in sync with ref
   useEffect(() => {
@@ -92,6 +104,37 @@ export default function ExpertVoiceCall() {
     closePeer();
   }, []);
 
+  // Auto-start mic on connecting state
+  useEffect(() => {
+    if (callState !== "connecting") return;
+    if (callStartedRef.current) return;
+
+    callStartedRef.current = true;
+
+    const autoStart = async () => {
+      try {
+        streamRef.current = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            channelCount: { ideal: 1 },
+            sampleRate: { ideal: 16000 },
+          },
+        });
+
+        socket.emit(CALL_EVENTS.ACCEPT, {
+          callId: callIdRef.current,
+        });
+
+      } catch (err) {
+        console.error("❌ Auto mic failed", err);
+      }
+    };
+
+    autoStart();
+  }, [callState, socket]);
+
   // Handle incoming call data
   useEffect(() => {
     const onIncoming = (data) => {
@@ -99,7 +142,7 @@ export default function ExpertVoiceCall() {
 
       console.log("📞 Incoming call data:", data);
 
-      // ✅ 3️⃣ Clear reconnecting state on new incoming
+      // Clear reconnecting state on new incoming
       setReconnecting(false);
 
       setCaller({
@@ -108,7 +151,9 @@ export default function ExpertVoiceCall() {
         avatar: DEFAULT_AVATAR,
       });
 
-      setCallState("incoming");
+      if (!callStartedRef.current) {
+        setCallState("incoming");
+      }
     };
 
     socket.on(CALL_EVENTS.INCOMING, onIncoming);
@@ -118,7 +163,7 @@ export default function ExpertVoiceCall() {
     };
   }, [socket]);
 
-  // ✅ 4️⃣ Timer with extra safety
+  // Timer with extra safety
   useEffect(() => {
     if (callState === "connected") {
       if (!timerRef.current) {
@@ -141,7 +186,7 @@ export default function ExpertVoiceCall() {
     };
   }, [callState]);
 
-  // ✅ 1️⃣ Socket core events (using normalizedCallId)
+  // Socket core events
   useEffect(() => {
     if (!normalizedCallId) return;
 
@@ -165,7 +210,7 @@ export default function ExpertVoiceCall() {
     const onBusy = () => {
       console.log("🚫 Expert: Call rejected/busy");
       setCallState("ended");
-      
+      callStartedRef.current = false;
       cleanupMedia();
       
       setTimeout(() => {
@@ -182,7 +227,7 @@ export default function ExpertVoiceCall() {
       socket.off(CALL_EVENTS.ENDED, onEnded);
       socket.off(CALL_EVENTS.BUSY, onBusy);
     };
-  }, [socket, navigate, cleanupMedia, normalizedCallId]); // ✅ Using normalizedCallId
+  }, [socket, navigate, cleanupMedia, normalizedCallId]);
 
   // Socket reconnect handler
   useEffect(() => {
@@ -192,12 +237,11 @@ export default function ExpertVoiceCall() {
       console.log("🔄 Expert socket reconnected");
       setReconnecting(true);
 
-      handleSocketReconnect(); // peer reset
+      handleSocketReconnect();
 
       if (callIdRef.current && callStateRef.current === "connected") {
         setTimeout(() => {
           console.log("♻ Recreating answer after reconnect");
-          // The offer will come from user automatically
           setReconnecting(false);
         }, 400);
       }
@@ -207,14 +251,28 @@ export default function ExpertVoiceCall() {
     return () => socket.io?.off("reconnect", onReconnect);
   }, [socket]);
 
-  // ✅ 1️⃣ & 2️⃣ WebRTC events with ANSWER SPAM PROTECTION + STREAM GUARD
+  // Network quality monitoring (simulated)
+  useEffect(() => {
+    if (callState === "connected") {
+      const interval = setInterval(() => {
+        // Simulate network quality - replace with actual WebRTC stats if needed
+        const qualities = ["good", "average", "poor"];
+        const randomQuality = qualities[Math.floor(Math.random() * qualities.length)];
+        setNetworkQuality(randomQuality);
+      }, 5000);
+
+      return () => clearInterval(interval);
+    }
+  }, [callState]);
+
+  // WebRTC events with ANSWER SPAM PROTECTION + STREAM GUARD
   useEffect(() => {
     if (!normalizedCallId) return;
 
     const onOffer = async ({ callId: incomingId, offer }) => {
       if (Number(incomingId) !== callIdRef.current) return;
 
-      // ✅ 3️⃣ Clear reconnecting when offer arrives
+      // Clear reconnecting when offer arrives
       setReconnecting(false);
 
       if (makingAnswerRef.current) {
@@ -222,7 +280,7 @@ export default function ExpertVoiceCall() {
         return;
       }
 
-      // ✅ 2️⃣ GUARD: Wait for mic stream to be ready
+      // GUARD: Wait for mic stream to be ready
       if (!streamRef.current) {
         console.log("⏳ Waiting for mic before answering");
         return;
@@ -269,7 +327,7 @@ export default function ExpertVoiceCall() {
       socket.off("webrtc:offer", onOffer);
       socket.off("webrtc:ice", onIce);
     };
-  }, [socket, normalizedCallId]); // ✅ Using normalizedCallId
+  }, [socket, normalizedCallId]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -295,7 +353,8 @@ export default function ExpertVoiceCall() {
         }
       });
       console.log("✅ Expert microphone permission granted, stream:", streamRef.current);
-      
+      callStartedRef.current = true;
+      setCallState("connecting");
       socket.emit(CALL_EVENTS.ACCEPT, { callId: callIdRef.current });
     } catch (error) {
       console.error("❌ Failed to get microphone permission:", error);
@@ -342,30 +401,59 @@ export default function ExpertVoiceCall() {
     });
   }, [socket]);
 
+  // Render wave animation for connected state
+  const renderWaveAnimation = () => (
+    <WaveContainer>
+      {[1, 2, 3, 4, 5].map((_, index) => (
+        <WaveBar key={index} $index={index} />
+      ))}
+    </WaveContainer>
+  );
+
   return (
     <PageWrapper>
       <CallCard>
         <audio ref={audioRef} autoPlay playsInline />
 
+        {/* Network Quality Indicator */}
+        {callState === "connected" && networkQuality !== "good" && (
+          <NetworkIndicator $quality={networkQuality}>
+            {networkQuality === "average" ? "Unstable Connection" : "Poor Connection"}
+          </NetworkIndicator>
+        )}
+
+        {/* Reconnecting UI */}
+        {reconnecting && callState === "connected" && (
+          <ReconnectingBadge />
+        )}
+
         <ExpertAvatarWrapper>
-          <ExpertAvatar src={caller.avatar} />
+          <ExpertAvatar 
+            src={caller.avatar} 
+            alt={caller.name}
+          />
         </ExpertAvatarWrapper>
 
         <ExpertName>{caller.name}</ExpertName>
         <ExpertRole>{caller.role}</ExpertRole>
 
-        {/* Reconnecting UI */}
-        {reconnecting && callState === "connected" && (
-          <StatusText>🔄 RECONNECTING...</StatusText>
+        {/* Connecting State */}
+        {callState === "connecting" && (
+          <>
+            <StatusText $reconnecting={reconnecting}>
+              {reconnecting ? "RECONNECTING..." : "CONNECTING..."}
+            </StatusText>
+            <Spinner />
+          </>
         )}
 
-        {callState === "incoming" && (
+        {/* Incoming State */}
+        {callState === "incoming" && !callStartedRef.current && (
           <>
             <StatusText>INCOMING VOICE CALL</StatusText>
             <IncomingActions>
               <ActionBtn
                 $accept
-                // ✅ 5️⃣ Disable button when not in incoming state
                 disabled={callState !== "incoming"}
                 onClick={acceptCall}
               >
@@ -379,30 +467,40 @@ export default function ExpertVoiceCall() {
           </>
         )}
 
+        {/* Connected State */}
         {callState === "connected" && (
           <>
+            {renderWaveAnimation()}
             <Timer>
               {String(Math.floor(seconds / 60)).padStart(2, "0")}:
               {String(seconds % 60).padStart(2, "0")}
             </Timer>
 
             <Controls>
-              <ControlBtn active={muted} onClick={toggleMuteClick}>
-                {muted ? "🔇" : "🎤"} <span>Mute</span>
+              <ControlBtn 
+                $active={muted} 
+                onClick={toggleMuteClick}
+              >
+                {muted ? "🔇" : "🎤"} 
+                <span>{muted ? "Unmute" : "Mute"}</span>
               </ControlBtn>
 
-              <ControlBtn danger onClick={endCall}>
+              <ControlBtn $danger onClick={endCall}>
                 ❌ <span>End</span>
               </ControlBtn>
             </Controls>
           </>
         )}
 
+        {/* Ended State */}
         {callState === "ended" && (
-          <StatusText>CALL ENDED</StatusText>
+          <>
+            <StatusText>CALL ENDED</StatusText>
+            <Spinner />
+          </>
         )}
 
-        <Brand>🌿 EXPERT YARD — Expert Panel</Brand>
+        <Brand>EXPERT YARD — Expert Panel</Brand>
       </CallCard>
     </PageWrapper>
   );

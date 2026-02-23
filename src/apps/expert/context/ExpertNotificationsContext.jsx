@@ -13,6 +13,8 @@ import { socket } from "../../../shared/api/socket";
 import { useExpert } from "../../../shared/context/ExpertContext";
 import { saveNotification, getNotifications,
    deleteNotification} from "../../../shared/api/notification.api";
+   import { soundManager } from "../../../shared/services/sound/soundManager";
+import { SOUNDS } from "../../../shared/services/sound/soundRegistry";
 
 const Ctx = createContext(null);
 const getStorageKey = (expertId) =>
@@ -173,6 +175,7 @@ const callUnreadCount = useMemo(
         if (prev.some((n) => n.id === request_id)) return prev;
         return [newNotif, ...prev];
       });
+     
     };
 
     socket.on("incoming_chat_request", onIncomingChat);
@@ -228,6 +231,7 @@ const callUnreadCount = useMemo(
       if (prev.some(n => n.id === callId)) return prev;
         return [newNotif, ...prev.filter((n) => n.id !== callId)];
       });
+      //  soundManager.play(SOUNDS.INCOMING_CALL, { loop: true, volume: 1 });
     };
 
     socket.on("call:incoming", onIncomingCall);
@@ -240,7 +244,7 @@ const callUnreadCount = useMemo(
   const removeById = useCallback(
     async (notification) => {
       if (!notification?.id) return;
-      
+      // soundManager.stopAll();
       try {
         // Clear timer for this notification first
         const timer = timers.current.get(notification.id);
@@ -492,6 +496,7 @@ const callUnreadCount = useMemo(
     if (!notification) return;
 
     if (notification.type === "voice_call") {
+      // soundManager.stopAll();
       window.dispatchEvent(
         new CustomEvent("go_to_call_page", {
           detail: notification.payload.callId,

@@ -12,6 +12,9 @@ import { ExpertNotificationsProvider } from "./apps/expert/context/ExpertNotific
 import { theme } from "./shared/styles/theme";
 import GlobalStyles from "./shared/styles/GlobalStyles";
 import AppRouter from "./routes";
+ import { soundManager } from "./shared/services/sound/soundManager";
+
+  soundManager.preload();
 
 /* ================================
    🔔 SERVICE WORKER REGISTRATION

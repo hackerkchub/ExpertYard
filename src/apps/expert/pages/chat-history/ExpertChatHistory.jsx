@@ -1,5 +1,4 @@
-// src/apps/expert/pages/chat-history/ExpertChatHistory.jsx
-// 🎨 POLISHED PREMIUM VERSION
+// 🎨 POLISHED PREMIUM VERSION - FULLY RESPONSIVE
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -17,17 +16,18 @@ import {
   FiTrendingUp,
   FiWatch,
 } from "react-icons/fi";
+// import { FaIndianRupeeSign } from "react-icons/fa6";
 import { HiUsers } from "react-icons/hi";
 import { BsChatLeftText } from "react-icons/bs";
 
 import {
+  PremiumContainer,
   PageContainer,
   Header,
   Title,
   HistoryList,
   HistoryItem,
   ChatHeader,
-  // ChatMeta,
   Avatar,
   EmptyState,
   LoadingSpinner,
@@ -43,11 +43,9 @@ import {
   StatCard,
   FilterBar,
   PillBadge,
-  // GradientTitle,
   EarningsBadge,
   SessionHeader,
   MessageAvatar,
-  PremiumContainer,
 } from "./ExpertChatHistory.styles";
 
 import { useExpert } from "../../../../shared/context/ExpertContext";
@@ -55,6 +53,7 @@ import {
   getExpertChatHistoryApi,
   getChatHistoryMessagesApi,
 } from "../../../../shared/api/chatHistory.api";
+import { FaIndianRupeeSign } from "react-icons/fa6";
 
 // ✅ FIXED BILLING: 1 MIN MINIMUM + ceil seconds
 const calculateEarnings = (durationMinutes, pricePerMinute) => {
@@ -124,6 +123,14 @@ const ExpertChatHistory = () => {
   const [messages, setMessages] = useState([]);
   const [showDetails, setShowDetails] = useState(false);
   const [filterType, setFilterType] = useState("all");
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
+
+  // Track window width for responsive adjustments
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // ✅ Fetch grouped chat history
   const fetchGrouped = useCallback(async () => {
@@ -266,12 +273,12 @@ const ExpertChatHistory = () => {
 
   if (loading && counterparties.length === 0) {
     return (
-      <PageContainer>
+      <PremiumContainer>
         <LoadingSpinner>
           <div className="spinner"></div>
           <p>Loading your chat history...</p>
         </LoadingSpinner>
-      </PageContainer>
+      </PremiumContainer>
     );
   }
 
@@ -307,30 +314,25 @@ const ExpertChatHistory = () => {
           transform: translateY(-2px);
           box-shadow: 0 8px 30px rgba(139, 92, 246, 0.12);
         }
-        
-        .session-badge {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          padding: 4px 12px;
-          border-radius: 20px;
-          font-size: 12px;
-          font-weight: 600;
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-        }
       `}</style>
 
       <PageContainer>
         {/* Enhanced Header with Stats */}
         <Header>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: windowWidth < 768 ? 'column' : 'row',
+            alignItems: windowWidth < 768 ? 'flex-start' : 'center',
+            justifyContent: 'space-between', 
+            width: '100%',
+            gap: '16px'
+          }}>
             <div>
               <Title>
-                <FiMessageSquare style={{ marginRight: 12 }} />
+                <FiMessageSquare />
                 <span className="gradient-text">Chat History</span>
               </Title>
-              <p style={{ color: '#64748b', marginTop: 8, fontSize: 14 }}>
+              <p style={{ color: '#64748b', marginTop: 8, fontSize: windowWidth < 640 ? 13 : 14 }}>
                 Track conversations and earnings from all your chat sessions
               </p>
             </div>
@@ -342,7 +344,7 @@ const ExpertChatHistory = () => {
                 </div>
                 <div className="stat-content">
                   <span className="stat-value">{counterparties.length}</span>
-                  <span className="stat-label">Total Users</span>
+                  <span className="stat-label">Users</span>
                 </div>
               </StatCard>
               
@@ -352,7 +354,7 @@ const ExpertChatHistory = () => {
                 </div>
                 <div className="stat-content">
                   <span className="stat-value">{summary.totalSessions}</span>
-                  <span className="stat-label">Total Sessions</span>
+                  <span className="stat-label">Sessions</span>
                 </div>
               </StatCard>
               
@@ -362,17 +364,17 @@ const ExpertChatHistory = () => {
                 </div>
                 <div className="stat-content">
                   <span className="stat-value">{summary.totalMinutes}</span>
-                  <span className="stat-label">Total Minutes</span>
+                  <span className="stat-label">Mins</span>
                 </div>
               </StatCard>
               
               <StatCard primary>
                 <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
-                  <FiDollarSign color="#8b5cf6" />
+                  <FaIndianRupeeSign color="#8b5cf6" />
                 </div>
                 <div className="stat-content">
                   <span className="stat-value">₹{(summary.expertEarn || 0).toFixed(0)}</span>
-                  <span className="stat-label">Total Earnings</span>
+                  <span className="stat-label">Earnings</span>
                 </div>
               </StatCard>
             </StatsContainer>
@@ -381,27 +383,31 @@ const ExpertChatHistory = () => {
           {/* Enhanced Filter Bar */}
           <FilterBar>
             <SearchBar premium>
-              <FiSearch size={18} />
+              <FiSearch />
               <input
-                placeholder="Search users by name..."
+                placeholder="Search users..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
               {searchTerm && (
                 <FiX
-                  size={18}
                   onClick={() => setSearchTerm("")}
-                  style={{ cursor: "pointer", color: '#64748b' }}
+                  style={{ cursor: "pointer" }}
                 />
               )}
             </SearchBar>
             
-            <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ 
+              display: 'flex', 
+              gap: 8,
+              flexWrap: 'wrap',
+              justifyContent: windowWidth < 640 ? 'space-between' : 'flex-end'
+            }}>
               <PillBadge 
                 active={filterType === 'all'} 
                 onClick={() => setFilterType('all')}
               >
-                All Users
+                All
               </PillBadge>
               <PillBadge 
                 active={filterType === 'recent'} 
@@ -413,7 +419,7 @@ const ExpertChatHistory = () => {
                 active={filterType === 'top'} 
                 onClick={() => setFilterType('top')}
               >
-                Top Earners
+                Top
               </PillBadge>
             </div>
           </FilterBar>
@@ -424,7 +430,7 @@ const ExpertChatHistory = () => {
           {filtered.length === 0 ? (
             <EmptyState premium>
               <div className="empty-icon">
-                <BsChatLeftText size={56} />
+                <BsChatLeftText />
               </div>
               <h3>No Chat History Found</h3>
               <p>Start chatting with users to see your history here</p>
@@ -448,46 +454,77 @@ const ExpertChatHistory = () => {
                     onClick={() => setExpandedUserId(isOpen ? null : c.user_id)}
                     premium
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: windowWidth < 480 ? 12 : 16,
+                      width: '100%'
+                    }}>
                       <Avatar premium src={c.user_avatar} />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                          <h4>{c.username}</h4>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 8,
+                          flexWrap: 'wrap',
+                          marginBottom: 4
+                        }}>
+                          <h4 style={{ wordBreak: 'break-word' }}>{c.username}</h4>
                           <EarningsBadge>₹{totalEarnings.toFixed(0)}</EarningsBadge>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 4 }}>
+                        <div style={{ 
+                          display: 'flex', 
+                          flexDirection: windowWidth < 480 ? 'column' : 'row',
+                          alignItems: windowWidth < 480 ? 'flex-start' : 'center', 
+                          gap: windowWidth < 480 ? 4 : 16 
+                        }}>
                           <span className="meta-item">
-                            <FiUser size={12} /> {totalSessions} sessions
+                            <FiUser /> {totalSessions} sess
                           </span>
                           <span className="meta-item">
-                            <FiClock size={12} /> {formatTime(c.total_minutes)}
+                            <FiClock /> {formatTime(c.total_minutes)}
                           </span>
-                          <span className="meta-item">
-                            {/* <FiDollarSign size={12} />*/} ₹{avgEarning.toFixed(0)} avg 
-                          </span>
+                          {windowWidth >= 640 && (
+                            <span className="meta-item">
+                              ₹{avgEarning.toFixed(0)} avg
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
                     
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: 12, color: '#64748b' }}>Last session</div>
-                        <div style={{ fontSize: 13,color: '#64748b', fontWeight: 600 }}>{formatDate(c.last_end_time)}</div>
-                      </div>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: 12,
+                      marginTop: windowWidth < 640 ? 8 : 0
+                    }}>
+                      {windowWidth >= 640 && (
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: 12, color: '#64748b' }}>Last</div>
+                          <div style={{ fontSize: 13, color: '#64748b', fontWeight: 600 }}>
+                            {formatDate(c.last_end_time)}
+                          </div>
+                        </div>
+                      )}
                       {isOpen ? (
-                        <FiChevronDown size={20} className="chevron-icon" />
+                        <FiChevronDown className="chevron-icon" />
                       ) : (
-                        <FiChevronRight size={20} className="chevron-icon" />
+                        <FiChevronRight className="chevron-icon" />
                       )}
                     </div>
                   </ChatHeader>
 
                   {isOpen && (
-                    <div style={{ padding: '24px', background: '#f8fafc', borderRadius: '0 0 12px 12px' }}>
+                    <div style={{ 
+                      padding: windowWidth < 640 ? '16px' : '24px', 
+                      background: '#f8fafc', 
+                      borderRadius: '0 0 12px 12px' 
+                    }}>
                       <SessionHeader>
                         <h5>Chat Sessions</h5>
                         <div className="session-badge">
-                          <FiCalendar size={12} /> {totalSessions} total
+                          <FiCalendar /> {totalSessions} total
                         </div>
                       </SessionHeader>
                       
@@ -509,27 +546,29 @@ const ExpertChatHistory = () => {
                               <div className="session-info">
                                 <div className="session-details">
                                   <div className="date">
-                                    <FiCalendar size={14} />
-                                    {formatDate(s.end_time)}
+                                    <FiCalendar />
+                                    {windowWidth < 480 ? formatDate(s.end_time).slice(0,6) : formatDate(s.end_time)}
                                   </div>
                                   <div className="duration">
-                                    <FiClock size={14} />
-                                    {seconds}s duration
+                                    <FiClock />
+                                    {seconds}s
                                   </div>
                                 </div>
-                                <div className="session-meta">
-                                  {/* <span className="room-id">Room: #{s.room_id?.slice(-6)}</span> */}
-                                </div>
+                                {windowWidth >= 640 && (
+                                  <div className="session-meta">
+                                    {/* <span className="room-id">#{s.room_id?.slice(-6)}</span> */}
+                                  </div>
+                                )}
                               </div>
                               
                               <div className="session-earnings">
-                                <div className="amount-label">Earned</div>
+                                {windowWidth >= 480 && <div className="amount-label">Earned</div>}
                                 <div className="amount">₹{earnings}</div>
                               </div>
                               
                               <ActionButton premium onClick={() => openSession(s)}>
-                                <FiEye size={14} />
-                                View Chat
+                                <FiEye />
+                                {windowWidth >= 480 ? 'View' : ''}
                               </ActionButton>
                             </SessionCard>
                           );
@@ -551,19 +590,25 @@ const ExpertChatHistory = () => {
                 <div className="modal-user-info">
                   <MessageAvatar 
                     src={selectedSession.user_avatar}
-                    size="large"
+                    size={windowWidth < 640 ? 'medium' : 'large'}
                   />
                   <div>
                     <h3>{selectedSession.username || selectedSession.user_name}</h3>
                     <div className="modal-meta">
                       <span>{formatDate(selectedSession.end_time)}</span>
                       <span>•</span>
-                      <span>{formatTime(selectedSession.duration_minutes)} duration</span>
-                      <span>•</span>
-                      <span className="earnings">₹{calculateEarnings(
-                        selectedSession.duration_minutes,
-                        selectedSession.price_per_minute || expertPrice?.chat_per_minute || 16
-                      )} earned</span>
+                      <span>{formatTime(selectedSession.duration_minutes)}</span>
+                      {windowWidth >= 480 && (
+                        <>
+                          <span>•</span>
+                          <span className="earnings">
+                            ₹{calculateEarnings(
+                              selectedSession.duration_minutes,
+                              selectedSession.price_per_minute || expertPrice?.chat_per_minute || 16
+                            )}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -592,9 +637,11 @@ const ExpertChatHistory = () => {
                             />
                             <div>
                               <strong>{msg.sender_name}</strong>
-                              <span className="sender-role">
-                                {msg.sender_type === "expert" ? "Expert" : "User"}
-                              </span>
+                              {windowWidth >= 480 && (
+                                <span className="sender-role">
+                                  {msg.sender_type === "expert" ? "(Expert)" : "(User)"}
+                                </span>
+                              )}
                             </div>
                           </div>
                           <span className="message-time">
@@ -613,7 +660,7 @@ const ExpertChatHistory = () => {
                     ))
                   ) : (
                     <div className="no-messages">
-                      <FiMessageCircle size={48} />
+                      <FiMessageCircle />
                       <p>No messages available</p>
                     </div>
                   )}
@@ -623,7 +670,7 @@ const ExpertChatHistory = () => {
               <div className="modal-footer">
                 <div className="footer-note">
                   <FiMessageSquare />
-                  Previous chat session (read-only)
+                  {windowWidth < 480 ? 'Read-only' : 'Previous chat session (read-only)'}
                 </div>
               </div>
             </ModalContent>

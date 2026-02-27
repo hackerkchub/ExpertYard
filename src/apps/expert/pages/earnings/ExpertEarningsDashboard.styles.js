@@ -73,6 +73,38 @@ export const DashboardContainer = styled.div`
   animation: ${fadeIn} 0.6s ease-out;
 `;
 
+
+/* Loading Spinner */
+export const LoadingSpinner = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  width: 100%;
+
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #e2e8f0;
+    border-top: 4px solid #8b5cf6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+  }
+
+  p {
+    color: #64748b;
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
 /* Header Section */
 export const Header = styled.div`
   margin-bottom: 24px;
@@ -1426,4 +1458,57 @@ export const SuccessMessage = styled.div`
       font-size: 14px;
     }
   }
+`;
+
+/* Withdrawal History */
+export const WithdrawalHistory = styled.div`
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 20px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  animation: ${fadeIn} 0.6s ease-out 0.15s both;
+  margin-top: 20px;
+
+  @media (min-width: 640px) {
+    padding: 24px;
+  }
+`;
+
+export const WithdrawalItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #e2e8f0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+`;
+
+export const StatusBadge = styled.div`
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: ${props => 
+    props.$status === 'approved' ? 'rgba(16, 185, 129, 0.1)' :
+    props.$status === 'pending' ? 'rgba(245, 158, 11, 0.1)' :
+    props.$status === 'rejected' ? 'rgba(239, 68, 68, 0.1)' :
+    '#f1f5f9'};
+  color: ${props => 
+    props.$status === 'approved' ? '#10b981' :
+    props.$status === 'pending' ? '#f59e0b' :
+    props.$status === 'rejected' ? '#ef4444' :
+    '#64748b'};
+  flex-shrink: 0;
 `;

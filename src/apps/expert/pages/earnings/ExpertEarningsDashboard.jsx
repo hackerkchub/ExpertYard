@@ -16,10 +16,13 @@ import {
   FiAlertCircle,
   FiLock,
   FiShield,
+  FiCheckCircle,
+  FiXCircle,
+  FiClock as FiClockIcon,
 } from "react-icons/fi";
 import { HiOutlineCurrencyRupee } from "react-icons/hi";
-import { MdAttachMoney, MdVerified } from "react-icons/md";
-import { BsGraphUp, BsLightningCharge } from "react-icons/bs";
+import { MdAttachMoney, MdVerified, MdWarning } from "react-icons/md";
+import { BsGraphUp, BsLightningCharge, BsCalendarCheck } from "react-icons/bs";
 import { TbPigMoney } from "react-icons/tb";
 
 import {
@@ -67,52 +70,61 @@ import {
   PayoutOption,
   Loader,
   SuccessMessage,
+  LoadingSpinner,
+  WithdrawalHistory,
+  WithdrawalItem,
+  StatusBadge,
 } from "./ExpertEarningsDashboard.styles";
 
 import { useExpert } from "../../../../shared/context/ExpertContext";
+import {
+  getExpertDashboardApi
+} from "../../../../shared/api/expertapi/dashboard.api";
 
-// Mock data - Replace with API calls
-const mockTransactions = [
-  { id: 1, date: "2024-02-25", amount: 2500, type: "chat", status: "completed", description: "Chat session with User123" },
-  { id: 2, date: "2024-02-24", amount: 1800, type: "chat", status: "completed", description: "Chat session with User456" },
-  { id: 3, date: "2024-02-23", amount: 3200, type: "call", status: "completed", description: "Voice call consultation" },
-  { id: 4, date: "2024-02-22", amount: 1500, type: "chat", status: "pending", description: "Chat session with User789" },
-  { id: 5, date: "2024-02-21", amount: 4200, type: "call", status: "completed", description: "Extended consultation" },
-  { id: 6, date: "2024-02-20", amount: 2800, type: "chat", status: "completed", description: "Chat session with User101" },
-];
+import {
+  getEarningSummaryApi,
+  getEarningHistoryApi
+} from "../../../../shared/api/expertapi/earning.api";
 
-const mockEarningsData = {
-  totalEarnings: 85400,
-  totalMinutes: 2135,
-  completedSessions: 128,
-  pendingPayout: 12500,
-  thisMonthEarnings: 25600,
-  lastMonthEarnings: 19800,
-  growthPercentage: 29.3,
-};
+import {
+  requestWithdrawalApi,
+  getWithdrawalHistoryApi
+} from "../../../../shared/api/expertapi/withdrawal.api";
 
 const ExpertEarningsDashboard = () => {
   const { expertData } = useExpert();
   const [timeFilter, setTimeFilter] = useState("month");
-  const [transactions, setTransactions] = useState(mockTransactions);
+  const [earningsStats, setEarningsStats] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showPayoutModal, setShowPayoutModal] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationStatus, setVerificationStatus] = useState("pending"); // pending, verified, rejected
+  const [verificationStatus, setVerificationStatus] = useState("pending");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [withdrawalHistory, setWithdrawalHistory] = useState([]);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
 
-  // Account form state
+  // Track window width for responsive
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Account form state (static for now)
   const [accountDetails, setAccountDetails] = useState({
-    fullName: "",
-    bankName: "",
-    accountNumber: "",
-    ifscCode: "",
+    fullName: expertData?.name || "Dr. Sarah Johnson",
+    bankName: "HDFC Bank",
+    accountNumber: "XXXXXXXXXXXX1234",
+    ifscCode: "HDFC0001234",
     accountType: "savings",
-    upiId: "",
-    phone: "",
-    email: expertData?.email || "",
-    panNumber: "",
-    address: "",
+    upiId: "sarah@okhdfcbank",
+    phone: expertData?.phone || "+91 98765 43210",
+    email: expertData?.email || "sarah@expertyard.com",
+    panNumber: "ABCDE1234F",
+    address: "Mumbai, Maharashtra",
   });
 
   // Payout request state
@@ -121,35 +133,126 @@ const ExpertEarningsDashboard = () => {
     method: "bank",
   });
 
-  const earningsStats = useMemo(() => {
-    const base = mockEarningsData;
+  // Load dashboard data
+  const loadDashboard = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const [summaryRes, historyRes, withdrawalRes] = await Promise.all([
+        getEarningSummaryApi(),
+        getEarningHistoryApi(),
+        getWithdrawalHistoryApi(),
+      ]);
+
+      // Process Summary Data
+     const summary = summaryRes.data.data;   // 🔥 main data yahan hai
+
+setEarningsStats({
+  totalEarnings: Number(summary.totalEarning || 0),
+  totalMinutes:
+    Number(summary.totalChatMinutes || 0) +
+    Number(summary.totalCallMinutes || 0),
+
+  chatMinutes: Number(summary.totalChatMinutes || 0),
+  callMinutes: Number(summary.totalCallMinutes || 0),
+
+  totalWithdrawn: Number(summary.totalWithdrawn || 0),
+  availableBalance: Number(summary.availableBalance || 0),
+
+  completedSessions: historyRes.data.total_records || 0,
+});
+      // Process Transaction History
+      const history = historyRes?.data?.data || [];
+      if (Array.isArray(history)) {
+        const formattedTransactions = history.map((item, index) => ({
+          id: index + 1,
+          type: item.session_type,
+          amount: parseFloat(item.expert_earning || 0),
+          totalAmount: parseFloat(item.total_amount || 0),
+          commission: parseFloat(item.commission_amount || 0),
+          minutes: parseInt(item.total_minutes || 0),
+          rate: parseFloat(item.rate_per_minute || 0),
+          date: item.created_at,
+          status: "completed",
+          description: `${item.session_type} session • ${item.total_minutes} min • ₹${item.rate_per_minute}/min`,
+        }));
+        setTransactions(formattedTransactions);
+      }
+
+      // Process Withdrawal History
+      const withdrawals = withdrawalRes?.data?.data || [];
+setWithdrawalHistory(withdrawals);
+      if (Array.isArray(withdrawals)) {
+        setWithdrawalHistory(withdrawals);
+      }
+
+      // Check verification status from expertData
+      if (expertData?.verification_status) {
+        setVerificationStatus(expertData.verification_status);
+      } else {
+        // If user has completed withdrawals, consider them verified
+        const hasWithdrawals = Array.isArray(withdrawals) && withdrawals.length > 0;
+        if (hasWithdrawals) {
+          setVerificationStatus("verified");
+        }
+      }
+
+    } catch (err) {
+      console.error("Failed to load dashboard data:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [expertData]);
+
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
+
+  // Calculate growth percentage (comparing to previous month - simulated for now)
+  const calculateGrowth = useCallback(() => {
+    if (!earningsStats) return 0;
+    // This would need previous month data from API
+    // For now, returning a simulated value
+    return 12.5;
+  }, [earningsStats]);
+
+  const formattedStats = useMemo(() => {
+    if (!earningsStats) return null;
+
     const formattedTotal = new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
       maximumFractionDigits: 0,
-    }).format(base.totalEarnings);
+    }).format(earningsStats.totalEarnings);
 
-    const formattedPending = new Intl.NumberFormat('en-IN', {
+    const formattedAvailable = new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
       maximumFractionDigits: 0,
-    }).format(base.pendingPayout);
+    }).format(earningsStats.availableBalance);
 
-    const formattedThisMonth = new Intl.NumberFormat('en-IN', {
+    const formattedWithdrawn = new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
       maximumFractionDigits: 0,
-    }).format(base.thisMonthEarnings);
+    }).format(earningsStats.totalWithdrawn);
+
+    const growthPercentage = calculateGrowth();
 
     return {
-      ...base,
+      ...earningsStats,
       formattedTotal,
-      formattedPending,
-      formattedThisMonth,
-      avgPerSession: base.totalEarnings / base.completedSessions,
-      avgPerMinute: base.totalEarnings / base.totalMinutes,
+      formattedAvailable,
+      formattedWithdrawn,
+      growthPercentage,
+      avgPerSession: earningsStats.completedSessions > 0 
+        ? earningsStats.totalEarnings / earningsStats.completedSessions 
+        : 0,
+      avgPerMinute: earningsStats.totalMinutes > 0 
+        ? earningsStats.totalEarnings / earningsStats.totalMinutes 
+        : 0,
     };
-  }, []);
+  }, [earningsStats, calculateGrowth]);
 
   const filteredTransactions = useMemo(() => {
     const now = new Date();
@@ -177,17 +280,38 @@ const ExpertEarningsDashboard = () => {
       setShowAccountModal(false);
       setShowSuccess(true);
       
-      // Hide success message after 3 seconds
       setTimeout(() => setShowSuccess(false), 3000);
     }, 2000);
   };
 
-  const handlePayoutRequest = (e) => {
+  const handlePayoutRequest = async (e) => {
     e.preventDefault();
-    // Handle payout request
-    setShowPayoutModal(false);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+
+    try {
+      setIsVerifying(true);
+      
+      await requestWithdrawalApi({
+        amount: payoutRequest.amount,
+      });
+
+      setShowPayoutModal(false);
+      setShowSuccess(true);
+      await loadDashboard(); // Refresh data
+
+      setTimeout(() => setShowSuccess(false), 3000);
+    }catch (err) {
+  console.log("FULL ERROR →", err);
+
+  const backendMessage =
+    err?.response?.data?.message ||
+    err?.response?.data?.error ||   // if your backend uses 'error'
+    err?.message ||
+    "Failed to request payout";
+
+  alert(backendMessage);
+} finally {
+      setIsVerifying(false);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -211,10 +335,11 @@ const ExpertEarningsDashboard = () => {
       style: 'currency',
       currency: 'INR',
       maximumFractionDigits: 0,
-    }).format(amount);
+    }).format(amount || 0);
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return "-";
     return new Date(dateString).toLocaleDateString('en-IN', {
       day: 'numeric',
       month: 'short',
@@ -222,14 +347,95 @@ const ExpertEarningsDashboard = () => {
     });
   };
 
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   const getStatusColor = (status) => {
-    switch(status) {
-      case 'completed': return '#10b981';
-      case 'pending': return '#f59e0b';
-      case 'failed': return '#ef4444';
-      default: return '#64748b';
+    switch(status?.toLowerCase()) {
+      case 'approved':
+      case 'completed':
+      case 'success':
+      case 'paid':
+        return '#10b981';
+      case 'pending':
+      case 'processing':
+        return '#f59e0b';
+      case 'rejected':
+      case 'failed':
+        return '#ef4444';
+      default:
+        return '#64748b';
     }
   };
+
+  const getStatusIcon = (status) => {
+    switch(status?.toLowerCase()) {
+      case 'approved':
+      case 'completed':
+      case 'success':
+      case 'paid':
+        return <FiCheckCircle />;
+      case 'pending':
+      case 'processing':
+        return <FiClockIcon />;
+      case 'rejected':
+      case 'failed':
+        return <FiXCircle />;
+      default:
+        return <FiAlertCircle />;
+    }
+  };
+
+  const getTransactionTypeIcon = (type) => {
+    switch(type?.toLowerCase()) {
+      case 'chat':
+        return <FiMail size={16} />;
+      case 'call':
+        return <FiPhone size={16} />;
+      default:
+        return <FiDollarSign size={16} />;
+    }
+  };
+
+  const getSessionSummary = () => {
+    if (!earningsStats) return { chat: 0, call: 0 };
+    return {
+      chat: earningsStats.chatMinutes || 0,
+      call: earningsStats.callMinutes || 0,
+    };
+  };
+
+  if (loading) {
+    return (
+      <PremiumContainer>
+        <LoadingSpinner>
+          <div className="spinner"></div>
+          <p>Loading your earnings dashboard...</p>
+        </LoadingSpinner>
+      </PremiumContainer>
+    );
+  }
+
+  if (!formattedStats) {
+    return (
+      <PremiumContainer>
+        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <h3>No data available</h3>
+          <p>Unable to load earnings information</p>
+        </div>
+      </PremiumContainer>
+    );
+  }
+
+  const sessionSummary = getSessionSummary();
 
   return (
     <PremiumContainer>
@@ -245,10 +451,10 @@ const ExpertEarningsDashboard = () => {
               <p style={{ 
                 color: '#64748b', 
                 marginTop: 8, 
-                fontSize: '14px',
+                fontSize: windowWidth < 640 ? '13px' : '14px',
                 lineHeight: 1.5 
               }}>
-                Track your earnings, manage payouts, and update account details
+                Track your earnings, manage payouts, and view transaction history
               </p>
             </HeaderLeft>
             
@@ -256,12 +462,13 @@ const ExpertEarningsDashboard = () => {
               <BalanceDisplay>
                 <div className="balance-label">Available Balance</div>
                 <div className="balance-value">
-                  {formatCurrency(earningsStats.pendingPayout)}
+                  {formatCurrency(formattedStats.availableBalance)}
                 </div>
               </BalanceDisplay>
               
               <PayoutButton
                 onClick={() => setShowPayoutModal(true)}
+                disabled={formattedStats.availableBalance < 100}
               >
                 <HiOutlineCurrencyRupee />
                 Request Payout
@@ -278,10 +485,10 @@ const ExpertEarningsDashboard = () => {
             </div>
             <div className="stat-content">
               <div className="stat-label">Total Earnings</div>
-              <div className="stat-value">{earningsStats.formattedTotal}</div>
+              <div className="stat-value">{formattedStats.formattedTotal}</div>
               <div className="stat-change">
                 <FiTrendingUp />
-                <span>+{earningsStats.growthPercentage}% this month</span>
+                <span>+{formattedStats.growthPercentage}% this month</span>
               </div>
             </div>
           </StatCard>
@@ -292,24 +499,27 @@ const ExpertEarningsDashboard = () => {
             </div>
             <div className="stat-content">
               <div className="stat-label">Total Time</div>
-              <div className="stat-value">{earningsStats.totalMinutes} min</div>
+              <div className="stat-value">{formattedStats.totalMinutes} min</div>
               <div className="stat-change">
                 <BsGraphUp />
-                <span>₹{earningsStats.avgPerMinute.toFixed(2)}/min avg</span>
+                <div style={{ display: 'flex', gap: '8px', fontSize: '11px' }}>
+                  <span>Chat: {sessionSummary.chat}min</span>
+                  <span>Call: {sessionSummary.call}min</span>
+                </div>
               </div>
             </div>
           </StatCard>
 
           <StatCard>
             <div className="stat-icon">
-              <FiTrendingUp />
+              <BsLightningCharge />
             </div>
             <div className="stat-content">
-              <div className="stat-label">This Month</div>
-              <div className="stat-value">{earningsStats.formattedThisMonth}</div>
+              <div className="stat-label">Withdrawn</div>
+              <div className="stat-value">{formattedStats.formattedWithdrawn}</div>
               <div className="stat-change">
-                <BsLightningCharge />
-                <span>{earningsStats.completedSessions} sessions</span>
+                <BsCalendarCheck />
+                <span>Total paid out</span>
               </div>
             </div>
           </StatCard>
@@ -319,8 +529,8 @@ const ExpertEarningsDashboard = () => {
               <TbPigMoney />
             </div>
             <div className="stat-content">
-              <div className="stat-label">Pending Payout</div>
-              <div className="stat-value">{earningsStats.formattedPending}</div>
+              <div className="stat-label">Available</div>
+              <div className="stat-value">{formattedStats.formattedAvailable}</div>
               <div className="stat-change">
                 <FiCalendar />
                 <span>Ready for withdrawal</span>
@@ -333,13 +543,13 @@ const ExpertEarningsDashboard = () => {
         <ContentGrid>
           {/* Left Column - Chart & Transactions */}
           <div>
-            {/* Earnings Chart */}
-            <ChartContainer>
+            {/* Earnings Chart - Optional, can be implemented later */}
+            {/* <ChartContainer>
               <div style={{ 
                 display: 'flex', 
-                flexDirection: window.innerWidth < 640 ? 'column' : 'row',
+                flexDirection: windowWidth < 640 ? 'column' : 'row',
                 justifyContent: 'space-between', 
-                alignItems: window.innerWidth < 640 ? 'flex-start' : 'center',
+                alignItems: windowWidth < 640 ? 'flex-start' : 'center',
                 gap: '16px',
                 marginBottom: '20px'
               }}>
@@ -369,21 +579,21 @@ const ExpertEarningsDashboard = () => {
               <ChartPlaceholder>
                 <div style={{ textAlign: 'center' }}>
                   <BsGraphUp size={28} />
-                  <div>Earnings chart will appear here</div>
-                  <div style={{ fontSize: '12px', marginTop: '4px' }}>
-                    Visual representation of your earnings over time
+                  <div>Earnings chart coming soon</div>
+                  <div style={{ fontSize: '12px', marginTop: '4px', color: '#94a3b8' }}>
+                    Your earnings visualization will appear here
                   </div>
                 </div>
               </ChartPlaceholder>
-            </ChartContainer>
+            </ChartContainer> */}
 
             {/* Transaction History */}
             <TransactionHistory>
               <div style={{ 
                 display: 'flex', 
-                flexDirection: window.innerWidth < 480 ? 'column' : 'row',
+                flexDirection: windowWidth < 480 ? 'column' : 'row',
                 justifyContent: 'space-between', 
-                alignItems: window.innerWidth < 480 ? 'flex-start' : 'center',
+                alignItems: windowWidth < 480 ? 'flex-start' : 'center',
                 gap: '12px',
                 marginBottom: '20px'
               }}>
@@ -413,36 +623,59 @@ const ExpertEarningsDashboard = () => {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {filteredTransactions.map(transaction => (
-                  <TransactionItem key={transaction.id}>
-                    <div className="transaction-icon">
-                      {transaction.type === 'chat' ? (
-                        <FiMail size={16} />
-                      ) : (
-                        <FiPhone size={16} />
-                      )}
-                    </div>
-                    
-                    <div className="transaction-details">
-                      <div className="transaction-title">{transaction.description}</div>
-                      <div className="transaction-date">{formatDate(transaction.date)}</div>
-                    </div>
-                    
-                    <div className="transaction-amount">
-                      <div className="amount">+{formatCurrency(transaction.amount)}</div>
-                      <div 
-                        className="status" 
-                        style={{ color: getStatusColor(transaction.status) }}
-                      >
-                        {transaction.status}
+                {filteredTransactions.length > 0 ? (
+                  filteredTransactions.map((transaction) => (
+                    <TransactionItem key={transaction.id}>
+                      <div className="transaction-icon">
+                        {getTransactionTypeIcon(transaction.type)}
                       </div>
-                    </div>
-                    
-                    <button className="transaction-action">
-                      <FiChevronRight />
-                    </button>
-                  </TransactionItem>
-                ))}
+                      
+                      <div className="transaction-details">
+                        <div className="transaction-title">
+                          {transaction.description}
+                        </div>
+                        <div className="transaction-date">
+                          {formatDate(transaction.date)}
+                        </div>
+                        <div style={{ 
+                          fontSize: '11px', 
+                          color: '#94a3b8',
+                          marginTop: '2px',
+                          display: 'flex',
+                          gap: '8px'
+                        }}>
+                          <span>Rate: ₹{transaction.rate}/min</span>
+                          <span>Commission: {formatCurrency(transaction.commission)}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="transaction-amount">
+                        <div className="amount">
+                          +{formatCurrency(transaction.amount)}
+                        </div>
+                        <div 
+                          className="status" 
+                          style={{ color: getStatusColor(transaction.status) }}
+                        >
+                          {transaction.status}
+                        </div>
+                      </div>
+                      
+                      <button className="transaction-action">
+                        <FiChevronRight />
+                      </button>
+                    </TransactionItem>
+                  ))
+                ) : (
+                  <div style={{ 
+                    textAlign: 'center', 
+                    padding: '40px 20px',
+                    color: '#64748b',
+                    fontSize: '14px'
+                  }}>
+                    No transactions found
+                  </div>
+                )}
               </div>
             </TransactionHistory>
           </div>
@@ -463,24 +696,29 @@ const ExpertEarningsDashboard = () => {
                 <VerificationBadge $status={verificationStatus}>
                   {verificationStatus === 'verified' && <MdVerified size={14} />}
                   {verificationStatus === 'pending' && <FiAlertCircle size={14} />}
-                  {verificationStatus === 'rejected' && <FiAlertCircle size={14} />}
+                  {verificationStatus === 'rejected' && <MdWarning size={14} />}
                   {verificationStatus.charAt(0).toUpperCase() + verificationStatus.slice(1)}
                 </VerificationBadge>
               </div>
 
               <PayoutProgress>
                 <div className="progress-header">
-                  <div className="progress-label">Payout Readiness</div>
-                  <div className="progress-percentage">75%</div>
+                  <div className="progress-label">Account Completion</div>
+                  <div className="progress-percentage">
+                    {verificationStatus === 'verified' ? '100%' : '75%'}
+                  </div>
                 </div>
                 <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: '75%' }}></div>
+                  <div 
+                    className="progress-fill" 
+                    style={{ width: verificationStatus === 'verified' ? '100%' : '75%' }}
+                  />
                 </div>
                 <div className="progress-steps">
                   {[
-                    { number: 1, label: 'Account Details', completed: verificationStatus === 'verified' },
-                    { number: 2, label: 'KYC Verification', completed: verificationStatus === 'verified' },
-                    { number: 3, label: 'First Payout', completed: false }
+                    { number: 1, label: 'Profile', completed: true },
+                    { number: 2, label: 'Bank Details', completed: verificationStatus === 'verified' },
+                    { number: 3, label: 'KYC', completed: verificationStatus === 'verified' }
                   ].map((step, index) => (
                     <div key={index} className="step">
                       <div className="step-number">{step.number}</div>
@@ -496,7 +734,7 @@ const ExpertEarningsDashboard = () => {
                   {verificationStatus === 'verified' ? (
                     <>
                       <FiUser size={16} />
-                      Update Account Details
+                      View Account Details
                     </>
                   ) : (
                     <>
@@ -522,10 +760,22 @@ const ExpertEarningsDashboard = () => {
 
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {[
-                  { label: 'Available Balance', value: formatCurrency(earningsStats.pendingPayout) },
-                  { label: 'Next Payout Date', value: '15 March 2024' },
-                  { label: 'Min. Withdrawal', value: formatCurrency(1000) },
-                  { label: 'Processing Time', value: '3-5 business days' }
+                  { 
+                    label: 'Available Balance', 
+                    value: formatCurrency(formattedStats.availableBalance) 
+                  },
+                  { 
+                    label: 'Total Withdrawn', 
+                    value: formatCurrency(formattedStats.totalWithdrawn) 
+                  },
+                  { 
+                    label: 'Min. Withdrawal', 
+                    value: formatCurrency(100) 
+                  },
+                  { 
+                    label: 'Processing Time', 
+                    value: '3-5 business days' 
+                  }
                 ].map((item, index) => (
                   <div key={index} className="summary-item">
                     <div className="summary-label">{item.label}</div>
@@ -545,15 +795,51 @@ const ExpertEarningsDashboard = () => {
               </SecurityNote>
             </SummaryCard>
 
+            {/* Withdrawal History */}
+            {withdrawalHistory.length > 0 && (
+              <WithdrawalHistory>
+                <SectionTitle style={{ marginBottom: '16px' }}>
+                  Recent Withdrawals
+                </SectionTitle>
+                
+                {withdrawalHistory.slice(0, 3).map((withdrawal) => (
+                  <WithdrawalItem key={withdrawal.id}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <StatusBadge $status={withdrawal.status}>
+                        {getStatusIcon(withdrawal.status)}
+                      </StatusBadge>
+                      <div>
+                        <div style={{ fontWeight: 600, color: '#1e293b' }}>
+                          {formatCurrency(withdrawal.amount)}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#64748b' }}>
+                          {formatDate(withdrawal.created_at)}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ 
+                      fontSize: '12px', 
+                      fontWeight: 500,
+                      color: getStatusColor(withdrawal.status),
+                      textTransform: 'capitalize'
+                    }}>
+                      {withdrawal.status}
+                    </div>
+                  </WithdrawalItem>
+                ))}
+              </WithdrawalHistory>
+            )}
+
             {/* Bank Details Preview */}
             {verificationStatus === 'verified' && (
               <BankDetailsCard>
                 <SectionTitle>Bank Details</SectionTitle>
                 <div style={{ marginTop: '16px' }}>
                   {[
-                    { label: 'Bank Name', value: 'HDFC Bank' },
-                    { label: 'Account Number', value: '●●●● ●●●● 1234' },
-                    { label: 'IFSC Code', value: 'HDFC0001234' }
+                    { label: 'Bank Name', value: accountDetails.bankName },
+                    { label: 'Account Number', value: accountDetails.accountNumber },
+                    { label: 'IFSC Code', value: accountDetails.ifscCode },
+                    { label: 'UPI ID', value: accountDetails.upiId }
                   ].map((detail, index) => (
                     <div key={index} className="bank-detail">
                       <div className="detail-label">{detail.label}</div>
@@ -588,14 +874,12 @@ const ExpertEarningsDashboard = () => {
         </SuccessMessage>
       )}
 
-      {/* Account Setup Modal */}
+      {/* Account Details Modal */}
       {showAccountModal && (
         <ModalOverlay onClick={() => !isVerifying && setShowAccountModal(false)}>
           <ModalContent onClick={(e) => e.stopPropagation()}>
             <ModalHeader>
-              <h2>
-                {verificationStatus === 'verified' ? 'Update Account Details' : 'Complete Account Setup'}
-              </h2>
+              <h2>Account Details</h2>
               <ModalClose
                 onClick={() => !isVerifying && setShowAccountModal(false)}
                 disabled={isVerifying}
@@ -616,9 +900,7 @@ const ExpertEarningsDashboard = () => {
                     name="fullName"
                     value={accountDetails.fullName}
                     onChange={handleInputChange}
-                    placeholder="Enter your full name"
-                    required
-                    disabled={isVerifying}
+                    disabled
                   />
                 </InputGroup>
 
@@ -632,9 +914,7 @@ const ExpertEarningsDashboard = () => {
                     name="email"
                     value={accountDetails.email}
                     onChange={handleInputChange}
-                    placeholder="Enter your email"
-                    required
-                    disabled={isVerifying}
+                    disabled
                   />
                 </InputGroup>
 
@@ -648,9 +928,7 @@ const ExpertEarningsDashboard = () => {
                     name="phone"
                     value={accountDetails.phone}
                     onChange={handleInputChange}
-                    placeholder="Enter phone number"
-                    required
-                    disabled={isVerifying}
+                    disabled
                   />
                 </InputGroup>
 
@@ -664,9 +942,7 @@ const ExpertEarningsDashboard = () => {
                     name="panNumber"
                     value={accountDetails.panNumber}
                     onChange={handleInputChange}
-                    placeholder="ABCDE1234F"
-                    required
-                    disabled={isVerifying}
+                    disabled
                   />
                 </InputGroup>
 
@@ -680,9 +956,7 @@ const ExpertEarningsDashboard = () => {
                     name="address"
                     value={accountDetails.address}
                     onChange={handleInputChange}
-                    placeholder="Enter your complete address"
-                    required
-                    disabled={isVerifying}
+                    disabled
                   />
                 </InputGroup>
 
@@ -702,9 +976,7 @@ const ExpertEarningsDashboard = () => {
                     name="bankName"
                     value={accountDetails.bankName}
                     onChange={handleInputChange}
-                    placeholder="e.g., HDFC Bank"
-                    required
-                    disabled={isVerifying}
+                    disabled
                   />
                 </InputGroup>
 
@@ -718,9 +990,7 @@ const ExpertEarningsDashboard = () => {
                     name="accountNumber"
                     value={accountDetails.accountNumber}
                     onChange={handleInputChange}
-                    placeholder="Enter account number"
-                    required
-                    disabled={isVerifying}
+                    disabled
                   />
                 </InputGroup>
 
@@ -734,41 +1004,21 @@ const ExpertEarningsDashboard = () => {
                     name="ifscCode"
                     value={accountDetails.ifscCode}
                     onChange={handleInputChange}
-                    placeholder="e.g., HDFC0001234"
-                    required
-                    disabled={isVerifying}
+                    disabled
                   />
-                </InputGroup>
-
-                <InputGroup>
-                  <FormLabel>
-                    <FiCreditCard />
-                    Account Type
-                  </FormLabel>
-                  <SelectInput
-                    name="accountType"
-                    value={accountDetails.accountType}
-                    onChange={handleInputChange}
-                    required
-                    disabled={isVerifying}
-                  >
-                    <option value="savings">Savings Account</option>
-                    <option value="current">Current Account</option>
-                  </SelectInput>
                 </InputGroup>
 
                 <InputGroup $fullWidth>
                   <FormLabel>
                     <HiOutlineCurrencyRupee />
-                    UPI ID (Optional)
+                    UPI ID
                   </FormLabel>
                   <FormInput
                     type="text"
                     name="upiId"
                     value={accountDetails.upiId}
                     onChange={handleInputChange}
-                    placeholder="username@bank"
-                    disabled={isVerifying}
+                    disabled
                   />
                 </InputGroup>
               </FormGrid>
@@ -778,33 +1028,17 @@ const ExpertEarningsDashboard = () => {
                 <div className="security-text">
                   <div className="security-title">Secure Information</div>
                   <div className="security-description">
-                    Your bank details are encrypted and stored securely. We never share your information with third parties.
+                    Your bank details are encrypted and stored securely.
                   </div>
                 </div>
               </SecurityNote>
 
               <FormActions>
                 <FormButton
-                  type="submit"
-                  $primary
-                  disabled={isVerifying}
-                >
-                  {isVerifying ? (
-                    <>
-                      <Loader />
-                      Verifying...
-                    </>
-                  ) : (
-                    'Save & Verify Account'
-                  )}
-                </FormButton>
-                
-                <FormButton
                   type="button"
-                  onClick={() => !isVerifying && setShowAccountModal(false)}
-                  disabled={isVerifying}
+                  onClick={() => setShowAccountModal(false)}
                 >
-                  Cancel
+                  Close
                 </FormButton>
               </FormActions>
             </AccountForm>
@@ -826,11 +1060,11 @@ const ExpertEarningsDashboard = () => {
                 Available Balance
               </div>
               <div style={{ 
-                fontSize: window.innerWidth < 480 ? '28px' : '32px', 
+                fontSize: windowWidth < 480 ? '28px' : '32px', 
                 fontWeight: 700, 
                 color: '#1e293b' 
               }}>
-                {formatCurrency(earningsStats.pendingPayout)}
+                {formatCurrency(formattedStats.availableBalance)}
               </div>
             </div>
 
@@ -843,16 +1077,17 @@ const ExpertEarningsDashboard = () => {
                   value={payoutRequest.amount}
                   onChange={handlePayoutChange}
                   placeholder="Enter amount"
-                  min="1000"
-                  max={earningsStats.pendingPayout}
+                  min="100"
+                  max={formattedStats.availableBalance}
                   required
+                  disabled={isVerifying}
                 />
                 <div style={{ 
                   fontSize: '12px', 
                   color: '#64748b', 
                   marginTop: '6px' 
                 }}>
-                  Minimum withdrawal: {formatCurrency(1000)}
+                  Minimum withdrawal: {formatCurrency(100)}
                 </div>
               </InputGroup>
 
@@ -860,7 +1095,7 @@ const ExpertEarningsDashboard = () => {
                 <FormLabel>Payout Method</FormLabel>
                 <PayoutOption
                   $selected={payoutRequest.method === 'bank'}
-                  onClick={() => setPayoutRequest(prev => ({ ...prev, method: 'bank' }))}
+                  onClick={() => !isVerifying && setPayoutRequest(prev => ({ ...prev, method: 'bank' }))}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div 
@@ -878,7 +1113,7 @@ const ExpertEarningsDashboard = () => {
 
                 <PayoutOption
                   $selected={payoutRequest.method === 'upi'}
-                  onClick={() => setPayoutRequest(prev => ({ ...prev, method: 'upi' }))}
+                  onClick={() => !isVerifying && setPayoutRequest(prev => ({ ...prev, method: 'upi' }))}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div 
@@ -900,18 +1135,35 @@ const ExpertEarningsDashboard = () => {
                 <div className="security-text">
                   <div className="security-title">Processing Information</div>
                   <div className="security-description">
-                    Payouts are processed every Monday and Thursday. A 2% processing fee applies to all withdrawals.
+                    Payouts are processed every Monday and Thursday.
                   </div>
                 </div>
               </SecurityNote>
 
               <FormActions>
-                <FormButton type="submit" $primary>
-                  <HiOutlineCurrencyRupee size={18} />
-                  Request Payout
+                <FormButton 
+                  type="submit" 
+                  $primary 
+                  disabled={isVerifying || payoutRequest.amount < 100 || payoutRequest.amount > formattedStats.availableBalance}
+                >
+                  {isVerifying ? (
+                    <>
+                      <Loader />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <HiOutlineCurrencyRupee size={18} />
+                      Request Payout
+                    </>
+                  )}
                 </FormButton>
                 
-                <FormButton type="button" onClick={() => setShowPayoutModal(false)}>
+                <FormButton 
+                  type="button" 
+                  onClick={() => setShowPayoutModal(false)}
+                  disabled={isVerifying}
+                >
                   Cancel
                 </FormButton>
               </FormActions>

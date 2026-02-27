@@ -55,6 +55,7 @@ const isOnCallPage = location.pathname.startsWith("/expert/voice-call/");
         userId: expertId,
         role: "expert",
       });
+      socket.emit("call:resume_check"); 
     };
 
     socket.on("connect", onConnect);

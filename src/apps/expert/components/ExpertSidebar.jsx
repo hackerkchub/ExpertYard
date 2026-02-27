@@ -100,9 +100,9 @@ export default function ExpertSidebar() {
 
   return (
     <>
-      <MenuToggle onClick={() => setIsOpen(!isOpen)}>
+      {/* <MenuToggle onClick={() => setIsOpen(!isOpen)}>
         {isOpen ? '✕' : '☰'}
-      </MenuToggle>
+      </MenuToggle> */}
 
       <SidebarWrap className={isOpen ? 'open' : ''}>
         {/* Premium Badge */}

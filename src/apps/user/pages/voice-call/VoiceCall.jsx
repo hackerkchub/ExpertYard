@@ -76,6 +76,8 @@ export default function VoiceCall() {
   const [muted, setMuted] = useState(false);
   const [reconnecting, setReconnecting] = useState(false);
   const [networkQuality, setNetworkQuality] = useState("good");
+  const [isResumed, setIsResumed] = useState(false);
+  const [resumeChecked, setResumeChecked] = useState(false);
   const navigatedRef = useRef(false);
 
   // Sync callState to ref
@@ -128,14 +130,15 @@ export default function VoiceCall() {
   }, [expertId, socket, goBackToProfile]);
 
   // Auto-start on mount
-  useEffect(() => {
-    startCall();
-  }, [startCall]);
+ useEffect(() => {
+  if (!resumeChecked) return;
+  if (!isResumed) startCall();
+}, [resumeChecked, isResumed, startCall]);
 
   // WebRTC Offer Handler
   const handleWebRTCOffer = useCallback(async (currentCallId) => {
     if (!currentCallId || makingOfferRef.current) return;
-
+if (callStateRef.current !== "connected") return;
     console.log("📡 Creating WebRTC offer for call:", currentCallId);
     makingOfferRef.current = true;
 
@@ -178,6 +181,36 @@ export default function VoiceCall() {
         .catch(console.warn);
     }
   }, []);
+
+   useEffect(() => {
+  const onResume = (data) => {
+    setIsResumed(true);
+
+    setCallId(data.callId);
+    setCallState("connected");
+
+    const alreadyElapsed =
+      Math.floor((Date.now() - new Date(data.startedAt)) / 1000);
+
+    setSeconds(alreadyElapsed);
+
+ if (callStateRef.current === "connected") {
+  setTimeout(() => {
+    handleWebRTCOffer(data.callId);
+  }, 400);
+}
+  };
+
+  socket.on("call:resume_data", onResume);
+  socket.emit("call:resume_check");
+
+  const t = setTimeout(() => setResumeChecked(true), 800);
+return () => {
+  clearTimeout(t);
+  socket.off("call:resume_data", onResume);
+};
+}, [socket, handleWebRTCOffer]);
+
 
   // Socket listeners
   useEffect(() => {

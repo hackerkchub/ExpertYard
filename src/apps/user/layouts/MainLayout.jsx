@@ -26,6 +26,7 @@ useEffect(() => {
       userId: Number(user.id),
       role: "user",
     });
+    socket.emit("call:resume_check"); 
   };
 
   socket.on("connect", onConnect);

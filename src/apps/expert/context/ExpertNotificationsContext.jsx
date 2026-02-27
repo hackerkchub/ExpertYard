@@ -283,6 +283,12 @@ const callUnreadCount = useMemo(
         updateStatus(notif, status || "missed");
       }
     };
+    const handleCancelled = ({ callId, status }) => {
+  const notif = getNotification(callId);
+  if (notif) {
+    updateStatus(notif, status || "cancelled");
+  }
+};
 
     const handleRejected = ({ callId, status }) => {
       const notif = getNotification(callId);
@@ -354,6 +360,7 @@ const callUnreadCount = useMemo(
     };
 
     socket.on("call:missed", handleMissed);
+    socket.on("call:cancelled", handleCancelled);
     socket.on("call:rejected", handleRejected);
     socket.on("call:taken", handleTaken);
     socket.on("call:ended", handleEnded);
@@ -361,6 +368,7 @@ const callUnreadCount = useMemo(
 
     return () => {
       socket.off("call:missed", handleMissed);
+      socket.off("call:cancelled", handleCancelled);
       socket.off("call:rejected", handleRejected);
       socket.off("call:taken", handleTaken);
       socket.off("call:ended", handleEnded);
@@ -453,7 +461,7 @@ const callUnreadCount = useMemo(
             id: localId,                    // Local ID for UI matching
             dbId: n.id,                      // DB ID for delete
             type: n.type,
-           status: FINAL_STATES.includes(n.status) ? n.status : "missed",
+           status: n.status || "missed",
             title: n.title,
             meta: n.message,
             unread: !n.is_read,

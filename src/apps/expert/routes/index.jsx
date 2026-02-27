@@ -16,6 +16,7 @@ import ExpertVoiceCall from "../pages/voice-call/ExpertVoiceCall";
 import ExpertNotificationPage from "../pages/notification/ExpertNotificationPage";
 import EarningDashboard from "../pages/earnings/ExpertEarningsDashboard";
 import Calendar from "../pages/calendar/Calendar";
+import ExpertSettings from "../pages/settings/ExpertSettings";
 
 export default function ExpertAppRoutes() {
   const { expertData } = useExpert();
@@ -65,7 +66,19 @@ export default function ExpertAppRoutes() {
             </ProtectedExpertRoute>
           }
         />
-
+        {/* SETTINGS */}
+        <Route
+          path="settings"
+          element={
+            <ProtectedExpertRoute
+              condition={expertData.expertId}
+              redirectTo="/expert/home"
+            >
+              <ExpertSettings />
+            </ProtectedExpertRoute>
+          }
+        />
+        
         {/* 📅 CALENDAR - NOW INSIDE LAYOUT ✅ */}
         <Route
           path="calendar"

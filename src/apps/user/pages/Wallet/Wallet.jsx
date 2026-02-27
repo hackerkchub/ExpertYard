@@ -36,14 +36,16 @@ import AddBalancePopup from "../../components/AddBalancePopup/AddBalancePopup";
 // ✅ CONTEXTS
 import { useWallet } from "../../../../shared/context/WalletContext";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
-import { getAllExperts } from "../../../../shared/services/expertService";
+import { useExpert } from "../../../../shared/context/ExpertContext";
+
+
 
 const WalletPage = () => {
-  const { balance, addMoney, transactions } = useWallet();
-  const { user } = useAuth();
-  const userId = user?.id;
-
-  const [experts, setExperts] = useState([]);
+  const { balance, addMoney } = useWallet();
+  // const { user } = useAuth();
+  // const userId = user?.id;
+const { experts } = useExpert();  
+  
   const [expenseHistory, setExpenseHistory] = useState([]);
   const [filteredExpenses, setFilteredExpenses] = useState([]);
   const [topupHistory, setTopupHistory] = useState([]);
@@ -61,60 +63,70 @@ const WalletPage = () => {
   const [customRange, setCustomRange] = useState({ from: "", to: "" });
 
   /* ================= LOAD DATA ================= */
-  useEffect(() => {
-    if (!userId) return;
-    loadExperts();
-    loadWalletStats();
-  }, [userId]);
+ 
 
-  const loadExperts = async () => {
-    const data = await getAllExperts();
+useEffect(() => {
+  if (!experts.length) return;
 
-    const expense = (data || []).slice(0, 8).map((ex, index) => ({
-      id: ex.id || index,
-      name: ex.name || "Expert",
-      role: ex.role || ex.position || "Consultant",
-      avatar: ex.profile_photo || ex.img || "/avatar.png",
-      amount: Math.floor(Math.random() * 500) + 100,
-      date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-      type: Math.random() > 0.5 ? "call" : "chat",
-      status: Math.random() > 0.3 ? "completed" : "pending"
-    }));
+  const expense = experts.slice(0, 8).map((ex, index) => ({
+    id: ex.id || index,
+    name: ex.name || "Expert",
+    role: ex.position || "Consultant",
+    avatar: ex.profile_photo || "/avatar.png",
+    amount: Math.floor(Math.random() * 500) + 100,
+    date: new Date(),
+    type: Math.random() > 0.5 ? "call" : "chat",
+    status: "completed"
+  }));
 
-    setExperts(data || []);
-    setExpenseHistory(expense);
-    setFilteredExpenses(expense.filter(e => sameMonth(e.date, new Date())));
+  setExpenseHistory(expense);
+  setFilteredExpenses(expense);
 
-    const topups = (data || []).slice(0, 4).map((ex, index) => ({
-      id: ex.id || index,
-      amount: Math.floor(Math.random() * 1000) + 100,
-      mode: ["UPI", "Card", "Net Banking", "Wallet"][index % 4],
-      date: new Date(Date.now() - Math.random() * 15 * 24 * 60 * 60 * 1000),
-      status: "success"
-    }));
+  const topups = experts.slice(0, 4).map((_, i) => ({
+    id: i,
+    amount: Math.floor(Math.random() * 1000) + 100,
+    mode: ["UPI", "Card", "Net Banking", "Wallet"][i % 4],
+    date: new Date(),
+    status: "success"
+  }));
 
-    setTopupHistory(topups);
-  };
+  setTopupHistory(topups);
+}, [experts]);
 
-  const loadWalletStats = () => {
-    const monthlySpent = expenseHistory
-      .filter(e => sameMonth(e.date, new Date()))
-      .reduce((sum, item) => sum + item.amount, 0);
-    
-    const avgTransaction = expenseHistory.length > 0 
-      ? expenseHistory.reduce((sum, item) => sum + item.amount, 0) / expenseHistory.length
-      : 0;
-    
-    const topExpert = expenseHistory.reduce((max, item) => 
-      item.amount > (max?.amount || 0) ? item : max, null
-    );
 
-    setStats({
-      monthlySpent,
-      avgTransaction: Math.round(avgTransaction),
-      topExpert
-    });
-  };
+useEffect(() => {
+  if (!expenseHistory.length) return;
+
+  const monthlySpent = expenseHistory
+    .filter(e => sameMonth(e.date, new Date()))
+    .reduce((sum, item) => sum + item.amount, 0);
+
+  const avgTransaction =
+    expenseHistory.reduce((sum, item) => sum + item.amount, 0) /
+    expenseHistory.length;
+
+  const topExpert = expenseHistory.reduce(
+    (max, item) =>
+      item.amount > (max?.amount || 0) ? item : max,
+    null
+  );
+
+  setStats({
+    monthlySpent,
+    avgTransaction: Math.round(avgTransaction),
+    topExpert
+  });
+}, [expenseHistory]);
+// useEffect(() => {
+//   if (!experts.length) return;
+
+//   const expense = experts.slice(0, 8).map(...);
+
+//   setExpenseHistory(expense);
+//   setFilteredExpenses(expense.filter(e => sameMonth(e.date, new Date())));
+// }, [experts]);
+ 
+  
 
   /* ================= FILTER ================= */
   const sameMonth = (d1, d2) =>
@@ -165,9 +177,9 @@ const WalletPage = () => {
 
   /* ================= ADD MONEY ================= */
   const handleAddMoney = async (amount) => {
-    await addMoney(userId, amount);
-    closePopup();
-  };
+  await addMoney(amount);
+  closePopup();
+};
 
   /* ================= FORMATTING ================= */
   const formatDate = (date) => {
@@ -283,11 +295,10 @@ const WalletPage = () => {
                 <select 
                   value={filterType}
                   onChange={(e) => {
-                    setFilterType(e.target.value);
-                    if (e.target.value === 'custom') {
-                      setShowDatePicker(true);
-                    }
-                  }}
+  const value = e.target.value;
+  setFilterType(value);
+  setShowDatePicker(value === "custom");
+}}
                 >
                   <option value="thisMonth">This Month</option>
                   <option value="lastMonth">Last Month</option>
@@ -363,7 +374,7 @@ const WalletPage = () => {
                       <span className="amount-value">₹{item.amount}</span>
                       <div className="amount-progress">
                         <ProgressBar 
-                          width={(item.amount / 500) * 100}
+                          width={Math.min((item.amount / stats.monthlySpent) * 100, 100)}
                           color={getTransactionTypeColor(item.type)}
                         />
                       </div>

@@ -32,7 +32,7 @@ import { socket } from "../../../../shared/api/socket";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { useExpertNotifications } from "../../context/ExpertNotificationsContext";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
-import { getUserProfileApi } from "../../../../shared/api/userApi";
+import { getUserPublicProfileApi } from "../../../../shared/api/userApi";
 
 const ExpertChat = () => {
   const { room_id } = useParams();
@@ -92,18 +92,22 @@ const ExpertChat = () => {
 
   /* ========= FETCH USER PROFILE ========= */
   const fetchUserProfile = useCallback(async (userId) => {
-    if (!userId) return;
+  if (!userId) return;
 
-    try {
-      setUserProfileLoading(true);
-      const response = await getUserProfileApi(userId);
-      if (response?.success) setUserProfile(response.data);
-    } catch (err) {
-      console.error("❌ User profile fetch failed:", err);
-    } finally {
-      setUserProfileLoading(false);
+  try {
+    setUserProfileLoading(true);
+
+    const res = await getUserPublicProfileApi(userId);
+
+    if (res?.success) {
+      setUserProfile(res.data);
     }
-  }, []);
+  } catch (err) {
+    console.error("User profile fetch failed", err);
+  } finally {
+    setUserProfileLoading(false);
+  }
+}, []);
 
   /* ========= RESET SESSION ========= */
   const resetSession = () => {

@@ -9,7 +9,7 @@ import React, {
 import {
   getWalletApi,
   addMoneyApi,
-  deductMoneyApi
+  
 } from "../api/userApi/walletApi";
 
 import { useAuth } from "./UserAuthContext";
@@ -23,15 +23,15 @@ export const WalletProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
 
   /* ================= GET BALANCE ================= */
- const fetchWallet = useCallback(async (userId) => {
-  if (!userId) return;
+ const fetchWallet = useCallback(async () => {
+  if (!isLoggedIn) return;
 
   try {
     setLoading(true);
-    const res = await getWalletApi(userId);
+    const res = await getWalletApi();
 
     if (res?.success) {
-      setBalance(Number(res.balance ?? res.new_balance ?? 0));
+      setBalance(Number(res.balance || 0));
     }
   } catch (err) {
     console.error("Wallet fetch failed", err);
@@ -39,46 +39,28 @@ export const WalletProvider = ({ children }) => {
   } finally {
     setLoading(false);
   }
-}, []);
+}, [isLoggedIn]);
 
   /* 🔥 AUTO FETCH AFTER LOGIN / REFRESH */
   useEffect(() => {
-  if (isLoggedIn && user?.id) {
-    fetchWallet(user.id);
+  if (isLoggedIn) {
+    fetchWallet();
   } else {
-    resetWallet(); // 🔥 important
+    resetWallet();
   }
-}, [isLoggedIn, user?.id, fetchWallet]);
+}, [isLoggedIn, fetchWallet]);
 
 
   /* ================= ADD MONEY ================= */
- const addMoney = async (user_id, amount) => {
-  const res = await addMoneyApi({ user_id, amount });
+const addMoney = async (amount) => {
+  const res = await addMoneyApi(amount);
 
   if (res?.success) {
-    // ✅ optimistic update
-    setBalance(Number(res.new_balance || 0));
-
-    // 🔄 final sync (IMPORTANT)
-    await fetchWallet(user_id);
+    await fetchWallet();
   }
 
   return res;
 };
-
-
-  /* ================= DEDUCT MONEY ================= */
-  const deductMoney = async (user_id, amount) => {
-  const res = await deductMoneyApi({ user_id, amount });
-
-  if (res?.success) {
-    setBalance(Number(res.new_balance || 0));
-    await fetchWallet(user_id);
-  }
-
-  return res;
-};
-
 
   /* ================= RESET ================= */
   const resetWallet = () => {
@@ -92,7 +74,6 @@ export const WalletProvider = ({ children }) => {
         loading,
         fetchWallet,
         addMoney,
-        deductMoney,
         resetWallet
       }}
     >

@@ -20,14 +20,19 @@ export const registerUserApi = async (payload) => {
 /* 👤 USER PROFILE APIS */
 /* ========================= */
 
-// GET USER PROFILE
-export const getUserProfileApi = async (user_id) => {
-  const { data } = await api.get(`/user/${user_id}`);
+// GET PROFILE
+export const getUserProfileApi = async () => {
+  const { data } = await api.get("/user/profile");
   return data;
 };
 
-// UPDATE USER PROFILE
-export const updateUserProfileApi = async (user_id, payload) => {
-  const { data } = await api.put(`/user/${user_id}`, payload);
+export const getUserPublicProfileApi = async (id) => {
+  const { data } = await api.get(`/user/public/${id}`);
+  return data;
+};
+
+// UPDATE PROFILE
+export const updateUserProfileApi = async (payload) => {
+  const { data } = await api.put("/user/profile", payload);
   return data;
 };

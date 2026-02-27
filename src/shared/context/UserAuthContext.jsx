@@ -9,8 +9,8 @@ import { loginUserApi } from "../api/userApi";
 const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
-const TOKEN_KEY = "token";
-const USER_KEY = "user"; // ✅ NEW
+const TOKEN_KEY = "user_token";
+const USER_KEY = "user";
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() =>
@@ -29,6 +29,17 @@ export const AuthProvider = ({ children }) => {
     setInitializing(false);
   }, []);
 
+  useEffect(() => {
+  const syncAuth = () => {
+  setToken(localStorage.getItem(TOKEN_KEY));
+
+  const savedUser = localStorage.getItem(USER_KEY);
+  setUser(savedUser ? JSON.parse(savedUser) : null);
+};
+  window.addEventListener("storage", syncAuth);
+  return () => window.removeEventListener("storage", syncAuth);
+}, []);
+
   /* ================= LOGIN ================= */
   const login = async (payload) => {
     const res = await loginUserApi(payload);
@@ -41,15 +52,13 @@ export const AuthProvider = ({ children }) => {
      *   user: { id: 6, name: "Rahul", email: "..." }
      * }
      */
-    if (res?.success && res?.token && res?.user) {
-  localStorage.setItem("token", res.token);
-  localStorage.setItem("user", JSON.stringify(res.user));
+   if (res?.success && res?.token && res?.user) {
+  localStorage.setItem(TOKEN_KEY, res.token);
+  localStorage.setItem(USER_KEY, JSON.stringify(res.user));
 
   setToken(res.token);
   setUser(res.user);
 }
-
-
     return res;
   };
 

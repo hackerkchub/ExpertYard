@@ -97,26 +97,33 @@ export default function Auth() {
     } catch (err) {}
   };
 
-  const handleLogin = async () => {
-    try {
-      const res = await login({
-        email_or_phone: loginEmail,
-        password: loginPassword
-      });
+ const handleLogin = async () => {
+  try {
+    const res = await login({
+      email_or_phone: loginEmail,
+      password: loginPassword
+    });
 
-      updateExpertData({
-        expertId: res.data.id,
-        name: res.data.name,
-        email: res.data.email,
-        phone: res.data.phone
-      });
+    console.log("LOGIN RES =>", res);
 
-      navigate("/expert/home");
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    // ✅ token save
+    localStorage.setItem("token", res.token);
 
+    // ✅ context update
+    updateExpertData({
+      expertId: res.expert.id,
+      name: res.expert.name,
+      email: res.expert.email,
+      phone: res.expert.phone
+    });
+
+    // ✅ redirect
+    navigate("/expert/home");
+
+  } catch (err) {
+    console.error(err);
+  }
+};
   const loading = registerLoading || loginLoading;
   const error = registerError || loginError;
 

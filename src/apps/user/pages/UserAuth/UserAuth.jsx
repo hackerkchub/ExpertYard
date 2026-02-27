@@ -86,8 +86,8 @@ const UserAuth = () => {
       } else {
         setSuccessMessage("❌ Invalid email or password");
       }
-    } catch {
-      setSuccessMessage("❌ Login failed. Try again.");
+    } catch (err) {
+      setSuccessMessage(`❌ ${err.message || "Login failed. Try again."}`);
     } finally {
       setLoading(false);
     }
@@ -117,7 +117,7 @@ const UserAuth = () => {
       } else {
         setSuccessMessage("❌ Registration failed.");
       }
-    } catch {
+    } catch (err) {
       setSuccessMessage("❌ Something went wrong.");
     } finally {
       setLoading(false);

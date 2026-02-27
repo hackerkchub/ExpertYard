@@ -135,6 +135,32 @@ export default function ExpertVoiceCall() {
     autoStart();
   }, [callState, socket]);
 
+  useEffect(() => {
+  const onResume = (data) => {
+    if (data.callId !== normalizedCallId) return;
+
+    setCallState("connected");
+
+    const alreadyElapsed =
+      Math.floor((Date.now() - new Date(data.startedAt)) / 1000);
+
+    setSeconds(alreadyElapsed);
+  };
+
+  socket.on("call:resume_data", onResume);
+  return () => socket.off("call:resume_data", onResume);
+}, [socket, normalizedCallId]);
+
+useEffect(() => {
+  if (!streamRef.current) {
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        streamRef.current = stream;
+      })
+      .catch(() => {});
+  }
+}, []);
+
   // Handle incoming call data
   useEffect(() => {
     const onIncoming = (data) => {
@@ -271,7 +297,7 @@ export default function ExpertVoiceCall() {
 
     const onOffer = async ({ callId: incomingId, offer }) => {
       if (Number(incomingId) !== callIdRef.current) return;
-
+if (callStateRef.current === "ended") return;
       // Clear reconnecting when offer arrives
       setReconnecting(false);
 

@@ -43,28 +43,53 @@ export const ProfileCard = styled.div`
   padding: 30px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
   margin-bottom: 24px;
+  overflow: hidden;
+
+  @media (max-width: 768px) {
+     gap: 20px;
+  }
+
+   @media (max-width: 600px) {
+    flex-direction: row;      
+    align-items: flex-start;
+    gap: 14px;   
+  }
 `;
 
 export const LeftImage = styled.img`
   width: 200px;
-  height: 200px;
+  height: 220px;
   border-radius: 16px;
   object-fit: cover;
   border: 4px solid white;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 600px) {
+    width: 100px;
+    height: 120px;
+    center-self: flex-start;
+  }
 `;
 
 export const Name = styled.h2`
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
-  margin-bottom: 8px;
+  margin-bottom: 20px;
   color: #1f2937;
+  word-break: break-word;
+    @media (max-width: 600px) {
+    font-size: 20px;
+    font-weight: 650;
 `;
 
 export const Role = styled.div`
   font-size: 18px;
   color: #6b7280;
   margin-bottom: 12px;
+
+  @media (max-width: 600px) {
+    font-size: 14px;
+  }
 `;
 
 export const Status = styled.div`
@@ -98,6 +123,12 @@ export const QuickStats = styled.div`
   border-radius: 12px;
   border: 1px solid #e5e7eb;
   margin-bottom: 20px;
+  width: 100%;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    gap: 12px;
+  }
 `;
 
 export const StatItem = styled.div`
@@ -147,6 +178,7 @@ export const CallToAction = styled.div`
   display: flex;
   gap: 20px;
   margin-top: 30px;
+  width: 100%;
 
   & > div {
     flex: 1;
@@ -156,7 +188,12 @@ export const CallToAction = styled.div`
   }
 
   @media (max-width: 600px) {
-    flex-direction: column;
+    flex-direction: row;
+    gap: 12px;
+
+    & > div {
+      flex: 1;
+    }
   }
 `;
 
@@ -165,12 +202,17 @@ export const PriceTag = styled.div`
   font-weight: 700;
   color: #1f40af;
   text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+
+  @media (max-width: 600px) {
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
 `;
 
 export const ActionButton = styled.button`
   width: 100%;
-  padding: 16px;
+  padding: 12px 14px;
   border-radius: 14px;
   border: none;
   cursor: pointer;
@@ -180,7 +222,7 @@ export const ActionButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
 
   background: ${(p) =>
     p.$primary
@@ -193,6 +235,27 @@ export const ActionButton = styled.button`
   &:hover {
     transform: translateY(-3px);
     box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+  }
+
+  @media (max-width: 600px) {
+    padding: 10px 12px;      
+    font-size: 14px;         
+    border-radius: 10px;
+  }
+`;
+
+export const FullWidthSection = styled.div`
+  margin-top: 20px;
+  width: 100%;
+`;
+
+export const TopRow = styled.div`
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+
+  @media (max-width: 600px) {
+    gap: 16px;
   }
 `;
 
@@ -292,10 +355,10 @@ export const FollowButton = styled.button`
   justify-content: center;
   gap: 8px;
   width: 100%;
-  padding: 12px;
-  font-size: 15px;
+  padding: 10px;
+  font-size: 14px;
   font-weight: 600;
-  border-radius: 12px;
+  border-radius: 10px;
   cursor: pointer;
   border: 2px solid ${(p) => (p.$active ? '#10b981' : '#d1d5db')};
   background: ${(p) => (p.$active ? '#d1fae5' : '#ffffff')};
@@ -409,6 +472,14 @@ export const LeftColumn = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+   width: 220px;   
+  flex-shrink: 0;
+  gap: 12px;
+
+  @media (max-width: 600px) {
+    width: 110px;
+  }
+  
 `;
 
 export const TopSection = styled.div`
@@ -417,6 +488,14 @@ export const TopSection = styled.div`
 
 export const RightInfo = styled.div`
   /* Deprecated - restructured */
+   flex: 1;
+   min-width: 0;
+  display: flex;
+  flex-direction: column;
+
+   @media (max-width: 600px) {
+    padding-bottom: 20px;
+  }
 `;
 
 /* ---------------- REVIEW FORM ---------------- */

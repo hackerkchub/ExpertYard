@@ -28,10 +28,8 @@ import {
   CTAButton,
   PartnerLogos,
   PartnerIcon,
-  TimelineContainer,
-  TimelineItem,
-  TimelineYear,
-  TimelineContent,
+ MissionVisionWrapper,
+MissionVisionCard,
   GradientText,
   SectionSpacer
 } from "./AboutUs.styles";
@@ -46,7 +44,6 @@ import {
   FaShieldAlt,
   FaHeart,
   FaRocket,
-  FaChartLine,
   FaStar,
   FaUserTie,
   FaUserGraduate,
@@ -191,43 +188,46 @@ const AboutUs = () => {
       <SectionSpacer />
 
       {/* Mission & Vision */}
-      <Section style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)', borderRadius: '20px', padding: '3rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', alignItems: 'center' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div style={{ fontSize: '2rem', color: '#3B82F6' }}>
-                <FaRocket />
-              </div>
-              <SectionTitle style={{ marginBottom: 0 }}>
-                Our Mission
-              </SectionTitle>
-            </div>
-            <SectionContent>
-              <p>
-                To democratize access to expert knowledge by creating a seamless, transparent, 
-                and trustworthy platform where anyone can connect with verified professionals 
-                across any domain, anywhere in the world.
-              </p>
-            </SectionContent>
-          </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div style={{ fontSize: '2rem', color: '#8B5CF6' }}>
-                <FaLightbulb />
-              </div>
-              <SectionTitle style={{ marginBottom: 0 }}>
-                Our Vision
-              </SectionTitle>
-            </div>
-            <SectionContent>
-              <p>
-                To become the world's most comprehensive expert network, 
-                empowering millions to make better decisions through professional guidance.
-              </p>
-            </SectionContent>
-          </div>
+<Section>
+  <MissionVisionWrapper>
+
+    <MissionVisionCard>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+        <div style={{ fontSize: '2rem', color: '#3B82F6' }}>
+          <FaRocket />
         </div>
-      </Section>
+        <SectionTitle style={{ marginBottom: 0 }}>
+          Our Mission
+        </SectionTitle>
+      </div>
+      <SectionContent>
+        <p>
+          To democratize access to expert knowledge by creating a seamless, transparent,
+          and trustworthy platform where anyone can connect with verified professionals
+          across any domain, anywhere in the world.
+        </p>
+      </SectionContent>
+    </MissionVisionCard>
+
+    <MissionVisionCard>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+        <div style={{ fontSize: '2rem', color: '#8B5CF6' }}>
+          <FaLightbulb />
+        </div>
+        <SectionTitle style={{ marginBottom: 0 }}>
+          Our Vision
+        </SectionTitle>
+      </div>
+      <SectionContent>
+        <p>
+          To become the world's most comprehensive expert network,
+          empowering millions to make better decisions through professional guidance.
+        </p>
+      </SectionContent>
+    </MissionVisionCard>
+
+  </MissionVisionWrapper>
+</Section>
 
       <SectionSpacer />
 

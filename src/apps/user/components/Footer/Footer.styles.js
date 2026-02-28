@@ -38,7 +38,7 @@ export const Wrapper = styled.footer`
   overflow: hidden;
   border-top: 1px solid #e2e8f0;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
-  padding: 2.5rem 0 1.5rem;
+  padding: 2rem 0 1rem;
 
   &::before {
     content: '';
@@ -66,7 +66,7 @@ export const Wrapper = styled.footer`
 export const Container = styled.div`
   display: flex;
   flex-direction: column; 
-  gap: 2rem;
+  gap: 1.5rem;
 
   max-width: 1200px;     
   margin: 0 auto;        
@@ -87,12 +87,12 @@ export const Container = styled.div`
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: space-between;
-    gap: 2.5rem;
+    gap: 2rem;
   }
 
   ${media.minLg} {
     padding: 0 2rem;
-    gap: 3rem;
+    gap: 2rem;
   }
 
   ${maxWidth(breakpoints.xs)} {
@@ -120,11 +120,10 @@ width: 100%;
 export const SectionTitle = styled.h4`
   font-size: 0.9rem;
   font-weight: 700;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.75rem;
   color: #1e293b;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  min-height: 48px;   
+  letter-spacing: 1px; 
   display: flex;
   align-items: flex-end;
   position: relative;
@@ -143,7 +142,7 @@ export const SectionTitle = styled.h4`
 
   ${media.minSm} {
     font-size: 0.925rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     padding-bottom: 0.75rem;
 
     &::after {
@@ -161,7 +160,7 @@ export const SectionTitle = styled.h4`
 
   ${maxWidth(breakpoints.xs)} {
     font-size: 0.875rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.6rem;
     padding-bottom: 0.5rem;
 
     &::after {
@@ -224,8 +223,7 @@ export const FooterLink = styled(Link)`
   transition: all 0.3s ease;
   line-height: 1.4;
   padding: 0.375rem 0;
-  position: relative;
-   min-height: 48px;              
+  position: relative;             
   display: flex;                 
   align-items: left; 
   -webkit-tap-highlight-color: transparent;          
@@ -256,7 +254,7 @@ export const FooterLink = styled(Link)`
 
   ${media.minSm} {
     font-size: 0.9rem;
-    margin-bottom: 0.625rem;
+
     
     &:hover {
       transform: translateX(5px);
@@ -265,7 +263,7 @@ export const FooterLink = styled(Link)`
 
   ${media.minMd} {
     font-size: 0.95rem;
-    margin-bottom: 0.875rem;
+  
   }
 
   ${maxWidth(breakpoints.xs)} {
@@ -296,12 +294,12 @@ export const SocialLinks = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  margin-top: 1.5rem;
+  margin-top: 0.5rem;
   justify-content: center;
 
   ${media.minSm} {
     gap: 0.875rem;
-    margin-top: 2rem;
+    margin-top: 0.75rem;
     justify-content: flex-start;
   }
 
@@ -361,7 +359,7 @@ export const SocialIcon = styled.a`
 
   ${media.minMd} {
     width: 40px;
-    height: 40px;
+    height: 50px;
     font-size: 1rem;
     border-radius: 10px;
   }
@@ -377,16 +375,17 @@ export const SocialIcon = styled.a`
 export const Copyright = styled.p`
   color: #94a3b8;
   font-size: 0.75rem;
-  margin: 0;
+  margin-top: 0.25;
   text-align: center;
-  padding-top: 1.5rem;
+  padding-top: 0.5rem;
   border-top: 1px solid #e2e8f0;
   width: 100%;
   line-height: 1.4;
 
   ${media.minSm} {
     font-size: 0.8rem;
-    padding-top: 2rem;
+    padding-top: 0.5rem;
+    margin-top: -0.25rem;
   }
 
   ${media.minMd} {
@@ -395,7 +394,7 @@ export const Copyright = styled.p`
 
   ${maxWidth(breakpoints.xs)} {
     font-size: 0.7rem;
-    padding-top: 1.25rem;
+    padding-top: 1.5rem;
   }
 `;
 
@@ -416,7 +415,7 @@ export const Logo = styled(Link)`
   }
 
   ${media.minSm} {
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
   }
 `;
 
@@ -595,17 +594,17 @@ export const BottomLink = styled(Link)`
 export const FooterGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr;
-  gap: 2rem;
+  gap: 0.75rem;
   width: 100%;
 
   ${media.minSm} {
     grid-template-columns: repeat(2, 1fr);
-    gap: 2rem 1.5rem;
+    gap: 1rem;
   }
 
   ${media.minMd} {
     grid-template-columns: repeat(4, 1fr);
-    gap: 2rem;
+    gap: 1rem;
   }
 
   ${media.minLg} {
@@ -614,7 +613,7 @@ export const FooterGrid = styled.div`
   }
 
   ${maxWidth(breakpoints.xs)} {
-    gap: 1.5rem;
+    gap: 1rem;
   }
 `;
 
@@ -670,7 +669,7 @@ export const LinksWrapper = styled.div`
     &:nth-child(5) {
       grid-column: 1;
       grid-row: 2;
-      margin-top: 1rem;
+      margin-top: 0rem;
     }
   }
 
@@ -732,14 +731,118 @@ export const SimpleSection = styled.div`
 `;
 
 export const SimpleSectionTitle = styled.h4`
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  margin-bottom: 1rem;
+  margin-bottom: 0 0 0.75rem 0;
   color: #1e293b;
   text-transform: uppercase;
   letter-spacing: 1px;
   
   @media (max-width: 767px) {
     text-align: center;
+  }
+`;
+
+/*  App Store & Google Play CSS */
+export const StoreContainer = styled.div`
+  display: flex;
+  gap: 20px;                 
+  margin-top: 2.5rem;        
+  flex-wrap: wrap;           
+
+  justify-content: center;
+
+  @media (min-width: 768px) {
+    justify-content: flex-start;
+  }
+`;
+
+export const StoreImage = styled.img`
+  height: 45px;
+  width: auto;
+  object-fit: contain;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  border-radius: 10px;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  @media (max-width: 480px) {
+    height: 40px;
+  }
+`;
+
+/* ===== MOBILE BOTTOM NAVIGATION ===== */
+export const BottomNav = styled.div`
+  width: 100%;
+  margin-top: 10px;
+  margin-bottom: 0px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  display: flex;
+  align-items: center;
+  border-top: 1px solid #e5e7eb;
+
+   /*Mobile + iPad full width spread*/
+  justify-content: space-between;
+
+  /*Optional: iPad thoda balanced spacing*/
+  @media (min-width: 768px) and (max-width: 1024px) {
+    padding: 12px 40px; 
+  }
+
+  /*Desktop hide*/
+  @media (min-width: 1025px) {
+    display: none;
+  }
+`;
+
+export const NavItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.3s ease;
+`;
+
+export const NavIcon = styled.div`
+  width: 45px;
+  height: 45px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  transition: 0.3s ease;
+
+   /* iPad bigger */
+  @media (min-width: 768px) and (max-width: 1024px) {
+    width: 42px;
+    height: 42px;
+  }
+
+   @media (max-width: 768px) {
+    width: 32px;
+    height: 32px;
+  }
+
+  &:hover {
+    background: #f3f4f6;
+}
+`;
+
+export const NavText = styled.span`
+  font-size: 12px;
+
+   @media (max-width: 768px) {
+    font-size: 10px;
   }
 `;

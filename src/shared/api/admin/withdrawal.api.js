@@ -21,3 +21,7 @@ export const downloadReceiptApi = (id) =>
   adminApi.get(`/admin/withdrawal/receipt/${id}`, {
     responseType: "blob",
   });
+
+  /* ADMIN HISTORY */
+export const getAdminWithdrawalHistoryApi = () =>
+  adminApi.get("/admin/withdrawal/history");

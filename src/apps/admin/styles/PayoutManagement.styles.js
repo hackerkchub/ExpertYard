@@ -887,3 +887,316 @@ export const EmptyState = styled.div`
     margin: 0;
   }
 `;
+
+// Add these to your existing styles file
+
+export const TabContainer = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #eef2f6;
+  padding-bottom: 8px;
+  overflow-x: auto;
+  
+  @media (min-width: 640px) {
+    gap: 12px;
+  }
+`;
+
+export const Tab = styled.button`
+  padding: 10px 16px;
+  background: ${props => props.$active ? '#8b5cf6' : 'transparent'};
+  color: ${props => props.$active ? 'white' : '#64748b'};
+  border: ${props => props.$active ? 'none' : '1px solid #e2e8f0'};
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: ${props => props.$active ? '#7c3aed' : '#f8fafc'};
+    color: ${props => props.$active ? 'white' : '#1e293b'};
+  }
+  
+  @media (min-width: 640px) {
+    padding: 12px 24px;
+    font-size: 14px;
+  }
+  
+  svg {
+    font-size: 14px;
+    
+    @media (min-width: 640px) {
+      font-size: 16px;
+    }
+  }
+`;
+
+export const HistoryTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1000px;
+`;
+
+export const HistoryTableHeader = styled.thead`
+  background: #f8fafc;
+  border-bottom: 2px solid #e2e8f0;
+  
+  th {
+    padding: 16px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    white-space: nowrap;
+  }
+`;
+
+export const HistoryTableRow = styled.tr`
+  border-bottom: 1px solid #eef2f6;
+  transition: background 0.2s ease;
+  
+  &:hover {
+    background: #f8fafc;
+  }
+`;
+
+export const HistoryTableCell = styled.td`
+  padding: 16px;
+  font-size: 14px;
+  color: #1e293b;
+`;
+
+export const Pagination = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+`;
+
+export const PageButton = styled.button`
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid ${props => props.$active ? '#8b5cf6' : '#e2e8f0'};
+  border-radius: 8px;
+  background: ${props => props.$active ? '#8b5cf6' : 'white'};
+  color: ${props => props.$active ? 'white' : '#1e293b'};
+  font-size: 13px;
+  font-weight: 500;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  opacity: ${props => props.disabled ? 0.5 : 1};
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  
+  &:hover:not(:disabled) {
+    background: ${props => props.$active ? '#7c3aed' : '#f1f5f9'};
+    border-color: ${props => props.$active ? '#7c3aed' : '#94a3b8'};
+  }
+  
+  @media (max-width: 480px) {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 6px;
+    font-size: 12px;
+  }
+`;
+
+export const FilterTag = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #f1f5f9;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #1e293b;
+  margin-right: 8px;
+  margin-bottom: 8px;
+  
+  button {
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 2px;
+    
+    &:hover {
+      color: #ef4444;
+    }
+  }
+`;
+
+export const ClearFilters = styled.button`
+  padding: 8px 16px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #991b1b;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #fecaca;
+  }
+  
+  @media (min-width: 640px) {
+    font-size: 13px;
+    padding: 8px 20px;
+  }
+`;
+
+export const ReceiptPreview = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
+
+export const ReceiptPreviewHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  
+  h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #1e293b;
+    
+    @media (min-width: 640px) {
+      font-size: 18px;
+    }
+  }
+`;
+
+export const ReceiptActions = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+export const ReceiptPreviewBody = styled.div`
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #e2e8f0;
+`;
+
+export const ReceiptPreviewFooter = styled.div`
+  text-align: right;
+  color: #94a3b8;
+  font-size: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+`;
+
+export const ReceiptImage = styled.img`
+  max-width: 100%;
+  max-height: 500px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+`;
+
+export const ReceiptFallback = styled.div`
+  text-align: center;
+  padding: 40px;
+  
+  svg {
+    font-size: 48px;
+    color: #94a3b8;
+    margin-bottom: 16px;
+  }
+  
+  p {
+    color: #64748b;
+    margin-bottom: 16px;
+  }
+`;
+
+export const ProcessedDateNote = styled.div`
+  font-size: 11px;
+  color: #8b5cf6;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  
+  svg {
+    font-size: 10px;
+  }
+`;
+
+export const InfoTooltip = styled.div`
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  cursor: help;
+  
+  svg {
+    color: #94a3b8;
+    font-size: 10px;
+  }
+  
+  &:hover {
+    svg {
+      color: #8b5cf6;
+    }
+  }
+`;
+
+export const MobileCard = styled.div`
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #eef2f6;
+  margin-bottom: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+`;
+
+export const MobileCardHeader = styled.div`
+  padding: 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #eef2f6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+`;
+
+export const MobileCardBody = styled.div`
+  padding: 16px;
+`;
+
+export const MobileCardFooter = styled.div`
+  padding: 16px;
+  border-top: 1px solid #eef2f6;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+`;

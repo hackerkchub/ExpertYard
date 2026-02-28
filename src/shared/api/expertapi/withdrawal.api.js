@@ -13,3 +13,6 @@ export const requestWithdrawalApi = async (data) => {
 /* HISTORY */
 export const getWithdrawalHistoryApi = () =>
   api.get("/expert/withdrawal/history");
+
+export const getExpertAllWithdrawalsApi = () =>
+  api.get("/expert/withdrawal/all");

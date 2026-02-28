@@ -31,26 +31,8 @@ export const Side = styled.aside`
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1200;
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  /* Custom Scrollbar */
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.02);
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(14, 165, 255, 0.3);
-    border-radius: 4px;
-    
-    &:hover {
-      background: rgba(14, 165, 255, 0.5);
-    }
-  }
+  display: flex;
+  flex-direction: column;
 
   /* Mobile Styles */
   @media (max-width: 768px) {
@@ -68,11 +50,12 @@ export const Side = styled.aside`
 /* Logo Area */
 export const Logo = styled.div`
   padding: 24px 20px;
-  margin-bottom: 20px;
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
   gap: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
 
   ${props => props.collapsed && css`
     padding: 24px 16px;
@@ -160,17 +143,59 @@ export const CollapseBtn = styled.button`
   }
 `;
 
+/* Scrollable Navigation Area */
+export const ScrollableArea = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 12px;
+  
+  /* Custom Scrollbar */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(14, 165, 255, 0.3);
+    border-radius: 4px;
+    
+    &:hover {
+      background: rgba(14, 165, 255, 0.5);
+    }
+  }
+
+  ${props => props.collapsed && css`
+    padding: 8px 0;
+  `}
+`;
+
+/* Bottom Fixed Area */
+export const BottomFixedArea = styled.div`
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+  width: 100%;
+  
+  ${props => props.collapsed && css`
+    text-align: center;
+  `}
+`;
+
 /* Navigation Menu */
 export const Menu = styled.nav`
   display: flex;
   flex-direction: column;
-  padding: 16px 12px;
   gap: 4px;
 `;
 
 /* Section Title */
 export const SectionTitle = styled.div`
-  padding: 16px 16px 8px;
+  padding: 20px 16px 8px;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -178,6 +203,10 @@ export const SectionTitle = styled.div`
   color: #64748b;
   white-space: nowrap;
   transition: all 0.3s ease;
+
+  &:first-of-type {
+    padding-top: 8px;
+  }
 
   ${props => props.collapsed && css`
     text-align: center;
@@ -215,7 +244,7 @@ export const MenuItem = styled(NavLink)`
   text-decoration: none;
   transition: all 0.3s ease;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   animation: ${slideIn} 0.5s ease backwards;
 
   /* Stagger animation */
@@ -226,20 +255,6 @@ export const MenuItem = styled(NavLink)`
   &:nth-child(5) { animation-delay: 0.3s; }
   &:nth-child(6) { animation-delay: 0.35s; }
   &:nth-child(7) { animation-delay: 0.4s; }
-
-  /* Ripple effect */
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
-  }
 
   &:hover {
     background: rgba(255, 255, 255, 0.05);
@@ -290,18 +305,20 @@ export const MenuItem = styled(NavLink)`
     height: 18px;
     transition: all 0.3s ease;
     color: #64748b;
+    flex-shrink: 0;
   }
 
   /* Label */
   span {
     white-space: nowrap;
     transition: all 0.3s ease;
+    flex: 1;
   }
 
   /* Notification Badge */
   .badge {
     position: absolute;
-    right: 16px;
+    right: 12px;
     top: 50%;
     transform: translateY(-50%);
     min-width: 20px;
@@ -316,13 +333,39 @@ export const MenuItem = styled(NavLink)`
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+    animation: ${glowPulse} 2s infinite;
+    z-index: 10;
+
+    /* Mobile responsive badge */
+    @media (max-width: 768px) {
+      right: 8px;
+      min-width: 18px;
+      height: 18px;
+      font-size: 10px;
+    }
 
     ${props => props.collapsed && css`
       right: 4px;
       top: 4px;
+      transform: none;
       min-width: 16px;
       height: 16px;
       font-size: 9px;
+      padding: 0 4px;
+    `}
+
+    ${props => props.hasBadge && css`
+      &::after {
+        content: '';
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 6px;
+        height: 6px;
+        background: #ef4444;
+        border-radius: 50%;
+        border: 2px solid #1e293b;
+      }
     `}
   }
 `;
@@ -387,19 +430,20 @@ export const MobileToggle = styled.button`
 
 /* User Info (Bottom) */
 export const UserInfo = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(10px);
+  padding: 16px 20px;
+  width: 100%;
 
   ${props => props.collapsed && css`
-    padding: 20px 0;
+    padding: 16px 0;
     text-align: center;
   `}
+
+  .logout-icon {
+    &:hover {
+      color: #ef4444 !important;
+      transform: scale(1.1);
+    }
+  }
 `;
 
 export const UserAvatar = styled.div`
@@ -413,6 +457,7 @@ export const UserAvatar = styled.div`
   color: white;
   font-weight: 600;
   font-size: 16px;
+  flex-shrink: 0;
 
   ${props => props.collapsed && css`
     margin: 0 auto;
@@ -444,4 +489,6 @@ export const UserDetails = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+  flex: 1;
 `;

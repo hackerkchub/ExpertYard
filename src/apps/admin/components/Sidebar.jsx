@@ -11,7 +11,6 @@ import {
   FiSettings,
   FiHelpCircle,
 } from "react-icons/fi";
-import { MdPendingActions } from "react-icons/md";
 import {
   Side,
   Overlay,
@@ -28,6 +27,8 @@ import {
   UserDetails,
   UserName,
   UserRole,
+  ScrollableArea,
+  BottomFixedArea,
 } from "../styles/Sidebar.styles";
 
 export default function Sidebar({ mobileOpen, setMobileOpen }) {
@@ -83,7 +84,7 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
           path: "/admin/expert-approval", 
           icon: FiCheckCircle, 
           label: "Approvals",
-          badge: notifications.pendingApprovals 
+          
         },
       ]
     },
@@ -94,7 +95,7 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
           path: "/admin/payout-management", 
           icon: FiDollarSign, 
           label: "Payouts",
-          badge: notifications.pendingPayouts 
+         
         },
       ]
     },
@@ -135,77 +136,87 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
           <FiMenu />
         </CollapseBtn>
 
-        {/* Navigation Menu */}
-        <Menu>
-          {menuItems.map((section, idx) => (
-            <React.Fragment key={idx}>
-              <SectionTitle collapsed={collapsed}>
-                {collapsed ? "•••" : section.section}
-              </SectionTitle>
+        {/* Scrollable Navigation Area */}
+        <ScrollableArea collapsed={collapsed}>
+          <Menu>
+            {menuItems.map((section, idx) => (
+              <React.Fragment key={idx}>
+                <SectionTitle collapsed={collapsed}>
+                  {collapsed ? "•••" : section.section}
+                </SectionTitle>
+                
+                {section.items.map((item, itemIdx) => (
+                  <MenuItem
+                    key={itemIdx}
+                    to={item.path}
+                    collapsed={collapsed}
+                    className={({ isActive }) => isActive ? "active" : ""}
+                    onClick={handleCloseMobile}
+                    hasBadge={item.badge > 0}
+                  >
+                    <item.icon />
+                    <span>{item.label}</span>
+                    {item.badge > 0 && (
+                      <span className="badge">{item.badge}</span>
+                    )}
+                  </MenuItem>
+                ))}
+              </React.Fragment>
+            ))}
+          </Menu>
+        </ScrollableArea>
+
+        {/* Fixed Bottom Area with User Info and Logout */}
+        <BottomFixedArea collapsed={collapsed}>
+          <UserInfo collapsed={collapsed}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: collapsed ? '0' : '12px',
+              flexDirection: collapsed ? 'column' : 'row',
+              width: '100%'
+            }}>
+              <UserAvatar collapsed={collapsed}>
+                A
+              </UserAvatar>
               
-              {section.items.map((item, itemIdx) => (
-                <MenuItem
-                  key={itemIdx}
-                  to={item.path}
-                  collapsed={collapsed}
-                  className={({ isActive }) => isActive ? "active" : ""}
-                  onClick={handleCloseMobile}
-                >
-                  <item.icon />
-                  <span>{item.label}</span>
-                  {item.badge > 0 && (
-                    <span className="badge">{item.badge}</span>
-                  )}
-                </MenuItem>
-              ))}
-            </React.Fragment>
-          ))}
-        </Menu>
+              {!collapsed && (
+                <UserDetails>
+                  <UserName>Admin User</UserName>
+                  <UserRole>Super Admin</UserRole>
+                </UserDetails>
+              )}
 
-        {/* User Info Section */}
-        <UserInfo collapsed={collapsed}>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: collapsed ? '0' : '12px',
-            flexDirection: collapsed ? 'column' : 'row'
-          }}>
-            <UserAvatar collapsed={collapsed}>
-              A
-            </UserAvatar>
-            
-            {!collapsed && (
-              <UserDetails>
-                <UserName>Admin User</UserName>
-                <UserRole>Super Admin</UserRole>
-              </UserDetails>
-            )}
+              {!collapsed && (
+                <FiLogOut 
+                  style={{ 
+                    marginLeft: 'auto', 
+                    color: '#64748b',
+                    cursor: 'pointer',
+                    fontSize: '18px',
+                    transition: 'all 0.3s ease',
+                  }}
+                  onClick={handleLogout}
+                  className="logout-icon"
+                />
+              )}
+            </div>
 
-            {!collapsed && (
+            {collapsed && (
               <FiLogOut 
                 style={{ 
-                  marginLeft: 'auto', 
+                  marginTop: '16px',
                   color: '#64748b',
                   cursor: 'pointer',
-                  fontSize: '18px'
+                  fontSize: '18px',
+                  transition: 'all 0.3s ease',
                 }}
                 onClick={handleLogout}
+                className="logout-icon"
               />
             )}
-          </div>
-
-          {collapsed && (
-            <FiLogOut 
-              style={{ 
-                marginTop: '16px',
-                color: '#64748b',
-                cursor: 'pointer',
-                fontSize: '18px'
-              }}
-              onClick={handleLogout}
-            />
-          )}
-        </UserInfo>
+          </UserInfo>
+        </BottomFixedArea>
       </Side>
 
       <Overlay show={mobileOpen} onClick={handleCloseMobile} />

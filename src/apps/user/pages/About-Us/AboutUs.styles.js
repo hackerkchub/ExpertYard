@@ -4,14 +4,20 @@ import { Link } from "react-router-dom";
 
 export const AboutContainer = styled.div`
   position: relative;
-  top: 80px;
-  overflow: hidden;
+ padding-top: 80px;
+  overflow-x: hidden;
+  overflow-y: visible;
+   width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
+
 `;
 
 export const SectionSpacer = styled.div`
   height: 1px;
   background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
   margin: 1rem 0;
+  box-sizing: border-box;
 `;
 
 export const HeroSection = styled.div`
@@ -76,6 +82,8 @@ export const Section = styled.section`
   padding: 3rem 1rem;
   max-width: 1200px;
   margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 
   @media (max-width: 768px) {
     padding: 2rem 1rem;
@@ -248,6 +256,18 @@ export const ValueCard = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+
+  @media (min-width: 769px) {
+  flex: 1;
+}
+
+   @media (max-width: 768px) {
+    padding: 1.5rem;
+  }
+
 `;
 
 export const ValueIcon = styled.div`
@@ -267,6 +287,21 @@ export const ValueDescription = styled.p`
   color: #64748b;
   line-height: 1.6;
   font-size: 0.95rem;
+`;
+
+export const ValuesGrid = styled.div`
+  display: flex;
+  flex-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+
+     @media (min-width: 769px) {
+    flex-direction: row;
+  }
+
+     @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
 `;
 
 export const CTAButton = styled(Link)`
@@ -325,8 +360,14 @@ export const PartnerIcon = styled.div`
 
 export const TimelineContainer = styled.div`
   position: relative;
-  max-width: 800px;
+  
   margin: 3rem auto 0;
+  padding: 0 1rem;
+   width: 100%;
+  box-sizing: border-box;
+
+   @media (min-width: 769px) {
+    max-width: 800px;
   
   &::before {
     content: '';
@@ -337,42 +378,26 @@ export const TimelineContainer = styled.div`
     height: 100%;
     background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
   }
-
-  @media (max-width: 768px) {
-    &::before {
-      left: 20px;
-    }
-  }
+ }
 `;
 
 export const TimelineItem = styled.div`
   position: relative;
   margin-bottom: 2.5rem;
-  padding-left: ${props => props.position === 'left' ? '0' : '50%'};
-  padding-right: ${props => props.position === 'right' ? '0' : '50%'};
-  padding-left: ${props => props.position === 'right' ? '50%' : '0'};
-
-  &::before {
-    content: '';
-    position: absolute;
-    left: ${props => props.position === 'left' ? 'calc(50% - 6px)' : '-6px'};
-    left: ${props => props.position === 'right' ? 'calc(50% - 6px)' : '-6px'};
-    top: 0;
-    width: 12px;
-    height: 12px;
-    background: #3b82f6;
-    border-radius: 50%;
-    border: 3px solid white;
-    box-shadow: 0 0 0 3px #3b82f6;
-  }
+  width: 100%;
+  box-sizing: border-box;
 
   @media (max-width: 768px) {
-    padding-left: 40px;
-    padding-right: 0;
-    
-    &::before {
-      left: 14px;
-    }
+    width: 100%;
+    margin-left: 0;
+  }
+
+  @media (min-width: 769px) {
+    width: 50%;
+    margin-left: ${props =>
+    props.position === "right"
+      ? "margin-left: 50%;"
+      : "margin-left: 0;"}
   }
 `;
 
@@ -395,9 +420,52 @@ export const TimelineContent = styled.div`
   font-size: 1rem;
   color: #475569;
   line-height: 1.6;
+  width: 100%;
+  box-sizing: border-box;
 
   @media (max-width: 768px) {
     padding: 1rem;
     font-size: 0.95rem;
+  }
+`;
+
+// Mission & Vision Responsive Styles
+
+export const MissionVisionWrapper = styled.div`
+  display: grid;
+  gap: 2rem;
+
+  /* Desktop */
+  @media (min-width: 769px) {
+    grid-template-columns: 1fr 1fr;
+    background: white;
+    padding: 3rem;
+    border-radius: 20px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    align-items: start;
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const MissionVisionCard = styled.div`
+  padding: 2rem;
+  
+  /* Desktop */
+  @media (min-width: 769px) {
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    padding: 1.5rem;
   }
 `;

@@ -1,4 +1,4 @@
-import api from "../axiosInstance";
+import adminApi from "./axiosInstance";
 
 export const adminLoginApi = (data) =>
-  api.post("/admin/login", data);
+  adminApi.post("/admin/login", data);

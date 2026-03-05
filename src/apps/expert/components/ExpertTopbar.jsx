@@ -33,7 +33,7 @@ import useDebounce from "../hooks/useDebounce";
 import { useExpertNotifications } from "../context/ExpertNotificationsContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useExpert } from "../../../shared/context/ExpertContext";
-import { socket } from "../../../shared/api/socket";
+import { socket, disconnectSocket } from "../../../shared/api/socket";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/40?img=12";
 const FINAL_STATES = ["missed", "rejected", "ended", "low_balance", "cancelled"];
@@ -68,27 +68,20 @@ export default function ExpertTopbar() {
 } = useExpertNotifications();
 
   // LOGOUT
-  const handleLogout = () => {
+ const handleLogout = () => {
   try {
-    // 🧠 1️⃣ socket disconnect (VERY IMPORTANT)
-    if (socket?.connected) {
-      socket.disconnect();
-    }
+    /* 🔌 disconnect socket (role-safe) */
+    disconnectSocket();
 
-    // 🧹 2️⃣ clear storage
-    localStorage.clear();
-    sessionStorage.clear();
+    /* 🧹 remove ONLY expert data */
+    localStorage.removeItem("expert_session");
+    localStorage.removeItem("expert_token");
 
-    // 🧠 3️⃣ reset expert context
+    /* ♻️ reset context */
     logoutExpert();
 
-    // 🚀 4️⃣ redirect
+    /* 🚀 redirect */
     navigate("/expert/register", { replace: true });
-
-    // 💣 5️⃣ optional hard reload (recommended for realtime apps)
-    setTimeout(() => {
-      window.location.reload();
-    }, 50);
 
   } catch (err) {
     console.error("Logout error:", err);

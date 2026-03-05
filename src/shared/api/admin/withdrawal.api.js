@@ -1,4 +1,4 @@
-import adminApi  from "./axiosInstance";
+import adminApi from "./axiosInstance";
 
 /* PENDING LIST */
 export const getPendingWithdrawalsApi = () =>
@@ -22,6 +22,10 @@ export const downloadReceiptApi = (id) =>
     responseType: "blob",
   });
 
-  /* ADMIN HISTORY */
+/* ADMIN HISTORY */
 export const getAdminWithdrawalHistoryApi = () =>
   adminApi.get("/admin/withdrawal/history");
+
+/* REAL PAYOUT DETAILS */
+export const getWithdrawalPayoutDetailsApi = (withdrawalId) =>
+  adminApi.get(`/admin/withdrawal/payout-details/${withdrawalId}`);

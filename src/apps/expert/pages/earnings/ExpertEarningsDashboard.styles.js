@@ -2816,3 +2816,113 @@ export const SecondaryButton = styled.button`
     background: #e2e8f0;
   }
 `;
+
+// Add these to your ExpertEarningsDashboard.styles.js
+
+export const PayoutMethodsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+export const PayoutMethodCard = styled.div`
+  padding: 16px;
+  background: ${props => props.$primary ? '#f5f3ff' : '#fff'};
+  border: 1px solid ${props => props.$primary ? '#8b5cf6' : '#e2e8f0'};
+  border-radius: 10px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-color: ${props => props.$primary ? '#8b5cf6' : '#cbd5e1'};
+  }
+`;
+
+export const PayoutMethodBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: #8b5cf6;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+
+export const AddPayoutMethodButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+export const RadioGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+export const RadioOption = styled.div`
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid ${props => props.$selected ? '#8b5cf6' : '#cbd5e1'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+
+  .radio-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: ${props => props.$selected ? '#8b5cf6' : 'transparent'};
+    transition: all 0.2s ease;
+  }
+`;
+
+export const TabsContainer = styled.div`
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 12px;
+`;
+
+export const TabButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: ${props => props.$active ? '#8b5cf6' : '#f1f5f9'};
+  color: ${props => props.$active ? '#fff' : '#475569'};
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${props => props.$active ? '#8b5cf6' : '#e2e8f0'};
+  }
+`;

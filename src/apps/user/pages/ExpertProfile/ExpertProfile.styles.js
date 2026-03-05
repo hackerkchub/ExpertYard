@@ -1,791 +1,339 @@
-import styled from "styled-components";
+import styled, { keyframes, css } from "styled-components";
 
-/* ---------------- PAGE WRAPPER ---------------- */
-export const PageWrap = styled.div`
-  max-width: 1000px;
-  margin: auto;
-  padding: 20px;
-  background: #f8fafc;
-  min-height: 100vh;
+// Animations
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 `;
 
-/* ---------------- HEADER ---------------- */
+const spin = keyframes`
+  to { transform: rotate(360deg); }
+`;
+
+export const PageWrap = styled.div`
+  max-width: 1128px; // LinkedIn Standard Container
+  margin: 0 auto;
+  padding: 24px 15px;
+  background-color: #f3f2ef; // LinkedIn light grey background
+  min-height: 100vh;
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  animation: ${fadeIn} 0.5s ease-out;
+
+  @media (max-width: 768px) {
+    padding: 0; // Mobile pe full width cards
+  }
+`;
+
 export const HeaderBar = styled.div`
   display: flex;
   align-items: center;
-  margin-bottom: 24px;
+  padding: 12px 0;
+  margin-bottom: 8px;
+  @media (max-width: 768px) { padding: 12px 16px; background: white; border-bottom: 1px solid #e0e0e0; }
 `;
 
 export const BackButton = styled.button`
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 500;
+  background: transparent;
+  border: none;
+  color: #666;
+  font-weight: 600;
   cursor: pointer;
-  transition: 0.25s ease;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.04);
-
-  &:hover {
-    background: #f1f5f9;
-    transform: translateY(-1px);
-  }
+  padding: 8px 12px;
+  border-radius: 4px;
+  &:hover { background-color: rgba(0, 0, 0, 0.08); color: #000; }
 `;
 
-/* ---------------- MAIN PROFILE CARD ---------------- */
+// --- Main Profile Section ---
 export const ProfileCard = styled.div`
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 30px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-  margin-bottom: 24px;
-  overflow: hidden;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  padding: 24px;
+  margin-bottom: 12px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.02), 0 2px 4px rgba(0,0,0,0.06);
 
-  @media (max-width: 768px) {
-     gap: 20px;
-  }
-
-   @media (max-width: 600px) {
-    flex-direction: row;      
-    align-items: flex-start;
-    gap: 14px;   
-  }
+  @media (max-width: 768px) { border-radius: 0; padding: 20px 16px; }
 `;
 
 export const LeftImage = styled.img`
-  width: 200px;
-  height: 220px;
-  border-radius: 16px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
   object-fit: cover;
-  border: 4px solid white;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-
-  @media (max-width: 600px) {
-    width: 100px;
-    height: 120px;
-    center-self: flex-start;
-  }
+  border: 4px solid #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  
+  @media (max-width: 768px) { width: 120px; height: 120px; margin: 0 auto; display: block; }
 `;
 
-export const Name = styled.h2`
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  color: #1f2937;
-  word-break: break-word;
-    @media (max-width: 600px) {
-    font-size: 20px;
-    font-weight: 650;
+export const Name = styled.h1`
+  font-size: 24px;
+  font-weight: 600;
+  color: #000000e6;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  @media (max-width: 768px) { justify-content: center; text-align: center; margin-top: 16px; }
 `;
 
-export const Role = styled.div`
-  font-size: 18px;
-  color: #6b7280;
-  margin-bottom: 12px;
+export const VerifiedBadge = styled.span`
+  background: #e7f3ff;
+  color: #0a66c2;
+  font-size: 12px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+`;
 
-  @media (max-width: 600px) {
-    font-size: 14px;
-  }
+export const Role = styled.p`
+  font-size: 16px;
+  color: #000000bf;
+  margin-bottom: 8px;
+  @media (max-width: 768px) { text-align: center; }
 `;
 
 export const Status = styled.div`
+  font-size: 14px;
   font-weight: 600;
-  font-size: 15px;
-  margin-bottom: 20px;
-  color: ${(p) => (p.$online ? "#10b981" : "#9ca3af")};
+  color: ${props => props.$online ? "#057642" : "#cc1016"};
+  margin-bottom: 16px;
+  @media (max-width: 768px) { text-align: center; }
 `;
 
-/* ---------------- VERIFIED BADGE ---------------- */
-export const VerifiedBadge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 20px;
-  margin-left: 12px;
-  vertical-align: middle;
-`;
-
-/* ---------------- QUICK STATS ---------------- */
 export const QuickStats = styled.div`
   display: flex;
-  gap: 20px;
-  background: #f9fafb;
-  padding: 16px 20px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  margin-bottom: 20px;
-  width: 100%;
-
-  @media (max-width: 600px) {
-    flex-direction: column;
-    gap: 12px;
-  }
+  gap: 12px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+  @media (max-width: 768px) { justify-content: center; }
 `;
 
 export const StatItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-size: 14px;
-  color: #4b5563;
-
-  svg {
-    flex-shrink: 0;
-  }
-
-  span {
-    font-weight: 500;
-    white-space: nowrap;
-  }
+  color: #666;
+  background: #f9f9f9;
+  padding: 6px 14px;
+  border-radius: 16px;
+  border: 1px solid #ebebeb;
 `;
 
-/* ---------------- TAG LIST ---------------- */
 export const TagList = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 8px;
+  margin: 16px 0;
+  @media (max-width: 768px) { justify-content: center; }
 `;
 
-export const Tag = styled.div`
+export const Tag = styled.span`
+  background: #f3f2ef;
+  color: #000000bf;
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid #dcdcdc;
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #f3f4f6;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  color: #4b5563;
-  font-weight: 500;
-  border: 1px solid #e5e7eb;
-
-  svg {
-    color: #6b7280;
-  }
 `;
 
-/* ---------------- CALL TO ACTION ---------------- */
+// --- Buttons ---
 export const CallToAction = styled.div`
   display: flex;
-  gap: 20px;
-  margin-top: 30px;
-  width: 100%;
+  gap: 12px;
+  margin-top: 20px;
+  @media (max-width: 768px) { flex-direction: column; }
+`;
 
-  & > div {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
+export const ActionButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-radius: 24px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.2s;
+  border: 1px solid #0a66c2;
+  background: ${props => props.$primary ? "#0a66c2" : "white"};
+  color: ${props => props.$primary ? "white" : "#0a66c2"};
 
-  @media (max-width: 600px) {
-    flex-direction: row;
-    gap: 12px;
-
-    & > div {
-      flex: 1;
-    }
+  &:hover {
+    background: ${props => props.$primary ? "#004182" : "#eef3f8"};
+    border-width: 2px;
+    padding: 9px 23px; // Adjust for border width
   }
 `;
 
 export const PriceTag = styled.div`
-  font-size: 16px;
+  font-size: 13px;
+  color: #666;
   font-weight: 700;
-  color: #1f40af;
-  text-align: center;
-  margin-bottom: 8px;
-
-  @media (max-width: 600px) {
-    font-size: 14px;
-    margin-bottom: 6px;
-  }
+  margin-bottom: 6px;
+  @media (max-width: 768px) { text-align: center; }
 `;
 
-export const ActionButton = styled.button`
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-
-  background: ${(p) =>
-    p.$primary
-      ? "linear-gradient(135deg, #2563eb, #1d4ed8)"
-      : "linear-gradient(135deg, #10b981, #059669)"};
-
-  color: white;
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.2);
-
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
-  }
-
-  @media (max-width: 600px) {
-    padding: 10px 12px;      
-    font-size: 14px;         
-    border-radius: 10px;
-  }
-`;
-
-export const FullWidthSection = styled.div`
-  margin-top: 20px;
-  width: 100%;
-`;
-
-export const TopRow = styled.div`
-  display: flex;
-  gap: 32px;
-  align-items: flex-start;
-
-  @media (max-width: 600px) {
-    gap: 16px;
-  }
-`;
-
-/* ---------------- EXPERTISE SECTION ---------------- */
-export const ExpertiseGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
-  margin-top: 20px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-export const ExpertiseCard = styled.div`
-  background: ${(p) => (p.$highlight ? 'linear-gradient(135deg, #f5f3ff, #ede9fe)' : '#ffffff')};
-  padding: 24px;
+export const FollowButton = styled.button`
+  background: ${props => props.$active ? "#0a66c2" : "white"};
+  color: ${props => props.$active ? "white" : "#666"};
+  border: 1px solid ${props => props.$active ? "#0a66c2" : "#666"};
+  padding: 6px 18px;
   border-radius: 16px;
-  border: 1px solid ${(p) => (p.$highlight ? '#c4b5fd' : '#e5e7eb')};
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s ease;
-
-  &:hover {
-    transform: translateY(-5px);
-  }
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  &:hover { background: ${props => props.$active ? "#004182" : "#f3f2ef"}; }
 `;
 
-/* ---------------- SECTIONS ---------------- */
+// --- Content Sections ---
 export const Section = styled.div`
-  background: #ffffff;
-  padding: 28px;
-  border-radius: 20px;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  padding: 24px;
+  margin-bottom: 12px;
+  @media (max-width: 768px) { border-radius: 0; padding: 16px; }
 `;
 
-export const SectionTitle = styled.h3`
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  color: #1f2937;
+export const SectionTitle = styled.h2`
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #000000e6;
 `;
 
-export const SectionBody = styled.p`
-  line-height: 1.7;
-  font-size: 16px;
-  color: #4b5563;
+export const SectionBody = styled.div`
+  font-size: 15px;
+  line-height: 1.5;
+  color: #000000bf;
 `;
 
-/* ---------------- REVIEWS SECTION ---------------- */
-export const ReviewSection = styled(Section)`
-  background: #ffffff;
-`;
-
+// --- Reviews ---
+export const ReviewSection = styled(Section)``;
 export const ReviewHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 20px;
-`;
-
-export const ReviewList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-`;
-
-export const ReviewItem = styled.div`
-  background: #f9fafb;
-  padding: 20px;
-  border-radius: 14px;
-  border: 1px solid #e5e7eb;
-`;
-
-export const ReviewUser = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  font-size: 15px;
-  color: #374151;
-`;
-
-export const ReviewText = styled.div`
-  line-height: 1.6;
-  font-size: 15px;
-  color: #6b7280;
-`;
-
-/* ---------------- FOLLOW & RATING ---------------- */
-export const FollowButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 10px;
-  cursor: pointer;
-  border: 2px solid ${(p) => (p.$active ? '#10b981' : '#d1d5db')};
-  background: ${(p) => (p.$active ? '#d1fae5' : '#ffffff')};
-  color: ${(p) => (p.$active ? '#065f46' : '#374151')};
-  margin-top: 12px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: ${(p) => (p.$active ? '#a7f3d0' : '#f3f4f6')};
-  }
-`;
-
-export const MiniRating = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1f2937;
-  padding: 8px 0;
-`;
-
-/* ---------------- STAR RATING ---------------- */
-export const StarRating = styled.div`
-  display: flex;
-  gap: 6px;
-`;
-
-export const Star = styled.button`
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  color: ${(p) => (p.$filled ? '#facc15' : '#d1d5db')};
-  transition: all 0.2s ease;
-  border-radius: 4px;
-
-  &:hover {
-    color: #facc15;
-    transform: scale(1.2);
-  }
-
-  svg {
-    width: 24px;
-    height: 24px;
-  }
-`;
-
-/* ---------------- NOTIFICATION BADGE ---------------- */
-export const NotificationBadge = styled.div`
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 20px;
-  height: 20px;
-  background: #ef4444;
-  color: white;
-  border-radius: 50%;
-  font-size: 11px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
-  min-width: 20px;
-  animation: pulse 2s infinite;
-
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-  }
-`;
-
-/* ---------------- REMAINING STYLES ---------------- */
-export const TwoColumn = styled.div`
-  display: flex;
-  gap: 40px;
-  flex-wrap: wrap;
-
-  & > div {
-    flex: 1;
-  }
-`;
-
-export const ListItem = styled.div`
-  margin-bottom: 8px;
-  padding-left: 14px;
-  border-left: 3px solid #6366f1;
-  color: #334155;
-  font-size: 15px;
-`;
-
-export const RatingRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  color: #1f2937;
-`;
-
-export const ReviewBox = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-`;
-
-export const LeftColumn = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-   width: 220px;   
-  flex-shrink: 0;
-  gap: 12px;
-
-  @media (max-width: 600px) {
-    width: 110px;
-  }
-  
-`;
-
-export const TopSection = styled.div`
-  /* Deprecated - using ProfileCard instead */
-`;
-
-export const RightInfo = styled.div`
-  /* Deprecated - restructured */
-   flex: 1;
-   min-width: 0;
-  display: flex;
-  flex-direction: column;
-
-   @media (max-width: 600px) {
-    padding-bottom: 20px;
-  }
-`;
-
-/* ---------------- REVIEW FORM ---------------- */
-export const ReviewForm = styled.div`
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  padding: 24px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  margin-bottom: 32px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-`;
-
-export const ReviewFormTitle = styled.h4`
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2937;
   margin-bottom: 20px;
+`;
+
+export const ReviewForm = styled.div`
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  margin-bottom: 24px;
+`;
+
+export const ReviewFormTitle = styled.h3`
+  font-size: 16px;
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 `;
 
 export const RatingInput = styled.div`
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 20px;
-  padding: 16px;
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  gap: 12px;
+  margin-bottom: 12px;
 `;
 
-export const RatingLabel = styled.span`
-  font-size: 15px;
-  font-weight: 500;
-  color: #4b5563;
-  white-space: nowrap;
+export const RatingLabel = styled.span` font-size: 14px; font-weight: 600; `;
+
+export const StarRating = styled.div` display: flex; gap: 4px; `;
+
+export const Star = styled.button`
+  background: none; border: none; cursor: pointer; font-size: 22px;
+  color: ${props => props.$filled ? "#f59e0b" : "#d1d5db"};
+  transition: transform 0.1s;
+  &:hover { transform: scale(1.1); }
 `;
 
-export const RatingValue = styled.div`
-  font-size: 15px;
-  font-weight: 600;
-  color: ${(p) => (p.$active ? '#1f40af' : '#9ca3af')};
-  background: #f3f4f6;
-  padding: 6px 12px;
-  border-radius: 20px;
-  min-width: 100px;
-  text-align: center;
-`;
-
-export const TextAreaContainer = styled.div`
-  position: relative;
-  margin-bottom: 16px;
-`;
+export const TextAreaContainer = styled.div` position: relative; margin-bottom: 12px; `;
 
 export const ReviewTextarea = styled.textarea`
-  width: 100%;
-  min-height: 120px;
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px solid ${(p) => (p.disabled ? '#d1d5db' : '#e5e7eb')};
-  font-size: 15px;
-  resize: vertical;
-  font-family: inherit;
-  background: white;
-  transition: all 0.2s ease;
-  line-height: 1.6;
-
-  &:focus {
-    outline: none;
-    border-color: #8b5cf6;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-  }
-
-  &:disabled {
-    background: #f9fafb;
-    cursor: not-allowed;
-  }
-
-  &::placeholder {
-    color: #9ca3af;
-  }
+  width: 100%; padding: 12px; border: 1px solid #dcdcdc; border-radius: 4px;
+  font-family: inherit; font-size: 14px; resize: vertical;
+  &:focus { border-color: #0a66c2; outline: none; box-shadow: 0 0 0 1px #0a66c2; }
 `;
 
-export const CharCount = styled.div`
-  position: absolute;
-  bottom: 12px;
-  right: 12px;
-  font-size: 12px;
-  color: #6b7280;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 2px 8px;
-  border-radius: 10px;
-`;
+export const FormActions = styled.div` display: flex; gap: 12px; align-items: center; `;
 
-export const FormActions = styled.div`
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-`;
-
-export const SubmitButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 24px;
-  border-radius: 12px;
-  border: none;
-  background: ${(p) => (p.$disabled ? '#d1d5db' : 'linear-gradient(135deg, #f59e0b, #d97706)')};
-  color: white;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: ${(p) => (p.$disabled ? 'not-allowed' : 'pointer')};
-  transition: all 0.3s ease;
-  min-width: 140px;
-
-  &:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
-  }
-
-  svg {
-    margin-right: 4px;
-  }
+export const SubmitButton = styled(ActionButton)`
+  padding: 6px 20px; font-size: 14px;
+  ${props => props.$disabled && css` background: #ccc; border-color: #ccc; cursor: not-allowed; `}
 `;
 
 export const DeleteButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border-radius: 12px;
-  border: 1px solid #fca5a5;
-  background: white;
-  color: #dc2626;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover:not(:disabled) {
-    background: #fee2e2;
-    transform: translateY(-2px);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  background: transparent; border: none; color: #cc1016; font-size: 14px;
+  font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;
+  &:hover { text-decoration: underline; }
 `;
 
-export const LoginPrompt = styled.div`
-  text-align: center;
-  padding: 20px;
-  background: white;
-  border-radius: 12px;
-  border: 1px dashed #d1d5db;
-  width: 100%;
+export const ReviewList = styled.div` display: flex; flex-direction: column; `;
 
-  p {
-    margin: 0 0 16px 0;
-    color: #6b7280;
-    font-size: 15px;
-  }
+export const ReviewItem = styled.div`
+  padding: 16px 0; border-bottom: 1px solid #e0e0e0;
+  &:last-child { border-bottom: none; }
 `;
 
-export const LoginButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 20px;
-  border-radius: 10px;
-  border: none;
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
-  }
-`;
-
-/* ---------------- RECENT REVIEWS ---------------- */
-export const RecentReviewsTitle = styled.h4`
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 32px 0 20px 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-`;
-
-export const LoadingReviews = styled.div`
-  text-align: center;
-  padding: 40px;
-  color: #6b7280;
-
-  p {
-    margin-top: 16px;
-    font-size: 14px;
-  }
-`;
-
-export const NoReviews = styled.div`
-  text-align: center;
-  padding: 40px;
-  background: #f9fafb;
-  border-radius: 12px;
-  border: 1px dashed #d1d5db;
-
-  h4 {
-    margin: 16px 0 8px 0;
-    color: #4b5563;
-    font-size: 16px;
-  }
-
-  p {
-    color: #9ca3af;
-    font-size: 14px;
-    margin: 0;
-  }
-`;
+export const ReviewUser = styled.div` display: flex; gap: 12px; `;
 
 export const UserAvatar = styled.div`
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 18px;
-  flex-shrink: 0;
+  width: 48px; height: 48px; border-radius: 50%; background: #717171;
+  color: white; display: flex; align-items: center; justify-content: center;
+  font-weight: 600; flex-shrink: 0;
 `;
 
-export const UserInfo = styled.div`
-  flex: 1;
-`;
-
-export const UserName = styled.div`
-  font-weight: 600;
-  color: #1f2937;
-  font-size: 15px;
-`;
-
-export const ReviewMeta = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 4px;
-`;
-
-export const ReviewDate = styled.div`
-  font-size: 13px;
-  color: #9ca3af;
-`;
+export const UserInfo = styled.div` flex: 1; `;
+export const UserName = styled.h4` font-size: 14px; font-weight: 600; margin: 0; `;
+export const ReviewMeta = styled.div` display: flex; align-items: center; gap: 8px; margin-top: 2px; `;
+export const ReviewDate = styled.span` font-size: 12px; color: #666; `;
+export const ReviewText = styled.p` font-size: 14px; color: #000000e6; margin-top: 8px; line-height: 1.4; `;
 
 export const ViewAllButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 14px;
-  margin-top: 24px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  background: white;
-  color: #4b5563;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: #f9fafb;
-    border-color: #d1d5db;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  }
+  width: 100%; padding: 12px; background: transparent; border: none;
+  color: #0a66c2; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  &:hover { background: #eef3f8; }
 `;
+
+export const LoginPrompt = styled.div` text-align: center; width: 100%; p { margin-bottom: 12px; color: #666; font-size: 14px; } `;
+export const LoginButton = styled(ActionButton)` margin: 0 auto; font-size: 14px; padding: 6px 20px; `;
+
+// --- Missing Exports for Error Resolution ---
+export const CharCount = styled.div` font-size: 12px; color: #666; text-align: right; margin-top: 4px; `;
+export const ExpertiseGrid = styled.div` display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px; `;
+export const ExpertiseCard = styled.div` background: #f9f9f9; padding: 16px; border-radius: 8px; border: 1px solid #eee; `;
+export const RecentReviewsTitle = styled.h3` font-size: 16px; font-weight: 600; margin: 24px 0 16px; display: flex; align-items: center; gap: 8px; `;
+export const LoadingReviews = styled.div` text-align: center; padding: 40px 0; color: #666; `;
+export const NoReviews = styled.div` text-align: center; padding: 40px 0; color: #666; h4 { margin: 12px 0 4px; color: #000; } `;
+
+// Fallback for missing styled components in JSX
+export const MiniRating = styled.div` display: flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 600; color: #000; `;
+export const RatingValue = styled.span` font-size: 14px; color: #666; `;
+export const LeftColumn = styled.div``;
+export const TopSection = styled.div``;
+export const RightInfo = styled.div``;
+export const TwoColumn = styled.div` display: grid; grid-template-columns: 1fr 1fr; gap: 20px; @media (max-width: 768px) { grid-template-columns: 1fr; } `;
+export const ListItem = styled.div``;
+export const ReviewBox = styled.div``;
+export const RatingRow = styled.div``;
+export const NotificationBadge = styled.span``;

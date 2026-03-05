@@ -83,32 +83,30 @@ export default function StepPricing() {
   const canFinish = Number(pricePerMinute) >= 10 && Number(chatPrice) >= 5;
 
   // 🚀 Submit with offline fallback
-  const handleSubmit = async () => {
-    if (!validateForm()) return;
+const handleSubmit = async () => {
+  if (!validateForm() || loading) return;
 
-    try {
-      const payload = {
-        expert_id: expertData.expertId,
-        call_per_minute: Number(pricePerMinute),
-        chat_per_minute: Number(chatPrice),
-        reason_for_price: reasonForPrice.trim(),
-        handle_customer: handleCustomer.trim(),
-        strength: strength.trim(),
-        weakness: weakness.trim()
-      };
+  try {
+    const payload = {
+      expert_id: expertData.expertId,
+      call_per_minute: Number(pricePerMinute),
+      chat_per_minute: Number(chatPrice),
+      reason_for_price: reasonForPrice.trim(),
+      handle_customer: handleCustomer.trim(),
+      strength: strength.trim(),
+      weakness: weakness.trim()
+    };
 
-      const res = await setPrice(payload);
-      navigate("/expert/home");
-    } catch (err) {
-      console.warn("⚠️ Pricing API failed - continuing:", err);
-      localStorage.setItem("expert_pricing_draft", JSON.stringify({
-        expertId: expertData.expertId,
-        call_per_minute: Number(pricePerMinute),
-        chat_per_minute: Number(chatPrice)
-      }));
-      navigate("/expert/home");
-    }
-  };
+    await setPrice(payload);
+
+    navigate(`/expert/register?completed=1&email=${expertData.email}`);
+
+  } catch (err) {
+    console.warn("Pricing API failed:", err);
+
+    navigate(`/expert/register?completed=1&email=${expertData.email}`);
+  }
+};
 
   return (
     <RegisterLayout

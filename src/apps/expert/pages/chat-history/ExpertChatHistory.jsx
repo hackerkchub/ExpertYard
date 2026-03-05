@@ -62,6 +62,14 @@ const calculateEarnings = (durationMinutes, pricePerMinute) => {
   return Math.max(1, billedMinutes) * Number(pricePerMinute || 16);
 };
 
+const getAvatarUrl = (name, avatar) => {
+  return (
+    avatar ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      name || "User"
+    )}&background=4a70eb&color=fff`
+  );
+};
 // ✅ FIXED: groupByUser - handles both user_name & username
 const groupByUser = (rows = [], expertPricePerMinute = 0) => {
   const map = rows.reduce((acc, chat) => {
@@ -231,14 +239,18 @@ const ExpertChatHistory = () => {
 
   const openSession = useCallback(async (session) => {
     try {
-      const res = await getChatHistoryMessagesApi(session.room_id);
-      if (res?.success && res.data?.length) {
-        setSelectedSession(session);
-        setMessages(res.data);
-        setShowDetails(true);
-      } else {
-        alert("No messages found");
-      }
+     const res = await getChatHistoryMessagesApi(session.id);
+     const messagesData = Array.isArray(res)
+  ? res
+  : res?.data || [];
+
+if (messagesData.length > 0) {
+  setSelectedSession(session);
+  setMessages(messagesData);
+  setShowDetails(true);
+} else {
+  alert("No messages found");
+}
     } catch (e) {
       console.error("❌ Messages error:", e);
       alert("Failed to load messages");
@@ -460,7 +472,10 @@ const ExpertChatHistory = () => {
                       gap: windowWidth < 480 ? 12 : 16,
                       width: '100%'
                     }}>
-                      <Avatar premium src={c.user_avatar} />
+                    <Avatar
+  premium
+  src={getAvatarUrl(c.username, c.user_avatar)}
+/>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ 
                           display: 'flex', 
@@ -588,10 +603,13 @@ const ExpertChatHistory = () => {
             <ModalContent premium onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <div className="modal-user-info">
-                  <MessageAvatar 
-                    src={selectedSession.user_avatar}
-                    size={windowWidth < 640 ? 'medium' : 'large'}
-                  />
+                 <MessageAvatar
+  src={getAvatarUrl(
+    selectedSession.username || selectedSession.user_name,
+    selectedSession.user_avatar
+  )}
+  size={windowWidth < 640 ? "medium" : "large"}
+/>
                   <div>
                     <h3>{selectedSession.username || selectedSession.user_name}</h3>
                     <div className="modal-meta">

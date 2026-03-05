@@ -118,10 +118,11 @@ width: 100%;
 `;
 
 export const SectionTitle = styled.h4`
-  font-size: 0.9rem;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   margin-bottom: 0.75rem;
-  color: #1e293b;
+  color: #000000;
+  font-family: -apple-system, system-ui, sans-serif;
   text-transform: uppercase;
   letter-spacing: 1px; 
   display: flex;
@@ -195,6 +196,8 @@ export const LinkList = styled.ul`
   list-style: none;
   padding: 0;
   margin: 0;
+  color: #000000;
+  font-family: -apple-system, system-ui, sans-serif;
   
 
   ${media.minSm} {
@@ -217,13 +220,15 @@ export const LinkList = styled.ul`
 
 export const FooterLink = styled(Link)`
   display: flex;
-  color: #64748b;
   text-decoration: none;
-  font-size: 0.875rem;
+  font-size: 17px;
+  color: #191515ff;
+  font-family: -apple-system, system-ui, sans-serif;
   transition: all 0.3s ease;
   line-height: 1.4;
   padding: 0.375rem 0;
-  position: relative;             
+  position: relative;      
+  list-style: none;       
   display: flex;                 
   align-items: left; 
   -webkit-tap-highlight-color: transparent;          
@@ -232,7 +237,8 @@ export const FooterLink = styled(Link)`
   text-align: left;
 
   &:hover {
-    color: #3b82f6;
+    color: #000000;
+    list-style:none;
   }
 
   &::before {
@@ -253,7 +259,7 @@ export const FooterLink = styled(Link)`
   }
 
   ${media.minSm} {
-    font-size: 0.9rem;
+    font-size: 28px;
 
     
     &:hover {
@@ -262,12 +268,12 @@ export const FooterLink = styled(Link)`
   }
 
   ${media.minMd} {
-    font-size: 0.95rem;
+    font-size: 16px;
   
   }
 
   ${maxWidth(breakpoints.xs)} {
-    font-size: 0.85rem;
+    font-size: 16px;
     padding: 0.5rem 0.75rem;
     background: rgba(255, 255, 255, 0.8);
     border-radius: 6px;
@@ -286,7 +292,7 @@ export const FooterLink = styled(Link)`
   }
 
   @media (max-width: ${breakpoints.sm}) {
-    font-size: 0.875rem;
+    font-size: 14px;
   }
 `;
 
@@ -490,12 +496,13 @@ export const LogoText = styled.span`
 `;
 
 export const Tagline = styled.p`
-  color: #64748b;
-  font-size: 0.85rem;
+  color: #000000;
+  font-size: 16px;
   line-height: 1.5;
   margin-top: 0.75rem;
   text-align: center;
   max-width: 100%;
+  font-family: -apple-system, system-ui, sans-serif;
 
   ${media.minSm} {
     font-size: 0.875rem;

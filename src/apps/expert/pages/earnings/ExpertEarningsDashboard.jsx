@@ -28,6 +28,9 @@ import {
   FiChevronLeft,
   FiChevronDown,
   FiFilter,
+  FiPlus,
+  FiStar,
+  FiTrash2,
 } from "react-icons/fi";
 import { HiOutlineCurrencyRupee } from "react-icons/hi";
 import { MdAttachMoney, MdVerified, MdWarning, MdInfo } from "react-icons/md";
@@ -107,12 +110,10 @@ import {
   InfoCardsContainer,
   StatsRow,
   TransactionMeta,
-  // TabContainer,
   Label,
   Tab,
   MobileTransactionCard,
   MobileTabBar,
-  // MobileFilterBar,
   MobileFilterButton,
   MobileSearchBar,
   FilterDrawer,
@@ -120,7 +121,16 @@ import {
   FilterDrawerBody,
   FilterDrawerFooter,
   ActionButton,
+  PayoutMethodsContainer,
+  PayoutMethodCard,
+  PayoutMethodBadge,
+  AddPayoutMethodButton,
+  RadioGroup,
+  RadioOption,
+  TabsContainer,
+  TabButton,
 } from "./ExpertEarningsDashboard.styles";
+
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import {
   getExpertDashboardApi
@@ -134,7 +144,10 @@ import {
 import {
   requestWithdrawalApi,
   getWithdrawalHistoryApi,
-  getExpertAllWithdrawalsApi
+  getExpertAllWithdrawalsApi,
+  addPayoutMethodApi,
+  getPayoutMethodsApi,
+  setPrimaryPayoutMethodApi
 } from "../../../../shared/api/expertapi/withdrawal.api";
 
 const ExpertEarningsDashboard = () => {
@@ -145,18 +158,25 @@ const ExpertEarningsDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showPayoutModal, setShowPayoutModal] = useState(false);
+  const [showAddPayoutMethodModal, setShowAddPayoutMethodModal] = useState(false);
   const [showWithdrawalDetailsModal, setShowWithdrawalDetailsModal] = useState(false);
   const [selectedWithdrawal, setSelectedWithdrawal] = useState(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState("pending");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const [withdrawalHistory, setWithdrawalHistory] = useState([]);
   const [allWithdrawals, setAllWithdrawals] = useState([]);
   const [filteredWithdrawals, setFilteredWithdrawals] = useState([]);
   const [dashboardData, setDashboardData] = useState(null);
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
-  const [activeMobileTab, setActiveMobileTab] = useState('overview'); // 'overview', 'transactions', 'withdrawals'
+  const [activeMobileTab, setActiveMobileTab] = useState('overview');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  
+  // Payout methods state
+  const [payoutMethods, setPayoutMethods] = useState([]);
+  const [loadingPayoutMethods, setLoadingPayoutMethods] = useState(false);
+  const [activePayoutTab, setActivePayoutTab] = useState('bank'); // 'bank' or 'upi'
   
   // Filter states for withdrawals
   const [withdrawalFilter, setWithdrawalFilter] = useState({
@@ -174,6 +194,20 @@ const ExpertEarningsDashboard = () => {
   const [expandedWithdrawals, setExpandedWithdrawals] = useState(false);
   const [expandedTransactions, setExpandedTransactions] = useState(false);
 
+  // New payout method form state
+  const [newPayoutMethod, setNewPayoutMethod] = useState({
+    method_type: 'bank',
+    bank: {
+      account_holder_name: '',
+      bank_name: '',
+      account_number: '',
+      ifsc: '',
+    },
+    vpa: {
+      address: '',
+    }
+  });
+
   // Track window width for responsive
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -181,25 +215,20 @@ const ExpertEarningsDashboard = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Account form state (static for now)
-  const [accountDetails, setAccountDetails] = useState({
-    fullName: expertData?.name || "Dr. Sarah Johnson",
-    bankName: "HDFC Bank",
-    accountNumber: "XXXXXXXXXXXX1234",
-    ifscCode: "HDFC0001234",
-    accountType: "savings",
-    upiId: "sarah@okhdfcbank",
-    phone: expertData?.phone || "+91 98765 43210",
-    email: expertData?.email || "sarah@expertyard.com",
-    panNumber: "ABCDE1234F",
-    address: "Mumbai, Maharashtra",
-  });
-
-  // Payout request state
-  const [payoutRequest, setPayoutRequest] = useState({
-    amount: 0,
-    method: "bank",
-  });
+  // Load payout methods
+  const loadPayoutMethods = useCallback(async () => {
+    try {
+      setLoadingPayoutMethods(true);
+      const response = await getPayoutMethodsApi();
+      if (response.data?.success && Array.isArray(response.data.data)) {
+        setPayoutMethods(response.data.data);
+      }
+    } catch (err) {
+      console.error("Failed to load payout methods:", err);
+    } finally {
+      setLoadingPayoutMethods(false);
+    }
+  }, []);
 
   // Load dashboard data
   const loadDashboard = useCallback(async () => {
@@ -266,6 +295,8 @@ const ExpertEarningsDashboard = () => {
           created_at: withdrawal.created_at,
           paid_at: withdrawal.paid_at || null,
           processed_at: withdrawal.processed_at || null,
+          payout_method_type: withdrawal.payout_method_type,
+          payout_mask: withdrawal.payout_mask,
           formatted_amount: new Intl.NumberFormat('en-IN', {
             style: 'currency',
             currency: 'INR',
@@ -286,12 +317,15 @@ const ExpertEarningsDashboard = () => {
         }
       }
 
+      // Load payout methods after dashboard data
+      await loadPayoutMethods();
+
     } catch (err) {
       console.error("Failed to load dashboard data:", err);
     } finally {
       setLoading(false);
     }
-  }, [expertData]);
+  }, [expertData, loadPayoutMethods]);
 
   useEffect(() => {
     loadDashboard();
@@ -394,6 +428,11 @@ const ExpertEarningsDashboard = () => {
 
   const totalPages = Math.ceil(filteredWithdrawals.length / itemsPerPage);
 
+  // Get primary payout method
+  const primaryPayoutMethod = useMemo(() => {
+    return payoutMethods.find(m => m.is_primary === 1) || payoutMethods[0];
+  }, [payoutMethods]);
+
   // Get visible transactions based on expanded state and screen size
   const visibleTransactions = useMemo(() => {
     if (windowWidth < 768) {
@@ -411,8 +450,90 @@ const ExpertEarningsDashboard = () => {
       setVerificationStatus("verified");
       setShowAccountModal(false);
       setShowSuccess(true);
+      setSuccessMessage("Account details updated successfully");
       setTimeout(() => setShowSuccess(false), 3000);
     }, 2000);
+  };
+
+  const handleAddPayoutMethod = async (e) => {
+    e.preventDefault();
+    
+    try {
+      setIsVerifying(true);
+      
+      // Validate based on method type
+      if (newPayoutMethod.method_type === 'bank') {
+        if (!newPayoutMethod.bank.account_holder_name || 
+            !newPayoutMethod.bank.bank_name ||
+            !newPayoutMethod.bank.account_number ||
+            !newPayoutMethod.bank.ifsc) {
+          alert('Please fill all bank details');
+          return;
+        }
+      } else if (newPayoutMethod.method_type === 'upi') {
+        if (!newPayoutMethod.vpa.address) {
+          alert('Please enter UPI ID');
+          return;
+        }
+      }
+      
+      const response = await addPayoutMethodApi(newPayoutMethod);
+      
+      if (response.data?.success) {
+        setShowAddPayoutMethodModal(false);
+        setShowSuccess(true);
+        setSuccessMessage('Payout method added successfully');
+        
+        // Reset form
+        setNewPayoutMethod({
+          method_type: 'bank',
+          bank: {
+            account_holder_name: '',
+            bank_name: '',
+            account_number: '',
+            ifsc: '',
+          },
+          vpa: {
+            address: '',
+          }
+        });
+        
+        // Reload payout methods
+        await loadPayoutMethods();
+        
+        setTimeout(() => setShowSuccess(false), 3000);
+      }
+    } catch (err) {
+      console.error('Error adding payout method:', err);
+      const errorMessage = err?.response?.data?.message || 'Failed to add payout method';
+      alert(errorMessage);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleSetPrimaryMethod = async (methodId) => {
+    try {
+      setIsVerifying(true);
+      
+      const response = await setPrimaryPayoutMethodApi(methodId);
+      
+      if (response.data?.success) {
+        setShowSuccess(true);
+        setSuccessMessage('Primary payout method updated');
+        
+        // Reload payout methods
+        await loadPayoutMethods();
+        
+        setTimeout(() => setShowSuccess(false), 3000);
+      }
+    } catch (err) {
+      console.error('Error setting primary method:', err);
+      const errorMessage = err?.response?.data?.message || 'Failed to set primary method';
+      alert(errorMessage);
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   const handlePayoutRequest = async (e) => {
@@ -421,12 +542,35 @@ const ExpertEarningsDashboard = () => {
     try {
       setIsVerifying(true);
       
+      // Get selected method_id from state or primary method
+      let methodId = payoutRequest.method_id;
+      
+      if (!methodId) {
+        const primaryMethod = payoutMethods.find(m => m.is_primary === 1);
+        if (!primaryMethod) {
+          alert('Please add a payout method first');
+          setShowPayoutModal(false);
+          setShowAddPayoutMethodModal(true);
+          return;
+        }
+        methodId = primaryMethod.id;
+      }
+      
       await requestWithdrawalApi({
         amount: payoutRequest.amount,
+        method_id: methodId
       });
 
       setShowPayoutModal(false);
       setShowSuccess(true);
+      setSuccessMessage('Payout request submitted successfully');
+      
+      // Reset form
+      setPayoutRequest({
+        amount: 0,
+        method_id: '',
+      });
+      
       await loadDashboard();
       setTimeout(() => setShowSuccess(false), 3000);
     } catch (err) {
@@ -460,6 +604,35 @@ const ExpertEarningsDashboard = () => {
     }));
   };
 
+  const handleNewPayoutMethodChange = (e) => {
+    const { name, value } = e.target;
+    
+    if (name.startsWith('bank.')) {
+      const field = name.split('.')[1];
+      setNewPayoutMethod(prev => ({
+        ...prev,
+        bank: {
+          ...prev.bank,
+          [field]: value
+        }
+      }));
+    } else if (name.startsWith('vpa.')) {
+      const field = name.split('.')[1];
+      setNewPayoutMethod(prev => ({
+        ...prev,
+        vpa: {
+          ...prev.vpa,
+          [field]: value
+        }
+      }));
+    } else {
+      setNewPayoutMethod(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
+
   const handleFilterChange = (key, value) => {
     setWithdrawalFilter(prev => ({
       ...prev,
@@ -483,7 +656,9 @@ const ExpertEarningsDashboard = () => {
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    alert('Copied to clipboard!');
+    setShowSuccess(true);
+    setSuccessMessage('Copied to clipboard!');
+    setTimeout(() => setShowSuccess(false), 2000);
   };
 
   const formatCurrency = (amount) => {
@@ -614,6 +789,26 @@ const ExpertEarningsDashboard = () => {
     );
   };
 
+  // Account form state
+  const [accountDetails, setAccountDetails] = useState({
+    fullName: expertData?.name || "Dr. Sarah Johnson",
+    bankName: "HDFC Bank",
+    accountNumber: "XXXXXXXXXXXX1234",
+    ifscCode: "HDFC0001234",
+    accountType: "savings",
+    upiId: "sarah@okhdfcbank",
+    phone: expertData?.phone || "+91 98765 43210",
+    email: expertData?.email || "sarah@expertyard.com",
+    panNumber: "ABCDE1234F",
+    address: "Mumbai, Maharashtra",
+  });
+
+  // Payout request state
+  const [payoutRequest, setPayoutRequest] = useState({
+    amount: 0,
+    method_id: '',
+  });
+
   // Mobile view for transactions
   const renderMobileTransactions = () => {
     return visibleTransactions.map((transaction) => (
@@ -640,109 +835,109 @@ const ExpertEarningsDashboard = () => {
 
   // Mobile view for withdrawals
   const renderMobileWithdrawals = () => {
-  return paginatedWithdrawals.map((withdrawal) => (
-    <MobileWithdrawalCard key={withdrawal.id}>
-      <MobileCardHeader>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <strong style={{ fontSize: '14px' }}>#{withdrawal.id}</strong>
-          <span style={{ fontSize: '12px', color: '#475569' }}>
-            {formatDate(withdrawal.created_at)}
-          </span>
-        </div>
-        {getStatusBadge(withdrawal.status)}
-      </MobileCardHeader>
-      
-      <MobileCardBody>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: '1fr 1fr', 
-          gap: '16px', 
-          marginBottom: '16px' 
-        }}>
-          <div>
-            <div className="detail-label">Amount</div>
-            <div className="detail-value">{withdrawal.formatted_amount}</div>
-          </div>
-          <div>
-            <div className="detail-label">Payment Method</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              {getPaymentMethodIcon(withdrawal.payment_method)}
-              <span style={{ 
-                fontSize: '13px', 
-                textTransform: 'capitalize',
-                color: '#0f172a',
-                fontWeight: 500
-              }}>
-                {withdrawal.payment_method?.replace('_', ' ')}
-              </span>
-            </div>
-          </div>
-        </div>
-        
-        <div style={{ marginBottom: '12px' }}>
-          <div className="detail-label">Transaction Reference</div>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '8px',
-            background: '#f8fafc',
-            padding: '10px',
-            borderRadius: '8px',
-            border: '1px solid #e2e8f0'
-          }}>
-            <span style={{ 
-              fontFamily: 'monospace', 
-              fontSize: '13px',
-              color: '#0f172a',
-              wordBreak: 'break-all',
-              flex: 1
-            }}>
-              {withdrawal.transaction_ref}
+    return paginatedWithdrawals.map((withdrawal) => (
+      <MobileWithdrawalCard key={withdrawal.id}>
+        <MobileCardHeader>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <strong style={{ fontSize: '14px' }}>#{withdrawal.id}</strong>
+            <span style={{ fontSize: '12px', color: '#475569' }}>
+              {formatDate(withdrawal.created_at)}
             </span>
-            {withdrawal.transaction_ref !== '-' && (
-              <FiCopy
-                size={16}
-                style={{ 
-                  cursor: 'pointer', 
-                  color: '#64748b',
-                  flexShrink: 0
-                }}
-                onClick={() => copyToClipboard(withdrawal.transaction_ref)}
-              />
-            )}
           </div>
-        </div>
+          {getStatusBadge(withdrawal.status)}
+        </MobileCardHeader>
         
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: '1fr 1fr', 
-          gap: '12px',
-          marginTop: '8px'
-        }}>
-          <div>
-            <div className="detail-label">Requested</div>
-            <div style={{ fontSize: '12px', color: '#0f172a' }}>
-              {formatDateTime(withdrawal.created_at)}
+        <MobileCardBody>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: '16px', 
+            marginBottom: '16px' 
+          }}>
+            <div>
+              <div className="detail-label">Amount</div>
+              <div className="detail-value">{withdrawal.formatted_amount}</div>
+            </div>
+            <div>
+              <div className="detail-label">Payment Method</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {getPaymentMethodIcon(withdrawal.payment_method)}
+                <span style={{ 
+                  fontSize: '13px', 
+                  textTransform: 'capitalize',
+                  color: '#0f172a',
+                  fontWeight: 500
+                }}>
+                  {withdrawal.payment_method?.replace('_', ' ')}
+                </span>
+              </div>
             </div>
           </div>
-          <div>
-            <div className="detail-label">Processed</div>
-            <div style={{ fontSize: '12px', color: '#0f172a' }}>
-              {withdrawal.processed_at ? formatDateTime(withdrawal.processed_at) : '-'}
+          
+          <div style={{ marginBottom: '12px' }}>
+            <div className="detail-label">Transaction Reference</div>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px',
+              background: '#f8fafc',
+              padding: '10px',
+              borderRadius: '8px',
+              border: '1px solid #e2e8f0'
+            }}>
+              <span style={{ 
+                fontFamily: 'monospace', 
+                fontSize: '13px',
+                color: '#0f172a',
+                wordBreak: 'break-all',
+                flex: 1
+              }}>
+                {withdrawal.transaction_ref}
+              </span>
+              {withdrawal.transaction_ref !== '-' && (
+                <FiCopy
+                  size={16}
+                  style={{ 
+                    cursor: 'pointer', 
+                    color: '#64748b',
+                    flexShrink: 0
+                  }}
+                  onClick={() => copyToClipboard(withdrawal.transaction_ref)}
+                />
+              )}
             </div>
           </div>
-        </div>
-      </MobileCardBody>
-      
-      <MobileCardFooter>
-        <ActionButton onClick={() => handleViewWithdrawalDetails(withdrawal)}>
-          <FiEye size={14} />
-          View Details
-        </ActionButton>
-      </MobileCardFooter>
-    </MobileWithdrawalCard>
-  ));
-};
+          
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: '12px',
+            marginTop: '8px'
+          }}>
+            <div>
+              <div className="detail-label">Requested</div>
+              <div style={{ fontSize: '12px', color: '#0f172a' }}>
+                {formatDateTime(withdrawal.created_at)}
+              </div>
+            </div>
+            <div>
+              <div className="detail-label">Processed</div>
+              <div style={{ fontSize: '12px', color: '#0f172a' }}>
+                {withdrawal.processed_at ? formatDateTime(withdrawal.processed_at) : '-'}
+              </div>
+            </div>
+          </div>
+        </MobileCardBody>
+        
+        <MobileCardFooter>
+          <ActionButton onClick={() => handleViewWithdrawalDetails(withdrawal)}>
+            <FiEye size={14} />
+            View Details
+          </ActionButton>
+        </MobileCardFooter>
+      </MobileWithdrawalCard>
+    ));
+  };
 
   // Mobile overview tab content
   const renderMobileOverview = () => {
@@ -811,68 +1006,72 @@ const ExpertEarningsDashboard = () => {
           </StatCard>
         </StatsGrid>
 
-        {/* Account Status Card - Mobile */}
+        {/* Payout Methods - Mobile */}
         <AccountStatus>
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '12px',
-            marginBottom: '20px'
+            marginBottom: '16px'
           }}>
-            <SectionTitle>Account Status</SectionTitle>
-            <VerificationBadge $status={verificationStatus}>
-              {verificationStatus === 'verified' && <MdVerified size={14} />}
-              {verificationStatus === 'pending' && <FiAlertCircle size={14} />}
-              {verificationStatus === 'rejected' && <MdWarning size={14} />}
-              {verificationStatus.charAt(0).toUpperCase() + verificationStatus.slice(1)}
-            </VerificationBadge>
+            <SectionTitle>Payout Methods</SectionTitle>
+            <AddPayoutMethodButton onClick={() => setShowAddPayoutMethodModal(true)}>
+              <FiPlus size={14} />
+              Add New
+            </AddPayoutMethodButton>
           </div>
 
-          <PayoutProgress>
-            <div className="progress-header">
-              <div className="progress-label">Account Completion</div>
-              <div className="progress-percentage">
-                {verificationStatus === 'verified' ? '100%' : '75%'}
-              </div>
+          {loadingPayoutMethods ? (
+            <div style={{ textAlign: 'center', padding: '20px' }}>
+              <Loader />
             </div>
-            <div className="progress-bar">
-              <div 
-                className="progress-fill" 
-                style={{ width: verificationStatus === 'verified' ? '100%' : '75%' }}
-              />
-            </div>
-            <div className="progress-steps">
-              {[
-                { number: 1, label: 'Profile', completed: true },
-                { number: 2, label: 'Bank', completed: verificationStatus === 'verified' },
-                { number: 3, label: 'KYC', completed: verificationStatus === 'verified' }
-              ].map((step, index) => (
-                <div key={index} className="step">
-                  <div className="step-number">{step.number}</div>
-                  <div className="step-label">{step.label}</div>
-                </div>
+          ) : payoutMethods.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {payoutMethods.map((method) => (
+                <PayoutMethodCard key={method.id} $primary={method.is_primary === 1}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '8px',
+                      background: method.is_primary === 1 ? '#8b5cf6' : '#f1f5f9',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: method.is_primary === 1 ? '#fff' : '#64748b'
+                    }}>
+                      {method.method_type === 'bank' ? <BsBank2 size={20} /> : <HiOutlineCurrencyRupee size={20} />}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '8px',
+                        flexWrap: 'wrap'
+                      }}>
+                        <span style={{ fontWeight: 600, fontSize: '14px' }}>
+                          {method.method_type === 'bank' ? 'Bank Account' : 'UPI'}
+                        </span>
+                        {method.is_primary === 1 && (
+                          <PayoutMethodBadge>Primary</PayoutMethodBadge>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#64748b' }}>
+                        {method.fund_account_mask}
+                      </div>
+                    </div>
+                  </div>
+                </PayoutMethodCard>
               ))}
             </div>
-
-            <SetupButton
-              $verified={verificationStatus === 'verified'}
-              onClick={() => setShowAccountModal(true)}
-            >
-              {verificationStatus === 'verified' ? (
-                <>
-                  <FiUser size={16} />
-                  View Account Details
-                </>
-              ) : (
-                <>
-                  <FiLock size={16} />
-                  Complete Account Setup
-                </>
-              )}
-            </SetupButton>
-          </PayoutProgress>
+          ) : (
+            <EmptyState>
+              <p>No payout methods added yet</p>
+              <SetupButton onClick={() => setShowAddPayoutMethodModal(true)}>
+                Add Payout Method
+              </SetupButton>
+            </EmptyState>
+          )}
         </AccountStatus>
 
         {/* Summary Card - Mobile */}
@@ -989,25 +1188,6 @@ const ExpertEarningsDashboard = () => {
 
         {/* Info Cards - Mobile */}
         <InfoCardsContainer>
-          {verificationStatus === 'verified' && (
-            <BankDetailsCard>
-              <SectionTitle>Bank Details</SectionTitle>
-              <div style={{ marginTop: '12px' }}>
-                {[
-                  { label: 'Bank', value: accountDetails.bankName },
-                  { label: 'Account', value: accountDetails.accountNumber },
-                  { label: 'IFSC', value: accountDetails.ifscCode },
-                  { label: 'UPI', value: accountDetails.upiId }
-                ].map((detail, index) => (
-                  <div key={index} className="bank-detail">
-                    <div className="detail-label">{detail.label}</div>
-                    <div className="detail-value">{detail.value}</div>
-                  </div>
-                ))}
-              </div>
-            </BankDetailsCard>
-          )}
-
           <InfoCard>
             <FiDollarSign />
             <div className="info-content">
@@ -1078,7 +1258,13 @@ const ExpertEarningsDashboard = () => {
                 </BalanceDisplay>
                 
                 <PayoutButton
-                  onClick={() => setShowPayoutModal(true)}
+                  onClick={() => {
+                    if (payoutMethods.length === 0) {
+                      setShowAddPayoutMethodModal(true);
+                    } else {
+                      setShowPayoutModal(true);
+                    }
+                  }}
                   disabled={formattedStats.availableBalance < 100}
                 >
                   <HiOutlineCurrencyRupee />
@@ -1240,68 +1426,81 @@ const ExpertEarningsDashboard = () => {
             {/* Right Column - All Cards in Grid Layout */}
             <RightColumn>
               <RightColumnGrid>
-                {/* Account Status */}
+                {/* Payout Methods Section */}
                 <AccountStatus>
                   <div style={{ 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '12px',
                     marginBottom: '20px'
                   }}>
-                    <SectionTitle>Account Status</SectionTitle>
-                    <VerificationBadge $status={verificationStatus}>
-                      {verificationStatus === 'verified' && <MdVerified size={14} />}
-                      {verificationStatus === 'pending' && <FiAlertCircle size={14} />}
-                      {verificationStatus === 'rejected' && <MdWarning size={14} />}
-                      {verificationStatus.charAt(0).toUpperCase() + verificationStatus.slice(1)}
-                    </VerificationBadge>
+                    <SectionTitle>Payout Methods</SectionTitle>
+                    <AddPayoutMethodButton onClick={() => setShowAddPayoutMethodModal(true)}>
+                      <FiPlus size={14} />
+                      Add New
+                    </AddPayoutMethodButton>
                   </div>
 
-                  <PayoutProgress>
-                    <div className="progress-header">
-                      <div className="progress-label">Account Completion</div>
-                      <div className="progress-percentage">
-                        {verificationStatus === 'verified' ? '100%' : '75%'}
-                      </div>
+                  {loadingPayoutMethods ? (
+                    <div style={{ textAlign: 'center', padding: '20px' }}>
+                      <Loader />
                     </div>
-                    <div className="progress-bar">
-                      <div 
-                        className="progress-fill" 
-                        style={{ width: verificationStatus === 'verified' ? '100%' : '75%' }}
-                      />
-                    </div>
-                    <div className="progress-steps">
-                      {[
-                        { number: 1, label: 'Profile', completed: true },
-                        { number: 2, label: 'Bank', completed: verificationStatus === 'verified' },
-                        { number: 3, label: 'KYC', completed: verificationStatus === 'verified' }
-                      ].map((step, index) => (
-                        <div key={index} className="step">
-                          <div className="step-number">{step.number}</div>
-                          <div className="step-label">{step.label}</div>
-                        </div>
+                  ) : payoutMethods.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {payoutMethods.map((method) => (
+                        <PayoutMethodCard key={method.id} $primary={method.is_primary === 1}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{
+                              width: '40px',
+                              height: '40px',
+                              borderRadius: '8px',
+                              background: method.is_primary === 1 ? '#8b5cf6' : '#f1f5f9',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: method.is_primary === 1 ? '#fff' : '#64748b'
+                            }}>
+                              {method.method_type === 'bank' ? <BsBank2 size={20} /> : <HiOutlineCurrencyRupee size={20} />}
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '8px',
+                                flexWrap: 'wrap'
+                              }}>
+                                <span style={{ fontWeight: 600, fontSize: '14px' }}>
+                                  {method.method_type === 'bank' ? 'Bank Account' : 'UPI'}
+                                </span>
+                                {method.is_primary === 1 && (
+                                  <PayoutMethodBadge>Primary</PayoutMethodBadge>
+                                )}
+                              </div>
+                              <div style={{ fontSize: '12px', color: '#64748b' }}>
+                                {method.fund_account_mask}
+                              </div>
+                            </div>
+                            {method.is_primary !== 1 && (
+                              <ActionButton 
+                                onClick={() => handleSetPrimaryMethod(method.id)}
+                                style={{ padding: '4px 8px' }}
+                              >
+                                <FiStar size={12} />
+                                Set Primary
+                              </ActionButton>
+                            )}
+                          </div>
+                        </PayoutMethodCard>
                       ))}
                     </div>
-
-                    <SetupButton
-                      $verified={verificationStatus === 'verified'}
-                      onClick={() => setShowAccountModal(true)}
-                    >
-                      {verificationStatus === 'verified' ? (
-                        <>
-                          <FiUser size={16} />
-                          View Account Details
-                        </>
-                      ) : (
-                        <>
-                          <FiLock size={16} />
-                          Complete Account Setup
-                        </>
-                      )}
-                    </SetupButton>
-                  </PayoutProgress>
+                  ) : (
+                    <EmptyState>
+                      <p>No payout methods added yet</p>
+                      <SetupButton onClick={() => setShowAddPayoutMethodModal(true)}>
+                        Add Payout Method
+                      </SetupButton>
+                    </EmptyState>
+                  )}
                 </AccountStatus>
 
                 {/* Payout Summary */}
@@ -1415,27 +1614,6 @@ const ExpertEarningsDashboard = () => {
 
                 {/* Info Cards Container */}
                 <InfoCardsContainer>
-                  {/* Bank Details Preview */}
-                  {verificationStatus === 'verified' && (
-                    <BankDetailsCard>
-                      <SectionTitle>Bank Details</SectionTitle>
-                      <div style={{ marginTop: '12px' }}>
-                        {[
-                          { label: 'Bank', value: accountDetails.bankName },
-                          { label: 'Account', value: accountDetails.accountNumber },
-                          { label: 'IFSC', value: accountDetails.ifscCode },
-                          { label: 'UPI', value: accountDetails.upiId }
-                        ].map((detail, index) => (
-                          <div key={index} className="bank-detail">
-                            <div className="detail-label">{detail.label}</div>
-                            <div className="detail-value">{detail.value}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </BankDetailsCard>
-                  )}
-
-                  {/* Info Card */}
                   <InfoCard>
                     <FiDollarSign />
                     <div className="info-content">
@@ -1500,73 +1678,74 @@ const ExpertEarningsDashboard = () => {
               </div>
 
               {/* Mobile Filter Drawer */}
-             {showMobileFilters && (
-  <FilterDrawer>
-    <FilterDrawerHeader>
-      <h3>Filter Withdrawals</h3>
-      <ModalClose onClick={() => setShowMobileFilters(false)}>×</ModalClose>
-    </FilterDrawerHeader>
-    <FilterDrawerBody>
-      <div style={{ marginBottom: '20px' }}>
-        <Label>Status</Label>
-        <SelectInput
-          value={withdrawalFilter.status}
-          onChange={(e) => handleFilterChange('status', e.target.value)}
-        >
-          <option value="all">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </SelectInput>
-      </div>
+              {showMobileFilters && (
+                <FilterDrawer>
+                  <FilterDrawerHeader>
+                    <h3>Filter Withdrawals</h3>
+                    <ModalClose onClick={() => setShowMobileFilters(false)}>×</ModalClose>
+                  </FilterDrawerHeader>
+                  <FilterDrawerBody>
+                    <div style={{ marginBottom: '20px' }}>
+                      <Label>Status</Label>
+                      <SelectInput
+                        value={withdrawalFilter.status}
+                        onChange={(e) => handleFilterChange('status', e.target.value)}
+                      >
+                        <option value="all">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                      </SelectInput>
+                    </div>
 
-      <div style={{ marginBottom: '20px' }}>
-        <Label>Search</Label>
-        <MobileSearchBar>
-          <FiSearch size={16} />
-          <input
-            type="text"
-            placeholder="Search by amount or reference..."
-            value={withdrawalFilter.search}
-            onChange={(e) => handleFilterChange('search', e.target.value)}
-          />
-        </MobileSearchBar>
-      </div>
+                    <div style={{ marginBottom: '20px' }}>
+                      <Label>Search</Label>
+                      <MobileSearchBar>
+                        <FiSearch size={16} />
+                        <input
+                          type="text"
+                          placeholder="Search by amount or reference..."
+                          value={withdrawalFilter.search}
+                          onChange={(e) => handleFilterChange('search', e.target.value)}
+                        />
+                      </MobileSearchBar>
+                    </div>
 
-      <div style={{ marginBottom: '20px' }}>
-        <Label>Date Range</Label>
-        <DateRangePicker>
-          <input
-            type="date"
-            value={withdrawalFilter.dateFrom}
-            onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-            placeholder="From"
-          />
-          <span>to</span>
-          <input
-            type="date"
-            value={withdrawalFilter.dateTo}
-            onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-            placeholder="To"
-          />
-        </DateRangePicker>
-      </div>
-    </FilterDrawerBody>
-    <FilterDrawerFooter>
-      <PrimaryButton onClick={() => setShowMobileFilters(false)}>
-        Apply Filters
-      </PrimaryButton>
-      <SecondaryButton 
-        onClick={() => {
-          clearFilters();
-          setShowMobileFilters(false);
-        }}
-      >
-        Clear All
-      </SecondaryButton>
-    </FilterDrawerFooter>
-  </FilterDrawer>
-)}
+                    <div style={{ marginBottom: '20px' }}>
+                      <Label>Date Range</Label>
+                      <DateRangePicker>
+                        <input
+                          type="date"
+                          value={withdrawalFilter.dateFrom}
+                          onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                          placeholder="From"
+                        />
+                        <span>to</span>
+                        <input
+                          type="date"
+                          value={withdrawalFilter.dateTo}
+                          onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                          placeholder="To"
+                        />
+                      </DateRangePicker>
+                    </div>
+                  </FilterDrawerBody>
+                  <FilterDrawerFooter>
+                    <ActionButton onClick={() => setShowMobileFilters(false)}>
+                      Apply Filters
+                    </ActionButton>
+                    <ActionButton 
+                      onClick={() => {
+                        clearFilters();
+                        setShowMobileFilters(false);
+                      }}
+                    >
+                      Clear All
+                    </ActionButton>
+                  </FilterDrawerFooter>
+                </FilterDrawer>
+              )}
+
               {/* Transactions List */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {visibleTransactions.length > 0 ? (
@@ -1710,17 +1889,17 @@ const ExpertEarningsDashboard = () => {
                     </div>
                   </FilterDrawerBody>
                   <FilterDrawerFooter>
-                    <PrimaryButton onClick={() => setShowMobileFilters(false)}>
+                    <ActionButton onClick={() => setShowMobileFilters(false)}>
                       Apply Filters
-                    </PrimaryButton>
-                    <SecondaryButton 
+                    </ActionButton>
+                    <ActionButton 
                       onClick={() => {
                         clearFilters();
                         setShowMobileFilters(false);
                       }}
                     >
                       Clear
-                    </SecondaryButton>
+                    </ActionButton>
                   </FilterDrawerFooter>
                 </FilterDrawer>
               )}
@@ -1737,29 +1916,63 @@ const ExpertEarningsDashboard = () => {
                   borderRadius: '8px'
                 }}>
                   {withdrawalFilter.status !== 'all' && (
-                    <FilterTag>
+                    <span style={{
+                      padding: '4px 8px',
+                      background: '#e2e8f0',
+                      borderRadius: '16px',
+                      fontSize: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
                       Status: {withdrawalFilter.status}
                       <button onClick={() => handleFilterChange('status', 'all')}>×</button>
-                    </FilterTag>
+                    </span>
                   )}
                   {withdrawalFilter.search && (
-                    <FilterTag>
+                    <span style={{
+                      padding: '4px 8px',
+                      background: '#e2e8f0',
+                      borderRadius: '16px',
+                      fontSize: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
                       Search: {withdrawalFilter.search}
                       <button onClick={() => handleFilterChange('search', '')}>×</button>
-                    </FilterTag>
+                    </span>
                   )}
                   {(withdrawalFilter.dateFrom || withdrawalFilter.dateTo) && (
-                    <FilterTag>
+                    <span style={{
+                      padding: '4px 8px',
+                      background: '#e2e8f0',
+                      borderRadius: '16px',
+                      fontSize: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
                       Date: {withdrawalFilter.dateFrom || 'Any'} to {withdrawalFilter.dateTo || 'Any'}
                       <button onClick={() => {
                         handleFilterChange('dateFrom', '');
                         handleFilterChange('dateTo', '');
                       }}>×</button>
-                    </FilterTag>
+                    </span>
                   )}
-                  <ClearFilters onClick={clearFilters}>
+                  <button
+                    onClick={clearFilters}
+                    style={{
+                      padding: '4px 8px',
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#8b5cf6',
+                      fontSize: '12px',
+                      cursor: 'pointer'
+                    }}
+                  >
                     Clear All
-                  </ClearFilters>
+                  </button>
                 </div>
               )}
 
@@ -1864,6 +2077,7 @@ const ExpertEarningsDashboard = () => {
               <SelectInput
                 value={withdrawalFilter.status}
                 onChange={(e) => handleFilterChange('status', e.target.value)}
+                style={{ width: '150px' }}
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -1888,9 +2102,9 @@ const ExpertEarningsDashboard = () => {
               </DateRangePicker>
               
               {(withdrawalFilter.search || withdrawalFilter.status !== 'all' || withdrawalFilter.dateFrom || withdrawalFilter.dateTo) && (
-                <ClearFilters onClick={clearFilters}>
+                <ActionButton onClick={clearFilters}>
                   Clear Filters
-                </ClearFilters>
+                </ActionButton>
               )}
             </FilterBar>
 
@@ -1903,6 +2117,7 @@ const ExpertEarningsDashboard = () => {
                     <TableHeaderCell>Amount</TableHeaderCell>
                     <TableHeaderCell>Status</TableHeaderCell>
                     <TableHeaderCell>Payment Method</TableHeaderCell>
+                    <TableHeaderCell>Paid To</TableHeaderCell>
                     <TableHeaderCell>Transaction Ref</TableHeaderCell>
                     <TableHeaderCell>Requested On</TableHeaderCell>
                     <TableHeaderCell>Processed On</TableHeaderCell>
@@ -1927,6 +2142,9 @@ const ExpertEarningsDashboard = () => {
                               {withdrawal.payment_method?.replace('_', ' ')}
                             </span>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <span style={{ fontSize: '12px' }}>{withdrawal.payout_mask || '-'}</span>
                         </TableCell>
                         <TableCell>
                           {withdrawal.transaction_ref !== '-' ? (
@@ -1958,7 +2176,7 @@ const ExpertEarningsDashboard = () => {
                     ))
                   ) : (
                     <tr>
-                      <TableCell colSpan="8" style={{ textAlign: 'center', padding: '40px' }}>
+                      <TableCell colSpan="9" style={{ textAlign: 'center', padding: '40px' }}>
                         <EmptyState>
                           <FiRefreshCw size={32} />
                           <h3>No withdrawals found</h3>
@@ -2017,7 +2235,7 @@ const ExpertEarningsDashboard = () => {
         <SuccessMessage>
           <MdVerified size={32} />
           <h3>Success!</h3>
-          <p>Your request has been processed successfully.</p>
+          <p>{successMessage}</p>
         </SuccessMessage>
       )}
 
@@ -2193,13 +2411,171 @@ const ExpertEarningsDashboard = () => {
         </ModalOverlay>
       )}
 
+      {/* Add Payout Method Modal */}
+      {showAddPayoutMethodModal && (
+        <ModalOverlay onClick={() => !isVerifying && setShowAddPayoutMethodModal(false)}>
+          <ModalContent style={{ maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
+            <ModalHeader>
+              <h2>Add Payout Method</h2>
+              <ModalClose
+                onClick={() => !isVerifying && setShowAddPayoutMethodModal(false)}
+                disabled={isVerifying}
+              >
+                ×
+              </ModalClose>
+            </ModalHeader>
+
+            <div style={{ marginBottom: '24px' }}>
+              <TabsContainer>
+                <TabButton
+                  $active={activePayoutTab === 'bank'}
+                  onClick={() => {
+                    setActivePayoutTab('bank');
+                    setNewPayoutMethod(prev => ({ ...prev, method_type: 'bank' }));
+                  }}
+                >
+                  <BsBank2 size={16} />
+                  Bank Account
+                </TabButton>
+                <TabButton
+                  $active={activePayoutTab === 'upi'}
+                  onClick={() => {
+                    setActivePayoutTab('upi');
+                    setNewPayoutMethod(prev => ({ ...prev, method_type: 'upi' }));
+                  }}
+                >
+                  <HiOutlineCurrencyRupee size={16} />
+                  UPI
+                </TabButton>
+              </TabsContainer>
+            </div>
+
+            <AccountForm onSubmit={handleAddPayoutMethod}>
+              {activePayoutTab === 'bank' && (
+                <>
+                  <InputGroup>
+                    <FormLabel>Account Holder Name *</FormLabel>
+                    <FormInput
+                      type="text"
+                      name="bank.account_holder_name"
+                      value={newPayoutMethod.bank.account_holder_name}
+                      onChange={handleNewPayoutMethodChange}
+                      placeholder="Enter account holder name"
+                      required
+                      disabled={isVerifying}
+                    />
+                  </InputGroup>
+
+                  <InputGroup>
+                    <FormLabel>Bank Name *</FormLabel>
+                    <FormInput
+                      type="text"
+                      name="bank.bank_name"
+                      value={newPayoutMethod.bank.bank_name}
+                      onChange={handleNewPayoutMethodChange}
+                      placeholder="Enter bank name"
+                      required
+                      disabled={isVerifying}
+                    />
+                  </InputGroup>
+
+                  <InputGroup>
+                    <FormLabel>Account Number *</FormLabel>
+                    <FormInput
+                      type="text"
+                      name="bank.account_number"
+                      value={newPayoutMethod.bank.account_number}
+                      onChange={handleNewPayoutMethodChange}
+                      placeholder="Enter account number"
+                      required
+                      disabled={isVerifying}
+                    />
+                  </InputGroup>
+
+                  <InputGroup>
+                    <FormLabel>IFSC Code *</FormLabel>
+                    <FormInput
+                      type="text"
+                      name="bank.ifsc"
+                      value={newPayoutMethod.bank.ifsc}
+                      onChange={handleNewPayoutMethodChange}
+                      placeholder="Enter IFSC code"
+                      required
+                      disabled={isVerifying}
+                    />
+                  </InputGroup>
+                </>
+              )}
+
+              {activePayoutTab === 'upi' && (
+                <InputGroup>
+                  <FormLabel>UPI ID *</FormLabel>
+                  <FormInput
+                    type="text"
+                    name="vpa.address"
+                    value={newPayoutMethod.vpa.address}
+                    onChange={handleNewPayoutMethodChange}
+                    placeholder="e.g., name@okhdfcbank"
+                    required
+                    disabled={isVerifying}
+                  />
+                </InputGroup>
+              )}
+
+              <SecurityNote style={{ marginTop: '20px' }}>
+                <FiShield />
+                <div className="security-text">
+                  <div className="security-title">Secure Information</div>
+                  <div className="security-description">
+                    Your payout details will be encrypted and stored securely
+                  </div>
+                </div>
+              </SecurityNote>
+
+              <FormActions>
+                <FormButton
+                  type="submit"
+                  $primary
+                  disabled={isVerifying}
+                >
+                  {isVerifying ? (
+                    <>
+                      <Loader />
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <FiPlus size={16} />
+                      Add Payout Method
+                    </>
+                  )}
+                </FormButton>
+                
+                <FormButton
+                  type="button"
+                  onClick={() => setShowAddPayoutMethodModal(false)}
+                  disabled={isVerifying}
+                >
+                  Cancel
+                </FormButton>
+              </FormActions>
+            </AccountForm>
+          </ModalContent>
+        </ModalOverlay>
+      )}
+
       {/* Payout Request Modal */}
       {showPayoutModal && (
-        <ModalOverlay onClick={() => setShowPayoutModal(false)}>
+        <ModalOverlay onClick={() => !isVerifying && setShowPayoutModal(false)}>
           <ModalContent style={{ maxWidth: '500px' }} onClick={(e) => e.stopPropagation()}>
             <ModalHeader>
               <h2>Request Payout</h2>
-              <ModalClose onClick={() => setShowPayoutModal(false)}>×</ModalClose>
+              <ModalClose
+                onClick={() => !isVerifying && setShowPayoutModal(false)}
+                disabled={isVerifying}
+              >
+                ×
+              </ModalClose>
             </ModalHeader>
 
             <div style={{ marginBottom: '24px' }}>
@@ -2239,42 +2615,59 @@ const ExpertEarningsDashboard = () => {
               </InputGroup>
 
               <div style={{ marginTop: '20px' }}>
-                <FormLabel>Payout Method</FormLabel>
-                <PayoutOption
-                  $selected={payoutRequest.method === 'bank'}
-                  onClick={() => !isVerifying && setPayoutRequest(prev => ({ ...prev, method: 'bank' }))}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div 
-                      className="option-icon"
-                      style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%)' }}
-                    >
-                      <FiHome size={16} />
-                    </div>
-                    <div>
-                      <div className="option-title">Bank Transfer</div>
-                      <div className="option-subtitle">3-5 business days</div>
-                    </div>
+                <FormLabel>Select Payout Method</FormLabel>
+                
+                {loadingPayoutMethods ? (
+                  <div style={{ textAlign: 'center', padding: '20px' }}>
+                    <Loader />
                   </div>
-                </PayoutOption>
-
-                <PayoutOption
-                  $selected={payoutRequest.method === 'upi'}
-                  onClick={() => !isVerifying && setPayoutRequest(prev => ({ ...prev, method: 'upi' }))}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div 
-                      className="option-icon"
-                      style={{ background: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)' }}
+                ) : payoutMethods.length > 0 ? (
+                  payoutMethods.map((method) => (
+                    <PayoutOption
+                      key={method.id}
+                      $selected={payoutRequest.method_id === method.id}
+                      onClick={() => !isVerifying && setPayoutRequest(prev => ({ ...prev, method_id: method.id }))}
+                      style={{ marginBottom: '8px' }}
                     >
-                      <HiOutlineCurrencyRupee size={16} />
-                    </div>
-                    <div>
-                      <div className="option-title">UPI Instant</div>
-                      <div className="option-subtitle">Within 24 hours</div>
-                    </div>
-                  </div>
-                </PayoutOption>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div 
+                          className="option-icon"
+                          style={{ 
+                            background: payoutRequest.method_id === method.id 
+                              ? 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)' 
+                              : '#f1f5f9'
+                          }}
+                        >
+                          {method.method_type === 'bank' ? <FiHome size={16} /> : <HiOutlineCurrencyRupee size={16} />}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div className="option-title">
+                            {method.method_type === 'bank' ? 'Bank Transfer' : 'UPI'}
+                            {method.is_primary === 1 && (
+                              <PayoutMethodBadge style={{ marginLeft: '8px' }}>Primary</PayoutMethodBadge>
+                            )}
+                          </div>
+                          <div className="option-subtitle">{method.fund_account_mask}</div>
+                        </div>
+                        <RadioOption $selected={payoutRequest.method_id === method.id}>
+                          <div className="radio-dot"></div>
+                        </RadioOption>
+                      </div>
+                    </PayoutOption>
+                  ))
+                ) : (
+                  <EmptyState>
+                    <p>No payout methods found</p>
+                    <ActionButton
+                      onClick={() => {
+                        setShowPayoutModal(false);
+                        setShowAddPayoutMethodModal(true);
+                      }}
+                    >
+                      Add Payout Method
+                    </ActionButton>
+                  </EmptyState>
+                )}
               </div>
 
               <SecurityNote style={{ marginTop: '20px' }}>
@@ -2282,7 +2675,7 @@ const ExpertEarningsDashboard = () => {
                 <div className="security-text">
                   <div className="security-title">Processing Information</div>
                   <div className="security-description">
-                    Payouts processed on Monday & Thursday
+                    Payouts are processed on Monday & Thursday
                   </div>
                 </div>
               </SecurityNote>
@@ -2291,7 +2684,7 @@ const ExpertEarningsDashboard = () => {
                 <FormButton 
                   type="submit" 
                   $primary 
-                  disabled={isVerifying || payoutRequest.amount < 100 || payoutRequest.amount > formattedStats.availableBalance}
+                  disabled={isVerifying || payoutRequest.amount < 100 || payoutRequest.amount > formattedStats.availableBalance || !payoutRequest.method_id}
                 >
                   {isVerifying ? (
                     <>
@@ -2363,7 +2756,7 @@ const ExpertEarningsDashboard = () => {
                 </div>
                 
                 <div>
-                  <div style={{ fontSize: '12px', color: '#101316', marginBottom: '2px' }}>Payment Method</div>
+                  <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '2px' }}>Payment Method</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <div style={{
                       width: '28px',
@@ -2377,20 +2770,25 @@ const ExpertEarningsDashboard = () => {
                     }}>
                       {getPaymentMethodIcon(selectedWithdrawal.payment_method)}
                     </div>
-                    <span style={{ textTransform: 'capitalize', fontSize: '13px', color: '#1c1d1e' }}>
+                    <span style={{ textTransform: 'capitalize', fontSize: '13px', color: '#050d1b' }}>
                       {selectedWithdrawal.payment_method?.replace('_', ' ')}
                     </span>
                   </div>
                 </div>
 
                 <div>
-                  <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '2px' }}>Requested On</div>
-                  <div style={{ fontSize: '13px', color: '#1c1d1e' }}>{formatDateTime(selectedWithdrawal.created_at)}</div>
+                  <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '2px' }}>Paid To</div>
+                  <div style={{ fontSize: '13px', color: '#050d1b' }}>{selectedWithdrawal.payout_mask || '-'}</div>
                 </div>
 
                 <div>
-                  <div style={{ fontSize: '12px', color: '#1f2225', marginBottom: '2px' }}>Processed On</div>
-                  <div style={{ fontSize: '13px', color: '#1c1d1e' }}>
+                  <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '2px' }}>Requested On</div>
+                  <div style={{ fontSize: '13px', color: '#050d1b'}}>{formatDateTime(selectedWithdrawal.created_at)}</div>
+                </div>
+
+                <div>
+                  <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '2px' }}>Processed On</div>
+                  <div style={{ fontSize: '13px', color: '#050d1b' }}>
                     {selectedWithdrawal.processed_at ? formatDateTime(selectedWithdrawal.processed_at) : '-'}
                   </div>
                 </div>
@@ -2403,9 +2801,9 @@ const ExpertEarningsDashboard = () => {
                     display: 'flex', 
                     alignItems: 'center', 
                     gap: '6px',
+                    color: '#050d1b',
                     fontFamily: 'monospace',
                     fontSize: '12px',
-                    color: '#1c1d1e',
                     background: '#f8fafc',
                     padding: '8px',
                     borderRadius: '6px'
@@ -2451,5 +2849,5 @@ const ExpertEarningsDashboard = () => {
     </PremiumContainer>
   );
 };
-
+ 
 export default ExpertEarningsDashboard;

@@ -16,7 +16,7 @@ import { FaUserCircle } from "react-icons/fa";
 import {
   getAllExpertsApi,
   updateExpertStatusApi
-} from "../../../shared/api/expertapi/expert.api";
+} from "../../../shared/api/admin/expert.api";
 
 import {
   getAllExpertProfilesApi
@@ -33,43 +33,39 @@ export default function ExpertApproval() {
     loadExperts();
   }, []);
 
-  const loadExperts = async () => {
-    try {
-      setLoading(true);
+ const loadExperts = async () => {
+  try {
+    setLoading(true);
 
-      // 1️⃣ experts
-      const expertRes = await getAllExpertsApi();
-      const experts = expertRes?.data || expertRes || [];
+    const expertRes = await getAllExpertsApi();
+    const experts = expertRes?.data?.data || [];
 
-      // 2️⃣ profiles
-      const profileRes = await getAllExpertProfilesApi();
-      const profiles = profileRes?.data || profileRes || [];
+    const profileRes = await getAllExpertProfilesApi();
+    const profiles = profileRes?.data?.data || [];
 
-      // 3️⃣ Map profile photo by expert_id
-      const profileMap = {};
-      profiles.forEach((p) => {
-        profileMap[p.expert_id] = p.profile_photo;
-      });
+    const profileMap = {};
+    profiles.forEach((p) => {
+      profileMap[p.expert_id] = p.profile_photo;
+    });
 
-      // 4️⃣ Final rows
-      const finalRows = experts.map((e) => ({
-        expert_id: e.id,
-        name: e.name,
-        email: e.email,
-        mobile: e.phone,
-        status: e.status === 1 ? "APPROVED" : "DISABLED",
-        profile_photo:
-          profileMap[e.id] ||
-          "https://via.placeholder.com/40?text=User"
-      }));
+    const finalRows = experts.map((e) => ({
+      expert_id: e.id,
+      name: e.name,
+      email: e.email,
+      mobile: e.phone,
+      status: e.status === 1 ? "APPROVED" : "DISABLED",
+      profile_photo:
+        profileMap[e.id] ||
+        "https://via.placeholder.com/40?text=User",
+    }));
 
-      setRows(finalRows);
-    } catch (err) {
-      console.error("Failed to load experts", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setRows(finalRows);
+  } catch (err) {
+    console.error("Failed to load experts", err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   /* =====================================
      🔹 TOGGLE STATUS (APPROVE / DISABLE)

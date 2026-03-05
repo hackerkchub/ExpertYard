@@ -36,7 +36,7 @@ import AddBalancePopup from "../../components/AddBalancePopup/AddBalancePopup";
 // ✅ CONTEXTS
 import { useWallet } from "../../../../shared/context/WalletContext";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
-import { useExpert } from "../../../../shared/context/ExpertContext";
+import { usePublicExpert as useExpert } from "../../context/PublicExpertContext";
 
 
 

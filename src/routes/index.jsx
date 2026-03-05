@@ -6,6 +6,8 @@ import { socket } from "../shared/api/socket";
 import UserAppRoutes from "../apps/user/routes";
 import ExpertAppRoutes from "../apps/expert/routes";
 import AdminAppRoutes from "../apps/admin/routes";
+import { ExpertProvider } from "../shared/context/ExpertContext"; // ✅ ADD
+import BottomNavbar from "../shared/components/BottomNavbar/BottomNavbar";
 
 export default function AppRouter() {
 useSoundInit();
@@ -47,7 +49,19 @@ useSoundInit();
     };
   }, []);
 
+   const showNavbar = location.pathname.startsWith("/user") || location.pathname.startsWith("/expert");
+
   return (
+    <div className="app-main-layout" style={{ width: '100%', overflowX: 'hidden', position: 'relative' }}>
+      {/* Padding tabhi add hogi jab screen mobile size (max-width: 768px) hogi */}
+      <div 
+        className="main-content-wrapper" 
+        style={{ 
+          paddingBottom: showNavbar ? "var(--nav-height, 70px)" : "0px",
+          width: '100%',
+          overflowX: 'hidden'
+        }}
+      >
     <Routes>
       {/* Redirect root */}
       <Route path="/" element={<Navigate to="/user" />} />
@@ -56,10 +70,20 @@ useSoundInit();
       <Route path="/user/*" element={<UserAppRoutes />} />
 
       {/* Expert */}
-      <Route path="/expert/*" element={<ExpertAppRoutes />} />
-
+     <Route
+  path="/expert/*"
+  element={
+    <ExpertProvider>
+      <ExpertAppRoutes />
+    </ExpertProvider>
+  }
+/>
       {/* Admin */}
       <Route path="/admin/*" element={<AdminAppRoutes />} />
     </Routes>
+     </div>
+     {showNavbar && <BottomNavbar />}
+    </div>
+    
   );
 }

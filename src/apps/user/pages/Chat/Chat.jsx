@@ -31,7 +31,7 @@ import {
 
 import { socket } from "../../../../shared/api/socket";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
-import { useExpert } from "../../../../shared/context/ExpertContext";
+import { usePublicExpert as useExpert } from "../../context/PublicExpertContext";
 import { useWallet } from "../../../../shared/context/WalletContext"; // ✅ CORRECT WalletContext
 import useChatTimer from "../../../../shared/hooks/useChatTimer"; // ✅ ADD hook
 

@@ -27,7 +27,7 @@ import {
   NetworkStatus,
 } from "./VoiceCall.styles";
 
-import { useExpert } from "../../../../shared/context/ExpertContext";
+import { usePublicExpert as useExpert } from "../../context/PublicExpertContext";
 import { useSocket } from "../../../../shared/hooks/useSocket";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 

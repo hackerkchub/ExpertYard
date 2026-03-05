@@ -37,7 +37,7 @@ export const PageContainer = styled.div`
 `;
 
 export const ContentWrapper = styled.div`
-  max-width: 1400px;
+  max-width: 950px;
   margin: 0 auto;
 `;
 
@@ -1011,32 +1011,32 @@ export const PageButton = styled.button`
   }
 `;
 
-export const FilterTag = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: #f1f5f9;
-  border-radius: 20px;
-  font-size: 12px;
-  color: #1e293b;
-  margin-right: 8px;
-  margin-bottom: 8px;
+// export const FilterTag = styled.div`
+//   display: inline-flex;
+//   align-items: center;
+//   gap: 6px;
+//   padding: 6px 12px;
+//   background: #f1f5f9;
+//   border-radius: 20px;
+//   font-size: 12px;
+//   color: #1e293b;
+//   margin-right: 8px;
+//   margin-bottom: 8px;
   
-  button {
-    background: none;
-    border: none;
-    color: #64748b;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    padding: 2px;
+//   button {
+//     background: none;
+//     border: none;
+//     color: #64748b;
+//     cursor: pointer;
+//     display: flex;
+//     align-items: center;
+//     padding: 2px;
     
-    &:hover {
-      color: #ef4444;
-    }
-  }
-`;
+//     &:hover {
+//       color: #ef4444;
+//     }
+//   }
+// `;
 
 export const ClearFilters = styled.button`
   padding: 8px 16px;
@@ -1199,4 +1199,290 @@ export const MobileCardFooter = styled.div`
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+`;
+
+// Add these to your PayoutManagement.styles.js
+
+export const PayoutMethodInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+export const PayoutMethodIcon = styled.div`
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+`;
+
+export const PayoutMethodDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+export const PayoutMethodBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  background: #8b5cf6;
+  color: white;
+  font-size: 10px;
+  border-radius: 4px;
+  margin-left: 6px;
+`;
+
+// Add these to your PayoutManagement.styles.js
+
+export const RealPayoutSection = styled.div`
+  margin-top: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  border-radius: 12px;
+  border: 1px solid #8b5cf6;
+`;
+
+export const RealPayoutToggle = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid #8b5cf6;
+  border-radius: 8px;
+  color: #8b5cf6;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: #8b5cf6;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+export const RealPayoutContent = styled.div`
+  margin-top: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+
+  h4 {
+    margin: 0 0 12px 0;
+    color: #1e293b;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &:before {
+      content: '';
+      width: 4px;
+      height: 4px;
+      background: #8b5cf6;
+      border-radius: 50%;
+    }
+  }
+`;
+
+export const SecurityNote = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #475569;
+`;
+
+export const FilterTagsContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 0 4px;
+`;
+
+export const FilterTag = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #f1f5f9;
+  border-radius: 16px;
+  font-size: 12px;
+  color: #475569;
+
+  button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 50%;
+
+    &:hover {
+      background: #e2e8f0;
+      color: #ef4444;
+    }
+  }
+`;
+
+export const MobileFilterBar = styled.div`
+  margin: 16px 0;
+`;
+
+export const MobileFilterButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #1e293b;
+  font-size: 14px;
+  cursor: pointer;
+
+  &:hover {
+    background: #f8fafc;
+  }
+`;
+
+export const MobileFilterDrawer = styled.div`
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: slideUp 0.3s ease;
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+`;
+
+export const MobileFilterDrawerHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+
+  h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #1e293b;
+  }
+
+  button {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #64748b;
+    cursor: pointer;
+    padding: 4px;
+
+    &:hover {
+      color: #ef4444;
+    }
+  }
+`;
+
+export const MobileFilterDrawerBody = styled.div`
+  padding: 20px;
+  max-height: 70vh;
+  overflow-y: auto;
+
+  ${SearchInput}, ${Select}, ${DateInput} {
+    width: 100%;
+    margin-bottom: 12px;
+  }
+`;
+
+export const MobileFilterDrawerFooter = styled.div`
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid #e2e8f0;
+
+  ${PrimaryButton}, ${SecondaryButton} {
+    flex: 1;
+  }
+`;
+
+export const ScreenshotPreview = styled.div`
+  position: relative;
+  margin-top: 12px;
+  padding: 8px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+
+  img {
+    width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    border-radius: 4px;
+  }
+
+  button {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #ef4444;
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+
+    &:hover {
+      background: #dc2626;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
 `;

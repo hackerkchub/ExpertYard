@@ -56,22 +56,25 @@ const Categories = () => {
       <div className="category-grid">
         {categories.map((cat) => (
           <div 
-            className={`category-card ${cat.id === activeCategory ? 'active' : ''}`}
-            key={cat.id}
-            onClick={() => handleCategoryClick(cat.id, cat.name)}
-          >
-            <div className="category-icon">
-              <img 
-                src={cat.image_url || DEFAULT_CATEGORY_IMAGE} 
-                alt={cat.name}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.parentElement.textContent = cat.name.charAt(0);
-                }}
-              />
-            </div>
-            <p>{cat.name}</p>
-          </div>
+  className={`category-card ${cat.id === activeCategory ? 'active' : ''}`}
+  key={cat.id}
+  onClick={() => handleCategoryClick(cat.id, cat.name)}
+>
+  <div className="category-icon">
+    <img 
+      src={cat.image_url || DEFAULT_CATEGORY_IMAGE} 
+      alt={cat.name}
+      onError={(e) => {
+        e.target.style.display = 'none';
+        e.target.parentElement.style.fontSize = '24px';
+        e.target.parentElement.style.fontWeight = 'bold';
+        e.target.parentElement.style.color = '#555';
+        e.target.parentElement.textContent = cat.name.charAt(0);
+      }}
+    />
+  </div>
+  <p>{cat.name}</p>
+</div>
         ))}
       </div>
     </section>

@@ -58,7 +58,7 @@ import {
 } from "./UserChatHistory.styles";
 
 import { useAuth } from "../../../../shared/context/UserAuthContext";
-import { useExpert } from "../../../../shared/context/ExpertContext";
+import {usePublicExpert as useExpert} from "../../context/PublicExpertContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
 import { socket } from "../../../../shared/api/socket";
 import {
@@ -358,14 +358,18 @@ export const UserChatHistory = () => {
 
   const openSession = useCallback(async (session) => {
     try {
-      const res = await getChatHistoryMessagesApi(session.room_id);
-      if (res?.success && res.data?.length) {
-        setSelectedSession(session);
-        setMessages(res.data);
-        setShowDetails(true);
-      } else {
-        alert("No messages found for this session");
-      }
+      const res = await getChatHistoryMessagesApi(session.id); 
+     const messagesData = Array.isArray(res)
+  ? res
+  : res?.data || [];
+
+if (messagesData.length > 0) {
+  setSelectedSession(session);
+  setMessages(messagesData);
+  setShowDetails(true);
+} else {
+  alert("No messages found");
+}
     } catch (e) {
       console.error("❌ messages error:", e);
       alert("Failed to load chat messages");

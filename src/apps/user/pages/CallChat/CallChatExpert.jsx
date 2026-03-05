@@ -32,7 +32,7 @@ import {
 } from "./CallChatExpert.styles";
 
 import ExpertCard from "../../components/userExperts/ExpertCard";
-import { useExpert } from "../../../../shared/context/ExpertContext";
+import { usePublicExpert as useExpert } from "../../context/PublicExpertContext";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
 import { socket } from "../../../../shared/api/socket";

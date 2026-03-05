@@ -26,6 +26,25 @@ export const TopbarWrap = styled.div`
   @media (max-width: 480px) {
     padding: 0 12px;
   }
+
+  .desktop-only {
+  display: flex;
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+{/* MOBILE HAMBURGER */}
+<IconBtn
+  onClick={() => setMobileMenuOpen(true)}
+  className="mobile-only"
+  title="Menu"
+>
+  <FiMenu />
+</IconBtn>
 `;
 
 /* LEFT BLOCK */

@@ -93,7 +93,7 @@ import {
   deleteReviewApi,
 } from "../../../../shared/api/expertapi/reviews.api";
 
-import { useExpert } from "../../../../shared/context/ExpertContext";
+import {usePublicExpert as useExpert} from "../../context/PublicExpertContext";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
 import { socket } from "../../../../shared/api/socket";
@@ -551,13 +551,13 @@ setRequestingChat(false);
             <div style={{ flex: '0 0 200px' }}>
               <LeftImage src={profile.profile_photo || DEFAULT_AVATAR} alt="Profile" />
               <div style={{ marginTop: '16px', textAlign: 'center' }}>
-                <MiniRating>
+                {/* <MiniRating>
                   <FiStar color="#facc15" />
                   {formattedAvgRating} ({totalReviews})
-                </MiniRating>
-                <div style={{ marginTop: '8px', fontSize: '14px', color: '#64748b' }}>
+                </MiniRating> */}
+                {/* <div style={{ marginTop: '8px', fontSize: '14px', color: '#64748b' }}>
                   Followers: <strong>{followersCount}</strong>
-                </div>
+                </div> */}
                 {!following ? (
                   <FollowButton onClick={handleFollowAction}>
                     <FiUserPlus /> Follow
@@ -606,7 +606,7 @@ setRequestingChat(false);
               <TagList>
                 <Tag><FiBookOpen /> Education: {profile.education || "Masters Degree"}</Tag>
                 <Tag><FiTarget /> Category: {profile.category_name || "Business"}</Tag>
-                <Tag><FiCheckCircle /> Status: {isExpertOnline ? "Available" : "Offline"}</Tag>
+                {/* <Tag><FiCheckCircle /> Status: {isExpertOnline ? "Available" : "Offline"}</Tag> */}
               </TagList>
 
               {/* Action Buttons */}
@@ -628,80 +628,6 @@ setRequestingChat(false);
           </div>
         </ProfileCard>
 
-        {/* Expertise Section - Based on Image */}
-        <Section>
-          <SectionTitle>Aspects of Expertise</SectionTitle>
-          <ExpertiseGrid>
-            <ExpertiseCard>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                <div style={{ 
-                  width: '40px', 
-                  height: '40px', 
-                  borderRadius: '10px', 
-                  background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <FiStar size={20} color="white" />
-                </div>
-                <h4 style={{ margin: 0, fontSize: '18px' }}>Reviewer</h4>
-              </div>
-              <SectionBody style={{ fontSize: '15px', color: '#4b5563' }}>
-                Early UK career settings using advanced data methods provide even insights. Highly recommended.
-              </SectionBody>
-            </ExpertiseCard>
-
-            <ExpertiseCard>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                <div style={{ 
-                  width: '40px', 
-                  height: '40px', 
-                  borderRadius: '10px', 
-                  background: 'linear-gradient(135deg, #10b981, #059669)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <FiThumbsUp size={20} color="white" />
-                </div>
-                <h4 style={{ margin: 0, fontSize: '18px' }}>Supports</h4>
-              </div>
-              <SectionBody style={{ fontSize: '15px', color: '#4b5563' }}>
-                Very knowledgeable, provides timely check-ins and future-focused guidance based on best practices.
-              </SectionBody>
-            </ExpertiseCard>
-
-            <ExpertiseCard $highlight>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                <div style={{ 
-                  width: '40px', 
-                  height: '40px', 
-                  borderRadius: '10px', 
-                  background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <FiMessageSquare size={20} color="white" />
-                </div>
-                <h4 style={{ margin: 0, fontSize: '18px' }}>Check with Sarah Now</h4>
-              </div>
-              <SectionBody style={{ fontSize: '15px', color: '#4b5563' }}>
-                Helpful technical details and verification of information to ensure accuracy and reliability.
-              </SectionBody>
-              <div style={{ marginTop: '16px' }}>
-                <ActionButton 
-                  onClick={() => handleStart("chat")}
-                  style={{ width: '100%', background: '#8b5cf6', color: 'white' }}
-                >
-                  <FiMessageSquare /> Start Conversation
-                </ActionButton>
-              </div>
-            </ExpertiseCard>
-          </ExpertiseGrid>
-        </Section>
-
         {/* About Section */}
         <Section>
           <SectionTitle>About</SectionTitle>
@@ -713,11 +639,11 @@ setRequestingChat(false);
           <ReviewHeader>
             <div>
               <SectionTitle>Rating & Reviews</SectionTitle>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+              {/* <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
                 <FiStar color="#facc15" />
                 <strong style={{ fontSize: '24px' }}>{formattedAvgRating}</strong>
                 <span style={{ color: '#64748b' }}>/5 ({totalReviews} reviews)</span>
-              </div>
+              </div> */}
             </div>
           </ReviewHeader>
 
@@ -746,22 +672,22 @@ setRequestingChat(false);
                     </Star>
                   ))}
                 </StarRating>
-                <RatingValue>{userRating > 0 ? `${userRating}/5` : 'Select rating'}</RatingValue>
+                {/* <RatingValue>{userRating > 0 ? `${userRating}/5` : 'Select rating'}</RatingValue> */}
               </RatingInput>
 
               {/* Review Textarea */}
               <TextAreaContainer>
                 <ReviewTextarea
-                  placeholder="Share your experience with this expert... (Optional)"
+                  placeholder="share your experience"
                   value={userReviewText}
                   onChange={(e) => setUserReviewText(e.target.value)}
                   disabled={submittingReview}
                   maxLength={500}
                   rows={4}
                 />
-                <CharCount>
+                {/* <CharCount>
                   {userReviewText.length}/500 characters
-                </CharCount>
+                </CharCount> */}
               </TextAreaContainer>
 
               {/* Action Buttons */}

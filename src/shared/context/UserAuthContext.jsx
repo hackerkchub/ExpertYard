@@ -5,6 +5,7 @@ import React, {
   useState
 } from "react";
 import { loginUserApi } from "../api/userApi";
+import { disconnectSocket } from "../api/socket";
 
 const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
@@ -69,6 +70,7 @@ export const AuthProvider = ({ children }) => {
 
     setToken(null);
     setUser(null);
+    disconnectSocket();
   };
 
   const value = {

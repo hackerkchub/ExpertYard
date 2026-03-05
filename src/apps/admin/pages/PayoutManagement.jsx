@@ -6,7 +6,6 @@ import {
   FaTimesCircle,
   FaClock,
   FaSearch,
-  FaFilter,
   FaSyncAlt,
   FaDownload,
   FaEye,
@@ -17,17 +16,19 @@ import {
   FaUser,
   FaPhone,
   FaEnvelope,
-  FaCalendarAlt,
   FaPrint,
   FaHistory,
-  FaFileAlt,
   FaReceipt,
   FaChevronLeft,
   FaChevronRight,
   FaTimes,
   FaInfoCircle,
+  FaUniversity,
+  FaMobile,
+  FaLock,
+  FaUnlock,
 } from "react-icons/fa";
-import { FiDownload, FiFilter, FiRefreshCw, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 import {
   PageContainer,
@@ -35,7 +36,6 @@ import {
   PageHeader,
   HeaderLeft,
   HeaderRight,
-  FilterButton,
   RefreshButton,
   StatsGrid,
   StatCard,
@@ -82,7 +82,6 @@ import {
   ReceiptButton,
   LoadingSpinner,
   EmptyState,
-  // New imports for history and receipt preview
   TabContainer,
   Tab,
   HistoryTable,
@@ -91,7 +90,6 @@ import {
   HistoryTableCell,
   Pagination,
   PageButton,
-  FilterTag,
   ClearFilters,
   ReceiptPreview,
   ReceiptPreviewHeader,
@@ -99,13 +97,28 @@ import {
   ReceiptPreviewFooter,
   ReceiptActions,
   ReceiptImage,
-  ReceiptFallback,
   ProcessedDateNote,
   InfoTooltip,
   MobileCard,
   MobileCardHeader,
   MobileCardBody,
   MobileCardFooter,
+  PayoutMethodInfo,
+  PayoutMethodIcon,
+  PayoutMethodDetails,
+  RealPayoutSection,
+  RealPayoutToggle,
+  RealPayoutContent,
+  SecurityNote,
+  FilterTag,
+  FilterTagsContainer,
+  MobileFilterBar,
+  MobileFilterButton,
+  MobileFilterDrawer,
+  MobileFilterDrawerHeader,
+  MobileFilterDrawerBody,
+  MobileFilterDrawerFooter,
+  ScreenshotPreview,
 } from "../styles/PayoutManagement.styles";
 
 import {
@@ -114,6 +127,7 @@ import {
   rejectWithdrawalApi,
   downloadReceiptApi,
   getAdminWithdrawalHistoryApi,
+  getWithdrawalPayoutDetailsApi,
 } from "../../../shared/api/admin/withdrawal.api";
 
 const PayoutManagement = () => {
@@ -125,9 +139,15 @@ const PayoutManagement = () => {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showReceiptPreviewModal, setShowReceiptPreviewModal] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [downloading, setDownloading] = useState(false);
-  const [activeTab, setActiveTab] = useState('pending'); // 'pending' or 'history'
+  const [activeTab, setActiveTab] = useState('pending');
+  
+  // Real payout details state
+  const [realPayout, setRealPayout] = useState(null);
+  const [loadingPayout, setLoadingPayout] = useState(false);
+  const [showRealPayout, setShowRealPayout] = useState(false);
   
   // State for withdrawal history
   const [historyWithdrawals, setHistoryWithdrawals] = useState([]);
@@ -179,14 +199,13 @@ const PayoutManagement = () => {
 
   // Calculate stats for pending
   const stats = useMemo(() => {
-    const totalPending = withdrawals.filter(w => w.status === 'pending').length;
-    const totalApproved = withdrawals.filter(w => w.status === 'approved').length;
-    const totalRejected = withdrawals.filter(w => w.status === 'rejected').length;
+    const totalPending = withdrawals.filter(w => w.status?.toLowerCase() === 'pending').length;
+    const totalApproved = withdrawals.filter(w => w.status?.toLowerCase() === 'approved' || w.status?.toLowerCase() === 'paid').length;
+    const totalRejected = withdrawals.filter(w => w.status?.toLowerCase() === 'rejected').length;
     const totalAmount = withdrawals.reduce((sum, w) => sum + parseFloat(w.amount || 0), 0);
     const pendingAmount = withdrawals
-      .filter(w => w.status === 'pending')
+      .filter(w => w.status?.toLowerCase() === 'pending')
       .reduce((sum, w) => sum + parseFloat(w.amount || 0), 0);
-    const avgAmount = withdrawals.length > 0 ? totalAmount / withdrawals.length : 0;
     const uniqueExperts = new Set(withdrawals.map(w => w.expert_id)).size;
 
     return {
@@ -195,18 +214,17 @@ const PayoutManagement = () => {
       totalRejected,
       totalAmount,
       pendingAmount,
-      avgAmount,
       uniqueExperts,
     };
   }, [withdrawals]);
 
   // Calculate stats for history
   const historyStats = useMemo(() => {
-    const totalApproved = historyWithdrawals.filter(w => w.status === 'approved' || w.status === 'paid').length;
-    const totalRejected = historyWithdrawals.filter(w => w.status === 'rejected').length;
+    const totalApproved = historyWithdrawals.filter(w => w.status?.toLowerCase() === 'approved' || w.status?.toLowerCase() === 'paid').length;
+    const totalRejected = historyWithdrawals.filter(w => w.status?.toLowerCase() === 'rejected').length;
     const totalAmount = historyWithdrawals.reduce((sum, w) => sum + parseFloat(w.amount || 0), 0);
     const approvedAmount = historyWithdrawals
-      .filter(w => w.status === 'approved' || w.status === 'paid')
+      .filter(w => w.status?.toLowerCase() === 'approved' || w.status?.toLowerCase() === 'paid')
       .reduce((sum, w) => sum + parseFloat(w.amount || 0), 0);
 
     return {
@@ -223,13 +241,18 @@ const PayoutManagement = () => {
       setLoading(true);
       const res = await getPendingWithdrawalsApi();
       
-      const list = Array.isArray(res?.data) 
-        ? res.data 
-        : Array.isArray(res?.data?.data)
-          ? res.data.data
-          : [];
+      const list = res?.data?.data || res?.data || [];
       
-      setWithdrawals(list);
+      const formattedList = list.map(item => ({
+        ...item,
+        withdrawal_id: item.withdrawal_id || item.id,
+        status: item.status || 'pending',
+        payout_method_type: item.payout_method_type || 'bank',
+        payout_mask: item.payout_mask || item.fund_account_mask || 'N/A',
+        available_balance: item.available_balance || 0,
+      }));
+      
+      setWithdrawals(formattedList);
     } catch (error) {
       console.error("Error fetching withdrawals:", error);
       setWithdrawals([]);
@@ -244,21 +267,18 @@ const PayoutManagement = () => {
       setHistoryLoading(true);
       const res = await getAdminWithdrawalHistoryApi();
       
-      const historyData = Array.isArray(res?.data) 
-        ? res.data 
-        : Array.isArray(res?.data?.data)
-          ? res.data.data
-          : [];
+      const historyData = res?.data?.data || res?.data || [];
       
-      // Format the data to ensure processed_at is properly handled
       const formattedHistory = historyData.map(item => ({
         ...item,
-        processed_at: item.processed_at || item.paid_at || null,
-        // Ensure we have all necessary fields
         withdrawal_id: item.withdrawal_id || item.id,
+        processed_at: item.processed_at || item.paid_at || null,
         expert_name: item.expert_name || 'Unknown',
         expert_email: item.expert_email || 'N/A',
         admin_name: item.admin_name || 'System',
+        status: item.status || 'pending',
+        payout_method_type: item.payout_method_type || item.payment_method || 'bank',
+        payout_mask: item.payout_mask || item.fund_account_mask || 'N/A',
       }));
       
       setHistoryWithdrawals(formattedHistory);
@@ -291,7 +311,7 @@ const PayoutManagement = () => {
     }
 
     if (filters.status && filters.status !== 'all') {
-      filtered = filtered.filter(w => w.status === filters.status);
+      filtered = filtered.filter(w => w.status?.toLowerCase() === filters.status.toLowerCase());
     }
 
     if (filters.dateFrom) {
@@ -324,7 +344,7 @@ const PayoutManagement = () => {
     }
 
     if (historyFilters.status && historyFilters.status !== 'all') {
-      filtered = filtered.filter(w => w.status === historyFilters.status);
+      filtered = filtered.filter(w => w.status?.toLowerCase() === historyFilters.status.toLowerCase());
     }
 
     if (historyFilters.dateFrom) {
@@ -351,11 +371,37 @@ const PayoutManagement = () => {
 
   const totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
 
+  // Handle view real payout details
+  const handleViewRealPayout = async () => {
+    if (!selectedRequest) return;
+    
+    try {
+      setLoadingPayout(true);
+      const res = await getWithdrawalPayoutDetailsApi(selectedRequest.withdrawal_id);
+      
+      if (res.data?.success) {
+        setRealPayout(res.data.data);
+        setShowRealPayout(true);
+      }
+    } catch (error) {
+      console.error("Error fetching real payout details:", error);
+      alert("Failed to load real payout details");
+    } finally {
+      setLoadingPayout(false);
+    }
+  };
+
   // Handle approve
   const handleApprove = async () => {
     if (!approveForm.payment_method || !approveForm.transaction_ref) {
       alert("Please fill all required fields");
       return;
+    }
+
+    // Make screenshot optional but show warning
+    if (!approveForm.screenshot) {
+      const confirm = window.confirm("Are you sure you want to proceed without uploading a payment screenshot?");
+      if (!confirm) return;
     }
 
     try {
@@ -375,7 +421,7 @@ const PayoutManagement = () => {
         setShowApproveModal(false);
         resetForms();
         await fetchWithdrawals();
-        await fetchWithdrawalHistory(); // Refresh history
+        await fetchWithdrawalHistory();
         alert("Withdrawal approved successfully!");
       } else {
         alert(data.message || "Failed to approve withdrawal");
@@ -407,7 +453,7 @@ const PayoutManagement = () => {
         setShowRejectModal(false);
         resetForms();
         await fetchWithdrawals();
-        await fetchWithdrawalHistory(); // Refresh history
+        await fetchWithdrawalHistory();
         alert("Withdrawal rejected successfully!");
       } else {
         alert(data.message || "Failed to reject withdrawal");
@@ -426,21 +472,18 @@ const PayoutManagement = () => {
       setDownloading(true);
       const res = await downloadReceiptApi(withdrawalId);
       
-      // Check if response is PDF or image
       const contentType = res.headers['content-type'];
       const blob = new Blob([res.data], { type: contentType });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
       
-      // Set filename based on content type
       const extension = contentType.includes('pdf') ? 'pdf' : 'png';
       link.setAttribute("download", `receipt_${withdrawalId}.${extension}`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       
-      // Clean up
       setTimeout(() => window.URL.revokeObjectURL(url), 100);
     } catch (error) {
       console.error("Error downloading receipt:", error);
@@ -508,6 +551,8 @@ const PayoutManagement = () => {
     });
     setRejectForm({ withdrawal_id: "", reason: "" });
     setSelectedRequest(null);
+    setRealPayout(null);
+    setShowRealPayout(false);
   };
 
   // Open approve modal
@@ -528,6 +573,26 @@ const PayoutManagement = () => {
       withdrawal_id: withdrawal.withdrawal_id,
     }));
     setShowRejectModal(true);
+  };
+
+  // Open detail modal
+  const openDetailModal = (withdrawal) => {
+    setSelectedRequest(withdrawal);
+    setRealPayout(null);
+    setShowRealPayout(false);
+    setShowDetailModal(true);
+  };
+
+  // Get payout method icon
+  const getPayoutMethodIcon = (type) => {
+    switch(type?.toLowerCase()) {
+      case 'bank':
+        return <FaUniversity />;
+      case 'upi':
+        return <FaMobile />;
+      default:
+        return <FaWallet />;
+    }
   };
 
   // Format currency
@@ -559,24 +624,6 @@ const PayoutManagement = () => {
       month: 'short',
       year: 'numeric',
     });
-  };
-
-  // Get status badge color
-  const getStatusColor = (status) => {
-    switch(status?.toLowerCase()) {
-      case 'approved':
-      case 'paid':
-      case 'completed':
-        return '#10b981';
-      case 'pending':
-      case 'processing':
-        return '#f59e0b';
-      case 'rejected':
-      case 'failed':
-        return '#ef4444';
-      default:
-        return '#64748b';
-    }
   };
 
   // Clear all filters
@@ -640,6 +687,22 @@ const PayoutManagement = () => {
           
           <div style={{ marginTop: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '8px' }}>
+              <span style={{ color: '#64748b' }}>Payout Method:</span>
+              <PayoutMethodInfo>
+                <PayoutMethodIcon>
+                  {getPayoutMethodIcon(withdrawal.payout_method_type)}
+                </PayoutMethodIcon>
+                <PayoutMethodDetails>
+                  <div style={{ textTransform: 'capitalize' }}>
+                    {withdrawal.payout_method_type}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748b' }}>
+                    {withdrawal.payout_mask}
+                  </div>
+                </PayoutMethodDetails>
+              </PayoutMethodInfo>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '8px' }}>
               <span style={{ color: '#64748b' }}>Requested:</span>
               <span>{formatDateOnly(withdrawal.created_at)}</span>
             </div>
@@ -653,15 +716,12 @@ const PayoutManagement = () => {
         <MobileCardFooter>
           <ActionButton
             $variant="view"
-            onClick={() => {
-              setSelectedRequest(withdrawal);
-              setShowDetailModal(true);
-            }}
+            onClick={() => openDetailModal(withdrawal)}
           >
             <FaEye /> Details
           </ActionButton>
           
-          {withdrawal.status === 'pending' && (
+          {withdrawal.status?.toLowerCase() === 'pending' && (
             <>
               <ActionButton
                 $variant="approve"
@@ -679,7 +739,7 @@ const PayoutManagement = () => {
             </>
           )}
 
-          {withdrawal.status === 'approved' && (
+          {withdrawal.status?.toLowerCase() === 'approved' && (
             <ReceiptButton
               onClick={() => handleDownloadReceipt(withdrawal.withdrawal_id)}
               disabled={downloading}
@@ -712,33 +772,53 @@ const PayoutManagement = () => {
             <ExpertEmail>{withdrawal.expert_email}</ExpertEmail>
           </div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-            <div>
-              <div style={{ fontSize: '11px', color: '#64748b' }}>Payment Method</div>
-              <div style={{ fontSize: '13px', fontWeight: 500, textTransform: 'capitalize' }}>
-                {withdrawal.payment_method || 'N/A'}
+          <div style={{ marginTop: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '8px' }}>
+              <span style={{ color: '#64748b' }}>Payout Method:</span>
+              <PayoutMethodInfo>
+                <PayoutMethodIcon>
+                  {getPayoutMethodIcon(withdrawal.payout_method_type || withdrawal.payment_method)}
+                </PayoutMethodIcon>
+                <PayoutMethodDetails>
+                  <div style={{ textTransform: 'capitalize' }}>
+                    {withdrawal.payout_method_type || withdrawal.payment_method || 'N/A'}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748b' }}>
+                    {withdrawal.payout_mask || withdrawal.fund_account_mask || 'N/A'}
+                  </div>
+                </PayoutMethodDetails>
+              </PayoutMethodInfo>
+            </div>
+            
+            {withdrawal.payment_method && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '8px' }}>
+                <span style={{ color: '#64748b' }}>Payment Method:</span>
+                <span style={{ textTransform: 'capitalize' }}>{withdrawal.payment_method}</span>
               </div>
-            </div>
-            <div>
-              <div style={{ fontSize: '11px', color: '#64748b' }}>Transaction Ref</div>
-              <div style={{ fontSize: '13px', fontWeight: 500 }}>
-                {withdrawal.transaction_ref || '-'}
+            )}
+            
+            {withdrawal.transaction_ref && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '8px' }}>
+                <span style={{ color: '#64748b' }}>Transaction Ref:</span>
+                <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>{withdrawal.transaction_ref}</span>
               </div>
+            )}
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '8px' }}>
+              <span style={{ color: '#64748b' }}>Requested:</span>
+              <span>{formatDateOnly(withdrawal.created_at)}</span>
             </div>
-            <div>
-              <div style={{ fontSize: '11px', color: '#64748b' }}>Requested</div>
-              <div style={{ fontSize: '13px' }}>{formatDateOnly(withdrawal.created_at)}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '11px', color: '#64748b' }}>
-                Processed
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+              <span style={{ color: '#64748b' }}>
+                Processed:
                 <InfoTooltip title="Date when the withdrawal was processed (approved/rejected)">
                   <FaInfoCircle size={10} />
                 </InfoTooltip>
-              </div>
-              <div style={{ fontSize: '13px' }}>
+              </span>
+              <span>
                 {withdrawal.processed_at ? formatDateOnly(withdrawal.processed_at) : '-'}
-              </div>
+              </span>
             </div>
           </div>
           
@@ -747,15 +827,18 @@ const PayoutManagement = () => {
               <strong>Rejection Reason:</strong> {withdrawal.rejection_reason}
             </div>
           )}
+
+          {withdrawal.admin_name && (
+            <div style={{ marginTop: '8px', fontSize: '11px', color: '#64748b', textAlign: 'right' }}>
+              Processed by: {withdrawal.admin_name}
+            </div>
+          )}
         </MobileCardBody>
         
         <MobileCardFooter>
           <ActionButton
             $variant="view"
-            onClick={() => {
-              setSelectedRequest(withdrawal);
-              setShowDetailModal(true);
-            }}
+            onClick={() => openDetailModal(withdrawal)}
           >
             <FaEye /> Details
           </ActionButton>
@@ -807,7 +890,7 @@ const PayoutManagement = () => {
           </HeaderRight>
         </PageHeader>
 
-        {/* Stats Cards - Dynamic based on active tab */}
+        {/* Stats Cards */}
         {activeTab === 'pending' ? (
           <StatsGrid>
             <StatCard>
@@ -904,16 +987,31 @@ const PayoutManagement = () => {
           </Tab>
         </TabContainer>
 
-        {/* Pending Requests Tab */}
-        {activeTab === 'pending' && (
-          <>
-            {/* Filters */}
-            <FiltersContainer>
+        {/* Mobile Filter Button - Only shown on mobile */}
+        {windowWidth <= 768 && (
+          <MobileFilterBar>
+            <MobileFilterButton onClick={() => setShowMobileFilters(true)}>
+              <FaSearch /> Filter & Search
+              {hasActiveFilters && <FilterTag>Active Filters</FilterTag>}
+            </MobileFilterButton>
+          </MobileFilterBar>
+        )}
+
+        {/* Mobile Filter Drawer */}
+        {showMobileFilters && (
+          <MobileFilterDrawer>
+            <MobileFilterDrawerHeader>
+              <h3>Filter Withdrawals</h3>
+              <button onClick={() => setShowMobileFilters(false)}>
+                <FaTimes />
+              </button>
+            </MobileFilterDrawerHeader>
+            <MobileFilterDrawerBody>
               <SearchInput>
                 <FaSearch />
                 <input
                   type="text"
-                  placeholder="Search by name, email, expert ID, or withdrawal ID..."
+                  placeholder="Search by name, email, ID..."
                   value={filters.search}
                   onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                 />
@@ -942,15 +1040,141 @@ const PayoutManagement = () => {
                 value={filters.dateTo}
                 onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
               />
+            </MobileFilterDrawerBody>
+            <MobileFilterDrawerFooter>
+              <PrimaryButton onClick={() => setShowMobileFilters(false)}>
+                Apply Filters
+              </PrimaryButton>
+              <SecondaryButton onClick={clearFilters}>
+                Clear All
+              </SecondaryButton>
+            </MobileFilterDrawerFooter>
+          </MobileFilterDrawer>
+        )}
 
-              {hasActiveFilters && (
-                <ClearFilters onClick={clearFilters}>
-                  <FaTimes /> Clear Filters
-                </ClearFilters>
-              )}
-            </FiltersContainer>
+        {/* Desktop Filters */}
+        {windowWidth > 768 && activeTab === 'pending' && (
+          <FiltersContainer>
+            <SearchInput>
+              <FaSearch />
+              <input
+                type="text"
+                placeholder="Search by name, email, expert ID, or withdrawal ID..."
+                value={filters.search}
+                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+              />
+            </SearchInput>
 
-            {/* Table/ Cards View based on screen size */}
+            <Select
+              value={filters.status}
+              onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+            >
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </Select>
+
+            <DateInput
+              type="date"
+              placeholder="From Date"
+              value={filters.dateFrom}
+              onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
+            />
+
+            <DateInput
+              type="date"
+              placeholder="To Date"
+              value={filters.dateTo}
+              onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
+            />
+
+            {hasActiveFilters && (
+              <ClearFilters onClick={clearFilters}>
+                <FaTimes /> Clear Filters
+              </ClearFilters>
+            )}
+          </FiltersContainer>
+        )}
+
+        {/* Desktop History Filters */}
+        {windowWidth > 1024 && activeTab === 'history' && (
+          <FiltersContainer>
+            <SearchInput>
+              <FaSearch />
+              <input
+                type="text"
+                placeholder="Search by expert name, email, transaction ref..."
+                value={historyFilters.search}
+                onChange={(e) => setHistoryFilters(prev => ({ ...prev, search: e.target.value }))}
+              />
+            </SearchInput>
+
+            <Select
+              value={historyFilters.status}
+              onChange={(e) => setHistoryFilters(prev => ({ ...prev, status: e.target.value }))}
+            >
+              <option value="all">All Status</option>
+              <option value="approved">Approved</option>
+              <option value="paid">Paid</option>
+              <option value="rejected">Rejected</option>
+            </Select>
+
+            <DateInput
+              type="date"
+              placeholder="From Date"
+              value={historyFilters.dateFrom}
+              onChange={(e) => setHistoryFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
+            />
+
+            <DateInput
+              type="date"
+              placeholder="To Date"
+              value={historyFilters.dateTo}
+              onChange={(e) => setHistoryFilters(prev => ({ ...prev, dateTo: e.target.value }))}
+            />
+
+            {hasActiveHistoryFilters && (
+              <ClearFilters onClick={clearHistoryFilters}>
+                <FaTimes /> Clear Filters
+              </ClearFilters>
+            )}
+          </FiltersContainer>
+        )}
+
+        {/* Active Filters Display */}
+        {hasActiveFilters && windowWidth > 768 && activeTab === 'pending' && (
+          <FilterTagsContainer>
+            {filters.search && (
+              <FilterTag>
+                Search: {filters.search}
+                <button onClick={() => setFilters(prev => ({ ...prev, search: '' }))}>×</button>
+              </FilterTag>
+            )}
+            {filters.status !== 'all' && (
+              <FilterTag>
+                Status: {filters.status}
+                <button onClick={() => setFilters(prev => ({ ...prev, status: 'all' }))}>×</button>
+              </FilterTag>
+            )}
+            {filters.dateFrom && (
+              <FilterTag>
+                From: {filters.dateFrom}
+                <button onClick={() => setFilters(prev => ({ ...prev, dateFrom: '' }))}>×</button>
+              </FilterTag>
+            )}
+            {filters.dateTo && (
+              <FilterTag>
+                To: {filters.dateTo}
+                <button onClick={() => setFilters(prev => ({ ...prev, dateTo: '' }))}>×</button>
+              </FilterTag>
+            )}
+          </FilterTagsContainer>
+        )}
+
+        {/* Pending Requests Tab */}
+        {activeTab === 'pending' && (
+          <>
             {windowWidth > 768 ? (
               <TableContainer>
                 <div style={{ overflowX: "auto" }}>
@@ -960,6 +1184,8 @@ const PayoutManagement = () => {
                         <th>Withdrawal ID</th>
                         <th>Expert</th>
                         <th>Amount</th>
+                        <th>Payout Method</th>
+                        <th>Paid To</th>
                         <th>Requested On</th>
                         <th>Available Balance</th>
                         <th>Status</th>
@@ -997,12 +1223,26 @@ const PayoutManagement = () => {
                             </TableCell>
 
                             <TableCell>
-                              <div>
-                                <div>{formatDate(withdrawal.created_at)}</div>
-                                <small style={{ color: '#64748b' }}>
-                                  ID: {withdrawal.expert_id}
-                                </small>
+                              <PayoutMethodInfo>
+                                <PayoutMethodIcon>
+                                  {getPayoutMethodIcon(withdrawal.payout_method_type)}
+                                </PayoutMethodIcon>
+                                <PayoutMethodDetails>
+                                  <div style={{ textTransform: 'capitalize' }}>
+                                    {withdrawal.payout_method_type}
+                                  </div>
+                                </PayoutMethodDetails>
+                              </PayoutMethodInfo>
+                            </TableCell>
+
+                            <TableCell>
+                              <div style={{ fontSize: '13px' }}>
+                                {withdrawal.payout_mask}
                               </div>
+                            </TableCell>
+
+                            <TableCell>
+                              <div>{formatDateOnly(withdrawal.created_at)}</div>
                             </TableCell>
 
                             <TableCell>
@@ -1018,47 +1258,44 @@ const PayoutManagement = () => {
                             <TableCell>
                               <ActionButton
                                 $variant="view"
-                                onClick={() => {
-                                  setSelectedRequest(withdrawal);
-                                  setShowDetailModal(true);
-                                }}
+                                onClick={() => openDetailModal(withdrawal)}
                               >
-                                <FaEye /> Details
+                                <FaEye />
                               </ActionButton>
                               
-                              {withdrawal.status === 'pending' && (
+                              {withdrawal.status?.toLowerCase() === 'pending' && (
                                 <>
                                   <ActionButton
                                     $variant="approve"
                                     onClick={() => openApproveModal(withdrawal)}
                                   >
-                                    <FaCheck /> Approve
+                                    <FaCheck />
                                   </ActionButton>
                                   
                                   <ActionButton
                                     $variant="reject"
                                     onClick={() => openRejectModal(withdrawal)}
                                   >
-                                    <FaBan /> Reject
+                                    <FaBan />
                                   </ActionButton>
                                 </>
                               )}
 
-                              {withdrawal.status === 'approved' && (
-                                <ReceiptButton
+                              {withdrawal.status?.toLowerCase() === 'approved' && (
+                                <ActionButton
+                                  $variant="view"
                                   onClick={() => handleDownloadReceipt(withdrawal.withdrawal_id)}
                                   disabled={downloading}
                                 >
-                                  <FaFilePdf /> 
-                                  {downloading ? '...' : 'Receipt'}
-                                </ReceiptButton>
+                                  <FaFilePdf />
+                                </ActionButton>
                               )}
                             </TableCell>
                           </TableRow>
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={7}>
+                          <TableCell colSpan={9}>
                             <EmptyState>
                               <FaWallet size={48} />
                               <h3>No withdrawal requests found</h3>
@@ -1100,50 +1337,6 @@ const PayoutManagement = () => {
         {/* History Tab */}
         {activeTab === 'history' && (
           <>
-            {/* History Filters */}
-            <FiltersContainer>
-              <SearchInput>
-                <FaSearch />
-                <input
-                  type="text"
-                  placeholder="Search by expert name, email, transaction ref..."
-                  value={historyFilters.search}
-                  onChange={(e) => setHistoryFilters(prev => ({ ...prev, search: e.target.value }))}
-                />
-              </SearchInput>
-
-              <Select
-                value={historyFilters.status}
-                onChange={(e) => setHistoryFilters(prev => ({ ...prev, status: e.target.value }))}
-              >
-                <option value="all">All Status</option>
-                <option value="approved">Approved</option>
-                <option value="paid">Paid</option>
-                <option value="rejected">Rejected</option>
-              </Select>
-
-              <DateInput
-                type="date"
-                placeholder="From Date"
-                value={historyFilters.dateFrom}
-                onChange={(e) => setHistoryFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
-              />
-
-              <DateInput
-                type="date"
-                placeholder="To Date"
-                value={historyFilters.dateTo}
-                onChange={(e) => setHistoryFilters(prev => ({ ...prev, dateTo: e.target.value }))}
-              />
-
-              {hasActiveHistoryFilters && (
-                <ClearFilters onClick={clearHistoryFilters}>
-                  <FaTimes /> Clear Filters
-                </ClearFilters>
-              )}
-            </FiltersContainer>
-
-            {/* History Table/ Cards */}
             {historyLoading ? (
               <LoadingSpinner>
                 <div className="spinner"></div>
@@ -1160,6 +1353,8 @@ const PayoutManagement = () => {
                             <th>ID</th>
                             <th>Expert</th>
                             <th>Amount</th>
+                            <th>Payout Method</th>
+                            <th>Paid To</th>
                             <th>Payment Method</th>
                             <th>Transaction Ref</th>
                             <th>Requested</th>
@@ -1181,6 +1376,23 @@ const PayoutManagement = () => {
                                 </HistoryTableCell>
                                 <HistoryTableCell>
                                   <Amount>{formatCurrency(withdrawal.amount)}</Amount>
+                                </HistoryTableCell>
+                                <HistoryTableCell>
+                                  <PayoutMethodInfo>
+                                    <PayoutMethodIcon>
+                                      {getPayoutMethodIcon(withdrawal.payout_method_type || withdrawal.payment_method)}
+                                    </PayoutMethodIcon>
+                                    <PayoutMethodDetails>
+                                      <div style={{ textTransform: 'capitalize' }}>
+                                        {withdrawal.payout_method_type || 'N/A'}
+                                      </div>
+                                    </PayoutMethodDetails>
+                                  </PayoutMethodInfo>
+                                </HistoryTableCell>
+                                <HistoryTableCell>
+                                  <div style={{ fontSize: '12px' }}>
+                                    {withdrawal.payout_mask || withdrawal.fund_account_mask || 'N/A'}
+                                  </div>
                                 </HistoryTableCell>
                                 <HistoryTableCell>
                                   <div style={{ textTransform: 'capitalize' }}>
@@ -1216,28 +1428,26 @@ const PayoutManagement = () => {
                                 <HistoryTableCell>
                                   <ActionButton
                                     $variant="view"
-                                    onClick={() => {
-                                      setSelectedRequest(withdrawal);
-                                      setShowDetailModal(true);
-                                    }}
+                                    onClick={() => openDetailModal(withdrawal)}
                                   >
-                                    <FaEye /> View
+                                    <FaEye />
                                   </ActionButton>
                                   {withdrawal.transaction_ref && (
-                                    <ReceiptButton
+                                    <ActionButton
+                                      $variant="view"
                                       onClick={() => handlePreviewReceipt(withdrawal.withdrawal_id)}
                                       disabled={downloading}
-                                      style={{ marginTop: '4px' }}
+                                      style={{ marginLeft: '4px' }}
                                     >
-                                      <FaReceipt /> Preview
-                                    </ReceiptButton>
+                                      <FaReceipt />
+                                    </ActionButton>
                                   )}
                                 </HistoryTableCell>
                               </HistoryTableRow>
                             ))
                           ) : (
                             <tr>
-                              <td colSpan="9">
+                              <td colSpan="11">
                                 <EmptyState>
                                   <FaHistory size={48} />
                                   <h3>No withdrawal history found</h3>
@@ -1320,7 +1530,7 @@ const PayoutManagement = () => {
           </>
         )}
 
-        {/* Detail Modal */}
+        {/* Detail Modal with Real Payout Details */}
         {showDetailModal && selectedRequest && (
           <ModalOverlay onClick={() => setShowDetailModal(false)}>
             <ModalContent onClick={(e) => e.stopPropagation()}>
@@ -1337,7 +1547,7 @@ const PayoutManagement = () => {
 
                 <DetailItem>
                   <DetailLabel>Expert ID</DetailLabel>
-                  <DetailValue>#{selectedRequest.expert_id || selectedRequest.expert_id}</DetailValue>
+                  <DetailValue>#{selectedRequest.expert_id}</DetailValue>
                 </DetailItem>
 
                 <DetailItem>
@@ -1359,11 +1569,6 @@ const PayoutManagement = () => {
                   <DetailLabel>Processed On</DetailLabel>
                   <DetailValue>
                     {selectedRequest.processed_at ? formatDate(selectedRequest.processed_at) : '-'}
-                    {!selectedRequest.processed_at && selectedRequest.status !== 'pending' && (
-                      <ProcessedDateNote style={{ marginLeft: '4px' }}>
-                        (Date not recorded - fix applied)
-                      </ProcessedDateNote>
-                    )}
                   </DetailValue>
                 </DetailItem>
 
@@ -1373,6 +1578,20 @@ const PayoutManagement = () => {
                     <StatusBadge $status={selectedRequest.status || 'pending'}>
                       {selectedRequest.status || 'pending'}
                     </StatusBadge>
+                  </DetailValue>
+                </DetailItem>
+
+                <DetailItem>
+                  <DetailLabel>Payout Method</DetailLabel>
+                  <DetailValue style={{ textTransform: 'capitalize' }}>
+                    {selectedRequest.payout_method_type || selectedRequest.payment_method || 'N/A'}
+                  </DetailValue>
+                </DetailItem>
+
+                <DetailItem>
+                  <DetailLabel>Paid To (Masked)</DetailLabel>
+                  <DetailValue>
+                    {selectedRequest.payout_mask || selectedRequest.fund_account_mask || 'N/A'}
                   </DetailValue>
                 </DetailItem>
 
@@ -1404,6 +1623,79 @@ const PayoutManagement = () => {
                 )}
               </DetailGrid>
 
+              {/* View Real Payout Details Button */}
+              <RealPayoutSection>
+                <RealPayoutToggle onClick={handleViewRealPayout} disabled={loadingPayout}>
+                  {loadingPayout ? (
+                    <>Loading...</>
+                  ) : (
+                    <>
+                      <FaEye /> View Real Payout Details
+                      <SecurityNote>
+                        <FaLock size={12} /> Decrypted
+                      </SecurityNote>
+                    </>
+                  )}
+                </RealPayoutToggle>
+
+                {/* Real Payout Details */}
+                {showRealPayout && realPayout && (
+                  <RealPayoutContent>
+                    <h4>Decrypted Payout Details</h4>
+                    
+                    {realPayout.method_type === "upi" && (
+                      <div style={{ marginTop: '12px' }}>
+                        <DetailItem $fullWidth>
+                          <DetailLabel>UPI ID</DetailLabel>
+                          <DetailValue style={{ 
+                            fontFamily: 'monospace',
+                            background: '#f5f3ff',
+                            padding: '8px',
+                            borderRadius: '6px',
+                            border: '1px solid #8b5cf6'
+                          }}>
+                            {realPayout.details.upi}
+                          </DetailValue>
+                        </DetailItem>
+                      </div>
+                    )}
+
+                    {realPayout.method_type === "bank" && (
+                      <div style={{ marginTop: '12px' }}>
+                        <DetailItem>
+                          <DetailLabel>Account Number</DetailLabel>
+                          <DetailValue style={{ 
+                            fontFamily: 'monospace',
+                            background: '#f5f3ff',
+                            padding: '8px',
+                            borderRadius: '6px',
+                            border: '1px solid #8b5cf6'
+                          }}>
+                            {realPayout.details.account_number}
+                          </DetailValue>
+                        </DetailItem>
+                        <DetailItem>
+                          <DetailLabel>IFSC Code</DetailLabel>
+                          <DetailValue style={{ 
+                            fontFamily: 'monospace',
+                            background: '#f5f3ff',
+                            padding: '8px',
+                            borderRadius: '6px',
+                            border: '1px solid #8b5cf6'
+                          }}>
+                            {realPayout.details.ifsc}
+                          </DetailValue>
+                        </DetailItem>
+                      </div>
+                    )}
+
+                    <SecurityNote style={{ marginTop: '12px' }}>
+                      <FaUnlock size={12} /> These are the actual decrypted details. Handle with care.
+                    </SecurityNote>
+                  </RealPayoutContent>
+                )}
+              </RealPayoutSection>
+
               <div style={{ marginTop: '20px' }}>
                 <h3 style={{ fontSize: '16px', marginBottom: '12px', color: '#1e293b' }}>
                   Expert Information
@@ -1426,7 +1718,7 @@ const PayoutManagement = () => {
                 </DetailGrid>
               </div>
 
-              {selectedRequest.status === 'approved' && (
+              {selectedRequest.status?.toLowerCase() === 'approved' && (
                 <ReceiptButton
                   onClick={() => handleDownloadReceipt(selectedRequest.withdrawal_id)}
                   disabled={downloading}
@@ -1448,7 +1740,7 @@ const PayoutManagement = () => {
                 </ReceiptButton>
               )}
 
-              {selectedRequest.status === 'pending' && (
+              {selectedRequest.status?.toLowerCase() === 'pending' && (
                 <ButtonGroup>
                   <PrimaryButton
                     onClick={() => {
@@ -1492,6 +1784,7 @@ const PayoutManagement = () => {
                   <div>
                     <div style={{ fontSize: '13px', color: '#64748b' }}>Withdrawal ID: #{selectedRequest.withdrawal_id}</div>
                     <div style={{ fontSize: '13px', color: '#64748b' }}>Expert: {selectedRequest.name}</div>
+                    <div style={{ fontSize: '13px', color: '#64748b' }}>Payout Method: {selectedRequest.payout_method_type} - {selectedRequest.payout_mask}</div>
                     <div style={{ fontSize: '15px', fontWeight: 600, color: '#1e293b', marginTop: '4px' }}>
                       Amount: {formatCurrency(selectedRequest.amount)}
                     </div>
@@ -1529,7 +1822,7 @@ const PayoutManagement = () => {
               </FormGroup>
 
               <FormGroup>
-                <Label>Payment Screenshot (Optional)</Label>
+                <Label>Payment Screenshot (Recommended)</Label>
                 <FileInput onClick={() => document.getElementById('screenshot').click()}>
                   <input
                     id="screenshot"
@@ -1544,13 +1837,15 @@ const PayoutManagement = () => {
                 </FileInput>
 
                 {approveForm.screenshotPreview && (
-                  <FilePreview>
+                  <ScreenshotPreview>
                     <img src={approveForm.screenshotPreview} alt="Preview" />
-                    <div>
-                      <p>{approveForm.screenshot.name}</p>
-                      <span>{(approveForm.screenshot.size / 1024).toFixed(2)} KB</span>
-                    </div>
-                  </FilePreview>
+                    <button 
+                      onClick={() => setApproveForm(prev => ({ ...prev, screenshot: null, screenshotPreview: null }))}
+                      disabled={processing}
+                    >
+                      <FaTimes />
+                    </button>
+                  </ScreenshotPreview>
                 )}
               </FormGroup>
 
@@ -1592,6 +1887,7 @@ const PayoutManagement = () => {
                   <div>
                     <div style={{ fontSize: '13px', color: '#64748b' }}>Withdrawal ID: #{selectedRequest.withdrawal_id}</div>
                     <div style={{ fontSize: '13px', color: '#64748b' }}>Expert: {selectedRequest.name}</div>
+                    <div style={{ fontSize: '13px', color: '#64748b' }}>Payout Method: {selectedRequest.payout_method_type} - {selectedRequest.payout_mask}</div>
                     <div style={{ fontSize: '15px', fontWeight: 600, color: '#1e293b', marginTop: '4px' }}>
                       Amount: {formatCurrency(selectedRequest.amount)}
                     </div>

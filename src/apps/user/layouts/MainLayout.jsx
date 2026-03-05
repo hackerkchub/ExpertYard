@@ -1,4 +1,3 @@
-// src/apps/user/layout/MainLayout.jsx
 import React, { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 
@@ -7,52 +6,83 @@ import Footer from "../components/Footer/Footer";
 import UserSocketListener from "../../../shared/socket/UserSocketListener";
 
 import { useAuth } from "../../../shared/context/UserAuthContext";
-import { socket } from "../../../shared/api/socket";
+import { connectSocket, disconnectSocket, socket} from "../../../shared/api/socket";
+import { PublicExpertProvider } from "../context/PublicExpertContext";
+import useFCM from "../../../hooks/useFCM";
+import { generateToken } from "../../../firebase/generateToken";
 
 export default function MainLayout() {
   const { user } = useAuth();
-  // const userId = user?.id;
 
   /* ----------------------------------
-     🔌 USER SOCKET REGISTER (ONLY HERE)
+     🔌 CONNECT SOCKET AFTER LOGIN
   ---------------------------------- */
-useEffect(() => {
-  if (!user?.id) return;
+  useEffect(() => {
+    if (!user?.id) return;
 
-  const onConnect = () => {
-    console.log("🔌 Socket connected → registering user", user.id);
-
-    socket.emit("register", {
+    connectSocket({
       userId: Number(user.id),
       role: "user",
     });
-    socket.emit("call:resume_check"); 
-  };
 
-  socket.on("connect", onConnect);
+    return () => {
+      disconnectSocket();
+    };
+  }, [user?.id]);
 
-  if (!socket.connected) {
-    socket.connect();
-  } else {
-    onConnect();   // ⭐ important
-  }
+  /* ----------------------------------
+   🔔 GENERATE FCM TOKEN
+---------------------------------- */
+useEffect(() => {
+  if (!user?.id) return;
 
-  return () => {
-    socket.off("connect", onConnect);
-  };
+  generateToken("user");
 }, [user?.id]);
 
 
+useFCM((data) => {
+  console.log("User FCM:", data);
 
+  if (data.type === "VOICE_CALL") {
+    window.dispatchEvent(
+      new CustomEvent("incoming_call", { detail: data })
+    );
+  }
+
+  if (data.type === "CHAT_REQUEST") {
+    window.dispatchEvent(
+      new CustomEvent("incoming_chat", { detail: data })
+    );
+  }
+});
+
+  /* ----------------------------------
+     📞 RESUME CALL LISTENER
+  ---------------------------------- */
+  useEffect(() => {
+    const handleResume = (data) => {
+      console.log("📞 Resume call मिला:", data);
+
+      window.dispatchEvent(
+        new CustomEvent("go_to_call_page", {
+          detail: data.callId,
+        })
+      );
+    };
+
+    socket.on("call:resume_data", handleResume);
+
+    return () => socket.off("call:resume_data", handleResume);
+  }, []);
 
   return (
     <>
-      {/* 🔔 user events listener (NO register here) */}
       <UserSocketListener />
-
       <Navbar />
+      <PublicExpertProvider>
       <Outlet />
+       </PublicExpertProvider>
       <Footer />
-    </>
+   </>
   );
 }

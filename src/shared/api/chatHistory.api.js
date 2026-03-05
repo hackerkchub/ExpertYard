@@ -33,16 +33,20 @@ export const getUserChatHistoryApi = async (userId) => {
 /* =========================
    CHAT HISTORY DETAILS (MESSAGES)
 ========================= */
-export const getChatHistoryMessagesApi = async (roomId) => {
-  if (!roomId) {
-    throw new Error("Room ID is required");
+/* =========================
+   CHAT HISTORY DETAILS (MESSAGES)
+========================= */
+export const getChatHistoryMessagesApi = async (sessionId) => {
+  if (!sessionId) {
+    throw new Error("Session ID is required");
   }
 
-  const { data } = await api.get(`/chat-history/history/${roomId}`);
+  const { data } = await api.get(
+    `/chat-history/history/${sessionId}`
+  );
 
   return data;
 };
-
 
 // src/shared/api/chatHistory.api.js
 export const getExpertUserSessionsApi = async (expertId, userId) => {

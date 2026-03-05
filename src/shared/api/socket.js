@@ -1,12 +1,18 @@
 import { io } from "socket.io-client";
 
 /* -------------------------------------------------------
-   🔐 GET TOKEN DYNAMICALLY (IMPORTANT FOR RECONNECT)
+   🔐 GET TOKEN BY ROLE
 ------------------------------------------------------- */
-const getAuthToken = () => {
-  const userToken = localStorage.getItem("user_token");
-  const expertToken = localStorage.getItem("expert_token");
-  return userToken || expertToken;
+const getAuthToken = (role) => {
+  if (role === "user") {
+    return localStorage.getItem("user_token");
+  }
+
+  if (role === "expert") {
+    return localStorage.getItem("expert_token");
+  }
+
+  return null;
 };
 
 /* -------------------------------------------------------
@@ -15,41 +21,31 @@ const getAuthToken = () => {
 export const socket = io("https://softmaxs.com", {
   path: "/socket.io",
   transports: ["websocket"],
-
   autoConnect: false,
-
   reconnection: true,
   reconnectionAttempts: Infinity,
   reconnectionDelay: 2000,
   reconnectionDelayMax: 5000,
-
-  auth: {
-    token: getAuthToken(),
-  },
 });
 
 /* -------------------------------------------------------
-   ♻️ AUTO UPDATE TOKEN BEFORE RECONNECT
-------------------------------------------------------- */
-socket.on("reconnect_attempt", () => {
-  socket.auth = {
-    token: getAuthToken(),
-  };
-});
-
-/* -------------------------------------------------------
-   🟢 CONNECT FUNCTION (CALL AFTER LOGIN)
+   🟢 CONNECT FUNCTION
 ------------------------------------------------------- */
 export const connectSocket = ({ userId, role }) => {
-  if (!socket.connected) {
-    socket.auth = {
-      token: getAuthToken(),
-    };
+  const token = getAuthToken(role);
 
+  if (!token) {
+    console.warn("❌ No token found for role:", role);
+    return;
+  }
+
+  socket.auth = { token };
+
+  if (!socket.connected) {
     socket.connect();
   }
 
-  socket.off("connect"); // prevent duplicate listener
+  socket.off("connect");
 
   socket.on("connect", () => {
     console.log("🟢 Socket connected:", socket.id);
@@ -62,7 +58,7 @@ export const connectSocket = ({ userId, role }) => {
 };
 
 /* -------------------------------------------------------
-   🔴 DISCONNECT FUNCTION (CALL ON LOGOUT)
+   🔴 DISCONNECT FUNCTION
 ------------------------------------------------------- */
 export const disconnectSocket = () => {
   if (socket.connected) {
@@ -76,7 +72,7 @@ export const disconnectSocket = () => {
 ------------------------------------------------------- */
 if (typeof window !== "undefined") {
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
+    if (document.visibilityState === "visible" && socket.auth?.token) {
       if (!socket.connected) {
         console.log("👁️ Reconnecting socket on tab focus...");
         socket.connect();
@@ -84,5 +80,5 @@ if (typeof window !== "undefined") {
     }
   });
 
-  window.__socket = socket; // debug helper
+  window.__socket = socket;
 }

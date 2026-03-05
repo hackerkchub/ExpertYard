@@ -15,6 +15,7 @@ import logo from "../../../../assets/logo.png";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
 import { getUserProfileApi } from "../../../../shared/api/userApi/auth.api";
+import { disconnectSocket } from "../../../../shared/api/socket";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -82,13 +83,28 @@ const Navbar = () => {
   }, [popupOpen, calculatePopupPosition]);
 
   const handleLogout = () => {
-    console.clear();
-    localStorage.clear();
+  try {
+    /* 🔌 realtime disconnect */
+    disconnectSocket();
+
+    /* 🧹 remove ONLY user data */
+    localStorage.removeItem("user_token");
+    localStorage.removeItem("user");
+
+    /* ♻️ reset auth context */
     logout();
+
+    /* UI cleanup */
     setPopupOpen(false);
     setOpen(false);
+
+    /* 🚀 redirect */
     navigate("/", { replace: true });
-  };
+
+  } catch (err) {
+    console.error("Logout error:", err);
+  }
+};
 
   const handleMobileProfile = () => {
     setOpen(false);

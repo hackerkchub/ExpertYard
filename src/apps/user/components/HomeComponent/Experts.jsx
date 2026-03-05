@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
-import { useExpert } from "../../../../shared/context/ExpertContext";
+import {usePublicExpert as useExpert } from "../../context/PublicExpertContext";
 import { getTopRatedExpertsApi } from "../../../../shared/api/expertapi/filter.api";
 import { useNavigate } from "react-router-dom";
 import useChatRequest from "../../../../shared/hooks/useChatRequest.jsx";

@@ -1,6 +1,6 @@
 // src/apps/expert/pages/register/Auth.jsx (Premium Upgraded)
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { registerApi, loginApi } from "../../../../shared/api/expertapi/auth.api";
 import useApi from "../../../../shared/hooks/useApi";
@@ -40,6 +40,12 @@ export default function Auth() {
     password: ""
   });
 
+  const location = useLocation();
+
+const params = new URLSearchParams(location.search);
+const setupCompleted = params.get("completed");
+const prefillEmail = params.get("email");
+
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
 
@@ -48,6 +54,18 @@ export default function Auth() {
 
   const { request: login, loading: loginLoading, error: loginError } =
     useApi(loginApi);
+
+    useEffect(() => {
+  if (setupCompleted) {
+    setMode("login");
+  }
+}, [setupCompleted]);
+
+useEffect(() => {
+  if (prefillEmail) {
+    setLoginEmail(prefillEmail);
+  }
+}, [prefillEmail]);
 
   // ✅ Premium Password Strength Checker
   useEffect(() => {
@@ -97,33 +115,33 @@ export default function Auth() {
     } catch (err) {}
   };
 
- const handleLogin = async () => {
+const handleLogin = async () => {
   try {
     const res = await login({
       email_or_phone: loginEmail,
       password: loginPassword
     });
 
-    console.log("LOGIN RES =>", res);
+    // ✅ remove AFTER success
+    localStorage.removeItem("expert_session");
 
-    // ✅ token save
-    localStorage.setItem("token", res.token);
+    localStorage.setItem("expert_token", res.token);
 
-    // ✅ context update
     updateExpertData({
       expertId: res.expert.id,
       name: res.expert.name,
       email: res.expert.email,
-      phone: res.expert.phone
+      phone: res.expert.phone,
+      profileId: null
     });
 
-    // ✅ redirect
-    navigate("/expert/home");
+    navigate("/expert/home", { replace: true });
 
   } catch (err) {
     console.error(err);
   }
 };
+
   const loading = registerLoading || loginLoading;
   const error = registerError || loginError;
 
@@ -152,6 +170,22 @@ export default function Auth() {
         ]}
       >
         {loading && <Loader />}
+        {setupCompleted && (
+  <div
+    style={{
+      background: "#ecfeff",
+      border: "1px solid #67e8f9",
+      color: "#0e7490",
+      padding: "10px",
+      borderRadius: "8px",
+      marginBottom: "16px",
+      textAlign: "center",
+      fontWeight: 500
+    }}
+  >
+    🎉 Setup completed! Please login to start earning.
+  </div>
+)}
         {error && <ErrorMessage message={error} />}
 
         {/* ✅ Premium Login Form */}

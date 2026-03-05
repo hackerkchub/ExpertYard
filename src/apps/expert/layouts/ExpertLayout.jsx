@@ -7,23 +7,31 @@ import IncomingCallPopup from "../components/IncomingCallPopup";
 
 import { LayoutWrapper, ContentWrapper } from "./expertLayout.styles";
 
-import { ExpertProvider, useExpert } from "../../../shared/context/ExpertContext";
-import { useAuth } from "../../../shared/context/UserAuthContext";
-import { socket } from "../../../shared/api/socket";
+import {
+  ExpertProvider,
+  useExpert,
+} from "../../../shared/context/ExpertContext";
+
+import {
+  connectSocket,
+  disconnectSocket,
+  socket,
+} from "../../../shared/api/socket";
 
 import {
   ExpertNotificationsProvider,
   useExpertNotifications,
 } from "../context/ExpertNotificationsContext";
+import useFCM from "../../../hooks/useFCM";
+import { generateToken } from "../../../firebase/generateToken";
 
 /* ===================================================== */
 function ExpertLayoutInner() {
   const navigate = useNavigate();
-  const { expertData } = useExpert();
-  const { user: authUser } = useAuth();
   const location = useLocation();
+  const { expertData } = useExpert();
 
-const isOnCallPage = location.pathname.startsWith("/expert/voice-call/");
+  const isOnCallPage = location.pathname.startsWith("/expert/voice-call/");
 
   const {
     notifications,
@@ -31,59 +39,120 @@ const isOnCallPage = location.pathname.startsWith("/expert/voice-call/");
     rejectNotification,
   } = useExpertNotifications();
 
- const activeIncomingCall =
-  !isOnCallPage &&
-  notifications.find(
-    (n) => n.type === "voice_call" && n.status === "ringing"
-  );
-
+  /* ✅ ONLY EXPERT CONTEXT — NO USER AUTH MIX */
   const expertId = useMemo(() => {
     return Number(
       expertData?.expertId ||
       expertData?.profile?.expert_id ||
-      authUser?.expert_id ||
       0
     );
-  }, [expertData, authUser]);
+  }, [expertData]);
 
-  /* SOCKET REGISTER */
+ 
+  /* =====================================================
+     🔌 CONNECT SOCKET (ROLE SAFE)
+  ===================================================== */
   useEffect(() => {
     if (!expertId) return;
 
-    const onConnect = () => {
-      socket.emit("register", {
-        userId: expertId,
-        role: "expert",
-      });
-      socket.emit("call:resume_check"); 
+    connectSocket({
+      userId: expertId,
+      role: "expert",
+    });
+
+    return () => {
+      disconnectSocket();
     };
-
-    socket.on("connect", onConnect);
-
-    if (!socket.connected) socket.connect();
-    else onConnect();
-
-    return () => socket.off("connect", onConnect);
   }, [expertId]);
 
-  /* CHAT REDIRECT */
+useEffect(() => {
+  if (!expertId) return;
+
+  generateToken("expert");
+}, [expertId]);
+
+   useEffect(() => {
+  if (!expertId) return;
+
+  const sendStatus = () => {
+    socket.emit("expert_active_status", {
+      isActive: document.visibilityState === "visible",
+    });
+  };
+
+  const handleConnect = () => {
+    sendStatus(); // send immediately after connect
+  };
+
+  socket.on("connect", handleConnect);
+
+  document.addEventListener("visibilitychange", sendStatus);
+
+  return () => {
+    socket.off("connect", handleConnect);
+    document.removeEventListener("visibilitychange", sendStatus);
+  };
+}, [expertId]);
+
+  /* =====================================================
+     📞 RESUME CALL CHECK AFTER CONNECT
+  ===================================================== */
+  useEffect(() => {
+    if (!expertId) return;
+
+    const handleConnect = () => {
+      socket.emit("call:resume_check");
+    };
+
+    socket.on("connect", handleConnect);
+
+    return () => socket.off("connect", handleConnect);
+  }, [expertId]);
+
+  /* =====================================================
+     💬 CHAT REDIRECT
+  ===================================================== */
   useEffect(() => {
     const handleChatStarted = ({ room_id }) => {
       navigate(`/expert/chat/${room_id}`, { replace: true });
     };
 
     socket.on("chat_started", handleChatStarted);
+
     return () => socket.off("chat_started", handleChatStarted);
   }, [navigate]);
 
+  /* =====================================================
+     📞 RESUME CALL NAVIGATION (FROM GLOBAL EVENT)
+  ===================================================== */
   useEffect(() => {
-  const handler = (e) => {
-    navigate(`/expert/voice-call/${e.detail}`);
-  };
+    const handler = (e) => {
+      navigate(`/expert/voice-call/${e.detail}`);
+    };
 
-  window.addEventListener("go_to_call_page", handler);
-  return () => window.removeEventListener("go_to_call_page", handler);
-}, [navigate]);
+    window.addEventListener("resume_call", handler);
+    return () => window.removeEventListener("resume_call", handler);
+  }, [navigate]);
+
+
+  useFCM((data) => {
+  console.log("Incoming FCM:", data);
+
+  // Trigger your notification system
+  window.dispatchEvent(
+    new CustomEvent("incoming_call", { detail: data })
+  );
+});
+  /* =====================================================
+     📲 INCOMING CALL
+  ===================================================== */
+  const activeIncomingCall =
+    !isOnCallPage &&
+    notifications.find(
+      (n) => n.type === "voice_call" && n.status === "ringing"
+    );
+
+  /* ===================================================== */
 
   return (
     <LayoutWrapper>
@@ -94,27 +163,32 @@ const isOnCallPage = location.pathname.startsWith("/expert/voice-call/");
         <Outlet />
       </ContentWrapper>
 
-      {/* 🌍 GLOBAL INCOMING CALL POPUP */}
       <IncomingCallPopup
-  caller={
-    activeIncomingCall && {
-      name:
-        activeIncomingCall.payload?.user_name ||
-        activeIncomingCall.title?.replace("Incoming call from ", ""),
-    }
-  }
-  onAccept={() =>
-    activeIncomingCall && acceptNotification(activeIncomingCall)
-  }
-  onReject={() =>
-    activeIncomingCall && rejectNotification(activeIncomingCall)
-  }
-/>
+        caller={
+          activeIncomingCall && {
+            name:
+              activeIncomingCall.payload?.user_name ||
+              activeIncomingCall.title?.replace(
+                "Incoming call from ",
+                ""
+              ),
+          }
+        }
+        onAccept={() =>
+          activeIncomingCall &&
+          acceptNotification(activeIncomingCall)
+        }
+        onReject={() =>
+          activeIncomingCall &&
+          rejectNotification(activeIncomingCall)
+        }
+      />
     </LayoutWrapper>
   );
 }
 
-/* ROOT */
+/* ===================================================== */
+
 export default function ExpertLayout() {
   return (
     <ExpertProvider>

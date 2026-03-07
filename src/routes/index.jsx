@@ -1,19 +1,25 @@
 import { useEffect } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { socket } from "../shared/api/socket";
- import { useSoundInit } from "../shared/services/sound/useSoundInit";
+import { useSoundInit } from "../shared/services/sound/useSoundInit";
 
 import UserAppRoutes from "../apps/user/routes";
 import ExpertAppRoutes from "../apps/expert/routes";
 import AdminAppRoutes from "../apps/admin/routes";
-import { ExpertProvider } from "../shared/context/ExpertContext"; // ✅ ADD
+import { ExpertProvider } from "../shared/context/ExpertContext";
 import BottomNavbar from "../shared/components/BottomNavbar/BottomNavbar";
 
 export default function AppRouter() {
-useSoundInit();
-  /* ---------------------------------------------
-     👁️ TAB VISIBILITY → AUTO RECONNECT
-  --------------------------------------------- */
+
+  useSoundInit();
+
+  const location = useLocation();   // ✅ ADD THIS
+
+  const showNavbar =
+    location.pathname.startsWith("/user") ||
+    location.pathname.startsWith("/expert");
+
+  /* socket reconnect */
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === "visible") {
@@ -31,9 +37,6 @@ useSoundInit();
     };
   }, []);
 
-  /* ---------------------------------------------
-     OPTIONAL: DEBUG CONNECTION STATE
-  --------------------------------------------- */
   useEffect(() => {
     socket.on("connect", () => {
       console.log("🟢 Socket connected from AppRouter:", socket.id);
@@ -49,41 +52,41 @@ useSoundInit();
     };
   }, []);
 
-   const showNavbar = location.pathname.startsWith("/user") || location.pathname.startsWith("/expert");
-
   return (
-    <div className="app-main-layout" style={{ width: '100%', overflowX: 'hidden', position: 'relative' }}>
-      {/* Padding tabhi add hogi jab screen mobile size (max-width: 768px) hogi */}
-      <div 
-        className="main-content-wrapper" 
-        style={{ 
+    <div className="app-main-layout" style={{ width: "100%", overflowX: "hidden", position: "relative" }}>
+      <div
+        className="main-content-wrapper"
+        style={{
           paddingBottom: showNavbar ? "var(--nav-height, 70px)" : "0px",
-          width: '100%',
-          overflowX: 'hidden'
+          width: "100%",
+          overflowX: "hidden"
         }}
       >
-    <Routes>
-      {/* Redirect root */}
-      <Route path="/" element={<Navigate to="/user" />} />
+        <Routes>
 
-      {/* User */}
-      <Route path="/user/*" element={<UserAppRoutes />} />
+          <Route path="/" element={<Navigate to="/user" />} />
 
-      {/* Expert */}
-     <Route
-  path="/expert/*"
-  element={
-    <ExpertProvider>
-      <ExpertAppRoutes />
-    </ExpertProvider>
-  }
-/>
-      {/* Admin */}
-      <Route path="/admin/*" element={<AdminAppRoutes />} />
-    </Routes>
-     </div>
-     {showNavbar && <BottomNavbar />}
+          {/* USER */}
+          <Route path="/user/*" element={<UserAppRoutes />} />
+
+          {/* EXPERT */}
+          <Route
+            path="/expert/*"
+            element={
+              <ExpertProvider>
+                <ExpertAppRoutes />
+              </ExpertProvider>
+            }
+          />
+
+          {/* ADMIN */}
+          <Route path="/admin/*" element={<AdminAppRoutes />} />
+
+        </Routes>
+      </div>
+
+      {showNavbar && <BottomNavbar />}
+
     </div>
-    
   );
 }

@@ -6,37 +6,62 @@ const api = axios.create({
   timeout: APP_CONFIG.REQUEST_TIMEOUT
 });
 
-// 🔐 Request Interceptor
+/* ===============================
+   REQUEST INTERCEPTOR
+================================ */
 api.interceptors.request.use(
   (config) => {
-    // ✅ SUPPORT BOTH USER & EXPERT TOKENS
-    const token =
-      localStorage.getItem("expert_token") ||
-      localStorage.getItem("token");
+
+    const expertToken = localStorage.getItem("expert_token");
+    const userToken = localStorage.getItem("user_token");
+
+    const token = expertToken || userToken;
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
+    /* OPTIONAL ROLE HEADER */
+    if (expertToken) {
+      config.headers["x-client-role"] = "expert";
+    } else if (userToken) {
+      config.headers["x-client-role"] = "user";
+    }
+
     return config;
+
   },
   (error) => Promise.reject(error)
 );
 
-// 🔁 Response Interceptor
+/* ===============================
+   RESPONSE INTERCEPTOR
+================================ */
 api.interceptors.response.use(
+
   (response) => response,
+
   (error) => {
-    if (error.response?.status === 401) {
+
+    const status = error?.response?.status;
+
+    /* TOKEN EXPIRED */
+    if (status === 401) {
+
       localStorage.removeItem("expert_token");
-      localStorage.removeItem("token");
+      localStorage.removeItem("user_token");
+
       // optional redirect
       // window.location.href = "/login";
+
     }
 
     return Promise.reject(
-      error?.response?.data?.message || "Server error"
+      error?.response?.data?.message ||
+      error?.message ||
+      "Server error"
     );
+
   }
 );
 

@@ -5,7 +5,7 @@ import "./BottomNavbar.css";
 
 const BottomNavbar = () => {
   const location = useLocation();
-  const isExpert = location.pathname.includes('/expert');
+ const isExpert = location.pathname.startsWith('/expert');
 
   // ✅ Chat page detect karke navbar ko render hi nahi karenge
   if (location.pathname.includes('/chat/')) {

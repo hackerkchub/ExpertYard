@@ -14,7 +14,7 @@ const BottomNavbar = () => {
 
   const userMenu = [
     { name: 'Home', path: '/user', icon: <Home size={22} /> },
-    { name: 'Notifications', path: '/user/notifications', icon: <Bell size={22} /> },
+    { name: 'Chat', path: '/user/chat-history', icon: <MessageSquare size={22} /> },
     { name: 'Wallet', path: '/user/wallet', icon: <Wallet size={22} /> },
     { name: 'Setting', path: '/user/setting', icon: <Settings size={22} /> },
   ];

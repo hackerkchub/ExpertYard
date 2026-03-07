@@ -1,4 +1,4 @@
-// 🎨 POLISHED PREMIUM VERSION - FULLY RESPONSIVE
+// 🎨 POLISHED PREMIUM VERSION - FULLY RESPONSIVE with Call History
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -15,10 +15,16 @@ import {
   FiEye,
   FiTrendingUp,
   FiWatch,
+  FiPhone,
+  FiVideo,
+  FiPhoneMissed,
+  FiXCircle,
+  FiCheckCircle,
 } from "react-icons/fi";
-// import { FaIndianRupeeSign } from "react-icons/fa6";
 import { HiUsers } from "react-icons/hi";
-import { BsChatLeftText } from "react-icons/bs";
+import { BsChatLeftText, BsTelephone } from "react-icons/bs";
+import { FaIndianRupeeSign } from "react-icons/fa6";
+import { IoMdCall } from "react-icons/io";
 
 import {
   PremiumContainer,
@@ -46,6 +52,12 @@ import {
   EarningsBadge,
   SessionHeader,
   MessageAvatar,
+  TabContainer,
+  TabButton,
+  MobileSummaryToggle,
+  ResponsiveGrid,
+  CallTypeBadge,
+  StatusBadge,
 } from "./ExpertChatHistory.styles";
 
 import { useExpert } from "../../../../shared/context/ExpertContext";
@@ -53,13 +65,23 @@ import {
   getExpertChatHistoryApi,
   getChatHistoryMessagesApi,
 } from "../../../../shared/api/chatHistory.api";
-import { FaIndianRupeeSign } from "react-icons/fa6";
+import { getExpertCallHistoryApi } from "../../../../shared/api/callHistory.api";
 
 // ✅ FIXED BILLING: 1 MIN MINIMUM + ceil seconds
 const calculateEarnings = (durationMinutes, pricePerMinute) => {
   const totalSeconds = Math.round(Number(durationMinutes || 0) * 60);
   const billedMinutes = Math.ceil(totalSeconds / 60);
   return Math.max(1, billedMinutes) * Number(pricePerMinute || 16);
+};
+
+// ✅ Format duration for calls
+const formatDuration = (minutes = 0) => {
+  const m = Number(minutes || 0);
+  if (m < 1) return `${Math.round(m * 60)}s`;
+  if (m < 60) return `${Math.round(m)}m`;
+  const hours = Math.floor(m / 60);
+  const mins = m % 60;
+  return `${hours}h ${mins}m`;
 };
 
 const getAvatarUrl = (name, avatar) => {
@@ -70,8 +92,43 @@ const getAvatarUrl = (name, avatar) => {
     )}&background=4a70eb&color=fff`
   );
 };
-// ✅ FIXED: groupByUser - handles both user_name & username
-const groupByUser = (rows = [], expertPricePerMinute = 0) => {
+
+// ✅ Status display mapping for calls
+const STATUS_CONFIG = {
+  completed: {
+    label: 'Completed',
+    icon: FiCheckCircle,
+    color: '#10b981',
+    bgColor: 'rgba(16, 185, 129, 0.1)'
+  },
+  missed: {
+    label: 'Missed',
+    icon: FiPhoneMissed,
+    color: '#f59e0b',
+    bgColor: 'rgba(245, 158, 11, 0.1)'
+  },
+  rejected: {
+    label: 'Rejected',
+    icon: FiXCircle,
+    color: '#ef4444',
+    bgColor: 'rgba(239, 68, 68, 0.1)'
+  },
+  accepted: {
+    label: 'In Progress',
+    icon: FiPhone,
+    color: '#3b82f6',
+    bgColor: 'rgba(59, 130, 246, 0.1)'
+  },
+  ended: {
+    label: 'Completed',
+    icon: FiCheckCircle,
+    color: '#10b981',
+    bgColor: 'rgba(16, 185, 129, 0.1)'
+  }
+};
+
+// ✅ FIXED: groupByUser for chat - handles both user_name & username
+const groupChatByUser = (rows = [], expertPricePerMinute = 0) => {
   const map = rows.reduce((acc, chat) => {
     const id = chat.user_id;
     if (!id) return acc;
@@ -119,13 +176,84 @@ const groupByUser = (rows = [], expertPricePerMinute = 0) => {
     .sort((a, b) => new Date(b.last_end_time) - new Date(a.last_end_time));
 };
 
+// ✅ Group calls by user
+const groupCallsByUser = (calls = []) => {
+  const map = calls.reduce((acc, call) => {
+    const id = call.user_id || call.caller_id;
+    if (!id) return acc;
+
+    if (!acc[id]) {
+      acc[id] = {
+        user_id: id,
+        username: call.user_name,
+        user_avatar: call.user_avatar,
+        total_calls: 0,
+        total_duration: 0,
+        total_earnings: 0,
+        last_call_time: call.ended_at || call.created_at,
+        calls: [],
+        missed_count: 0,
+        rejected_count: 0,
+        completed_count: 0,
+      };
+    }
+
+    acc[id].calls.push(call);
+    acc[id].total_calls++;
+
+    // Update counts by status
+    if (call.status === 'ended') {
+      acc[id].completed_count++;
+      const mins = Number(call.duration || 0);
+      const ppm = Number(call.price_per_minute || 16);
+      acc[id].total_duration += mins;
+      acc[id].total_earnings += calculateEarnings(mins, ppm);
+    } else if (call.status === 'missed') {
+      acc[id].missed_count++;
+    } else if (call.status === 'rejected') {
+      acc[id].rejected_count++;
+    }
+
+    // Update last call time
+    const callTime = call.ended_at || call.created_at;
+    if (callTime && (!acc[id].last_call_time || new Date(callTime) > new Date(acc[id].last_call_time))) {
+      acc[id].last_call_time = callTime;
+    }
+
+    return acc;
+  }, {});
+
+  return Object.values(map)
+    .map(g => ({
+      ...g,
+      calls: [...g.calls].sort((a, b) => 
+        new Date(b.created_at) - new Date(a.created_at)
+      )
+    }))
+    .sort((a, b) => new Date(b.last_call_time) - new Date(a.last_call_time));
+};
+
 const ExpertChatHistory = () => {
   const { expertData, expertPrice } = useExpert();
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(true);
-  const [counterparties, setCounterparties] = useState([]);
-  const [expandedUserId, setExpandedUserId] = useState(null);
+  // Tab states
+  const [activeMainTab, setActiveMainTab] = useState('chat'); // 'chat' or 'call'
+  const [activeCallSubTab, setActiveCallSubTab] = useState('all'); // 'all', 'completed', 'missed', 'rejected'
+  const [showMobileSummary, setShowMobileSummary] = useState(false);
+
+  // Chat history states
+  const [chatLoading, setChatLoading] = useState(true);
+  const [chatCounterparties, setChatCounterparties] = useState([]);
+  const [expandedChatUserId, setExpandedChatUserId] = useState(null);
+
+  // Call history states
+  const [callLoading, setCallLoading] = useState(false);
+  const [calls, setCalls] = useState([]);
+  const [groupedCallUsers, setGroupedCallUsers] = useState([]);
+  const [expandedCallUserId, setExpandedCallUserId] = useState(null);
+
+  // Common states
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSession, setSelectedSession] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -141,17 +269,17 @@ const ExpertChatHistory = () => {
   }, []);
 
   // ✅ Fetch grouped chat history
-  const fetchGrouped = useCallback(async () => {
+  const fetchChatHistory = useCallback(async () => {
     const expertId = expertData?.expert_id || expertData?.expertId;
     
     if (!expertId) {
       console.log("❌ No expert ID found");
-      setLoading(false);
+      setChatLoading(false);
       return;
     }
 
     try {
-      setLoading(true);
+      setChatLoading(true);
       const res = await getExpertChatHistoryApi(expertId);
       
       const rows = Array.isArray(res)
@@ -162,15 +290,48 @@ const ExpertChatHistory = () => {
         ? res.data || []
         : [];
         
-      const grouped = groupByUser(rows, expertPrice?.chat_per_minute || 16);
-      setCounterparties(grouped);
+      const grouped = groupChatByUser(rows, expertPrice?.chat_per_minute || 16);
+      setChatCounterparties(grouped);
     } catch (e) {
       console.error("❌ API Error:", e);
-      setCounterparties([]);
+      setChatCounterparties([]);
     } finally {
-      setLoading(false);
+      setChatLoading(false);
     }
   }, [expertData?.expert_id, expertData?.expertId, expertPrice?.chat_per_minute]);
+
+  // ✅ Fetch call history
+  const fetchCallHistory = useCallback(async () => {
+    const expertId = expertData?.expert_id || expertData?.expertId;
+    
+    if (!expertId) return;
+
+    try {
+      setCallLoading(true);
+      const params = {};
+      if (activeCallSubTab !== 'all') {
+        params.status = activeCallSubTab === 'completed' ? 'ended' : activeCallSubTab;
+      }
+      
+      const res = await getExpertCallHistoryApi(params);
+      const callsData = res?.data?.data || [];
+      
+      // Filter out ringing status
+      const filteredCalls = callsData.filter(call => call.status !== 'ringing');
+      
+      setCalls(filteredCalls);
+      
+      // Group by user for expanded view
+      const grouped = groupCallsByUser(filteredCalls);
+      setGroupedCallUsers(grouped);
+    } catch (error) {
+      console.error("❌ Error fetching call history:", error);
+      setCalls([]);
+      setGroupedCallUsers([]);
+    } finally {
+      setCallLoading(false);
+    }
+  }, [expertData?.expert_id, expertData?.expertId, activeCallSubTab]);
 
   useEffect(() => {
     const handleBack = () => {
@@ -181,22 +342,25 @@ const ExpertChatHistory = () => {
     return () => window.removeEventListener("popstate", handleBack);
   }, [navigate]);
 
+  // Fetch data based on active tab
   useEffect(() => {
-    fetchGrouped();
-  }, [fetchGrouped]);
+    if (activeMainTab === 'chat') {
+      fetchChatHistory();
+    } else {
+      fetchCallHistory();
+    }
+  }, [activeMainTab, activeCallSubTab, fetchChatHistory, fetchCallHistory]);
 
-  // ✅ Enhanced search + filter
-  const filtered = useMemo(() => {
-    let arr = [...(counterparties || [])];
+  // ✅ Enhanced search + filter for chat
+  const filteredChat = useMemo(() => {
+    let arr = [...(chatCounterparties || [])];
     
-    // Search filter
     if (searchTerm) {
       arr = arr.filter((c) =>
         c.username?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
     
-    // Type filter
     if (filterType === "recent") {
       const oneWeekAgo = new Date();
       oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -206,16 +370,54 @@ const ExpertChatHistory = () => {
     }
     
     return arr;
-  }, [counterparties, searchTerm, filterType]);
+  }, [chatCounterparties, searchTerm, filterType]);
 
-  // ✅ Enhanced summary with metrics
-  const summary = useMemo(() => {
+  // ✅ Filter calls
+  const filteredCalls = useMemo(() => {
+    if (activeMainTab !== 'call') return [];
+    
+    let filtered = [...calls];
+    
+    if (searchTerm) {
+      filtered = filtered.filter(call => 
+        (call.user_name || "").toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    // Apply status filter
+    if (activeCallSubTab !== 'all') {
+      filtered = filtered.filter(call => {
+        if (activeCallSubTab === 'completed') {
+          return call.status === 'ended';
+        }
+        return call.status === activeCallSubTab;
+      });
+    }
+    
+    return filtered;
+  }, [calls, searchTerm, activeMainTab, activeCallSubTab]);
+
+  // Filter grouped call users
+  const filteredGroupedCallUsers = useMemo(() => {
+    let filtered = [...groupedCallUsers];
+    
+    if (searchTerm) {
+      filtered = filtered.filter(g =>
+        (g.username || "").toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    return filtered;
+  }, [groupedCallUsers, searchTerm]);
+
+  // ✅ Enhanced chat summary with metrics
+  const chatSummary = useMemo(() => {
     const ppm = Number(expertPrice?.chat_per_minute || 16);
     let totalMinutes = 0;
     let totalSessions = 0;
     let avgSessionLength = 0;
 
-    counterparties.forEach((c) => {
+    chatCounterparties.forEach((c) => {
       totalMinutes += Number(c.total_minutes || 0);
       totalSessions += c.sessions?.length || 0;
     });
@@ -230,27 +432,56 @@ const ExpertChatHistory = () => {
       expertEarn: expertEarn || 0,
       totalSessions,
       avgSessionLength: Math.round(avgSessionLength * 10) / 10,
-      topEarner: counterparties.reduce((max, c) => 
+      totalUsers: chatCounterparties.length,
+      topEarner: chatCounterparties.reduce((max, c) => 
         c.total_earnings > max.total_earnings ? c : max, 
         { username: 'None', total_earnings: 0 }
       ),
     };
-  }, [counterparties, expertPrice?.chat_per_minute]);
+  }, [chatCounterparties, expertPrice?.chat_per_minute]);
+
+  // ✅ Call summary metrics
+  const callSummary = useMemo(() => {
+    let totalCalls = 0;
+    let totalDuration = 0;
+    let totalEarnings = 0;
+    let missedCalls = 0;
+    let rejectedCalls = 0;
+    let completedCalls = 0;
+
+    groupedCallUsers.forEach((g) => {
+      totalCalls += g.total_calls || 0;
+      totalDuration += g.total_duration || 0;
+      totalEarnings += g.total_earnings || 0;
+      missedCalls += g.missed_count || 0;
+      rejectedCalls += g.rejected_count || 0;
+      completedCalls += g.completed_count || 0;
+    });
+
+    return {
+      totalCalls,
+      totalDuration: Math.round(totalDuration || 0),
+      totalEarnings: Math.round(totalEarnings || 0),
+      missedCalls,
+      rejectedCalls,
+      completedCalls,
+      totalUsers: groupedCallUsers.length,
+      avgDuration: totalCalls > 0 ? (totalDuration / totalCalls).toFixed(1) : 0,
+    };
+  }, [groupedCallUsers]);
 
   const openSession = useCallback(async (session) => {
     try {
-     const res = await getChatHistoryMessagesApi(session.id);
-     const messagesData = Array.isArray(res)
-  ? res
-  : res?.data || [];
+      const res = await getChatHistoryMessagesApi(session.id);
+      const messagesData = Array.isArray(res) ? res : res?.data || [];
 
-if (messagesData.length > 0) {
-  setSelectedSession(session);
-  setMessages(messagesData);
-  setShowDetails(true);
-} else {
-  alert("No messages found");
-}
+      if (messagesData.length > 0) {
+        setSelectedSession(session);
+        setMessages(messagesData);
+        setShowDetails(true);
+      } else {
+        alert("No messages found");
+      }
     } catch (e) {
       console.error("❌ Messages error:", e);
       alert("Failed to load messages");
@@ -283,12 +514,28 @@ if (messagesData.length > 0) {
     return `${hours}h ${mins}m`;
   };
 
-  if (loading && counterparties.length === 0) {
+  const formatTimeFromDate = (dateString) => {
+    if (!dateString) return "";
+    return new Date(dateString).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const isLoading = () => {
+    if (activeMainTab === 'chat') {
+      return chatLoading && chatCounterparties.length === 0;
+    } else {
+      return callLoading && calls.length === 0;
+    }
+  };
+
+  if (isLoading()) {
     return (
       <PremiumContainer>
         <LoadingSpinner>
           <div className="spinner"></div>
-          <p>Loading your chat history...</p>
+          <p>Loading your {activeMainTab} history...</p>
         </LoadingSpinner>
       </PremiumContainer>
     );
@@ -326,78 +573,250 @@ if (messagesData.length > 0) {
           transform: translateY(-2px);
           box-shadow: 0 8px 30px rgba(139, 92, 246, 0.12);
         }
+        
+        .call-type-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-size: 11px;
+          font-weight: 500;
+        }
+        
+        .call-type-badge.voice {
+          background: rgba(14, 165, 233, 0.1);
+          color: #0ea5e9;
+        }
+        
+        .call-type-badge.video {
+          background: rgba(139, 92, 246, 0.1);
+          color: #8b5cf6;
+        }
       `}</style>
 
       <PageContainer>
         {/* Enhanced Header with Stats */}
         <Header>
-          <div style={{ 
-            display: 'flex', 
-            flexDirection: windowWidth < 768 ? 'column' : 'row',
-            alignItems: windowWidth < 768 ? 'flex-start' : 'center',
-            justifyContent: 'space-between', 
-            width: '100%',
-            gap: '16px'
-          }}>
+          <ResponsiveGrid>
             <div>
               <Title>
-                <FiMessageSquare />
-                <span className="gradient-text">Chat History</span>
+                {activeMainTab === 'chat' ? (
+                  <FiMessageSquare />
+                ) : (
+                  <FiPhone />
+                )}
+                <span className="gradient-text">
+                  {activeMainTab === 'chat' ? 'Chat History' : 'Call History'}
+                </span>
               </Title>
-              <p style={{ color: '#64748b', marginTop: 8, fontSize: windowWidth < 640 ? 13 : 14 }}>
-                Track conversations and earnings from all your chat sessions
+              <p style={{ 
+                color: '#64748b', 
+                marginTop: 8, 
+                fontSize: windowWidth < 640 ? 13 : 14 
+              }}>
+                {activeMainTab === 'chat' 
+                  ? 'Track conversations and earnings from all your chat sessions'
+                  : 'View your complete call history and earnings from calls'}
               </p>
             </div>
-            
-            <StatsContainer>
-              <StatCard>
-                <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
-                  <HiUsers color="#8b5cf6" />
-                </div>
-                <div className="stat-content">
-                  <span className="stat-value">{counterparties.length}</span>
-                  <span className="stat-label">Users</span>
-                </div>
-              </StatCard>
-              
-              <StatCard>
-                <div className="stat-icon" style={{ background: 'rgba(34, 197, 94, 0.1)' }}>
-                  <FiTrendingUp color="#22c55e" />
-                </div>
-                <div className="stat-content">
-                  <span className="stat-value">{summary.totalSessions}</span>
-                  <span className="stat-label">Sessions</span>
-                </div>
-              </StatCard>
-              
-              <StatCard accent>
-                <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)' }}>
-                  <FiWatch color="#f59e0b" />
-                </div>
-                <div className="stat-content">
-                  <span className="stat-value">{summary.totalMinutes}</span>
-                  <span className="stat-label">Mins</span>
-                </div>
-              </StatCard>
-              
-              <StatCard primary>
-                <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
-                  <FaIndianRupeeSign color="#8b5cf6" />
-                </div>
-                <div className="stat-content">
-                  <span className="stat-value">₹{(summary.expertEarn || 0).toFixed(0)}</span>
-                  <span className="stat-label">Earnings</span>
-                </div>
-              </StatCard>
-            </StatsContainer>
-          </div>
 
-          {/* Enhanced Filter Bar */}
+            {/* Mobile Summary Toggle */}
+            <MobileSummaryToggle onClick={() => setShowMobileSummary(!showMobileSummary)}>
+              {showMobileSummary ? 'Hide Summary' : 'Show Summary'}
+              {showMobileSummary ? <FiChevronDown /> : <FiChevronRight />}
+            </MobileSummaryToggle>
+
+            {/* Summary Stats - Desktop always visible, mobile toggleable */}
+            {(showMobileSummary || windowWidth > 768) && (
+              <StatsContainer className={showMobileSummary ? 'mobile-visible' : ''}>
+                {activeMainTab === 'chat' ? (
+                  <>
+                    <StatCard>
+                      <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
+                        <HiUsers color="#8b5cf6" />
+                      </div>
+                      <div className="stat-content">
+                        <span className="stat-value">{chatSummary.totalUsers}</span>
+                        <span className="stat-label">Users</span>
+                      </div>
+                    </StatCard>
+                    
+                    <StatCard>
+                      <div className="stat-icon" style={{ background: 'rgba(34, 197, 94, 0.1)' }}>
+                        <FiTrendingUp color="#22c55e" />
+                      </div>
+                      <div className="stat-content">
+                        <span className="stat-value">{chatSummary.totalSessions}</span>
+                        <span className="stat-label">Sessions</span>
+                      </div>
+                    </StatCard>
+                    
+                    <StatCard accent>
+                      <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)' }}>
+                        <FiWatch color="#f59e0b" />
+                      </div>
+                      <div className="stat-content">
+                        <span className="stat-value">{chatSummary.totalMinutes}</span>
+                        <span className="stat-label">Mins</span>
+                      </div>
+                    </StatCard>
+                    
+                    <StatCard primary>
+                      <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
+                        <FaIndianRupeeSign color="#8b5cf6" />
+                      </div>
+                      <div className="stat-content">
+                        <span className="stat-value">₹{(chatSummary.expertEarn || 0).toFixed(0)}</span>
+                        <span className="stat-label">Earnings</span>
+                      </div>
+                    </StatCard>
+                  </>
+                ) : (
+                  <>
+                    <StatCard>
+                      <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
+                        <IoMdCall color="#8b5cf6" />
+                      </div>
+                      <div className="stat-content">
+                        <span className="stat-value">{callSummary.totalCalls}</span>
+                        <span className="stat-label">Calls</span>
+                      </div>
+                    </StatCard>
+                    
+                    <StatCard>
+                      <div className="stat-icon" style={{ background: 'rgba(34, 197, 94, 0.1)' }}>
+                        <FiWatch color="#22c55e" />
+                      </div>
+                      <div className="stat-content">
+                        <span className="stat-value">{formatDuration(callSummary.totalDuration)}</span>
+                        <span className="stat-label">Duration</span>
+                      </div>
+                    </StatCard>
+                    
+                    <StatCard accent>
+                      <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)' }}>
+                        <FiCheckCircle color="#f59e0b" />
+                      </div>
+                      <div className="stat-content">
+                        <span className="stat-value">{callSummary.completedCalls}</span>
+                        <span className="stat-label">Completed</span>
+                      </div>
+                    </StatCard>
+                    
+                    <StatCard primary>
+                      <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
+                        <FaIndianRupeeSign color="#8b5cf6" />
+                      </div>
+                      <div className="stat-content">
+                        <span className="stat-value">₹{(callSummary.totalEarnings || 0).toFixed(0)}</span>
+                        <span className="stat-label">Earned</span>
+                      </div>
+                    </StatCard>
+                  </>
+                )}
+              </StatsContainer>
+            )}
+          </ResponsiveGrid>
+
+          {/* Main Tabs - Chat / Call */}
+          <TabContainer>
+            <TabButton 
+              active={activeMainTab === 'chat'}
+              onClick={() => setActiveMainTab('chat')}
+            >
+              <BsChatLeftText size={18} />
+              <span>Chat History</span>
+            </TabButton>
+            <TabButton 
+              active={activeMainTab === 'call'}
+              onClick={() => setActiveMainTab('call')}
+            >
+              <FiPhone size={18} />
+              <span>Call History</span>
+            </TabButton>
+          </TabContainer>
+
+          {/* Call Sub-tabs (only visible when call tab is active) */}
+          {activeMainTab === 'call' && (
+            <FilterBar style={{ marginTop: 16 }}>
+              <div style={{ 
+                display: 'flex', 
+                gap: 8, 
+                flexWrap: 'wrap',
+                justifyContent: windowWidth < 640 ? 'center' : 'flex-start'
+              }}>
+                <PillBadge 
+                  active={activeCallSubTab === 'all'} 
+                  onClick={() => setActiveCallSubTab('all')}
+                >
+                  All
+                </PillBadge>
+                <PillBadge 
+                  active={activeCallSubTab === 'completed'} 
+                  onClick={() => setActiveCallSubTab('completed')}
+                >
+                  <FiCheckCircle size={14} style={{ marginRight: 4 }} />
+                  Completed
+                </PillBadge>
+                <PillBadge 
+                  active={activeCallSubTab === 'missed'} 
+                  onClick={() => setActiveCallSubTab('missed')}
+                >
+                  <FiPhoneMissed size={14} style={{ marginRight: 4 }} />
+                  Missed
+                </PillBadge>
+                <PillBadge 
+                  active={activeCallSubTab === 'rejected'} 
+                  onClick={() => setActiveCallSubTab('rejected')}
+                >
+                  <FiXCircle size={14} style={{ marginRight: 4 }} />
+                  Rejected
+                </PillBadge>
+              </div>
+            </FilterBar>
+          )}
+
+          {/* Chat Filter Bar (only for chat tab) */}
+          {activeMainTab === 'chat' && (
+            <FilterBar style={{ marginTop: 16 }}>
+              <div style={{ 
+                display: 'flex', 
+                gap: 8,
+                flexWrap: 'wrap',
+                justifyContent: windowWidth < 640 ? 'center' : 'flex-start'
+              }}>
+                <PillBadge 
+                  active={filterType === 'all'} 
+                  onClick={() => setFilterType('all')}
+                >
+                  All
+                </PillBadge>
+                <PillBadge 
+                  active={filterType === 'recent'} 
+                  onClick={() => setFilterType('recent')}
+                >
+                  Recent
+                </PillBadge>
+                <PillBadge 
+                  active={filterType === 'top'} 
+                  onClick={() => setFilterType('top')}
+                >
+                  Top Earners
+                </PillBadge>
+              </div>
+            </FilterBar>
+          )}
+
+          {/* Enhanced Filter Bar with Search */}
           <FilterBar>
             <SearchBar premium>
               <FiSearch />
               <input
-                placeholder="Search users..."
+                placeholder={activeMainTab === 'chat' 
+                  ? "Search users..." 
+                  : "Search by user name..."
+                }
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -408,192 +827,301 @@ if (messagesData.length > 0) {
                 />
               )}
             </SearchBar>
-            
-            <div style={{ 
-              display: 'flex', 
-              gap: 8,
-              flexWrap: 'wrap',
-              justifyContent: windowWidth < 640 ? 'space-between' : 'flex-end'
-            }}>
-              <PillBadge 
-                active={filterType === 'all'} 
-                onClick={() => setFilterType('all')}
-              >
-                All
-              </PillBadge>
-              <PillBadge 
-                active={filterType === 'recent'} 
-                onClick={() => setFilterType('recent')}
-              >
-                Recent
-              </PillBadge>
-              <PillBadge 
-                active={filterType === 'top'} 
-                onClick={() => setFilterType('top')}
-              >
-                Top
-              </PillBadge>
-            </div>
           </FilterBar>
         </Header>
 
         {/* History List */}
         <HistoryList>
-          {filtered.length === 0 ? (
-            <EmptyState premium>
-              <div className="empty-icon">
-                <BsChatLeftText />
-              </div>
-              <h3>No Chat History Found</h3>
-              <p>Start chatting with users to see your history here</p>
-              <button 
-                className="premium-btn"
-                onClick={() => navigate("/expert")}
-              >
-                Go to Dashboard
-              </button>
-            </EmptyState>
-          ) : (
-            filtered.map((c) => {
-              const isOpen = expandedUserId === c.user_id;
-              const totalSessions = c.sessions?.length || 0;
-              const totalEarnings = c.total_earnings || 0;
-              const avgEarning = totalSessions > 0 ? totalEarnings / totalSessions : 0;
+          {activeMainTab === 'chat' ? (
+            /* ===== CHAT HISTORY ===== */
+            filteredChat.length === 0 ? (
+              <EmptyState premium>
+                <div className="empty-icon">
+                  <BsChatLeftText />
+                </div>
+                <h3>No Chat History Found</h3>
+                <p>Start chatting with users to see your history here</p>
+                <button 
+                  className="premium-btn"
+                  onClick={() => navigate("/expert")}
+                >
+                  Go to Dashboard
+                </button>
+              </EmptyState>
+            ) : (
+              filteredChat.map((c) => {
+                const isOpen = expandedChatUserId === c.user_id;
+                const totalSessions = c.sessions?.length || 0;
+                const totalEarnings = c.total_earnings || 0;
+                const avgEarning = totalSessions > 0 ? totalEarnings / totalSessions : 0;
 
-              return (
-                <HistoryItem key={c.user_id} premium className="premium-card">
-                  <ChatHeader
-                    onClick={() => setExpandedUserId(isOpen ? null : c.user_id)}
-                    premium
-                  >
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: windowWidth < 480 ? 12 : 16,
-                      width: '100%'
-                    }}>
-                    <Avatar
-  premium
-  src={getAvatarUrl(c.username, c.user_avatar)}
-/>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: 8,
-                          flexWrap: 'wrap',
-                          marginBottom: 4
-                        }}>
-                          <h4 style={{ wordBreak: 'break-word' }}>{c.username}</h4>
-                          <EarningsBadge>₹{totalEarnings.toFixed(0)}</EarningsBadge>
-                        </div>
-                        <div style={{ 
-                          display: 'flex', 
-                          flexDirection: windowWidth < 480 ? 'column' : 'row',
-                          alignItems: windowWidth < 480 ? 'flex-start' : 'center', 
-                          gap: windowWidth < 480 ? 4 : 16 
-                        }}>
-                          <span className="meta-item">
-                            <FiUser /> {totalSessions} sess
-                          </span>
-                          <span className="meta-item">
-                            <FiClock /> {formatTime(c.total_minutes)}
-                          </span>
-                          {windowWidth >= 640 && (
+                return (
+                  <HistoryItem key={c.user_id} premium className="premium-card">
+                    <ChatHeader
+                      onClick={() => setExpandedChatUserId(isOpen ? null : c.user_id)}
+                      premium
+                    >
+                      <div className="chat-header-content">
+                        <Avatar
+                          premium
+                          src={getAvatarUrl(c.username, c.user_avatar)}
+                        />
+                        
+                        <div className="user-info">
+                          <div className="user-name-section">
+                            <h4>{c.username}</h4>
+                            <EarningsBadge>₹{totalEarnings.toFixed(0)}</EarningsBadge>
+                          </div>
+                          
+                          <div className="user-stats">
                             <span className="meta-item">
-                              ₹{avgEarning.toFixed(0)} avg
+                              <FiUser /> {totalSessions} sess
                             </span>
+                            <span className="meta-item">
+                              <FiClock /> {formatTime(c.total_minutes)}
+                            </span>
+                            {windowWidth >= 640 && (
+                              <span className="meta-item">
+                                ₹{avgEarning.toFixed(0)} avg
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="header-right">
+                          {windowWidth >= 640 && (
+                            <div className="last-activity hide-on-mobile">
+                              <div>Last</div>
+                              <div className="last-date">{formatDate(c.last_end_time)}</div>
+                            </div>
+                          )}
+                          {isOpen ? (
+                            <FiChevronDown className="chevron-icon" />
+                          ) : (
+                            <FiChevronRight className="chevron-icon" />
                           )}
                         </div>
                       </div>
-                    </div>
-                    
-                    <div style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: 12,
-                      marginTop: windowWidth < 640 ? 8 : 0
-                    }}>
-                      {windowWidth >= 640 && (
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: 12, color: '#64748b' }}>Last</div>
-                          <div style={{ fontSize: 13, color: '#64748b', fontWeight: 600 }}>
-                            {formatDate(c.last_end_time)}
+                    </ChatHeader>
+
+                    {isOpen && (
+                      <div className="expanded-content">
+                        <SessionHeader>
+                          <h5>Chat Sessions</h5>
+                          <div className="session-badge">
+                            <FiCalendar /> {totalSessions} total
                           </div>
-                        </div>
-                      )}
-                      {isOpen ? (
-                        <FiChevronDown className="chevron-icon" />
-                      ) : (
-                        <FiChevronRight className="chevron-icon" />
-                      )}
-                    </div>
-                  </ChatHeader>
+                        </SessionHeader>
+                        
+                        <SessionsWrap>
+                          {c.sessions.map((s, idx) => {
+                            const ppm = Number(
+                              s.price_per_minute || expertPrice?.chat_per_minute || 16
+                            );
+                            const actualMins = Number(s.duration_minutes || 0);
+                            const earnings = calculateEarnings(actualMins, ppm);
 
-                  {isOpen && (
-                    <div style={{ 
-                      padding: windowWidth < 640 ? '16px' : '24px', 
-                      background: '#f8fafc', 
-                      borderRadius: '0 0 12px 12px' 
-                    }}>
-                      <SessionHeader>
-                        <h5>Chat Sessions</h5>
-                        <div className="session-badge">
-                          <FiCalendar /> {totalSessions} total
-                        </div>
-                      </SessionHeader>
-                      
-                      <SessionsWrap>
-                        {c.sessions.map((s, idx) => {
-                          const ppm = Number(
-                            s.price_per_minute || expertPrice?.chat_per_minute || 16
-                          );
-                          const actualMins = Number(s.duration_minutes || 0);
-                          const earnings = calculateEarnings(actualMins, ppm);
-                          const seconds = Math.round(actualMins * 60);
-
-                          return (
-                            <SessionCard key={s.id || s.room_id} premium>
-                              <div className="session-indicator">
-                                <div className="session-number">{idx + 1}</div>
-                              </div>
-                              
-                              <div className="session-info">
-                                <div className="session-details">
-                                  <div className="date">
-                                    <FiCalendar />
-                                    {windowWidth < 480 ? formatDate(s.end_time).slice(0,6) : formatDate(s.end_time)}
-                                  </div>
-                                  <div className="duration">
-                                    <FiClock />
-                                    {seconds}s
+                            return (
+                              <SessionCard key={s.id || s.room_id} premium>
+                                <div className="session-indicator">
+                                  <div className="session-number">{idx + 1}</div>
+                                </div>
+                                
+                                <div className="session-info">
+                                  <div className="session-details">
+                                    <div className="date">
+                                      <FiCalendar />
+                                      {windowWidth < 480 ? formatDate(s.end_time).slice(0,6) : formatDate(s.end_time)}
+                                    </div>
+                                    <div className="duration">
+                                      <FiClock />
+                                      {formatTime(actualMins)}
+                                    </div>
                                   </div>
                                 </div>
-                                {windowWidth >= 640 && (
-                                  <div className="session-meta">
-                                    {/* <span className="room-id">#{s.room_id?.slice(-6)}</span> */}
+                                
+                                <div className="session-earnings">
+                                  {windowWidth >= 480 && <div className="amount-label">Earned</div>}
+                                  <div className="amount">₹{earnings}</div>
+                                </div>
+                                
+                                <ActionButton premium onClick={() => openSession(s)}>
+                                  <FiEye />
+                                  {windowWidth >= 480 ? 'View' : ''}
+                                </ActionButton>
+                              </SessionCard>
+                            );
+                          })}
+                        </SessionsWrap>
+                      </div>
+                    )}
+                  </HistoryItem>
+                );
+              })
+            )
+          ) : (
+            /* ===== CALL HISTORY ===== */
+            filteredCalls.length === 0 ? (
+              <EmptyState premium>
+                <div className="empty-icon">
+                  <FiPhone size={56} />
+                </div>
+                <h3>No Call History Found</h3>
+                <p>
+                  {activeCallSubTab === 'all' 
+                    ? "You haven't received any calls yet" 
+                    : `No ${activeCallSubTab} calls found`}
+                </p>
+                <button 
+                  className="premium-btn"
+                  onClick={() => navigate("/expert")}
+                >
+                  Go to Dashboard
+                </button>
+              </EmptyState>
+            ) : (
+              /* Grouped by user view */
+              filteredGroupedCallUsers.map((g) => {
+                const isOpen = expandedCallUserId === g.user_id;
+
+                return (
+                  <HistoryItem key={g.user_id} premium className="premium-card">
+                    <ChatHeader
+                      onClick={() => setExpandedCallUserId(isOpen ? null : g.user_id)}
+                      premium
+                    >
+                      <div className="chat-header-content">
+                        <Avatar
+                          premium
+                          src={getAvatarUrl(g.username, g.user_avatar)}
+                        />
+                        
+                        <div className="user-info">
+                          <div className="user-name-section">
+                            <h4>{g.username}</h4>
+                            <EarningsBadge>₹{g.total_earnings}</EarningsBadge>
+                          </div>
+                          
+                          <div className="user-stats">
+                            <span className="meta-item">
+                              <FiPhone /> {g.total_calls} calls
+                            </span>
+                            <span className="meta-item">
+                              <FiClock /> {formatDuration(g.total_duration)}
+                            </span>
+                          </div>
+
+                          <div className="call-stats-badges">
+                            {g.completed_count > 0 && (
+                              <span className="status-badge completed">
+                                <FiCheckCircle size={10} /> {g.completed_count}
+                              </span>
+                            )}
+                            {g.missed_count > 0 && (
+                              <span className="status-badge missed">
+                                <FiPhoneMissed size={10} /> {g.missed_count}
+                              </span>
+                            )}
+                            {g.rejected_count > 0 && (
+                              <span className="status-badge rejected">
+                                <FiXCircle size={10} /> {g.rejected_count}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="header-right">
+                          {windowWidth >= 640 && (
+                            <div className="last-activity hide-on-mobile">
+                              <div>Last</div>
+                              <div className="last-date">{formatDate(g.last_call_time)}</div>
+                            </div>
+                          )}
+                          {isOpen ? (
+                            <FiChevronDown className="chevron-icon" />
+                          ) : (
+                            <FiChevronRight className="chevron-icon" />
+                          )}
+                        </div>
+                      </div>
+                    </ChatHeader>
+
+                    {isOpen && (
+                      <div className="expanded-content">
+                        <SessionHeader>
+                          <h5>Call Sessions</h5>
+                          <div className="session-badge">
+                            <FiCalendar /> {g.total_calls} calls
+                          </div>
+                        </SessionHeader>
+                        
+                        <SessionsWrap>
+                          {g.calls.map((call, idx) => {
+                            const config = STATUS_CONFIG[call.status === 'ended' ? 'completed' : call.status] || STATUS_CONFIG.missed;
+                            const StatusIcon = config.icon;
+                            const earnings = calculateEarnings(
+                              call.duration, 
+                              call.price_per_minute
+                            );
+
+                            return (
+                              <SessionCard key={call.id} premium>
+                                <div className="session-indicator">
+                                  <div className="session-number">{idx + 1}</div>
+                                </div>
+                                
+                                <div className="session-info">
+                                  <div className="session-details">
+                                    <div className="date">
+                                      <FiCalendar />
+                                      {windowWidth < 480 ? formatDate(call.created_at).slice(0,6) : formatDate(call.created_at)}
+                                    </div>
+                                    <div className="duration">
+                                      <FiClock />
+                                      {formatDuration(call.duration)}
+                                    </div>
                                   </div>
-                                )}
-                              </div>
-                              
-                              <div className="session-earnings">
-                                {windowWidth >= 480 && <div className="amount-label">Earned</div>}
-                                <div className="amount">₹{earnings}</div>
-                              </div>
-                              
-                              <ActionButton premium onClick={() => openSession(s)}>
-                                <FiEye />
-                                {windowWidth >= 480 ? 'View' : ''}
-                              </ActionButton>
-                            </SessionCard>
-                          );
-                        })}
-                      </SessionsWrap>
-                    </div>
-                  )}
-                </HistoryItem>
-              );
-            })
+                                  
+                                  <div className="session-meta">
+                                    <span className={`call-type-badge ${call.call_type || 'voice'}`}>
+                                      {call.call_type === 'video' ? <FiVideo size={11} /> : <FiPhone size={11} />}
+                                      {call.call_type || 'voice'}
+                                    </span>
+                                    <span className="status-badge" style={{
+                                      background: config.bgColor,
+                                      color: config.color,
+                                      padding: '2px 8px',
+                                      borderRadius: '12px',
+                                      fontSize: '11px',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px'
+                                    }}>
+                                      <StatusIcon size={10} />
+                                      {config.label}
+                                    </span>
+                                  </div>
+                                </div>
+                                
+                                <div className="session-earnings">
+                                  {windowWidth >= 480 && <div className="amount-label">Earned</div>}
+                                  <div className="amount">₹{earnings}</div>
+                                </div>
+                                
+                                <ActionButton premium onClick={() => {}}>
+                                  <FiEye />
+                                  {windowWidth >= 480 ? 'Details' : ''}
+                                </ActionButton>
+                              </SessionCard>
+                            );
+                          })}
+                        </SessionsWrap>
+                      </div>
+                    )}
+                  </HistoryItem>
+                );
+              })
+            )
           )}
         </HistoryList>
 
@@ -603,13 +1131,13 @@ if (messagesData.length > 0) {
             <ModalContent premium onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <div className="modal-user-info">
-                 <MessageAvatar
-  src={getAvatarUrl(
-    selectedSession.username || selectedSession.user_name,
-    selectedSession.user_avatar
-  )}
-  size={windowWidth < 640 ? "medium" : "large"}
-/>
+                  <MessageAvatar
+                    src={getAvatarUrl(
+                      selectedSession.username || selectedSession.user_name,
+                      selectedSession.user_avatar
+                    )}
+                    size={windowWidth < 640 ? "medium" : "large"}
+                  />
                   <div>
                     <h3>{selectedSession.username || selectedSession.user_name}</h3>
                     <div className="modal-meta">
@@ -657,14 +1185,14 @@ if (messagesData.length > 0) {
                               <strong>{msg.sender_name}</strong>
                               {windowWidth >= 480 && (
                                 <span className="sender-role">
-                                  {msg.sender_type === "expert" ? "(Expert)" : "(User)"}
+                                  {msg.sender_type === "expert" ? "(You)" : "(User)"}
                                 </span>
                               )}
                             </div>
                           </div>
                           <span className="message-time">
-                            {msg.time_sent
-                              ? new Date(msg.time_sent).toLocaleTimeString([], {
+                            {msg.time_sent || msg.created_at
+                              ? new Date(msg.time_sent || msg.created_at).toLocaleTimeString([], {
                                   hour: "2-digit",
                                   minute: "2-digit",
                                 })

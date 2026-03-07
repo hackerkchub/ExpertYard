@@ -367,6 +367,14 @@ const handleCancel = () => {
 
   const closeModal = () => setModalConfig({ open: false, type: null });
 
+const responseRate = useMemo(() => {
+  if (!followersCount) return 0;
+
+  const rate = (totalReviews / followersCount) * 100;
+
+  return Math.min(rate, 100).toFixed(0);
+}, [totalReviews, followersCount]);
+
   // FIX #9: Memoize stats to prevent unnecessary re-renders
   const stats = useMemo(() => [
     {
@@ -392,12 +400,11 @@ const handleCancel = () => {
       color: "#10b981"
     },
     {
-      icon: <FiTrendingUp />,
-      label: "Response Rate",
-      value: "98%",
-      // FIX #7: No onClick for this stat
-      color: "#8b5cf6"
-    }
+  icon: <FiTrendingUp />,
+  label: "Response Rate",
+  value: `${responseRate}%`,
+  color: "#8b5cf6"
+}
   ], [followersCount, avgRating, totalReviews, openFollowersModal, openReviewsModal]);
 
 if (profileLoading || priceLoading || !draft) {

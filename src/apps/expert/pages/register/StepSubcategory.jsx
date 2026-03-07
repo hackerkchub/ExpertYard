@@ -45,6 +45,19 @@ export default function StepSubcategory() {
     error
   } = useApi(getSubCategoriesApi);
 
+  const loadSubCategories = useCallback(async () => {
+  try {
+    const res = await getSubCategories(expertData.categoryId);
+    const list = Array.isArray(res?.data) ? res.data : [];
+    setSubCategories(list);
+    setFilteredSubCategories(list);
+  } catch (err) {
+    console.error("SubCategory API failed", err);
+    setSubCategories([]);
+    setFilteredSubCategories([]);
+  }
+}, [expertData.categoryId]);
+
   // 🔐 Route Guard + Load Data
   useEffect(() => {
     if (!expertData.categoryId) {
@@ -52,7 +65,7 @@ export default function StepSubcategory() {
       return;
     }
     loadSubCategories();
-  }, [expertData.categoryId]);
+  }, [expertData.categoryId, loadSubCategories]);
 
   // 🔹 Filter subcategories
   useEffect(() => {
@@ -66,39 +79,43 @@ export default function StepSubcategory() {
     }
   }, [searchQuery, subCategories]);
 
-  const loadSubCategories = async () => {
-    try {
-      const res = await getSubCategories(expertData.categoryId);
-      const list = Array.isArray(res?.data) ? res.data : [];
-      setSubCategories(list);
-      setFilteredSubCategories(list);
-    } catch (err) {
-      console.error("SubCategory API failed", err);
-      setSubCategories([]);
-      setFilteredSubCategories([]);
-    }
-  };
-
   // 🔹 Enhanced multi-select handling
-  const handleSelect = useCallback((id, name) => {
-    if (isMultiSelect) {
-      setSelectedIds(prev => 
-        prev.includes(id) 
-          ? prev.filter(sid => sid !== id)
-          : [...prev, id]
-      );
+ const handleSelect = useCallback((id, name) => {
+
+  if (isMultiSelect) {
+
+    setSelectedIds(prev => {
+
+      const updated = prev.includes(id)
+        ? prev.filter(s => s !== id)
+        : [...prev, id];
+
       updateExpertData({
-        subCategoryIds: isMultiSelect ? [...selectedIds, id].filter(sid => sid !== id) : [id],
+        subCategoryIds: updated,
         primarySubCategory: name
       });
-    } else {
-      setSelectedIds([id]);
-      updateExpertData({
-        subCategoryIds: [id],
-        primarySubCategory: name
-      });
-    }
-  }, [isMultiSelect, selectedIds, updateExpertData]);
+
+      return updated;
+    });
+
+  } else {
+
+    setSelectedIds([id]);
+
+    updateExpertData({
+      subCategoryIds: [id],
+      primarySubCategory: name
+    });
+
+  }
+
+}, [isMultiSelect, updateExpertData]);
+
+useEffect(() => {
+  if (expertData.subCategoryIds?.length) {
+    setSelectedIds(expertData.subCategoryIds);
+  }
+}, []);
 
   // 🔹 Toggle multi-select mode
   const toggleMultiSelect = () => {

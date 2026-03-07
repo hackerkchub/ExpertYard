@@ -108,13 +108,17 @@ export const ExpertProvider = ({ children }) => {
 
   /* ================= UPDATE EXPERT SESSION ================= */
 
-  const updateExpertData = (data) => {
-    const newState = { ...DEFAULT_STATE, ...data };
+ const updateExpertData = (data) => {
+  setExpertData((prev) => {
+    const newState = {
+      ...prev,
+      ...data
+    };
 
-    setExpertData(newState);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
-  };
-
+    return newState;
+  });
+};
   /* ================= FETCH PROFILE ================= */
 
   const fetchProfile = useCallback(
@@ -137,25 +141,32 @@ export const ExpertProvider = ({ children }) => {
             : `${BASE_URL}${profileData.profile_photo}`;
         }
 
-        setExpertData((prev) => {
-          // 🧠 prevent unnecessary re-render
-          if (prev.profileId === profileData.id) return prev;
+   setExpertData((prev) => {
 
-          const newState = {
-            ...DEFAULT_STATE,
-            expertId: profileData.expert_id || expertId,
-            profileId: profileData.id,
-            profile: profileData,
-            name: profileData.name || "",
-            email: profileData.email || "",
-            phone: profileData.phone || "",
-            position: profileData.position || "",
-            profile_photo: photoUrl,
-          };
+  const newState = {
+    ...prev,
+    expertId: profileData.expert_id || expertId,
+    profileId: profileData.id,
+    profile: profileData,
+    name: profileData.name || "",
+    email: profileData.email || "",
+    phone: profileData.phone || "",
+    position: profileData.position || "",
+    profile_photo: photoUrl,
+  };
 
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
-          return newState;
-        });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
+  return newState;
+});
+
+/* ⭐ add this */
+if (profileData.call_per_minute || profileData.chat_per_minute) {
+  setExpertPrice((prev) => ({
+    ...prev,
+    call_per_minute: Number(profileData.call_per_minute) || 0,
+    chat_per_minute: Number(profileData.chat_per_minute) || 0,
+  }));
+}
       } catch (err) {
         console.error("Profile load failed", err);
       } finally {
@@ -196,12 +207,12 @@ export const ExpertProvider = ({ children }) => {
 
   /* ================= AUTO LOAD AFTER LOGIN ================= */
 
-  useEffect(() => {
-    if (expertData.expertId && !expertData.profileId) {
-      fetchProfile(expertData.expertId);
-      fetchPrice(expertData.expertId);
-    }
-  }, [expertData.expertId]);
+ useEffect(() => {
+  if (expertData.expertId) {
+    fetchProfile(expertData.expertId);
+    fetchPrice(expertData.expertId);
+  }
+}, [expertData.expertId, fetchProfile, fetchPrice]);
 
   /* ================= REFRESH ================= */
 

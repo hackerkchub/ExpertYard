@@ -13,33 +13,40 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || payload.data?.title;
-  const body = payload.notification?.body || payload.data?.body;
+messaging.onBackgroundMessage(async (payload) => {
+
+  const type = payload.data?.type;
+
+  // if (type === "VOICE_CALL") return;
+
+  const title = payload.data?.title;
+  const body = payload.data?.body;
+
+  const tag = payload.data?.request_id || payload.data?.type;
+
+  /* 🔴 duplicate prevention */
+  const existing = await self.registration.getNotifications({ tag });
+
+  if (existing.length > 0) return;
 
   self.registration.showNotification(title, {
     body,
-    icon: "/logo.png",
-    data: payload.data,
+    icon: "/logo-192.png",
+    badge: "/logo-192.png",
+    tag,
+    data: payload.data
   });
+
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const url = event.notification?.data?.url || "/";
+  const url =
+    event.notification?.data?.click_action ||
+    event.notification?.data?.url;
 
-  event.waitUntil(
-    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientsArr) => {
-      const hadWindow = clientsArr.some((windowClient) => {
-        if (windowClient.url.includes(url)) {
-          windowClient.focus();
-          return true;
-        }
-        return false;
-      });
-
-      if (!hadWindow) clients.openWindow(url);
-    })
+   event.waitUntil(
+    clients.openWindow(url)
   );
 });

@@ -37,7 +37,7 @@ const {
   return (
     <>
       <Hero />
-      {isLoggedIn && supported && permission === "default" && (
+      {/* {isLoggedIn && supported && permission === "default" && (
   <div
     style={{
       margin: "16px auto",
@@ -79,7 +79,7 @@ const {
       {loading ? "Enabling..." : "Allow"}
     </button>
   </div>
-)}
+)} */}
 
       
       <div className="section-wrapper">

@@ -919,42 +919,42 @@ export const FileGrid = styled.div`
   gap: 20px;
 `;
 
-export const FilePreview = styled.div`
-  margin-top: 12px;
-  img, video {
-    width: 80px;
-    height: 80px;
-    border-radius: 12px;
-    object-fit: cover;
-    border: 2px solid rgba(14,165,233,0.3);
-  }
-`;
+// export const FilePreview = styled.div`
+//   margin-top: 12px;
+//   img, video {
+//     width: 80px;
+//     height: 80px;
+//     border-radius: 12px;
+//     object-fit: cover;
+//     border: 2px solid rgba(14,165,233,0.3);
+//   }
+// `;
 
-export const UploadStatus = styled.div`
-  margin-top: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+// export const UploadStatus = styled.div`
+//   margin-top: 8px;
+//   font-size: 12px;
+//   font-weight: 600;
+//   padding: 4px 8px;
+//   border-radius: 6px;
+//   display: inline-flex;
+//   align-items: center;
+//   gap: 4px;
   
-  ${({ status }) => {
-    if (status === "success") return `
-      background: rgba(16,185,129,0.15);
-      color: #059669;
-    `;
-    if (status === "error") return `
-      background: rgba(239,68,68,0.15);
-      color: #dc2626;
-    `;
-    return `
-      background: rgba(245,158,11,0.15);
-      color: #d97706;
-    `;
-  }}
-`;
+//   ${({ status }) => {
+//     if (status === "success") return `
+//       background: rgba(16,185,129,0.15);
+//       color: #059669;
+//     `;
+//     if (status === "error") return `
+//       background: rgba(239,68,68,0.15);
+//       color: #dc2626;
+//     `;
+//     return `
+//       background: rgba(245,158,11,0.15);
+//       color: #d97706;
+//     `;
+//   }}
+// `;
 
 export const ProgressBarWrap = styled.div`
   display: flex;
@@ -1097,4 +1097,91 @@ export const PricingFieldsGrid = styled.div`
   @media (max-width: 768px) {
     gap: 20px;
   }
+`;
+
+// Add these to your existing Register.styles.js
+
+export const FilePreview = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  margin-top: 8px;
+`;
+
+export const FileInfo = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+export const FileName = styled.span`
+  font-size: 14px;
+  color: #2c3e50;
+  font-weight: 500;
+`;
+
+export const FileSize = styled.span`
+  font-size: 12px;
+  color: #7f8c8d;
+`;
+
+export const RemoveFileButton = styled.button`
+  background: none;
+  border: none;
+  color: #e74c3c;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  
+  &:hover {
+    background: #fee;
+  }
+`;
+
+export const ProgressBar = styled.div`
+  width: 100%;
+  height: 4px;
+  background: #f0f0f0;
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+`;
+
+export const ProgressFill = styled.div`
+  height: 100%;
+  background: linear-gradient(90deg, #3498db, #2980b9);
+  transition: width 0.3s ease;
+`;
+
+export const UploadStatus = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f0f7ff;
+  border-radius: 6px;
+  color: #2c3e50;
+  font-size: 13px;
+  grid-column: 1 / -1;
+`;
+
+export const ErrorMessage = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #e74c3c;
+  font-size: 13px;
+  margin-top: 4px;
+  background: #fdf0ef;
+  padding: 6px 10px;
+  border-radius: 4px;
+  grid-column: 1 / -1;
 `;

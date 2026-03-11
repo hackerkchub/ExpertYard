@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useCallback } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 
 import ExpertSidebar from "../components/ExpertSidebar";
@@ -75,9 +75,10 @@ useEffect(() => {
   if (!expertId) return;
 
   const sendStatus = () => {
-    socket.emit("expert_active_status", {
-      isActive: document.visibilityState === "visible",
-    });
+   socket.emit("expert_active_status", {
+  expertId,
+  isActive: document.visibilityState === "visible",
+});
   };
 
   const handleConnect = () => {
@@ -135,20 +136,21 @@ useEffect(() => {
   }, [navigate]);
 
 
-  useFCM((data) => {
+ const handleFCM = useCallback((data) => {
   console.log("Incoming FCM:", data);
 
-  // Trigger your notification system
   window.dispatchEvent(
     new CustomEvent("incoming_call", { detail: data })
   );
-});
+}, []);
+
+useFCM(handleFCM);
   /* =====================================================
      📲 INCOMING CALL
   ===================================================== */
   const activeIncomingCall =
     !isOnCallPage &&
-    notifications.find(
+    notifications?.find(
       (n) => n.type === "voice_call" && n.status === "ringing"
     );
 

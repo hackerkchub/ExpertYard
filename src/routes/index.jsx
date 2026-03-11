@@ -8,6 +8,7 @@ import ExpertAppRoutes from "../apps/expert/routes";
 import AdminAppRoutes from "../apps/admin/routes";
 import { ExpertProvider } from "../shared/context/ExpertContext";
 import BottomNavbar from "../shared/components/BottomNavbar/BottomNavbar";
+import RouteLoader from "../shared/loaders/RouteLoader";
 
 export default function AppRouter() {
 
@@ -37,6 +38,14 @@ export default function AppRouter() {
     };
   }, []);
 
+//   useEffect(() => {
+
+//   if ("Notification" in window) {
+//     Notification.requestPermission();
+//   }
+
+// }, []);
+
   useEffect(() => {
     socket.on("connect", () => {
       console.log("🟢 Socket connected from AppRouter:", socket.id);
@@ -62,6 +71,7 @@ export default function AppRouter() {
           overflowX: "hidden"
         }}
       >
+        <RouteLoader />
         <Routes>
 
           <Route path="/" element={<Navigate to="/user" />} />

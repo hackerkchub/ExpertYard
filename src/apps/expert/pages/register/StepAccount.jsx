@@ -7,7 +7,7 @@ import useApi from "../../../../shared/hooks/useApi";
 
 import RegisterLayout from "../../components/RegisterLayout";
 import OtpModal from "../../components/OtpModal";
-import Loader from "../../../../shared/components/Loader/Loader";
+//import Loader from "../../../../shared/components/Loader/Loader";
 import ErrorMessage from "../../../../shared/components/ErrorMessage/ErrorMessage";
 
 import {
@@ -137,9 +137,9 @@ const handleLogin = async () => {
 
     navigate("/expert/home", { replace: true });
 
-  } catch (err) {
-    console.error(err);
-  }
+  }catch (err) {
+  console.error("Login error:", err);
+}
 };
 
   const loading = registerLoading || loginLoading;
@@ -169,7 +169,7 @@ const handleLogin = async () => {
           { label: "Register", active: mode === "register", onClick: () => setMode("register") },
         ]}
       >
-        {loading && <Loader />}
+        {/* {loading && <Loader />} */}
         {setupCompleted && (
   <div
     style={{
@@ -186,7 +186,7 @@ const handleLogin = async () => {
     🎉 Setup completed! Please login to start earning.
   </div>
 )}
-        {error && <ErrorMessage message={error} />}
+      {error && <ErrorMessage message={error} />}
 
         {/* ✅ Premium Login Form */}
         {mode === "login" && (

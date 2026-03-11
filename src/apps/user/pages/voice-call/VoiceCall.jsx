@@ -252,12 +252,15 @@ return () => {
       closePeer();
     };
 
-    const onOffline = () => {
-      soundManager.stopAll();
-      console.log("🔴 Expert offline");
-      setCallState("offline");
-      closePeer();
-    };
+   const onOffline = ({ callId }) => {
+  soundManager.stopAll();
+  console.log("🔴 Expert offline");
+
+  setCallId(callId || null);
+  setCallState("offline");
+
+  closePeer();
+};
 
     const onEnded = ({ reason }) => {
       soundManager.stopAll();

@@ -18,4 +18,8 @@ export const analytics =
   typeof window !== "undefined" ? getAnalytics(app) : null;
 
 export const messaging =
-  typeof window !== "undefined" ? getMessaging(app) : null;
+  typeof window !== "undefined" &&
+  "serviceWorker" in navigator &&
+  "PushManager" in window
+    ? getMessaging(app)
+    : null;

@@ -9,13 +9,24 @@ const VAPID_KEY =
 
 export const generateToken = async (role) => {
   try {
-    if (!messaging) return;
 
-    const permission = await Notification.requestPermission();
+    if (!messaging || !("Notification" in window)) return;
+
+    if (Notification.permission === "denied") return;
+
+    const permission =
+      Notification.permission === "granted"
+        ? "granted"
+        : await Notification.requestPermission();
+
     if (permission !== "granted") return;
+
+    // ✅ IMPORTANT
+    const registration = await navigator.serviceWorker.ready;
 
     const token = await getToken(messaging, {
       vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: registration
     });
 
     if (!token) return;

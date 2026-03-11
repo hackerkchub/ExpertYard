@@ -29,19 +29,19 @@ export const PageWrap = styled.div`
 /* ================= CARD ================= */
 
 export const Card = styled.div`
-  width: 520px;   /* ⬅ increased */
+  width: 600px;   /* ⬅ increased */
   background: linear-gradient(180deg, #ffffff, #f6f9fe);
   border-radius: 18px;
-  padding: 36px;
+  padding: 100px;
 
   @media (max-width: 1024px) {
-    width: 480px;
+    width: 600px;
   }
 
   @media (max-width: 768px) {
     width: 100%;
-    max-width: 400px;
-    padding: 26px;
+    max-width: 580px;
+    padding: 60px;
   }
 `;
 /* ================= LOGO ================= */

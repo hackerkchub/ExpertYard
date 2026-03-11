@@ -138,7 +138,7 @@ const showEnabledInfo =
               ? "Welcome back..."
               : `Welcome back, ${expertName}!`}
           </Welcome>
-{showAskPermission && (
+{/* {showAskPermission && (
   <div
     style={{
       background: "#0f172a",
@@ -177,10 +177,10 @@ const showEnabledInfo =
       Allow Notifications
     </button>
   </div>
-)}
+)} */}
 
           {/* ❌ Browser not supported */}
-          {showUnsupported && (
+          {/* {showUnsupported && (
             <div
               style={{
                 background: "#fef3c7",
@@ -195,9 +195,9 @@ const showEnabledInfo =
               Your browser does not support system notifications.
               Please use the latest version of Chrome, Edge, or Firefox.
             </div>
-          )}
+          )} */}
 
-          {/* ❌ Notifications blocked */}
+          {/* ❌ Notifications blocked
           {showDeniedBanner && (
             <div
               style={{
@@ -213,10 +213,10 @@ const showEnabledInfo =
               Notifications are blocked for this site.
               Please allow them from browser settings (site permissions) and reload.
             </div>
-          )}
+          )} */}
 
           {/* 🔔 Enable notifications */}
-         {showEnableBanner && (
+         {/* {showEnableBanner && (
   <div  style={{
                 background: "#fef3c7",
                 color: "#92400e",
@@ -245,10 +245,10 @@ const showEnabledInfo =
       {loading ? "Enabling..." : "Enable"}
     </button>
   </div>
-)}
+)} */}
 
           {/* ✅ Enabled */}
-       {showEnabledInfo && (
+       {/* {showEnabledInfo && (
   <div
     style={{
       fontSize: 12,
@@ -277,12 +277,12 @@ const showEnabledInfo =
       Disable
     </button>
   </div>
-)}
+)} */}
 
         
 
           {/* ❌ Hook error */}
-          {error && (
+          {/* {error && (
             <div
               style={{
                 fontSize: 12,
@@ -292,7 +292,7 @@ const showEnabledInfo =
             >
               {error}
             </div>
-          )}
+          )} */}
 
           <StatsRow>
             {stats.map((stat, index) => (

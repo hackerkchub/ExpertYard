@@ -24,7 +24,14 @@ export default function ExpertAppRoutes() {
   return (
     <Routes>
       {/* Default redirect */}
-      <Route index element={<Navigate to="home" />} />
+      <Route
+  index
+  element={
+    expertData?.expertId
+      ? <Navigate to="home" />
+      : <Navigate to="register" />
+  }
+/>
 
       {/* 🔐 PROTECTED ROUTES WITH EXPERT LAYOUT (SIDEBAR + TOPBAR) */}
       <Route element={<ExpertLayout />}>

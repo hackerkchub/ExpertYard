@@ -18,12 +18,30 @@ import {
   ActionsRow,
   PrimaryButton,
   SecondaryButton,
-  FullRow
+  FullRow,
+  FilePreview,
+  FileInfo,
+  FileName,
+  FileSize,
+  RemoveFileButton,
+  ProgressBar,
+  ProgressFill,
+  UploadStatus,
+  ErrorMessage
 } from "../../styles/Register.styles";
 
+import {
+  FiUpload,
+  FiCheck,
+  FiX,
+  FiFile,
+  FiImage,
+  FiAlertCircle
+} from "react-icons/fi";
+
 /* ================= FILE LIMITS ================= */
-const MAX_SINGLE_FILE_SIZE = 1.5 * 1024 * 1024;
-const MAX_TOTAL_SIZE = 5 * 1024 * 1024;
+const MAX_SINGLE_FILE_SIZE = 1.5 * 1024 * 1024; // 1.5MB
+const MAX_TOTAL_SIZE = 5 * 1024 * 1024; // 5MB
 
 const compressImage = (file, quality = 0.6, maxWidth = 1024) =>
   new Promise((resolve, reject) => {
@@ -54,6 +72,12 @@ const compressImage = (file, quality = 0.6, maxWidth = 1024) =>
     reader.readAsDataURL(file);
   });
 
+const formatFileSize = (bytes) => {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+};
+
 export default function StepProfile() {
   const navigate = useNavigate();
   const { expertData, updateExpertData } = useExpert();
@@ -72,7 +96,12 @@ export default function StepProfile() {
     aadhar_card: null
   });
 
-  const { request: createProfile, loading } = useApi(createProfileApi);
+  const [uploadProgress, setUploadProgress] = useState({});
+  const [fileErrors, setFileErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+
+  const { request: createProfile, loading: apiLoading } = useApi(createProfileApi);
 
   // 🔐 Guard
   useEffect(() => {
@@ -84,13 +113,13 @@ export default function StepProfile() {
   const handleChange = (k, v) =>
     setForm(prev => ({ ...prev, [k]: v }));
 
-  const handleFile = async (k, e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const validateFile = (file, fieldName) => {
     if (file.size > MAX_SINGLE_FILE_SIZE) {
-      alert("File must be under 1.5MB");
-      return;
+      setFileErrors(prev => ({
+        ...prev,
+        [fieldName]: `File must be under ${formatFileSize(MAX_SINGLE_FILE_SIZE)}`
+      }));
+      return false;
     }
 
     const total =
@@ -99,19 +128,92 @@ export default function StepProfile() {
         .reduce((s, f) => s + f.size, 0) + file.size;
 
     if (total > MAX_TOTAL_SIZE) {
-      alert("Total upload must be under 5MB");
-      return;
+      setFileErrors(prev => ({
+        ...prev,
+        [fieldName]: `Total upload must be under ${formatFileSize(MAX_TOTAL_SIZE)}`
+      }));
+      return false;
     }
 
-    const finalFile = file.type.startsWith("image/")
-      ? await compressImage(file)
-      : file;
-
-    setForm(p => ({ ...p, [k]: finalFile }));
+    setFileErrors(prev => ({ ...prev, [fieldName]: null }));
+    return true;
   };
 
-  /* =================== MAIN FIX =================== */
+  const handleFile = async (k, e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!validateFile(file, k)) return;
+
+    try {
+      setUploadProgress(prev => ({ ...prev, [k]: 0 }));
+
+      // Simulate upload progress
+      const interval = setInterval(() => {
+        setUploadProgress(prev => ({
+          ...prev,
+          [k]: Math.min((prev[k] || 0) + 10, 90)
+        }));
+      }, 100);
+
+      const finalFile = file.type.startsWith("image/")
+        ? await compressImage(file)
+        : file;
+
+      clearInterval(interval);
+      setUploadProgress(prev => ({ ...prev, [k]: 100 }));
+      
+      setTimeout(() => {
+        setForm(p => ({ ...p, [k]: finalFile }));
+        setUploadProgress(prev => ({ ...prev, [k]: null }));
+      }, 500);
+
+    } catch (error) {
+      setFileErrors(prev => ({
+        ...prev,
+        [k]: "File processing failed. Please try again."
+      }));
+      setUploadProgress(prev => ({ ...prev, [k]: null }));
+    }
+  };
+
+  const removeFile = (field) => {
+    setForm(prev => ({ ...prev, [field]: null }));
+    setFileErrors(prev => ({ ...prev, [field]: null }));
+    setUploadProgress(prev => ({ ...prev, [field]: null }));
+  };
+
+  const validateForm = () => {
+    const requiredFields = {
+      position: "Position is required",
+      description: "Description is required",
+      education: "Education is required",
+      location: "Location is required"
+    };
+
+    for (const [field, message] of Object.entries(requiredFields)) {
+      if (!form[field]?.trim()) {
+        setSubmitError(message);
+        return false;
+      }
+    }
+
+    // Check for file errors
+    const hasFileErrors = Object.values(fileErrors).some(error => error !== null);
+    if (hasFileErrors) {
+      setSubmitError("Please fix file upload errors before submitting");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
     const payload = new FormData();
 
     payload.append("expert_id", expertData.expertId);
@@ -125,30 +227,90 @@ export default function StepProfile() {
     payload.append("education", form.education);
     payload.append("location", form.location);
 
-    if (form.profile_photo) payload.append("profile_photo", form.profile_photo);
-    if (form.experience_certificate) payload.append("experience_certificate", form.experience_certificate);
-    if (form.marksheet) payload.append("marksheet", form.marksheet);
-    if (form.aadhar_card) payload.append("aadhar_card", form.aadhar_card);
+    const files = [
+      { key: "profile_photo", file: form.profile_photo },
+      { key: "experience_certificate", file: form.experience_certificate },
+      { key: "marksheet", file: form.marksheet },
+      { key: "aadhar_card", file: form.aadhar_card }
+    ];
+
+    files.forEach(({ key, file }) => {
+      if (file) payload.append(key, file);
+    });
 
     try {
       const res = await createProfile(payload);
 
-      // ✅ SUCCESS RESPONSE
       if (res?.success) {
         updateExpertData({
           profileId: res.profile_id,
           profile: res.data
         });
+        
+        // Small delay to show success state
+        setTimeout(() => {
+          navigate("/expert/register/pricing");
+        }, 1000);
+      } else {
+        throw new Error(res?.message || "Failed to create profile");
       }
 
     } catch (err) {
-      // ⚠️ IGNORE TIMEOUT / SERVER ERROR
-      console.warn("Profile created but frontend timed out");
+      setSubmitError(err.message || "Failed to save profile. Please try again.");
+      setIsSubmitting(false);
     }
-
-    // 🚀 ALWAYS MOVE FORWARD
-    navigate("/expert/register/pricing");
   };
+
+  const FileUploadField = ({ field, label, accept = "*", isImage = false }) => (
+    <Field>
+      <Label>{label}</Label>
+      {!form[field] ? (
+        <>
+          <FileInput
+            type="file"
+            accept={accept}
+            onChange={e => handleFile(field, e)}
+            disabled={uploadProgress[field]}
+          />
+          {uploadProgress[field] !== null && uploadProgress[field] !== undefined && (
+            <ProgressBar>
+              <ProgressFill style={{ width: `${uploadProgress[field]}%` }} />
+            </ProgressBar>
+          )}
+        </>
+      ) : (
+        <FilePreview>
+          {isImage ? <FiImage size={20} /> : <FiFile size={20} />}
+          <FileInfo>
+            <FileName>{form[field].name}</FileName>
+            <FileSize>{formatFileSize(form[field].size)}</FileSize>
+          </FileInfo>
+          <RemoveFileButton onClick={() => removeFile(field)}>
+            <FiX />
+          </RemoveFileButton>
+        </FilePreview>
+      )}
+      {fileErrors[field] && (
+        <ErrorMessage>
+          <FiAlertCircle size={14} />
+          {fileErrors[field]}
+        </ErrorMessage>
+      )}
+    </Field>
+  );
+
+  if (isSubmitting && apiLoading) {
+    return (
+      <RegisterLayout title="Saving your profile..." step={4}>
+        <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+          <Loader size="large" />
+          <p style={{ marginTop: '20px', color: '#666' }}>
+            Please wait while we save your information...
+          </p>
+        </div>
+      </RegisterLayout>
+    );
+  }
 
   return (
     <RegisterLayout
@@ -156,60 +318,118 @@ export default function StepProfile() {
       subtitle="Clients will see this information before booking."
       step={4}
     >
-      {loading && <Loader />}
-
       <FormGrid>
-        <Field><Label>Name</Label><Input value={form.name} disabled /></Field>
-        <Field><Label>Email</Label><Input value={form.email} disabled /></Field>
-        <Field><Label>Phone</Label><Input value={form.phone} disabled /></Field>
+        <Field>
+          <Label>Name</Label>
+          <Input value={form.name} disabled />
+        </Field>
+        
+        <Field>
+          <Label>Email</Label>
+          <Input value={form.email} disabled />
+        </Field>
+        
+        <Field>
+          <Label>Phone</Label>
+          <Input value={form.phone} disabled />
+        </Field>
 
         <Field>
-          <Label>Position</Label>
-          <Input value={form.position} onChange={e => handleChange("position", e.target.value)} />
+          <Label>Position *</Label>
+          <Input 
+            value={form.position} 
+            onChange={e => handleChange("position", e.target.value)}
+            placeholder="e.g., Senior Software Engineer"
+          />
         </Field>
 
         <FullRow>
-          <Label>Description</Label>
-          <TextArea value={form.description} onChange={e => handleChange("description", e.target.value)} />
+          <Label>Description *</Label>
+          <TextArea 
+            value={form.description} 
+            onChange={e => handleChange("description", e.target.value)}
+            placeholder="Tell clients about your expertise and experience..."
+            rows={4}
+          />
         </FullRow>
 
         <Field>
-          <Label>Education</Label>
-          <Input value={form.education} onChange={e => handleChange("education", e.target.value)} />
+          <Label>Education *</Label>
+          <Input 
+            value={form.education} 
+            onChange={e => handleChange("education", e.target.value)}
+            placeholder="e.g., B.Tech in Computer Science"
+          />
         </Field>
 
         <Field>
-          <Label>Location</Label>
-          <Input value={form.location} onChange={e => handleChange("location", e.target.value)} />
+          <Label>Location *</Label>
+          <Input 
+            value={form.location} 
+            onChange={e => handleChange("location", e.target.value)}
+            placeholder="e.g., Mumbai, India"
+          />
         </Field>
 
-        <FullRow>
-          <Label>Profile Photo</Label>
-          <FileInput type="file" accept="image/*" onChange={e => handleFile("profile_photo", e)} />
-        </FullRow>
+        <FileUploadField
+          field="profile_photo"
+          label="Profile Photo"
+          accept="image/*"
+          isImage={true}
+        />
 
-        <Field>
-          <Label>Experience Certificate</Label>
-          <FileInput type="file" onChange={e => handleFile("experience_certificate", e)} />
-        </Field>
+        <FileUploadField
+          field="experience_certificate"
+          label="Experience Certificate"
+          accept=".pdf,.jpg,.jpeg,.png"
+        />
 
-        <Field>
-          <Label>Marksheet</Label>
-          <FileInput type="file" onChange={e => handleFile("marksheet", e)} />
-        </Field>
+        <FileUploadField
+          field="marksheet"
+          label="Marksheet"
+          accept=".pdf,.jpg,.jpeg,.png"
+        />
 
-        <Field>
-          <Label>Aadhar Card</Label>
-          <FileInput type="file" onChange={e => handleFile("aadhar_card", e)} />
-        </Field>
+        <FileUploadField
+          field="aadhar_card"
+          label="Aadhar Card"
+          accept=".pdf,.jpg,.jpeg,.png"
+        />
+
+        {submitError && (
+          <FullRow>
+            <ErrorMessage>
+              <FiAlertCircle size={16} />
+              {submitError}
+            </ErrorMessage>
+          </FullRow>
+        )}
+
+        <UploadStatus>
+          <FiCheck size={16} />
+          <span>Max file size: {formatFileSize(MAX_SINGLE_FILE_SIZE)} per file, total {formatFileSize(MAX_TOTAL_SIZE)}</span>
+        </UploadStatus>
       </FormGrid>
 
       <ActionsRow>
-        <SecondaryButton onClick={() => navigate("/expert/register/subcategory")}>
+        <SecondaryButton 
+          onClick={() => navigate("/expert/register/subcategory")}
+          disabled={isSubmitting}
+        >
           ← Back
         </SecondaryButton>
-        <PrimaryButton disabled={loading} onClick={handleSubmit}>
-          Save & Continue →
+        <PrimaryButton 
+          onClick={handleSubmit}
+          disabled={isSubmitting || apiLoading}
+        >
+          {isSubmitting || apiLoading ? (
+            <>
+              <Loader size="small" color="white" />
+              <span style={{ marginLeft: '8px' }}>Saving...</span>
+            </>
+          ) : (
+            'Save & Continue →'
+          )}
         </PrimaryButton>
       </ActionsRow>
     </RegisterLayout>

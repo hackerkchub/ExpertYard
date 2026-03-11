@@ -27,6 +27,8 @@ import {
   FaMobile,
   FaLock,
   FaUnlock,
+  FaExclamationTriangle,
+  FaShieldAlt,
 } from "react-icons/fa";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 
@@ -119,6 +121,17 @@ import {
   MobileFilterDrawerBody,
   MobileFilterDrawerFooter,
   ScreenshotPreview,
+  AuditSection,
+  AuditCard,
+  AuditStatus,
+  AuditDetails,
+  AuditItem,
+  AuditLabel,
+  AuditValue,
+  AuditMatch,
+  AuditMismatch,
+  AuditLoading,
+  BlockedMessage,
 } from "../styles/PayoutManagement.styles";
 
 import {
@@ -128,7 +141,11 @@ import {
   downloadReceiptApi,
   getAdminWithdrawalHistoryApi,
   getWithdrawalPayoutDetailsApi,
+  walletAuditApi,
 } from "../../../shared/api/admin/withdrawal.api";
+
+// Import wallet audit API
+// import { walletAuditApi } from "../../../shared/api/admin/adminFinance.api";
 
 const PayoutManagement = () => {
   // State for pending withdrawals
@@ -143,6 +160,11 @@ const PayoutManagement = () => {
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [downloading, setDownloading] = useState(false);
   const [activeTab, setActiveTab] = useState('pending');
+  
+  // Wallet Audit State
+  const [auditResult, setAuditResult] = useState(null);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditError, setAuditError] = useState(null);
   
   // Real payout details state
   const [realPayout, setRealPayout] = useState(null);
@@ -246,6 +268,7 @@ const PayoutManagement = () => {
       const formattedList = list.map(item => ({
         ...item,
         withdrawal_id: item.withdrawal_id || item.id,
+         expert_id: item.expert_id || item.expertId,
         status: item.status || 'pending',
         payout_method_type: item.payout_method_type || 'bank',
         payout_mask: item.payout_mask || item.fund_account_mask || 'N/A',
@@ -371,6 +394,32 @@ const PayoutManagement = () => {
 
   const totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
 
+  // Perform wallet audit when opening approve modal
+  const performWalletAudit = useCallback(async (expertId) => {
+    if (!expertId) return;
+    
+    try {
+       console.log("Calling wallet audit API for expert:", expertId);
+
+      setAuditLoading(true);
+      setAuditError(null);
+      setAuditResult(null);
+      
+      const res = await walletAuditApi(expertId);
+       console.log("Wallet audit response:", res);
+      if (res.data?.success) {
+        setAuditResult(res.data.data);
+      } else {
+        setAuditError("Failed to verify wallet integrity");
+      }
+    } catch (error) {
+      console.error("Wallet audit error:", error);
+      setAuditError(error.response?.data?.message || "Failed to verify wallet");
+    } finally {
+      setAuditLoading(false);
+    }
+  }, []);
+
   // Handle view real payout details
   const handleViewRealPayout = async () => {
     if (!selectedRequest) return;
@@ -393,6 +442,17 @@ const PayoutManagement = () => {
 
   // Handle approve
   const handleApprove = async () => {
+    // First check audit result
+    if (!auditResult) {
+      alert("Please wait for wallet verification");
+      return;
+    }
+
+    if (!auditResult.match) {
+      alert("Cannot approve: Wallet mismatch detected. Please check expert wallet integrity.");
+      return;
+    }
+
     if (!approveForm.payment_method || !approveForm.transaction_ref) {
       alert("Please fill all required fields");
       return;
@@ -553,16 +613,22 @@ const PayoutManagement = () => {
     setSelectedRequest(null);
     setRealPayout(null);
     setShowRealPayout(false);
+    setAuditResult(null);
+    setAuditError(null);
   };
 
   // Open approve modal
   const openApproveModal = (withdrawal) => {
+     console.log("Withdrawal object:", withdrawal);
     setSelectedRequest(withdrawal);
     setApproveForm(prev => ({
       ...prev,
       withdrawal_id: withdrawal.withdrawal_id,
     }));
     setShowApproveModal(true);
+    
+    // Perform wallet audit
+    performWalletAudit(withdrawal.expert_id);
   };
 
   // Open reject modal
@@ -725,7 +791,11 @@ const PayoutManagement = () => {
             <>
               <ActionButton
                 $variant="approve"
-                onClick={() => openApproveModal(withdrawal)}
+                
+                onClick={() => {
+    console.log("Approve button clicked", withdrawal);
+    openApproveModal(withdrawal);
+  }}
               >
                 <FaCheck /> Approve
               </ActionButton>
@@ -1765,7 +1835,7 @@ const PayoutManagement = () => {
           </ModalOverlay>
         )}
 
-        {/* Approve Modal */}
+        {/* Approve Modal with Wallet Audit */}
         {showApproveModal && selectedRequest && (
           <ModalOverlay onClick={() => !processing && setShowApproveModal(false)}>
             <ModalContent onClick={(e) => e.stopPropagation()}>
@@ -1793,12 +1863,87 @@ const PayoutManagement = () => {
                 </div>
               </div>
 
+              {/* Wallet Audit Section */}
+              <AuditSection>
+                <h4>
+                  <FaShieldAlt /> Wallet Integrity Check
+                </h4>
+                
+                {auditLoading ? (
+                  <AuditLoading>
+                    <div className="spinner-small"></div>
+                    <p>Verifying wallet integrity...</p>
+                  </AuditLoading>
+                ) : auditError ? (
+                  <AuditMismatch>
+                    <FaExclamationTriangle />
+                    <div>
+                      <strong>Verification Failed</strong>
+                      <p>{auditError}</p>
+                    </div>
+                  </AuditMismatch>
+                ) : auditResult ? (
+                  <AuditCard $match={auditResult.match}>
+                    <AuditStatus>
+                      {auditResult.match ? (
+                        <>
+                          <FaCheckCircle /> Verified
+                        </>
+                      ) : (
+                        <>
+                          <FaExclamationTriangle /> Mismatch Detected
+                        </>
+                      )}
+                    </AuditStatus>
+                    
+                    <AuditDetails>
+                      <AuditItem>
+                        <AuditLabel>Wallet Balance</AuditLabel>
+                        <AuditValue>{formatCurrency(auditResult.wallet_balance)}</AuditValue>
+                      </AuditItem>
+                      <AuditItem>
+                        <AuditLabel>Ledger Balance</AuditLabel>
+                        <AuditValue>{formatCurrency(auditResult.ledger_balance)}</AuditValue>
+                      </AuditItem>
+                      {auditResult.match ? (
+                        <AuditMatch>
+                          <FaCheckCircle /> Balances match - Wallet is healthy
+                        </AuditMatch>
+                      ) : (
+                        <AuditMismatch>
+                          <FaExclamationTriangle /> Wallet mismatch detected!
+                          <p>Cannot proceed with approval until balances match.</p>
+                        </AuditMismatch>
+                      )}
+                    </AuditDetails>
+                  </AuditCard>
+                ) : (
+                  <AuditLoading>
+                    <p>Initializing verification...</p>
+                  </AuditLoading>
+                )}
+              </AuditSection>
+
+              {/* Block approval if audit fails */}
+              {auditResult && !auditResult.match && (
+                <BlockedMessage>
+                  <FaBan /> Approval blocked due to wallet mismatch
+                </BlockedMessage>
+              )}
+
+{auditError && (
+<SecondaryButton
+onClick={() => performWalletAudit(selectedRequest.expert_id)}
+>
+Retry Wallet Audit
+</SecondaryButton>
+)}
               <FormGroup>
                 <Label>Payment Method *</Label>
                 <SelectModal
                   value={approveForm.payment_method}
                   onChange={(e) => setApproveForm(prev => ({ ...prev, payment_method: e.target.value }))}
-                  disabled={processing}
+                  disabled={processing || (auditResult && !auditResult.match)}
                 >
                   <option value="bank">Bank Transfer</option>
                   <option value="upi">UPI</option>
@@ -1814,7 +1959,7 @@ const PayoutManagement = () => {
                   placeholder="Enter transaction ID / UTR number"
                   value={approveForm.transaction_ref}
                   onChange={(e) => setApproveForm(prev => ({ ...prev, transaction_ref: e.target.value }))}
-                  disabled={processing}
+                  disabled={processing || (auditResult && !auditResult.match)}
                 />
                 <small style={{ color: '#64748b', marginTop: '4px', display: 'block' }}>
                   This will be saved as transaction_ref in the database
@@ -1823,13 +1968,13 @@ const PayoutManagement = () => {
 
               <FormGroup>
                 <Label>Payment Screenshot (Recommended)</Label>
-                <FileInput onClick={() => document.getElementById('screenshot').click()}>
+                <FileInput onClick={() => !processing && (auditResult?.match !== false) && document.getElementById('screenshot').click()}>
                   <input
                     id="screenshot"
                     type="file"
                     accept="image/*"
                     onChange={handleFileUpload}
-                    disabled={processing}
+                    disabled={processing || (auditResult && !auditResult.match)}
                   />
                   <FaUpload />
                   <p>Click to upload payment screenshot</p>
@@ -1854,7 +1999,17 @@ const PayoutManagement = () => {
               </ProcessedDateNote>
 
               <ButtonGroup>
-                <PrimaryButton onClick={handleApprove} disabled={processing}>
+                <PrimaryButton 
+                  onClick={handleApprove} 
+                 disabled={
+processing ||
+auditLoading ||
+!auditResult ||
+!auditResult.match ||
+!approveForm.payment_method ||
+!approveForm.transaction_ref
+}
+                >
                   {processing ? 'Processing...' : 'Approve & Process'}
                 </PrimaryButton>
                 <SecondaryButton

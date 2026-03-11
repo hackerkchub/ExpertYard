@@ -1486,3 +1486,131 @@ export const ScreenshotPreview = styled.div`
     }
   }
 `;
+
+// Add these new styled components to your existing styles file
+
+export const AuditSection = styled.div`
+  margin: 20px 0;
+  padding: 16px;
+  background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+
+  h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 16px;
+  }
+`;
+
+export const AuditCard = styled.div`
+  background: white;
+  border-radius: 10px;
+  padding: 16px;
+  border: 2px solid ${props => props.$match ? '#10b981' : '#ef4444'};
+`;
+
+export const AuditStatus = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: ${props => props.$match ? '#10b981' : '#ef4444'};
+`;
+
+export const AuditDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+export const AuditItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background: #f8fafc;
+  border-radius: 6px;
+`;
+
+export const AuditLabel = styled.span`
+  font-size: 13px;
+  color: #64748b;
+`;
+
+export const AuditValue = styled.span`
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+`;
+
+export const AuditMatch = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px;
+  background: #d1fae5;
+  color: #065f46;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+`;
+
+export const AuditMismatch = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+
+  p {
+    font-size: 12px;
+    margin-top: 4px;
+    color: #b91c1c;
+  }
+`;
+
+export const AuditLoading = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+  color: #64748b;
+
+  .spinner-small {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #e2e8f0;
+    border-top-color: #8b5cf6;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+`;
+
+export const BlockedMessage = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 16px;
+`;

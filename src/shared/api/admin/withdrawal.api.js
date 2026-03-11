@@ -29,3 +29,6 @@ export const getAdminWithdrawalHistoryApi = () =>
 /* REAL PAYOUT DETAILS */
 export const getWithdrawalPayoutDetailsApi = (withdrawalId) =>
   adminApi.get(`/admin/withdrawal/payout-details/${withdrawalId}`);
+
+export const walletAuditApi = (expertId) =>
+  adminApi.get(`/admin/wallet-audit/${expertId}`);

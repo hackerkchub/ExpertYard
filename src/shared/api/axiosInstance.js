@@ -1,6 +1,15 @@
 import axios from "axios";
 import { APP_CONFIG } from "../../config/appConfig";
 
+let loader = null;
+
+/* ===============================
+   INJECT GLOBAL LOADER
+================================ */
+export const injectLoader = (_loader) => {
+  loader = _loader;
+};
+
 const api = axios.create({
   baseURL: APP_CONFIG.API_BASE_URL,
   timeout: APP_CONFIG.REQUEST_TIMEOUT
@@ -11,6 +20,11 @@ const api = axios.create({
 ================================ */
 api.interceptors.request.use(
   (config) => {
+
+    /* GLOBAL LOADER START */
+    if (!config.skipLoader) {
+      loader?.showLoader();
+    }
 
     const expertToken = localStorage.getItem("expert_token");
     const userToken = localStorage.getItem("user_token");
@@ -31,7 +45,12 @@ api.interceptors.request.use(
     return config;
 
   },
-  (error) => Promise.reject(error)
+  (error) => {
+
+    loader?.hideLoader();
+
+    return Promise.reject(error);
+  }
 );
 
 /* ===============================
@@ -39,9 +58,21 @@ api.interceptors.request.use(
 ================================ */
 api.interceptors.response.use(
 
-  (response) => response,
+  (response) => {
+
+    /* GLOBAL LOADER STOP */
+    if (!response.config.skipLoader) {
+      loader?.hideLoader();
+    }
+
+    return response;
+  },
 
   (error) => {
+
+    if (!error.config?.skipLoader) {
+      loader?.hideLoader();
+    }
 
     const status = error?.response?.status;
 

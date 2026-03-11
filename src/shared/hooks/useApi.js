@@ -8,11 +8,23 @@ const useApi = (apiFunction) => {
     try {
       setLoading(true);
       setError(null);
+
       const response = await apiFunction(...args);
+
       return response.data;
+
     } catch (err) {
-      setError(err);
-      throw err;
+
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        err ||
+        "Something went wrong";
+
+      setError(message);
+
+      throw message;
+
     } finally {
       setLoading(false);
     }

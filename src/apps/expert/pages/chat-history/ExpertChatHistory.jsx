@@ -334,14 +334,25 @@ const ExpertChatHistory = () => {
   }, [expertData?.expert_id, expertData?.expertId, activeCallSubTab]);
 
   useEffect(() => {
-    const handleBack = () => {
-      navigate("/expert", { replace: true });
-    };
 
-    window.addEventListener("popstate", handleBack);
-    return () => window.removeEventListener("popstate", handleBack);
-  }, [navigate]);
+  // push dummy history state
+  window.history.pushState(null, "", window.location.href);
 
+  const handleBack = () => {
+
+    navigate("/expert/home", { replace: true });
+
+  };
+
+  window.addEventListener("popstate", handleBack);
+
+  return () => {
+
+    window.removeEventListener("popstate", handleBack);
+
+  };
+
+}, [navigate]);
   // Fetch data based on active tab
   useEffect(() => {
     if (activeMainTab === 'chat') {

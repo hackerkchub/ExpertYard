@@ -9,6 +9,7 @@ import AdminAppRoutes from "../apps/admin/routes";
 import { ExpertProvider } from "../shared/context/ExpertContext";
 import BottomNavbar from "../shared/components/BottomNavbar/BottomNavbar";
 import RouteLoader from "../shared/loaders/RouteLoader";
+import RootRedirect from "./RootRedirect";
 
 export default function AppRouter() {
 
@@ -74,7 +75,7 @@ export default function AppRouter() {
         <RouteLoader />
         <Routes>
 
-          <Route path="/" element={<Navigate to="/user" />} />
+          <Route path="/" element={<RootRedirect />} />
 
           {/* USER */}
           <Route path="/user/*" element={<UserAppRoutes />} />

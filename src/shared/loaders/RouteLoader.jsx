@@ -7,15 +7,18 @@ export default function RouteLoader(){
 const location = useLocation()
 const { showLoader , hideLoader } = useLoader()
 
-useEffect(()=>{
+useEffect(() => {
 
-showLoader()
+  showLoader()
 
-const t = setTimeout(()=>{
-hideLoader()
-},500)
+  const t = setTimeout(() => {
+    hideLoader()
+  },300)
 
-return ()=>clearTimeout(t)
+  return () => {
+    clearTimeout(t)
+    hideLoader()
+  }
 
 },[location])
 

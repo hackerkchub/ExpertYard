@@ -11,14 +11,18 @@ export const LoaderProvider = ({ children }) => {
   };
 
   const hideLoader = () => {
-    setLoadingCount((c) => Math.max(0, c - 1));
+    setLoadingCount((c) => (c > 0 ? c - 1 : 0));
+  };
+
+  const resetLoader = () => {
+    setLoadingCount(0);
   };
 
   const loading = loadingCount > 0;
 
   return (
     <LoaderContext.Provider
-      value={{ loading, showLoader, hideLoader }}
+      value={{ loading, showLoader, hideLoader, resetLoader }}
     >
       {children}
     </LoaderContext.Provider>

@@ -294,7 +294,7 @@ export const UserChatHistory = () => {
       }
     });
     return map;
-  }, [experts]);
+  }, [experts]); 
 
    const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
 

@@ -91,7 +91,7 @@ const AdminLogin = () => {
     localStorage.setItem("admin_token", res.data.token);
 
     // ✅ (optional) admin data store
-    localStorage.setItem("adminData", JSON.stringify(res.data.admin));
+    // localStorage.setItem("adminData", JSON.stringify(res.data.admin));
 
     // ✅ REMEMBER ME (optional logic)
     if (rememberMe) {

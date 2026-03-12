@@ -7,29 +7,23 @@ export const getExpertProfileApi = (expertId) =>
   api.get(`/expert-profile/expert/${expertId}`);
 
 export const updateExpertProfileApi = (expertId, data) => {
-  if (!expertId) {
-    throw new Error("expertId is required to update profile");
-  }
-
   const formData = new FormData();
 
-  Object.keys(data).forEach(key => {
-    if (data[key] !== undefined && data[key] !== null) {
+  for (const key in data) {
+    if (data[key] instanceof File) {
+      formData.append(key, data[key]);
+    } else if (data[key] !== undefined && data[key] !== null) {
       formData.append(key, data[key]);
     }
-  });
+  }
 
-  return api.put(
-    `/expert-profile/expert/${expertId}`,
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data"
-      }
-    }
-  );
+  return api.put(`/expert-profile/expert/${expertId}`, formData);
 };
 
 export const getExpertsProfileListApi = () => {
   return api.get("/expert-profile/list");
 };
+
+
+export const getMyProfileApi = () =>
+  api.get("/expert/me");

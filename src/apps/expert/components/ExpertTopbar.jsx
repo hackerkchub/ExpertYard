@@ -69,23 +69,11 @@ export default function ExpertTopbar() {
 
   // LOGOUT
  const handleLogout = () => {
-  try {
-    /* 🔌 disconnect socket (role-safe) */
-    disconnectSocket();
+  disconnectSocket();     // socket first
 
-    /* 🧹 remove ONLY expert data */
-    localStorage.removeItem("expert_session");
-    localStorage.removeItem("expert_token");
+  logoutExpert();         // context + storage clean
 
-    /* ♻️ reset context */
-    logoutExpert();
-
-    /* 🚀 redirect */
-    navigate("/expert/register", { replace: true });
-
-  } catch (err) {
-    console.error("Logout error:", err);
-  }
+  navigate("/expert/register", { replace: true });
 };
 
   // CHAT REDIRECT

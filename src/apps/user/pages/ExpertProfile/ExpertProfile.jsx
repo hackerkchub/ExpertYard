@@ -18,8 +18,6 @@ import {
 
 import {
   PageWrap,
-  HeaderBar,
-  BackButton,
   LeftColumn,
   FollowButton,
   MiniRating,
@@ -539,18 +537,14 @@ setRequestingChat(false);
       `}</style>
       
       <PageWrap>
-        <HeaderBar>
-          <BackButton onClick={() => navigate(-1)}>
-            <FiArrowLeft size={18} /> Back
-          </BackButton>
-        </HeaderBar>
+   
 
         {/* Main Profile Card */}
         <ProfileCard>
-          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap' }}>
             <div style={{ flex: '0 0 200px' }}>
               <LeftImage src={profile.profile_photo || DEFAULT_AVATAR} alt="Profile" />
-              <div style={{ marginTop: '16px', textAlign: 'center' }}>
+              <div >
                 {/* <MiniRating>
                   <FiStar color="#facc15" />
                   {formattedAvgRating} ({totalReviews})

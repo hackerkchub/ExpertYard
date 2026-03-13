@@ -11,6 +11,9 @@ import BottomNavbar from "../shared/components/BottomNavbar/BottomNavbar";
 import RouteLoader from "../shared/loaders/RouteLoader";
 import RootRedirect from "./RootRedirect";
 
+// ✅ NETWORK STATUS COMPONENT IMPORT
+import NetworkStatus from "../shared/components/NetworkStatus/NetworkStatus";
+
 export default function AppRouter() {
 
   useSoundInit();
@@ -64,6 +67,9 @@ export default function AppRouter() {
 
   return (
     <div className="app-main-layout" style={{ width: "100%", overflowX: "hidden", position: "relative" }}>
+       {/* ✅ NETWORK STATUS TOAST (Global) */}
+      <NetworkStatus />
+
       <div
         className="main-content-wrapper"
         style={{

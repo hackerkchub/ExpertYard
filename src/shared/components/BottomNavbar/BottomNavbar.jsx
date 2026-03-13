@@ -1,11 +1,12 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Bell, Wallet, Settings, History, MessageSquare, User } from 'lucide-react';
+import { Home, Wallet, MessageSquare, Gift } from 'lucide-react';
+import { FiUser,  FiGrid, FiBarChart2 } from "react-icons/fi";
 import "./BottomNavbar.css";
 
 const BottomNavbar = () => {
   const location = useLocation();
- const isExpert = location.pathname.startsWith('/expert');
+  const isExpert = location.pathname.includes('/expert');
 
   // ✅ Chat page detect karke navbar ko render hi nahi karenge
   if (location.pathname.includes('/chat/')) {
@@ -14,17 +15,16 @@ const BottomNavbar = () => {
 
   const userMenu = [
     { name: 'Home', path: '/user', icon: <Home size={22} /> },
-    { name: 'Chat', path: '/user/chat-history', icon: <MessageSquare size={22} /> },
-    { name: 'Wallet', path: '/user/wallet', icon: <Wallet size={22} /> },
-    { name: 'Setting', path: '/user/setting', icon: <Settings size={22} /> },
+     { name: 'Wallet', path: '/user/wallet', icon: <Wallet size={22} /> },
+     { name: 'Messages', path: '/user/chat-history', icon: <MessageSquare size={22} /> },
+    { name: 'Categories', path: '/user/categories', icon: < FiGrid  size={22} /> },
   ];
 
   const expertMenu = [
     { name: 'Home', path: '/expert/home', icon: <Home size={22} /> },
-    // { name: 'History', path: '/expert/history', icon: <History size={22} /> },
-    { name: 'Chat', path: '/expert/chat-history', icon: <MessageSquare size={22} /> },
-    { name: 'Profile', path: '/expert/profile', icon: <User size={22} /> },
-    { name: 'Setting', path: '/expert/settings', icon: <Settings size={22} /> },
+    { name: 'Earning', path: '/expert/earnings', icon: <FiBarChart2 size={22} /> },
+    { name: 'Messages', path: '/expert/chat-history', icon: <MessageSquare size={22} /> },
+     { name: 'Profile', path: '/expert/profile', icon: <FiUser size={22} /> },
   ];
 
   const menuItems = isExpert ? expertMenu : userMenu;

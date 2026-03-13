@@ -24,27 +24,6 @@ export const PageWrap = styled.div`
   }
 `;
 
-export const HeaderBar = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 12px 0;
-  margin-bottom: 8px;
-  @media (max-width: 768px) { padding: 12px 16px; background: white; border-bottom: 1px solid #e0e0e0; }
-`;
-
-export const BackButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: transparent;
-  border: none;
-  color: #666;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 4px;
-  &:hover { background-color: rgba(0, 0, 0, 0.08); color: #000; }
-`;
 
 // --- Main Profile Section ---
 export const ProfileCard = styled.div`
@@ -66,139 +45,187 @@ export const LeftImage = styled.img`
   border: 4px solid #fff;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   
-  @media (max-width: 768px) { width: 120px; height: 120px; margin: 0 auto; display: block; }
+  @media (max-width: 768px) { width: 120px; height: 120px;  auto; display: block; }
 `;
 
+
+
+// --- Name & Header Info ---
 export const Name = styled.h1`
   font-size: 24px;
   font-weight: 600;
   color: #000000e6;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  @media (max-width: 768px) { justify-content: center; text-align: center; margin-top: 16px; }
+  gap: 8px; /* Badha diya thoda gap */
+  
+  @media (max-width: 768px) { 
+    font-size: 20px;
+    justify-content: flex-start; /* Left align on mobile */
+    text-align: left; 
+    margin-top: 0; 
+  }
 `;
 
 export const VerifiedBadge = styled.span`
   background: #e7f3ff;
   color: #0a66c2;
-  font-size: 12px;
-  padding: 2px 10px;
+  font-size: 11px;
+  padding: 2px 8px;
   border-radius: 12px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-weight: 600;
+  flex-shrink: 0;
 `;
 
 export const Role = styled.p`
   font-size: 16px;
   color: #000000bf;
-  margin-bottom: 8px;
-  @media (max-width: 768px) { text-align: center; }
+  margin-bottom: 4px;
+  @media (max-width: 768px) { text-align: left; font-size: 14px; }
 `;
 
 export const Status = styled.div`
   font-size: 14px;
   font-weight: 600;
   color: ${props => props.$online ? "#057642" : "#cc1016"};
-  margin-bottom: 16px;
-  @media (max-width: 768px) { text-align: center; }
+  margin-bottom: 12px;
+  @media (max-width: 768px) { text-align: left; font-size: 12px; }
 `;
 
+// --- Stats & Tags (No Overflow) ---
 export const QuickStats = styled.div`
   display: flex;
-  gap: 12px;
-  margin: 16px 0;
-  flex-wrap: wrap;
-  @media (max-width: 768px) { justify-content: center; }
+  gap: 8px;
+  margin: 12px 0;
+  flex-wrap: wrap; /* Screen ke bahar nahi jayega */
+  @media (max-width: 768px) { justify-content: flex-start; }
 `;
 
 export const StatItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 14px;
+  gap: 4px;
+  font-size: 13px;
   color: #666;
   background: #f9f9f9;
-  padding: 6px 14px;
+  padding: 4px 10px;
   border-radius: 16px;
   border: 1px solid #ebebeb;
+  white-space: nowrap;
 `;
 
 export const TagList = styled.div`
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: wrap; 
   gap: 8px;
-  margin: 16px 0;
-  @media (max-width: 768px) { justify-content: center; }
+  margin: 12px 0;
+  @media (max-width: 768px) { justify-content: flex-start; }
 `;
 
 export const Tag = styled.span`
   background: #f3f2ef;
   color: #000000bf;
-  padding: 5px 12px;
+  padding: 4px 10px;
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   border: 1px solid #dcdcdc;
   display: flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
 `;
 
-// --- Buttons ---
+// --- Buttons & Price ---
 export const CallToAction = styled.div`
   display: flex;
-  gap: 12px;
-  margin-top: 20px;
-  @media (max-width: 768px) { flex-direction: column; }
+  gap: 10px;
+  margin-top: 15px;
+  @media (max-width: 768px) { 
+    flex-direction: row; /* Mobile pe bhi side-by-side rakha hai */
+    width: 100%;
+  }
 `;
 
 export const ActionButton = styled.button`
+  flex: 1; /* Barabar jagah lenge */
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 24px;
+  gap: 6px;
+  padding: 10px 12px;
   border-radius: 24px;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 14px;
   cursor: pointer;
-  transition: 0.2s;
   border: 1px solid #0a66c2;
   background: ${props => props.$primary ? "#0a66c2" : "white"};
   color: ${props => props.$primary ? "white" : "#0a66c2"};
+  white-space: nowrap;
 
   &:hover {
     background: ${props => props.$primary ? "#004182" : "#eef3f8"};
-    border-width: 2px;
-    padding: 9px 23px; // Adjust for border width
   }
 `;
 
 export const PriceTag = styled.div`
-  font-size: 13px;
-  color: #666;
+  font-size: 14px;
+  color: #000;
   font-weight: 700;
   margin-bottom: 6px;
-  @media (max-width: 768px) { text-align: center; }
+  @media (max-width: 768px) { text-align: left; }
 `;
 
 export const FollowButton = styled.button`
-  background: ${props => props.$active ? "#0a66c2" : "white"};
-  color: ${props => props.$active ? "white" : "#666"};
-  border: 1px solid ${props => props.$active ? "#0a66c2" : "#666"};
-  padding: 6px 18px;
-  border-radius: 16px;
+  border: 1px solid #0a66c2;
+  background: none;
+  color: #0a66c2;
+  border-radius: 20px;
+  padding: 4px 12px;
   font-weight: 600;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  &:hover { background: ${props => props.$active ? "#004182" : "#f3f2ef"}; }
+  transition: 0.3s;
+
+  // Desktop
+  margin-top: 16px;
+  margin-left: 25px;
+  display: block;
+
+  &:hover {
+    background-color: rgba(10, 102, 194, 0.1);
+  }
+
+  // Mobile
+  @media (max-width: 768px) {
+        padding-left: 20px;
+        padding-right: 20px;
+        display: inline-block;
+        margin: 10px;
+  }
 `;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // --- Content Sections ---
 export const Section = styled.div`

@@ -48,6 +48,102 @@ function ExpertLayoutInner() {
     );
   }, [expertData]);
 
+  useEffect(() => {
+    if (!expertId) return;
+
+    const params = new URLSearchParams(window.location.search);
+
+    if (!params.get("from_notification")) return;
+
+    const checkActiveRequests = async () => {
+      try {
+        const res = await fetch(
+          `/notifications?panel=expert&userId=${expertId}&limit=10`
+        );
+
+        const data = await res.json();
+
+        // ✅ Bug 3 Fixed: Safer data structure handling
+       const notifications =
+  data?.data?.data ||
+  data?.data ||
+  data ||
+  [];
+
+       const activeRequest = notifications.find((n) => {
+
+  if (!(n.type === "voice_call" || n.type === "chat_request")) return false;
+
+  if (!n.status) return true; // NULL status → active request
+
+  return !["missed","rejected","ended","cancelled"].includes(n.status);
+
+});
+
+        if (!activeRequest) return;
+
+        // ✅ Bug 1 Fixed: Properly parse and use meta
+        const meta =
+          typeof activeRequest.meta === "string"
+            ? JSON.parse(activeRequest.meta)
+            : activeRequest.meta || {};
+
+        /* ===== CALL ===== */
+        if (
+  activeRequest.type === "voice_call" &&
+  activeRequest.status === "ringing"
+) {
+          const callId = meta.callId || meta.request_id;
+
+          if (callId) {
+           setTimeout(() => {
+
+  window.dispatchEvent(
+    new CustomEvent("incoming_call", {
+      detail: {
+        callId,
+        user_name: activeRequest.title?.replace(
+          "Incoming call from ",
+          ""
+        ),
+        status: "ringing",
+      },
+    })
+  );
+
+}, 500);
+          }
+        }
+
+        /* ===== CHAT ===== */
+        if (activeRequest.type === "chat_request") {
+          const requestId = meta.request_id;
+
+          if (requestId) {
+           setTimeout(() => {
+
+  window.dispatchEvent(
+    new CustomEvent("incoming_chat_request", {
+      detail: {
+        request_id: requestId,
+      },
+    })
+  );
+
+}, 500);
+          }
+        }
+
+        // ✅ Bug 2 Fixed: Remove from_notification param after processing
+        window.history.replaceState({}, document.title, "/expert");
+
+      } catch (err) {
+        console.log("Active request fetch failed:", err);
+      }
+    };
+
+    checkActiveRequests();
+  }, [expertId]);
  
   /* =====================================================
      🔌 CONNECT SOCKET (ROLE SAFE)
@@ -65,35 +161,35 @@ function ExpertLayoutInner() {
     };
   }, [expertId]);
 
-useEffect(() => {
-  if (!expertId) return;
+  useEffect(() => {
+    if (!expertId) return;
 
-  generateToken("expert");
-}, [expertId]);
+    generateToken("expert");
+  }, [expertId]);
 
-   useEffect(() => {
-  if (!expertId) return;
+  useEffect(() => {
+    if (!expertId) return;
 
-  const sendStatus = () => {
-   socket.emit("expert_active_status", {
-  expertId,
-  isActive: document.visibilityState === "visible",
-});
-  };
+    const sendStatus = () => {
+      socket.emit("expert_active_status", {
+        expertId,
+        isActive: document.visibilityState === "visible",
+      });
+    };
 
-  const handleConnect = () => {
-    sendStatus(); // send immediately after connect
-  };
+    const handleConnect = () => {
+      sendStatus(); // send immediately after connect
+    };
 
-  socket.on("connect", handleConnect);
+    socket.on("connect", handleConnect);
 
-  document.addEventListener("visibilitychange", sendStatus);
+    document.addEventListener("visibilitychange", sendStatus);
 
-  return () => {
-    socket.off("connect", handleConnect);
-    document.removeEventListener("visibilitychange", sendStatus);
-  };
-}, [expertId]);
+    return () => {
+      socket.off("connect", handleConnect);
+      document.removeEventListener("visibilitychange", sendStatus);
+    };
+  }, [expertId]);
 
   /* =====================================================
      📞 RESUME CALL CHECK AFTER CONNECT
@@ -135,16 +231,12 @@ useEffect(() => {
     return () => window.removeEventListener("resume_call", handler);
   }, [navigate]);
 
-
- const handleFCM = useCallback((data) => {
-  console.log("Incoming FCM:", data);
-
-  window.dispatchEvent(
-    new CustomEvent("incoming_call", { detail: data })
-  );
+  const handleFCM = useCallback(() => {
+  console.log("FCM handled by notification provider");
 }, []);
 
-useFCM(handleFCM);
+  useFCM(handleFCM);
+  
   /* =====================================================
      📲 INCOMING CALL
   ===================================================== */

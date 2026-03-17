@@ -2,7 +2,7 @@ importScripts("https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"
 importScripts("https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js");
 
 firebase.initializeApp({
-   apiKey: "AIzaSyDSPw3lTarBu6X0rTqM8KLNVh7Av6XgKXI",
+  apiKey: "AIzaSyDSPw3lTarBu6X0rTqM8KLNVh7Av6XgKXI",
   authDomain: "expert-yard-f2d19.firebaseapp.com",
   projectId: "expert-yard-f2d19",
   storageBucket: "expert-yard-f2d19.firebasestorage.app",
@@ -13,40 +13,73 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+/* ================= BACKGROUND MESSAGE ================= */
+
 messaging.onBackgroundMessage(async (payload) => {
+
+  console.log("📩 Background FCM:", payload);
 
   const type = payload.data?.type;
 
-  // if (type === "VOICE_CALL") return;
+  const title = payload.data?.title || "Notification";
+  const body = payload.data?.body || "";
 
-  const title = payload.data?.title;
-  const body = payload.data?.body;
+  const tag =
+    payload.data?.request_id ||
+    payload.data?.callId ||
+    payload.data?.type;
 
-  const tag = payload.data?.request_id || payload.data?.type;
-
-  /* 🔴 duplicate prevention */
   const existing = await self.registration.getNotifications({ tag });
 
-  if (existing.length > 0) return;
+if (existing.length > 0) return;
+// ❌ DO NOT show popup for real call
+if (type === "voice_call") return;
 
-  self.registration.showNotification(title, {
-    body,
-    icon: "/logo-192.png",
-    badge: "/logo-192.png",
-    tag,
-    data: payload.data
-  });
-
+// ✅ show for everything else
+self.registration.showNotification(title, {
+  body,
+  icon: "/logo-192.png",
+  badge: "/logo-192.png",
+  tag,
+  data: payload.data
+});
 });
 
+
+
+/* ================= NOTIFICATION CLICK ================= */
+
 self.addEventListener("notificationclick", (event) => {
+
   event.notification.close();
 
-  const url =
-    event.notification?.data?.click_action ||
-    event.notification?.data?.url;
+  const data = event.notification?.data || {};
 
-   event.waitUntil(
-    clients.openWindow(url)
+  const url =
+    data.url ||
+    data.click_action ||
+    "/";
+
+  event.waitUntil(
+
+    clients.matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+
+        for (const client of clientList) {
+
+          if (client.url.includes(self.location.origin) && "focus" in client) {
+
+            client.navigate(url);
+            return client.focus();
+
+          }
+
+        }
+
+        return clients.openWindow(url);
+
+      })
+
   );
+
 });

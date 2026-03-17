@@ -30,7 +30,7 @@ export const PageWrap = styled.div`
 `;
 
 export const Header = styled.div`
-  height: 60px;
+  height: 200px;
   background: white;
   border-bottom: 1px solid rgba(0,0,0,0.08);
   display: flex;

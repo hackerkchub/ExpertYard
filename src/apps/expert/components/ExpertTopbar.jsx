@@ -69,11 +69,14 @@ export default function ExpertTopbar() {
 
   // LOGOUT
  const handleLogout = () => {
-  disconnectSocket();     // socket first
+ disconnectSocket();
 
-  logoutExpert();         // context + storage clean
+localStorage.removeItem("expert_token");
+localStorage.setItem("last_panel", "expert");
 
-  navigate("/expert/register", { replace: true });
+logoutExpert();
+
+navigate("/expert/register", { replace: true });
 };
 
   // CHAT REDIRECT

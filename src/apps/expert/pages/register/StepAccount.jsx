@@ -123,17 +123,18 @@ const handleLogin = async () => {
     });
 
     // ✅ remove AFTER success
-    localStorage.removeItem("expert_session");
+   localStorage.removeItem("expert_session");
 
-    localStorage.setItem("expert_token", res.token);
+localStorage.setItem("expert_token", res.token);
+localStorage.setItem("last_panel", "expert");
 
-    updateExpertData({
-      expertId: res.expert.id,
-      name: res.expert.name,
-      email: res.expert.email,
-      phone: res.expert.phone,
-      profileId: null
-    });
+updateExpertData({
+  expertId: res.expert.id,
+  name: res.expert.name,
+  email: res.expert.email,
+  phone: res.expert.phone,
+  profileId: null
+});
 
     navigate("/expert/home", { replace: true });
 

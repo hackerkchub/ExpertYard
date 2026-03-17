@@ -1,7 +1,7 @@
 {
   "name": "Expert Yard",
   "short_name": "ExpertYard",
-  "start_url": "/",
+  "start_url": "/?pwa=true",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",

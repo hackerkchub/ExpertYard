@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { FaUserCircle, FaFilter, FaHistory, FaPlus, FaWallet, FaCalendarAlt } from "react-icons/fa";
 import { MdAccountBalanceWallet, MdPayments, MdTrendingUp } from "react-icons/md";
 import { RiMoneyRupeeCircleFill } from "react-icons/ri";
@@ -23,36 +23,64 @@ import {
   QuickAddBtn,
   StatsGrid,
   StatCard,
-  ChartContainer,
   FilterDropdown,
   DateRangePicker,
   TransactionBadge,
   ProgressBar,
-  EmptyState
+  EmptyState,
+  LoadingState,
+  ErrorState
 } from "./Wallet.styles";
 
 import AddBalancePopup from "../../components/AddBalancePopup/AddBalancePopup";
-
-// ✅ CONTEXTS
 import { useWallet } from "../../../../shared/context/WalletContext";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
-import { usePublicExpert as useExpert } from "../../context/PublicExpertContext";
+import { getWalletHistoryApi } from "../../../../shared/api/userApi/walletApi";
 
+// Helper function to check if dates are in same month
+const isSameMonth = (date1, date2) => {
+  const d1 = new Date(date1);
+  const d2 = new Date(date2);
+  return d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear();
+};
 
+// Helper function to format currency
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(amount);
+};
+
+// Helper function to format date
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
 
 const WalletPage = () => {
   const { balance, addMoney } = useWallet();
-  // const { user } = useAuth();
-  // const userId = user?.id;
-const { experts } = useExpert();  
+  const { user } = useAuth();
   
-  const [expenseHistory, setExpenseHistory] = useState([]);
-  const [filteredExpenses, setFilteredExpenses] = useState([]);
-  const [topupHistory, setTopupHistory] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [filteredTransactions, setFilteredTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   const [stats, setStats] = useState({
+    totalDebits: 0,
+    totalCredits: 0,
     monthlySpent: 0,
     avgTransaction: 0,
-    topExpert: null
+    topExpert: null,
+    transactionCount: 0
   });
 
   const [popupOpen, setPopupOpen] = useState(false);
@@ -62,109 +90,139 @@ const { experts } = useExpert();
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [customRange, setCustomRange] = useState({ from: "", to: "" });
 
-  /* ================= LOAD DATA ================= */
- 
-
-useEffect(() => {
-  if (!experts.length) return;
-
-  const expense = experts.slice(0, 8).map((ex, index) => ({
-    id: ex.id || index,
-    name: ex.name || "Expert",
-    role: ex.position || "Consultant",
-    avatar: ex.profile_photo || "/avatar.png",
-    amount: Math.floor(Math.random() * 500) + 100,
-    date: new Date(),
-    type: Math.random() > 0.5 ? "call" : "chat",
-    status: "completed"
-  }));
-
-  setExpenseHistory(expense);
-  setFilteredExpenses(expense);
-
-  const topups = experts.slice(0, 4).map((_, i) => ({
-    id: i,
-    amount: Math.floor(Math.random() * 1000) + 100,
-    mode: ["UPI", "Card", "Net Banking", "Wallet"][i % 4],
-    date: new Date(),
-    status: "success"
-  }));
-
-  setTopupHistory(topups);
-}, [experts]);
-
-
-useEffect(() => {
-  if (!expenseHistory.length) return;
-
-  const monthlySpent = expenseHistory
-    .filter(e => sameMonth(e.date, new Date()))
-    .reduce((sum, item) => sum + item.amount, 0);
-
-  const avgTransaction =
-    expenseHistory.reduce((sum, item) => sum + item.amount, 0) /
-    expenseHistory.length;
-
-  const topExpert = expenseHistory.reduce(
-    (max, item) =>
-      item.amount > (max?.amount || 0) ? item : max,
-    null
-  );
-
-  setStats({
-    monthlySpent,
-    avgTransaction: Math.round(avgTransaction),
-    topExpert
-  });
-}, [expenseHistory]);
-// useEffect(() => {
-//   if (!experts.length) return;
-
-//   const expense = experts.slice(0, 8).map(...);
-
-//   setExpenseHistory(expense);
-//   setFilteredExpenses(expense.filter(e => sameMonth(e.date, new Date())));
-// }, [experts]);
- 
-  
-
-  /* ================= FILTER ================= */
-  const sameMonth = (d1, d2) =>
-    d1.getMonth() === d2.getMonth() &&
-    d1.getFullYear() === d2.getFullYear();
+  /* ================= FETCH REAL DATA ================= */
+  const fetchWalletHistory = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await getWalletHistoryApi();
+      
+      if (response.success && response.data) {
+        setTransactions(response.data);
+      } else {
+        setTransactions([]);
+      }
+    } catch (err) {
+      console.error("Error fetching wallet history:", err);
+      setError("Failed to load transaction history");
+      setTransactions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    applyFilters();
-  }, [filterType, customRange, expenseHistory]);
+    fetchWalletHistory();
+  }, [fetchWalletHistory]);
 
-  const applyFilters = () => {
+  /* ================= PROCESS TRANSACTIONS ================= */
+  useEffect(() => {
+    if (!transactions.length) {
+      setFilteredTransactions([]);
+      setStats({
+        totalDebits: 0,
+        totalCredits: 0,
+        monthlySpent: 0,
+        avgTransaction: 0,
+        topExpert: null,
+        transactionCount: 0
+      });
+      return;
+    }
+
+    // Separate credits and debits
+    const credits = transactions.filter(t => t.type === 'credit');
+    const debits = transactions.filter(t => t.type === 'debit');
+
+    // Calculate monthly spent (current month debits)
+    const currentMonthDebits = debits.filter(t => 
+      isSameMonth(t.created_at, new Date())
+    );
+    const monthlySpent = currentMonthDebits.reduce((sum, t) => sum + t.amount, 0);
+
+    // Calculate average transaction amount (only debits)
+    const avgTransaction = debits.length > 0 
+      ? Math.round(debits.reduce((sum, t) => sum + t.amount, 0) / debits.length) 
+      : 0;
+
+    // Find top expert (most spent on)
+    const expertSpending = debits.reduce((acc, t) => {
+      if (t.expert_name) {
+        acc[t.expert_name] = (acc[t.expert_name] || 0) + t.amount;
+      }
+      return acc;
+    }, {});
+
+    let topExpert = null;
+    let maxSpent = 0;
+    
+    Object.entries(expertSpending).forEach(([name, amount]) => {
+      if (amount > maxSpent) {
+        maxSpent = amount;
+        topExpert = { name, amount };
+      }
+    });
+
+    setStats({
+      totalDebits: debits.reduce((sum, t) => sum + t.amount, 0),
+      totalCredits: credits.reduce((sum, t) => sum + t.amount, 0),
+      monthlySpent,
+      avgTransaction,
+      topExpert,
+      transactionCount: transactions.length
+    });
+
+    // Apply current filter
+    applyFilters(transactions, filterType, customRange);
+  }, [transactions, filterType, customRange]);
+
+  /* ================= FILTER FUNCTION ================= */
+  const applyFilters = (txns, type, range) => {
+    if (!txns || !txns.length) {
+      setFilteredTransactions([]);
+      return;
+    }
+
     const now = new Date();
+    let filtered = [...txns];
 
-    if (filterType === "thisMonth") {
-      setFilteredExpenses(expenseHistory.filter((e) => sameMonth(e.date, now)));
-    } else if (filterType === "lastMonth") {
-      const last = new Date();
-      last.setMonth(last.getMonth() - 1);
-      setFilteredExpenses(expenseHistory.filter((e) => sameMonth(e.date, last)));
-    } else if (filterType === "last3Months") {
+    if (type === "thisMonth") {
+      filtered = txns.filter(t => isSameMonth(t.created_at, now));
+    } else if (type === "lastMonth") {
+      const lastMonth = new Date();
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
+      filtered = txns.filter(t => isSameMonth(t.created_at, lastMonth));
+    } else if (type === "last3Months") {
       const threeMonthsAgo = new Date();
       threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-      setFilteredExpenses(
-        expenseHistory.filter((e) => e.date >= threeMonthsAgo && e.date <= now)
-      );
-    } else if (filterType === "custom") {
-      if (!customRange.from || !customRange.to) return;
-      const from = new Date(customRange.from);
-      const to = new Date(customRange.to);
-      setFilteredExpenses(
-        expenseHistory.filter((e) => e.date >= from && e.date <= to)
-      );
-    } else {
-      setFilteredExpenses(expenseHistory);
+      filtered = txns.filter(t => new Date(t.created_at) >= threeMonthsAgo);
+    } else if (type === "custom") {
+      if (range.from && range.to) {
+        const from = new Date(range.from);
+        const to = new Date(range.to);
+        to.setHours(23, 59, 59, 999);
+        filtered = txns.filter(t => {
+          const date = new Date(t.created_at);
+          return date >= from && date <= to;
+        });
+      }
     }
+    // "all" - no filtering
+
+    setFilteredTransactions(filtered);
   };
 
-  /* ================= POPUP ================= */
+  const handleFilterChange = (e) => {
+    const value = e.target.value;
+    setFilterType(value);
+    setShowDatePicker(value === "custom");
+  };
+
+  const handleCustomRangeChange = (newRange) => {
+    setCustomRange(newRange);
+  };
+
+  /* ================= POPUP HANDLERS ================= */
   const openPopup = (amount = null) => {
     setPopupAmount(amount);
     setPopupOpen(true);
@@ -175,31 +233,78 @@ useEffect(() => {
     setPopupAmount(null);
   };
 
-  /* ================= ADD MONEY ================= */
   const handleAddMoney = async (amount) => {
-  await addMoney(amount);
-  closePopup();
-};
-
-  /* ================= FORMATTING ================= */
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
+    try {
+      await addMoney(amount);
+      closePopup();
+      // Refresh transactions after adding money
+      await fetchWalletHistory();
+    } catch (err) {
+      console.error("Error adding money:", err);
+      // You might want to show an error toast here
+    }
   };
 
+  /* ================= UI HELPERS ================= */
   const getTransactionTypeColor = (type) => {
     const colors = {
       call: "#3b82f6",
       chat: "#10b981",
-      consultation: "#8b5cf6"
+      consultation: "#8b5cf6",
+      upi: "#f59e0b",
+      card: "#6366f1",
+      credit: "#10b981",
+      debit: "#ef4444"
     };
     return colors[type] || "#64748b";
   };
 
-  /* ================= UI ================= */
+  const getTransactionIcon = (source) => {
+    const icons = {
+      upi: "💳",
+      call: "📞",
+      chat: "💬",
+      card: "💳",
+      netbanking: "🏦"
+    };
+    return icons[source] || "💰";
+  };
+
+  /* ================= RENDER STATES ================= */
+  if (loading) {
+    return (
+      <PageWrap>
+        <WalletBox>
+          <LoadingState>
+            <div className="spinner"></div>
+            <p>Loading wallet data...</p>
+          </LoadingState>
+        </WalletBox>
+      </PageWrap>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageWrap>
+        <WalletBox>
+          <ErrorState>
+            <div className="error-icon">⚠️</div>
+            <h3>Error Loading Wallet</h3>
+            <p>{error}</p>
+            <button onClick={fetchWalletHistory} className="retry-btn">
+              Try Again
+            </button>
+          </ErrorState>
+        </WalletBox>
+      </PageWrap>
+    );
+  }
+
+  // Separate transactions for display
+  const debitTransactions = filteredTransactions.filter(t => t.type === 'debit');
+  const creditTransactions = filteredTransactions.filter(t => t.type === 'credit');
+
   return (
     <PageWrap>
       <WalletBox>
@@ -212,12 +317,12 @@ useEffect(() => {
             </div>
             <h1 className="page-title">Wallet Management</h1>
           </div>
-          {/* <div className="header-right">
+          <div className="header-right">
             <div className="user-badge">
               <FaUserCircle className="user-icon" />
               <span className="user-name">{user?.name || "User"}</span>
             </div>
-          </div> */}
+          </div>
         </HeaderRow>
 
         {/* PREMIUM BALANCE CARD */}
@@ -231,22 +336,22 @@ useEffect(() => {
             <span className="amount">{balance || 0}</span>
             <span className="currency">INR</span>
           </BalanceAmount>
-          {/* <div className="balance-footer">
+          <div className="balance-footer">
             <div className="balance-stat">
               <MdTrendingUp className="stat-icon" />
               <div>
-                <span className="stat-label">Monthly Spent</span>
-                <span className="stat-value">₹{stats.monthlySpent}</span>
+                <span className="stat-label">Total Spent</span>
+                <span className="stat-value">{formatCurrency(stats.totalDebits)}</span>
               </div>
             </div>
             <div className="balance-stat">
               <MdPayments className="stat-icon" />
               <div>
-                <span className="stat-label">Avg. Transaction</span>
-                <span className="stat-value">₹{stats.avgTransaction}</span>
+                <span className="stat-label">Total Added</span>
+                <span className="stat-value">{formatCurrency(stats.totalCredits)}</span>
               </div>
             </div>
-          </div> */}
+          </div>
         </BalanceCard>
 
         {/* STATS GRID */}
@@ -256,8 +361,8 @@ useEffect(() => {
               <FaWallet />
             </div>
             <div className="stat-content">
-              <span className="stat-label">Total Transactions</span>
-              <span className="stat-value">{expenseHistory.length}</span>
+              <span className="stat-label">Transactions</span>
+              <span className="stat-value">{stats.transactionCount}</span>
             </div>
           </StatCard>
           <StatCard className="stat-2">
@@ -276,29 +381,25 @@ useEffect(() => {
               <FaCalendarAlt />
             </div>
             <div className="stat-content">
-              <span className="stat-label">Active Since</span>
-              <span className="stat-value">{formatDate(new Date())}</span>
+              <span className="stat-label">Monthly Spent</span>
+              <span className="stat-value">{formatCurrency(stats.monthlySpent)}</span>
             </div>
           </StatCard>
         </StatsGrid>
 
-        {/* EXPENSE HISTORY */}
+        {/* EXPENSE HISTORY (DEBITS) */}
         <ExpenseSection>
           <SectionTitle>
             <div className="section-header">
               <h2>Expense History</h2>
-              <p className="section-subtitle">Track your expert consultations</p>
+              <p className="section-subtitle">Track your consultation expenses</p>
             </div>
             
             <div className="filter-section">
               <FilterDropdown>
                 <select 
                   value={filterType}
-                  onChange={(e) => {
-  const value = e.target.value;
-  setFilterType(value);
-  setShowDatePicker(value === "custom");
-}}
+                  onChange={handleFilterChange}
                 >
                   <option value="thisMonth">This Month</option>
                   <option value="lastMonth">Last Month</option>
@@ -311,56 +412,61 @@ useEffect(() => {
             </div>
           </SectionTitle>
 
-          {filterType === "custom" && (
+          {showDatePicker && (
             <DateRangePicker>
               <input
                 type="date"
                 value={customRange.from}
                 onChange={(e) =>
-                  setCustomRange({ ...customRange, from: e.target.value })
+                  handleCustomRangeChange({ ...customRange, from: e.target.value })
                 }
                 className="date-input"
                 placeholder="From Date"
+                max={customRange.to || undefined}
               />
               <span className="date-separator">to</span>
               <input
                 type="date"
                 value={customRange.to}
                 onChange={(e) =>
-                  setCustomRange({ ...customRange, to: e.target.value })
+                  handleCustomRangeChange({ ...customRange, to: e.target.value })
                 }
                 className="date-input"
                 placeholder="To Date"
+                min={customRange.from || undefined}
+                max={new Date().toISOString().split('T')[0]}
               />
             </DateRangePicker>
           )}
 
-          {filteredExpenses.length === 0 ? (
+          {debitTransactions.length === 0 ? (
             <EmptyState>
               <div className="empty-icon">📊</div>
               <h3>No expenses found</h3>
-              <p>Try adjusting your filters or add balance to get started</p>
+              <p>Start consulting with experts to see your transaction history</p>
             </EmptyState>
           ) : (
             <div className="expenses-list">
-              {filteredExpenses.map((item) => (
+              {debitTransactions.map((item) => (
                 <ExpertCard key={item.id}>
                   <ExpertLeft>
-                    <Avatar src={item.avatar}>
-                      {!item.avatar && <FaUserCircle />}
+                    <Avatar>
+                      {getTransactionIcon(item.source)}
                     </Avatar>
                     <ExpertInfo>
                       <div className="expert-header">
-                        <strong>{item.name}</strong>
+                        <strong>{item.expert_name || 'Consultation'}</strong>
                         <TransactionBadge 
-                          style={{ backgroundColor: getTransactionTypeColor(item.type) }}
+                          style={{ backgroundColor: getTransactionTypeColor(item.service_type) }}
                         >
-                          {item.type.toUpperCase()}
+                          {item.service_type?.toUpperCase() || item.source?.toUpperCase()}
                         </TransactionBadge>
                       </div>
-                      <small className="expert-role">{item.role}</small>
+                      <small className="expert-role">
+                        {item.service_type === 'call' ? 'Phone Consultation' : 'Chat Session'}
+                      </small>
                       <div className="expert-meta">
-                        <span className="date">{formatDate(item.date)}</span>
+                        <span className="date">{formatDate(item.created_at)}</span>
                         <span className={`status ${item.status}`}>
                           {item.status}
                         </span>
@@ -371,11 +477,13 @@ useEffect(() => {
                   <ExpertRight>
                     <AmountBox>
                       <span className="amount-label">Spent</span>
-                      <span className="amount-value">₹{item.amount}</span>
+                      <span className="amount-value">{formatCurrency(item.amount)}</span>
                       <div className="amount-progress">
                         <ProgressBar 
-                          width={Math.min((item.amount / stats.monthlySpent) * 100, 100)}
-                          color={getTransactionTypeColor(item.type)}
+                          width={stats.monthlySpent > 0 
+                            ? Math.min((item.amount / stats.monthlySpent) * 100, 100) 
+                            : 0}
+                          color={getTransactionTypeColor(item.service_type)}
                         />
                       </div>
                     </AmountBox>
@@ -386,7 +494,7 @@ useEffect(() => {
           )}
         </ExpenseSection>
 
-        {/* TOPUP SECTION */}
+        {/* TOPUP SECTION (CREDITS) */}
         <TopupSection>
           <SectionTitle>
             <div className="section-header">
@@ -395,23 +503,23 @@ useEffect(() => {
             </div>
           </SectionTitle>
 
-          {topupHistory.length === 0 ? (
+          {creditTransactions.length === 0 ? (
             <EmptyState className="small">
               <div className="empty-icon">💳</div>
               <p>No top-up history yet</p>
             </EmptyState>
           ) : (
             <div className="topup-list">
-              {topupHistory.map((item) => (
+              {creditTransactions.map((item) => (
                 <ExpertCard key={item.id} className="topup-card">
                   <ExpertLeft>
                     <div className="topup-icon">
                       <FaPlus />
                     </div>
                     <ExpertInfo>
-                      <strong>₹{item.amount}</strong>
-                      <small>Added via {item.mode}</small>
-                      <small className="topup-date">{formatDate(item.date)}</small>
+                      <strong>{formatCurrency(item.amount)}</strong>
+                      <small>Added via {item.source?.toUpperCase()}</small>
+                      <small className="topup-date">{formatDate(item.created_at)}</small>
                     </ExpertInfo>
                   </ExpertLeft>
 

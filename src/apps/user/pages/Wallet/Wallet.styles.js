@@ -809,3 +809,87 @@ export const EmptyState = styled.div`
     margin: 0 auto;
   }
 `;
+
+export const LoadingContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+  
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #8B5CF6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  p {
+    color: #6B7280;
+    font-size: 1rem;
+  }
+`;
+
+export const ErrorContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+  
+  .error-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+  }
+  
+  h3 {
+    color: #EF4444;
+    margin-bottom: 10px;
+    font-size: 1.5rem;
+  }
+  
+  p {
+    color: #6B7280;
+    margin-bottom: 20px;
+  }
+  
+  .retry-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s;
+    
+    &:hover {
+      transform: translateY(-2px);
+    }
+  }
+`;
+
+export const ErrorState = styled.div`
+  padding: 20px;
+  text-align: center;
+  color: #ff4d4f;
+  font-weight: 500;
+`;
+
+export const LoadingState = styled.div`
+  padding: 20px;
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+`;

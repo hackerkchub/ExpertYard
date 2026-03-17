@@ -61,32 +61,32 @@ export default function ExpertSidebar() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleLogout = () => {
-   try {
-     // 🧠 1️⃣ socket disconnect (VERY IMPORTANT)
-     if (socket?.connected) {
-       socket.disconnect();
-     }
- 
-     // 🧹 2️⃣ clear storage
-     localStorage.clear();
-     sessionStorage.clear();
- 
-     // 🧠 3️⃣ reset expert context
-     logoutExpert();
- 
-     // 🚀 4️⃣ redirect
-     navigate("/expert/register", { replace: true });
- 
-     // 💣 5️⃣ optional hard reload (recommended for realtime apps)
-     setTimeout(() => {
-       window.location.reload();
-     }, 50);
- 
-   } catch (err) {
-     console.error("Logout error:", err);
-   }
- };
+ const handleLogout = () => {
+  try {
+
+    if (socket?.connected) {
+      socket.disconnect();
+    }
+
+    // ❌ DO NOT CLEAR ALL
+    // localStorage.clear();
+
+    // ✅ remove only token
+    localStorage.removeItem("expert_token");
+
+    // ✅ keep panel memory
+    localStorage.setItem("last_panel", "expert");
+
+    sessionStorage.clear();
+
+    logoutExpert();
+
+    navigate("/expert/register", { replace: true });
+
+  } catch (err) {
+    console.error("Logout error:", err);
+  }
+};
  
 
   const menuItems = [

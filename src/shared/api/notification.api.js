@@ -60,3 +60,17 @@ export const saveNotification = ({
 
 export const deleteNotification = (id, userId) =>
   axios.delete(`/notifications/${id}?userId=${userId}`);
+
+
+/* 🔄 UPDATE STATUS */
+export const updateNotificationStatus = ({
+  requestId,
+  type,
+  status,
+}) => {
+  return axios.patch("/notifications/status", {
+    requestId,
+    type,
+    status,
+  });
+};

@@ -6,7 +6,7 @@ import api from "./axiosInstance";
 
 // 🔍 GET WALLET BALANCE
 export const getWalletApi = async () => {
-  const { data } = await api.get(`/wallet`);
+  const { data } = await api.get("/wallet");
   return data;
 };
 
@@ -16,5 +16,8 @@ export const addMoneyApi = async (amount) => {
   return data;
 };
 
-
-
+// 📜 WALLET HISTORY (NEW)
+export const getWalletHistoryApi = async () => {
+  const { data } = await api.get("/wallet/history");
+  return data;
+}; 

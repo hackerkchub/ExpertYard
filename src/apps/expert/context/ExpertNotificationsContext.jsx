@@ -11,7 +11,12 @@ import React, {
 
 import { socket } from "../../../shared/api/socket";
 import { useExpert } from "../../../shared/context/ExpertContext";
-import { saveNotification, getNotifications, deleteNotification } from "../../../shared/api/notification.api";
+import {
+  saveNotification,
+  getNotifications,
+  deleteNotification,
+  updateNotificationStatus
+} from "../../../shared/api/notification.api";
 import { soundManager } from "../../../shared/services/sound/soundManager";
 import { SOUNDS } from "../../../shared/services/sound/soundRegistry";
 import { onMessage } from "firebase/messaging";
@@ -34,10 +39,10 @@ const FINAL_STATES = ["missed", "rejected", "ended", "low_balance", "cancelled"]
    🔧 UTILITIES
 ===================================================== */
 const normalizeCallPayload = (data) => ({
-  callId: data.callId,
-  fromUserId: data.fromUserId,
-  user_name: data.userName || data.user_name,
-  pricePerMinute: data.pricePerMinute,
+  callId: data.callId || data.call_id,
+  fromUserId: data.fromUserId || data.caller_id,
+  user_name: data.user_name || data.userName,
+  pricePerMinute: data.pricePerMinute || data.price_per_minute,
   status: data.status || "ringing",
 });
 
@@ -53,6 +58,9 @@ export function ExpertNotificationsProvider({ children }) {
   
   // ✅ BroadcastChannel for multi-tab communication
   const broadcastChannel = useRef(null);
+
+  // 🔒 Prevent duplicate calls even after reload
+
   
   // Track if history has loaded
   const [historyLoaded, setHistoryLoaded] = useState(false);
@@ -168,8 +176,9 @@ export function ExpertNotificationsProvider({ children }) {
   ===================================================== */
   useEffect(() => {
     // Create broadcast channel once
-    broadcastChannel.current = new BroadcastChannel("expert_notifications");
-
+   if ("BroadcastChannel" in window) {
+  broadcastChannel.current = new BroadcastChannel("expert_notifications");
+}
     return () => {
       if (broadcastChannel.current) {
         broadcastChannel.current.close();
@@ -191,6 +200,11 @@ export function ExpertNotificationsProvider({ children }) {
         console.log(`⚠️ Call ${callId} notification already exists, skipping`);
         return;
       }
+
+      // ✅ Broadcast duplicate guard
+if (fromBroadcast && notificationsRef.current.some((n) => n.id === callId)) {
+  return;
+}
 
       const safeName = getSafeUserName(user_name, fromUserId);
       const isRinging = status === "ringing";
@@ -227,12 +241,14 @@ export function ExpertNotificationsProvider({ children }) {
       }
 
       // ✅ Broadcast to other tabs ONLY if this is the origin tab (ISSUE 1 FIX)
-      if (!fromBroadcast && broadcastChannel.current) {
-        broadcastChannel.current.postMessage({
-          type: "INCOMING_CALL",
-          data: { callId, fromUserId, user_name, pricePerMinute, status }
-        });
-      }
+     if (!fromBroadcast) {
+  if (broadcastChannel.current) {
+    broadcastChannel.current.postMessage({
+      type: "INCOMING_CALL",
+      data: { callId, fromUserId, user_name, pricePerMinute, status }
+    });
+  }
+}
 
       setNotifications((prev) => {
         if (prev.some((n) => n.id === callId)) return prev;
@@ -257,15 +273,37 @@ export function ExpertNotificationsProvider({ children }) {
     const channel = broadcastChannel.current;
     if (!channel) return;
 
-    const handleBroadcastMessage = (event) => {
-      console.log("📢 Broadcast message received:", event.data);
+   const handleBroadcastMessage = (event) => {
+  console.log("📢 Broadcast message received:", event.data);
 
-      if (event.data?.type === "INCOMING_CALL") {
-        // Pass fromBroadcast: true to prevent re-broadcasting (ISSUE 1 FIX)
-        createIncomingCallNotification(event.data.data, { fromBroadcast: true });
-      }
-      
-      if (event.data?.type === "NOTIFICATION_REMOVED") {
+  if (event.data?.type === "INCOMING_CALL") {
+    createIncomingCallNotification(event.data.data, { fromBroadcast: true });
+  }
+
+  if (event.data?.type === "NEW_CHAT_REQUEST") {
+    const { request_id, user_id, user_name } = event.data.data;
+
+    if (!notificationsRef.current.some((n) => n.id === request_id)) {
+      const safeName = getSafeUserName(user_name, user_id);
+
+
+      setNotifications((prev) => [
+        {
+          id: request_id,
+          type: "chat_request",
+          status: "pending",
+          title: `Chat request from ${safeName}`,
+          meta: "Tap to open",
+          unread: true,
+          payload: { request_id },
+          createdAt: Date.now(),
+        },
+        ...prev,
+      ]);
+    }
+  }
+
+  if (event.data?.type === "NOTIFICATION_REMOVED") {
         setNotifications((prev) => 
           prev.filter((n) => n.id !== event.data.notificationId)
         );
@@ -295,7 +333,7 @@ export function ExpertNotificationsProvider({ children }) {
     const handleIncomingCall = (data) => {
       createIncomingCallNotification(normalizeCallPayload(data));
     };
-
+socket.off("call:incoming");
     socket.on("call:incoming", handleIncomingCall);
 
     return () => {
@@ -309,13 +347,15 @@ export function ExpertNotificationsProvider({ children }) {
   useEffect(() => {
     if (!messaging || !expertId) return;
 
-    const unsubscribe = onMessage(messaging, (payload) => {
-      console.log("📱 FCM message received:", payload);
+   const unsubscribe = onMessage(messaging, (payload) => {
 
-      if (payload.data?.type === "CALL") {
-        createIncomingCallNotification(normalizeCallPayload(payload.data));
-      }
-    });
+  console.log("📱 FCM message received:", payload);
+
+  const type = payload.data?.type;
+
+ 
+
+});
 
     return () => unsubscribe();
   }, [expertId, createIncomingCallNotification]);
@@ -375,11 +415,68 @@ export function ExpertNotificationsProvider({ children }) {
         if (prev.some((n) => n.id === request_id)) return prev;
         return [newNotif, ...prev];
       });
-    };
+    }; 
 
     socket.on("incoming_chat_request", onIncomingChat);
     return () => socket.off("incoming_chat_request", onIncomingChat);
   }, [expertId]);
+
+
+
+  /* =====================================================
+   🔔 WINDOW EVENT CHAT REQUEST (FROM NOTIFICATION CLICK)
+===================================================== */
+
+useEffect(() => {
+
+  const handleIncomingChatFromWindow = (e) => {
+
+    const { request_id, user_name } = e.detail || {};
+
+    if (!request_id) return;
+
+    // ✅ Duplicate protection (same request already exists)
+    if (notificationsRef.current.some((n) => n.id === request_id)) {
+      return;
+    }
+
+    const safeName = getSafeUserName(user_name, request_id);
+
+    const newNotif = {
+      id: request_id,
+      type: "chat_request",
+      status: "pending",
+      title: `Chat request from ${safeName}`,
+      meta: "Tap to open",
+      unread: true,
+      payload: { request_id },
+      createdAt: Date.now(),
+    };
+
+    setNotifications((prev) => {
+
+      // ✅ Double safety (React state check)
+      if (prev.some((n) => n.id === request_id)) return prev;
+
+      return [newNotif, ...prev];
+
+    });
+
+  };
+
+  window.addEventListener(
+    "incoming_chat_request",
+    handleIncomingChatFromWindow
+  );
+
+  return () => {
+    window.removeEventListener(
+      "incoming_chat_request",
+      handleIncomingChatFromWindow
+    );
+  };
+
+}, []);
 
   /* =====================================================
      🗑️ REMOVE NOTIFICATION BY ID
@@ -398,6 +495,8 @@ export function ExpertNotificationsProvider({ children }) {
 
         // UI instant remove
         setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
+
+       
 
         // Stop sound
         soundManager.stopAll();
@@ -505,6 +604,15 @@ export function ExpertNotificationsProvider({ children }) {
     // ✅ Timer overwrite protection with full notification
     const updateStatus = (notification, status) => {
       if (!notification?.id) return;
+
+      // ✅ Backend sync for call status
+      if (notification?.payload?.callId) {
+        updateNotificationStatus({
+          requestId: notification.payload.callId,
+          type: "voice_call",
+          status
+        }).catch(() => {});
+      }
       
       setNotifications((prev) => {
         if (!prev.some((n) => n.id === notification.id)) {
@@ -525,7 +633,8 @@ export function ExpertNotificationsProvider({ children }) {
 
       if (FINAL_STATES.includes(status)) {
         // Stop ringing sound for final states
-        soundManager.stopAll();
+       
+  soundManager.stopAll();
         
         // Clear existing timer if any
         const existing = timers.current.get(notification.id);
@@ -585,6 +694,15 @@ export function ExpertNotificationsProvider({ children }) {
     // ✅ Added guard and timer overwrite protection
     const markDone = (notification, status) => {
       if (!notification?.id) return;
+
+      // ✅ Backend sync for chat status
+      if (notification?.payload?.request_id) {
+        updateNotificationStatus({
+          requestId: notification.payload.request_id,
+          type: "chat_request",
+          status
+        }).catch(() => {});
+      }
       
       setNotifications((prev) => {
         if (!prev.some((n) => n.id === notification.id)) return prev;
@@ -640,8 +758,11 @@ export function ExpertNotificationsProvider({ children }) {
         });
 
         // ✅ Smart ID mapping to prevent duplicates
-        const mapped = (res.data || []).map((n) => {
-          const meta = n.meta || {};
+       const mapped = (Array.isArray(res.data) ? res.data : []).map((n) => {
+      const meta =
+  typeof n.meta === "string"
+    ? JSON.parse(n.meta)
+    : n.meta || {};
           // Use request_id or callId from meta as local ID, fallback to DB ID
           const localId = meta.request_id || meta.callId || n.id;
 
@@ -649,7 +770,9 @@ export function ExpertNotificationsProvider({ children }) {
             id: localId,                    // Local ID for UI matching
             dbId: n.id,                      // DB ID for delete
             type: n.type,
-            status: n.status || "missed",
+            status:
+  n.status ||
+  (n.type === "chat_request" ? "pending" : "missed"),
             title: n.title,
             meta: n.message,
             unread: !n.is_read,
@@ -670,10 +793,12 @@ export function ExpertNotificationsProvider({ children }) {
             } else {
               // Optional: Update DB fields without overwriting live status
               const existing = liveMap.get(n.id);
-              if (existing && existing.status === "ringing") {
-                // Keep live ringing, don't overwrite with DB missed
-                return;
-              }
+             if (
+  existing &&
+  (existing.status === "ringing" || existing.status === "pending")
+) {
+  return;
+}
               liveMap.set(n.id, { ...existing, ...n, unread: existing.unread });
             }
           });
@@ -723,6 +848,13 @@ export function ExpertNotificationsProvider({ children }) {
     }
 
     if (notification.type === "chat_request") {
+      // ✅ Backend sync for chat accept
+      updateNotificationStatus({
+        requestId: notification.payload.request_id,
+        type: "chat_request",
+        status: "accepted"
+      }).catch(() => {});
+
       socket.emit("accept_chat", {
         request_id: notification.payload.request_id,
       });
@@ -735,6 +867,13 @@ export function ExpertNotificationsProvider({ children }) {
     if (!notification) return;
 
     if (notification.type === "chat_request") {
+      // ✅ Backend sync for chat reject
+      updateNotificationStatus({
+        requestId: notification.payload.request_id,
+        type: "chat_request",
+        status: "rejected"
+      }).catch(() => {});
+
       socket.emit("reject_chat", {
         request_id: notification.payload.request_id,
       });
@@ -751,6 +890,13 @@ export function ExpertNotificationsProvider({ children }) {
         });
       }
       
+      // ✅ Backend sync for call reject
+      updateNotificationStatus({
+        requestId: notification.payload.callId,
+        type: "voice_call",
+        status: "rejected"
+      }).catch(() => {});
+
       socket.emit("call:reject", {
         callId: notification.payload.callId,
       });

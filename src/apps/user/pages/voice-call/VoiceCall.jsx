@@ -252,14 +252,12 @@ return () => {
       closePeer();
     };
 
-   const onOffline = ({ callId }) => {
+  const onOffline = ({ message }) => {
   soundManager.stopAll();
-  console.log("🔴 Expert offline");
 
-  setCallId(callId || null);
   setCallState("offline");
 
-  closePeer();
+  alert(message || "Expert is offline. Please try again later.");
 };
 
     const onEnded = ({ reason }) => {
@@ -287,6 +285,23 @@ return () => {
       closePeer();
     };
   }, [socket, handleWebRTCOffer]);
+
+  useEffect(() => {
+  const handleExpertOnline = ({ expertId }) => {
+    console.log("🟢 Expert now online");
+
+    // 🔥 BEST UX
+    if (callStateRef.current === "offline") {
+      setTimeout(() => {
+        socket.emit(CALL_EVENTS.START, { expertId });
+      }, 1000);
+    }
+  };
+
+  socket.on("expert_now_online", handleExpertOnline);
+
+  return () => socket.off("expert_now_online", handleExpertOnline);
+}, [socket]);
 
   // Reconnect handler
   useEffect(() => {

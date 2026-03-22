@@ -1,3 +1,4 @@
+
 // 🎨 POLISHED PREMIUM VERSION - FULLY RESPONSIVE with Call History
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -8,7 +9,6 @@ import {
   FiChevronDown,
   FiSearch,
   FiX,
-  FiDollarSign,
   FiUser,
   FiCalendar,
   FiMessageCircle,
@@ -56,7 +56,6 @@ import {
   TabButton,
   MobileSummaryToggle,
   ResponsiveGrid,
-  CallTypeBadge,
   StatusBadge,
 } from "./ExpertChatHistory.styles";
 
@@ -89,7 +88,7 @@ const getAvatarUrl = (name, avatar) => {
     avatar ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(
       name || "User"
-    )}&background=4a70eb&color=fff`
+    )}&background=0a66c2&color=fff`
   );
 };
 
@@ -98,8 +97,8 @@ const STATUS_CONFIG = {
   completed: {
     label: 'Completed',
     icon: FiCheckCircle,
-    color: '#10b981',
-    bgColor: 'rgba(16, 185, 129, 0.1)'
+    color: '#0a66c2',
+    bgColor: 'rgba(10, 102, 194, 0.1)'
   },
   missed: {
     label: 'Missed',
@@ -116,14 +115,14 @@ const STATUS_CONFIG = {
   accepted: {
     label: 'In Progress',
     icon: FiPhone,
-    color: '#3b82f6',
-    bgColor: 'rgba(59, 130, 246, 0.1)'
+    color: '#0a66c2',
+    bgColor: 'rgba(10, 102, 194, 0.1)'
   },
   ended: {
     label: 'Completed',
     icon: FiCheckCircle,
-    color: '#10b981',
-    bgColor: 'rgba(16, 185, 129, 0.1)'
+    color: '#0a66c2',
+    bgColor: 'rgba(10, 102, 194, 0.1)'
   }
 };
 
@@ -334,25 +333,20 @@ const ExpertChatHistory = () => {
   }, [expertData?.expert_id, expertData?.expertId, activeCallSubTab]);
 
   useEffect(() => {
+    // push dummy history state
+    window.history.pushState(null, "", window.location.href);
 
-  // push dummy history state
-  window.history.pushState(null, "", window.location.href);
+    const handleBack = () => {
+      navigate("/expert/home", { replace: true });
+    };
 
-  const handleBack = () => {
+    window.addEventListener("popstate", handleBack);
 
-    navigate("/expert/home", { replace: true });
+    return () => {
+      window.removeEventListener("popstate", handleBack);
+    };
+  }, [navigate]);
 
-  };
-
-  window.addEventListener("popstate", handleBack);
-
-  return () => {
-
-    window.removeEventListener("popstate", handleBack);
-
-  };
-
-}, [navigate]);
   // Fetch data based on active tab
   useEffect(() => {
     if (activeMainTab === 'chat') {
@@ -566,7 +560,7 @@ const ExpertChatHistory = () => {
         }
         
         .gradient-text {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #0a66c2 0%, #0a66c2 100%);
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent;
@@ -574,15 +568,15 @@ const ExpertChatHistory = () => {
         }
         
         .premium-card {
-          background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-          border: 1px solid rgba(139, 92, 246, 0.1);
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+          background: white;
+          border: 1px solid #dbdbdb;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
           transition: all 0.3s ease;
         }
         
         .premium-card:hover {
           transform: translateY(-2px);
-          box-shadow: 0 8px 30px rgba(139, 92, 246, 0.12);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
         
         .call-type-badge {
@@ -596,8 +590,8 @@ const ExpertChatHistory = () => {
         }
         
         .call-type-badge.voice {
-          background: rgba(14, 165, 233, 0.1);
-          color: #0ea5e9;
+          background: rgba(10, 102, 194, 0.1);
+          color: #0a66c2;
         }
         
         .call-type-badge.video {
@@ -622,7 +616,7 @@ const ExpertChatHistory = () => {
                 </span>
               </Title>
               <p style={{ 
-                color: '#64748b', 
+                color: '#8e8e8e', 
                 marginTop: 8, 
                 fontSize: windowWidth < 640 ? 13 : 14 
               }}>
@@ -644,8 +638,8 @@ const ExpertChatHistory = () => {
                 {activeMainTab === 'chat' ? (
                   <>
                     <StatCard>
-                      <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
-                        <HiUsers color="#8b5cf6" />
+                      <div className="stat-icon" style={{ background: 'rgba(10, 102, 194, 0.1)' }}>
+                        <HiUsers color="#0a66c2" />
                       </div>
                       <div className="stat-content">
                         <span className="stat-value">{chatSummary.totalUsers}</span>
@@ -674,8 +668,8 @@ const ExpertChatHistory = () => {
                     </StatCard>
                     
                     <StatCard primary>
-                      <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
-                        <FaIndianRupeeSign color="#8b5cf6" />
+                      <div className="stat-icon" style={{ background: 'rgba(10, 102, 194, 0.1)' }}>
+                        <FaIndianRupeeSign color="#0a66c2" />
                       </div>
                       <div className="stat-content">
                         <span className="stat-value">₹{(chatSummary.expertEarn || 0).toFixed(0)}</span>
@@ -686,8 +680,8 @@ const ExpertChatHistory = () => {
                 ) : (
                   <>
                     <StatCard>
-                      <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
-                        <IoMdCall color="#8b5cf6" />
+                      <div className="stat-icon" style={{ background: 'rgba(10, 102, 194, 0.1)' }}>
+                        <IoMdCall color="#0a66c2" />
                       </div>
                       <div className="stat-content">
                         <span className="stat-value">{callSummary.totalCalls}</span>
@@ -716,8 +710,8 @@ const ExpertChatHistory = () => {
                     </StatCard>
                     
                     <StatCard primary>
-                      <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
-                        <FaIndianRupeeSign color="#8b5cf6" />
+                      <div className="stat-icon" style={{ background: 'rgba(10, 102, 194, 0.1)' }}>
+                        <FaIndianRupeeSign color="#0a66c2" />
                       </div>
                       <div className="stat-content">
                         <span className="stat-value">₹{(callSummary.totalEarnings || 0).toFixed(0)}</span>
@@ -873,10 +867,10 @@ const ExpertChatHistory = () => {
                       premium
                     >
                       <div className="chat-header-content">
-                        <Avatar
+                        {/* <Avatar
                           premium
                           src={getAvatarUrl(c.username, c.user_avatar)}
-                        />
+                        /> */}
                         
                         <div className="user-info">
                           <div className="user-name-section">

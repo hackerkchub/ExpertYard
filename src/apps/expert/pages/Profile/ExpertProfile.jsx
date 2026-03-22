@@ -96,7 +96,7 @@ export default function ExpertProfile() {
     type: null
   });
 
-  const expertId = expertData?.expertId || expertData?.id;
+const expertId = expertData?.expertId || expertData?.id;
   
 const draftRef = useRef();
 

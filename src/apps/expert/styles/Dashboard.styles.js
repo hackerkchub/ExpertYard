@@ -1,314 +1,215 @@
-// src/apps/expert/styles/Dashboard.styles.js
-
 import styled from "styled-components";
 
-/* ===== Container Layout ===== */
+/* LinkedIn + Instagram Mix Layout */
 export const Layout = styled.div`
   display: flex;
   width: 100%;
   min-height: 100vh;
-  background: #f7f9fc; /* Light background */
-  color: #0f182a;
-  font-family: 'Inter', sans-serif;
+  background-color: #f3f2ef; /* LinkedIn Soft Background */
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 `;
 
-/* ===== Sidebar (kept dark for contrast) ===== */
-export const SidebarWrap = styled.aside`
-  width: 260px;
-  min-width: 260px;
-  height: calc(100vh - 64px);
-  background: rgba(12, 17, 22, 0.85);
-  border-right: 1px solid rgba(255,255,255,0.08);
-  backdrop-filter: blur(12px);
-  display: flex;
-  flex-direction: column;
-  padding: 24px 16px;
-  position: fixed;
-  top: 64px;
-  left: 0;
-  z-index: 1200;
-
-  @media(max-width: 768px) {
-    transform: translateX(${({ open }) => (open ? "0" : "-100%")});
-    transition: 0.28s ease;
-  }
-`;
-
-/* ===== Center Content ===== */
-export const MainContent = styled.div`
+export const MainContent = styled.main`
   flex: 1;
   display: flex;
   flex-direction: column;
-  margin-left: 50px;
-  width: calc(100% - 50px);
-  transition: margin-left 0.28s ease;
+  padding-top: 70px; /* Topbar height */
+  min-width: 0;
+  
+  /* Desktop Sidebar Space */
+  margin-left: 244px; 
 
-  @media(max-width: 768px) {
-    margin-left: 0;
-    width: 100%;
+  @media (max-width: 1024px) {
+    margin-left: 0; /* Mobile par sidebar hide hota hai */
+    padding-top: 64px;
   }
 `;
 
-
-/* ===== Inner Page ===== */
 export const ContentInner = styled.div`
-  padding: 32px 40px;
-  flex: 1;
+  padding: 24px;
+  width: 100%;
+  max-width: 1128px; /* LinkedIn standard width */
+  margin: 0 auto; /* ✅ Center Align Desktop Content */
 
-  @media(max-width: 768px) {
-    padding: 24px 16px;
+  @media (max-width: 768px) {
+    padding: 16px 12px; /* Mobile par clean padding */
   }
 `;
 
 export const Welcome = styled.h2`
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 600;
-  margin-bottom: 26px;
-  color: #0f182a;
+  color: #000000;
+  margin-bottom: 24px;
+  letter-spacing: -0.02em;
+
+  @media (max-width: 768px) {
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
 `;
 
-/* ===== Stats ===== */
+/* Stats Grid - Instagram Insight Style */
 export const StatsRow = styled.div`
-  display: flex;
-  gap: 20px;
-  margin-bottom: 28px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* Desktop: 4 Columns */
+  gap: 16px;
+  margin-bottom: 24px;
 
-  @media(max-width: 768px) {
-    flex-direction: column;
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr); /* Tablet: 2 Columns */
+  }
+
+  @media (max-width: 480px) {
+    gap: 8px; /* Mobile par kam space */
   }
 `;
 
 export const StatCard = styled.div`
-  flex: 1;
-  background: rgba(255,255,255,0.75);
-  backdrop-filter: blur(18px);
-  border: 1px solid rgba(18,18,18,0.06);
-  border-radius: 14px;
-  padding: 20px 24px;
-  box-shadow: 0 4px 18px rgba(0,0,0,0.04);
-  transition: 0.25s ease;
+  background: #ffffff;
+  border: 1px solid #dbdbdb; /* Instagram-ish border */
+  border-radius: 12px;
+  padding: 20px;
+  transition: transform 0.2s;
 
   &:hover {
-    box-shadow: 0 6px 24px rgba(0,0,0,0.06);
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   }
-
+  
   span {
-    font-size: 14px;
-    color: #5e6a7b;
+    font-size: 13px;
+    color: #737373; /* Instagram Grey */
+    font-weight: 500;
+    display: block;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   h2 {
-    margin: 10px 0 0;
-    font-size: 26px;
+    margin: 0;
+    font-size: 28px;
+    color: #000000;
     font-weight: 700;
-    color: #0f182a;
+  }
+
+  @media (max-width: 480px) {
+    padding: 16px;
+    h2 { font-size: 22px; }
   }
 `;
 
-/* ===== Queue Card ===== */
+/* Queue Card Section - Clean LinkedIn Look */
 export const QueueCardWrap = styled.div`
-  background: rgba(255,255,255,0.75);
-  border-radius: 14px;
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(18,18,18,0.06);
-  box-shadow: 0 4px 18px rgba(0,0,0,0.04);
-  margin-bottom: 32px;
-  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #dbdbdb;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
 `;
 
 export const QueueTabs = styled.div`
   display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
+  border-bottom: 1px solid #dbdbdb;
+  padding: 0 8px;
+  background: #fff;
 
   button {
-    background: transparent;
+    background: none;
     border: none;
-    padding: 8px 16px;
-    border-radius: 20px;
+    padding: 16px 20px;
     font-size: 14px;
-    color: #4b5563;
-    cursor: pointer;
-    transition: 0.2s ease;
-    font-weight: 500;
-  }
-
-  .active {
-    background: rgba(14,165,255,0.1);
-    color: #0ea5ff;
-  }
-`;
-
-// export const QueueItem = styled.div`
-//   border-bottom: 1px solid rgba(18,18,18,0.06);
-//   padding: 14px 0;
-//   display: flex;
-//   justify-content: space-between;
-
-//   span {
-//     font-size: 14px;
-//     color: #4b5563;
-//   }
-
-//   &:last-child {
-//     border-bottom: none;
-//   }
-// `;
-
-export const ActionBtn = styled.button`
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-size: 13px;
-  cursor: pointer;
-  font-weight: 500;
-  border: none;
-  color: white;
-  background: linear-gradient(90deg,#0ea5ff,#38bdf8);
-  transition: 0.2s ease;
-
-  &:hover {
-    opacity: 0.9;
-  }
-`;
-
-/* ===== Feed and Widget ===== */
-export const FeedArea = styled.div`
-  display: flex;
-  gap: 20px;
-
-  @media(max-width: 768px) {
-    flex-direction: column;
-  }
-`;
-
-export const FeedCardWrap = styled.div`
-  flex: 2;
-  background: rgba(255,255,255,0.75);
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(18,18,18,0.06);
-  padding: 24px;
-  border-radius: 14px;
-  box-shadow: 0 4px 18px rgba(0,0,0,0.04);
-`;
-
-export const WidgetCardWrap = styled.div`
-  flex: 1;
-  background: rgba(255,255,255,0.75);
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(18,18,18,0.06);
-  padding: 24px;
-  border-radius: 14px;
-  box-shadow: 0 4px 18px rgba(0,0,0,0.04);
-`;
-
-export const WidgetInput = styled.textarea`
-  background: #ffffff;
-  border: 1px solid rgba(18,18,18,0.06);
-  border-radius: 10px;
-  color: #111827;
-  padding: 10px;
-  width: 100%;
-  height: 90px;
-  resize: none;
-  font-size: 14px;
-
-  &:focus {
-    outline: 2px solid #0ea5ff;
-  }
-`;
-
-export const WidgetActions = styled.div`
-  margin-top: 14px;
-
-  button {
-    background: linear-gradient(90deg, #0ea5ff, #38bdf8);
-    color: #fff;
-    padding: 10px 20px;
-    border-radius: 10px;
     font-weight: 600;
-    font-size: 14px;
-    border: none;
+    color: #737373;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+
+    &:hover { color: #000; }
+
+    &.active {
+      color: #000000;
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: #000000; /* Active tab underline black */
+      }
+    }
   }
-`;
-
-export const RedDot = styled.span`
-  width: 8px;
-  height: 8px;
-  background: #ef4444;
-  border-radius: 50%;
-  display: inline-block;
-  margin-left: 6px;
-`;
-
-// src/apps/expert/pages/styles/Dashboard.styles.js me add karo:
-
-export const LiveRequests = styled.div`
-  background: ${({ theme }) => theme.white || "#fff"};
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 24px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-`;
-
-export const RequestCount = styled.div`
-  font-size: 24px;
-  font-weight: 700;
-  color: #0f172a;
-  background: linear-gradient(135deg, #10b981, #059669);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-`;
-
-export const NotificationBell = styled.div`
-  background: ${({ theme }) => theme.white || "#fff"};
-  border: 1px solid #10b981;
-  border-radius: 12px;
-  padding: 16px 20px;
-  margin-bottom: 24px;
-  text-align: center;
-  
-  strong {
-    color: #10b981;
-    font-weight: 700;
-  }
-`;
-
-// Dashboard.styles.js में add करें:
-export const StatusBadge = styled.span`
-  padding: 4px 10px;
-  background: ${props => 
-    props.status === "pending" ? "#dbeafe" : 
-    props.status === "cancelled" ? "#fecaca" : "#fed7aa"
-  };
-  color: ${props => 
-    props.status === "pending" ? "#1e40af" : 
-    props.status === "cancelled" ? "#dc2626" : "#d97706"
-  };
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-  margin-left: 8px;
-  display: inline-block;
 `;
 
 export const QueueItem = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
-  border-radius: 12px;
-  background: white;
-  margin-bottom: 12px;
-  border-left: 4px solid #e2e8f0;
-  transition: all 0.3s ease;
+  padding: 16px 20px;
+  border-bottom: 1px solid #efefef;
+  transition: background 0.2s;
 
+  &:hover { background: #fafafa; }
+  &:last-child { border-bottom: none; }
+  
   &.cancelled {
-    border-left-color: #ef4444;
-    background: #fef2f2;
+    background: #fafafa;
     opacity: 0.7;
+    text-decoration: line-through;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px;
+    flex-direction: column; /* Mobile par stack ho jayega */
+    align-items: flex-start;
+    gap: 10px;
   }
 `;
 
+/* Instagram Style Action Button */
+export const ActionBtn = styled.button`
+  background: #0095f6; /* Instagram Blue */
+  border: none;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #1877f2;
+  }
+
+  &:active {
+    opacity: 0.7;
+  }
+
+  @media (max-width: 480px) {
+    width: 100%; /* Mobile par full width */
+    text-align: center;
+  }
+`;
+
+/* RedDot */
+export const RedDot = styled.span`
+  width: 8px;
+  height: 8px;
+  background: #ff3b30;
+  border-radius: 50%;
+  display: inline-block;
+  margin-left: 6px;
+`;
+
+/* Modern Status Badge */
+export const StatusBadge = styled.span`
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: ${props => props.status === 'pending' ? '#fff9e6' : '#f1f5f9'};
+  color: ${props => props.status === 'pending' ? '#b45309' : '#475569'};
+`;

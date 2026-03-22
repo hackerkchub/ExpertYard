@@ -13,7 +13,7 @@
 
    /* --- HERO SECTION BASE --- */
 .hero-section {
-  padding: 80px 20px;
+  padding: 30px 20px;
   background: radial-gradient(circle at 0% 0%, rgba(10, 102, 194, 0.05) 0%, transparent 50%),
               radial-gradient(circle at 100% 100%, rgba(102, 126, 234, 0.05) 0%, transparent 50%);
   overflow: hidden;
@@ -240,8 +240,8 @@ category css
 
 /* The Icon Container (The "Circle/Square" background) */
 .category-icon {
-  width: 80px;  /* Smaller, standard size */
-  height: 80px;
+  width: 100px;  /* Smaller, standard size */
+  height: 100px;
   background: #f0edff;
   border-radius: 16px; /* Soft rounded corners */
   display: flex;
@@ -258,8 +258,8 @@ category css
 }
 
 .category-icon img {
-  width: 60%; /* Image doesn't touch the edges */
-  height: 60%;
+  width: 85%; /* Image doesn't touch the edges */
+  height: 85%;
   object-fit: contain;
 }
 
@@ -285,14 +285,14 @@ category css
   }
 
   .category-icon {
-    width: 65px; /* Smaller icons for mobile */
-    height: 65px;
+    width: 75px; /* Smaller icons for mobile */
+    height: 75px;
     border-radius: 12px;
   }
 
   .category-card p {
-    font-size: 12px;
-    font-weight: 400;
+    font-size: 15px;
+    font-weight: 600;
   }
 }
 
@@ -613,7 +613,7 @@ category css
 
 /* Content Inside Card */
 .step-content h4 {
-  font-size: 1.1rem;
+  font-size: 18px;
   font-weight: 600;
   color:#000000 ;
   margin-bottom: 12px;
@@ -621,7 +621,7 @@ category css
 }
 
 .step-content p {
-  font-size: 0.9rem;
+  font-size: 18px;
   line-height: 1.5;
   margin: 0;
 font-family: -apple-system, system-ui, sans-serif;
@@ -674,14 +674,14 @@ font-family: -apple-system, system-ui, sans-serif;
   }
 
   .step-content h4 {
-    font-size: 1rem;
+    font-size: 18px;
     margin-bottom: 4px;
     font-family: -apple-system, system-ui, sans-serif;
     color:#000000
   }
 
   .step-content p {
-    font-size: 0.85rem;
+    font-size: 18px;
     font-family: -apple-system, system-ui, sans-serif;
     color:#000000
   }

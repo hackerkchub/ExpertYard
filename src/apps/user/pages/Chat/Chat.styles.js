@@ -9,8 +9,18 @@ export const ChatGlobalStyle = createGlobalStyle`
     background-color: #f4f2ee;
   }
 
-  /* Footer/Header ko force hide karein chat screen par */
-  .main-layout footer, .footer, header {
+  /* ✅ Navbar aur Spacer ko force hide karne ke liye */
+  nav, 
+  header, 
+  .main-layout footer, 
+  .footer,
+  [class*="NavbarSpacer"], /* Spacer component ko target karne ke liye */
+  header + div { 
+    display: none !important;
+  }
+
+  /* Specific Nav class agar styled component name use ho raha ho */
+  .sc-nav, .nav-container { 
     display: none !important;
   }
 `;
@@ -24,20 +34,20 @@ export const PageWrap = styled.div`
   width: 100%;
   background: #f4f2ee;
   position: fixed;
-  top: 0;
+  top: 0; /* Page ke ekdum top se start hoga */
   left: 0;
-  z-index: 9999;
+  z-index: 9999; /* Isse navbar iske niche chup jayega */
 `;
 
 export const Header = styled.div`
-  height: 200px;
+  height: 60px; /* Header height fix ki hai taaki clean dikhe */
   background: white;
   border-bottom: 1px solid rgba(0,0,0,0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 12px;
-  flex-shrink: 0; /* Header apni jagah fix rahega */
+  flex-shrink: 0; 
   
   @media (max-width: 480px) {
     height: 55px;
@@ -59,7 +69,7 @@ export const ExpertInfo = styled.div`
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100px; /* Mobile par naam chhota dikhega */
+    max-width: 120px; 
     
     @media (min-width: 768px) {
       max-width: 200px;
@@ -98,7 +108,6 @@ export const StatusDot = styled.span`
   border: 1.5px solid white;
 `;
 
-/* TIMER VIEW FIX */
 export const TimerContainer = styled.div`
   display: flex;
   align-items: center;
@@ -115,12 +124,12 @@ export const TimerContainer = styled.div`
   @media (max-width: 360px) {
     font-size: 11px;
     padding: 3px 6px;
-    span { display: none; } /* Chhote mobile par clock icon hide */
+    span { display: none; } 
   }
 `;
 
 export const MessagesArea = styled.div`
-  flex: 1; /* Ye area baki bachi hui jagah lega */
+  flex: 1; 
   overflow-y: auto;
   padding: 12px;
   display: flex;
@@ -163,7 +172,6 @@ export const MessageTime = styled.div`
   text-align: right;
 `;
 
-/* INPUT BAR FIX - Mobile par humesha upar rahega */
 export const InputBar = styled.div`
   background: white;
   border-top: 1px solid rgba(0,0,0,0.1);
@@ -171,7 +179,7 @@ export const InputBar = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-shrink: 0; /* Isse bar gayab nahi hoga */
+  flex-shrink: 0; 
   padding-bottom: max(8px, env(safe-area-inset-bottom));
 `;
 
@@ -184,7 +192,7 @@ export const InputBox = styled.input`
   border-radius: 20px;
   font-size: 14px;
   outline: none;
-  width: 100%; /* Important for mobile */
+  width: 100%;
 
   &:focus {
     background: white;
@@ -217,7 +225,6 @@ export const UploadButton = styled.button`
   flex-shrink: 0;
 `;
 
-/* Baaki zaruri exports taaki error na aaye */
 export const EndChatButton = styled.button`
   background: #ef4444;
   color: white;

@@ -221,7 +221,7 @@ export const LinkList = styled.ul`
 export const FooterLink = styled(Link)`
   display: flex;
   text-decoration: none;
-  font-size: 14px;
+  font-size: 16px;
   color: #191515ff;
   font-family: -apple-system, system-ui, sans-serif;
   transition: all 0.3s ease;
@@ -259,7 +259,7 @@ export const FooterLink = styled(Link)`
   }
 
   ${media.minSm} {
-    font-size: 14px;
+    font-size: 16px;
 
     
     &:hover {
@@ -268,12 +268,12 @@ export const FooterLink = styled(Link)`
   }
 
   ${media.minMd} {
-    font-size: 14px;
+    font-size: 16px;
   
   }
 
   ${maxWidth(breakpoints.xs)} {
-    font-size: 14px;
+    font-size: 16px;
     padding: 0.5rem 0.75rem;
     margin-bottom: 0.375rem;
     
@@ -289,7 +289,7 @@ export const FooterLink = styled(Link)`
   }
 
   @media (max-width: ${breakpoints.sm}) {
-    font-size: 14px;
+    font-size: 16px;
   }
 `;
 

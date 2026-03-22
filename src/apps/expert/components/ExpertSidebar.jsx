@@ -93,9 +93,7 @@ export default function ExpertSidebar() {
     { path: "/expert", icon: FiHome, label: "Dashboard", exact: true },
     { path: "/expert/my-content", icon: FiFileText, label: "My Content" },
     { path: "/expert/chat-history", icon: FiMessageSquare, label: "Chat History" },
-    { path: "/expert/calendar", icon: FiCalendar, label: "Calendar" },
     { path: "/expert/earnings", icon: FiBarChart2, label: "Earnings" },
-    { path: "/expert/settings", icon: FiSettings, label: "Settings" },
   ];
 
   return (
@@ -147,16 +145,7 @@ export default function ExpertSidebar() {
             Profile
           </NavItem>
 
-          <NavItem to="/expert/notifications">
-            <IconWrap>
-              <FiBell />
-              {/* {notifications > 0 && (
-                <NotificationBadge>{notifications}</NotificationBadge>
-              )} */}
-            </IconWrap>
-            Notifications
-          </NavItem>
-
+          
           <NavItem as="div" onClick={handleLogout} style={{ cursor: 'pointer' }}>
             <IconWrap>
               <FiLogOut />
@@ -164,44 +153,7 @@ export default function ExpertSidebar() {
             Logout
           </NavItem>
         </NavList>
-
-        {/* Enhanced Status Indicator */}
-        <SidebarStatus>
-          <StatusHeader>
-            <StatusLabel>Status</StatusLabel>
-            <StatusDot />
-          </StatusHeader>
-          
-          <StatusText>
-            {onlineStatus === 'online' ? 'Online & Available' : 'Away'}
-          </StatusText>
-          
-          <StatusSubtext>
-            <FiClock />
-            Ready to accept chats
-          </StatusSubtext>
-
-          {/* Quick Stats */}
-          <div style={{ 
-            display: 'flex', 
-            gap: '12px', 
-            marginTop: '12px',
-            paddingTop: '12px',
-            borderTop: '1px solid rgba(255,255,255,0.05)'
-          }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '11px', color: '#64748b' }}>Today</div>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: '#e2e8f0' }}>
-                <FiDollarSign style={{ display: 'inline', marginRight: 2 }} />
-                2.4k
-              </div>
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '11px', color: '#64748b' }}>Sessions</div>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: '#e2e8f0' }}>12</div>
-            </div>
-          </div>
-        </SidebarStatus>
+        
       </SidebarWrap>
     </>
   );

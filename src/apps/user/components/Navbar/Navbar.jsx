@@ -34,7 +34,7 @@ const Navbar = () => {
           <RightActions>
             <IconBox>
               {/* Desktop Icons */}
-              <button onClick={() => navigate("/")} title="Home"><FiHome /></button>
+              <button onClick={() => navigate("/user/")} title="Home"><FiHome /></button>
               <button onClick={() => navigate("/user/my-offers")} title="Offers"><FiGift /></button>
               <button onClick={() => navigate("/user/chat-history")} title="Messages"><FiMessageSquare /></button>
               
@@ -73,7 +73,6 @@ const Navbar = () => {
             <MobileItem onClick={() => handleNav("/user/wallet")}><FaWallet /> Wallet</MobileItem>
             {isLoggedIn ? (
               <>
-                <MobileItem onClick={() => handleNav("/user/profile")}><FiUser /> Profile</MobileItem>
                 <MobileItem onClick={() => { logout(); setOpen(false); }}><FiLogOut color="#ef4444"/> Logout</MobileItem>
               </>
             ) : (

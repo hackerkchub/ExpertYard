@@ -19,10 +19,10 @@ export default function Hero() {
             Real solutions, real conversations, real results.
           </p>
 
-          <div className="hero-actions">
+          {/* <div className="hero-actions">
             <button className="btn-solid">Start Free Chat</button>
             <button className="btn-outline-blue">Talk to Expert</button>
-          </div>
+          </div> */}
 
           <div className="popular-tags">
             <span>Popular:</span>

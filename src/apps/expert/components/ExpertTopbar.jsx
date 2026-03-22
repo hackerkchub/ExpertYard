@@ -148,9 +148,7 @@ useEffect(() => {
   const mobileNavItems = [
     { icon: FiHome, label: "Dashboard", path: "/expert" },
     { icon: FiFileText, label: "My Content", path: "/expert/my-content" },
-    { icon: FiCalendar, label: "Calendar", path: "/expert/calendar" },
     { icon: FiBarChart2, label: "Earnings", path: "/expert/earnings" },
-    { icon: FiSettings, label: "Settings", path: "/expert/settings" },
   ];
 
   const isActivePath = (path) => location.pathname === path;
@@ -181,7 +179,7 @@ const hasRingingCall = notifications.some(
           </Brand>
 
           {/* DESKTOP SEARCH - SIMPLIFIED */}
-          <SearchWrap ref={searchRef}>
+          {/* <SearchWrap ref={searchRef}>
             <SearchRow>
               <SearchBox
                 placeholder="Search clients..."
@@ -189,7 +187,7 @@ const hasRingingCall = notifications.some(
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </SearchRow>
-          </SearchWrap>
+          </SearchWrap> */}
         </LeftBlock>
 
         <RightActions>

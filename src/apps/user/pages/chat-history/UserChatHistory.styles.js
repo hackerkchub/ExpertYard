@@ -11,20 +11,22 @@ const spin = keyframes`
 
 export const PremiumContainer = styled.div`
   min-height: 100vh;
-  background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%);
+  background: #F4F2EE;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #191919;
 `;
 
 export const PageContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
-  padding: 100px 24px;
+  padding: 25px 20px;
 
   @media (max-width: 768px) {
-    padding: 100px 16px;
+    padding: 30px 16px;
   }
 
   @media (max-width: 480px) {
-    padding: 100px 12px;
+    padding: 25px 12px;
   }
 `;
 
@@ -39,7 +41,7 @@ export const Header = styled.div`
 export const Title = styled.h1`
   font-size: 32px;
   font-weight: 700;
-  color: #0f172a;
+  color: #191919;
   display: flex;
   align-items: center;
   margin-bottom: 8px;
@@ -70,7 +72,7 @@ export const TabContainer = styled.div`
   display: flex;
   gap: 16px;
   margin: 24px 0 16px;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid #E9E5DF;
   padding-bottom: 12px;
 
   @media (max-width: 480px) {
@@ -84,18 +86,18 @@ export const TabButton = styled.button`
   align-items: center;
   gap: 8px;
   padding: 10px 28px;
-  background: ${props => props.active ? '#0ea5e9' : 'transparent'};
-  color: ${props => props.active ? 'white' : '#64748b'};
+  background: ${props => props.active ? '#0A66C2' : 'transparent'};
+  color: ${props => props.active ? 'white' : '#666666'};
   border: none;
-  border-radius: 30px;
+  border-radius: 24px;
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    background: ${props => props.active ? '#0ea5e9' : '#f1f5f9'};
-    color: ${props => props.active ? 'white' : '#0f172a'};
+    background: ${props => props.active ? '#0A66C2' : '#F3F2F0'};
+    color: ${props => props.active ? 'white' : '#191919'};
   }
 
   @media (max-width: 768px) {
@@ -127,9 +129,9 @@ export const MobileSummaryToggle = styled.button`
   gap: 8px;
   padding: 8px 16px;
   background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 30px;
-  color: #0ea5e9;
+  border: 1px solid #E9E5DF;
+  border-radius: 24px;
+  color: #0A66C2;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -146,11 +148,11 @@ export const MobileSummaryToggle = styled.button`
 `;
 
 export const SummaryCard = styled.div`
-  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  background: white;
   border-radius: 20px;
   padding: 20px 24px;
-  border: 1px solid rgba(14, 165, 233, 0.1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #E9E5DF;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   min-width: 300px;
 
   @media (max-width: 768px) {
@@ -163,7 +165,7 @@ export const SummaryCard = styled.div`
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #0ea5e9;
+    color: #0A66C2;
     font-weight: 600;
     margin-bottom: 16px;
     font-size: 14px;
@@ -185,7 +187,7 @@ export const SummaryCard = styled.div`
     display: block;
     font-size: 20px;
     font-weight: 700;
-    color: #0f172a;
+    color: #191919;
 
     @media (max-width: 480px) {
       font-size: 16px;
@@ -194,7 +196,7 @@ export const SummaryCard = styled.div`
 
   .stat-label {
     font-size: 12px;
-    color: #64748b;
+    color: #666666;
 
     @media (max-width: 480px) {
       font-size: 10px;
@@ -205,9 +207,9 @@ export const SummaryCard = styled.div`
     display: flex;
     justify-content: space-between;
     padding-top: 12px;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid #E9E5DF;
     font-size: 12px;
-    color: #64748b;
+    color: #666666;
     gap: 8px;
     flex-wrap: wrap;
   }
@@ -243,23 +245,23 @@ export const StatCard = styled.div`
   display: flex;
   align-items: center;
   gap: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(14, 165, 233, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #E9E5DF;
   transition: all 0.3s ease;
 
   ${props => props.accent && `
-    background: linear-gradient(145deg, #ffffff, #f0f9ff);
-    border-left: 4px solid #0ea5e9;
+    background: white;
+    border-left: 4px solid #0A66C2;
   `}
 
   ${props => props.primary && `
-    background: linear-gradient(145deg, #ffffff, #f5f3ff);
-    border-left: 4px solid #8b5cf6;
+    background: white;
+    border-left: 4px solid #0A66C2;
   `}
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(14, 165, 233, 0.12);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   }
 
   @media (max-width: 768px) {
@@ -275,6 +277,7 @@ export const StatCard = styled.div`
     width: 48px;
     height: 48px;
     border-radius: 16px;
+    background: #F3F2F0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -301,7 +304,7 @@ export const StatCard = styled.div`
   .stat-value {
     font-size: 24px;
     font-weight: 700;
-    color: #0f172a;
+    color: #191919;
     line-height: 1.2;
 
     @media (max-width: 768px) {
@@ -315,7 +318,7 @@ export const StatCard = styled.div`
 
   .stat-label {
     font-size: 13px;
-    color: #64748b;
+    color: #666666;
     font-weight: 500;
 
     @media (max-width: 480px) {
@@ -343,17 +346,17 @@ export const SearchBar = styled.div`
   display: flex;
   align-items: center;
   background: white;
-  border: 2px solid #e2e8f0;
+  border: 2px solid #E9E5DF;
   border-radius: 40px;
   padding: 8px 16px;
   transition: all 0.2s ease;
 
   ${props => props.premium && `
-    box-shadow: 0 2px 10px rgba(14, 165, 233, 0.1);
+    box-shadow: 0 2px 8px rgba(10, 102, 194, 0.08);
     
     &:focus-within {
-      border-color: #0ea5e9;
-      box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+      border-color: #0A66C2;
+      box-shadow: 0 0 0 4px rgba(10, 102, 194, 0.1);
     }
   `}
 
@@ -372,7 +375,7 @@ export const SearchBar = styled.div`
   }
 
   svg {
-    color: #94a3b8;
+    color: #999999;
     flex-shrink: 0;
   }
 `;
@@ -380,9 +383,9 @@ export const SearchBar = styled.div`
 export const PillBadge = styled.button`
   padding: 8px 16px;
   border-radius: 30px;
-  border: 1px solid ${props => props.active ? '#0ea5e9' : '#e2e8f0'};
-  background: ${props => props.active ? '#0ea5e9' : 'white'};
-  color: ${props => props.active ? 'white' : '#64748b'};
+  border: 1px solid ${props => props.active ? '#0A66C2' : '#E9E5DF'};
+  background: ${props => props.active ? '#0A66C2' : 'white'};
+  color: ${props => props.active ? 'white' : '#666666'};
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -392,8 +395,8 @@ export const PillBadge = styled.button`
   white-space: nowrap;
 
   &:hover {
-    background: ${props => props.active ? '#0ea5e9' : '#f1f5f9'};
-    border-color: ${props => props.active ? '#0ea5e9' : '#cbd5e1'};
+    background: ${props => props.active ? '#0A66C2' : '#F3F2F0'};
+    border-color: ${props => props.active ? '#0A66C2' : '#D0CBC4'};
   }
 
   @media (max-width: 768px) {
@@ -421,27 +424,27 @@ export const HistoryList = styled.div`
 `;
 
 export const HistoryItem = styled.div`
-  background: ${props => props.premium ? 'linear-gradient(145deg, #ffffff, #f8fafc)' : 'white'};
+  background: ${props => props.premium ? 'white' : 'white'};
   border-radius: 20px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #E9E5DF;
   overflow: hidden;
   transition: all 0.3s ease;
   animation: ${fadeIn} 0.5s ease;
 
   ${props => props.premium && `
-    border-color: rgba(14, 165, 233, 0.2);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border-color: rgba(10, 102, 194, 0.2);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
   `}
 
   &:hover {
-    box-shadow: 0 8px 30px rgba(14, 165, 233, 0.12);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   }
 
   .expanded-content {
     padding: 24px;
-    background: #f8fafc;
+    background: #FAF9F7;
     border-radius: 0 0 16px 16px;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid #E9E5DF;
 
     @media (max-width: 768px) {
       padding: 16px;
@@ -496,7 +499,7 @@ export const ChatHeader = styled.div`
 
   ${props => props.premium && `
     &:hover {
-      background: rgba(14, 165, 233, 0.02);
+      background: rgba(10, 102, 194, 0.02);
     }
   `}
 
@@ -545,7 +548,7 @@ export const ChatHeader = styled.div`
     h4 {
       font-size: 16px;
       font-weight: 600;
-      color: #0f172a;
+      color: #191919;
       margin: 0;
       white-space: nowrap;
       overflow: hidden;
@@ -565,7 +568,7 @@ export const ChatHeader = styled.div`
   }
 
   .rate-badge {
-    background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+    background: #0A66C2;
     color: white;
     padding: 4px 12px;
     border-radius: 20px;
@@ -603,7 +606,7 @@ export const ChatHeader = styled.div`
     align-items: center;
     gap: 4px;
     font-size: 12px;
-    color: #64748b;
+    color: #666666;
 
     @media (max-width: 480px) {
       font-size: 11px;
@@ -624,13 +627,13 @@ export const ChatHeader = styled.div`
 
       div:first-child {
         font-size: 12px;
-        color: #64748b;
+        color: #666666;
       }
 
       .last-date {
         font-size: 13px;
         font-weight: 600;
-        color: #0f172a;
+        color: #191919;
 
         @media (max-width: 480px) {
           font-size: 12px;
@@ -640,7 +643,7 @@ export const ChatHeader = styled.div`
   }
 
   .chevron-icon {
-    color: #94a3b8;
+    color: #999999;
     transition: transform 0.2s ease;
     flex-shrink: 0;
   }
@@ -650,7 +653,7 @@ export const Avatar = styled.div`
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: ${props => props.premium ? 'linear-gradient(135deg, #0ea5e9, #3b82f6)' : '#e2e8f0'};
+  background: ${props => props.premium ? '#0A66C2' : '#E9E5DF'};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -682,7 +685,7 @@ export const Avatar = styled.div`
 `;
 
 export const ExpertBadge = styled.span`
-  background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+  background: #0A66C2;
   color: white;
   padding: 4px 12px;
   border-radius: 20px;
@@ -725,13 +728,13 @@ export const SessionHeader = styled.div`
   h5 {
     font-size: 14px;
     font-weight: 600;
-    color: #0f172a;
+    color: #191919;
     margin: 0;
   }
 
   .expert-badge {
-    background: #e2e8f0;
-    color: #475569;
+    background: #F3F2F0;
+    color: #666666;
     padding: 4px 10px;
     border-radius: 16px;
     font-size: 11px;
@@ -755,13 +758,13 @@ export const SessionCard = styled.div`
   padding: 16px;
   background: white;
   border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #E9E5DF;
   transition: all 0.2s ease;
 
   ${props => props.premium && `
     &:hover {
-      border-color: #0ea5e9;
-      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.1);
+      border-color: #0A66C2;
+      box-shadow: 0 4px 12px rgba(10, 102, 194, 0.08);
     }
   `}
 
@@ -780,14 +783,14 @@ export const SessionCard = styled.div`
     .session-number {
       width: 32px;
       height: 32px;
-      background: #f1f5f9;
+      background: #F3F2F0;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 12px;
       font-weight: 600;
-      color: #475569;
+      color: #666666;
 
       @media (max-width: 480px) {
         width: 28px;
@@ -826,7 +829,7 @@ export const SessionCard = styled.div`
       align-items: center;
       gap: 4px;
       font-size: 13px;
-      color: #475569;
+      color: #666666;
 
       @media (max-width: 480px) {
         font-size: 12px;
@@ -846,7 +849,7 @@ export const SessionCard = styled.div`
 
     .rate-label {
       font-size: 11px;
-      color: #94a3b8;
+      color: #999999;
 
       @media (max-width: 480px) {
         font-size: 10px;
@@ -863,8 +866,8 @@ export const SessionCard = styled.div`
       font-weight: 500;
 
       &.voice {
-        background: rgba(14, 165, 233, 0.1);
-        color: #0ea5e9;
+        background: rgba(10, 102, 194, 0.1);
+        color: #0A66C2;
       }
 
       &.video {
@@ -887,7 +890,7 @@ export const SessionCard = styled.div`
 
     .amount-label {
       font-size: 10px;
-      color: #94a3b8;
+      color: #999999;
       margin-bottom: 2px;
 
       @media (max-width: 480px) {
@@ -898,7 +901,7 @@ export const SessionCard = styled.div`
     .amount {
       font-size: 16px;
       font-weight: 700;
-      color: #0ea5e9;
+      color: #0A66C2;
 
       @media (max-width: 480px) {
         font-size: 14px;
@@ -926,10 +929,10 @@ export const ActionButtons = styled.div`
 
 export const ActionButton = styled.button`
   padding: 8px 16px;
-  border-radius: 30px;
-  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  border: 1px solid #E9E5DF;
   background: white;
-  color: #475569;
+  color: #666666;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -939,18 +942,18 @@ export const ActionButton = styled.button`
   gap: 6px;
 
   ${props => props.primary && `
-    background: #0ea5e9;
+    background: #0A66C2;
     color: white;
     border: none;
     
     &:hover {
-      background: #0284c7;
+      background: #004182;
     }
   `}
 
   &:hover {
-    background: ${props => props.primary ? '#0284c7' : '#f1f5f9'};
-    border-color: ${props => props.primary ? '#0284c7' : '#cbd5e1'};
+    background: ${props => props.primary ? '#004182' : '#F3F2F0'};
+    border-color: ${props => props.primary ? '#004182' : '#D0CBC4'};
   }
 
   @media (max-width: 768px) {
@@ -967,32 +970,32 @@ export const ActionButton = styled.button`
 `;
 
 export const ViewChatButton = styled(ActionButton)`
-  background: #f8fafc;
-  color: #0ea5e9;
-  border-color: #0ea5e9;
+  background: white;
+  color: #0A66C2;
+  border-color: #0A66C2;
 
   &:hover {
-    background: #0ea5e9;
+    background: #0A66C2;
     color: white;
   }
 `;
 
 export const ChatAgainButton = styled(ActionButton)`
-  background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+  background: #0A66C2;
   color: white;
   border: none;
 
   &:hover {
-    background: linear-gradient(135deg, #0284c7, #2563eb);
+    background: #004182;
   }
 `;
 
 export const EmptyState = styled.div`
   text-align: center;
   padding: 60px 20px;
-  background: ${props => props.premium ? 'linear-gradient(145deg, #ffffff, #f8fafc)' : 'white'};
+  background: ${props => props.premium ? 'white' : 'white'};
   border-radius: 30px;
-  border: 2px dashed #e2e8f0;
+  border: 2px dashed #E9E5DF;
 
   @media (max-width: 768px) {
     padding: 40px 16px;
@@ -1003,7 +1006,7 @@ export const EmptyState = styled.div`
   }
 
   .empty-icon {
-    color: #94a3b8;
+    color: #999999;
     margin-bottom: 20px;
 
     @media (max-width: 480px) {
@@ -1017,7 +1020,7 @@ export const EmptyState = styled.div`
   h3 {
     font-size: 20px;
     font-weight: 600;
-    color: #0f172a;
+    color: #191919;
     margin-bottom: 8px;
 
     @media (max-width: 480px) {
@@ -1026,7 +1029,7 @@ export const EmptyState = styled.div`
   }
 
   p {
-    color: #64748b;
+    color: #666666;
     margin-bottom: 24px;
     font-size: 14px;
 
@@ -1036,11 +1039,11 @@ export const EmptyState = styled.div`
   }
 
   .premium-btn {
-    background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+    background: #0A66C2;
     color: white;
     border: none;
     padding: 12px 24px;
-    border-radius: 30px;
+    border-radius: 24px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -1051,7 +1054,7 @@ export const EmptyState = styled.div`
 
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(14, 165, 233, 0.3);
+      box-shadow: 0 8px 20px rgba(10, 102, 194, 0.3);
     }
 
     @media (max-width: 480px) {
@@ -1073,15 +1076,15 @@ export const LoadingSpinner = styled.div`
   .spinner {
     width: 48px;
     height: 48px;
-    border: 3px solid rgba(14, 165, 233, 0.1);
-    border-top-color: #0ea5e9;
+    border: 3px solid rgba(10, 102, 194, 0.1);
+    border-top-color: #0A66C2;
     border-radius: 50%;
     animation: ${spin} 0.8s linear infinite;
     margin-bottom: 16px;
   }
 
   p {
-    color: #64748b;
+    color: #666666;
     font-size: 14px;
   }
 `;
@@ -1106,7 +1109,7 @@ export const ModalOverlay = styled.div`
 `;
 
 export const ModalContent = styled.div`
-  background: ${props => props.premium ? 'linear-gradient(145deg, #ffffff, #f8fafc)' : 'white'};
+  background: ${props => props.premium ? 'white' : 'white'};
   border-radius: 30px;
   width: 100%;
   max-width: 600px;
@@ -1124,7 +1127,7 @@ export const ModalContent = styled.div`
     justify-content: space-between;
     align-items: center;
     padding: 24px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #E9E5DF;
 
     @media (max-width: 768px) {
       padding: 20px;
@@ -1149,7 +1152,7 @@ export const ModalContent = styled.div`
     display: flex;
     gap: 8px;
     font-size: 12px;
-    color: #64748b;
+    color: #666666;
     margin-top: 4px;
     flex-wrap: wrap;
 
@@ -1159,7 +1162,7 @@ export const ModalContent = styled.div`
   }
 
   .modal-close {
-    background: #f1f5f9;
+    background: #F3F2F0;
     border: none;
     width: 32px;
     height: 32px;
@@ -1169,13 +1172,13 @@ export const ModalContent = styled.div`
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: #64748b;
+    color: #666666;
     transition: all 0.2s ease;
     flex-shrink: 0;
 
     &:hover {
-      background: #e2e8f0;
-      color: #0f172a;
+      background: #E9E5DF;
+      color: #191919;
     }
 
     @media (max-width: 480px) {
@@ -1187,7 +1190,7 @@ export const ModalContent = styled.div`
 
   .modal-footer {
     padding: 16px 24px;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid #E9E5DF;
 
     @media (max-width: 480px) {
       padding: 12px 16px;
@@ -1197,7 +1200,7 @@ export const ModalContent = styled.div`
       display: flex;
       align-items: center;
       gap: 8px;
-      color: #94a3b8;
+      color: #999999;
       font-size: 12px;
 
       @media (max-width: 480px) {
@@ -1211,7 +1214,7 @@ export const ChatMessagesArea = styled.div`
   flex: 1;
   overflow-y: auto;
   padding: 24px;
-  background: ${props => props.premium ? '#f8fafc' : '#f1f5f9'};
+  background: ${props => props.premium ? '#FAF9F7' : '#F3F2F0'};
 
   @media (max-width: 768px) {
     padding: 20px;
@@ -1230,7 +1233,7 @@ export const ChatMessagesArea = styled.div`
   .no-messages {
     text-align: center;
     padding: 40px 20px;
-    color: #94a3b8;
+    color: #999999;
 
     @media (max-width: 480px) {
       padding: 30px 16px;
@@ -1244,8 +1247,8 @@ export const ChatMessagesArea = styled.div`
 `;
 
 export const ChatMessageBubble = styled.div`
-  background: ${props => props.isExpert ? 'white' : '#0ea5e9'};
-  color: ${props => props.isExpert ? '#0f172a' : 'white'};
+  background: ${props => props.isExpert ? 'white' : '#0A66C2'};
+  color: ${props => props.isExpert ? '#191919' : 'white'};
   padding: 16px;
   border-radius: 20px;
   max-width: 80%;
@@ -1254,7 +1257,7 @@ export const ChatMessageBubble = styled.div`
   animation: ${fadeIn} 0.3s ease;
 
   ${props => props.premium && `
-    border: ${props.isExpert ? '1px solid rgba(14, 165, 233, 0.1)' : 'none'};
+    border: ${props.isExpert ? '1px solid rgba(10, 102, 194, 0.1)' : 'none'};
   `}
 
   @media (max-width: 768px) {
@@ -1309,7 +1312,7 @@ export const UserMessageAvatar = styled.div`
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: ${props => props.isExpert ? '#e2e8f0' : 'rgba(255, 255, 255, 0.2)'};
+  background: ${props => props.isExpert ? '#F3F2F0' : 'rgba(255, 255, 255, 0.2)'};
   display: flex;
   align-items: center;
   justify-content: center;

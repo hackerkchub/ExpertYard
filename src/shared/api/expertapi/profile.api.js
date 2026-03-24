@@ -1,29 +1,22 @@
 import api from "./axiosInstance";
 
-export const createProfileApi = (data) =>
-  api.post("/expert-profile/create", data);
-
-export const getExpertProfileApi = (expertId) =>
-  api.get(`/expert-profile/expert/${expertId}`);
-
-export const updateExpertProfileApi = (expertId, data) => {
-  const formData = new FormData();
-
-  for (const key in data) {
-    if (data[key] instanceof File) {
-      formData.append(key, data[key]);
-    } else if (data[key] !== undefined && data[key] !== null) {
-      formData.append(key, data[key]);
-    }
-  }
-
-  return api.put(`/expert-profile/expert/${expertId}`, formData);
+/* ================= PROFILE CREATE ================= */
+export const createProfileApi = (formData) => {
+  return api.post("/expert-profile/create", formData);
 };
 
-export const getExpertsProfileListApi = () => {
-  return api.get("/expert-profile/list");
+/* ================= PROFILE UPDATE ================= */
+export const updateExpertProfileApi = (formData) => {
+  return api.put("/expert-profile/expert", formData);
 };
 
+/* ================= ALL PROFILES ================= */
+export const getExpertsProfileListApi = async () => {
+  const { data } = await api.get("/expert-profile/list");
+  return data;
+};
 
-export const getMyProfileApi = () =>
-  api.get("/expert/me");
+/* ================= GET BY EXPERT ID ================= */
+export const getExpertProfileApi = (expertId) => {
+  return api.get(`/expert-profile/expert/${expertId}`);
+};

@@ -50,6 +50,19 @@ export default function IncomingCallPopup({
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+  const handleCancel = () => {
+    setVisible(false);
+    soundManager.stopAll();
+  };
+
+  window.addEventListener("call_cancelled", handleCancel);
+
+  return () => {
+    window.removeEventListener("call_cancelled", handleCancel);
+  };
+}, []);
+
   if (!caller || !visible) return null;
 
 const handleAccept = () => {

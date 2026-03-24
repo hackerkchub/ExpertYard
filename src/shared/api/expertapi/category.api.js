@@ -3,9 +3,10 @@ import api from "./axiosInstance";
 /* ===========================
    GET CATEGORIES
 =========================== */
-export const getCategoriesApi = () =>
-  api.get("/category/list");
-
+export const getCategoriesApi = async () => {
+  const { data } = await api.get("/category/list");
+  return data;
+};
 /* ===========================
    GET SUBCATEGORIES
 =========================== */
@@ -42,6 +43,12 @@ export const updateCategoryApi = ({ id, name, file }) => {
   });
 };
 
+export const saveCategoryApi = (data) =>
+  api.post("/expert/category", data);
+
+
+export const saveSubCategoryApi = (data) =>
+  api.post("/expert/subcategory", data);
 /* ===========================
    DELETE CATEGORY
    API: /api/category/delete/:id

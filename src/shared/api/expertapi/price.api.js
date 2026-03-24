@@ -1,10 +1,25 @@
 import api from "./axiosInstance";
 
-export const setPriceApi = (data) =>
-  api.post("/expert-price", data);
+/* ================= SAVE / UPDATE PRICE ================= */
+export const savePriceApi = async (data) => {
+  const { data: res } = await api.post("/expert-price", data);
+  return res;
+};
 
-export const getExpertPriceById = (expertId) =>
-  api.get(`/expert-price/${expertId}`);
+/* ================= GET MY PRICE (LOGGED-IN) ================= */
+export const getMyPriceApi = async () => {
+  const { data } = await api.get("/expert-price/me");
+  return data;
+};
 
-export const updateExpertPriceApi = (data) =>
-  api.post("/expert-price", data);
+/* ================= GET PRICE BY EXPERT ID (PUBLIC / ADMIN) ================= */
+export const getExpertPriceByIdApi = async (expertId) => {
+  const { data } = await api.get(`/expert-price/expert/${expertId}`);
+  return data;
+};
+
+/* ================= DELETE MY PRICE ================= */
+export const deleteMyPriceApi = async () => {
+  const { data } = await api.delete("/expert-price/me");
+  return data;
+};

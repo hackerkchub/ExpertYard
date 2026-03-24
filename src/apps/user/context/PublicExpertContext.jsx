@@ -3,7 +3,7 @@ import {
   getExpertProfileApi,
   getExpertsProfileListApi,
 } from "../../../shared/api/expertapi/profile.api";
-import { getExpertPriceById } from "../../../shared/api/expertapi/price.api";
+import { getExpertPriceByIdApi } from "../../../shared/api/expertapi/price.api";
 
 const ExpertContext = createContext(null);
 export const usePublicExpert = () => useContext(ExpertContext); // ⭐ SAME HOOK NAME
@@ -114,7 +114,7 @@ export const PublicExpertProvider = ({ children }) => {
     try {
       setPriceLoading(true);
 
-      const res = await getExpertPriceById(expertId);
+      const res = await getExpertPriceByIdApi(expertId);
       const price = res?.data?.data;
 
       if (!price) {

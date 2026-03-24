@@ -1,4 +1,4 @@
-// src/shared/context/ExpertContext.jsx
+// src/shared/context/ExpertContext.jsx (FINAL PRODUCTION READY)
 
 import {
   createContext,
@@ -6,6 +6,7 @@ import {
   useEffect,
   useState,
   useCallback,
+  useRef,
 } from "react";
 
 import {
@@ -13,7 +14,7 @@ import {
   getExpertsProfileListApi,
 } from "../api/expertapi/profile.api";
 
-import { getExpertPriceById } from "../api/expertapi/price.api";
+import { getMyPriceApi } from "../api/expertapi/price.api"; // ✅ FIX: Correct import
 
 const ExpertContext = createContext(null);
 export const useExpert = () => useContext(ExpertContext);
@@ -50,6 +51,7 @@ const DEFAULT_PRICE = {
 
 export const ExpertProvider = ({ children }) => {
   const BASE_URL = import.meta.env?.VITE_API_BASE_URL || "";
+  const isInitialized = useRef(false);
 
   /* ================= PUBLIC EXPERT LIST ================= */
 
@@ -62,8 +64,7 @@ export const ExpertProvider = ({ children }) => {
         setExpertsLoading(true);
 
         const res = await getExpertsProfileListApi();
-        const raw = res?.data?.data || [];
-
+        const raw = Array.isArray(res?.data) ? res.data : [];
         const mapped = raw.map((p) => ({
           id: p.expert_id,
           profileId: p.id,
@@ -106,20 +107,20 @@ export const ExpertProvider = ({ children }) => {
   const [profileLoading, setProfileLoading] = useState(false);
   const [priceLoading, setPriceLoading] = useState(false);
 
-  /* ================= UPDATE EXPERT SESSION ================= */
+  /* ================= UPDATE EXPERT SESSION (OPTIMIZED) ================= */
 
- const updateExpertData = (data) => {
+ const updateExpertData = useCallback((data) => {
   setExpertData((prev) => {
-    const newState = {
-      ...prev,
-      ...data
-    };
+    const newState = { ...prev, ...data };
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
+    if (JSON.stringify(prev) !== JSON.stringify(newState)) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
+    }
+
     return newState;
   });
-};
-  /* ================= FETCH PROFILE ================= */
+}, []);
+  /* ================= FETCH PROFILE (UPDATED WITH SAFETY) ================= */
 
   const fetchProfile = useCallback(
     async (expertId) => {
@@ -129,9 +130,14 @@ export const ExpertProvider = ({ children }) => {
         setProfileLoading(true);
 
         const res = await getExpertProfileApi(expertId);
-        const profileData = res?.data?.data;
+        
+       const profileData = res?.data?.data;
 
-        if (!profileData) return;
+        // ✅ SAFETY FIX: Check if profile data exists and has ID
+        if (!profileData || !profileData.id) {
+          console.warn("Invalid profile data received");
+          return;
+        }
 
         let photoUrl = DEFAULT_AVATAR;
 
@@ -141,58 +147,60 @@ export const ExpertProvider = ({ children }) => {
             : `${BASE_URL}${profileData.profile_photo}`;
         }
 
-   setExpertData((prev) => {
+        updateExpertData({
+          expertId: profileData.expert_id || expertId,
+          profileId: profileData.id,
+          profile: profileData,
+          name: profileData.name || "",
+          email: profileData.email || "",
+          phone: profileData.phone || "",
+          position: profileData.position || "",
+          profile_photo: photoUrl,
+        });
 
-  const newState = {
-    ...prev,
-    expertId: profileData.expert_id || expertId,
-    profileId: profileData.id,
-    profile: profileData,
-    name: profileData.name || "",
-    email: profileData.email || "",
-    phone: profileData.phone || "",
-    position: profileData.position || "",
-    profile_photo: photoUrl,
-  };
-
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
-  return newState;
-});
-
-/* ⭐ add this */
-if (profileData.call_per_minute || profileData.chat_per_minute) {
-  setExpertPrice((prev) => ({
-    ...prev,
-    call_per_minute: Number(profileData.call_per_minute) || 0,
-    chat_per_minute: Number(profileData.chat_per_minute) || 0,
-  }));
-}
+        // ✅ Load price data from profile if available
+        if (
+          profileData.call_per_minute !== undefined ||
+          profileData.chat_per_minute !== undefined
+        ) {
+          setExpertPrice((prev) => ({
+            ...prev,
+            call_per_minute: Number(profileData.call_per_minute) || 0,
+            chat_per_minute: Number(profileData.chat_per_minute) || 0,
+            reason_for_price: profileData.reason_for_price || prev.reason_for_price,
+            handle_customer: profileData.handle_customer || prev.handle_customer,
+            strength: profileData.strength || prev.strength,
+            weakness: profileData.weakness || prev.weakness,
+          }));
+        }
       } catch (err) {
         console.error("Profile load failed", err);
       } finally {
         setProfileLoading(false);
       }
     },
-    [BASE_URL]
+    [BASE_URL, updateExpertData]
   );
 
-  /* ================= FETCH PRICE ================= */
+  /* ================= FETCH PRICE (CRITICAL FIX) ================= */
 
-  const fetchPrice = useCallback(async (expertId) => {
-    if (!expertId) return;
-
+  const fetchPrice = useCallback(async () => {
     try {
       setPriceLoading(true);
 
-      const res = await getExpertPriceById(expertId);
-      const priceData = res?.data?.data;
+      // ✅ FIX: No expertId parameter needed - uses token from headers
+      const res = await getMyPriceApi();
+      const priceData = res?.data || res;
 
-      if (!priceData) return;
+      if (!priceData || !priceData.id) {
+        console.log("No price data found");
+        return;
+      }
 
       setExpertPrice({
         id: priceData.id,
-        call_per_minute: Number(priceData.call_per_minute),
-        chat_per_minute: Number(priceData.chat_per_minute),
+        call_per_minute: Number(priceData.call_per_minute) || 0,
+        chat_per_minute: Number(priceData.chat_per_minute) || 0,
         reason_for_price: priceData.reason_for_price || "",
         handle_customer: priceData.handle_customer || "",
         strength: priceData.strength || "",
@@ -200,61 +208,92 @@ if (profileData.call_per_minute || profileData.chat_per_minute) {
       });
     } catch (err) {
       console.error("Price load failed", err);
+      // Don't set error state - just log and continue
     } finally {
       setPriceLoading(false);
     }
   }, []);
 
-  /* ================= AUTO LOAD AFTER LOGIN ================= */
+  /* ================= AUTO LOAD AFTER LOGIN (OPTIMIZED) ================= */
 
  useEffect(() => {
-  if (expertData.expertId) {
-    fetchProfile(expertData.expertId);
-    fetchPrice(expertData.expertId);
+  if (!expertData.expertId) {
+    isInitialized.current = false; // 🔥 reset when no expert
+    return;
   }
+
+  if (isInitialized.current) return;
+
+  isInitialized.current = true;
+
+  const loadAllData = async () => {
+    try {
+      await Promise.all([
+        fetchProfile(expertData.expertId),
+        fetchPrice()
+      ]);
+    } catch (err) {
+      console.error("Failed to load expert data", err);
+    }
+  };
+
+  loadAllData();
 }, [expertData.expertId, fetchProfile, fetchPrice]);
 
-  /* ================= REFRESH ================= */
+  /* ================= REFRESH FUNCTIONS ================= */
 
-  const refreshProfile = () => {
+  const refreshProfile = useCallback(() => {
     if (expertData.expertId) fetchProfile(expertData.expertId);
-  };
+  }, [expertData.expertId, fetchProfile]);
 
-  const refreshPrice = () => {
-    if (expertData.expertId) fetchPrice(expertData.expertId);
-  };
+  const refreshPrice = useCallback(() => {
+    fetchPrice();
+  }, [fetchPrice]);
+
+  const refreshAll = useCallback(() => {
+    if (expertData.expertId) {
+      Promise.all([
+        fetchProfile(expertData.expertId),
+        fetchPrice()
+      ]);
+    }
+  }, [expertData.expertId, fetchProfile, fetchPrice]);
 
   /* ================= LOGOUT ================= */
 
-  const logoutExpert = () => {
+  const logoutExpert = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem("expert_token");
-
+    
     setExpertData(DEFAULT_STATE);
     setExpertPrice(DEFAULT_PRICE);
-  };
+    isInitialized.current = false; // Reset initialization flag
+  }, []);
 
   /* ================= PROVIDER VALUE ================= */
 
   return (
     <ExpertContext.Provider
       value={{
+        // Public experts list
         experts,
         expertsLoading,
 
+        // Expert data
         expertData,
         expertPrice,
 
+        // Loading states
         profileLoading,
         priceLoading,
 
+        // Actions
         fetchProfile,
         fetchPrice,
-
         updateExpertData,
         refreshProfile,
         refreshPrice,
-
+        refreshAll,
         logoutExpert,
       }}
     >

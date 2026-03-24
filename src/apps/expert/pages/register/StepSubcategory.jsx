@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useExpert } from "../../../../shared/context/ExpertContext";
-import { getSubCategoriesApi } from "../../../../shared/api/expertapi/category.api";
+import { getSubCategoriesApi , saveSubCategoryApi} from "../../../../shared/api/expertapi/category.api";
 import useApi from "../../../../shared/hooks/useApi";
 
 import RegisterLayout from "../../components/RegisterLayout";
@@ -25,7 +25,6 @@ import {
   SelectedCount,
   SubcategoryEmptyState,
   CategoryPreview,
-  MultiSelectToggle,
   SelectedPreview
 } from "../../styles/Register.styles";
 
@@ -36,7 +35,8 @@ export default function StepSubcategory() {
   const [subCategories, setSubCategories] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isMultiSelect, setIsMultiSelect] = useState(false);
+  // 🔥 Multi-select temporarily disabled due to backend limitation
+  const [isMultiSelect] = useState(false); // Fixed to single-select mode
   const [filteredSubCategories, setFilteredSubCategories] = useState([]);
 
   const {
@@ -45,27 +45,31 @@ export default function StepSubcategory() {
     error
   } = useApi(getSubCategoriesApi);
 
+  const { request: saveSubCategory, loading: saving } = useApi(saveSubCategoryApi);
+
   const loadSubCategories = useCallback(async () => {
-  try {
-    const res = await getSubCategories(expertData.categoryId);
-    const list = Array.isArray(res?.data) ? res.data : [];
-    setSubCategories(list);
-    setFilteredSubCategories(list);
-  } catch (err) {
-    console.error("SubCategory API failed", err);
-    setSubCategories([]);
-    setFilteredSubCategories([]);
-  }
-}, [expertData.categoryId]);
+    try {
+      const res = await getSubCategories(expertData.categoryId);
+      // ✅ FIX: useApi already unwraps the response
+     const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      setSubCategories(list);
+      setFilteredSubCategories(list);
+    } catch (err) {
+      console.error("SubCategory API failed", err);
+      setSubCategories([]);
+      setFilteredSubCategories([]);
+    }
+  }, [expertData.categoryId, getSubCategories]);
 
   // 🔐 Route Guard + Load Data
-  useEffect(() => {
-    if (!expertData.categoryId) {
-      navigate("/expert/register/category");
-      return;
-    }
-    loadSubCategories();
-  }, [expertData.categoryId, loadSubCategories]);
+ useEffect(() => {
+  if (!expertData.categoryId) {
+    navigate("/expert/register/category");
+    return;
+  }
+
+  loadSubCategories();
+}, [expertData.categoryId]);
 
   // 🔹 Filter subcategories
   useEffect(() => {
@@ -79,57 +83,48 @@ export default function StepSubcategory() {
     }
   }, [searchQuery, subCategories]);
 
-  // 🔹 Enhanced multi-select handling
- const handleSelect = useCallback((id, name) => {
-
-  if (isMultiSelect) {
-
-    setSelectedIds(prev => {
-
-      const updated = prev.includes(id)
-        ? prev.filter(s => s !== id)
-        : [...prev, id];
-
-      updateExpertData({
-        subCategoryIds: updated,
-        primarySubCategory: name
-      });
-
-      return updated;
-    });
-
-  } else {
-
+  // 🔹 Enhanced single-select handling (multi-select disabled)
+  const handleSelect = useCallback((id, name) => {
+    // Single select only (due to backend limitation)
     setSelectedIds([id]);
-
+    
     updateExpertData({
       subCategoryIds: [id],
       primarySubCategory: name
     });
+  }, [updateExpertData]);
 
-  }
+  // ✅ FIX: Proper handleNext with API call
+  const handleNext = async () => {
+    if (selectedIds.length === 0) return;
+    
+    try {
+     await saveSubCategory({
+  subcategory_id: selectedIds[0]
+});
 
-}, [isMultiSelect, updateExpertData]);
-
-useEffect(() => {
-  if (expertData.subCategoryIds?.length) {
-    setSelectedIds(expertData.subCategoryIds);
-  }
-}, []);
-
-  // 🔹 Toggle multi-select mode
-  const toggleMultiSelect = () => {
-    setIsMultiSelect(!isMultiSelect);
-    if (!isMultiSelect && selectedIds.length > 0) {
-      updateExpertData({
-        subCategoryIds: selectedIds
-      });
-    } else {
-      updateExpertData({
-        subCategoryIds: selectedIds.length > 0 ? selectedIds : []
-      });
+updateExpertData({
+  subCategoryIds: selectedIds
+});
+      navigate("/expert/register/profile");
+    } catch (err) {
+      console.error("Save subcategory failed", err);
     }
   };
+
+  // ✅ FIX: Added proper dependency
+  useEffect(() => {
+    if (expertData.subCategoryIds?.length) {
+      setSelectedIds(expertData.subCategoryIds);
+    }
+  }, [expertData.subCategoryIds]);
+
+  // 🔹 Toggle multi-select mode (disabled temporarily)
+  // const toggleMultiSelect = () => {
+  //   // Temporarily disabled due to backend limitation
+  //   // Only single select is supported currently
+  //   console.warn("Multi-select is temporarily disabled");
+  // };
 
   const selectedSubCategories = useMemo(() => 
     subCategories.filter(sub => selectedIds.includes(sub.id)),
@@ -144,8 +139,8 @@ useEffect(() => {
 
   return (
     <RegisterLayout
-      title="Select your specializations"
-      subtitle="Choose your specializations within your expertise area. you have more credibility."
+      title="Select your specialization"
+      subtitle="Choose your primary specialization within your expertise area for better credibility"
       step={3}
       hasNavbar={true}
     >
@@ -154,19 +149,16 @@ useEffect(() => {
         <div>
           <div style={{ fontSize: 32, marginBottom: 8 }}>🎯</div>
           <h3>{expertData.categoryName || "Category"}</h3>
-          <p>Specializations within this expertise</p>
+          <p>Select your primary specialization</p>
         </div>
-        {/* <MultiSelectToggle onClick={toggleMultiSelect}>
-          {isMultiSelect ? "Single" : "Multi"}-select
-          <span>{isMultiSelect ? "−" : "+"}</span>
-        </MultiSelectToggle> */}
+        {/* Multi-select temporarily disabled - UI hidden */}
       </CategoryPreview>
 
       {/* ✅ Premium Stats */}
       <SelectionStats>
         <div>
           <SelectedCount>{selectedIds.length}</SelectedCount>
-          <span>{isMultiSelect ? "Selected" : "Primary"}</span>
+          <span>Primary Specialization</span>
         </div>
         <div>
           <span>{totalSubCategories}</span>
@@ -247,15 +239,15 @@ useEffect(() => {
                         fontSize: 20,
                         fontWeight: "bold"
                       }}>
-                        {sub.id % 2 === 0 ? "✓" : "★"}
+                        {selectedIds.includes(sub.id) ? "✓" : "★"}
                       </div>
                     </div>
                     <div>
                       <CardTitle>{sub.name}</CardTitle>
                       <CardMeta>
                         {selectedIds.includes(sub.id)
-                          ? "✅ Your specialization selected"
-                          : "Click to make primary specialization"
+                          ? "✅ Your primary specialization"
+                          : "Click to select as primary specialization"
                         }
                       </CardMeta>
                     </div>
@@ -286,10 +278,7 @@ useEffect(() => {
                 {selectedSubCategories.map(s => s.name).join(", ")}
               </h4>
               <p style={{ margin: 0, color: "#64748b", fontSize: 14 }}>
-                {isMultiSelect 
-                  ? `${selectedIds.length} specializations selected` 
-                  : "Your specialization confirmed"
-                }
+                Your primary specialization confirmed
               </p>
             </div>
           </div>
@@ -305,13 +294,16 @@ useEffect(() => {
           ← Back to Categories
         </SecondaryButton>
 
+        {/* ✅ FIX: Updated button with handleNext and saving state */}
         <PrimaryButton
-          disabled={!canNext}
-          onClick={() => navigate("/expert/register/profile")}
+          disabled={!canNext || saving}
+          onClick={handleNext}
         >
-          {selectedSubCategories.length > 0 ? (
+          {saving ? (
+            "Saving..."
+          ) : selectedSubCategories.length > 0 ? (
             <>
-              Continue to Profile ({selectedSubCategories.map(s => s.name).join(", ").slice(0, 20)}...) →
+              Continue to Profile ({selectedSubCategories[0]?.name?.slice(0, 20) || ""}) →
             </>
           ) : (
             "Continue to Profile →"

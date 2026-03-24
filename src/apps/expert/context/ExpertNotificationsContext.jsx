@@ -540,13 +540,12 @@ useEffect(() => {
       }
     };
 
-    const handleCancelled = ({ callId, status }) => {
-      const notif = getNotification(callId);
-      if (notif) {
-        updateStatus(notif, status || "cancelled");
-      }
-    };
-
+   const handleCancelled = ({ callId }) => {
+  const notif = getNotification(callId);
+  if (notif) {
+    updateStatus(notif, "cancelled"); // ✅ KEEP ORIGINAL
+  }
+};
     const handleRejected = ({ callId, status }) => {
       const notif = getNotification(callId);
       if (notif) {

@@ -219,6 +219,28 @@ function ExpertLayoutInner() {
     return () => socket.off("chat_started", handleChatStarted);
   }, [navigate]);
 
+ useEffect(() => {
+  const handleCancelled = ({ callId }) => {
+    window.dispatchEvent(
+      new CustomEvent("call_cancelled", { detail: callId })
+    );
+  };
+
+  const handleMissed = ({ callId }) => {
+    window.dispatchEvent(
+      new CustomEvent("call_missed", { detail: callId })
+    );
+  };
+
+  socket.on("call:cancelled", handleCancelled);
+  socket.on("call:missed", handleMissed);
+
+  return () => {
+    socket.off("call:cancelled", handleCancelled);
+    socket.off("call:missed", handleMissed);
+  };
+}, []); 
+
   /* =====================================================
      📞 RESUME CALL NAVIGATION (FROM GLOBAL EVENT)
   ===================================================== */

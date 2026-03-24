@@ -5,7 +5,7 @@ import FollowersContent from "../../../../shared/components/modal-contents/Follo
 import ReviewsContent from "../../../../shared/components/modal-contents/ReviewsContent";
 import {
   updateExpertProfileApi,
-  updateExpertPriceApi,
+  savePriceApi,
   getExpertFollowersApi
 } from "../../../../shared/api/expertapi";
 import {
@@ -291,7 +291,7 @@ if (draft.documents.aadhar_cardFile)
 
       await Promise.all([
         updateExpertProfileApi(expertId, profilePayload),
-        updateExpertPriceApi(pricePayload)
+        savePriceApi(pricePayload)
       ]);
 
       await Promise.all([refreshProfile(), refreshPrice()]);

@@ -6,7 +6,7 @@ import { FiStar, FiPhoneCall, FiMessageSquare, FiMapPin, FiX } from "react-icons
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
 
-import { getExpertPriceById } from "../../../../shared/api/expertapi/price.api";
+import { getExpertPriceByIdApi } from "../../../../shared/api/expertapi/price.api";
 import { getExpertFollowersApi } from "../../../../shared/api/expertapi/follower.api";
 import { getReviewsByExpertApi } from "../../../../shared/api/expertapi/reviews.api";
 
@@ -63,7 +63,7 @@ const ExpertCard = ({ data, mode, maxPrice, onStartChat }) => {
       try {
         setLoadingMeta(true);
 
-        const priceRes = await getExpertPriceById(expertId);
+        const priceRes = await getExpertPriceByIdApi(expertId);
         const priceData = priceRes?.data?.data;
         if (!cancelled && priceData) {
           setCallPrice(Number(priceData.call_per_minute || 0));

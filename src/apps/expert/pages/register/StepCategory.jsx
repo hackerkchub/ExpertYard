@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useExpert } from "../../../../shared/context/ExpertContext";
-import { getCategoriesApi } from "../../../../shared/api/expertapi/category.api";
+import { getCategoriesApi, saveCategoryApi } from "../../../../shared/api/expertapi/category.api";
 import useApi from "../../../../shared/hooks/useApi";
 
 import RegisterLayout from "../../components/RegisterLayout";
@@ -35,12 +35,12 @@ export default function StepCategory() {
   const [categories, setCategories] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredCategories, setFilteredCategories] = useState([]);
-
-  const {
-    request: getCategories,
-    loading,
-    error
-  } = useApi(getCategoriesApi);
+const {
+  request: getCategories,
+  loading,
+  error
+} = useApi(getCategoriesApi);
+ const { request: saveCategory, loading: saving } = useApi(saveCategoryApi);
 
   const DEFAULT_CATEGORY_IMAGE = "/default-category.png";
   // 🔹 Load categories from API
@@ -64,7 +64,7 @@ export default function StepCategory() {
   const loadCategories = async () => {
     try {
       const res = await getCategories();
-      const list = Array.isArray(res?.data) ? res.data : [];
+    const list = Array.isArray(res) ? res : res?.data || [];
       setCategories(list);
       setFilteredCategories(list);
     } catch (err) {
@@ -82,6 +82,19 @@ export default function StepCategory() {
       categoryKey: category.key || category.slug
     });
   }, [updateExpertData]);
+
+  const handleNext = async () => {
+  try {
+    await saveCategory({
+      category_id: expertData.categoryId
+    });
+
+    navigate("/expert/register/subcategory");
+
+  } catch (err) {
+    console.error("Save category failed", err);
+  }
+};
 
   // const IconFor = (key) => {
   //   const Icon = CATEGORY_ICON_MAP[key];
@@ -258,10 +271,10 @@ export default function StepCategory() {
           ← Back to Basic Info
         </SecondaryButton>
 
-        <PrimaryButton
-          disabled={!canNext}
-          onClick={() => navigate("/expert/register/subcategory")}
-        >
+       <PrimaryButton
+  disabled={!canNext || saving}
+  onClick={handleNext}
+>
           {selectedCategory ? (
             <>
               Continue with {prettyLabel(selectedCategory.name)} →

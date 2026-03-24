@@ -13,7 +13,7 @@ import {
 } from "react-icons/io5";
 import { useCategory } from "../../../../shared/context/CategoryContext";
 import { getExpertsBySubCategoryApi } from "../../../../shared/api/expertapi/auth.api";
-import { getExpertPriceById } from "../../../../shared/api/expertapi/price.api";
+import { getExpertPriceByIdApi } from "../../../../shared/api/expertapi/price.api";
 import { getExpertFollowersApi } from "../../../../shared/api/expertapi/follower.api";
 import { getReviewsByExpertApi } from "../../../../shared/api/expertapi/reviews.api";
 import ExpertCard from "../../components/userExperts/ExpertCard";
@@ -195,7 +195,7 @@ const SubcategoryPage = () => {
         
         try {
           const [priceRes, followersRes, reviewsRes] = await Promise.allSettled([
-            getExpertPriceById(expertId),
+            getExpertPriceByIdApi(expertId),
             getExpertFollowersApi(expertId),
             getReviewsByExpertApi(expertId)
           ]);

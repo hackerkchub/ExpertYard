@@ -2,9 +2,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useExpert } from "../../../../shared/context/ExpertContext";
-import { createProfileApi } from "../../../../shared/api/expertapi/profile.api";
+import { createProfileApi, updateExpertProfileApi } from "../../../../shared/api/expertapi/profile.api";
 import useApi from "../../../../shared/hooks/useApi";
-
+import { toast } from "react-toastify";
 import RegisterLayout from "../../components/RegisterLayout";
 import Loader from "../../../../shared/components/Loader/Loader";
 
@@ -101,14 +101,37 @@ export default function StepProfile() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
-  const { request: createProfile, loading: apiLoading } = useApi(createProfileApi);
+  // ✅ FIX: Import both APIs
+  const { request: createProfile, loading: createLoading } = useApi(createProfileApi);
+  const { request: updateProfile, loading: updateLoading } = useApi(updateExpertProfileApi);
 
-  // 🔐 Guard
+  const apiLoading = createLoading || updateLoading;
+
+  // 🔐 Guard - Check if subcategory is selected
   useEffect(() => {
     if (!expertData.subCategoryIds?.length) {
       navigate("/expert/register/subcategory");
     }
   }, [expertData.subCategoryIds, navigate]);
+
+  // ✅ Load existing data if editing
+  useEffect(() => {
+    if (expertData.profile) {
+      setForm({
+        name: expertData.profile.name || expertData.name || "",
+        email: expertData.profile.email || expertData.email || "",
+        phone: expertData.profile.phone || expertData.phone || "",
+        position: expertData.profile.position || "",
+        description: expertData.profile.description || "",
+        education: expertData.profile.education || "",
+        location: expertData.profile.location || "",
+        profile_photo: null, // Files need to be re-uploaded
+        experience_certificate: null,
+        marksheet: null,
+        aadhar_card: null
+      });
+    }
+  }, [expertData.profile, expertData.name, expertData.email, expertData.phone]);
 
   const handleChange = (k, v) =>
     setForm(prev => ({ ...prev, [k]: v }));
@@ -122,10 +145,11 @@ export default function StepProfile() {
       return false;
     }
 
-    const total =
-      [form.profile_photo, form.experience_certificate, form.marksheet, form.aadhar_card]
-        .filter(Boolean)
-        .reduce((s, f) => s + f.size, 0) + file.size;
+   const total =
+  [form.profile_photo, form.experience_certificate, form.marksheet, form.aadhar_card]
+    .filter(Boolean)
+    .filter(f => f !== form[fieldName]) // 🔥 important
+    .reduce((s, f) => s + f.size, 0) + file.size;
 
     if (total > MAX_TOTAL_SIZE) {
       setFileErrors(prev => ({
@@ -208,6 +232,7 @@ export default function StepProfile() {
     return true;
   };
 
+  // ✅ FINAL FIXED handleSubmit with Edit/Create logic
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
@@ -216,12 +241,19 @@ export default function StepProfile() {
 
     const payload = new FormData();
 
-    payload.append("expert_id", expertData.expertId);
+    // payload.append("expert_id", expertData.expertId);
     payload.append("name", form.name);
     payload.append("email", form.email);
     payload.append("phone", form.phone);
     payload.append("category_id", String(expertData.categoryId));
-    payload.append("subcategory_id", String(expertData.subCategoryIds[0]));
+  const subId = expertData.subCategoryIds?.[0];
+
+if (!subId) {
+  setSubmitError("Subcategory missing. Please go back.");
+  return;
+}
+
+payload.append("subcategory_id", String(subId));
     payload.append("position", form.position);
     payload.append("description", form.description);
     payload.append("education", form.education);
@@ -239,24 +271,36 @@ export default function StepProfile() {
     });
 
     try {
-      const res = await createProfile(payload);
+      // ✅ Check if editing or creating
+      const isEdit = !!expertData.profileId;
 
-      if (res?.success) {
-        updateExpertData({
-          profileId: res.profile_id,
-          profile: res.data
-        });
-        
-        // Small delay to show success state
-        setTimeout(() => {
-          navigate("/expert/register/pricing");
-        }, 1000);
-      } else {
-        throw new Error(res?.message || "Failed to create profile");
+      // ✅ Call appropriate API
+      const res = isEdit
+        ? await updateProfile(payload)
+        : await createProfile(payload);
+
+      // ✅ Check response
+      if (!res || !res.success) {
+        throw res?.message || "Profile save failed";
       }
 
+      // ✅ FIX: Proper profileId extraction
+      const profile = res.data || res;
+
+updateExpertData({
+  profileId: profile?.id,
+  profile: profile
+});
+toast.success("Profile saved");
+      // ✅ FIX: Correct navigation route
+      setTimeout(() => {
+  navigate("/expert/register/pricing");
+}, 500);
     } catch (err) {
-      setSubmitError(err.message || "Failed to save profile. Please try again.");
+      // ✅ FIX: Better error handling
+      setSubmitError(err || "Failed to save profile. Please try again.");
+    } finally {
+      // ✅ Always reset submitting state
       setIsSubmitting(false);
     }
   };
@@ -299,13 +343,14 @@ export default function StepProfile() {
     </Field>
   );
 
+  // Show loading state
   if (isSubmitting && apiLoading) {
     return (
       <RegisterLayout title="Saving your profile..." step={4}>
         <div style={{ textAlign: 'center', padding: '40px 20px' }}>
           <Loader size="large" />
           <p style={{ marginTop: '20px', color: '#666' }}>
-            Please wait while we save your information...
+            {expertData.profileId ? "Updating your profile..." : "Creating your profile..."}
           </p>
         </div>
       </RegisterLayout>
@@ -425,10 +470,12 @@ export default function StepProfile() {
           {isSubmitting || apiLoading ? (
             <>
               <Loader size="small" color="white" />
-              <span style={{ marginLeft: '8px' }}>Saving...</span>
+              <span style={{ marginLeft: '8px' }}>
+                {expertData.profileId ? "Updating..." : "Saving..."}
+              </span>
             </>
           ) : (
-            'Save & Continue →'
+            expertData.profileId ? 'Update & Continue →' : 'Save & Continue →'
           )}
         </PrimaryButton>
       </ActionsRow>

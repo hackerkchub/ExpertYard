@@ -802,3 +802,13 @@ export const ErrorMessage = styled.div`
   border-radius: 4px;
   flex: 1 1 100% !important;
 `;
+
+export const SuccessCard = styled.div`
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.15);
+`;

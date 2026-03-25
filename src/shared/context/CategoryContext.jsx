@@ -1,4 +1,3 @@
-// src/shared/context/CategoryContext.jsx
 import React, {
   createContext,
   useContext,
@@ -21,14 +20,20 @@ export const CategoryProvider = ({ children }) => {
   const [subCategories, setSubCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  /* ================= LOAD CATEGORIES (ONCE) ================= */
+  /* ================= LOAD CATEGORIES ================= */
   useEffect(() => {
     const loadCategories = async () => {
       try {
+        setLoading(true);
+
         const res = await getCategoriesApi();
-        setCategories(res?.data?.data || []);
+
+        // ✅ FIX HERE
+        setCategories(res?.data || []);
+
       } catch (err) {
         console.error("Category load failed", err);
+        setCategories([]);
       } finally {
         setLoading(false);
       }
@@ -37,13 +42,16 @@ export const CategoryProvider = ({ children }) => {
     loadCategories();
   }, []);
 
-  /* ================= LOAD SUBCATEGORIES (MEMOIZED) ================= */
+  /* ================= LOAD SUBCATEGORIES ================= */
   const loadSubCategories = useCallback(async (categoryId) => {
     if (!categoryId) return;
 
     try {
       const res = await getSubCategoriesApi(categoryId);
-      setSubCategories(res?.data?.data || []);
+
+      // ⚠️ subcategory API axios raw return karta hai
+      setSubCategories(res?.data?.data || res?.data || []);
+
     } catch (err) {
       console.error("Subcategory load failed", err);
       setSubCategories([]);

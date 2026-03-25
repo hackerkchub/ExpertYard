@@ -48,7 +48,32 @@ export const LeftImage = styled.img`
   @media (max-width: 768px) { width: 120px; height: 120px;  auto; display: block; }
 `;
 
+export const AvatarFallback = styled.div`
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: ${({ bg }) =>
+    bg || "linear-gradient(135deg, #6366f1, #06b6d4)"};
+  color: #fff;
+  font-size: 42px;
+  font-weight: 600;
 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+
+  border: 4px solid #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+
+  @media (max-width: 768px) {
+    width: 120px;
+    height: 120px;
+    font-size: 32px;
+    margin: 0 auto;
+    display: flex;
+  }
+`;
 
 // --- Name & Header Info ---
 export const Name = styled.h1`
@@ -207,25 +232,6 @@ export const FollowButton = styled.button`
         margin: 10px;
   }
 `;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // --- Content Sections ---
 export const Section = styled.div`

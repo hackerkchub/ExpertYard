@@ -64,6 +64,7 @@ import {
   TabButton,
   MobileSummaryToggle,
   ResponsiveGrid,
+  AvatarFallback,
 } from "./UserChatHistory.styles";
 
 import { useAuth } from "../../../../shared/context/UserAuthContext";
@@ -75,6 +76,7 @@ import {
   getChatHistoryMessagesApi,
 } from "../../../../shared/api/chatHistory.api";
 import { getUserCallHistoryApi } from "../../../../shared/api/callHistory.api";
+import { getExpertPriceByIdApi } from "../../../../shared/api/expertapi/price.api";
 
 // ✅ MINIMUM 1 MIN BILLING + PRICE FIX
 const calculateBilledAmount = (durationMinutes, pricePerMinute) => {
@@ -269,6 +271,7 @@ export const UserChatHistory = () => {
   const [selectedSession, setSelectedSession] = useState(null);
   const [messages, setMessages] = useState([]);
   const [showDetails, setShowDetails] = useState(false);
+  const [prices, setPrices] = useState({});
 
   // ✅ Popups
   const [chatRequestId, setChatRequestId] = useState(null);
@@ -286,35 +289,17 @@ export const UserChatHistory = () => {
     const map = {};
     (experts || []).forEach((e) => {
       if (e?.id) {
-        map[e.id] = {
-          ...e,
-          chat_per_minute: e.chat_per_minute || e.price?.chat_per_minute || 16,
-          rating: e.rating || 0,
-        };
+       map[e.expert_id] = {
+  ...e,
+  chat_per_minute: e.chat_per_minute || e.price?.chat_per_minute || 16,
+  rating: e.rating || 0,
+};
       }
     });
     return map;
   }, [experts]); 
 
-   const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
-
-const getExpertAvatar = (ctxExpert, name) => {
-
-  if (ctxExpert?.profile_photo) {
-
-    // already full URL
-    if (ctxExpert.profile_photo.startsWith("http")) {
-      return ctxExpert.profile_photo;
-    }
-
-    // relative path
-    return `${API_BASE}${ctxExpert.profile_photo}`;
-  }
-
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(
-    name || "Expert"
-  )}&background=0ea5e9&color=fff`;
-};
+ 
 // console.log("experts from context", experts);
 // console.log("expertById", expertById);
 
@@ -532,9 +517,8 @@ console.log("history rows", rows)
     expert_name: ctxExpert?.name || c.expert_name || "Expert",
     expert_position:
       ctxExpert?.position || c.expert_position || "Professional Advisor",
-    expert_avatar: getExpertAvatar(ctxExpert, c.expert_name),
-    chat_per_minute:
-      Number(ctxExpert?.chat_per_minute) || 16,
+   expert_avatar: ctxExpert?.profile_photo || null,
+   chat_per_minute: Number(c.chat_per_minute || 0),
     rating: ctxExpert?.rating || c.rating || 0,
   };
 
@@ -549,6 +533,27 @@ console.log("history rows", rows)
       setChatLoading(false);
     }
   }, [user?.id, expertById]);
+
+  useEffect(() => {
+  const loadPrices = async () => {
+    const map = {};
+
+    for (let c of counterparties) {
+      try {
+        const res = await getExpertPriceByIdApi(c.expert_id);
+        const data = res?.data?.data || res?.data;
+
+        map[c.expert_id] = Number(data?.chat_per_minute || 0);
+      } catch {
+        map[c.expert_id] = 0;
+      }
+    }
+
+    setPrices(map);
+  };
+
+  if (counterparties.length) loadPrices();
+}, [counterparties]);
 
   // Fetch call history
   const fetchCallHistory = useCallback(async () => {
@@ -577,7 +582,7 @@ console.log("history rows", rows)
           ...g,
           expert_name: ctxExpert?.name || g.expert_name || "Expert",
           expert_position: ctxExpert?.position || g.expert_position || "Professional Advisor",
-         expert_avatar: getExpertAvatar(ctxExpert, g.expert_name),
+       expert_avatar: ctxExpert?.profile_photo || null,
           expert_rating: ctxExpert?.rating || g.expert_rating || 0,
         };
       });
@@ -761,6 +766,16 @@ console.log("history rows", rows)
       return callLoading && calls.length === 0;
     }
   };
+
+  const getInitials = (name = "") => {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
+};
 
   if (isLoading()) {
     return (
@@ -1150,17 +1165,19 @@ console.log("history rows", rows)
                       premium
                     >
                       <div className="chat-header-content">
-                        <Avatar
-  premium
-  src={c.expert_avatar || undefined}
-  onError={(e) => {
-    e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-      c.expert_name || "Expert"
-    )}&background=0ea5e9&color=fff`;
-  }}
->
-  {!c.expert_avatar && <FiUser size={24} />}
-</Avatar>
+                       {c.expert_avatar ? (
+  <Avatar
+    premium
+    src={c.expert_avatar}
+    onError={(e) => {
+      e.currentTarget.style.display = "none";
+    }}
+  />
+) : (
+  <AvatarFallback>
+    {getInitials(c.expert_name)}
+  </AvatarFallback>
+)}
                         <div className="expert-info">
                           <div className="expert-name-section">
                             <h4>{c.expert_name}</h4>
@@ -1169,7 +1186,7 @@ console.log("history rows", rows)
                               <span className="expert-position">{c.expert_position}</span>
                             </ExpertBadge>
                             <div className="rate-badge">
-                              ₹{c.chat_per_minute}/min
+                              ₹{prices[c.expert_id] || 0}/min
                             </div>
                           </div>
                           
@@ -1456,11 +1473,19 @@ console.log("history rows", rows)
             <ModalContent premium onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <div className="modal-user-info">
-                  <Avatar 
-                    premium 
-                    src={selectedSession.expert_avatar}
-                    style={{ width: 56, height: 56 }}
-                  />
+                 {g.expert_avatar ? (
+  <Avatar
+    premium
+    src={g.expert_avatar}
+    onError={(e) => {
+      e.currentTarget.style.display = "none";
+    }}
+  />
+) : (
+  <AvatarFallback>
+    {getInitials(g.expert_name)}
+  </AvatarFallback>
+)}
                   <div>
                     <h3>{selectedSession.expert_name || "Expert"}</h3>
                     <div className="modal-meta">

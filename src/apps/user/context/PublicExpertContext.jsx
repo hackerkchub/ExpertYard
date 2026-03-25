@@ -6,7 +6,7 @@ import {
 import { getExpertPriceByIdApi } from "../../../shared/api/expertapi/price.api";
 
 const ExpertContext = createContext(null);
-export const usePublicExpert = () => useContext(ExpertContext); // ⭐ SAME HOOK NAME
+export const usePublicExpert = () => useContext(ExpertContext);
 
 const DEFAULT_STATE = {
   expertId: null,
@@ -30,8 +30,6 @@ const DEFAULT_PRICE = {
 };
 
 export const PublicExpertProvider = ({ children }) => {
-  const BASE_URL = import.meta.env?.VITE_API_BASE_URL || "";
-
   const [experts, setExperts] = useState([]);
   const [expertsLoading, setExpertsLoading] = useState(false);
 
@@ -41,27 +39,31 @@ export const PublicExpertProvider = ({ children }) => {
   const [expertPrice, setExpertPrice] = useState(DEFAULT_PRICE);
   const [priceLoading, setPriceLoading] = useState(false);
 
-  /* ALL EXPERTS */
+  /* ================= ALL EXPERTS ================= */
   useEffect(() => {
     const loadExperts = async () => {
       try {
         setExpertsLoading(true);
+
         const res = await getExpertsProfileListApi();
 
-        const raw = res?.data?.data || [];
+        // ✅ FIX: backend returns { success, data }
+        const raw = res?.data || [];
 
         const mapped = raw.map((p) => ({
           id: p.expert_id,
           profileId: p.id,
-          name: p.name,
+          name: p.name || p.expert_name,
           position: p.position,
           profile_photo: p.profile_photo,
-          chat_per_minute: Number(p.chat_per_minute),
-          call_per_minute: Number(p.call_per_minute),
+          chat_per_minute: Number(p.chat_per_minute || 0),
+          call_per_minute: Number(p.call_per_minute || 0),
+          subcategory_id: p.subcategory_id,
         }));
 
         setExperts(mapped);
-      } catch {
+      } catch (err) {
+        console.error("LOAD EXPERTS ERROR:", err);
         setExperts([]);
       } finally {
         setExpertsLoading(false);
@@ -71,43 +73,38 @@ export const PublicExpertProvider = ({ children }) => {
     loadExperts();
   }, []);
 
-  /* PROFILE */
-  const fetchProfile = useCallback(
-    async (expertId) => {
-      if (!expertId) return;
+  /* ================= PROFILE ================= */
+  const fetchProfile = useCallback(async (expertId) => {
+    if (!expertId) return;
 
-      try {
-        setProfileLoading(true);
+    try {
+      setProfileLoading(true);
 
-        const res = await getExpertProfileApi(expertId);
-        const data = res?.data?.data;
+      const res = await getExpertProfileApi(expertId);
 
-        if (!data) return;
+      // ✅ backend already returns full URL
+     const data = res?.data?.data;
 
-        let photoUrl = data.profile_photo;
+      if (!data) return;
 
-        if (photoUrl && !photoUrl.startsWith("http")) {
-          photoUrl = `${BASE_URL}${photoUrl}`;
-        }
+      setExpertData({
+        expertId: data.expert_id,
+        profileId: data.id,
+        profile: data,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        position: data.position,
+        profile_photo: data.profile_photo,
+      });
+    } catch (err) {
+      console.error("PROFILE ERROR:", err);
+    } finally {
+      setProfileLoading(false);
+    }
+  }, []);
 
-        setExpertData({
-          expertId: data.expert_id,
-          profileId: data.id,
-          profile: data,
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          position: data.position,
-          profile_photo: photoUrl,
-        });
-      } finally {
-        setProfileLoading(false);
-      }
-    },
-    [BASE_URL]
-  );
-
-  /* PRICE */
+  /* ================= PRICE ================= */
   const fetchPrice = useCallback(async (expertId) => {
     if (!expertId) return;
 
@@ -115,7 +112,9 @@ export const PublicExpertProvider = ({ children }) => {
       setPriceLoading(true);
 
       const res = await getExpertPriceByIdApi(expertId);
-      const price = res?.data?.data;
+
+      // ✅ backend returns { success, data }
+      const price = res?.data;
 
       if (!price) {
         setExpertPrice(DEFAULT_PRICE);
@@ -124,23 +123,22 @@ export const PublicExpertProvider = ({ children }) => {
 
       setExpertPrice({
         id: price.id,
-        call_per_minute: Number(price.call_per_minute),
-        chat_per_minute: Number(price.chat_per_minute),
+        call_per_minute: Number(price.call_per_minute || 0),
+        chat_per_minute: Number(price.chat_per_minute || 0),
         reason_for_price: price.reason_for_price || "",
         handle_customer: price.handle_customer || "",
         strength: price.strength || "",
         weakness: price.weakness || "",
       });
     } catch (err) {
-      if (err.response?.status === 404) {
-        setExpertPrice(DEFAULT_PRICE);
-      }
+      console.error("PRICE ERROR:", err);
+      setExpertPrice(DEFAULT_PRICE);
     } finally {
       setPriceLoading(false);
     }
   }, []);
 
-  /* ⭐ AUTO TRIGGER LIKE EXPERT CONTEXT */
+  /* ================= AUTO PRICE LOAD ================= */
   useEffect(() => {
     if (expertData.expertId) {
       fetchPrice(expertData.expertId);
@@ -172,8 +170,8 @@ export const PublicExpertProvider = ({ children }) => {
         fetchPrice,
         refreshProfile,
         refreshPrice,
-        updateExpertData: () => {}, // ⭐ dummy for compatibility
-        logoutExpert: () => {},     // ⭐ dummy for compatibility
+        updateExpertData: () => {},
+        logoutExpert: () => {},
       }}
     >
       {children}

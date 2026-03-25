@@ -18,19 +18,14 @@ import {
 
 import {
   PageWrap,
-  LeftColumn,
   FollowButton,
-  MiniRating,
   VerifiedBadge,
-  TopSection,
    ReviewForm,
   ReviewFormTitle,
   RatingInput,
   RatingLabel,
-  RatingValue,
   TextAreaContainer,
   ReviewTextarea,
-  CharCount,
   FormActions,
   SubmitButton,
   DeleteButton,
@@ -46,29 +41,21 @@ import {
   ReviewDate,
   ViewAllButton,
   LeftImage,
-  RightInfo,
   Name,
   Role,
   Status,
   Section,
   SectionTitle,
   SectionBody,
-  TwoColumn,
-  ListItem,
   ActionButton,
   PriceTag,
-  ReviewBox,
   ReviewItem,
   ReviewUser,
   ReviewText,
-  RatingRow,
   StarRating,
   Star,
-  NotificationBadge,
   // New styled components
   ProfileCard,
-  ExpertiseGrid,
-  ExpertiseCard,
   StatItem,
   CallToAction,
   ReviewSection,
@@ -77,6 +64,7 @@ import {
   QuickStats,
   TagList,
   Tag,
+  AvatarFallback,
 } from "./ExpertProfile.styles";
 
 import {
@@ -513,6 +501,18 @@ setRequestingChat(false);
   const profile = expertData.profile;
   const price = expertPrice || {};
 
+  const getInitials = (name = "") => {
+  const words = name.trim().split(" ");
+
+  if (words.length === 1) {
+    return words[0].charAt(0).toUpperCase();
+  }
+
+  return (
+    words[0].charAt(0) + (words[1]?.charAt(0) || "")
+  ).toUpperCase();
+};
+
   // Spinner component
   const Spinner = () => (
     <div
@@ -543,7 +543,13 @@ setRequestingChat(false);
         <ProfileCard>
           <div style={{ display: 'flex', flexWrap: 'wrap' }}>
             <div style={{ flex: '0 0 200px' }}>
-              <LeftImage src={profile.profile_photo || DEFAULT_AVATAR} alt="Profile" />
+           {profile.profile_photo ? (
+  <LeftImage src={profile.profile_photo} alt="Profile" />
+) : (
+  <AvatarFallback>
+    {getInitials(profile.name)}
+  </AvatarFallback>
+)}
               <div >
                 {/* <MiniRating>
                   <FiStar color="#facc15" />

@@ -684,6 +684,20 @@ export const Avatar = styled.div`
   }
 `;
 
+export const AvatarFallback = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
 export const ExpertBadge = styled.span`
   background: #0A66C2;
   color: white;

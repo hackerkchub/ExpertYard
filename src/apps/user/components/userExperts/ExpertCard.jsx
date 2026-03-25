@@ -64,7 +64,7 @@ const ExpertCard = ({ data, mode, maxPrice, onStartChat }) => {
         setLoadingMeta(true);
 
         const priceRes = await getExpertPriceByIdApi(expertId);
-        const priceData = priceRes?.data?.data;
+        const priceData = priceRes?.data;
         if (!cancelled && priceData) {
           setCallPrice(Number(priceData.call_per_minute || 0));
           setChatPrice(Number(priceData.chat_per_minute || 0));

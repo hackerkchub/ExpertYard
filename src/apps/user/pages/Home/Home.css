@@ -1121,3 +1121,17 @@ font-family: -apple-system, system-ui, sans-serif;
 .section-wrapper:not(:first-child) {
   border-top: 1px solid #f1f5f9;
 }
+
+.avatar-fallback {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #06b6d4);
+  color: #fff;
+  font-weight: 600;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+}

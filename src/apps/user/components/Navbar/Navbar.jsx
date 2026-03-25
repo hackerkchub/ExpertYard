@@ -26,7 +26,7 @@ const Navbar = () => {
     <>
       <Nav>
         <Container>
-          <BrandBox to="/">
+          <BrandBox to="/user/">
             <BrandLogo src={logo} alt="ExpertYard" />
             <BrandName>Expert<span>Yard</span></BrandName>
           </BrandBox>

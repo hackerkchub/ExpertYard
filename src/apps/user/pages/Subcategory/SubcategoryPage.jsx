@@ -177,7 +177,7 @@ const SubcategoryPage = () => {
 
     if (requestId !== latestRequestRef.current) return;  // ✅ ADD THIS
 
-    const expertsList = res?.data?.data || [];
+    const expertsList = res?.data?.experts || [];
 
     const expertsWithCategory = expertsList.map(exp => ({
       ...exp,
@@ -200,9 +200,20 @@ const SubcategoryPage = () => {
             getReviewsByExpertApi(expertId)
           ]);
           
-          const priceData = priceRes.status === 'fulfilled' ? priceRes.value?.data?.data || {} : {};
-          const followersData = followersRes.status === 'fulfilled' ? followersRes.value?.data || {} : {};
-          const reviewsData = reviewsRes.status === 'fulfilled' ? reviewsRes.value?.data?.data || {} : {};
+         const priceData =
+  priceRes.status === "fulfilled"
+    ? priceRes.value?.data || {}
+    : {};
+
+const followersData =
+  followersRes.status === "fulfilled"
+    ? followersRes.value?.data || {}
+    : {};
+
+const reviewsData =
+  reviewsRes.status === "fulfilled"
+    ? reviewsRes.value?.data || {}
+    : {};
           
           return {
             expertId,

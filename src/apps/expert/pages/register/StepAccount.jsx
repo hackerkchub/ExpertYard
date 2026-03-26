@@ -213,10 +213,10 @@ export default function Auth() {
       let payload = {};
 
       if (type === "email") {
-        apiUrl = "http://softmaxs.com/api/otp/email/send";
+        apiUrl = "https://softmaxs.com/api/otp/email/send";
         payload = { email: registerForm.email };
       } else {
-        apiUrl = "http://softmaxs.com/api/otp/sms/send";
+        apiUrl = "https://softmaxs.com/api/otp/sms/send";
         payload = { countryCode: "91", mobile: registerForm.phone };
       }
 

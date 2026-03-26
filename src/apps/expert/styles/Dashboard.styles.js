@@ -13,15 +13,14 @@ export const MainContent = styled.main`
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding-top: 70px; /* Topbar height */
   min-width: 0;
   
   /* Desktop Sidebar Space */
-  margin-left: 244px; 
+ 
 
   @media (max-width: 1024px) {
     margin-left: 0; /* Mobile par sidebar hide hota hai */
-    padding-top: 64px;
+    padding-top: 20px;
   }
 `;
 

@@ -1,4 +1,4 @@
-// src/apps/expert/pages/register/StepPricing.jsx (Upgraded & Fixed)
+// src/apps/expert/pages/register/StepPricing.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -10,7 +10,6 @@ import useApi from "../../../../shared/hooks/useApi";
 import RegisterLayout from "../../components/RegisterLayout";
 import { getSmartPricing } from "../../utils/pricingEngine";
 import Loader from "../../../../shared/components/Loader/Loader";
-import ErrorMessage from "../../../../shared/components/ErrorMessage/ErrorMessage";
 
 import {
   Field,
@@ -43,9 +42,8 @@ export default function StepPricing() {
   const [validationErrors, setValidationErrors] = useState({});
   const [isLoadingExisting, setIsLoadingExisting] = useState(true);
 
-  // ✅ FIX: Correct API hooks
   const { request: savePrice, loading: saving } = useApi(savePriceApi);
-   const { request: getMyPrice, loading: fetching } = useApi(getMyPriceApi);
+  const { request: getMyPrice } = useApi(getMyPriceApi); // 👈 loading को यहाँ से हटा कर use hook loading direct use कर सकते हैं
 
   // 🔐 Route guard
   useEffect(() => {
@@ -54,7 +52,7 @@ export default function StepPricing() {
     }
   }, [expertData.expertId, navigate]);
 
-  // ✅ LOAD EXISTING PRICE (CRITICAL FIX)
+  // ✅ FIX: empty dependency array [] ताकि ये सिर्फ़ एक बार लोड हो
   useEffect(() => {
     const loadExistingPrice = async () => {
       try {
@@ -68,13 +66,11 @@ export default function StepPricing() {
           setHandleCustomer(res.data.handle_customer || "");
           setStrength(res.data.strength || "");
           setWeakness(res.data.weakness || "");
-          
-          // Optional: Show toast for existing data
+
           if (res.data.call_per_minute) {
             toast.info("Your existing pricing loaded");
           }
         } else if (res?.call_per_minute) {
-          // Handle case where data is not nested
           setPricePerMinute(res.call_per_minute?.toString() || "");
           setChatPrice(res.chat_per_minute?.toString() || "");
           setReasonForPrice(res.reason_for_price || "");
@@ -90,7 +86,8 @@ export default function StepPricing() {
     };
 
     loadExistingPrice();
-  }, [getMyPrice]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 👈 खाली कर दिया गया ताकि बार-बार न चले!
 
   // 💡 Smart pricing
   const handleSmartPricing = useCallback(() => {
@@ -98,20 +95,19 @@ export default function StepPricing() {
       category: expertData.categoryName,
       experience: 3
     });
-    
+
     setSuggested(smartPrice);
     setPricePerMinute(smartPrice.call.toString());
     setChatPrice(smartPrice.chat.toString());
-    
-    // Auto-fill reason with smart suggestion
+
     if (!reasonForPrice) {
       setReasonForPrice(`Expert in ${expertData.categoryName} with proven track record`);
     }
-    
+
     toast.info(`Suggested pricing: ₹${smartPrice.call}/min call, ₹${smartPrice.chat}/min chat`);
   }, [expertData.categoryName, reasonForPrice]);
 
-  // ✅ VALIDATION FIX (with NaN handling)
+  // ✅ Validation
   const validateForm = useCallback(() => {
     const errors = {};
 
@@ -138,25 +134,23 @@ export default function StepPricing() {
     return Object.keys(errors).length === 0;
   }, [pricePerMinute, chatPrice, reasonForPrice]);
 
-  // Real-time validation on input changes
+  // रियल-टाइम वैलिडेशन (टाइप करने पर सिर्फ एरर चेक करेगा, API नहीं बुलाएगा!)
   useEffect(() => {
     if (pricePerMinute || chatPrice) {
       validateForm();
     }
   }, [pricePerMinute, chatPrice, reasonForPrice, validateForm]);
 
-  const canFinish = Number(pricePerMinute) >= 10 && 
-                    Number(chatPrice) >= 5 && 
-                    !isNaN(Number(pricePerMinute)) && 
-                    !isNaN(Number(chatPrice)) &&
-                    reasonForPrice.trim().length > 0;
+  const canFinish = Number(pricePerMinute) >= 10 &&
+    Number(chatPrice) >= 5 &&
+    !isNaN(Number(pricePerMinute)) &&
+    !isNaN(Number(chatPrice)) &&
+    reasonForPrice.trim().length > 0;
 
-  // 🚀 SUBMIT FIX (without expert_id)
   const handleSubmit = async () => {
     if (!validateForm() || saving) return;
 
     try {
-      // ✅ FIX: Don't send expert_id, backend uses req.expert.id
       const payload = {
         call_per_minute: Number(pricePerMinute),
         chat_per_minute: Number(chatPrice),
@@ -172,17 +166,13 @@ export default function StepPricing() {
         throw new Error(res?.message || "Failed to save pricing");
       }
 
-      // ✅ Success feedback
       toast.success("Pricing saved successfully! 🎉");
-      
-      // ✅ Onboarding complete redirect
       navigate(`/expert/register?completed=1&email=${expertData.email}`);
 
     } catch (err) {
       console.error("Pricing API failed:", err);
       toast.error(err.message || "Failed to save pricing. Please try again.");
-      
-      // Optional: Still allow navigation if offline (but show warning)
+
       if (!err.message?.includes("network")) {
         toast.warning("You'll be able to update pricing later");
         navigate(`/expert/register?completed=1&email=${expertData.email}`);
@@ -190,14 +180,13 @@ export default function StepPricing() {
     }
   };
 
-  // Show loading state while fetching existing data
-  if (isLoadingExisting || fetching) {
+  if (isLoadingExisting) {
     return (
       <RegisterLayout title="Loading your pricing..." step={5} hasNavbar={true}>
         <div style={{ textAlign: 'center', padding: '40px 20px' }}>
           <Loader size="large" />
           <p style={{ marginTop: '20px', color: '#666' }}>
-            Loading your existing pricing...
+            Looking for existing pricing record...
           </p>
         </div>
       </RegisterLayout>
@@ -213,7 +202,6 @@ export default function StepPricing() {
     >
       {saving && <Loader />}
 
-      {/* ✅ Smart Pricing Button */}
       <FullRow style={{ marginBottom: 32 }}>
         <PrimaryButton
           style={{
@@ -228,7 +216,6 @@ export default function StepPricing() {
         </PrimaryButton>
       </FullRow>
 
-      {/* ✅ Call & Chat Rates */}
       <FullRow style={{ marginBottom: 32 }}>
         <Field style={{ flex: 1, marginRight: 16 }}>
           <Label>Call Rate <span style={{ color: "#ef4444" }}>*</span></Label>
@@ -239,10 +226,7 @@ export default function StepPricing() {
               max="500"
               step="5"
               value={pricePerMinute}
-              onChange={e => {
-                setPricePerMinute(e.target.value);
-                validateForm();
-              }}
+              onChange={e => setPricePerMinute(e.target.value)}
               placeholder="50"
               disabled={saving}
             />
@@ -264,10 +248,7 @@ export default function StepPricing() {
               max="300"
               step="5"
               value={chatPrice}
-              onChange={e => {
-                setChatPrice(e.target.value);
-                validateForm();
-              }}
+              onChange={e => setChatPrice(e.target.value)}
               placeholder="15"
               disabled={saving}
             />
@@ -281,7 +262,6 @@ export default function StepPricing() {
         </Field>
       </FullRow>
 
-      {/* ✅ Smart Pricing Suggestion Card */}
       {suggested && (
         <SmartPricingCard style={{ marginBottom: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -296,7 +276,6 @@ export default function StepPricing() {
         </SmartPricingCard>
       )}
 
-      {/* ✅ Professional Fields */}
       <PricingFieldsGrid>
         <FullRow>
           <Field>
@@ -360,7 +339,6 @@ export default function StepPricing() {
         </div>
       </PricingFieldsGrid>
 
-      {/* ✅ Validation Summary */}
       {Object.keys(validationErrors).length > 0 && (
         <ValidationSummary>
           <div style={{ color: "#ef4444", fontWeight: 600, marginBottom: 8 }}>
@@ -374,7 +352,6 @@ export default function StepPricing() {
         </ValidationSummary>
       )}
 
-      {/* ✅ Pricing Summary Card */}
       {canFinish && (
         <SuccessCard style={{ marginTop: 24, marginBottom: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -401,11 +378,7 @@ export default function StepPricing() {
           disabled={!canFinish || saving}
           onClick={handleSubmit}
         >
-          {saving ? (
-            "Saving..."
-          ) : (
-            "Complete Setup & Start →"
-          )}
+          {saving ? "Saving..." : "Complete Setup & Start →"}
         </PrimaryButton>
       </ActionsRow>
     </RegisterLayout>

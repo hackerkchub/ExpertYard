@@ -2,14 +2,15 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useExpert } from "../../../../shared/context/ExpertContext";
-import { createProfileApi, updateExpertProfileApi } from "../../../../shared/api/expertapi/profile.api";
+import { createProfileApi, updateExpertProfileApi, getExpertProfileApi } from "../../../../shared/api/expertapi/profile.api";
 import useApi from "../../../../shared/hooks/useApi";
 import { toast } from "react-toastify";
 import RegisterLayout from "../../components/RegisterLayout";
 import Loader from "../../../../shared/components/Loader/Loader";
 
+// ✅ साफ़ सुथरे और पक्के इंपोर्ट्स
 import {
-  FormGrid,
+  ProfileContainer,
   Field,
   Label,
   Input,
@@ -18,61 +19,30 @@ import {
   ActionsRow,
   PrimaryButton,
   SecondaryButton,
-  FullRow,
   FilePreview,
   FileInfo,
   FileName,
   FileSize,
   RemoveFileButton,
-  ProgressBar,
-  ProgressFill,
-  UploadStatus,
-  ErrorMessage
-} from "../../styles/Register.styles";
+  ErrorMessage,
+  UploadWidget,
+  UploadWidgetIcon,
+  DocumentsListWrapper // 👈 लिस्ट के लिए नया रैपर
+} from "../../styles/StepProfile.style";
 
 import {
-  FiUpload,
   FiCheck,
   FiX,
   FiFile,
   FiImage,
-  FiAlertCircle
+  FiAlertCircle,
+  FiUploadCloud
 } from "react-icons/fi";
 
-/* ================= FILE LIMITS ================= */
-const MAX_SINGLE_FILE_SIZE = 1.5 * 1024 * 1024; // 1.5MB
-const MAX_TOTAL_SIZE = 5 * 1024 * 1024; // 5MB
-
-const compressImage = (file, quality = 0.6, maxWidth = 1024) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    const img = new Image();
-
-    reader.onload = e => (img.src = e.target.result);
-    reader.onerror = reject;
-
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      const scale = Math.min(maxWidth / img.width, 1);
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-
-      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      canvas.toBlob(
-        blob =>
-          blob
-            ? resolve(new File([blob], file.name, { type: file.type }))
-            : reject("Compression failed"),
-        file.type,
-        quality
-      );
-    };
-
-    reader.readAsDataURL(file);
-  });
+const MAX_SINGLE_FILE_SIZE = 1.5 * 1024 * 1024;
 
 const formatFileSize = (bytes) => {
+  if (!bytes) return "0 B";
   if (bytes < 1024) return bytes + ' B';
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
@@ -96,143 +66,123 @@ export default function StepProfile() {
     aadhar_card: null
   });
 
-  const [uploadProgress, setUploadProgress] = useState({});
+  const [existingFiles, setExistingFiles] = useState({
+    profile_photo: false,
+    experience_certificate: false,
+    marksheet: false,
+    aadhar_card: false
+  });
+
   const [fileErrors, setFileErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  const [isLoadingExisting, setIsLoadingExisting] = useState(true);
 
-  // ✅ FIX: Import both APIs
   const { request: createProfile, loading: createLoading } = useApi(createProfileApi);
   const { request: updateProfile, loading: updateLoading } = useApi(updateExpertProfileApi);
 
   const apiLoading = createLoading || updateLoading;
 
-  // 🔐 Guard - Check if subcategory is selected
   useEffect(() => {
     if (!expertData.subCategoryIds?.length) {
       navigate("/expert/register/subcategory");
     }
   }, [expertData.subCategoryIds, navigate]);
 
-  // ✅ Load existing data if editing
   useEffect(() => {
-    if (expertData.profile) {
-      setForm({
-        name: expertData.profile.name || expertData.name || "",
-        email: expertData.profile.email || expertData.email || "",
-        phone: expertData.profile.phone || expertData.phone || "",
-        position: expertData.profile.position || "",
-        description: expertData.profile.description || "",
-        education: expertData.profile.education || "",
-        location: expertData.profile.location || "",
-        profile_photo: null, // Files need to be re-uploaded
-        experience_certificate: null,
-        marksheet: null,
-        aadhar_card: null
-      });
-    }
-  }, [expertData.profile, expertData.name, expertData.email, expertData.phone]);
+    const loadProfileData = async () => {
+      if (!expertData.expertId) {
+        setIsLoadingExisting(false);
+        return;
+      }
 
-  const handleChange = (k, v) =>
-    setForm(prev => ({ ...prev, [k]: v }));
+      try {
+        setIsLoadingExisting(true);
+        const res = await getExpertProfileApi(expertData.expertId);
+        const profile = res?.data?.data || res?.data;
 
-  const validateFile = (file, fieldName) => {
-    if (file.size > MAX_SINGLE_FILE_SIZE) {
-      setFileErrors(prev => ({
-        ...prev,
-        [fieldName]: `File must be under ${formatFileSize(MAX_SINGLE_FILE_SIZE)}`
-      }));
-      return false;
-    }
+        if (profile && profile.id) {
+          setForm(prev => ({
+            ...prev,
+            position: profile.position || "",
+            description: profile.description || "",
+            education: profile.education || "",
+            location: profile.location || "",
+          }));
 
-   const total =
-  [form.profile_photo, form.experience_certificate, form.marksheet, form.aadhar_card]
-    .filter(Boolean)
-    .filter(f => f !== form[fieldName]) // 🔥 important
-    .reduce((s, f) => s + f.size, 0) + file.size;
+          setExistingFiles({
+            profile_photo: !!profile.profile_photo,
+            experience_certificate: !!profile.experience_certificate,
+            marksheet: !!profile.marksheet,
+            aadhar_card: !!profile.aadhar_card
+          });
 
-    if (total > MAX_TOTAL_SIZE) {
-      setFileErrors(prev => ({
-        ...prev,
-        [fieldName]: `Total upload must be under ${formatFileSize(MAX_TOTAL_SIZE)}`
-      }));
-      return false;
-    }
+          updateExpertData({ profileId: profile.id, profile });
+        }
+      } catch (err) {
+        console.log("No existing profile found");
+      } finally {
+        setIsLoadingExisting(false);
+      }
+    };
 
-    setFileErrors(prev => ({ ...prev, [fieldName]: null }));
-    return true;
-  };
+    loadProfileData();
+  }, [expertData.expertId, updateExpertData]);
+
+  const handleChange = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
 
   const handleFile = async (k, e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!validateFile(file, k)) return;
-
-    try {
-      setUploadProgress(prev => ({ ...prev, [k]: 0 }));
-
-      // Simulate upload progress
-      const interval = setInterval(() => {
-        setUploadProgress(prev => ({
-          ...prev,
-          [k]: Math.min((prev[k] || 0) + 10, 90)
-        }));
-      }, 100);
-
-      const finalFile = file.type.startsWith("image/")
-        ? await compressImage(file)
-        : file;
-
-      clearInterval(interval);
-      setUploadProgress(prev => ({ ...prev, [k]: 100 }));
-      
-      setTimeout(() => {
-        setForm(p => ({ ...p, [k]: finalFile }));
-        setUploadProgress(prev => ({ ...prev, [k]: null }));
-      }, 500);
-
-    } catch (error) {
-      setFileErrors(prev => ({
-        ...prev,
-        [k]: "File processing failed. Please try again."
-      }));
-      setUploadProgress(prev => ({ ...prev, [k]: null }));
+    if (file.size > MAX_SINGLE_FILE_SIZE) {
+      setFileErrors(prev => ({ ...prev, [k]: `File must be under ${formatFileSize(MAX_SINGLE_FILE_SIZE)}` }));
+      return;
     }
+
+    setFileErrors(prev => ({ ...prev, [k]: null }));
+    setForm(p => ({ ...p, [k]: file }));
+    setExistingFiles(prev => ({ ...prev, [k]: false }));
   };
 
   const removeFile = (field) => {
     setForm(prev => ({ ...prev, [field]: null }));
+    setExistingFiles(prev => ({ ...prev, [field]: false }));
     setFileErrors(prev => ({ ...prev, [field]: null }));
-    setUploadProgress(prev => ({ ...prev, [field]: null }));
   };
 
   const validateForm = () => {
-    const requiredFields = {
+    const textFields = {
       position: "Position is required",
       description: "Description is required",
       education: "Education is required",
       location: "Location is required"
     };
 
-    for (const [field, message] of Object.entries(requiredFields)) {
+    for (const [field, message] of Object.entries(textFields)) {
       if (!form[field]?.trim()) {
-        setSubmitError(message);
+        toast.error(message);
         return false;
       }
     }
 
-    // Check for file errors
-    const hasFileErrors = Object.values(fileErrors).some(error => error !== null);
-    if (hasFileErrors) {
-      setSubmitError("Please fix file upload errors before submitting");
-      return false;
+    const requiredFiles = {
+      profile_photo: "Profile photo is required",
+      experience_certificate: "Experience certificate is required",
+      marksheet: "Marksheet is required",
+      aadhar_card: "Aadhar card is required"
+    };
+
+    for (const [field, message] of Object.entries(requiredFiles)) {
+      if (!form[field] && !existingFiles[field]) {
+        toast.error(message);
+        return false;
+      }
     }
 
     return true;
   };
 
-  // ✅ FINAL FIXED handleSubmit with Edit/Create logic
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
@@ -240,243 +190,149 @@ export default function StepProfile() {
     setSubmitError(null);
 
     const payload = new FormData();
-
-    // payload.append("expert_id", expertData.expertId);
     payload.append("name", form.name);
     payload.append("email", form.email);
     payload.append("phone", form.phone);
     payload.append("category_id", String(expertData.categoryId));
-  const subId = expertData.subCategoryIds?.[0];
-
-if (!subId) {
-  setSubmitError("Subcategory missing. Please go back.");
-  return;
-}
-
-payload.append("subcategory_id", String(subId));
+    payload.append("subcategory_id", String(expertData.subCategoryIds?.[0]));
     payload.append("position", form.position);
     payload.append("description", form.description);
     payload.append("education", form.education);
     payload.append("location", form.location);
 
-    const files = [
-      { key: "profile_photo", file: form.profile_photo },
-      { key: "experience_certificate", file: form.experience_certificate },
-      { key: "marksheet", file: form.marksheet },
-      { key: "aadhar_card", file: form.aadhar_card }
-    ];
-
-    files.forEach(({ key, file }) => {
-      if (file) payload.append(key, file);
-    });
+    if (form.profile_photo) payload.append("profile_photo", form.profile_photo);
+    if (form.experience_certificate) payload.append("experience_certificate", form.experience_certificate);
+    if (form.marksheet) payload.append("marksheet", form.marksheet);
+    if (form.aadhar_card) payload.append("aadhar_card", form.aadhar_card);
 
     try {
-      // ✅ Check if editing or creating
       const isEdit = !!expertData.profileId;
+      const res = isEdit ? await updateProfile(payload) : await createProfile(payload);
 
-      // ✅ Call appropriate API
-      const res = isEdit
-        ? await updateProfile(payload)
-        : await createProfile(payload);
+      if (!res || !res.success) throw res?.message || "Profile save failed";
 
-      // ✅ Check response
-      if (!res || !res.success) {
-        throw res?.message || "Profile save failed";
-      }
-
-      // ✅ FIX: Proper profileId extraction
       const profile = res.data || res;
+      updateExpertData({ profileId: profile?.id, profile });
 
-updateExpertData({
-  profileId: profile?.id,
-  profile: profile
-});
-toast.success("Profile saved");
-      // ✅ FIX: Correct navigation route
-      setTimeout(() => {
-  navigate("/expert/register/pricing");
-}, 500);
+      toast.success("Profile saved successfully! 🎉");
+      setTimeout(() => navigate("/expert/register/pricing"), 500);
     } catch (err) {
-      // ✅ FIX: Better error handling
-      setSubmitError(err || "Failed to save profile. Please try again.");
+      setSubmitError(err || "Failed to save profile.");
     } finally {
-      // ✅ Always reset submitting state
       setIsSubmitting(false);
     }
   };
 
-  const FileUploadField = ({ field, label, accept = "*", isImage = false }) => (
-    <Field>
-      <Label>{label}</Label>
-      {!form[field] ? (
-        <>
-          <FileInput
-            type="file"
-            accept={accept}
-            onChange={e => handleFile(field, e)}
-            disabled={uploadProgress[field]}
-          />
-          {uploadProgress[field] !== null && uploadProgress[field] !== undefined && (
-            <ProgressBar>
-              <ProgressFill style={{ width: `${uploadProgress[field]}%` }} />
-            </ProgressBar>
-          )}
-        </>
-      ) : (
-        <FilePreview>
-          {isImage ? <FiImage size={20} /> : <FiFile size={20} />}
-          <FileInfo>
-            <FileName>{form[field].name}</FileName>
-            <FileSize>{formatFileSize(form[field].size)}</FileSize>
-          </FileInfo>
-          <RemoveFileButton onClick={() => removeFile(field)}>
-            <FiX />
-          </RemoveFileButton>
-        </FilePreview>
-      )}
-      {fileErrors[field] && (
-        <ErrorMessage>
-          <FiAlertCircle size={14} />
-          {fileErrors[field]}
-        </ErrorMessage>
-      )}
-    </Field>
-  );
+  const isFormComplete = 
+    form.position.trim() && 
+    form.description.trim() && 
+    form.education.trim() && 
+    form.location.trim() && 
+    (form.profile_photo || existingFiles.profile_photo) &&
+    (form.experience_certificate || existingFiles.experience_certificate) &&
+    (form.marksheet || existingFiles.marksheet) &&
+    (form.aadhar_card || existingFiles.aadhar_card);
 
-  // Show loading state
-  if (isSubmitting && apiLoading) {
+  if (isLoadingExisting) {
     return (
-      <RegisterLayout title="Saving your profile..." step={4}>
+      <RegisterLayout title="Checking existing profile..." step={4}>
         <div style={{ textAlign: 'center', padding: '40px 20px' }}>
           <Loader size="large" />
-          <p style={{ marginTop: '20px', color: '#666' }}>
-            {expertData.profileId ? "Updating your profile..." : "Creating your profile..."}
-          </p>
+          <p style={{ marginTop: '20px', color: '#666' }}>Fetching your profile data...</p>
         </div>
       </RegisterLayout>
     );
   }
 
+  const FileFieldUI = ({ field, label, accept }) => (
+    <Field style={{ marginBottom: 0 }}>
+      <Label>{label} <span style={{ color: '#ef4444' }}>*</span></Label>
+      {existingFiles[field] || form[field] ? (
+        <FilePreview>
+          {field === "profile_photo" ? <FiImage size={20} /> : <FiFile size={20} />}
+          <FileInfo>
+            <FileName>{form[field]?.name || "Document Uploaded"}</FileName>
+            <FileSize>{form[field] ? formatFileSize(form[field].size) : "Cloud Saved"}</FileSize>
+          </FileInfo>
+          <RemoveFileButton onClick={() => removeFile(field)}>
+            <FiX size={16} />
+          </RemoveFileButton>
+        </FilePreview>
+      ) : (
+        <UploadWidget>
+          <UploadWidgetIcon>
+            <FiUploadCloud size={20} />
+          </UploadWidgetIcon>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", flex: 1 }}>
+            <p style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "#1e293b" }}>Click to upload</p>
+            <span style={{ fontSize: "12px", color: "#64748b" }}>Max 1.5MB</span>
+          </div>
+          <FileInput type="file" accept={accept} onChange={e => handleFile(field, e)} />
+        </UploadWidget>
+      )}
+      {fileErrors[field] && <ErrorMessage><FiAlertCircle /> {fileErrors[field]}</ErrorMessage>}
+    </Field>
+  );
+
   return (
-    <RegisterLayout
-      title="Build your expert profile"
-      subtitle="Clients will see this information before booking."
-      step={4}
-    >
-      <FormGrid>
-        <Field>
-          <Label>Name</Label>
-          <Input value={form.name} disabled />
-        </Field>
+    <RegisterLayout title="Build your expert profile" subtitle="All fields are mandatory." step={4}>
+      <ProfileContainer>
         
-        <Field>
-          <Label>Email</Label>
-          <Input value={form.email} disabled />
-        </Field>
-        
-        <Field>
-          <Label>Phone</Label>
-          <Input value={form.phone} disabled />
-        </Field>
+        {/* 📋 Section 1: Basic Info */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "16px", width: "100%" }}>
+          <Field><Label>Full Name</Label><Input value={form.name} disabled /></Field>
+          <Field><Label>Contact Phone</Label><Input value={form.phone} disabled /></Field>
+        </div>
+        <Field><Label>Email Address</Label><Input value={form.email} disabled /></Field>
+
+        {/* 📋 Section 2: Professional Info */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "16px", width: "100%" }}>
+          <Field>
+            <Label>Position / Role <span style={{ color: '#ef4444' }}>*</span></Label>
+            <Input value={form.position} onChange={e => handleChange("position", e.target.value)} placeholder="e.g., Software Engineer" />
+          </Field>
+          <Field>
+            <Label>Qualification <span style={{ color: '#ef4444' }}>*</span></Label>
+            <Input value={form.education} onChange={e => handleChange("education", e.target.value)} placeholder="e.g., B.Tech, MCA" />
+          </Field>
+        </div>
 
         <Field>
-          <Label>Position *</Label>
-          <Input 
-            value={form.position} 
-            onChange={e => handleChange("position", e.target.value)}
-            placeholder="e.g., Senior Software Engineer"
-          />
-        </Field>
-
-        <FullRow>
-          <Label>Description *</Label>
-          <TextArea 
-            value={form.description} 
-            onChange={e => handleChange("description", e.target.value)}
-            placeholder="Tell clients about your expertise and experience..."
-            rows={4}
-          />
-        </FullRow>
-
-        <Field>
-          <Label>Education *</Label>
-          <Input 
-            value={form.education} 
-            onChange={e => handleChange("education", e.target.value)}
-            placeholder="e.g., B.Tech in Computer Science"
-          />
+          <Label>Working Location <span style={{ color: '#ef4444' }}>*</span></Label>
+          <Input value={form.location} onChange={e => handleChange("location", e.target.value)} placeholder="e.g., Indore, India" />
         </Field>
 
         <Field>
-          <Label>Location *</Label>
-          <Input 
-            value={form.location} 
-            onChange={e => handleChange("location", e.target.value)}
-            placeholder="e.g., Mumbai, India"
-          />
+          <Label>About You / Experience <span style={{ color: '#ef4444' }}>*</span></Label>
+          <TextArea value={form.description} onChange={e => handleChange("description", e.target.value)} placeholder="Tell us about your years of experience..." rows={4} />
         </Field>
 
-        <FileUploadField
-          field="profile_photo"
-          label="Profile Photo"
-          accept="image/*"
-          isImage={true}
-        />
+        {/* 📁 Section 3: Documents (Description के ठीक नीचे, एक के नीचे एक) */}
+        <div style={{ marginTop: "24px", width: "100%" }}>
+          <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b", marginBottom: "16px", borderBottom: "1px solid #e2e8f0", paddingBottom: "12px" }}>
+            📁 Document Verification
+          </h3>
+          
+          <DocumentsListWrapper>
+            <FileFieldUI field="profile_photo" label="Professional Photo" accept="image/*" />
+            <FileFieldUI field="experience_certificate" label="Experience Certificate" accept=".pdf,.jpg,.jpeg,.png" />
+            <FileFieldUI field="marksheet" label="Degree / Marksheet" accept=".pdf,.jpg,.jpeg,.png" />
+            <FileFieldUI field="aadhar_card" label="Govt. Identity Proof" accept=".pdf,.jpg,.jpeg,.png" />
+          </DocumentsListWrapper>
+        </div>
 
-        <FileUploadField
-          field="experience_certificate"
-          label="Experience Certificate"
-          accept=".pdf,.jpg,.jpeg,.png"
-        />
+      </ProfileContainer>
 
-        <FileUploadField
-          field="marksheet"
-          label="Marksheet"
-          accept=".pdf,.jpg,.jpeg,.png"
-        />
+      {submitError && (
+        <div style={{ marginTop: "16px" }}>
+          <ErrorMessage><FiAlertCircle /> {submitError}</ErrorMessage>
+        </div>
+      )}
 
-        <FileUploadField
-          field="aadhar_card"
-          label="Aadhar Card"
-          accept=".pdf,.jpg,.jpeg,.png"
-        />
-
-        {submitError && (
-          <FullRow>
-            <ErrorMessage>
-              <FiAlertCircle size={16} />
-              {submitError}
-            </ErrorMessage>
-          </FullRow>
-        )}
-
-        <UploadStatus>
-          <FiCheck size={16} />
-          <span>Max file size: {formatFileSize(MAX_SINGLE_FILE_SIZE)} per file, total {formatFileSize(MAX_TOTAL_SIZE)}</span>
-        </UploadStatus>
-      </FormGrid>
-
-      <ActionsRow>
-        <SecondaryButton 
-          onClick={() => navigate("/expert/register/subcategory")}
-          disabled={isSubmitting}
-        >
-          ← Back
-        </SecondaryButton>
-        <PrimaryButton 
-          onClick={handleSubmit}
-          disabled={isSubmitting || apiLoading}
-        >
-          {isSubmitting || apiLoading ? (
-            <>
-              <Loader size="small" color="white" />
-              <span style={{ marginLeft: '8px' }}>
-                {expertData.profileId ? "Updating..." : "Saving..."}
-              </span>
-            </>
-          ) : (
-            expertData.profileId ? 'Update & Continue →' : 'Save & Continue →'
-          )}
+      <ActionsRow style={{ marginTop: "32px" }}>
+        <SecondaryButton onClick={() => navigate("/expert/register/subcategory")}>← Back</SecondaryButton>
+        <PrimaryButton onClick={handleSubmit} disabled={apiLoading || !isFormComplete} style={{ opacity: isFormComplete ? 1 : 0.6 }}>
+          {apiLoading ? "Saving..." : expertData.profileId ? "Update & Continue →" : "Save & Continue →"}
         </PrimaryButton>
       </ActionsRow>
     </RegisterLayout>

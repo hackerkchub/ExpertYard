@@ -1,4 +1,4 @@
-// src/apps/expert/pages/chat/ExpertChat.jsx - ✅ Updated: Remove Left Panel + Full Screen Right + Redirect on End
+// src/apps/expert/pages/chat/ExpertChat.jsx
 import React, {
   useState,
   useEffect,
@@ -27,24 +27,23 @@ import {
   ErrorMessage,
   EmptyChatMessage,
 } from "./ExpertChat.styles";
-import { FiSend, FiUserX, FiClock, FiPause } from "react-icons/fi";
+import { FiSend, FiUserX, FiClock } from "react-icons/fi";
 import { socket } from "../../../../shared/api/socket";
 import { useExpert } from "../../../../shared/context/ExpertContext";
-import { useExpertNotifications } from "../../context/ExpertNotificationsContext";
-import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { getUserPublicProfileApi } from "../../../../shared/api/userApi";
+import { toast } from "react-hot-toast"; // 👈 Toast for feedback
+
+const DEFAULT_AVATAR = "https://i.pravatar.cc/150?img=1";
 
 const ExpertChat = () => {
   const { room_id } = useParams();
   const navigate = useNavigate();
 
-  // User Profile States
   const [userProfile, setUserProfile] = useState(null);
   const [userProfileLoading, setUserProfileLoading] = useState(false);
 
   const [chatData, setChatData] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [allChats, setAllChats] = useState([]); // kept (no UI now) but used for refresh consistency
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -59,20 +58,17 @@ const ExpertChat = () => {
   const messagesEndRef = useRef(null);
   const timerIntervalRef = useRef(null);
 
-  // const { user: loggedInUser } = useAuth();
-  const { expert, expertPrice } = useExpert();
-  // const { notifications } = useExpertNotifications();
+  const { expert } = useExpert();
 
   const expertId = useMemo(() => {
-  return (
-    expert?.id ||
-    expert?.expert_id ||
-    chatData?.expert_id ||
-    null
-  );
-}, [expert, chatData]);
+    return (
+      expert?.id ||
+      expert?.expert_id ||
+      chatData?.expert_id ||
+      null
+    );
+  }, [expert, chatData]);
 
-  /* ========= HELPER: CURRENT EXPERT ID ========= */
   const getCurrentExpertId = useCallback(() => {
     if (expert?.id || expert?.expert_id) return expert.id || expert.expert_id;
 
@@ -85,31 +81,24 @@ const ExpertChat = () => {
     } catch {
       // ignore
     }
-
-    console.warn("⚠️ No expert id found");
     return null;
   }, [expert]);
 
-  /* ========= FETCH USER PROFILE ========= */
   const fetchUserProfile = useCallback(async (userId) => {
-  if (!userId) return;
-
-  try {
-    setUserProfileLoading(true);
-
-    const res = await getUserPublicProfileApi(userId);
-
-    if (res?.success) {
-      setUserProfile(res.data);
+    if (!userId) return;
+    try {
+      setUserProfileLoading(true);
+      const res = await getUserPublicProfileApi(userId);
+      if (res?.success) {
+        setUserProfile(res.data);
+      }
+    } catch (err) {
+      console.error("User profile fetch failed", err);
+    } finally {
+      setUserProfileLoading(false);
     }
-  } catch (err) {
-    console.error("User profile fetch failed", err);
-  } finally {
-    setUserProfileLoading(false);
-  }
-}, []);
+  }, []);
 
-  /* ========= RESET SESSION ========= */
   const resetSession = () => {
     setChatData(null);
     setMessages([]);
@@ -125,7 +114,47 @@ const ExpertChat = () => {
     }
   };
 
-  /* ========= FETCH CHAT DETAILS ========= */
+
+  /* ==========================================================
+      🚫 JUGAD: HIDE SIDEBAR & TOPBAR ONLY FOR CHAT (Cleanup on Leave)
+     ========================================================== */
+  useEffect(() => {
+    const topbar = document.querySelector(".main-app-topbar");
+    
+    // Yahan aapke sidebar component ka wrap select kijiye (Check class names)
+    const sidebar = document.querySelector("aside") || document.querySelector("[class*='SidebarWrap']");
+
+    if (topbar) topbar.style.display = "none";
+    if (sidebar) sidebar.style.display = "none";
+
+    return () => {
+      // Jab screen se exit karein, to dono ko wapas dikha dein
+      if (topbar) topbar.style.display = "flex";
+      if (sidebar) sidebar.style.display = "flex"; // style file ke display property ke anusar check kar lein
+    };
+  }, []);
+
+
+  /* ==========================================================
+      🚫 BACK BUTTON BLOCK LOGIC
+     ========================================================== */
+  useEffect(() => {
+    if (sessionActive) {
+      window.history.pushState(null, null, window.location.pathname);
+
+      const handlePopState = () => {
+        window.history.pushState(null, null, window.location.pathname);
+        toast.error("Finish chat session to leave!", { id: "back-block" });
+      };
+
+      window.addEventListener("popstate", handlePopState);
+
+      return () => {
+        window.removeEventListener("popstate", handlePopState);
+      };
+    }
+  }, [sessionActive]);
+
   const fetchChatDetails = useCallback(async () => {
     if (!room_id) {
       resetSession();
@@ -168,7 +197,6 @@ const ExpertChat = () => {
         }),
       })));
 
-      // Initialize timer from server
       if (isActive && session.start_time) {
         const startTime = new Date(session.start_time).getTime();
         const now = Date.now();
@@ -182,7 +210,6 @@ const ExpertChat = () => {
         setTimerPaused(true);
       }
 
-      // Fetch user profile
       if (session.user_id) fetchUserProfile(session.user_id);
     } catch (err) {
       console.error("❌ Chat fetch error:", err);
@@ -193,30 +220,6 @@ const ExpertChat = () => {
     }
   }, [room_id, fetchUserProfile]);
 
-  /* ========= FETCH ALL CHATS (kept) ========= */
-  const fetchAllChats = useCallback(async () => {
-    try {
-      const expertId = getCurrentExpertId();
-      if (!expertId) return;
-
-      const response = await fetch(
-        `https://softmaxs.com/api/chat/expert-chats?expert_id=${encodeURIComponent(expertId)}`
-      );
-
-      if (!response.ok) {
-        const txt = await response.text();
-        console.error("❌ expert-chats error:", response.status, txt);
-        return;
-      }
-
-      const result = await response.json();
-      if (result.success) setAllChats(result.data.chats || []);
-    } catch (err) {
-      console.error("❌ Failed to fetch chats list:", err);
-    }
-  }, [getCurrentExpertId]);
-
-  /* ========= PRECISE SESSION TIMER ========= */
   useEffect(() => {
     if (!sessionActive || !sessionStartTime || timerPaused) {
       if (timerIntervalRef.current) {
@@ -241,13 +244,11 @@ const ExpertChat = () => {
     };
   }, [sessionActive, sessionStartTime, timerPaused]);
 
-  /* ========= SOCKET HANDLERS ========= */
   useEffect(() => {
     if (!room_id || !socket) return;
 
     const roomId = room_id;
     socket.emit("join_room", { room_id });
-
 
     const handleNewMessage = (msgData) => {
       if (msgData.room_id === roomId) {
@@ -270,90 +271,65 @@ const ExpertChat = () => {
       }
     };
 
-    const handleChatUpdate = ({ room_id: updatedRoomId }) => {
-      if (updatedRoomId === roomId) {
-        fetchChatDetails();
-        fetchAllChats();
-      }
-    };
-
-    const handleChatEnded = ({ room_id: endedRoomId, reason }) => {
+    const handleChatEnded = ({ room_id: endedRoomId }) => {
       if (endedRoomId === roomId) {
-        console.log("🔚 Expert: Chat ended:", reason);
-
         setSessionActive(false);
         setTimerPaused(true);
         setChatData((prev) => (prev ? { ...prev, is_active: 0 } : prev));
-
-        // ✅ redirect to expert chat history
+        toast.success("Chat ended! Redirecting...");
         navigate("/expert/chat-history");
       }
     };
 
     socket.on("message", handleNewMessage);
-    // socket.on("message_sent", handleNewMessage);
-   
     socket.on("chat_ended", handleChatEnded);
 
     return () => {
       socket.off("message", handleNewMessage);
-      // socket.off("message_sent", handleNewMessage);
-      
       socket.off("chat_ended", handleChatEnded);
-     socket.emit("leave_room", { room_id });
-
-
+      socket.emit("leave_room", { room_id });
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     };
-  }, [room_id, fetchChatDetails, fetchAllChats, navigate]);
+  }, [room_id, navigate]);
 
-  /* ========= AUTO SCROLL ========= */
   useEffect(() => {
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 80);
   }, [messages]);
 
-  /* ========= INITIAL LOAD ========= */
   useEffect(() => {
     const init = async () => {
-      await Promise.all([fetchChatDetails(), fetchAllChats()]);
+      await fetchChatDetails();
       setIsInitialized(true);
     };
     init();
+  }, [fetchChatDetails]);
 
-    const interval = setInterval(fetchAllChats, null || 30000);
-    return () => clearInterval(interval);
-  }, [fetchChatDetails, fetchAllChats]);
+  const handleSendMessage = () => {
+    if (!message.trim() || !room_id || !expertId) return;
 
-  /* ========= SEND MESSAGE ========= */
- const handleSendMessage = () => {
-if (!message.trim() || !room_id || !expertId) return;
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        sender_type: "expert",
+        sender_id: expertId,
+        message: message.trim(),
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      },
+    ]);
 
-
-  setMessages(prev => [
-    ...prev,
-    {
-      id: Date.now(),
-      sender_type: "expert",
-      sender_id: expertId,
+    socket.emit("sendMessage", {
+      room_id,
       message: message.trim(),
-      time: new Date().toLocaleTimeString([], {
-  hour: "2-digit",
-  minute: "2-digit",
-}),
+    });
 
-    }
-  ]);
-
-  socket.emit("sendMessage", {
-    room_id,
-    message: message.trim(),
-  });
-
-  setMessage("");
-};
-
+    setMessage("");
+  };
 
   const handleKeyPress = useCallback(
     (e) => {
@@ -365,13 +341,6 @@ if (!message.trim() || !room_id || !expertId) return;
     [handleSendMessage]
   );
 
-  const formatTime = (date) =>
-  new Date(date).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
-  /* ========= SELECTED USER ========= */
   const selectedUser = useMemo(() => {
     if (!chatData) return null;
 
@@ -392,17 +361,6 @@ if (!message.trim() || !room_id || !expertId) return;
     };
   }, [chatData, userProfile]);
 
-  // Earning calculation
-  const perMinute = expertPrice?.chat_per_minute || chatData?.price_per_minute || 0;
-  const completedMinutes = Math.floor(displaySeconds / 60);
-  const totalEarning = perMinute * (completedMinutes + 1);
-
-  const formatSessionTime = () => {
-    const mins = Math.floor(displaySeconds / 60);
-    const secs = displaySeconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
-
   if (loading && !isInitialized) {
     return (
       <PageWrap>
@@ -412,9 +370,8 @@ if (!message.trim() || !room_id || !expertId) return;
   }
 
   return (
-    <PageWrap>
+    <PageWrap style={{ top: 0, left: 0, width: '100%' }}> {/* 👈 Sidebar hatne par width 100% aur left chipka do */}
       <ChatLayout>
-        {/* ✅ ONLY RIGHT PANEL, FULL WIDTH */}
         <RightPanel style={{ width: "100%" }}>
           {chatData && selectedUser ? (
             <>
@@ -423,7 +380,6 @@ if (!message.trim() || !room_id || !expertId) return;
                   <Avatar src={selectedUser.avatar} />
                   <UserMeta>
                     <h4>{selectedUser.name}</h4>
-
                     {userProfile ? (
                       <>
                         <span>{selectedUser.email}</span>
@@ -436,50 +392,6 @@ if (!message.trim() || !room_id || !expertId) return;
                     )}
                   </UserMeta>
                 </UserInfo>
-
-                {/* <div style={{ textAlign: "right" }}>
-                  <div
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: sessionActive ? "#10b981" : "#ef4444",
-                      marginBottom: 4,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      justifyContent: "flex-end",
-                    }}
-                  >
-                    {sessionActive ? (
-                      "🟢 Chat Active"
-                    ) : (
-                      <>
-                        🔴 Chat Ended {timerPaused && <FiPause size={12} />}
-                      </>
-                    )}
-                  </div>
-
-                  <div
-                    style={{
-                      fontSize: 12,
-                      color: timerPaused ? "#6b7280" : "#10b981",
-                      fontWeight: timerPaused ? 400 : 600,
-                    }}
-                  >
-                    Session: {formatSessionTime()}
-                  </div>
-
-                  <div
-                    style={{
-                      fontSize: 13,
-                      color: "#111827",
-                      marginTop: 2,
-                      fontWeight: 600,
-                    }}
-                  >
-                    Earning: ₹{totalEarning}
-                  </div>
-                </div> */}
               </UserHeader>
 
               <ChatArea>

@@ -1,22 +1,37 @@
 import styled from "styled-components";
 
+// -- Sidebar Width Constant --
+const SIDEBAR_WIDTH = "260px";
+const TOPBAR_HEIGHT = "70px";
+
 export const LayoutWrapper = styled.div`
   display: flex;
   width: 100%;
   height: 100vh;
-overflow: hidden;
+  overflow: hidden; /* Main window scroll block taaki dashboard smooth scroll ho */
   background: #F3F2EF; 
 
-   /*scrollbar hide*/
-    & *::-webkit-scrollbar-thumb {
-    background: #F3F2EF !important;
+  /* Global Scrollbar Reset for modern UI */
+  & * {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db transparent;
+  }
+
+  & *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
   }
 
   & *::-webkit-scrollbar-track {
-    background: transparent !important;
+    background: transparent;
   }
 
-  /* Premium Loading Animation */
+  & *::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+  }
+
+  /* Shimmer Loading Animation */
   @keyframes shimmer {
     0% { background-position: -468px 0; }
     100% { background-position: 468px 0; }
@@ -24,63 +39,90 @@ overflow: hidden;
 `;
 
 export const ContentWrapper = styled.main`
-  /* DESKTOP: Sidebar + Topbar spacing */
-  margin-top: 70px;
-  margin-left: 280px;
+  /* --- DESKTOP VIEW --- */
   flex: 1;
   display: flex;
   flex-direction: column;
-   height: calc(100vh - 70px);   
-  overflow-y: auto;
+  
+  /* Sidebar width ke hisaab se automatic margin aur width handle hogi */
+  margin-top: ${TOPBAR_HEIGHT};
+  margin-left: ${SIDEBAR_WIDTH};
+  width: calc(100% - ${SIDEBAR_WIDTH});
+  
+  height: calc(100vh - ${TOPBAR_HEIGHT}); 
+  min-height: calc(100vh - ${TOPBAR_HEIGHT});
+  
   padding: 24px;
-  min-height: calc(100vh - 70px);
-  width: calc(100% - 260px);
-   box-sizing: border-box;
-  color: #f1f5f9;
-    overflow-y: auto;
-  overflow-x: hidden;
-   background: #F3F2EF;  
+  box-sizing: border-box;
+  background: #F3F2EF;  
   color: #1D2226;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Smooth scrolling behaviour */
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; 
+  
+  transition: all 0.3s ease-in-out;
 
-
-  /* TABLET: Compact layout */
+  /* --- TABLET VIEW (Up to 1024px) --- */
   @media (max-width: 1024px) {
-    margin-left: 280px;
-    padding: 28px 24px 32px;
+    /* Tablet par sidebar thoda chota ya toggle layout ho sakta hai */
+    margin-left: 240px; 
+    width: calc(100% - 240px);
+    padding: 24px;
   }
 
-  /* MOBILE: Full width, no sidebar margin */
-  @media (max-width: 1023px) {
-    margin-left: 0;
-    padding: 24px 20px 32px;
+  /* --- LARGE MOBILE & SMALL TABLETS (Up to 991px) --- */
+  @media (max-width: 991px) {
+    margin-left: 0; /* Sidebar niche overlay ya drawer me shift hoga */
+    width: 100%;
+    padding: 20px;
   }
 
+  /* --- MOBILE VIEW (Up to 768px) --- */
   @media (max-width: 768px) {
-    padding: 20px 16px 28px;
-     width: 100%;
-    margin-top: 60px;
+    margin-top: 60px; /* Chota Header height */
+    height: calc(100vh - 60px);
+    min-height: calc(100vh - 60px);
+    padding: 16px;
   }
 
+  /* --- SMALL MOBILE (Up to 480px) --- */
   @media (max-width: 480px) {
-    padding: 16px 12px 24px;
-    margin-top: 50px;
+    margin-top: 56px;
+    height: calc(100vh - 56px);
+    min-height: calc(100vh - 56px);
+    padding: 12px;
   }
 
-  /* Premium Content Container */
+  /* Content inside children constraint */
   & > * {
     max-width: 100%;
-    overflow-x: hidden;
+    overflow-wrap: break-word;
   }
 
-  /* Responsive Typography */
-  h1 { font-size: clamp(24px, 4vw, 32px); margin-bottom: 20px; }
-  h2 { font-size: clamp(20px, 3.5vw, 26px); margin-bottom: 16px; }
-  h3 { font-size: clamp(18px, 3vw, 22px); }
+  /* Responsive Typography using CSS Clamp */
+  h1 { 
+    font-size: clamp(22px, 5vw, 30px); 
+    margin-bottom: 20px; 
+    font-weight: 600;
+  }
+  h2 { 
+    font-size: clamp(18px, 4vw, 24px); 
+    margin-bottom: 16px; 
+    font-weight: 600;
+  }
+  h3 { 
+    font-size: clamp(16px, 3.5vw, 20px); 
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
 
+  /* Content Wrapper scrollbar hide (if needed) */
   &::-webkit-scrollbar {
-  width: 0px !important;
-  height: 0px !important;
-}
-
+    width: 0px !important;
+    height: 0px !important;
+  }
+  scrollbar-width: none; /* Firefox */
 `;

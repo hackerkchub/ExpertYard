@@ -1,18 +1,19 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   Nav, Container, NavbarSpacer, BrandBox, BrandLogo, BrandName,
   IconBox, MobileIcon, MobileMenu, MobileItem,
   WalletIconWrap, WalletBadge, AuthButton, RightActions
 } from "./Navbar.styles";
-import { FiMenu, FiX, FiHome, FiGift, FiUser, FiLogOut, FiMessageSquare } from "react-icons/fi";
+import { FiMenu, FiX, FiHome, FiGift, FiUser, FiLogOut, FiMessageSquare, FiArrowLeft } from "react-icons/fi";
 import { FaWallet } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import logo from "../../../../assets/logo.png";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isLoggedIn, logout } = useAuth();
   const { balance } = useWallet();
   const [open, setOpen] = useState(false);
@@ -22,13 +23,38 @@ const Navbar = () => {
     setOpen(false);
   };
 
+  // 🆕 Updated Logic to check all Home paths
+  const homePaths = ["/", "/user", "/user/", "/user/home", "/user/home/"];
+  const isHomePage = homePaths.includes(location.pathname);
+
   return (
     <>
       <Nav>
         <Container>
-          <BrandBox to="/user/">
-            <BrandLogo src={logo} alt="ExpertYard" />
-            <BrandName>Expert<span>Yard</span></BrandName>
+          <BrandBox 
+            to={isHomePage ? "/" : "#"} 
+            onClick={(e) => {
+              if (!isHomePage) {
+                e.preventDefault();
+                navigate(-1); // Goes back to previous page
+              }
+            }}
+          >
+            {/* 🆕 If NOT home page, show black back button. Logo will hide via CSS on mobile */}
+            {!isHomePage && (
+              <div className="back-btn-mobile" style={{ display: 'flex', alignItems: 'center' }}>
+                <FiArrowLeft size={24} style={{ color: '#000000', marginRight: '8px' }} /> {/* Black Color Button */}
+              </div>
+            )}
+
+            {/* Logo will automatically hide on mobile if NOT home page via styled-components class */}
+            <BrandLogo 
+              src={logo} 
+              alt="ExpertYard" 
+              className={!isHomePage ? "hide-logo-on-mobile" : ""} 
+            />
+            
+            <BrandName  className={!isHomePage ? "hide-logo-on-mobile" : ""}  >Expert<span>Yard</span></BrandName>
           </BrandBox>
 
           <RightActions>
@@ -64,7 +90,7 @@ const Navbar = () => {
           </RightActions>
         </Container>
 
-        {/* Mobile Menu - Grid Layout for better reach */}
+        {/* Mobile Menu */}
         {open && (
           <MobileMenu>
             <MobileItem onClick={() => handleNav("/")}><FiHome /> Home</MobileItem>
@@ -72,9 +98,7 @@ const Navbar = () => {
             <MobileItem onClick={() => handleNav("/user/chat-history")}><FiMessageSquare /> Chat</MobileItem>
             <MobileItem onClick={() => handleNav("/user/wallet")}><FaWallet /> Wallet</MobileItem>
             {isLoggedIn ? (
-              <>
-                <MobileItem onClick={() => { logout(); setOpen(false); }}><FiLogOut color="#ef4444"/> Logout</MobileItem>
-              </>
+              <MobileItem onClick={() => { logout(); setOpen(false); }}><FiLogOut color="#ef4444"/> Logout</MobileItem>
             ) : (
               <MobileItem onClick={() => handleNav("/user/auth")}><FiUser /> Login</MobileItem>
             )}
@@ -82,7 +106,6 @@ const Navbar = () => {
         )}
       </Nav>
 
-      {/* ✅ Ye aapke Back button ko niche dhakelega automatically */}
       <NavbarSpacer />
     </>
   );

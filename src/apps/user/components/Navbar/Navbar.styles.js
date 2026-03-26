@@ -35,15 +35,6 @@ export const NavbarSpacer = styled.div`
   @media (max-width: 480px) { height: 66px; }
 `;
 
-export const BrandBox = styled(Link)`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  text-decoration: none;
-  transition: transform 0.2s ease;
-  &:active { transform: scale(0.95); }
-`;
-
 export const BrandLogo = styled.img`
   width: 42px;
   height: 42px;
@@ -188,4 +179,27 @@ export const MobileItem = styled.div`
   cursor: pointer;
   svg { font-size: 22px; color: #3b82f6; }
   &:active { background: #eff6ff; }
+`;
+
+export const BrandBox = styled(Link)`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  cursor: pointer;
+
+  .back-btn-mobile {
+    display: none; /* Desktop pe default hide */
+  }
+
+  @media (max-width: 768px) {
+    .back-btn-mobile {
+      display: flex; /* Mobile pe display flex */
+    }
+
+    /* 🆕 Logic to hide the logo inside BrandBox in Mobile View if Back Button is present */
+    .hide-logo-on-mobile {
+      display: none !important;
+    }
+  }
 `;

@@ -18,7 +18,7 @@ const styles = {
     minHeight: "100vh",
   },
   sidebar: {
-    width: "260px",
+    width: "500px",
     padding: "20px",
     borderRight: "1px solid #e5e7eb",
     background: "#fff",

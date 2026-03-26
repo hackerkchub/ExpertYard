@@ -162,7 +162,7 @@ const hasRingingCall = notifications.some(
 
   return (
     <>
-      <TopbarWrap>
+      <TopbarWrap className="main-app-topbar">
         <LeftBlock>
           {/* MOBILE HAMBURGER */}
           <IconBtn 

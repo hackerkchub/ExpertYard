@@ -6,15 +6,36 @@ const fadeIn = keyframes`
   to { opacity: 1; transform: translateY(0); }
 `;
 
-/* PAGE WRAPPER */
 export const PageWrap = styled.div`
-  width: 100%;
-  min-height: 100vh;
-  background: #fafafa; 
-  display: flex;
-  justify-content: center;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  height: 100vh;
+  width: 100%; /* 👈 Use 100% instead of 100vw to prevent scrollbar width push */
+  background-color: #f3f2ef;
+  padding: 24px 16px; /* Desktop side padding */
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  /* Custom Scrollbar for Desktop/Laptop */
+  &::-webkit-scrollbar {
+    width: 6px; /* Slightly thinner for a modern look */
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: #c1c1c1;
+    border-radius: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  @media (max-width: 768px) {
+    padding: 12px 8px; /* 👈 Clean, minimal side padding for mobile (no extra right gap) */
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px 4px; /* Even smaller screens get tighter padding */
+  }
 `;
+
 
 export const Content = styled.div`
   max-width: 1128px;

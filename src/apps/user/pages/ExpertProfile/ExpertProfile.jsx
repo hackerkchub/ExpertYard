@@ -369,9 +369,9 @@ setRequestingChat(false);
 
       } else if (type === "call" && numericExpertId) {
   // 1️⃣ Send call request to server
-  socket.emit("call:start", {
-    expertId: numericExpertId,
-  });
+  // socket.emit("call:start", {
+  //   expertId: numericExpertId,
+  // });
 
   // 2️⃣ Navigate to voice call screen (connecting state)
   navigate(`/user/voice-call/${numericExpertId}`, {

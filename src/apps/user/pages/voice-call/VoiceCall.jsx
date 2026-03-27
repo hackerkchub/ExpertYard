@@ -111,28 +111,27 @@ export default function VoiceCall() {
   }, [callState]);
 
   // Start call
-  const startCall = useCallback(async () => {
-    if (callStartedRef.current) return;
-    
-    setCallState("calling");
-    callStartedRef.current = true;
+ const startCall = useCallback(async () => {
+  if (callStartedRef.current) return;
 
-    try {
-      console.log("📞 Starting call for expert:", expertId);
-      socket.emit(CALL_EVENTS.START, {
-        expertId: Number(expertId),
-      });
-    } catch (error) {
-      console.error("❌ Failed to start call:", error);
-      setCallState("ended");
-      setTimeout(() => goBackToProfile(), 1500);
-    }
-  }, [expertId, socket, goBackToProfile]);
+  callStartedRef.current = true; // 🔥 FIRST LINE
 
+  setCallState("calling");
+
+  try {
+    socket.emit(CALL_EVENTS.START, {
+      expertId: Number(expertId),
+    });
+  } catch (error) {
+    callStartedRef.current = false;
+  }
+}, [expertId, socket]);
   // Auto-start on mount
- useEffect(() => {
+useEffect(() => {
   if (!resumeChecked) return;
-  if (!isResumed) startCall();
+  if (!isResumed && !callStartedRef.current) {
+    startCall();
+  }
 }, [resumeChecked, isResumed, startCall]);
 
   // WebRTC Offer Handler
@@ -291,11 +290,11 @@ return () => {
     console.log("🟢 Expert now online");
 
     // 🔥 BEST UX
-    if (callStateRef.current === "offline") {
-      setTimeout(() => {
-        socket.emit(CALL_EVENTS.START, { expertId });
-      }, 1000);
-    }
+   if (callStateRef.current === "offline" && !callStartedRef.current) {
+  setTimeout(() => {
+    startCall(); // 🔥 USE SAME FUNCTION
+  }, 1000);
+}
   };
 
   socket.on("expert_now_online", handleExpertOnline);

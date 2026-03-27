@@ -22,9 +22,9 @@ export default function RootRedirect() {
   }
 
   if (lastPanel === "user") {
-    return <Navigate to="/user/login" replace />;
+    return <Navigate to="/user" replace />;
   }
 
   // DEFAULT
-  return <Navigate to="/user/login" replace />;
+  return <Navigate to="/user" replace />;
 }

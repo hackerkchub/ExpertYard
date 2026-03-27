@@ -39,7 +39,7 @@ export default function Auth() {
   const [isForgotMode, setIsForgotMode] = useState(false);
 
   // ⏱️ Loaders & Messages
-  const [submitting, setSubmitting] = useState(false); // ✅ Included submitting loader
+  const [submitting, setSubmitting] = useState(false); 
   const [loadingType, setLoadingType] = useState(null); 
   const [apiMessage, setApiMessage] = useState({ text: "", isError: false });
 
@@ -181,7 +181,7 @@ export default function Auth() {
 
       const expert = res.expert;
 
-      // ✅ [Step Based Navigation Logic Included]
+      // ✅ Step Based Navigation
       if (!expert.category_id) {
         navigate("/expert/register/category");
       } else if (!expert.subcategory_id) {
@@ -292,7 +292,6 @@ export default function Auth() {
 
   /* ================= 🔑 FORGOT PASSWORD FLOW 🔑 ================= */
 
-  // 1️⃣ SEND OTP
   const handleForgotSendOtp = async () => {
     showMessage("");
     const { type, email, mobile } = forgotData;
@@ -332,7 +331,6 @@ export default function Auth() {
     }
   };
 
-  // 2️⃣ VERIFY OTP
   const handleForgotVerifyOtp = async () => {
     showMessage("");
     const { type, email, mobile, otp } = forgotData;
@@ -372,7 +370,6 @@ export default function Auth() {
     }
   };
 
-  // 3️⃣ RESET PASSWORD
   const handleForgotResetPassword = async () => {
     showMessage("");
     const { type, email, mobile, resetToken, newPassword, confirmPassword } = forgotData;
@@ -420,7 +417,7 @@ export default function Auth() {
     registerForm.phone && 
     registerForm.password &&
     passwordStrength >= 3 &&
-    (isForgotMode || (verified.email && verified.phone)); // Validates only if verified for registration
+    (isForgotMode || (verified.email && verified.phone));
 
   return (
     <>
@@ -437,7 +434,7 @@ export default function Auth() {
         ] : []}
       >
         
-        {submitting && <Loader />} {/* ✅ Correct Loader placement */}
+        {submitting && <Loader />} 
 
         {setupCompleted && !isForgotMode && (
           <div style={{ background: "#ecfeff", border: "1px solid #67e8f9", color: "#0e7490", padding: "10px", borderRadius: "8px", marginBottom: "16px", textAlign: "center", fontWeight: 500 }}>
@@ -478,7 +475,7 @@ export default function Auth() {
             </Field>
 
             <div style={{ textAlign: "right", marginTop: "-10px" }}>
-              <span onClick={() => { setIsForgotMode(true); showMessage(""); }} style={{ color: "#0ea5ff", fontSize: "14px", fontWeight: "600", cursor: "pointer" }}>
+              <span onClick={() => { setIsForgotMode(true); showMessage(""); }} style={{ color: "#0a66c2", fontSize: "14px", fontWeight: "600", cursor: "pointer" }}>
                 Forgot Password?
               </span>
             </div>
@@ -498,54 +495,49 @@ export default function Auth() {
               />
             </Field>
 
-            <Field style={{ position: "relative" }}>
+            <Field>
               <Label>Email</Label>
-              <div style={{ display: "flex", gap: "8px" }}>
-                <Input
-                  type="email"
-                  placeholder="example@domain.com"
-                  value={registerForm.email}
-                  disabled={verified.email || submitting || loading}
-                  onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
-                />
-                <SecondaryButton 
-                  type="button" 
-                  style={{ padding: "0 15px", height: "48px" }}
-                  onClick={() => openOtp("email")} 
-                  disabled={verified.email || loadingType === "email" || submitting || loading}
-                >
-                  {verified.email ? "Verified" : loadingType === "email" ? "..." : "Verify"}
-                </SecondaryButton>
-              </div>
+              <Input
+                type="email"
+                placeholder="example@domain.com"
+                value={registerForm.email}
+                disabled={verified.email || submitting || loading}
+                onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
+              />
+              <SecondaryButton 
+                type="button" 
+                style={{ marginTop: "4px" }}
+                onClick={() => openOtp("email")} 
+                disabled={verified.email || loadingType === "email" || submitting || loading}
+              >
+                {verified.email ? "Verified" : loadingType === "email" ? "..." : "Verify Email"}
+              </SecondaryButton>
             </Field>
 
-            <PhoneInputWrap>
+            <Field>
               <Label>Mobile Number</Label>
-              <div style={{ display: "flex", gap: "8px", width: "100%" }}>
-                <Input
-                  type="tel"
-                  placeholder="9876543210"
-                  value={registerForm.phone}
-                  disabled={verified.phone || submitting || loading}
-                  onChange={(e) => setRegisterForm({ ...registerForm, phone: e.target.value })}
-                />
-                <SecondaryButton 
-                  type="button" 
-                  style={{ padding: "0 15px", height: "48px" }}
-                  onClick={() => openOtp("phone")} 
-                  disabled={verified.phone || loadingType === "phone" || submitting || loading}
-                >
-                  {verified.phone ? "Verified" : loadingType === "phone" ? "..." : "Verify"}
-                </SecondaryButton>
-              </div>
-            </PhoneInputWrap>
+              <Input
+                type="tel"
+                placeholder="9876543210"
+                value={registerForm.phone}
+                disabled={verified.phone || submitting || loading}
+                onChange={(e) => setRegisterForm({ ...registerForm, phone: e.target.value })}
+              />
+              <SecondaryButton 
+                type="button" 
+                style={{ marginTop: "4px" }}
+                onClick={() => openOtp("phone")} 
+                disabled={verified.phone || loadingType === "phone" || submitting || loading}
+              >
+                {verified.phone ? "Verified" : loadingType === "phone" ? "..." : "Verify Mobile"}
+              </SecondaryButton>
+            </Field>
 
             <Field>
               <Label>Password</Label>
               <Input
                 type="password"
                 placeholder="Create strong password"
-                value={registerForm.password}
                 disabled={submitting || loading}
                 onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
               />
@@ -569,7 +561,7 @@ export default function Auth() {
                 <div style={{ display: "flex", gap: "12px" }}>
                   <SecondaryButton 
                     type="button" 
-                    style={{ flex: 1, background: forgotData.type === 'email' ? '#0ea5ff' : '#fff', color: forgotData.type === 'email' ? '#fff' : '#0ea5ff' }} 
+                    style={{ flex: 1, background: forgotData.type === 'email' ? '#0a66c2' : '#fff', color: forgotData.type === 'email' ? '#fff' : '#0a66c2' }} 
                     onClick={() => { setForgotData(prev => ({ ...prev, type: "email" })); setForgotStep(1); }}
                     disabled={forgotStep > 1.4 || submitting || loading}
                   >
@@ -577,7 +569,7 @@ export default function Auth() {
                   </SecondaryButton>
                   <SecondaryButton 
                     type="button" 
-                    style={{ flex: 1, background: forgotData.type === 'mobile' ? '#0ea5ff' : '#fff', color: forgotData.type === 'mobile' ? '#fff' : '#0ea5ff' }} 
+                    style={{ flex: 1, background: forgotData.type === 'mobile' ? '#0a66c2' : '#fff', color: forgotData.type === 'mobile' ? '#fff' : '#0a66c2' }} 
                     onClick={() => { setForgotData(prev => ({ ...prev, type: "mobile" })); setForgotStep(1); }}
                     disabled={forgotStep > 1.4 || submitting || loading}
                   >

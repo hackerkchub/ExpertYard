@@ -178,10 +178,10 @@ export default function OtpModal({ email, phone, type, onClose, onSuccess }) {
       let payload = {};
 
       if (apiType === "email") {
-        apiUrl = "http://softmaxs.com/api/otp/email/verify";
+        apiUrl = "https://softmaxs.com/api/otp/email/verify";
         payload = { email, otp: otpString };
       } else {
-        apiUrl = "http://softmaxs.com/api/otp/sms/verify";
+        apiUrl = "https://softmaxs.com/api/otp/sms/verify";
         payload = { countryCode: "91", mobile: phone, otp: otpString };
       }
 

@@ -1,52 +1,33 @@
+// src/apps/expert/styles/Register.styles.js
 import styled, { keyframes } from "styled-components";
 
-/* --------------------------------------------------
-   0. Premium Subtle Animations
--------------------------------------------------- */
 const progressLiquid = keyframes`
   0% { width: 0; opacity: 0; }
   100% { width: 100%; opacity: 1; }
 `;
 
-const floatSubtle = keyframes`
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-4px); }
-`;
-
-/* --------------------------------------------------
-   1. Background — LinkedIn Soft Off-White Light Theme
--------------------------------------------------- */
 export const RegisterPageWrap = styled.div`
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: flex-start;
   padding: ${({ hasNavbar }) => (hasNavbar ? "120px 20px 60px" : "80px 20px 60px")};
-
-  background-color: #f4f2ee; /* Exact LinkedIn Light Background */
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(10, 102, 194, 0.03) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(10, 102, 194, 0.03) 0px, transparent 50%);
-
+  background-color: #f4f2ee;
   position: relative;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; /* Instagram Font standard */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
   @media (max-width: 480px) {
-    padding: ${({ hasNavbar }) => (hasNavbar ? "110px 16px 40px" : "70px 16px 40px")};
+    padding: ${({ hasNavbar }) => (hasNavbar ? "100px 12px 40px" : "40px 12px 40px")};
   }
 `;
 
-/* --------------------------------------------------
-   2. Card — Standard Professional Clean Card
--------------------------------------------------- */
 export const RegisterCard = styled.div`
   width: 100%;
   max-width: 760px;
-  border-radius: 12px; /* Professional curve */
+  border-radius: 12px;
   padding: 44px 48px;
   position: relative;
   overflow: hidden;
-
   background: #ffffff;
   border: 1px solid #e0e0e0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -60,13 +41,10 @@ export const RegisterCard = styled.div`
   @media (max-width: 480px) {
     padding: 24px 16px;
     border-radius: 10px;
-    margin: 0 4px;
+    margin: 0;
   }
 `;
 
-/* --------------------------------------------------
-   3. Typography — Clean Instagram Style
--------------------------------------------------- */
 export const StepHeader = styled.div`
   margin-bottom: 32px;
   text-align: center;
@@ -75,10 +53,8 @@ export const StepHeader = styled.div`
 export const StepTitle = styled.h2`
   font-size: clamp(24px, 4vw, 30px);
   font-weight: 600;
-  letter-spacing: -0.02em;
   color: rgba(0, 0, 0, 0.9);
   margin: 0 0 12px 0;
-  line-height: 1.2;
 `;
 
 export const StepSubtitle = styled.p`
@@ -86,12 +62,9 @@ export const StepSubtitle = styled.p`
   font-weight: 400;
   color: rgba(0, 0, 0, 0.6);
   margin: 0;
-  line-height: 1.5;
 `;
 
-/* --------------------------------------------------
-   4. Progress Bar — Clean Minimalist
--------------------------------------------------- */
+/* ✅ ADDED MISSING EXPORTS FOR REGISTER LAYOUT PROGRESS BAR */
 export const ProgressWrap = styled.div`
   margin-bottom: 32px;
 `;
@@ -130,42 +103,31 @@ export const ProgressBarInner = styled.div`
   background-color: #0a66c2; /* LinkedIn Blue */
   animation: ${progressLiquid} 0.6s ease;
 `;
+/* -------------------------------------------------------- */
 
-/* --------------------------------------------------
-   5. Form Grid — Perfect Flex/Grid Hybrid Responsive
--------------------------------------------------- */
 export const FormGrid = styled.div`
   display: flex;
-  flex-wrap: wrap; /* Prevents text and input overflow across devices */
-  gap: 20px;
+  flex-direction: column;
+  gap: 24px;
   margin-top: 16px;
   width: 100%;
 
-  & > div {
-    flex: 1 1 calc(50% - 10px); /* 2 Columns on Desktop & Tablet */
-    min-width: 250px; /* Forces wrap on mobile! */
-  }
-
-  @media (max-width: 640px) {
-    flex-direction: column;
-    & > div {
-      flex: 1 1 100%;
-    }
+  @media (min-width: 641px) {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
   }
 `;
 
 export const FullRow = styled.div`
-  flex: 1 1 100% !important;
+  @media (min-width: 641px) {
+    grid-column: span 2;
+  }
 `;
 
-/* --------------------------------------------------
-   6. Inputs — Standard Box with Focused Frame
--------------------------------------------------- */
 export const Field = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  position: relative;
+  gap: 8px;
   width: 100%;
 `;
 
@@ -176,25 +138,131 @@ export const Label = styled.label`
 `;
 
 export const Input = styled.input`
-  border-radius: 4px; /* Straight clean box */
+  border-radius: 4px;
   border: 1px solid rgba(0, 0, 0, 0.6);
   padding: 12px 16px;
   font-size: 16px;
-  color: rgba(0, 0, 0, 0.9);
   background: #ffffff;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s;
   min-height: 48px;
-
-  &::placeholder {
-    color: rgba(0, 0, 0, 0.4);
-  }
+  box-sizing: border-box;
+  width: 100%;
 
   &:focus {
-    border-width: 2px;
     border-color: #0a66c2;
-    padding: 11px 15px; /* offset to fix jumps */
     box-shadow: 0 0 0 1px #0a66c2;
     outline: none;
+  }
+`;
+
+export const ActionsRow = styled.div`
+  margin-top: 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+
+  @media (max-width: 640px) {
+    flex-direction: column-reverse;
+    gap: 12px;
+    align-items: stretch;
+  }
+`;
+
+export const PrimaryButton = styled.button`
+  flex: 1;
+  padding: 14px 24px;
+  height: 48px;
+  border-radius: 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  background-color: #0a66c2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  opacity: ${({ disabled }) => (disabled ? 0.5 : 1)};
+  pointer-events: ${({ disabled }) => (disabled ? "none" : "auto")};
+
+  &:hover {
+    background-color: #004182;
+  }
+`;
+
+export const SecondaryButton = styled.button`
+  padding: 12px 24px;
+  height: 44px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid #0a66c2;
+  background: #ffffff;
+  color: #0a66c2;
+  cursor: pointer;
+  border-radius: 22px;
+  transition: all 0.2s ease;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+
+  &:hover:not(:disabled) {
+    background: rgba(10, 102, 194, 0.06);
+  }
+
+  &:disabled {
+    border-color: rgba(0, 0, 0, 0.2);
+    color: rgba(0, 0, 0, 0.3);
+    cursor: not-allowed;
+  }
+`;
+
+export const PasswordStrength = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+
+  div {
+    height: 4px;
+    border-radius: 2px;
+    background: #e0e0e0;
+    flex: 1;
+  }
+
+  span {
+    font-size: 12px;
+    font-weight: 600;
+  }
+`;
+
+export const Divider = styled.div`
+  height: 1px;
+  background: #e0e0e0;
+  margin: 32px 0;
+`;
+
+export const ToggleLink = styled.span`
+  display: inline-block;
+  color: #0a66c2 !important;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  margin-left: 4px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+export const PhoneInputWrap = styled(Field)`
+  width: 100%;
+  @media (min-width: 641px) {
+    grid-column: span 2;
   }
 `;
 
@@ -207,6 +275,8 @@ export const FileInput = styled.input.attrs({ type: "file" })`
   cursor: pointer;
   background: #ffffff;
   min-height: 48px;
+  width: 100%;
+  box-sizing: border-box;
 
   &::-webkit-file-upload-button {
     padding: 8px 16px;
@@ -217,7 +287,6 @@ export const FileInput = styled.input.attrs({ type: "file" })`
     font-weight: 600;
     font-size: 13px;
     cursor: pointer;
-    transition: background-color 0.2s ease;
 
     &:hover {
       background-color: #004182;
@@ -235,89 +304,16 @@ export const TextArea = styled.textarea`
   min-height: 120px;
   resize: vertical;
   transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
 
   &:focus {
-    border-width: 2px;
     border-color: #0a66c2;
-    padding: 11px 15px;
     box-shadow: 0 0 0 1px #0a66c2;
     outline: none;
   }
 `;
 
-/* --------------------------------------------------
-   7. Buttons — LinkedIn Pill Buttons
--------------------------------------------------- */
-export const ActionsRow = styled.div`
-  margin-top: 40px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
-
-  @media (max-width: 640px) {
-    flex-direction: column-reverse;
-    gap: 16px;
-    width: 100%;
-  }
-`;
-
-export const PrimaryButton = styled.button`
-  flex: 1;
-  padding: 14px 24px;
-  height: 48px;
-  border-radius: 24px;
-  font-size: 16px;
-  font-weight: 600;
-  border: none;
-  color: #fff;
-  cursor: pointer;
-  background-color: #0a66c2; /* LinkedIn Blue */
-  transition: background-color 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-
-  opacity: ${({ disabled }) => (disabled ? 0.5 : 1)};
-  pointer-events: ${({ disabled }) => (disabled ? "none" : "auto")};
-
-  &:hover {
-    background-color: #004182;
-  }
-
-  @media (max-width: 640px) {
-    width: 100%;
-  }
-`;
-
-export const SecondaryButton = styled.button`
-  padding: 12px 24px;
-  height: 48px;
-  font-size: 15px;
-  font-weight: 600;
-  border: 1px solid rgba(0, 0, 0, 0.6);
-  background: #ffffff;
-  color: rgba(0, 0, 0, 0.7);
-  cursor: pointer;
-  border-radius: 24px;
-  transition: all 0.2s ease;
-  flex: 0 0 auto;
-
-  &:hover {
-    background: rgba(0, 0, 0, 0.04);
-    border-color: rgba(0, 0, 0, 0.9);
-    color: rgba(0, 0, 0, 0.9);
-  }
-
-  @media (max-width: 640px) {
-    width: 100%;
-  }
-`;
-
-/* --------------------------------------------------
-   8. Category Cards — Professional Selection
--------------------------------------------------- */
 export const CardGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -346,8 +342,7 @@ export const SelectCard = styled.button`
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
-
-  box-shadow: ${({ active }) => (active ? "0 4px 12px rgba(10, 102, 194, 0.1)" : "none")};
+  width: 100%;
 
   &:hover {
     border-color: #0a66c2;
@@ -378,9 +373,6 @@ export const Chip = styled.span`
   align-items: center;
 `;
 
-/* --------------------------------------------------
-   9. Price Input
--------------------------------------------------- */
 export const PriceInputRow = styled.div`
   display: flex;
   align-items: center;
@@ -390,6 +382,8 @@ export const PriceInputRow = styled.div`
   background: #ffffff;
   border-radius: 4px;
   border: 1px solid rgba(0, 0, 0, 0.6);
+  width: 100%;
+  box-sizing: border-box;
 
   span {
     color: rgba(0, 0, 0, 0.8);
@@ -398,56 +392,10 @@ export const PriceInputRow = styled.div`
   }
 `;
 
-export const PhoneInputWrap = styled(Field)`
-  flex: 1 1 100% !important;
-`;
-
-/* --------------------------------------------------
-   10. Extra Profile & Dynamic States (LinkedIn Theme)
--------------------------------------------------- */
-export const PasswordStrength = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-
-  div {
-    height: 4px;
-    border-radius: 2px;
-    background: #e0e0e0;
-    flex: 1;
-  }
-
-  span {
-    font-size: 12px;
-    font-weight: 600;
-    color: rgba(0, 0, 0, 0.6);
-  }
-`;
-
-export const ToggleLink = styled.span`
-  display: inline-block;
-  color: #0a66c2 !important;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  margin-left: 4px;
-
-  &:hover {
-    text-decoration: underline;
-    color: #004182 !important;
-  }
-`;
-
-export const Divider = styled.div`
-  height: 1px;
-  background: #e0e0e0;
-  margin: 32px 0;
-`;
-
 export const CategorySearch = styled.div`
   position: relative;
   margin-bottom: 32px;
+  width: 100%;
 
   input {
     width: 100%;
@@ -456,11 +404,10 @@ export const CategorySearch = styled.div`
     border-radius: 4px;
     background: #ffffff;
     font-size: 15px;
+    box-sizing: border-box;
 
     &:focus {
-      border-width: 2px;
       border-color: #0a66c2;
-      padding: 11px 15px 11px 41px;
       box-shadow: 0 0 0 1px #0a66c2;
       outline: none;
     }
@@ -485,6 +432,8 @@ export const CategoryStats = styled.div`
   background: #f4f2ee;
   border-radius: 8px;
   border: 1px solid #e0e0e0;
+  flex-wrap: wrap;
+  gap: 12px;
 
   > div {
     display: flex;
@@ -544,6 +493,8 @@ export const CategoryPreview = styled.div`
   border: 1px solid rgba(10, 102, 194, 0.2);
   border-radius: 8px;
   margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
 
   h3 {
     margin: 0 0 4px 0;
@@ -600,6 +551,7 @@ export const FileGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 16px;
+  width: 100%;
 `;
 
 export const ProgressBarWrap = styled.div`
@@ -607,6 +559,7 @@ export const ProgressBarWrap = styled.div`
   align-items: center;
   gap: 12px;
   margin-bottom: 24px;
+  width: 100%;
 
   span {
     font-size: 13px;
@@ -622,6 +575,7 @@ export const CharacterCounter = styled.div`
   font-size: 12px;
   color: rgba(0, 0, 0, 0.6);
   font-weight: 500;
+  width: 100%;
 `;
 
 export const PricingPreview = styled.div`
@@ -633,6 +587,8 @@ export const PricingPreview = styled.div`
   border: 1px solid rgba(10, 102, 194, 0.2);
   border-radius: 12px;
   margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 16px;
 `;
 
 export const PriceRangeSlider = styled.input`
@@ -663,6 +619,8 @@ export const SmartPricingCard = styled.div`
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
 
   &:hover {
     border-color: #0a66c2;
@@ -675,6 +633,7 @@ export const PricingStats = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 16px;
   margin-bottom: 32px;
+  width: 100%;
 
   > div {
     text-align: center;
@@ -696,6 +655,7 @@ export const FeatureGrid = styled.div`
   display: grid;
   gap: 20px;
   margin: 32px 0;
+  width: 100%;
 `;
 
 export const ValidationSummary = styled.div`
@@ -704,6 +664,8 @@ export const ValidationSummary = styled.div`
   border-radius: 8px;
   padding: 16px;
   margin: 24px 0;
+  width: 100%;
+  box-sizing: border-box;
 `;
 
 export const PricingFieldsGrid = styled.div`
@@ -711,11 +673,9 @@ export const PricingFieldsGrid = styled.div`
   flex-direction: column;
   gap: 20px;
   margin: 32px 0;
+  width: 100%;
 `;
 
-/* --------------------------------------------------
-   11. Upload / File Handler Elements (Missing Exports Fixed)
--------------------------------------------------- */
 export const FilePreview = styled.div`
   display: flex;
   align-items: center;
@@ -725,6 +685,8 @@ export const FilePreview = styled.div`
   border: 1px solid #e0e0e0;
   border-radius: 4px;
   margin-top: 8px;
+  width: 100%;
+  box-sizing: border-box;
 `;
 
 export const FileInfo = styled.div`
@@ -774,7 +736,7 @@ export const ProgressFill = styled.div`
   height: 100%;
   background: #0a66c2;
   transition: width 0.3s ease;
-  width: ${({ percent }) => `${percent}%`}; /* Dynamic Percent */
+  width: ${({ percent }) => `${percent}%`};
 `;
 
 export const UploadStatus = styled.div`
@@ -787,20 +749,8 @@ export const UploadStatus = styled.div`
   color: #0a66c2;
   font-size: 14px;
   font-weight: 500;
-  flex: 1 1 100% !important;
-`;
-
-export const ErrorMessage = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #d32f2f;
-  font-size: 13px;
-  margin-top: 4px;
-  background: rgba(211, 47, 47, 0.04);
-  padding: 8px 12px;
-  border-radius: 4px;
-  flex: 1 1 100% !important;
+  width: 100%;
+  box-sizing: border-box;
 `;
 
 export const SuccessCard = styled.div`
@@ -811,4 +761,6 @@ export const SuccessCard = styled.div`
   display: flex;
   align-items: center;
   box-shadow: 0 4px 20px rgba(16, 185, 129, 0.15);
+  width: 100%;
+  box-sizing: border-box;
 `;

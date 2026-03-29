@@ -43,7 +43,7 @@ const AddBalancePopup = ({ amountPreset, onClose, onConfirm }) => {
   ============================== */
   const baseAmount = Number(amountPreset || amount || 0);
   const gst = baseAmount * 0.18;
-  const platformFee = 10;
+  const platformFee = 0;
   const total = baseAmount + gst + platformFee;
 
   /* ============================

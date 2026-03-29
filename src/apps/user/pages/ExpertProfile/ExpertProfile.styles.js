@@ -370,3 +370,360 @@ export const ListItem = styled.div``;
 export const ReviewBox = styled.div``;
 export const RatingRow = styled.div``;
 export const NotificationBadge = styled.span``;
+
+// new added styles for experience and price sections
+
+
+// Add these new styled components to your ExpertProfile.styles.js file
+
+export const TabContainer = styled.div`
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 24px;
+  
+  @media (max-width: 768px) {
+    gap: 4px;
+  }
+`;
+
+export const TabButton = styled.button`
+  padding: 12px 24px;
+  background: none;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: ${props => props.$active ? "#0a66c2" : "#666"};
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+  
+  &:hover {
+    color: #0a66c2;
+  }
+  
+  ${props => props.$active && `
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #0a66c2;
+    }
+  `}
+  
+  @media (max-width: 768px) {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+`;
+
+export const TabContent = styled.div`
+  animation: ${fadeIn} 0.3s ease-out;
+`;
+
+export const InfoGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+`;
+
+export const InfoItem = styled.div`
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+`;
+
+export const InfoLabel = styled.div`
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #666;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+`;
+
+export const InfoValue = styled.div`
+  font-size: 14px;
+  color: #000000e6;
+  line-height: 1.5;
+  
+  div {
+    margin-bottom: 4px;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+`;
+
+export const ExperienceCard = styled.div`
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: all 0.2s;
+  
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+export const ExperienceHeader = styled.div`
+  margin-bottom: 12px;
+`;
+
+export const ExperienceTitle = styled.h3`
+  font-size: 16px;
+  font-weight: 600;
+  color: #000000e6;
+  margin: 0 0 4px 0;
+`;
+
+export const ExperienceCompany = styled.div`
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+`;
+
+export const ExperienceDate = styled.div`
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 12px;
+`;
+
+export const ExperienceCertificate = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #0a66c2;
+  text-decoration: none;
+  padding: 6px 12px;
+  background: #eef3f8;
+  border-radius: 4px;
+  
+  &:hover {
+    text-decoration: underline;
+    background: #e2e9f0;
+  }
+`;
+
+
+// Add this new styled component for the post grid
+export const PostGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+`;
+
+// Update PostCard for grid layout
+export const PostCard = styled.div`
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.2s;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+`;
+
+export const PostHeader = styled.div`
+  padding: 16px 16px 8px 16px;
+`;
+
+export const PostTitle = styled.h3`
+  font-size: 16px;
+  font-weight: 600;
+  color: #000000e6;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+`;
+
+export const PostDescription = styled.p`
+  font-size: 14px;
+  color: #000000bf;
+  line-height: 1.5;
+  margin: 0 16px 12px 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+`;
+
+export const PostImage = styled.img`
+  width: 100%;
+  height: 280px;
+  object-fit: cover;
+  background: #f3f2ef;
+`;
+
+export const PostStats = styled.div`
+  display: flex;
+  gap: 16px;
+  padding: 12px 16px;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  margin: 0;
+`;
+
+export const PostStat = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #666;
+`;
+
+export const PostActions = styled.div`
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+`;
+
+export const PostActionBtn = styled.button`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: ${props => props.$liked ? "#ef4444" : "#666"};
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background: #f3f2ef;
+    color: ${props => props.$liked ? "#dc2626" : "#0a66c2"};
+  }
+`;
+
+// Add these new styled components
+
+export const CommentsBox = styled.div`
+  padding: 12px;
+  border-top: 1px solid #e0e0e0;
+  background: #f9f9f9;
+`;
+
+export const CommentsList = styled.div`
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+`;
+
+export const CommentItem = styled.div`
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+export const CommentText = styled.div`
+  font-size: 13px;
+  color: #000000bf;
+  margin-bottom: 4px;
+`;
+
+export const CommentMeta = styled.div`
+  font-size: 11px;
+  color: #0a66c2;
+`;
+
+export const InlineInput = styled.input`
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  font-size: 13px;
+  outline: none;
+  
+  &:focus {
+    border-color: #0a66c2;
+  }
+`;
+
+export const SendBtn = styled.button`
+  background: #0a66c2;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  
+  &:hover {
+    background: #004182;
+  }
+  
+  &:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+`;
+
+export const RatingBox = styled.div`
+  padding: 12px;
+  border-top: 1px solid #e0e0e0;
+  background: #f9f9f9;
+`;
+
+export const StarsRow = styled.div`
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+`;
+
+export const StarBtn = styled.button`
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: ${props => props.active ? "#f59e0b" : "#d1d5db"};
+  
+  &:hover {
+    transform: scale(1.1);
+  }
+`;
+
+export const UserReviewBox = styled.div`
+  padding: 8px 12px;
+  background: #e0f2fe;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 12px;
+`;

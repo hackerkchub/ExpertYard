@@ -14,13 +14,21 @@ import {
   FiTarget,
   FiThumbsUp,
   FiClock,
+  FiBriefcase,
+  FiAward,
+  FiTrendingUp,
+  FiFileText,
+  FiImage,
+  FiHeart,
+  FiMessageCircle,
+  FiSend,
 } from "react-icons/fi";
 
 import {
   PageWrap,
   FollowButton,
   VerifiedBadge,
-   ReviewForm,
+  ReviewForm,
   ReviewFormTitle,
   RatingInput,
   RatingLabel,
@@ -54,7 +62,6 @@ import {
   ReviewText,
   StarRating,
   Star,
-  // New styled components
   ProfileCard,
   StatItem,
   CallToAction,
@@ -65,6 +72,40 @@ import {
   TagList,
   Tag,
   AvatarFallback,
+  TabContainer,
+  TabButton,
+  TabContent,
+  ExperienceCard,
+  ExperienceHeader,
+  ExperienceTitle,
+  ExperienceCompany,
+  ExperienceDate,
+  ExperienceCertificate,
+  PostGrid,
+  PostCard,
+  PostHeader,
+  PostTitle,
+  PostDescription,
+  PostImage,
+  PostStats,
+  PostStat,
+  PostActions,
+  PostActionBtn,
+  InfoGrid,
+  InfoItem,
+  InfoLabel,
+  InfoValue,
+  CommentsBox,
+  CommentsList,
+  CommentItem,
+  CommentText,
+  CommentMeta,
+  InlineInput,
+  SendBtn,
+  RatingBox,
+  StarsRow,
+  StarBtn,
+  UserReviewBox,
 } from "./ExpertProfile.styles";
 
 import {
@@ -79,14 +120,42 @@ import {
   deleteReviewApi,
 } from "../../../../shared/api/expertapi/reviews.api";
 
-import {usePublicExpert as useExpert} from "../../context/PublicExpertContext";
+import { getExpertExperienceApi } from "../../../../shared/api/expertapi/experience.api";
+import { 
+  getPostsApi, 
+  likePostApi, 
+  unlikePostApi,
+  getCommentsApi,
+  addCommentApi,
+} from "../../../../shared/api/expertapi/post.api";
+import { usePublicExpert as useExpert } from "../../context/PublicExpertContext";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
 import { socket } from "../../../../shared/api/socket";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/300?img=12";
-// ✅ FIX 4: Replace magic number with constant
 const MIN_CHAT_MINUTES = 5;
+
+// EXACT formatRelativeTime from MyOffer.jsx
+const formatRelativeTime = (dateString) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - date;
+
+  const seconds = Math.floor(diffMs / 1000);
+  const minutes = Math.floor(diffMs / (1000 * 60));
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const weeks = Math.floor(days / 7);
+  const years = Math.floor(days / 365);
+
+  if (seconds < 60) return "Just now";
+  if (minutes < 60) return `${minutes} min${minutes > 1 ? "s" : ""} ago`;
+  if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+  if (days < 7) return `${days} day${days > 1 ? "s" : ""} ago`;
+  if (weeks < 52) return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
+  return `${years} year${years > 1 ? "s" : ""} ago`;
+};
 
 const ExpertProfilePage = () => {
   // Context hooks
@@ -107,8 +176,7 @@ const ExpertProfilePage = () => {
   // Memoized values
   const numericExpertId = useMemo(() => expertId ? Number(expertId) : null, [expertId]);
 
-  // All states
-  // ✅ FIX 2: Removed chatRoomId dead state
+  // All states - EXACT pattern from MyOffer
   const [following, setFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [reviews, setReviews] = useState([]);
@@ -127,9 +195,25 @@ const ExpertProfilePage = () => {
   const [isExpertOnline, setIsExpertOnline] = useState(false);
   const [showChatCancelled, setShowChatCancelled] = useState(false);
   const [chatRejectedMessage, setChatRejectedMessage] = useState("");
-const [calling, setCalling] = useState(false);
-const [requestingChat, setRequestingChat] = useState(false);
-const requestIdRef = useRef(null);
+  const [calling, setCalling] = useState(false);
+  const [requestingChat, setRequestingChat] = useState(false);
+  const requestIdRef = useRef(null);
+
+  // Tab states
+  const [activeTab, setActiveTab] = useState("about");
+  const [experienceData, setExperienceData] = useState(null);
+  const [experienceList, setExperienceList] = useState([]);
+  const [posts, setPosts] = useState([]);
+  const [loadingExperience, setLoadingExperience] = useState(false);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+  const [totalExperienceText, setTotalExperienceText] = useState("");
+  
+  // EXACT post interaction states from MyOffer
+  const [liked, setLiked] = useState({});
+  const [activeSection, setActiveSection] = useState(null);
+  const [comments, setComments] = useState({});
+  const [commentText, setCommentText] = useState({});
+  const [expertReviewStats, setExpertReviewStats] = useState({});
 
   // Memoized computed values
   const hasUserReview = useMemo(() => 
@@ -138,66 +222,141 @@ const requestIdRef = useRef(null);
   );
   const formattedAvgRating = useMemo(() => avgRating.toFixed(1), [avgRating]);
   const recentReviews = useMemo(() => reviews.slice(0, 3), [reviews]);
-// const requestIdRef = useRef(null);
 
-  // Expert status listener
-  useEffect(() => {
-     if (!socket.connected) socket.connect();
-    const handleExpertOnline = ({ expert_id }) => {
-      if (Number(expert_id) === numericExpertId) {
-        setIsExpertOnline(true);
+  // Fetch experience data
+  const fetchExperience = useCallback(async () => {
+    if (!numericExpertId) return;
+    setLoadingExperience(true);
+    try {
+      const response = await getExpertExperienceApi(numericExpertId);
+      if (response.success) {
+        setExperienceData(response.total_experience);
+        setExperienceList(response.experience || []);
+        if (response.total_text) {
+          setTotalExperienceText(response.total_text);
+        } else if (response.total_experience?.total_text) {
+          setTotalExperienceText(response.total_experience.total_text);
+        }
       }
-    };
-
-    const handleExpertOffline = ({ expert_id }) => {
-      if (Number(expert_id) === numericExpertId) {
-        setIsExpertOnline(false);
-      }
-    };
-
-    socket.on("expert_online", handleExpertOnline);
-    socket.on("expert_offline", handleExpertOffline);
-
-    return () => {
-      socket.off("expert_online", handleExpertOnline);
-      socket.off("expert_offline", handleExpertOffline);
-    };
+    } catch (error) {
+      console.error("Failed to fetch experience:", error);
+    } finally {
+      setLoadingExperience(false);
+    }
   }, [numericExpertId]);
 
-  useEffect(() => {
-  if (expertData?.profile?.is_online !== undefined) {
-    setIsExpertOnline(expertData.profile.is_online);
-  }
-}, [expertData]);
-
-useEffect(() => {
-  setIsExpertOnline(false);
-}, [numericExpertId]);
-
-
-useEffect(() => {
-  if (!numericExpertId) return;
-
-  socket.emit("check_expert_online", {
-    expertId: numericExpertId,
-  });
-
-  socket.on("expert_status", ({ expertId, online }) => {
-    if (Number(expertId) === numericExpertId) {
-      setIsExpertOnline(online);
+  // Fetch posts - EXACT pattern from MyOffer
+  const fetchPosts = useCallback(async () => {
+    if (!numericExpertId) return;
+    setLoadingPosts(true);
+    try {
+      const response = await getPostsApi(numericExpertId);
+      if (response.data?.success) {
+        const postsData = response.data.data || [];
+        setPosts(postsData);
+        
+        // EXACT like pattern from MyOffer
+        const likedMap = {};
+        postsData.forEach(post => {
+          likedMap[post.id] = !!post.is_liked;
+        });
+        setLiked(likedMap);
+        
+        // Fetch review stats
+        try {
+          const reviewRes = await getReviewsByExpertApi(numericExpertId);
+          const reviewData = reviewRes.data.data || {};
+          setExpertReviewStats({
+            avg: Number(reviewData.avg_rating || 0),
+            total: reviewData.total_reviews || 0
+          });
+        } catch (error) {
+          console.error("Failed to fetch review stats:", error);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch posts:", error);
+    } finally {
+      setLoadingPosts(false);
     }
-  });
+  }, [numericExpertId]);
 
-  return () => socket.off("expert_status");
-}, [numericExpertId]);
-
-  // Profile data fetch
-  useEffect(() => {
-    if (expertId) {
-      fetchProfile(expertId);
-      fetchPrice(expertId);
+  // EXACT toggleLike from MyOffer
+  const toggleLike = async (post) => {
+    if (!isLoggedIn || !userId) {
+      navigate("/user/auth", { state: { from: `/experts/${expertId}` } });
+      return;
     }
-  }, [expertId, fetchProfile, fetchPrice]);
+    
+    const isLiked = liked[post.id];
+    setLiked((p) => ({ ...p, [post.id]: !isLiked }));
+
+    try {
+      if (isLiked) {
+        await unlikePostApi({
+          post_id: post.id,
+          user_id: userId
+        });
+      } else {
+        await likePostApi({
+          post_id: post.id,
+          user_id: userId
+        });
+      }
+    } catch (err) {
+      console.error("Like toggle error:", err);
+      setLiked((p) => ({ ...p, [post.id]: isLiked }));
+    }
+  };
+
+  // EXACT toggleSection from MyOffer
+  const toggleSection = async (section, postId) => {
+    const key = `${section}-${postId}`;
+    if (activeSection === key) {
+      setActiveSection(null);
+      return;
+    }
+
+    setActiveSection(key);
+
+    if (section === "comments" && !comments[postId]) {
+      try {
+        const res = await getCommentsApi(postId);
+        setComments((p) => ({ ...p, [postId]: res.data.data || [] }));
+      } catch (e) {
+        console.error("Get comments error:", e);
+      }
+    }
+  };
+
+  // EXACT submitComment from MyOffer
+  const submitComment = async (post) => {
+    const text = commentText[post.id]?.trim();
+    if (!text) return;
+
+    try {
+      const res = await addCommentApi({
+        post_id: post.id,
+        expert_id: numericExpertId,
+        comment: text
+      });
+
+      setPosts(prev =>
+        prev.map(p =>
+          p.id === post.id
+            ? { ...p, comments_count: p.comments_count + 1 }
+            : p
+        )
+      );
+      setComments((p) => ({
+        ...p,
+        [post.id]: [...(p[post.id] || []), res.data.data]
+      }));
+      setCommentText((p) => ({ ...p, [post.id]: "" }));
+    } catch (err) {
+      console.error("Add comment error:", err);
+    }
+  };
 
   // Followers & reviews loader
   const loadFollowersAndReviews = useCallback(() => {
@@ -223,7 +382,7 @@ useEffect(() => {
         if (userId) {
           const mine = list.find((r) => Number(r.user_id) === Number(userId));
           setUserRating(mine ? mine.rating_number || 0 : 0);
-          setUserReviewText("");
+          setUserReviewText(mine?.review_text || "");
         } else {
           setUserRating(0);
           setUserReviewText("");
@@ -238,108 +397,164 @@ useEffect(() => {
       .finally(() => setLoadingReviews(false));
   }, [expertId, userId]);
 
+  // Expert status listener
+  useEffect(() => {
+    if (!socket.connected) socket.connect();
+    const handleExpertOnline = ({ expert_id }) => {
+      if (Number(expert_id) === numericExpertId) {
+        setIsExpertOnline(true);
+      }
+    };
+
+    const handleExpertOffline = ({ expert_id }) => {
+      if (Number(expert_id) === numericExpertId) {
+        setIsExpertOnline(false);
+      }
+    };
+
+    socket.on("expert_online", handleExpertOnline);
+    socket.on("expert_offline", handleExpertOffline);
+
+    return () => {
+      socket.off("expert_online", handleExpertOnline);
+      socket.off("expert_offline", handleExpertOffline);
+    };
+  }, [numericExpertId]);
+
+  useEffect(() => {
+    if (expertData?.profile?.is_online !== undefined) {
+      setIsExpertOnline(expertData.profile.is_online);
+    }
+  }, [expertData]);
+
+  useEffect(() => {
+    setIsExpertOnline(false);
+  }, [numericExpertId]);
+
+  useEffect(() => {
+    if (!numericExpertId) return;
+
+    socket.emit("check_expert_online", {
+      expertId: numericExpertId,
+    });
+
+    socket.on("expert_status", ({ expertId, online }) => {
+      if (Number(expertId) === numericExpertId) {
+        setIsExpertOnline(online);
+      }
+    });
+
+    return () => socket.off("expert_status");
+  }, [numericExpertId]);
+
+  // Profile data fetch
+  useEffect(() => {
+    if (expertId) {
+      fetchProfile(expertId);
+      fetchPrice(expertId);
+    }
+  }, [expertId, fetchProfile, fetchPrice]);
+
+  // Fetch experience data on component mount
+  useEffect(() => {
+    if (numericExpertId) {
+      fetchExperience();
+    }
+  }, [numericExpertId, fetchExperience]);
+
+  // Fetch posts when tab changes
+  useEffect(() => {
+    if (activeTab === "posts") {
+      fetchPosts();
+    }
+  }, [activeTab, fetchPosts]);
+
+  
   useEffect(() => {
     loadFollowersAndReviews();
   }, [loadFollowersAndReviews]);
 
   useEffect(() => {
-  setChatRequestId(null);
-  requestIdRef.current = null;
-  setRequestingChat(false);
-  setShowWaitingPopup(false);
-}, [numericExpertId]);
+    setChatRequestId(null);
+    requestIdRef.current = null;
+    setRequestingChat(false);
+    setShowWaitingPopup(false);
+  }, [numericExpertId]);
 
-
-  // Socket events
+  // Socket events for chat
   useEffect(() => {
     const handleRequestPending = ({ request_id }) => {
-       setRequestingChat(false);
-       setChatRequestId(request_id);
-requestIdRef.current = request_id;
+      setRequestingChat(false);
+      setChatRequestId(request_id);
+      requestIdRef.current = request_id;
       setShowWaitingPopup(true);
       setWaitingText("Waiting for expert to accept...");
     };
 
-   const handleChatAccepted = ({ room_id }) => {
-  if (!room_id) return;
-setRequestingChat(false);
-  setShowWaitingPopup(false);
-  setChatRequestId(null);
-  requestIdRef.current = null;
+    const handleChatAccepted = ({ room_id }) => {
+      if (!room_id) return;
+      setRequestingChat(false);
+      setShowWaitingPopup(false);
+      setChatRequestId(null);
+      requestIdRef.current = null;
+      navigate(`/user/chat/${room_id}`, {
+        replace: true,
+        state: { fromRequest: true }
+      });
+    };
 
+    const handleChatRejected = ({ request_id, reason }) => {
+      if (reason === "offline") {
+        setRequestingChat(false);
+        setChatRejectedMessage("Expert is currently offline");
+        return;
+      }
 
-  navigate(`/user/chat/${room_id}`, {
-    replace: true,
-    state: { fromRequest: true }
-  });
-};
+      if (request_id !== requestIdRef.current) return;
 
+      setRequestingChat(false);
+      setShowWaitingPopup(false);
+      setChatRequestId(null);
+      requestIdRef.current = null;
 
-   const handleChatRejected = ({ request_id, reason }) => {
-
-  // 🟢 OFFLINE CASE (no request_id from backend)
-  if (reason === "offline") {
-    setRequestingChat(false);
-    setChatRejectedMessage("Expert is currently offline");
-    return;
-  }
-
-  // 🟢 NORMAL FLOW
-  if (request_id !== requestIdRef.current) return;
-
-  setRequestingChat(false);
-  setShowWaitingPopup(false);
-  setChatRequestId(null);
-  requestIdRef.current = null;
-
-  if (reason === "busy") {
-    setChatRejectedMessage("Expert is busy on another chat");
-  } else {
-    setChatRejectedMessage("Expert rejected your request");
-  }
-};
-
-
+      if (reason === "busy") {
+        setChatRejectedMessage("Expert is busy on another chat");
+      } else {
+        setChatRejectedMessage("Expert rejected your request");
+      }
+    };
 
     const handleChatCancelled = ({ request_id, reason }) => {
-  if (request_id !== requestIdRef.current) return;
-  setRequestingChat(false);
-  setShowWaitingPopup(false);
-  setChatRequestId(null);
-  requestIdRef.current = null;
+      if (request_id !== requestIdRef.current) return;
+      setRequestingChat(false);
+      setShowWaitingPopup(false);
+      setChatRequestId(null);
+      requestIdRef.current = null;
 
+      if (reason === "timeout") {
+        setChatRejectedMessage("Expert did not respond");
+        return;
+      }
 
-  if (reason === "timeout") {
-    setChatRejectedMessage("Expert did not respond");
-    return;
-  }
-
-  if (reason === "user_cancelled") {
-    setShowChatCancelled(true);
-  }
-};
-
-
-    const handleChatEnded = ({ room_id, reason }) => {
-      // Handle chat end notifications
+      if (reason === "user_cancelled") {
+        setShowChatCancelled(true);
+      }
     };
 
     socket.on("request_pending", handleRequestPending);
     socket.on("chat_accepted", handleChatAccepted);
     socket.on("chat_rejected", handleChatRejected);
     socket.on("chat_cancelled", handleChatCancelled);
-    socket.on("chat_ended", handleChatEnded);
 
     return () => {
       socket.off("request_pending", handleRequestPending);
       socket.off("chat_accepted", handleChatAccepted);
       socket.off("chat_rejected", handleChatRejected);
       socket.off("chat_cancelled", handleChatCancelled);
-      socket.off("chat_ended", handleChatEnded);
     };
   }, [navigate]);
 
-  // Callbacks
+  // Handlers
   const handleStart = useCallback((type) => {
     if (!isLoggedIn) {
       navigate("/user/auth", { state: { from: `/experts/${expertId}` } });
@@ -350,41 +565,30 @@ setRequestingChat(false);
       ? Number(expertPrice?.chat_per_minute || 0)
       : Number(expertPrice?.call_per_minute || 0);
     
-    // ✅ FIX 4: Using constant instead of magic number
     const minRequired = perMinute * MIN_CHAT_MINUTES;
     const userBalance = Number(balance || 0);
 
     if (userBalance >= minRequired) {
-        if (requestingChat) return;
- console.log("🔥 Start clicked", type);
-  setRequestingChat(true);
-  setWaitingText("Waiting for expert to accept...");
+      if (requestingChat) return;
+      setRequestingChat(true);
+      setWaitingText("Waiting for expert to accept...");
 
       if (type === "chat" && numericExpertId) {
-       socket.emit("request_chat", {
-  user_id: userId,
-  expert_id: numericExpertId,
-  user_name: user?.name || user?.first_name || "User"
-});
-
+        socket.emit("request_chat", {
+          user_id: userId,
+          expert_id: numericExpertId,
+          user_name: user?.name || user?.first_name || "User"
+        });
       } else if (type === "call" && numericExpertId) {
-  // 1️⃣ Send call request to server
-  // socket.emit("call:start", {
-  //   expertId: numericExpertId,
-  // });
-
-  // 2️⃣ Navigate to voice call screen (connecting state)
-  navigate(`/user/voice-call/${numericExpertId}`, {
-    state: { fromProfile: true },
-  });
-}
-
-
+        navigate(`/user/voice-call/${numericExpertId}`, {
+          state: { fromProfile: true },
+        });
+      }
     } else {
       setRequiredAmount(Math.max(0, minRequired - userBalance));
       setShowRecharge(true);
     }
-  }, [isLoggedIn, navigate, expertId, expertPrice, balance, userId, numericExpertId]);
+  }, [isLoggedIn, navigate, expertId, expertPrice, balance, userId, numericExpertId, requestingChat]);
 
   const handleFollowAction = useCallback(async () => {
     if (!isLoggedIn || !userId || !numericExpertId) {
@@ -459,19 +663,18 @@ setRequestingChat(false);
 
   const handleStarClick = useCallback((rating) => setUserRating(rating), []);
   
-  // ✅ FIX 3: Fixed handleCancelRequest to be server-driven
   const handleCancelRequest = useCallback(() => {
-  if (!chatRequestId) return;
+    if (!chatRequestId) return;
 
-  socket.emit("cancel_chat_request", {
-    request_id: chatRequestId,
-  });
+    socket.emit("cancel_chat_request", {
+      request_id: chatRequestId,
+    });
 
-  setRequestingChat(false);
-  setShowWaitingPopup(false);
-  setChatRequestId(null);
-  requestIdRef.current = null;
-}, [chatRequestId]);
+    setRequestingChat(false);
+    setShowWaitingPopup(false);
+    setChatRequestId(null);
+    requestIdRef.current = null;
+  }, [chatRequestId]);
 
   const handleRechargeClose = useCallback(() => {
     setShowRecharge(false);
@@ -479,15 +682,20 @@ setRequestingChat(false);
   }, []);
 
   const handleUnfollowClose = useCallback(() => setShowUnfollowModal(false), []);
-
- const handleChatRejectedClose = useCallback(() => {
-  setChatRejectedMessage("");
-  setRequestingChat(false);
-}, []);
-
+  const handleChatRejectedClose = useCallback(() => {
+    setChatRejectedMessage("");
+    setRequestingChat(false);
+  }, []);
   const handleChatCancelledClose = useCallback(() => {
     setShowChatCancelled(false);
   }, []);
+
+  // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
 
   // Early returns
   if (profileLoading || priceLoading) {
@@ -502,18 +710,13 @@ setRequestingChat(false);
   const price = expertPrice || {};
 
   const getInitials = (name = "") => {
-  const words = name.trim().split(" ");
+    const words = name.trim().split(" ");
+    if (words.length === 1) {
+      return words[0].charAt(0).toUpperCase();
+    }
+    return (words[0].charAt(0) + (words[1]?.charAt(0) || "")).toUpperCase();
+  };
 
-  if (words.length === 1) {
-    return words[0].charAt(0).toUpperCase();
-  }
-
-  return (
-    words[0].charAt(0) + (words[1]?.charAt(0) || "")
-  ).toUpperCase();
-};
-
-  // Spinner component
   const Spinner = () => (
     <div
       style={{
@@ -537,27 +740,18 @@ setRequestingChat(false);
       `}</style>
       
       <PageWrap>
-   
-
         {/* Main Profile Card */}
         <ProfileCard>
           <div style={{ display: 'flex', flexWrap: 'wrap' }}>
             <div style={{ flex: '0 0 200px' }}>
-           {profile.profile_photo ? (
-  <LeftImage src={profile.profile_photo} alt="Profile" />
-) : (
-  <AvatarFallback>
-    {getInitials(profile.name)}
-  </AvatarFallback>
-)}
-              <div >
-                {/* <MiniRating>
-                  <FiStar color="#facc15" />
-                  {formattedAvgRating} ({totalReviews})
-                </MiniRating> */}
-                {/* <div style={{ marginTop: '8px', fontSize: '14px', color: '#64748b' }}>
-                  Followers: <strong>{followersCount}</strong>
-                </div> */}
+              {profile.profile_photo ? (
+                <LeftImage src={profile.profile_photo} alt="Profile" />
+              ) : (
+                <AvatarFallback>
+                  {getInitials(profile.name)}
+                </AvatarFallback>
+              )}
+              <div>
                 {!following ? (
                   <FollowButton onClick={handleFollowAction}>
                     <FiUserPlus /> Follow
@@ -597,7 +791,9 @@ setRequestingChat(false);
                   </StatItem>
                   <StatItem>
                     <FiClock color="#6366f1" />
-                    <span>{profile.experience || "5"} Years Exp</span>
+                    <span>
+                      {totalExperienceText || experienceData?.total_text || `${profile.experience || "5"} Years`}
+                    </span>
                   </StatItem>
                 </QuickStats>
               </div>
@@ -606,7 +802,6 @@ setRequestingChat(false);
               <TagList>
                 <Tag><FiBookOpen /> Education: {profile.education || "Masters Degree"}</Tag>
                 <Tag><FiTarget /> Category: {profile.category_name || "Business"}</Tag>
-                {/* <Tag><FiCheckCircle /> Status: {isExpertOnline ? "Available" : "Offline"}</Tag> */}
               </TagList>
 
               {/* Action Buttons */}
@@ -628,22 +823,186 @@ setRequestingChat(false);
           </div>
         </ProfileCard>
 
-        {/* About Section */}
+        {/* Tabs Section */}
         <Section>
-          <SectionTitle>About</SectionTitle>
-          <SectionBody>{profile.description || "Experienced professional with proven track record in the field. Committed to providing valuable insights and practical solutions."}</SectionBody>
+          <TabContainer>
+            <TabButton $active={activeTab === "about"} onClick={() => setActiveTab("about")}>
+              <FiFileText /> About
+            </TabButton>
+            <TabButton $active={activeTab === "experience"} onClick={() => setActiveTab("experience")}>
+              <FiBriefcase /> Experience
+            </TabButton>
+            <TabButton $active={activeTab === "posts"} onClick={() => setActiveTab("posts")}>
+              <FiImage /> Posts
+            </TabButton>
+          </TabContainer>
+
+          {/* About Tab Content */}
+          {activeTab === "about" && (
+            <TabContent>
+              <InfoGrid>
+                <InfoItem>
+                  <InfoLabel>Professional Summary</InfoLabel>
+                  <InfoValue>{profile.description || "Experienced professional with proven track record in the field. Committed to providing valuable insights and practical solutions."}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Price Details</InfoLabel>
+                  <InfoValue>
+                    <div><strong>Call:</strong> ₹{price.call_per_minute || 99}/min</div>
+                    <div><strong>Chat:</strong> ₹{price.chat_per_minute || 49}/min</div>
+                    {price.reason_for_price && <div><strong>Reason:</strong> {price.reason_for_price}</div>}
+                  </InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Strengths</InfoLabel>
+                  <InfoValue>{price.strength || "Expertise in field, Strong communication, Problem-solving"}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Customer Handling</InfoLabel>
+                  <InfoValue>{price.handle_customer || "Professional approach, Quick response, Client satisfaction"}</InfoValue>
+                </InfoItem>
+              </InfoGrid>
+            </TabContent>
+          )}
+
+          {/* Experience Tab Content */}
+          {activeTab === "experience" && (
+            <TabContent>
+              {loadingExperience ? (
+                <LoadingReviews><Spinner /><p>Loading experience...</p></LoadingReviews>
+              ) : experienceList.length === 0 ? (
+                <NoReviews>
+                  <FiBriefcase size={48} color="#d1d5db" />
+                  <h4>No experience records</h4>
+                  <p>This expert hasn't added their experience yet.</p>
+                </NoReviews>
+              ) : (
+                experienceList.map((exp) => (
+                  <ExperienceCard key={exp.id}>
+                    <ExperienceHeader>
+                      <ExperienceTitle>{exp.title}</ExperienceTitle>
+                      <ExperienceCompany>{exp.company}</ExperienceCompany>
+                    </ExperienceHeader>
+                    <ExperienceDate>
+                      {formatDate(exp.start_date)} - {exp.end_date ? formatDate(exp.end_date) : "Present"}
+                    </ExperienceDate>
+                    {exp.certificate && (
+                      <ExperienceCertificate 
+                        href={exp.certificate} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                      >
+                        <FiAward /> View Certificate
+                      </ExperienceCertificate>
+                    )}
+                  </ExperienceCard>
+                ))
+              )}
+            </TabContent>
+          )}
+
+          {/* Posts Tab Content - EXACT pattern from MyOffer.jsx */}
+          {activeTab === "posts" && (
+            <TabContent>
+              {loadingPosts ? (
+                <LoadingReviews><Spinner /><p>Loading posts...</p></LoadingReviews>
+              ) : posts.length === 0 ? (
+                <NoReviews>
+                  <FiImage size={48} color="#d1d5db" />
+                  <h4>No posts yet</h4>
+                  <p>This expert hasn't shared any posts.</p>
+                </NoReviews>
+              ) : (
+                <PostGrid>
+                  {posts.map((post) => {
+                    const isLiked = liked[post.id];
+                    return (
+                      <PostCard key={post.id}>
+                        {post.image_url && (
+                          <PostImage src={post.image_url} alt={post.title} />
+                        )}
+                        <PostHeader>
+                          <PostTitle>{post.title}</PostTitle>
+                        </PostHeader>
+                        {post.description && (
+                          <PostDescription>{post.description}</PostDescription>
+                        )}
+                        
+                        {/* Post Stats - EXACT from MyOffer */}
+                        <PostStats>
+                          <PostStat>
+                            <FiHeart 
+                              fill={isLiked ? "#ef4444" : "none"} 
+                              stroke={isLiked ? "#ef4444" : "#374151"}
+                              style={{ strokeWidth: isLiked ? 0 : 2 }}
+                            />
+                            {post.likes + (isLiked ? 1 : 0)}
+                          </PostStat>
+                          <PostStat>
+                            <FiMessageCircle />
+                            {post.comments_count}
+                          </PostStat>
+                        </PostStats>
+                        
+                        {/* Post Actions - EXACT from MyOffer */}
+                        <PostActions>
+                          <PostActionBtn 
+                            $liked={!!liked[post.id]}
+                            onClick={() => toggleLike(post)}
+                          >
+                            <FiHeart 
+                              fill={liked[post.id] ? "#ef4444" : "none"} 
+                              stroke={liked[post.id] ? "#ef4444" : "#374151"}
+                              style={{ strokeWidth: liked[post.id] ? 0 : 2 }}
+                            />
+                            {liked[post.id] ? "Liked" : "Like"}
+                          </PostActionBtn>
+                          <PostActionBtn onClick={() => toggleSection("comments", post.id)}>
+                            <FiMessageCircle /> Comment
+                          </PostActionBtn>
+                        </PostActions>
+
+                        {/* Comments Section - EXACT from MyOffer */}
+                        {activeSection === `comments-${post.id}` && (
+                          <div style={{ marginTop: 16, borderTop: "1px solid #e5e7eb", paddingTop: 12 }}>
+                            {(comments[post.id] || []).map((c) => (
+                              <div key={c.id} style={{ marginBottom: 12, padding: "8px 0", borderBottom: "1px solid #f3f4f6" }}>
+                                <div style={{ fontSize: 14, color: "#1f2937" }}>
+                                  {c.comment}
+                                  {c.user_id === userId && (
+                                    <span style={{ color: "#9ca3af", fontSize: 11, marginLeft: 8 }}>You</span>
+                                  )}
+                                </div>
+                                <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>
+                                  {c.user_name || "User"} • {formatRelativeTime(c.created_at)}
+                                </div>
+                              </div>
+                            ))}
+                            <div style={{ display: "flex", gap: 8, alignItems: "flex-end", marginTop: 8 }}>
+                              <InlineInput
+                                placeholder="Write a comment…"
+                                value={commentText[post.id] || ""}
+                                onChange={(e) => setCommentText(p => ({ ...p, [post.id]: e.target.value }))}
+                                onKeyDown={(e) => e.key === "Enter" && submitComment(post)}
+                              />
+                              <SendBtn onClick={() => submitComment(post)}><FiSend /></SendBtn>
+                            </div>
+                          </div>
+                        )}
+                      </PostCard>
+                    );
+                  })}
+                </PostGrid>
+              )}
+            </TabContent>
+          )}
         </Section>
 
-        {/* ✅ FIX 1: SINGLE ReviewSection - NO DUPLICATES */}
+        {/* Review Section - EXACT pattern from MyOffer's review display */}
         <ReviewSection>
           <ReviewHeader>
             <div>
               <SectionTitle>Rating & Reviews</SectionTitle>
-              {/* <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                <FiStar color="#facc15" />
-                <strong style={{ fontSize: '24px' }}>{formattedAvgRating}</strong>
-                <span style={{ color: '#64748b' }}>/5 ({totalReviews} reviews)</span>
-              </div> */}
             </div>
           </ReviewHeader>
 
@@ -655,7 +1014,6 @@ setRequestingChat(false);
             </ReviewFormTitle>
             
             <form onSubmit={handleSubmitReview}>
-              {/* Rating Stars */}
               <RatingInput>
                 <RatingLabel>Your Rating:</RatingLabel>
                 <StarRating>
@@ -672,10 +1030,8 @@ setRequestingChat(false);
                     </Star>
                   ))}
                 </StarRating>
-                {/* <RatingValue>{userRating > 0 ? `${userRating}/5` : 'Select rating'}</RatingValue> */}
               </RatingInput>
 
-              {/* Review Textarea */}
               <TextAreaContainer>
                 <ReviewTextarea
                   placeholder="share your experience"
@@ -685,12 +1041,8 @@ setRequestingChat(false);
                   maxLength={500}
                   rows={4}
                 />
-                {/* <CharCount>
-                  {userReviewText.length}/500 characters
-                </CharCount> */}
               </TextAreaContainer>
 
-              {/* Action Buttons */}
               <FormActions>
                 {isLoggedIn ? (
                   <>
@@ -744,24 +1096,16 @@ setRequestingChat(false);
             </form>
           </ReviewForm>
 
-          {/* Recent Reviews List */}
+          {/* All Reviews List */}
           <RecentReviewsTitle>
             <FiMessageSquare />
-            Recent Reviews ({recentReviews.length})
+            All Reviews ({reviews.length})
           </RecentReviewsTitle>
 
           <ReviewList>
             {loadingReviews ? (
               <LoadingReviews>
-                <div style={{ 
-                  width: '40px', 
-                  height: '40px', 
-                  border: '3px solid #e2e8f0',
-                  borderTopColor: '#0ea5e9',
-                  borderRadius: '50%',
-                  animation: 'spin 0.8s linear infinite',
-                  margin: '0 auto'
-                }} />
+                <Spinner />
                 <p>Loading reviews...</p>
               </LoadingReviews>
             ) : reviews.length === 0 ? (
@@ -771,7 +1115,7 @@ setRequestingChat(false);
                 <p>Be the first to review this expert!</p>
               </NoReviews>
             ) : (
-              recentReviews.map((r) => (
+              reviews.map((r) => (
                 <ReviewItem key={r.id}>
                   <ReviewUser>
                     <UserAvatar>
@@ -807,16 +1151,9 @@ setRequestingChat(false);
               ))
             )}
           </ReviewList>
-
-          {reviews.length > 3 && (
-            <ViewAllButton onClick={() => navigate(`/experts/${expertId}/reviews`)}>
-              View All Reviews ({totalReviews})
-              <FiArrowLeft style={{ transform: 'rotate(180deg)' }} />
-            </ViewAllButton>
-          )}
         </ReviewSection>
 
-        {/* Modals remain the same */}
+        {/* Modals */}
         {showRecharge && (
           <div style={{ 
             position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", 

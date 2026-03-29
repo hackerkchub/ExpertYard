@@ -29,14 +29,14 @@ export const LoadingSpinner = styled.div`
   animation: ${spin} 1s linear infinite;
 `;
 
-export const LoadingSpinnerSmall = styled.div`
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: #fff;
-  animation: ${spin} 0.6s linear infinite;
-`;
+// export const LoadingSpinnerSmall = styled.div`
+//   width: 16px;
+//   height: 16px;
+//   border: 2px solid rgba(255, 255, 255, 0.3);
+//   border-radius: 50%;
+//   border-top-color: #fff;
+//   animation: ${spin} 0.6s linear infinite;
+// `;
 
 export const LoadingText = styled.p`
   margin-top: 16px;
@@ -438,3 +438,385 @@ export const DocumentTitle = styled.span` font-size: 13px; font-weight: 500; `;
 export const DocumentUploadButton = styled.label` cursor: pointer; color: #0a66c2; `;
 export const NoDocument = styled.div` padding: 20px; text-align: center; color: #737373; border: 1px dashed #dbdbdb; `;
 export const PdfPreview = styled.div` display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; color: #ff3040; `;
+
+// Add these to your existing styles file
+
+export const ExperienceSection = styled.div`
+  margin-top: 24px;
+`;
+
+export const ExperienceHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+`;
+
+export const AddExperienceButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+`;
+
+export const ExperienceList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+export const ExperienceItem = styled.div`
+  background: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+`;
+
+export const ExperienceItemHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+`;
+
+export const ExperienceTitleSection = styled.div`
+  flex: 1;
+`;
+
+export const ExperienceTitle = styled.h4`
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  color: ${({ theme }) => theme.colors.text};
+`;
+
+export const ExperienceCompany = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: ${({ theme }) => theme.colors.textSecondary};
+`;
+
+export const ExperienceActions = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+export const ExperienceEditButton = styled.button`
+  background: none;
+  border: none;
+  color: #667eea;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(102, 126, 234, 0.1);
+    transform: scale(1.1);
+  }
+`;
+
+export const ExperienceDeleteButton = styled.button`
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.1);
+    transform: scale(1.1);
+  }
+`;
+
+export const ExperienceDate = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  margin-bottom: 12px;
+`;
+
+export const ExperienceCertificate = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #667eea;
+    text-decoration: none;
+    font-size: 13px;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+`;
+
+export const NoExperienceMessage = styled.div`
+  text-align: center;
+  padding: 48px 24px;
+  background: ${({ theme }) => theme.colors.background};
+  border-radius: 12px;
+  border: 2px dashed ${({ theme }) => theme.colors.border};
+
+  svg {
+    color: ${({ theme }) => theme.colors.textSecondary};
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 18px;
+    margin: 0 0 8px 0;
+    color: ${({ theme }) => theme.colors.text};
+  }
+
+  p {
+    color: ${({ theme }) => theme.colors.textSecondary};
+    margin: 0;
+  }
+`;
+
+export const TotalExperienceDisplay = styled.div`
+  display: flex;
+  gap: 16px;
+  align-items: baseline;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-radius: 12px;
+`;
+
+export const TotalExperienceYears = styled.span`
+  font-size: 24px;
+  font-weight: 700;
+  color: #667eea;
+`;
+
+export const TotalExperienceMonths = styled.span`
+  font-size: 18px;
+  font-weight: 600;
+  color: #764ba2;
+`;
+
+// Modal Styles
+export const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+export const ModalContent = styled.div`
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+`;
+
+export const ModalHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+
+  h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    color: #1f2937;
+  }
+`;
+
+export const ModalCloseButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: #6b7280;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: #1f2937;
+    transform: scale(1.1);
+  }
+`;
+
+export const ModalBody = styled.div`
+  padding: 24px;
+`;
+
+export const ModalFooter = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+`;
+
+export const FormGroup = styled.div`
+  margin-bottom: 20px;
+`;
+
+export const FormRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+`;
+
+export const FormLabel = styled.label`
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #374151;
+`;
+
+export const FormInput = styled.input`
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+`;
+
+export const FormHint = styled.small`
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6b7280;
+`;
+
+export const FileInputWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+export const FileInputLabel = styled.label`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #e5e7eb;
+  }
+`;
+
+export const FileName = styled.span`
+  font-size: 13px;
+  color: #6b7280;
+`;
+
+export const FilePreview = styled.div`
+  margin-top: 12px;
+  
+  img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+  }
+`;
+
+export const ModalCancelButton = styled.button`
+  padding: 8px 16px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #e5e7eb;
+  }
+`;
+
+export const ModalSubmitButton = styled.button`
+  padding: 8px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+export const LoadingSpinnerSmall = styled.div`
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  display: inline-block;
+  margin-right: 8px;
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+`;

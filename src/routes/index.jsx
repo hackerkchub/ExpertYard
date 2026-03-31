@@ -3,7 +3,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import { socket } from "../shared/api/socket";
 import { useSoundInit } from "../shared/services/sound/useSoundInit";
 
-// Lazy loading to break the chain
+// ✅ Code Splitting (Breaking the 429KB chain)
 const UserAppRoutes = lazy(() => import("../apps/user/routes"));
 const ExpertAppRoutes = lazy(() => import("../apps/expert/routes"));
 const AdminAppRoutes = lazy(() => import("../apps/admin/routes"));
@@ -17,7 +17,10 @@ import NetworkStatus from "../shared/components/NetworkStatus/NetworkStatus";
 export default function AppRouter() {
   useSoundInit();
   const location = useLocation();
-  const showNavbar = location.pathname.startsWith("/user") || location.pathname.startsWith("/expert");
+
+  const showNavbar =
+    location.pathname.startsWith("/user") ||
+    location.pathname.startsWith("/expert");
 
   useEffect(() => {
     const handleVisibility = () => {
@@ -30,19 +33,43 @@ export default function AppRouter() {
   }, []);
 
   return (
+    /* Aapka Original CSS Layout - NO CHANGES HERE */
     <div className="app-main-layout" style={{ width: "100%", overflowX: "hidden", position: "relative" }}>
       <NetworkStatus />
-      <div className="main-content-wrapper" style={{ paddingBottom: showNavbar ? "var(--nav-height, 70px)" : "0px", width: "100%", overflowX: "hidden" }}>
+
+      <div
+        className="main-content-wrapper"
+        style={{
+          paddingBottom: showNavbar ? "var(--nav-height, 70px)" : "0px",
+          width: "100%",
+          overflowX: "hidden"
+        }}
+      >
         <RouteLoader />
+        
         <Suspense fallback={<RouteLoader />}>
           <Routes>
             <Route path="/" element={<RootRedirect />} />
+
+            {/* USER */}
             <Route path="/user/*" element={<UserAppRoutes />} />
-            <Route path="/expert/*" element={<ExpertProvider><ExpertAppRoutes /></ExpertProvider>} />
+
+            {/* EXPERT */}
+            <Route
+              path="/expert/*"
+              element={
+                <ExpertProvider>
+                  <ExpertAppRoutes />
+                </ExpertProvider>
+              }
+            />
+
+            {/* ADMIN */}
             <Route path="/admin/*" element={<AdminAppRoutes />} />
           </Routes>
         </Suspense>
       </div>
+
       {showNavbar && <BottomNavbar />}
     </div>
   );

@@ -9,21 +9,23 @@ export const CategoryProvider = ({ children }) => {
   const [subCategories, setSubCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   
-  // ⚡ Cache for Subcategories: { categoryId: data }
   const subCatCache = useRef({}); 
-  const isFetched = useRef(false); // To prevent double execution in StrictMode
+  const isFetched = useRef(false); 
 
-  /* ================= LOAD CATEGORIES (With Cache Check) ================= */
+  /* ================= LOAD CATEGORIES ================= */
   const loadCategories = useCallback(async (forceRefresh = false) => {
-    // Agar data pehle se hai aur force refresh nahi maanga, toh return karein
+    // Agar data pehle se state mein hai, toh API call skip karein
     if (categories.length > 0 && !forceRefresh) return;
     if (isFetched.current && !forceRefresh) return;
 
     try {
       setLoading(true);
       const res = await getCategoriesApi();
-      const data = res?.data || [];
-      setCategories(data);
+      
+      // ✅ Fix: getCategoriesApi direct data return kar raha hai ya wrapped, dono handle honge
+      const actualData = res?.data || res || []; 
+      
+      setCategories(actualData);
       isFetched.current = true;
     } catch (err) {
       console.error("Category load failed", err);
@@ -37,22 +39,16 @@ export const CategoryProvider = ({ children }) => {
     loadCategories();
   }, [loadCategories]);
 
-  /* ================= LOAD SUBCATEGORIES (With Smart Caching) ================= */
+  /* ================= LOAD SUBCATEGORIES ================= */
   const loadSubCategories = useCallback(async (categoryId) => {
     if (!categoryId) return;
-
-    // 1. Check if already in cache
     if (subCatCache.current[categoryId]) {
       setSubCategories(subCatCache.current[categoryId]);
       return;
     }
-
     try {
-      // Optional: loading state for subcategories specifically
       const res = await getSubCategoriesApi(categoryId);
       const data = res?.data?.data || res?.data || [];
-      
-      // 2. Save to cache
       subCatCache.current[categoryId] = data;
       setSubCategories(data);
     } catch (err) {
@@ -68,7 +64,7 @@ export const CategoryProvider = ({ children }) => {
         subCategories,
         loadSubCategories,
         loading,
-        refreshCategories: () => loadCategories(true) // Manual refresh option
+        refreshCategories: () => loadCategories(true)
       }}
     >
       {children}

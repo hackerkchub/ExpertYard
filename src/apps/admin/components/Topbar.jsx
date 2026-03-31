@@ -15,7 +15,7 @@ import {
   MobileToggle
 } from "../styles/Topbar.styles";
 
-import logo from "../../../assets/logo.png";
+import logo from "../../../assets/logo.webp";
 
 export default function Topbar({ setMobileOpen }) {
   const [openProfile, setOpenProfile] = useState(false);

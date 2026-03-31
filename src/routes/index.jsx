@@ -3,7 +3,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import { socket } from "../shared/api/socket";
 import { useSoundInit } from "../shared/services/sound/useSoundInit";
 
-// Lazy Loading bundles
+// Lazy loading to break the chain
 const UserAppRoutes = lazy(() => import("../apps/user/routes"));
 const ExpertAppRoutes = lazy(() => import("../apps/expert/routes"));
 const AdminAppRoutes = lazy(() => import("../apps/admin/routes"));
@@ -17,7 +17,6 @@ import NetworkStatus from "../shared/components/NetworkStatus/NetworkStatus";
 export default function AppRouter() {
   useSoundInit();
   const location = useLocation();
-
   const showNavbar = location.pathname.startsWith("/user") || location.pathname.startsWith("/expert");
 
   useEffect(() => {
@@ -33,26 +32,13 @@ export default function AppRouter() {
   return (
     <div className="app-main-layout" style={{ width: "100%", overflowX: "hidden", position: "relative" }}>
       <NetworkStatus />
-      <div
-        className="main-content-wrapper"
-        style={{
-          width: "100%",
-          overflowX: "hidden"
-        }}
-      >
+      <div className="main-content-wrapper" style={{ paddingBottom: showNavbar ? "var(--nav-height, 70px)" : "0px", width: "100%", overflowX: "hidden" }}>
         <RouteLoader />
         <Suspense fallback={<RouteLoader />}>
           <Routes>
             <Route path="/" element={<RootRedirect />} />
             <Route path="/user/*" element={<UserAppRoutes />} />
-            <Route
-              path="/expert/*"
-              element={
-                <ExpertProvider>
-                  <ExpertAppRoutes />
-                </ExpertProvider>
-              }
-            />
+            <Route path="/expert/*" element={<ExpertProvider><ExpertAppRoutes /></ExpertProvider>} />
             <Route path="/admin/*" element={<AdminAppRoutes />} />
           </Routes>
         </Suspense>

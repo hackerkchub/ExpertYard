@@ -7,7 +7,6 @@ import Categories from "../../components/HomeComponent/Categories";
 
 // NEW COMPONENTS
 import Hero from "../../components/HomeComponent/Hero";
-import Experts from "../../components/HomeComponent/Experts";
 import HowItWorks from "../../components/HomeComponent/HowItWorks";
 import Testimonials from "../../components/HomeComponent/Testimonials";
 import "./Home.css";
@@ -95,7 +94,7 @@ const {
         <Categories />
       </div>
       
-        <Experts />
+        
      
 
       <HowItWorks />

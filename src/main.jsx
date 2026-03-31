@@ -11,13 +11,10 @@ import AppRouter from "./routes";
 import { soundManager } from "./shared/services/sound/soundManager";
 import { LoaderProvider, useLoader } from "./shared/loaders/LoaderContext";
 import GlobalLoader from "./shared/loaders/GlobalLoader";
-import { injectUserLoader } from "./shared/api/userApi/axiosInstance";
-import { injectExpertLoader } from "./shared/api/expertapi/axiosInstance";
-import { injectAdminLoader } from "./shared/api/admin/axiosInstance";
-import { injectLoader } from "./shared/api/axiosInstance";
+import { injectUserLoader, injectExpertLoader, injectAdminLoader, injectLoader } from "./shared/api/axiosInstance"; // Assuming shared injection
 
-// Sound preload ko background mein rehne dein
-setTimeout(() => soundManager.preload(), 3000);
+// Background sound loading
+setTimeout(() => soundManager.preload(), 4000);
 
 function LoaderInjector() {
   const loader = useLoader();
@@ -26,6 +23,10 @@ function LoaderInjector() {
     injectUserLoader(loader);
     injectExpertLoader(loader);
     injectAdminLoader(loader);
+    
+    // React load hote hi initial white screen loader ko hata dein
+    const initialLoader = document.getElementById('initial-loader');
+    if (initialLoader) initialLoader.style.display = 'none';
   }, [loader]);
   return null;
 }
@@ -40,7 +41,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <BrowserRouter>
           <AuthProvider>
             <WalletProvider>
-              {/* Suspense fallback ko GlobalLoader par set kiya taaki white screen na dikhe */}
               <Suspense fallback={<GlobalLoader />}>
                 <AppRouter />
               </Suspense>

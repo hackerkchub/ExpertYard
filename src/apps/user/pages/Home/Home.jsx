@@ -7,14 +7,12 @@ import Categories from "../../components/HomeComponent/Categories";
 
 // NEW COMPONENTS
 import Hero from "../../components/HomeComponent/Hero";
-import Experts from "../../components/HomeComponent/Experts";
 import HowItWorks from "../../components/HomeComponent/HowItWorks";
 import Testimonials from "../../components/HomeComponent/Testimonials";
 import "./Home.css";
 
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWebPush } from "../../../../shared/hooks/useWebPush";
-
 
 import { FiUserCheck, FiMessageCircle } from "react-icons/fi";
 
@@ -95,9 +93,7 @@ const {
         <Categories />
       </div>
       
-        <Experts />
      
-
       <HowItWorks />
       {/* <Testimonials /> */}
     </>

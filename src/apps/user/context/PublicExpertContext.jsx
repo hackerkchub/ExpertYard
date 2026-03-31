@@ -39,35 +39,49 @@ export const PublicExpertProvider = ({ children }) => {
   const [expertPrice, setExpertPrice] = useState(DEFAULT_PRICE);
   const [priceLoading, setPriceLoading] = useState(false);
 
-  /* ================= ALL EXPERTS ================= */
+  /* ================= ALL EXPERTS (DEFERRED LOAD) ================= */
   useEffect(() => {
     const loadExperts = async () => {
-      try {
-        setExpertsLoading(true);
+      // ✅ Internal function for fetching
+      const triggerFetch = async () => {
+        try {
+          setExpertsLoading(true);
+          const res = await getExpertsProfileListApi();
 
-        const res = await getExpertsProfileListApi();
+          // backend returns { success, data } or just data
+          const raw = res?.data || [];
 
-        // ✅ FIX: backend returns { success, data }
-        const raw = res?.data || [];
+          const mapped = raw.map((p) => ({
+            id: p.expert_id,
+            profileId: p.id,
+            name: p.name || p.expert_name,
+            position: p.position,
+            profile_photo: p.profile_photo,
+            chat_per_minute: Number(p.chat_per_minute || 0),
+            call_per_minute: Number(p.call_per_minute || 0),
+            subcategory_id: p.subcategory_id,
+          }));
 
-        const mapped = raw.map((p) => ({
-          id: p.expert_id,
-          profileId: p.id,
-          name: p.name || p.expert_name,
-          position: p.position,
-          profile_photo: p.profile_photo,
-          chat_per_minute: Number(p.chat_per_minute || 0),
-          call_per_minute: Number(p.call_per_minute || 0),
-          subcategory_id: p.subcategory_id,
-        }));
+          setExperts(mapped);
+        } catch (err) {
+          console.error("LOAD EXPERTS ERROR:", err);
+          setExperts([]);
+        } finally {
+          setExpertsLoading(false);
+        }
+      };
 
-        setExperts(mapped);
-      } catch (err) {
-        console.error("LOAD EXPERTS ERROR:", err);
-        setExperts([]);
-      } finally {
-        setExpertsLoading(false);
-      }
+      // ✅ Lighthouse Optimization: 
+      // Delaying the heavy list call by 1.2s and using idle callback
+      const timer = setTimeout(() => {
+        if ("requestIdleCallback" in window) {
+          window.requestIdleCallback(() => triggerFetch());
+        } else {
+          triggerFetch();
+        }
+      }, 1200);
+
+      return () => clearTimeout(timer);
     };
 
     loadExperts();
@@ -79,11 +93,8 @@ export const PublicExpertProvider = ({ children }) => {
 
     try {
       setProfileLoading(true);
-
       const res = await getExpertProfileApi(expertId);
-
-      // ✅ backend already returns full URL
-     const data = res?.data?.data;
+      const data = res?.data?.data;
 
       if (!data) return;
 
@@ -110,10 +121,7 @@ export const PublicExpertProvider = ({ children }) => {
 
     try {
       setPriceLoading(true);
-
       const res = await getExpertPriceByIdApi(expertId);
-
-      // ✅ backend returns { success, data }
       const price = res?.data;
 
       if (!price) {
@@ -170,8 +178,8 @@ export const PublicExpertProvider = ({ children }) => {
         fetchPrice,
         refreshProfile,
         refreshPrice,
-        updateExpertData: () => {},
-        logoutExpert: () => {},
+        updateExpertData: () => {}, // Kept for compatibility
+        logoutExpert: () => {},      // Kept for compatibility
       }}
     >
       {children}

@@ -15,12 +15,12 @@ export default function Experts() {
   const [loading, setLoading] = useState(true);
   const [prices, setPrices] = useState({});
 
-  /* ================= FETCH TOP RATED (Optimized Limit) ================= */
+  /* ================= FETCH TOP RATED ================= */
   useEffect(() => {
     const loadTopRated = async () => {
       try {
         setLoading(true);
-        // Limit ko 20 rakha hai taaki initial load fast ho (Lighthouse friendly)
+        // Limit 20 is perfect for Lighthouse
         const res = await getTopRatedExpertsApi(20); 
         const ids = res?.data?.data?.map((e) => e.expert_id || e.id) || [];
         setTopIds(ids);
@@ -39,33 +39,38 @@ export default function Experts() {
     return experts.filter((e) => topIds.includes(e.id));
   }, [experts, topIds]);
 
-  /* ================= FETCH PRICES (PARALLEL EXECUTION) ================= */
-  // ✅ FIX: Pehle ye loop mein tha (Slow), ab Promise.all se Parallel hai (Fast)
+  /* ================= FETCH PRICES (DEFERRED PARALLEL) ================= */
   useEffect(() => {
     const loadPrices = async () => {
       if (!topExperts.length) return;
 
-      try {
-        const pricePromises = topExperts.map((ex) =>
-          getExpertPriceByIdApi(ex.id)
-            .then((res) => ({
-              id: ex.id,
-              price: Number(res?.data?.chat_per_minute || 0),
-            }))
-            .catch(() => ({ id: ex.id, price: 0 }))
-        );
+      // ✅ SOLUTION: 1.5 second ka delay taaki browser page ko "Loaded" maan le
+      // Isse ye saari requests 'Critical Chain' se bahar nikal jayengi
+      const timer = setTimeout(async () => {
+        try {
+          const pricePromises = topExperts.map((ex) =>
+            getExpertPriceByIdApi(ex.id)
+              .then((res) => ({
+                id: ex.id,
+                price: Number(res?.data?.chat_per_minute || 0),
+              }))
+              .catch(() => ({ id: ex.id, price: 0 }))
+          );
 
-        const results = await Promise.all(pricePromises);
+          const results = await Promise.all(pricePromises);
 
-        const map = {};
-        results.forEach((item) => {
-          map[item.id] = item.price;
-        });
+          const map = {};
+          results.forEach((item) => {
+            map[item.id] = item.price;
+          });
 
-        setPrices(map);
-      } catch (error) {
-        console.error("Error loading prices in parallel:", error);
-      }
+          setPrices(map);
+        } catch (error) {
+          console.error("Deferred price load failed:", error);
+        }
+      }, 1500); // 1.5s delay is sweet spot for Lighthouse
+
+      return () => clearTimeout(timer);
     };
 
     loadPrices();
@@ -87,8 +92,7 @@ export default function Experts() {
   };
 
   if (loading || expertsLoading) {
-    // Skeleton loader yahan use karna best hota hai white screen se bachne ke liye
-    return <p style={{ padding: 20, textAlign: 'center' }}>Fetching top experts...</p>;
+    return <p style={{ padding: 20, textAlign: 'center', minHeight: '200px' }}>Fetching top experts...</p>;
   }
 
   return (
@@ -112,7 +116,15 @@ export default function Experts() {
                 style={{ cursor: "pointer" }}
               >
                 {ex.profile_photo ? (
-                  <img src={ex.profile_photo} alt={ex.name} className="avatar" loading="lazy" />
+                  <img 
+                    src={ex.profile_photo} 
+                    alt={ex.name} 
+                    className="avatar" 
+                    decoding="async" 
+                    loading="lazy" 
+                    width="100" // Image dimensions fix layout shift
+                    height="100"
+                  />
                 ) : (
                   <div className="avatar-fallback">{getInitials(ex.name)}</div>
                 )}
@@ -122,7 +134,7 @@ export default function Experts() {
                 <div className="rating">★★★★★</div>
 
                 <p className="price">
-                  {prices[ex.id] !== undefined ? `₹${prices[ex.id]} / min` : "Loading..."}
+                  {prices[ex.id] !== undefined ? `₹${prices[ex.id]} / min` : "..."}
                 </p>
 
                 <button

@@ -37,10 +37,9 @@ export default function AppRouter() {
     <div className="app-main-layout" style={{ width: "100%", overflowX: "hidden", position: "relative" }}>
       <NetworkStatus />
 
-      <div
+         <div
         className="main-content-wrapper"
         style={{
-          paddingBottom: showNavbar ? "var(--nav-height, 70px)" : "0px",
           width: "100%",
           overflowX: "hidden"
         }}

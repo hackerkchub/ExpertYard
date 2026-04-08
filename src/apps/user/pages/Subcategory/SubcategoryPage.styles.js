@@ -341,13 +341,168 @@ export const NoResultsTitle = styled.h2` font-size: 22px; font-weight: 700; colo
 export const NoResultsText = styled.p` font-size: 15px; color: ${colors.textSecondary}; font-weight: 500; `;
 export const CtaSection = styled.section` margin-top: 30px; width: 100%; `;
 export const RatingBanner = styled.div` text-align: center; margin-bottom: 12px; `;
-export const Stars = styled.div` color: ${colors.star}; display: flex; justify-content: center; gap: 3px; font-size: 14px; `;
-export const RatingText = styled.p` font-size: 13px; color: ${colors.textSecondary}; font-weight: 600; margin-top: 4px; `;
-export const CtaBanner = styled.div` background: ${colors.primary}; color: white; padding: 30px 20px; border-radius: 12px; text-align: center; width: 100%; box-sizing: border-box; `;
-export const CtaTitle = styled.h2` font-size: 19px; margin-bottom: 8px; font-weight: 800; `;
-export const CtaDescription = styled.p` font-size: 13px; opacity: 0.95; margin-bottom: 18px; font-weight: 500; line-height: 1.5; `;
-export const PrimaryButton = styled.button` background: white; color: ${colors.primary}; border: none; padding: 12px 24px; border-radius: 24px; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; margin: 0 auto; `;
-export const SecondaryButton = styled.button` background: ${colors.primaryLight}; color: ${colors.primary}; border: none; padding: 12px 24px; border-radius: 24px; font-weight: 700; font-size: 14px; `;
+
+
+export const Stars = styled.div` 
+  color: ${colors.star}; 
+  display: flex; 
+  justify-content: center; 
+  gap: 3px; 
+  font-size: 14px;
+`;
+
+export const RatingText = styled.p` 
+  font-size: 13px; /* Increased from 11px */
+  color: ${colors.textSecondary}; 
+  font-weight: 600;
+  margin-top: 4px;
+`;
+
+export const CtaBanner = styled.div` 
+  background: ${colors.primary}; 
+  color: white; 
+  padding: 30px 20px; /* Increased padding */
+  border-radius: 12px; 
+  text-align: center; 
+  width: 100%; 
+  box-sizing: border-box; 
+`;
+
+export const CtaTitle = styled.h2` 
+  font-size: 19px; /* Increased from 17px */
+  margin-bottom: 8px; 
+  font-weight: 800;
+`;
+
+export const CtaDescription = styled.p` 
+  font-size: 13px; /* Increased from 12px */
+  opacity: 0.95; 
+  margin-bottom: 18px; 
+  font-weight: 500;
+  line-height: 1.5;
+`;
+
+export const PrimaryButton = styled.button` 
+  background: white; 
+  color: ${colors.primary}; 
+  border: none; 
+  padding: 12px 24px; /* Increased padding */
+  border-radius: 24px; 
+  font-weight: 700; 
+  font-size: 14px; /* Increased from 13px */
+  cursor: pointer; 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+  margin: 0 auto; 
+`;
+
+export const SecondaryButton = styled.button` 
+  background: ${colors.primaryLight}; 
+  color: ${colors.primary}; 
+  border: none; 
+  padding: 12px 24px; 
+  border-radius: 24px; 
+  font-weight: 700; 
+  font-size: 14px; 
+`;
+
+// Add these to your existing styled components file
+
+export const PricingModesBadge = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+`;
+
+export const PricingModeBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  
+  ${props => props.type === 'per_minute' && `
+    background: #dbeafe;
+    color: #1e40af;
+  `}
+  
+  ${props => props.type === 'session' && `
+    background: #fef3c7;
+    color: #92400e;
+  `}
+  
+  ${props => props.type === 'plans' && `
+    background: #ede9fe;
+    color: #5b21b6;
+  `}
+`;
+
+export const StartSessionButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  }
+`;
+
+export const ViewPlansButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  }
+`;
+
+export const PricingInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: #f3e8ff;
+  border-radius: 8px;
+  font-size: 11px;
+  color: #6b21a5;
+  
+  span {
+    flex: 1;
+  }
+`;
+
+// export const Stars = styled.div` color: ${colors.star}; display: flex; justify-content: center; gap: 3px; font-size: 14px; `;
+// export const RatingText = styled.p` font-size: 13px; color: ${colors.textSecondary}; font-weight: 600; margin-top: 4px; `;
+// export const CtaBanner = styled.div` background: ${colors.primary}; color: white; padding: 30px 20px; border-radius: 12px; text-align: center; width: 100%; box-sizing: border-box; `;
+// export const CtaTitle = styled.h2` font-size: 19px; margin-bottom: 8px; font-weight: 800; `;
+// export const CtaDescription = styled.p` font-size: 13px; opacity: 0.95; margin-bottom: 18px; font-weight: 500; line-height: 1.5; `;
+// export const PrimaryButton = styled.button` background: white; color: ${colors.primary}; border: none; padding: 12px 24px; border-radius: 24px; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; margin: 0 auto; `;
+// export const SecondaryButton = styled.button` background: ${colors.primaryLight}; color: ${colors.primary}; border: none; padding: 12px 24px; border-radius: 24px; font-weight: 700; font-size: 14px; `;
 export const FilterChipsContainer = styled.div` display: flex; gap: 12px; overflow-x: auto; padding: 8px 4px 16px; scroll-behavior: smooth; position: relative; width: 100%; box-sizing: border-box; &::-webkit-scrollbar { display: none; } animation: ${scrollHintLoop} 2s ease-in-out; `;
 export const FilterChip = styled.button` white-space: nowrap; padding: 10px 18px; border-radius: 24px; font-size: 15px; font-weight: 600; border: 1px solid ${props => props.isActive ? colors.primary : colors.border}; background: ${props => props.isActive ? colors.primary : colors.white}; color: ${props => props.isActive ? colors.white : colors.textMain}; flex-shrink: 0; `;
 export const Breadcrumb = styled.div` display: flex; align-items: center; gap: 8px; font-size: 14px; padding: 12px 16px; color: ${colors.textSecondary}; flex-wrap: wrap; `;
@@ -362,3 +517,4 @@ export const StatLabel = styled.span` color: ${colors.textSecondary}; font-size:
 export const PriceIcon = styled.div` color: ${colors.primary}; display: flex; font-size: 15px; `;
 export const PriceAmount = styled.span` font-weight: 800; font-size: 15px; color: ${colors.textMain}; `;
 export const PriceUnit = styled.span` font-size: 12px; color: ${colors.textSecondary}; font-weight: 600; `;
+

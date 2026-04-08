@@ -20,15 +20,15 @@ const DEFAULT_STATE = {
 };
 
 const DEFAULT_PRICE = {
-  id: null,
-  call_per_minute: 0,
-  chat_per_minute: 0,
+  pricing_modes: [],
+  call: 0,
+  chat: 0,
+  session: null,
   reason_for_price: "",
   handle_customer: "",
   strength: "",
   weakness: "",
 };
-
 export const PublicExpertProvider = ({ children }) => {
   const [experts, setExperts] = useState([]);
   const [expertsLoading, setExpertsLoading] = useState(false);
@@ -56,8 +56,10 @@ export const PublicExpertProvider = ({ children }) => {
           name: p.name || p.expert_name,
           position: p.position,
           profile_photo: p.profile_photo,
-          chat_per_minute: Number(p.chat_per_minute || 0),
-          call_per_minute: Number(p.call_per_minute || 0),
+         chat: p.chat?.per_minute || 0,
+call: p.call?.per_minute || 0,
+session: p.session || null,
+pricing_modes: p.pricing_modes || [],
           subcategory_id: p.subcategory_id,
         }));
 
@@ -105,38 +107,42 @@ export const PublicExpertProvider = ({ children }) => {
   }, []);
 
   /* ================= PRICE ================= */
-  const fetchPrice = useCallback(async (expertId) => {
-    if (!expertId) return;
+ const fetchPrice = useCallback(async (expertId) => {
+  if (!expertId) return;
 
-    try {
-      setPriceLoading(true);
+  try {
+    setPriceLoading(true);
 
-      const res = await getExpertPriceByIdApi(expertId);
+    const res = await getExpertPriceByIdApi(expertId);
 
-      // ✅ backend returns { success, data }
-      const price = res?.data;
+    // 🔥 HANDLE NEW BACKEND FORMAT
+    const priceData = res?.data?.data || res?.data || res;
 
-      if (!price) {
-        setExpertPrice(DEFAULT_PRICE);
-        return;
-      }
+    console.log("PUBLIC PRICE:", priceData);
 
-      setExpertPrice({
-        id: price.id,
-        call_per_minute: Number(price.call_per_minute || 0),
-        chat_per_minute: Number(price.chat_per_minute || 0),
-        reason_for_price: price.reason_for_price || "",
-        handle_customer: price.handle_customer || "",
-        strength: price.strength || "",
-        weakness: price.weakness || "",
-      });
-    } catch (err) {
-      console.error("PRICE ERROR:", err);
+    if (!priceData || !priceData.pricing_modes) {
       setExpertPrice(DEFAULT_PRICE);
-    } finally {
-      setPriceLoading(false);
+      return;
     }
-  }, []);
+
+    setExpertPrice({
+      pricing_modes: priceData.pricing_modes || [],
+      call: priceData.call?.per_minute || 0,
+      chat: priceData.chat?.per_minute || 0,
+      session: priceData.session || null,
+      reason_for_price: priceData.reason_for_price || "",
+      handle_customer: priceData.handle_customer || "",
+      strength: priceData.strength || "",
+      weakness: priceData.weakness || "",
+    });
+
+  } catch (err) {
+    console.error("PRICE ERROR:", err);
+    setExpertPrice(DEFAULT_PRICE);
+  } finally {
+    setPriceLoading(false);
+  }
+}, []);
 
   /* ================= AUTO PRICE LOAD ================= */
   useEffect(() => {

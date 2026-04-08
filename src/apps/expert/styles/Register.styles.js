@@ -238,11 +238,11 @@ export const PasswordStrength = styled.div`
   span { font-size: 12px; font-weight: 600; }
 `;
 
-export const Divider = styled.div`
-  height: 1px;
-  background: #e0e0e0;
-  margin: 24px 0;
-`;
+// export const Divider = styled.div`
+//   height: 1px;
+//   background: #e0e0e0;
+//   margin: 24px 0;
+// `;
 
 export const ToggleLink = styled.span`
   color: #0a66c2 !important;
@@ -307,6 +307,13 @@ export const SelectCard = styled.button`
   text-align: left;
 `;
 
+
+// export const Divider = styled.div`
+//   height: 1px;
+//   background: #e0e0e0;
+//   margin: 32px 0;
+// `;
+
 export const CardTitle = styled.div` font-weight: 600; color: #000; `;
 export const CardMeta = styled.div` font-size: 13px; color: #666; `;
 export const Chip = styled.span`
@@ -318,6 +325,7 @@ export const PriceInputRow = styled.div`
   display: flex; align-items: center; gap: 10px; padding: 10px 14px;
   border: 1px solid rgba(0,0,0,0.6); border-radius: 4px;
 `;
+
 
 export const CategorySearch = styled.div`
   position: relative; margin-bottom: 24px;
@@ -403,5 +411,198 @@ export const UploadStatus = styled.div`
 `;
 
 export const SuccessCard = styled.div`
+<<<<<<< HEAD
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.15);
+`;
+
+// Add these to your existing Register.styles.js file
+
+export const RadioGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+`;
+
+export const RadioLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #1e293b;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+  
+  &:hover {
+    background: #f8fafc;
+  }
+`;
+
+export const RadioInput = styled.input`
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #0ea5ff;
+`;
+
+export const CheckboxGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+`;
+
+export const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #1e293b;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+  
+  &:hover {
+    background: #f8fafc;
+  }
+`;
+
+export const CheckboxInput = styled.input`
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #0ea5ff;
+`;
+
+export const SectionTitle = styled.h3`
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e2e8f0;
+`;
+
+export const SectionCard = styled.div`
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+`;
+
+export const Divider = styled.hr`
+  margin: 20px 0;
+  border: none;
+  border-top: 1px solid #e2e8f0;
+`;
+
+export const PlanCard = styled.div`
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s;
+  
+  &:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
+  }
+`;
+
+export const PlanHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+`;
+
+export const PlanName = styled.h4`
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+`;
+
+export const PlanPrice = styled.div`
+  font-size: 20px;
+  font-weight: 700;
+  color: #0ea5ff;
+  margin: 8px 0;
+`;
+
+export const PlanDetails = styled.div`
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 8px 0;
+`;
+
+export const AddPlanButton = styled.button`
+  width: 100%;
+  padding: 12px;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  color: #0ea5ff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 12px;
+  
+  &:hover {
+    background: #f1f5f9;
+    border-color: #0ea5ff;
+  }
+`;
+
+export const RemoveButton = styled.button`
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+  
+  &:hover {
+    background: #fee2e2;
+  }
+`;
+
+export const PlansGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+`;
+
+
+export const EditButton = styled.button`
+  background: none;
+  border: none;
+  color: #0ea5ff;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+  
+  &:hover {
+    background: #e0f2fe;
+  }
+
   background: #ecfdf5; border: 1px solid #10b981; padding: 20px; border-radius: 12px; text-align: center;
+
 `;

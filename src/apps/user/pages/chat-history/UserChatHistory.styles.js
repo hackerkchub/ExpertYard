@@ -653,7 +653,7 @@ export const Avatar = styled.div`
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: ${props => props.premium ? '#0A66C2' : '#E9E5DF'};
+  background: ${props => props.premium ? '#0A66C2' : '#d8d1c7'};
   display: flex;
   align-items: center;
   justify-content: center;

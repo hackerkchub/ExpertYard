@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { FiFilter, FiSearch, FiCheck, FiX, FiChevronRight } from "react-icons/fi";
+import { FiFilter, FiSearch, FiCheck, FiX, FiChevronRight, FiZap } from "react-icons/fi";
 import { 
   IoStar, 
   IoPeople, 
@@ -9,13 +9,16 @@ import {
   IoTime,
   IoCalendar,
   IoTrendingUp,
-  IoShieldCheckmark
+  IoShieldCheckmark,
+  IoBookOutline,
+  IoPricetagOutline
 } from "react-icons/io5";
 import { useCategory } from "../../../../shared/context/CategoryContext";
 import { getExpertsBySubCategoryApi } from "../../../../shared/api/expertapi/auth.api";
 import { getExpertPriceByIdApi } from "../../../../shared/api/expertapi/price.api";
 import { getExpertFollowersApi } from "../../../../shared/api/expertapi/follower.api";
 import { getReviewsByExpertApi } from "../../../../shared/api/expertapi/reviews.api";
+import { getPlansApi } from "../../../../shared/api/userApi/subscription.api";
 import ExpertCard from "../../components/userExperts/ExpertCard";
 import useChatRequest from "../../../../shared/hooks/useChatRequest";
 import {
@@ -94,6 +97,10 @@ import {
   ActionButtons,
   ViewProfileButton,
   StartChatButton,
+  StartSessionButton,
+  ViewPlansButton,
+  PricingModesBadge,
+  PricingModeBadge,
   HoroscopeSection,
   HoroscopeTitle,
   HoroscopeGrid,
@@ -110,7 +117,9 @@ import {
   RatingValue,
   NoCategories,
   CategoryErrorTitle,
-  CategoryErrorText
+  CategoryErrorText,
+  PricingInfo,
+  // PricingMethod
 } from "./SubcategoryPage.styles";
 
 const DEFAULT_AVATAR = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face";
@@ -121,7 +130,6 @@ const SubcategoryPage = () => {
   const location = useLocation();
   const latestRequestRef = useRef(0);
 
-  
   const {
     subCategories,
     loadSubCategories,
@@ -139,14 +147,21 @@ const SubcategoryPage = () => {
   const [prevCategoryId, setPrevCategoryId] = useState(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [expertDetails, setExpertDetails] = useState({});
+  const [expertPlans, setExpertPlans] = useState({});
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
   const [hoveredExpert, setHoveredExpert] = useState(null);
+ const loading = categoryLoading || expertsLoading;
+
+const selectedSubcategoryName = useMemo(() => {
+  return subCategories.find(s => s.id === selectedSubcategory)?.name;
+}, [subCategories, selectedSubcategory]);
 
   const resetStateForNewCategory = useCallback(() => {
     console.log("Resetting state for new category:", categoryId);
     setActiveSubCategory(null);
     setExperts([]);
     setExpertDetails({});
+    setExpertPlans({});
     setCategoryName("");
     setSortBy("price-high");
     setSearchQuery("");
@@ -165,64 +180,84 @@ const SubcategoryPage = () => {
     setPrevCategoryId(categoryId);
   }, [categoryId, prevCategoryId, loadSubCategories]);
 
-   const loadExpertsForSubcategory = useCallback(async (subCategoryId) => {
-  if (!subCategoryId || !categoryId) return;
+  const loadExpertsForSubcategory = useCallback(async (subCategoryId) => {
+    if (!subCategoryId || !categoryId) return;
 
-  const requestId = ++latestRequestRef.current;   // ✅ ADD THIS
+    const requestId = ++latestRequestRef.current;
 
-  try {
-    setExpertsLoading(true);
+    try {
+      setExpertsLoading(true);
 
-    const res = await getExpertsBySubCategoryApi(subCategoryId);
+      const res = await getExpertsBySubCategoryApi(subCategoryId);
 
-    if (requestId !== latestRequestRef.current) return;  // ✅ ADD THIS
+      if (requestId !== latestRequestRef.current) return;
 
-    const expertsList = res?.data?.experts || [];
+      const expertsList = res?.data?.experts || [];
 
-    const expertsWithCategory = expertsList.map(exp => ({
-      ...exp,
-      category_id: categoryId,
-      subcategory_id: subCategoryId
-    }));
+      const expertsWithCategory = expertsList.map(exp => ({
+        ...exp,
+        category_id: categoryId,
+        subcategory_id: subCategoryId
+      }));
 
-    setExperts(expertsWithCategory);
+      setExperts(expertsWithCategory);
 
-   
       const newExpertDetails = {};
+      const newExpertPlans = {};
+      
       const expertPromises = expertsList.map(async (expert) => {
         const expertId = expert.expert_id || expert.id;
         if (!expertId) return null;
         
         try {
-          const [priceRes, followersRes, reviewsRes] = await Promise.allSettled([
+          const [priceRes, followersRes, reviewsRes, plansRes] = await Promise.allSettled([
             getExpertPriceByIdApi(expertId),
             getExpertFollowersApi(expertId),
-            getReviewsByExpertApi(expertId)
+            getReviewsByExpertApi(expertId),
+            getPlansApi(expertId)
           ]);
           
-         const priceData =
-  priceRes.status === "fulfilled"
-    ? priceRes.value?.data || {}
-    : {};
-
-const followersData =
-  followersRes.status === "fulfilled"
-    ? followersRes.value?.data || {}
-    : {};
-
-const reviewsData =
-  reviewsRes.status === "fulfilled"
-    ? reviewsRes.value?.data || {}
-    : {};
+          const priceData = priceRes.status === "fulfilled" ? priceRes.value?.data || priceRes.value || {} : {};
+          const followersData = followersRes.status === "fulfilled" ? followersRes.value?.data || {} : {};
+          const reviewsData = reviewsRes.status === "fulfilled" ? reviewsRes.value?.data || {} : {};
+          const plansData = plansRes.status === "fulfilled" && plansRes.value?.data?.success ? plansRes.value.data.data || [] : [];
+          
+          // Parse pricing modes
+          let pricingModes = priceData.pricing_modes || [];
+          if (typeof pricingModes === 'string') {
+            try {
+              pricingModes = JSON.parse(pricingModes);
+            } catch {
+              pricingModes = [];
+            }
+          }
+          
+          const hasPerMinute = pricingModes.includes('per_minute');
+          const hasSession = pricingModes.includes('session');
+          const hasPlans = plansData.length > 0;
+          
+          // Get prices
+          const callPrice = priceData.call?.per_minute || priceData.call_per_minute || 0;
+          const chatPrice = priceData.chat?.per_minute || priceData.chat_per_minute || 0;
+          const sessionPrice = priceData.session?.price || priceData.session_price || 0;
+          const sessionDuration = priceData.session?.duration || priceData.session_duration || 0;
           
           return {
             expertId,
             details: {
-              callPrice: Number(priceData.call_per_minute || priceData.price || 0),
-              chatPrice: Number(priceData.chat_per_minute || priceData.price || 0),
+              hasPricing: hasPerMinute || hasSession || hasPlans,
+              hasPerMinute,
+              hasSession,
+              hasPlans,
+              callPrice: Number(callPrice),
+              chatPrice: Number(chatPrice),
+              sessionPrice: Number(sessionPrice),
+              sessionDuration: Number(sessionDuration),
               followersCount: followersData.total_followers || followersData.followers?.length || 0,
               avgRating: Number(reviewsData.avg_rating || 0),
               totalReviews: reviewsData.total_reviews || (reviewsData.reviews || []).length || 0,
+              pricingModes,
+              plansCount: plansData.length,
             }
           };
         } catch (err) {
@@ -230,11 +265,19 @@ const reviewsData =
           return {
             expertId,
             details: {
+              hasPricing: false,
+              hasPerMinute: false,
+              hasSession: false,
+              hasPlans: false,
               callPrice: 0,
               chatPrice: 0,
+              sessionPrice: 0,
+              sessionDuration: 0,
               followersCount: 0,
               avgRating: 0,
               totalReviews: 0,
+              pricingModes: [],
+              plansCount: 0,
             }
           };
         }
@@ -245,14 +288,16 @@ const reviewsData =
       expertDetailsResults.forEach(result => {
         if (result) {
           newExpertDetails[result.expertId] = result.details;
+          if (result.details.hasPlans) {
+            newExpertPlans[result.expertId] = true;
+          }
         }
       });
-      
-    //  setExperts(expertsWithCategory);
 
       if (requestId !== latestRequestRef.current) return;
 
       setExpertDetails(prev => ({ ...prev, ...newExpertDetails }));
+      setExpertPlans(prev => ({ ...prev, ...newExpertPlans }));
       
     } catch (err) {
       console.error("Experts load failed", err);
@@ -266,17 +311,6 @@ const reviewsData =
       resetStateForNewCategory();
     }
   }, [categoryId, prevCategoryId, resetStateForNewCategory]);
-
-//   useEffect(() => {
-//   setExperts([]);
-//   setExpertDetails({});
-// }, [categoryId]);
-
-// useEffect(() => {
-//   setSelectedSubcategory(null);
-//   setActiveSubCategory(null);
-// }, [categoryId]);
-
 
   useEffect(() => {
     if (!categoryId || subCategories.length === 0) return;
@@ -292,10 +326,10 @@ const reviewsData =
   }, [categoryId, subCategories]);
 
   useEffect(() => {
-  if (selectedSubcategory && categoryId) {
-    loadExpertsForSubcategory(selectedSubcategory);
-  }
-}, [selectedSubcategory, categoryId, loadExpertsForSubcategory]);
+    if (selectedSubcategory && categoryId) {
+      loadExpertsForSubcategory(selectedSubcategory);
+    }
+  }, [selectedSubcategory, categoryId, loadExpertsForSubcategory]);
 
   useEffect(() => {
     if (subCategories.length > 0) {
@@ -312,12 +346,6 @@ const reviewsData =
       }
     }
   }, [subCategories]);
-
-  // useEffect(() => {
-  //   if (selectedSubcategory && categoryId) {
-  //     loadExpertsForSubcategory(selectedSubcategory);
-  //   }
-  // }, [selectedSubcategory, categoryId]);
 
   const handleSubCategoryClick = (subCategoryId) => {
     if (subCategoryId === selectedSubcategory) return;
@@ -366,13 +394,8 @@ const reviewsData =
       position: expert.position || "Expert",
       speciality: getSubcategoryName(expert.subcategory_id) || expert.main_expertise || categoryName,
       location: expert.location || "India",
-      callPrice: details.callPrice || 0,
-      chatPrice: details.chatPrice || 0,
-      followersCount: details.followersCount || 0,
-      avgRating: details.avgRating || 0,
-      totalReviews: details.totalReviews || 0,
+      ...details,
       rawData: expert,
-      rawDetails: details
     };
   };
 
@@ -399,13 +422,10 @@ const reviewsData =
       switch (sortBy) {
         case "price-low":
           return (a.chatPrice || 0) - (b.chatPrice || 0);
-        
         case "price-high":
           return (b.chatPrice || 0) - (a.chatPrice || 0);
-        
         case "rating":
           return (b.avgRating || 0) - (a.avgRating || 0);
-        
         default:
           return (b.chatPrice || 0) - (a.chatPrice || 0);
       }
@@ -414,28 +434,56 @@ const reviewsData =
     return filtered;
   }, [currentSubcategoryExperts, searchQuery, sortBy, expertsLoading]);
 
-  const loading = categoryLoading || expertsLoading;
+  const handleExpertAction = (expert, action) => {
+    if (action === 'chat' && expert.hasPerMinute) {
+      startChat({
+        expertId: expert.id,
+        chatPrice: expert.chatPrice,
+        expertName: expert.name,
+      });
+    } else if (action === 'session') {
+      navigate(`/user/experts/${expert.id}`, { 
+        state: { scrollToBooking: true, bookingType: "session" }
+      });
+    } else if (action === 'plans') {
+      navigate(`/user/experts/${expert.id}`, { 
+        state: { scrollToPlans: true }
+      });
+    } else {
+      navigate(`/user/experts/${expert.id}`);
+    }
+  };
 
-  const horoscopeSigns = [
-    { sign: "Aries", date: "Mar 21 - Apr 19" },
-    { sign: "Taurus", date: "Apr 20 - May 20" },
-    { sign: "Gemini", date: "May 21 - Jun 20" },
-    { sign: "Cancer", date: "Jun 21 - Jul 22" },
-    { sign: "Leo", date: "Jul 23 - Aug 22" },
-    { sign: "Virgo", date: "Aug 23 - Sep 22" },
-    { sign: "Libra", date: "Sep 23 - Oct 22" },
-    { sign: "Scorpio", date: "Oct 23 - Nov 21" },
-    { sign: "Sagittarius", date: "Nov 22 - Dec 21" },
-    { sign: "Capricorn", date: "Dec 22 - Jan 19" },
-    { sign: "Aquarius", date: "Jan 20 - Feb 18" },
-    { sign: "Pisces", date: "Feb 19 - Mar 20" }
-  ];
-
-  const selectedSubcategoryName = useMemo(() => {
-    if (!selectedSubcategory) return "";
-    const sc = subCategories.find(s => s.id === selectedSubcategory);
-    return sc ? sc.name : "";
-  }, [selectedSubcategory, subCategories]);
+  const getPrimaryActionButton = (expert) => {
+    if (expert.hasPerMinute) {
+      return (
+        <StartChatButton onClick={() => handleExpertAction(expert, 'chat')}>
+          <IoChatbubble size={16} />
+          Chat ₹{expert.chatPrice}/min
+        </StartChatButton>
+      );
+    } else if (expert.hasSession) {
+      return (
+        <StartSessionButton onClick={() => handleExpertAction(expert, 'session')}>
+          <IoBookOutline size={16} />
+          Book Session (₹{expert.sessionPrice})
+        </StartSessionButton>
+      );
+    } else if (expert.hasPlans) {
+      return (
+        <ViewPlansButton onClick={() => handleExpertAction(expert, 'plans')}>
+          <FiZap size={16} />
+          View Plans
+        </ViewPlansButton>
+      );
+    } else {
+      return (
+        <ViewProfileButton onClick={() => handleExpertAction(expert, 'profile')}>
+          View Profile
+        </ViewProfileButton>
+      );
+    }
+  };
 
   const renderExpertCard = (expert) => (
     <ExpertCardPremium
@@ -464,52 +512,85 @@ const reviewsData =
         </ExpertInfo>
       </ExpertHeader>
 
+      {/* Pricing Modes Badges */}
+      <PricingModesBadge>
+        {expert.hasPerMinute && (
+          <PricingModeBadge type="per_minute">💰 Per Minute</PricingModeBadge>
+        )}
+        {expert.hasSession && (
+          <PricingModeBadge type="session">📋 Session Based</PricingModeBadge>
+        )}
+        {expert.hasPlans && !expert.hasPerMinute && !expert.hasSession && (
+          <PricingModeBadge type="plans">📦 Subscription Plans</PricingModeBadge>
+        )}
+      </PricingModesBadge>
+
       <ExpertStats>
         <StatItem>
-          <StatIcon>
-            <IoStar size={16} />
-          </StatIcon>
+          <StatIcon><IoStar size={16} /></StatIcon>
           <StatValue>{expert.avgRating.toFixed(1)}</StatValue>
           <StatLabel>({expert.totalReviews} reviews)</StatLabel>
         </StatItem>
         <StatItem>
-          <StatIcon>
-            <IoPeople size={16} />
-          </StatIcon>
+          <StatIcon><IoPeople size={16} /></StatIcon>
           <StatValue>{expert.followersCount}</StatValue>
           <StatLabel>Followers</StatLabel>
         </StatItem>
       </ExpertStats>
 
+      {/* Pricing Display */}
       <ExpertPricing>
-        <PriceTag>
-          <PriceIcon>
-            <IoChatbubble size={16} />
-          </PriceIcon>
-          <PriceAmount>₹{expert.chatPrice}</PriceAmount>
-          <PriceUnit>/min chat</PriceUnit>
-        </PriceTag>
-        <PriceTag>
-          <PriceIcon>
-            <IoCall size={16} />
-          </PriceIcon>
-          <PriceAmount>₹{expert.callPrice}</PriceAmount>
-          <PriceUnit>/min call</PriceUnit>
-        </PriceTag>
+        {expert.hasPerMinute && (
+          <>
+            <PriceTag>
+              <PriceIcon><IoChatbubble size={16} /></PriceIcon>
+              <PriceAmount>₹{expert.chatPrice}</PriceAmount>
+              <PriceUnit>/min chat</PriceUnit>
+            </PriceTag>
+            <PriceTag>
+              <PriceIcon><IoCall size={16} /></PriceIcon>
+              <PriceAmount>₹{expert.callPrice}</PriceAmount>
+              <PriceUnit>/min call</PriceUnit>
+            </PriceTag>
+          </>
+        )}
+        {expert.hasSession && !expert.hasPerMinute && (
+          <PriceTag>
+            <PriceIcon><IoBookOutline size={16} /></PriceIcon>
+            <PriceAmount>₹{expert.sessionPrice}</PriceAmount>
+            <PriceUnit>/{expert.sessionDuration} min session</PriceUnit>
+          </PriceTag>
+        )}
+        {expert.hasPlans && !expert.hasPerMinute && !expert.hasSession && (
+          <PriceTag>
+            <PriceIcon><FiZap size={16} /></PriceIcon>
+            <PriceAmount>Plans Available</PriceAmount>
+            <PriceUnit>{expert.plansCount} options</PriceUnit>
+          </PriceTag>
+        )}
+        {!expert.hasPricing && (
+          <PriceTag>
+            <PriceIcon><IoPricetagOutline size={16} /></PriceIcon>
+            <PriceAmount>Contact</PriceAmount>
+            <PriceUnit>for pricing</PriceUnit>
+          </PriceTag>
+        )}
       </ExpertPricing>
 
       <ActionButtons>
         <ViewProfileButton onClick={() => navigate(`/user/experts/${expert.id}`)}>
           View Profile
         </ViewProfileButton>
-        <StartChatButton onClick={() => startChat({
-          expertId: expert.id,
-          chatPrice: expert.chatPrice,
-        })}>
-          <IoChatbubble size={16} />
-          Start Chat
-        </StartChatButton>
+        {getPrimaryActionButton(expert)}
       </ActionButtons>
+
+      {/* Subscription hint for experts with both pricing modes */}
+      {expert.hasPlans && expert.hasPerMinute && (
+        <PricingInfo>
+          <IoShieldCheckmark size={12} />
+          <span>Subscription plans available for savings</span>
+        </PricingInfo>
+      )}
     </ExpertCardPremium>
   );
 
@@ -527,7 +608,7 @@ const reviewsData =
     </LoadingGrid>
   );
 
-  if (loading && !categoryName) {
+  if (categoryLoading && !categoryName) {
     return (
       <PageContainer>
         <PageHeader>
@@ -572,9 +653,7 @@ const reviewsData =
 
         <PageHeader>
           <HeaderContent>
-            <HeaderTitle>
-              {categoryName} Experts
-            </HeaderTitle>
+            <HeaderTitle>{categoryName} Experts</HeaderTitle>
             <HeaderSubtitle>
               Connect with verified {categoryName.toLowerCase()} experts for personalized insights and guidance
             </HeaderSubtitle>
@@ -629,7 +708,6 @@ const reviewsData =
               <SubcategoryFilterList>
                 {subCategories.map((sc) => {
                   const isSelected = sc.id === selectedSubcategory;
-                  const expertCount = experts.filter(exp => exp.subcategory_id === sc.id).length;
                   
                   return (
                     <SubcategoryFilterItem
@@ -641,9 +719,6 @@ const reviewsData =
                       <SubcategoryFilterLabel isSelected={isSelected}>
                         {sc.name}
                       </SubcategoryFilterLabel>
-                      {/* <SubcategoryCount>
-                        {expertCount}
-                      </SubcategoryCount> */}
                     </SubcategoryFilterItem>
                   );
                 })}
@@ -684,7 +759,6 @@ const reviewsData =
             <FilterChipsContainer>
               {subCategories.map((sc) => {
                 const isActive = sc.id === selectedSubcategory;
-                const expertCount = experts.filter(exp => exp.subcategory_id === sc.id).length;
                 
                 return (
                   <FilterChip
@@ -693,9 +767,6 @@ const reviewsData =
                     onClick={() => handleSubCategoryClick(sc.id)}
                   >
                     {sc.name}
-                    {expertCount > 0 && (
-                      <span className="count">{expertCount}</span>
-                    )}
                   </FilterChip>
                 );
               })}
@@ -805,11 +876,9 @@ const reviewsData =
               </>
             ) : !loading ? (
               <NoResults>
-                <NoResultsTitle>
-                  No Experts Found
-                </NoResultsTitle>
+                <NoResultsTitle>No Experts Found</NoResultsTitle>
                 <NoResultsText>
-                  We couldn't find any experts in {selectedSubcategoryName.toLowerCase()}. 
+                  We couldn't find any experts in {selectedSubcategoryName?.toLowerCase() || categoryName?.toLowerCase()}. 
                   Try selecting a different subcategory or adjusting your search.
                 </NoResultsText>
                 <SecondaryButton onClick={resetFilters}>

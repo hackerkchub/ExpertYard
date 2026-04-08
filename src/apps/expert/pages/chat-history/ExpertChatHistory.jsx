@@ -1,4 +1,3 @@
-
 // 🎨 POLISHED PREMIUM VERSION - FULLY RESPONSIVE with Call History
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +19,8 @@ import {
   FiPhoneMissed,
   FiXCircle,
   FiCheckCircle,
+  FiZap,
+  FiBookOpen,
 } from "react-icons/fi";
 import { HiUsers } from "react-icons/hi";
 import { BsChatLeftText, BsTelephone } from "react-icons/bs";
@@ -57,6 +58,7 @@ import {
   MobileSummaryToggle,
   ResponsiveGrid,
   StatusBadge,
+  PricingBadge,
 } from "./ExpertChatHistory.styles";
 
 import { useExpert } from "../../../../shared/context/ExpertContext";
@@ -126,8 +128,21 @@ const STATUS_CONFIG = {
   }
 };
 
+// ✅ Get pricing mode display
+const getPricingModeDisplay = (priceData) => {
+  const modes = priceData?.pricing_modes || [];
+  const hasPerMinute = modes.includes('per_minute');
+  const hasSession = modes.includes('session');
+  const hasPlans = priceData?.hasPlans || false;
+  
+  if (hasPerMinute) return { type: 'per_minute', label: 'Per Minute', icon: '💰' };
+  if (hasSession) return { type: 'session', label: 'Session Based', icon: '📋' };
+  if (hasPlans) return { type: 'plans', label: 'Subscription Plans', icon: '📦' };
+  return { type: 'none', label: 'Contact', icon: '📞' };
+};
+
 // ✅ FIXED: groupByUser for chat - handles both user_name & username
-const groupChatByUser = (rows = [], expertPricePerMinute = 0) => {
+const groupChatByUser = (rows = [], expertPricePerMinute = 0, pricingModes = []) => {
   const map = rows.reduce((acc, chat) => {
     const id = chat.user_id;
     if (!id) return acc;
@@ -237,8 +252,8 @@ const ExpertChatHistory = () => {
   const navigate = useNavigate();
 
   // Tab states
-  const [activeMainTab, setActiveMainTab] = useState('chat'); // 'chat' or 'call'
-  const [activeCallSubTab, setActiveCallSubTab] = useState('all'); // 'all', 'completed', 'missed', 'rejected'
+  const [activeMainTab, setActiveMainTab] = useState('chat');
+  const [activeCallSubTab, setActiveCallSubTab] = useState('all');
   const [showMobileSummary, setShowMobileSummary] = useState(false);
 
   // Chat history states
@@ -259,6 +274,56 @@ const ExpertChatHistory = () => {
   const [showDetails, setShowDetails] = useState(false);
   const [filterType, setFilterType] = useState("all");
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
+
+  // Get pricing data from context
+  const pricingModes = useMemo(() => {
+    return expertPrice?.pricing_modes || [];
+  }, [expertPrice]);
+
+  const hasPerMinute = useMemo(() => pricingModes.includes('per_minute'), [pricingModes]);
+  const hasSession = useMemo(() => pricingModes.includes('session'), [pricingModes]);
+  
+  const chatPrice = useMemo(() => {
+    return Number(expertPrice?.chat || expertPrice?.chat_per_minute || 16);
+  }, [expertPrice]);
+  
+  const callPrice = useMemo(() => {
+    return Number(expertPrice?.call || expertPrice?.call_per_minute || 16);
+  }, [expertPrice]);
+  
+  const sessionPrice = useMemo(() => {
+    return expertPrice?.session?.price || expertPrice?.session_price || 0;
+  }, [expertPrice]);
+  
+  const sessionDuration = useMemo(() => {
+    return expertPrice?.session?.duration || expertPrice?.session_duration || 30;
+  }, [expertPrice]);
+
+  const pricingDisplay = useMemo(() => {
+    if (hasPerMinute) {
+      return {
+        type: 'per_minute',
+        label: 'Per Minute Pricing',
+        chatRate: chatPrice,
+        callRate: callPrice,
+        icon: '💰'
+      };
+    }
+    if (hasSession) {
+      return {
+        type: 'session',
+        label: 'Session Based Pricing',
+        sessionPrice: sessionPrice,
+        sessionDuration: sessionDuration,
+        icon: '📋'
+      };
+    }
+    return {
+      type: 'none',
+      label: 'Contact for Pricing',
+      icon: '📞'
+    };
+  }, [hasPerMinute, hasSession, chatPrice, callPrice, sessionPrice, sessionDuration]);
 
   // Track window width for responsive adjustments
   useEffect(() => {
@@ -289,7 +354,7 @@ const ExpertChatHistory = () => {
         ? res.data || []
         : [];
         
-      const grouped = groupChatByUser(rows, expertPrice?.chat_per_minute || 16);
+      const grouped = groupChatByUser(rows, chatPrice, pricingModes);
       setChatCounterparties(grouped);
     } catch (e) {
       console.error("❌ API Error:", e);
@@ -297,7 +362,7 @@ const ExpertChatHistory = () => {
     } finally {
       setChatLoading(false);
     }
-  }, [expertData?.expert_id, expertData?.expertId, expertPrice?.chat_per_minute]);
+  }, [expertData?.expert_id, expertData?.expertId, chatPrice, pricingModes]);
 
   // ✅ Fetch call history
   const fetchCallHistory = useCallback(async () => {
@@ -333,7 +398,6 @@ const ExpertChatHistory = () => {
   }, [expertData?.expert_id, expertData?.expertId, activeCallSubTab]);
 
   useEffect(() => {
-    // push dummy history state
     window.history.pushState(null, "", window.location.href);
 
     const handleBack = () => {
@@ -417,7 +481,6 @@ const ExpertChatHistory = () => {
 
   // ✅ Enhanced chat summary with metrics
   const chatSummary = useMemo(() => {
-    const ppm = Number(expertPrice?.chat_per_minute || 16);
     let totalMinutes = 0;
     let totalSessions = 0;
     let avgSessionLength = 0;
@@ -428,13 +491,22 @@ const ExpertChatHistory = () => {
     });
 
     avgSessionLength = totalSessions > 0 ? totalMinutes / totalSessions : 0;
-    const gross = totalMinutes * ppm;
-    const company = gross * 0.2;
-    const expertEarn = gross - company;
+    
+    // Calculate earnings based on pricing mode
+    let expertEarn = 0;
+    if (hasPerMinute) {
+      expertEarn = totalMinutes * chatPrice;
+    } else if (hasSession) {
+      expertEarn = totalSessions * sessionPrice;
+    }
+
+    const company = expertEarn * 0.2;
+    const netEarn = expertEarn - company;
 
     return {
       totalMinutes: Math.round(totalMinutes || 0),
-      expertEarn: expertEarn || 0,
+      expertEarn: netEarn || 0,
+      grossEarn: expertEarn || 0,
       totalSessions,
       avgSessionLength: Math.round(avgSessionLength * 10) / 10,
       totalUsers: chatCounterparties.length,
@@ -443,7 +515,7 @@ const ExpertChatHistory = () => {
         { username: 'None', total_earnings: 0 }
       ),
     };
-  }, [chatCounterparties, expertPrice?.chat_per_minute]);
+  }, [chatCounterparties, hasPerMinute, hasSession, chatPrice, sessionPrice]);
 
   // ✅ Call summary metrics
   const callSummary = useMemo(() => {
@@ -463,10 +535,15 @@ const ExpertChatHistory = () => {
       completedCalls += g.completed_count || 0;
     });
 
+    // Calculate net earnings after commission
+    const companyCut = totalEarnings * 0.2;
+    const netEarnings = totalEarnings - companyCut;
+
     return {
       totalCalls,
       totalDuration: Math.round(totalDuration || 0),
       totalEarnings: Math.round(totalEarnings || 0),
+      netEarnings: Math.round(netEarnings || 0),
       missedCalls,
       rejectedCalls,
       completedCalls,
@@ -517,14 +594,6 @@ const ExpertChatHistory = () => {
     const hours = Math.floor(m / 60);
     const mins = m % 60;
     return `${hours}h ${mins}m`;
-  };
-
-  const formatTimeFromDate = (dateString) => {
-    if (!dateString) return "";
-    return new Date(dateString).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   const isLoading = () => {
@@ -598,6 +667,26 @@ const ExpertChatHistory = () => {
           background: rgba(139, 92, 246, 0.1);
           color: #8b5cf6;
         }
+        
+        .pricing-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 4px 12px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 500;
+        }
+        
+        .pricing-badge.per-minute {
+          background: #dbeafe;
+          color: #1e40af;
+        }
+        
+        .pricing-badge.session {
+          background: #fef3c7;
+          color: #92400e;
+        }
       `}</style>
 
       <PageContainer>
@@ -624,6 +713,23 @@ const ExpertChatHistory = () => {
                   ? 'Track conversations and earnings from all your chat sessions'
                   : 'View your complete call history and earnings from calls'}
               </p>
+            </div>
+
+            {/* Pricing Mode Badge */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <div className={`pricing-badge ${pricingDisplay.type}`}>
+                {pricingDisplay.icon} {pricingDisplay.label}
+                {hasPerMinute && (
+                  <span style={{ marginLeft: 8, fontSize: 11 }}>
+                    Chat: ₹{chatPrice}/min | Call: ₹{callPrice}/min
+                  </span>
+                )}
+                {hasSession && (
+                  <span style={{ marginLeft: 8, fontSize: 11 }}>
+                    ₹{sessionPrice}/{sessionDuration}min session
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Mobile Summary Toggle */}
@@ -714,7 +820,7 @@ const ExpertChatHistory = () => {
                         <FaIndianRupeeSign color="#0a66c2" />
                       </div>
                       <div className="stat-content">
-                        <span className="stat-value">₹{(callSummary.totalEarnings || 0).toFixed(0)}</span>
+                        <span className="stat-value">₹{(callSummary.netEarnings || 0).toFixed(0)}</span>
                         <span className="stat-label">Earned</span>
                       </div>
                     </StatCard>
@@ -867,10 +973,10 @@ const ExpertChatHistory = () => {
                       premium
                     >
                       <div className="chat-header-content">
-                        {/* <Avatar
+                        <Avatar
                           premium
                           src={getAvatarUrl(c.username, c.user_avatar)}
-                        /> */}
+                        />
                         
                         <div className="user-info">
                           <div className="user-name-section">
@@ -921,7 +1027,7 @@ const ExpertChatHistory = () => {
                         <SessionsWrap>
                           {c.sessions.map((s, idx) => {
                             const ppm = Number(
-                              s.price_per_minute || expertPrice?.chat_per_minute || 16
+                              s.price_per_minute || chatPrice || 16
                             );
                             const actualMins = Number(s.duration_minutes || 0);
                             const earnings = calculateEarnings(actualMins, ppm);
@@ -942,6 +1048,9 @@ const ExpertChatHistory = () => {
                                       <FiClock />
                                       {formatTime(actualMins)}
                                     </div>
+                                  </div>
+                                  <div className="rate-badge">
+                                    @ ₹{ppm}/min
                                   </div>
                                 </div>
                                 
@@ -1066,7 +1175,7 @@ const ExpertChatHistory = () => {
                             const StatusIcon = config.icon;
                             const earnings = calculateEarnings(
                               call.duration, 
-                              call.price_per_minute
+                              call.price_per_minute || callPrice || 16
                             );
 
                             return (
@@ -1155,7 +1264,7 @@ const ExpertChatHistory = () => {
                           <span className="earnings">
                             ₹{calculateEarnings(
                               selectedSession.duration_minutes,
-                              selectedSession.price_per_minute || expertPrice?.chat_per_minute || 16
+                              selectedSession.price_per_minute || chatPrice || 16
                             )}
                           </span>
                         </>

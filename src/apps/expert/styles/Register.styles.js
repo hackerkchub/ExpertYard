@@ -238,11 +238,11 @@ export const PasswordStrength = styled.div`
   span { font-size: 12px; font-weight: 600; }
 `;
 
-export const Divider = styled.div`
-  height: 1px;
-  background: #e0e0e0;
-  margin: 24px 0;
-`;
+// export const Divider = styled.div`
+//   height: 1px;
+//   background: #e0e0e0;
+//   margin: 24px 0;
+// `;
 
 export const ToggleLink = styled.span`
   color: #0a66c2 !important;
@@ -307,13 +307,13 @@ export const SelectCard = styled.button`
   text-align: left;
 `;
 
-<<<<<<< HEAD
+
 // export const Divider = styled.div`
 //   height: 1px;
 //   background: #e0e0e0;
 //   margin: 32px 0;
 // `;
-=======
+
 export const CardTitle = styled.div` font-weight: 600; color: #000; `;
 export const CardMeta = styled.div` font-size: 13px; color: #666; `;
 export const Chip = styled.span`
@@ -325,7 +325,7 @@ export const PriceInputRow = styled.div`
   display: flex; align-items: center; gap: 10px; padding: 10px 14px;
   border: 1px solid rgba(0,0,0,0.6); border-radius: 4px;
 `;
->>>>>>> 2287298729c9e66cd14aebc028f9a10299e31746
+
 
 export const CategorySearch = styled.div`
   position: relative; margin-bottom: 24px;
@@ -602,7 +602,7 @@ export const EditButton = styled.button`
   &:hover {
     background: #e0f2fe;
   }
-=======
+
   background: #ecfdf5; border: 1px solid #10b981; padding: 20px; border-radius: 12px; text-align: center;
->>>>>>> 2287298729c9e66cd14aebc028f9a10299e31746
+
 `;

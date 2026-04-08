@@ -341,7 +341,7 @@ export const NoResultsTitle = styled.h2` font-size: 22px; font-weight: 700; colo
 export const NoResultsText = styled.p` font-size: 15px; color: ${colors.textSecondary}; font-weight: 500; `;
 export const CtaSection = styled.section` margin-top: 30px; width: 100%; `;
 export const RatingBanner = styled.div` text-align: center; margin-bottom: 12px; `;
-<<<<<<< HEAD
+
 
 export const Stars = styled.div` 
   color: ${colors.star}; 
@@ -495,14 +495,14 @@ export const PricingInfo = styled.div`
     flex: 1;
   }
 `;
-=======
-export const Stars = styled.div` color: ${colors.star}; display: flex; justify-content: center; gap: 3px; font-size: 14px; `;
-export const RatingText = styled.p` font-size: 13px; color: ${colors.textSecondary}; font-weight: 600; margin-top: 4px; `;
-export const CtaBanner = styled.div` background: ${colors.primary}; color: white; padding: 30px 20px; border-radius: 12px; text-align: center; width: 100%; box-sizing: border-box; `;
-export const CtaTitle = styled.h2` font-size: 19px; margin-bottom: 8px; font-weight: 800; `;
-export const CtaDescription = styled.p` font-size: 13px; opacity: 0.95; margin-bottom: 18px; font-weight: 500; line-height: 1.5; `;
-export const PrimaryButton = styled.button` background: white; color: ${colors.primary}; border: none; padding: 12px 24px; border-radius: 24px; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; margin: 0 auto; `;
-export const SecondaryButton = styled.button` background: ${colors.primaryLight}; color: ${colors.primary}; border: none; padding: 12px 24px; border-radius: 24px; font-weight: 700; font-size: 14px; `;
+
+// export const Stars = styled.div` color: ${colors.star}; display: flex; justify-content: center; gap: 3px; font-size: 14px; `;
+// export const RatingText = styled.p` font-size: 13px; color: ${colors.textSecondary}; font-weight: 600; margin-top: 4px; `;
+// export const CtaBanner = styled.div` background: ${colors.primary}; color: white; padding: 30px 20px; border-radius: 12px; text-align: center; width: 100%; box-sizing: border-box; `;
+// export const CtaTitle = styled.h2` font-size: 19px; margin-bottom: 8px; font-weight: 800; `;
+// export const CtaDescription = styled.p` font-size: 13px; opacity: 0.95; margin-bottom: 18px; font-weight: 500; line-height: 1.5; `;
+// export const PrimaryButton = styled.button` background: white; color: ${colors.primary}; border: none; padding: 12px 24px; border-radius: 24px; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; margin: 0 auto; `;
+// export const SecondaryButton = styled.button` background: ${colors.primaryLight}; color: ${colors.primary}; border: none; padding: 12px 24px; border-radius: 24px; font-weight: 700; font-size: 14px; `;
 export const FilterChipsContainer = styled.div` display: flex; gap: 12px; overflow-x: auto; padding: 8px 4px 16px; scroll-behavior: smooth; position: relative; width: 100%; box-sizing: border-box; &::-webkit-scrollbar { display: none; } animation: ${scrollHintLoop} 2s ease-in-out; `;
 export const FilterChip = styled.button` white-space: nowrap; padding: 10px 18px; border-radius: 24px; font-size: 15px; font-weight: 600; border: 1px solid ${props => props.isActive ? colors.primary : colors.border}; background: ${props => props.isActive ? colors.primary : colors.white}; color: ${props => props.isActive ? colors.white : colors.textMain}; flex-shrink: 0; `;
 export const Breadcrumb = styled.div` display: flex; align-items: center; gap: 8px; font-size: 14px; padding: 12px 16px; color: ${colors.textSecondary}; flex-wrap: wrap; `;
@@ -517,4 +517,4 @@ export const StatLabel = styled.span` color: ${colors.textSecondary}; font-size:
 export const PriceIcon = styled.div` color: ${colors.primary}; display: flex; font-size: 15px; `;
 export const PriceAmount = styled.span` font-weight: 800; font-size: 15px; color: ${colors.textMain}; `;
 export const PriceUnit = styled.span` font-size: 12px; color: ${colors.textSecondary}; font-weight: 600; `;
->>>>>>> 2287298729c9e66cd14aebc028f9a10299e31746
+

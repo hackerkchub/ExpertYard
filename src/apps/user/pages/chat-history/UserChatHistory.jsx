@@ -24,6 +24,8 @@ import {
   FiPhoneMissed,
   FiXCircle,
   FiCheckCircle,
+  FiZap,
+  FiBookOpen,
 } from "react-icons/fi";
 import { HiUsers } from "react-icons/hi";
 import { BsChatLeftText, BsLightningCharge, BsTelephone } from "react-icons/bs";
@@ -77,6 +79,8 @@ import {
 } from "../../../../shared/api/chatHistory.api";
 import { getUserCallHistoryApi } from "../../../../shared/api/callHistory.api";
 import { getExpertPriceByIdApi } from "../../../../shared/api/expertapi/price.api";
+import { getPlansApi } from "../../../../shared/api/userApi/subscription.api";
+import useChatRequest from "../../../../shared/hooks/useChatRequest";
 
 // ✅ MINIMUM 1 MIN BILLING + PRICE FIX
 const calculateBilledAmount = (durationMinutes, pricePerMinute) => {
@@ -206,7 +210,6 @@ const groupCallsByExpert = (calls = []) => {
     acc[id].calls.push(call);
     acc[id].total_calls++;
 
-    // Update counts by status
     const displayStatus = call.status === 'ended' ? 'completed' : call.status;
     if (displayStatus === 'completed') {
       acc[id].completed_count++;
@@ -220,7 +223,6 @@ const groupCallsByExpert = (calls = []) => {
       acc[id].rejected_count++;
     }
 
-    // Update last call time
     const callTime = call.ended_at || call.created_at;
     if (callTime && (!acc[id].last_call_time || new Date(callTime) > new Date(acc[id].last_call_time))) {
       acc[id].last_call_time = callTime;
@@ -228,8 +230,6 @@ const groupCallsByExpert = (calls = []) => {
 
     return acc;
   }, {});
-
- 
 
   return Object.values(map)
     .map(g => ({
@@ -244,12 +244,13 @@ const groupCallsByExpert = (calls = []) => {
 export const UserChatHistory = () => {
   const { user, isLoggedIn } = useAuth();
   const { experts } = useExpert();
-  const { balance } = useWallet();
+  const { balance, fetchWallet } = useWallet();
   const navigate = useNavigate();
+  const { startChat, ChatPopups } = useChatRequest();
 
   // Tab states
-  const [activeMainTab, setActiveMainTab] = useState('chat'); // 'chat' or 'call'
-  const [activeCallSubTab, setActiveCallSubTab] = useState('all'); // 'all', 'completed', 'missed', 'rejected'
+  const [activeMainTab, setActiveMainTab] = useState('chat');
+  const [activeCallSubTab, setActiveCallSubTab] = useState('all');
   const [showMobileSummary, setShowMobileSummary] = useState(false);
 
   // Chat history states
@@ -271,37 +272,175 @@ export const UserChatHistory = () => {
   const [selectedSession, setSelectedSession] = useState(null);
   const [messages, setMessages] = useState([]);
   const [showDetails, setShowDetails] = useState(false);
-  const [prices, setPrices] = useState({});
-
-  // ✅ Popups
-  const [chatRequestId, setChatRequestId] = useState(null);
-  const [showWaitingPopup, setShowWaitingPopup] = useState(false);
-  const [showRecharge, setShowRecharge] = useState(false);
-  const [requiredAmount, setRequiredAmount] = useState(0);
-  const [waitingText, setWaitingText] = useState(
-    "Waiting for expert to accept your request..."
-  );
-  const [showChatRejected, setShowChatRejected] = useState(false);
-  const [chatRejectedMessage, setChatRejectedMessage] = useState("");
-  const [showChatCancelled, setShowChatCancelled] = useState(false);
+  
+  // Expert pricing and plans data
+  const [expertPricing, setExpertPricing] = useState({});
+  const [expertPlans, setExpertPlans] = useState({});
 
   const expertById = useMemo(() => {
     const map = {};
     (experts || []).forEach((e) => {
       if (e?.id) {
-       map[e.expert_id] = {
-  ...e,
-  chat_per_minute: e.chat_per_minute || e.price?.chat_per_minute || 16,
-  rating: e.rating || 0,
-};
+        map[e.id] = {
+          ...e,
+          chat_per_minute: e.chat_per_minute || e.price?.chat_per_minute || 16,
+          rating: e.rating || 0,
+        };
       }
     });
     return map;
-  }, [experts]); 
+  }, [experts]);
 
- 
-// console.log("experts from context", experts);
-// console.log("expertById", expertById);
+  // Fetch expert pricing and plans
+  const fetchExpertPricing = useCallback(async (expertId) => {
+    try {
+      const [priceRes, plansRes] = await Promise.allSettled([
+        getExpertPriceByIdApi(expertId),
+        getPlansApi(expertId)
+      ]);
+
+      const priceData = priceRes.status === "fulfilled" ? priceRes.value?.data?.data || priceRes.value?.data || {} : {};
+      const plansData = plansRes.status === "fulfilled" && plansRes.value?.data?.success ? plansRes.value.data.data || [] : [];
+
+      let pricingModes = priceData.pricing_modes || [];
+      if (typeof pricingModes === 'string') {
+        try {
+          pricingModes = JSON.parse(pricingModes);
+        } catch {
+          pricingModes = [];
+        }
+      }
+
+      const hasPerMinute = pricingModes.includes('per_minute');
+      const hasSession = pricingModes.includes('session');
+      const hasPlans = plansData.length > 0;
+
+      const chatPrice = priceData.chat?.per_minute || priceData.chat_per_minute || 0;
+      const callPrice = priceData.call?.per_minute || priceData.call_per_minute || 0;
+      const sessionPrice = priceData.session?.price || priceData.session_price || 0;
+      const sessionDuration = priceData.session?.duration || priceData.session_duration || 0;
+
+      return {
+        hasPerMinute,
+        hasSession,
+        hasPlans,
+        chatPrice: Number(chatPrice),
+        callPrice: Number(callPrice),
+        sessionPrice: Number(sessionPrice),
+        sessionDuration: Number(sessionDuration),
+        pricingModes,
+      };
+    } catch (error) {
+      console.error(`Failed to fetch pricing for expert ${expertId}:`, error);
+      return {
+        hasPerMinute: false,
+        hasSession: false,
+        hasPlans: false,
+        chatPrice: 0,
+        callPrice: 0,
+        sessionPrice: 0,
+        sessionDuration: 0,
+        pricingModes: [],
+      };
+    }
+  }, []);
+
+  // Handle chat start with balance check
+  const handleStartChat = useCallback(async (expertId) => {
+    if (!isLoggedIn) {
+      navigate("/user/auth", { state: { from: "/user/chat-history" } });
+      return;
+    }
+
+    const pricing = expertPricing[expertId] || await fetchExpertPricing(expertId);
+    
+    if (!expertPricing[expertId]) {
+      setExpertPricing(prev => ({ ...prev, [expertId]: pricing }));
+    }
+
+    // Check if user has per-minute pricing
+    if (pricing.hasPerMinute) {
+      const minRequired = pricing.chatPrice * 5;
+      const userBalance = Number(balance || 0);
+
+      if (userBalance >= minRequired) {
+        startChat({
+          expertId: expertId,
+          chatPrice: pricing.chatPrice,
+          expertName: expertById[expertId]?.name || "Expert"
+        });
+      } else {
+        // Show low balance popup
+        alert(`Insufficient balance. Need ₹${minRequired} for 5 minutes of chat. Please recharge.`);
+        navigate("/user/wallet");
+      }
+    } 
+    // Check if user has session pricing
+    else if (pricing.hasSession) {
+      const userBalance = Number(balance || 0);
+      if (userBalance >= pricing.sessionPrice) {
+        navigate(`/user/experts/${expertId}`, { 
+          state: { scrollToBooking: true, bookingType: "session" }
+        });
+      } else {
+        alert(`Insufficient balance. Need ₹${pricing.sessionPrice} for session booking. Please recharge.`);
+        navigate("/user/wallet");
+      }
+    }
+    // Check if user has subscription plans
+    else if (pricing.hasPlans) {
+      navigate(`/user/experts/${expertId}`, { 
+        state: { scrollToPlans: true }
+      });
+    }
+    else {
+      alert("This expert doesn't have chat pricing available. Please contact support.");
+    }
+  }, [isLoggedIn, navigate, balance, expertPricing, fetchExpertPricing, startChat, expertById]);
+
+  // Handle call start with balance check
+  const handleStartCall = useCallback(async (expertId, callType = 'voice') => {
+    if (!isLoggedIn) {
+      navigate("/user/auth", { state: { from: "/user/chat-history" } });
+      return;
+    }
+
+    const pricing = expertPricing[expertId] || await fetchExpertPricing(expertId);
+    
+    if (!expertPricing[expertId]) {
+      setExpertPricing(prev => ({ ...prev, [expertId]: pricing }));
+    }
+
+    if (pricing.hasPerMinute) {
+      const minRequired = pricing.callPrice * 5;
+      const userBalance = Number(balance || 0);
+
+      if (userBalance >= minRequired) {
+        navigate(`/user/voice-call/${expertId}`, {
+          state: { fromHistory: true, callType },
+        });
+      } else {
+        alert(`Insufficient balance. Need ₹${minRequired} for 5 minutes of call. Please recharge.`);
+        navigate("/user/wallet");
+      }
+    } else if (pricing.hasSession) {
+      const userBalance = Number(balance || 0);
+      if (userBalance >= pricing.sessionPrice) {
+        navigate(`/user/experts/${expertId}`, { 
+          state: { scrollToBooking: true, bookingType: "call_session" }
+        });
+      } else {
+        alert(`Insufficient balance. Need ₹${pricing.sessionPrice} for session booking. Please recharge.`);
+        navigate("/user/wallet");
+      }
+    } else if (pricing.hasPlans) {
+      navigate(`/user/experts/${expertId}`, { 
+        state: { scrollToPlans: true }
+      });
+    } else {
+      alert("This expert doesn't have call pricing available. Please contact support.");
+    }
+  }, [isLoggedIn, navigate, balance, expertPricing, fetchExpertPricing, expertById]);
 
   // Filter chat history
   const filteredCounterparties = useMemo(() => {
@@ -320,11 +459,11 @@ export const UserChatHistory = () => {
     } else if (filterType === "top") {
       arr.sort((a, b) => b.sessions_count - a.sessions_count);
     } else if (filterType === "expensive") {
-      arr.sort((a, b) => b.chat_per_minute - a.chat_per_minute);
+      arr.sort((a, b) => (expertPricing[a.expert_id]?.chatPrice || 0) - (expertPricing[b.expert_id]?.chatPrice || 0));
     }
     
     return arr;
-  }, [counterparties, search, filterType]);
+  }, [counterparties, search, filterType, expertPricing]);
 
   // Filter calls
   const filteredCalls = useMemo(() => {
@@ -339,7 +478,6 @@ export const UserChatHistory = () => {
       );
     }
     
-    // Apply status filter
     if (activeCallSubTab !== 'all') {
       filtered = filtered.filter(call => {
         if (activeCallSubTab === 'completed') {
@@ -365,7 +503,7 @@ export const UserChatHistory = () => {
     return filtered;
   }, [groupedCallExperts, search]);
 
-  // ✅ Calculate chat summary stats
+  // Calculate chat summary stats
   const chatSummary = useMemo(() => {
     let totalMinutes = 0;
     let totalSpent = 0;
@@ -395,7 +533,7 @@ export const UserChatHistory = () => {
     };
   }, [counterparties]);
 
-  // ✅ Calculate call summary stats
+  // Calculate call summary stats
   const callSummary = useMemo(() => {
     let totalCalls = 0;
     let totalDuration = 0;
@@ -434,63 +572,6 @@ export const UserChatHistory = () => {
     };
   }, [groupedCallExperts]);
 
-  const handleStartChat = useCallback(
-    (expertId) => {
-      if (!isLoggedIn) {
-        navigate("/user/auth", { state: { from: "/user/chat-history" } });
-        return;
-      }
-
-      const perMinute = Number(
-        expertById[expertId]?.chat_per_minute || 16
-      );
-
-      const minRequired = perMinute * 5;
-      const userBalance = Number(balance || 0);
-
-      if (userBalance >= minRequired) {
-        socket.emit("request_chat", {
-          user_id: user.id,
-          expert_id: expertId,
-          user_name: `${user?.first_name || ""} ${user?.last_name || ""}`.trim(),
-        });
-      } else {
-        setRequiredAmount(Math.max(0, minRequired - userBalance));
-        setShowRecharge(true);
-      }
-    },
-    [isLoggedIn, navigate, expertById, balance, user?.id]
-  );
-
-  const handleStartCall = useCallback((expertId, callType = 'voice') => {
-    if (!isLoggedIn) {
-      navigate("/user/auth", { state: { from: "/user/call-history" } });
-      return;
-    }
-
-    const perMinute = Number(expertById[expertId]?.chat_per_minute || 16);
-    const minRequired = perMinute * 5;
-    const userBalance = Number(balance || 0);
-
-    if (userBalance >= minRequired) {
-      socket.emit("request_call", {
-        user_id: user.id,
-        expert_id: expertId,
-        call_type: callType,
-        user_name: `${user?.first_name || ""} ${user?.last_name || ""}`.trim(),
-      });
-      navigate(`/user/call/${expertId}`, { state: { callType } });
-    } else {
-      setRequiredAmount(Math.max(0, minRequired - userBalance));
-      setShowRecharge(true);
-    }
-  }, [isLoggedIn, navigate, expertById, balance, user?.id]);
-
-  const handleRechargeClose = useCallback(() => {
-    setShowRecharge(false);
-    setRequiredAmount(0);
-  }, []);
-
   // Fetch chat history
   const fetchChatHistory = useCallback(async () => {
     try {
@@ -505,26 +586,30 @@ export const UserChatHistory = () => {
       }
 
       const grouped = groupChatByExpert(rows);
-console.log("history rows", rows)
-      const merged = grouped.map((c) => {
 
-  const expertId = Number(c.expert_id);
+      const merged = await Promise.all(grouped.map(async (c) => {
+        const expertId = Number(c.expert_id);
+        const ctxExpert = expertById[expertId];
+        const pricing = await fetchExpertPricing(expertId);
+        
+        if (!expertPricing[expertId]) {
+          setExpertPricing(prev => ({ ...prev, [expertId]: pricing }));
+        }
 
-  const ctxExpert = expertById[expertId];
+        return {
+          ...c,
+          expert_name: ctxExpert?.name || c.expert_name || "Expert",
+          expert_position: ctxExpert?.position || c.expert_position || "Professional Advisor",
+          expert_avatar: ctxExpert?.profile_photo || null,
+          chat_per_minute: pricing.chatPrice || 0,
+          call_per_minute: pricing.callPrice || 0,
+          hasPerMinute: pricing.hasPerMinute,
+          hasSession: pricing.hasSession,
+          hasPlans: pricing.hasPlans,
+          rating: ctxExpert?.rating || c.rating || 0,
+        };
+      }));
 
-  return {
-    ...c,
-    expert_name: ctxExpert?.name || c.expert_name || "Expert",
-    expert_position:
-      ctxExpert?.position || c.expert_position || "Professional Advisor",
-   expert_avatar: ctxExpert?.profile_photo || null,
-   chat_per_minute: Number(c.chat_per_minute || 0),
-    rating: ctxExpert?.rating || c.rating || 0,
-  };
-
-});
-//       console.log("history rows", rows),
-// console.log("expert id from history", c.expert_id),
       setCounterparties(merged);
     } catch (e) {
       console.error("❌ user grouped history error:", e);
@@ -532,28 +617,7 @@ console.log("history rows", rows)
     } finally {
       setChatLoading(false);
     }
-  }, [user?.id, expertById]);
-
-  useEffect(() => {
-  const loadPrices = async () => {
-    const map = {};
-
-    for (let c of counterparties) {
-      try {
-        const res = await getExpertPriceByIdApi(c.expert_id);
-        const data = res?.data?.data || res?.data;
-
-        map[c.expert_id] = Number(data?.chat_per_minute || 0);
-      } catch {
-        map[c.expert_id] = 0;
-      }
-    }
-
-    setPrices(map);
-  };
-
-  if (counterparties.length) loadPrices();
-}, [counterparties]);
+  }, [user?.id, expertById, fetchExpertPricing, expertPricing]);
 
   // Fetch call history
   const fetchCallHistory = useCallback(async () => {
@@ -567,25 +631,31 @@ console.log("history rows", rows)
       const res = await getUserCallHistoryApi(params);
       const callsData = res?.data?.data || [];
       
-      // Filter out ringing status
-      const filteredCalls = callsData.filter(call => call.status !== 'ringing');
+      const filteredCallsData = callsData.filter(call => call.status !== 'ringing');
       
-      setCalls(filteredCalls);
+      setCalls(filteredCallsData);
       
-      // Group by expert for expanded view
-      const grouped = groupCallsByExpert(filteredCalls);
+      const grouped = groupCallsByExpert(filteredCallsData);
       
-      // Merge with expert data from context
-      const merged = grouped.map(g => {
+      const merged = await Promise.all(grouped.map(async (g) => {
         const ctxExpert = expertById[Number(g.expert_id)];
+        const pricing = await fetchExpertPricing(Number(g.expert_id));
+        
+        if (!expertPricing[g.expert_id]) {
+          setExpertPricing(prev => ({ ...prev, [g.expert_id]: pricing }));
+        }
+
         return {
           ...g,
           expert_name: ctxExpert?.name || g.expert_name || "Expert",
           expert_position: ctxExpert?.position || g.expert_position || "Professional Advisor",
-       expert_avatar: ctxExpert?.profile_photo || null,
+          expert_avatar: ctxExpert?.profile_photo || null,
           expert_rating: ctxExpert?.rating || g.expert_rating || 0,
+          hasPerMinute: pricing.hasPerMinute,
+          hasSession: pricing.hasSession,
+          hasPlans: pricing.hasPlans,
         };
-      });
+      }));
       
       setGroupedCallExperts(merged);
     } catch (error) {
@@ -595,9 +665,9 @@ console.log("history rows", rows)
     } finally {
       setCallLoading(false);
     }
-  }, [user?.id, activeCallSubTab, expertById]);
+  }, [activeCallSubTab, expertById, fetchExpertPricing, expertPricing]);
 
-  // ✅ USER ONLINE REGISTRATION
+  // User online registration
   useEffect(() => {
     if (user?.id) {
       socket.emit("user_online", { user_id: user.id });
@@ -621,49 +691,6 @@ console.log("history rows", rows)
     }
   }, [user?.id, activeMainTab, activeCallSubTab, fetchChatHistory, fetchCallHistory]);
 
-  // ✅ SOCKET EVENTS
-  useEffect(() => {
-    const handleRequestPending = ({ request_id }) => {
-      setChatRequestId(request_id);
-      setShowWaitingPopup(true);
-      setWaitingText("Waiting for expert to accept your request...");
-    };
-
-    const handleChatAccepted = ({ user_id, room_id }) => {
-      if (Number(user_id) !== Number(user?.id)) return;
-      setShowWaitingPopup(false);
-      setChatRequestId(null);
-      navigate(`/user/chat/${room_id}`, { replace: true });
-    };
-
-    const handleChatRejected = ({ user_id, message }) => {
-      if (Number(user_id) !== Number(user?.id)) return;
-      setShowWaitingPopup(false);
-      setChatRequestId(null);
-      setChatRejectedMessage(message || "Expert declined your chat request");
-      setShowChatRejected(true);
-    };
-
-    const handleChatCancelled = ({ user_id }) => {
-      if (Number(user_id) !== Number(user?.id)) return;
-      setShowWaitingPopup(false);
-      setChatRequestId(null);
-      setShowChatCancelled(true);
-    };
-
-    socket.on("request_pending", handleRequestPending);
-    socket.on("chat_accepted", handleChatAccepted);
-    socket.on("chat_rejected", handleChatRejected);
-    socket.on("chat_cancelled", handleChatCancelled);
-
-    return () => {
-      socket.off("request_pending", handleRequestPending);
-      socket.off("chat_accepted", handleChatAccepted);
-      socket.off("chat_rejected", handleChatRejected);
-      socket.off("chat_cancelled", handleChatCancelled);
-    };
-  }, [navigate, user?.id]);
-
   const openSession = useCallback(async (session) => {
     try {
       const res = await getChatHistoryMessagesApi(session.id); 
@@ -681,17 +708,6 @@ console.log("history rows", rows)
       alert("Failed to load chat messages");
     }
   }, []);
-
-  const handleCancelRequest = useCallback(() => {
-    if (chatRequestId && user?.id) {
-      socket.emit("cancel_chat_request", {
-        request_id: chatRequestId,
-        user_id: user.id,
-      });
-    }
-    setShowWaitingPopup(false);
-    setChatRequestId(null);
-  }, [chatRequestId, user?.id]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
@@ -719,30 +735,19 @@ console.log("history rows", rows)
     return `${hours}h ${mins}m`;
   };
 
-  const formatTimeFromDate = (dateString) => {
-    if (!dateString) return "";
-    return new Date(dateString).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const getInitials = (name = "") => {
+    return name
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase();
   };
 
-  const renderStars = (rating) => {
-    return (
-      <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-        {[1, 2, 3, 4, 5].map((star) => (
-          <FiStar
-            key={star}
-            size={12}
-            color={star <= rating ? "#fbbf24" : "#e2e8f0"}
-            fill={star <= rating ? "#fbbf24" : "none"}
-          />
-        ))}
-        <span style={{ fontSize: 12, marginLeft: 4, color: '#64748b' }}>
-          {rating.toFixed(1)}
-        </span>
-      </div>
-    );
+  const handleAvatarClick = (expertId, e) => {
+    e.stopPropagation();
+    navigate(`/user/experts/${expertId}`);
   };
 
   const Spinner = () => (
@@ -766,16 +771,6 @@ console.log("history rows", rows)
       return callLoading && calls.length === 0;
     }
   };
-
-  const getInitials = (name = "") => {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase();
-};
 
   if (isLoading()) {
     return (
@@ -822,26 +817,40 @@ console.log("history rows", rows)
           box-shadow: 0 8px 30px rgba(14, 165, 233, 0.12);
         }
         
-        .call-type-badge {
+        .avatar-clickable {
+          cursor: pointer;
+          transition: transform 0.2s;
+        }
+        
+        .avatar-clickable:hover {
+          transform: scale(1.05);
+        }
+        
+        .pricing-badge {
           display: inline-flex;
           align-items: center;
           gap: 4px;
           padding: 2px 8px;
           border-radius: 12px;
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 500;
         }
         
-        .call-type-badge.voice {
+        .pricing-badge.per-minute {
           background: rgba(14, 165, 233, 0.1);
           color: #0ea5e9;
         }
         
-        .call-type-badge.video {
-          background: rgba(139, 92, 246, 0.1);
-          color: #8b5cf6;
+        .pricing-badge.session {
+          background: rgba(245, 158, 11, 0.1);
+          color: #d97706;
         }
-
+        
+        .pricing-badge.plans {
+          background: rgba(139, 92, 246, 0.1);
+          color: #7c3aed;
+        }
+        
         @media (max-width: 768px) {
           .hide-on-mobile {
             display: none;
@@ -850,7 +859,6 @@ console.log("history rows", rows)
       `}</style>
 
       <PageContainer>
-        {/* Header with Tabs */}
         <Header>
           <ResponsiveGrid>
             <div>
@@ -871,20 +879,16 @@ console.log("history rows", rows)
               </p>
             </div>
 
-            {/* Mobile Summary Toggle */}
             <MobileSummaryToggle onClick={() => setShowMobileSummary(!showMobileSummary)}>
               {showMobileSummary ? 'Hide Summary' : 'Show Summary'}
               {showMobileSummary ? <FiChevronDown /> : <FiChevronRight />}
             </MobileSummaryToggle>
 
-            {/* Summary Card - Desktop always visible, mobile toggleable */}
             {(showMobileSummary || window.innerWidth > 768) && (
               <SummaryCard className={showMobileSummary ? 'mobile-visible' : ''}>
                 <div className="summary-header">
                   <FiTrendingUp size={20} />
-                  <span>
-                    {activeMainTab === 'chat' ? 'Chat Summary' : 'Call Summary'}
-                  </span>
+                  <span>{activeMainTab === 'chat' ? 'Chat Summary' : 'Call Summary'}</span>
                 </div>
                 <div className="summary-stats">
                   {activeMainTab === 'chat' ? (
@@ -936,7 +940,6 @@ console.log("history rows", rows)
             )}
           </ResponsiveGrid>
 
-          {/* Main Tabs - Chat / Call */}
           <TabContainer>
             <TabButton 
               active={activeMainTab === 'chat'}
@@ -954,7 +957,6 @@ console.log("history rows", rows)
             </TabButton>
           </TabContainer>
 
-          {/* Stats Grid - Only show for chat or call based on active tab */}
           {activeMainTab === 'chat' && counterparties.length > 0 && (
             <StatsContainer>
               <StatCard accent>
@@ -1043,7 +1045,6 @@ console.log("history rows", rows)
             </StatsContainer>
           )}
 
-          {/* Call Sub-tabs (only visible when call tab is active) */}
           {activeMainTab === 'call' && (
             <FilterBar style={{ marginTop: 16 }}>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -1078,7 +1079,6 @@ console.log("history rows", rows)
             </FilterBar>
           )}
 
-          {/* Chat Filter Bar (only for chat tab) */}
           {activeMainTab === 'chat' && (
             <FilterBar style={{ marginTop: 16 }}>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -1100,17 +1100,10 @@ console.log("history rows", rows)
                 >
                   Most Active
                 </PillBadge>
-                <PillBadge 
-                  active={filterType === 'expensive'} 
-                  onClick={() => setFilterType('expensive')}
-                >
-                  Premium
-                </PillBadge>
               </div>
             </FilterBar>
           )}
 
-          {/* Search Bar - Common for both tabs */}
           <FilterBar style={{ marginTop: 16 }}>
             <SearchBar premium>
               <FiSearch size={18} />
@@ -1133,10 +1126,8 @@ console.log("history rows", rows)
           </FilterBar>
         </Header>
 
-        {/* History List */}
         <HistoryList>
           {activeMainTab === 'chat' ? (
-            /* ===== CHAT HISTORY ===== */
             filteredCounterparties.length === 0 ? (
               <EmptyState premium>
                 <div className="empty-icon">
@@ -1155,8 +1146,7 @@ console.log("history rows", rows)
             ) : (
               filteredCounterparties.map((c) => {
                 const isOpen = expandedExpertId === c.expert_id;
-                const totalSessions = c.sessions_count || 0;
-                const totalSpent = c.total_spent || 0;
+                const pricing = expertPricing[c.expert_id] || c;
 
                 return (
                   <HistoryItem key={c.expert_id} premium className="premium-card">
@@ -1165,19 +1155,23 @@ console.log("history rows", rows)
                       premium
                     >
                       <div className="chat-header-content">
-                       {c.expert_avatar ? (
-  <Avatar
-    premium
-    src={c.expert_avatar}
-    onError={(e) => {
-      e.currentTarget.style.display = "none";
-    }}
-  />
-) : (
-  <AvatarFallback>
-    {getInitials(c.expert_name)}
-  </AvatarFallback>
-)}
+                        {c.expert_avatar ? (
+                          <Avatar
+                            premium
+                            src={c.expert_avatar}
+                            className="avatar-clickable"
+                            onClick={(e) => handleAvatarClick(c.expert_id, e)}
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                              e.currentTarget.parentElement.innerHTML = `<div class="avatar-fallback">${getInitials(c.expert_name)}</div>`;
+                            }}
+                          />
+                        ) : (
+                          <AvatarFallback className="avatar-clickable" onClick={(e) => handleAvatarClick(c.expert_id, e)}>
+                            {getInitials(c.expert_name)}
+                          </AvatarFallback>
+                        )}
+                        
                         <div className="expert-info">
                           <div className="expert-name-section">
                             <h4>{c.expert_name}</h4>
@@ -1185,9 +1179,21 @@ console.log("history rows", rows)
                               <FiBriefcase size={12} />
                               <span className="expert-position">{c.expert_position}</span>
                             </ExpertBadge>
-                            <div className="rate-badge">
-                              ₹{prices[c.expert_id] || 0}/min
-                            </div>
+                            {pricing.hasPerMinute && (
+                              <span className="pricing-badge per-minute">
+                                <BsChatLeftText size={10} /> ₹{pricing.chatPrice}/min
+                              </span>
+                            )}
+                            {pricing.hasSession && !pricing.hasPerMinute && (
+                              <span className="pricing-badge session">
+                                <FiBookOpen size={10} /> Session ₹{pricing.sessionPrice}
+                              </span>
+                            )}
+                            {pricing.hasPlans && !pricing.hasPerMinute && !pricing.hasSession && (
+                              <span className="pricing-badge plans">
+                                <FiZap size={10} /> Plans Available
+                              </span>
+                            )}
                           </div>
                           
                           <div className="expert-stats">
@@ -1195,10 +1201,10 @@ console.log("history rows", rows)
                               <FiClock size={12} /> {formatTime(c.total_minutes)} total
                             </span>
                             <span className="meta-item">
-                              <FiMessageSquare size={12} /> {totalSessions} sessions
+                              <FiMessageSquare size={12} /> {c.sessions_count} sessions
                             </span>
                             <span className="meta-item">
-                              ₹{totalSpent.toFixed(0)} spent
+                              ₹{c.total_spent.toFixed(0)} spent
                             </span>
                           </div>
                         </div>
@@ -1222,7 +1228,7 @@ console.log("history rows", rows)
                         <SessionHeader>
                           <h5>Consultation Sessions</h5>
                           <div className="expert-badge">
-                            <FiCalendar size={12} /> {totalSessions} consultations
+                            <FiCalendar size={12} /> {c.sessions_count} consultations
                           </div>
                         </SessionHeader>
                         
@@ -1283,8 +1289,7 @@ console.log("history rows", rows)
               })
             )
           ) : (
-            /* ===== CALL HISTORY ===== */
-            filteredCalls.length === 0 ? (
+            filteredGroupedCallExperts.length === 0 ? (
               <EmptyState premium>
                 <div className="empty-icon">
                   <FiPhone size={56} />
@@ -1304,9 +1309,9 @@ console.log("history rows", rows)
                 </button>
               </EmptyState>
             ) : (
-              /* Grouped by expert view */
               filteredGroupedCallExperts.map((g) => {
                 const isOpen = expandedCallExpertId === g.expert_id;
+                const pricing = expertPricing[g.expert_id] || g;
 
                 return (
                   <HistoryItem key={g.expert_id} premium className="premium-card">
@@ -1315,16 +1320,22 @@ console.log("history rows", rows)
                       premium
                     >
                       <div className="chat-header-content">
-                       <Avatar
-  premium
-  src={g.expert_avatar || undefined}
-  onError={(e) => {
-    e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-      g.expert_name || "Expert"
-    )}&background=0ea5e9&color=fff`;
-  }}
->
-                        </Avatar>
+                        {g.expert_avatar ? (
+                          <Avatar
+                            premium
+                            src={g.expert_avatar}
+                            className="avatar-clickable"
+                            onClick={(e) => handleAvatarClick(g.expert_id, e)}
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                              e.currentTarget.parentElement.innerHTML = `<div class="avatar-fallback">${getInitials(g.expert_name)}</div>`;
+                            }}
+                          />
+                        ) : (
+                          <AvatarFallback className="avatar-clickable" onClick={(e) => handleAvatarClick(g.expert_id, e)}>
+                            {getInitials(g.expert_name)}
+                          </AvatarFallback>
+                        )}
                         
                         <div className="expert-info">
                           <div className="expert-name-section">
@@ -1333,7 +1344,21 @@ console.log("history rows", rows)
                               <FiBriefcase size={12} />
                               <span className="expert-position">{g.expert_position}</span>
                             </ExpertBadge>
-                            {/* {renderStars(g.expert_rating)} */}
+                            {pricing.hasPerMinute && (
+                              <span className="pricing-badge per-minute">
+                                <FiPhone size={10} /> ₹{pricing.callPrice}/min
+                              </span>
+                            )}
+                            {pricing.hasSession && !pricing.hasPerMinute && (
+                              <span className="pricing-badge session">
+                                <FiBookOpen size={10} /> Session ₹{pricing.sessionPrice}
+                              </span>
+                            )}
+                            {pricing.hasPlans && !pricing.hasPerMinute && !pricing.hasSession && (
+                              <span className="pricing-badge plans">
+                                <FiZap size={10} /> Plans Available
+                              </span>
+                            )}
                           </div>
                           
                           <div className="expert-stats">
@@ -1473,19 +1498,21 @@ console.log("history rows", rows)
             <ModalContent premium onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <div className="modal-user-info">
-                 {g.expert_avatar ? (
-  <Avatar
-    premium
-    src={g.expert_avatar}
-    onError={(e) => {
-      e.currentTarget.style.display = "none";
-    }}
-  />
-) : (
-  <AvatarFallback>
-    {getInitials(g.expert_name)}
-  </AvatarFallback>
-)}
+                  {selectedSession.expert_avatar ? (
+                    <Avatar
+                      premium
+                      src={selectedSession.expert_avatar}
+                      onClick={() => navigate(`/user/experts/${selectedSession.expert_id}`)}
+                      style={{ cursor: "pointer" }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <AvatarFallback style={{ cursor: "pointer" }} onClick={() => navigate(`/user/experts/${selectedSession.expert_id}`)}>
+                      {getInitials(selectedSession.expert_name)}
+                    </AvatarFallback>
+                  )}
                   <div>
                     <h3>{selectedSession.expert_name || "Expert"}</h3>
                     <div className="modal-meta">
@@ -1560,99 +1587,10 @@ console.log("history rows", rows)
             </ModalContent>
           </ModalOverlay>
         )}
-
-        {/* Enhanced Waiting Popup */}
-        {showWaitingPopup && (
-          <div className="waiting-popup-overlay">
-            <div className="waiting-popup">
-              <div className="popup-icon">
-                <BsLightningCharge size={32} />
-              </div>
-              <h3>Request Sent</h3>
-              <p>{waitingText}</p>
-              <div className="popup-spinner">
-                <Spinner />
-              </div>
-              <button
-                className="cancel-request-btn"
-                onClick={handleCancelRequest}
-              >
-                Cancel Request
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Enhanced Recharge Popup */}
-        {showRecharge && (
-          <div className="recharge-popup-overlay">
-            <div className="recharge-popup">
-              <div className="popup-icon warning">
-                <FiDollarSign size={32} />
-              </div>
-              <h3>Insufficient Balance</h3>
-              <p>
-                You need <strong>₹{requiredAmount.toFixed(2)}</strong> more to start this {activeMainTab}
-              </p>
-              <div className="popup-actions">
-                <ActionButton 
-                  primary 
-                  onClick={() => {
-                    setShowRecharge(false);
-                    navigate("/user/wallet");
-                  }}
-                >
-                  Recharge Now
-                </ActionButton>
-                <ActionButton onClick={handleRechargeClose}>
-                  Cancel
-                </ActionButton>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Enhanced Chat Rejected Popup */}
-        {showChatRejected && chatRejectedMessage && (
-          <div className="reject-popup-overlay">
-            <div className="reject-popup">
-              <div className="popup-icon error">
-                <FiX size={32} />
-              </div>
-              <h3>Request Declined</h3>
-              <p>{chatRejectedMessage}</p>
-              <ActionButton 
-                primary 
-                onClick={() => {
-                  setShowChatRejected(false);
-                  setChatRejectedMessage("");
-                }}
-              >
-                OK
-              </ActionButton>
-            </div>
-          </div>
-        )}
-
-        {/* Enhanced Chat Cancelled Popup */}
-        {showChatCancelled && (
-          <div className="cancel-popup-overlay">
-            <div className="cancel-popup">
-              <div className="popup-icon">
-                <FiMessageSquare size={32} />
-              </div>
-              <h3>Request Cancelled</h3>
-              <p>Your chat request has been cancelled</p>
-              <ActionButton 
-                primary 
-                onClick={() => setShowChatCancelled(false)}
-              >
-                OK
-              </ActionButton>
-            </div>
-          </div>
-        )}
       </PageContainer>
+      
+      {/* Chat Popups from hook */}
+      <ChatPopups />
     </PremiumContainer>
   );
 };

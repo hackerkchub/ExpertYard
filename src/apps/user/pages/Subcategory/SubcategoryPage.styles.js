@@ -776,3 +776,92 @@ export const SecondaryButton = styled.button`
   font-weight: 700; 
   font-size: 14px; 
 `;
+
+// Add these to your existing styled components file
+
+export const PricingModesBadge = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+`;
+
+export const PricingModeBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  
+  ${props => props.type === 'per_minute' && `
+    background: #dbeafe;
+    color: #1e40af;
+  `}
+  
+  ${props => props.type === 'session' && `
+    background: #fef3c7;
+    color: #92400e;
+  `}
+  
+  ${props => props.type === 'plans' && `
+    background: #ede9fe;
+    color: #5b21b6;
+  `}
+`;
+
+export const StartSessionButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  }
+`;
+
+export const ViewPlansButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  }
+`;
+
+export const PricingInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: #f3e8ff;
+  border-radius: 8px;
+  font-size: 11px;
+  color: #6b21a5;
+  
+  span {
+    flex: 1;
+  }
+`;

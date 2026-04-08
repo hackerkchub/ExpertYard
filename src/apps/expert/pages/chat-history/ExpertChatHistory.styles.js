@@ -467,3 +467,27 @@ export const StatusBadge = styled.span`
   &.missed { background: #ffebee; color: #d32f2f; border: 1px solid #d32f2f; }
   &.rejected { background: #f5f5f5; color: #616161; border: 1px solid #616161; }
 `;
+
+// Add this to your existing styles file
+
+export const PricingBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  background: #f3f4f6;
+  color: #374151;
+  
+  &.per-minute {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+  
+  &.session {
+    background: #fef3c7;
+    color: #92400e;
+  }
+`;

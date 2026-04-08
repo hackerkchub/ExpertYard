@@ -1,4 +1,4 @@
-// src/apps/user/pages/chat/Chat.jsx - ✅ FIXED Wallet Balance Check + Auto-Deduct
+// src/apps/user/pages/chat/Chat.jsx - ✅ FIXED Wallet Balance Check + Auto-Deduct + Unlimited Subscription
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiPaperclip, FiImage, FiVideo, FiFile, FiX } from "react-icons/fi";
@@ -44,7 +44,7 @@ const Chat = () => {
   const [chatData, setChatData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
- const [sessionActive, setSessionActive] = useState(null);
+  const [sessionActive, setSessionActive] = useState(null);
 
   const [isInitialized, setIsInitialized] = useState(false);
   const [showEndPopup, setShowEndPopup] = useState(false);
@@ -54,6 +54,9 @@ const Chat = () => {
   const { user } = useAuth();
   const { experts, expertData, expertPrice } = useExpert();
   const { balance: walletBalance } = useWallet(); // ✅ CORRECT Wallet API
+
+  // ✅ STEP 1: Detect if subscription is unlimited
+  const isUnlimited = useMemo(() => !endTime, [endTime]);
 
   // ✅ PERFECT fetchChatDetails
   const fetchChatDetails = useCallback(async () => {
@@ -98,11 +101,13 @@ const Chat = () => {
         })
       })));
       // Only set false if really ended
-setSessionActive(Number(session.is_active) === 1);
+      setSessionActive(Number(session.is_active) === 1);
 
-if (session?.end_time) {
-  setEndTime(session.end_time);
-}
+      if (session?.end_time) {
+        setEndTime(session.end_time);
+      } else {
+        setEndTime(null); // ✅ Unlimited subscription - no end time
+      }
 
       setError("");
       
@@ -118,8 +123,14 @@ if (session?.end_time) {
     }
   }, [room_id]);
 
-  // ✅ Auto End Chat → redirect to history
+  // ✅ Auto End Chat → redirect to history (only for limited plans)
   const handleAutoEndChat = useCallback(() => {
+    // ✅ Don't auto-end if unlimited
+    if (isUnlimited) {
+      console.log("♾️ Unlimited subscription - no auto-end");
+      return;
+    }
+    
     console.log("⏰ Timer expired - Auto ending chat");
 
     setSessionActive(false);
@@ -130,61 +141,62 @@ if (session?.end_time) {
     });
 
     navigate("/user/chat-history", { replace: true });
-  }, [room_id, navigate]);
-
+  }, [room_id, navigate, isUnlimited]);
 
   // ✅ Manual End Chat (UPDATED)
- const handleEndChat = useCallback(() => {
-  if (!room_id) return;
+  const handleEndChat = useCallback(() => {
+    if (!room_id) return;
 
-  const ok = window.confirm("Are you sure you want to end this chat?");
+    const ok = window.confirm("Are you sure you want to end this chat?");
 
-  if (!ok) return;
+    if (!ok) return;
 
-  socket.emit("end_chat", {
-    room_id,
-    reason: "user_ended"
-  });
+    socket.emit("end_chat", {
+      room_id,
+      reason: "user_ended"
+    });
 
-  setSessionActive(false);
-  navigate("/user/chat-history", { replace: true });
+    setSessionActive(false);
+    navigate("/user/chat-history", { replace: true });
 
-}, [room_id, navigate]);
+  }, [room_id, navigate]);
 
-useEffect(() => {
-  if (!sessionActive) return;
+  useEffect(() => {
+    if (!sessionActive) return;
 
-  const blockBack = () => {
-    const ok = window.confirm("Are you sure you want to leave and end this chat?");
+    const blockBack = () => {
+      const ok = window.confirm("Are you sure you want to leave and end this chat?");
 
-    if (ok) {
-      socket.emit("end_chat", { room_id, reason: "user_left" });
-      socket.disconnect();
-      navigate("/user/chat-history", { replace: true });
-    } else {
-      window.history.pushState(null, "", window.location.pathname);
-    }
-  };
+      if (ok) {
+        socket.emit("end_chat", { room_id, reason: "user_left" });
+        socket.disconnect();
+        navigate("/user/chat-history", { replace: true });
+      } else {
+        window.history.pushState(null, "", window.location.pathname);
+      }
+    };
 
-  // push dummy state once
-  window.history.pushState(null, "", window.location.pathname);
+    // push dummy state once
+    window.history.pushState(null, "", window.location.pathname);
 
-  window.addEventListener("popstate", blockBack);
+    window.addEventListener("popstate", blockBack);
 
-  return () => {
-    window.removeEventListener("popstate", blockBack);
-  };
-}, [sessionActive, room_id, navigate]);
+    return () => {
+      window.removeEventListener("popstate", blockBack);
+    };
+  }, [sessionActive, room_id, navigate]);
 
-
-  // ✅ use chat timer hook
+  // ✅ STEP 2: use chat timer hook - only when endTime exists (limited plans)
   const { formatted, secondsLeft, isExpired } = useChatTimer(
-    endTime,
+    isUnlimited ? null : endTime, // ✅ Pass null for unlimited plans
     handleAutoEndChat
   );
 
-  // ✅ Timer color logic
-  const getTimerColor = () => secondsLeft <= 60 ? "#ef4444" : "#10b981";
+  // ✅ STEP 4: Timer color logic with unlimited support
+  const getTimerColor = useCallback(() => {
+    if (isUnlimited) return "#10b981";
+    return secondsLeft <= 60 ? "#ef4444" : "#10b981";
+  }, [isUnlimited, secondsLeft]);
 
   // ✅ Close popup and go home
   const handleGoHome = () => {
@@ -230,8 +242,12 @@ useEffect(() => {
 
     const handleChatAccepted = (data) => {
       if (data.room_id === room_id) {
-        setEndTime(data.endTime);
-         setSessionActive(true); 
+        if (data.endTime) {
+          setEndTime(data.endTime);
+        } else {
+          setEndTime(null); // ✅ Unlimited subscription
+        }
+        setSessionActive(true); 
       }
     };
 
@@ -301,8 +317,6 @@ useEffect(() => {
 
   useEffect(() => {
     fetchChatDetails();
-    // const interval = setInterval(fetchChatDetails, null || 30000); // Refresh every 30s
-    // return () => clearInterval(interval);
   }, [fetchChatDetails]);
 
   const sendMessage = useCallback(() => {
@@ -349,9 +363,7 @@ useEffect(() => {
   }
 
   // Check if chat is disabled (either expired or session ended)
-const isChatDisabled = sessionActive !== true;
-
-
+  const isChatDisabled = sessionActive !== true;
 
   return (
     <>
@@ -384,22 +396,43 @@ const isChatDisabled = sessionActive !== true;
                 </div>
               </ExpertInfo>
               <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  background: "#f8fafc",
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  border: `2px solid ${getTimerColor()}`,
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  color: getTimerColor(),
-                  minWidth: "80px",
-                  justifyContent: "center"
-                }}>
-                  <span>⏱️ {formatted}</span>
-                </div>
+                {/* ✅ STEP 3: Show timer only for limited plans */}
+                {!isUnlimited && (
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    background: "#f8fafc",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: `2px solid ${getTimerColor()}`,
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    color: getTimerColor(),
+                    minWidth: "80px",
+                    justifyContent: "center"
+                  }}>
+                    ⏱️ {formatted}
+                  </div>
+                )}
+
+                {/* ✅ STEP 3: Show unlimited badge for subscription users */}
+                {isUnlimited && (
+                  <div style={{
+                    background: "#ecfdf5",
+                    color: "#10b981",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px"
+                  }}>
+                    <span>♾️</span> Unlimited
+                  </div>
+                )}
+
                 <EndChatButton
                   onClick={handleEndChat}
                   disabled={isChatDisabled}

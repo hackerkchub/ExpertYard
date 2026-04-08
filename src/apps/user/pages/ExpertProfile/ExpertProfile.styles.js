@@ -727,3 +727,279 @@ export const UserReviewBox = styled.div`
   margin-bottom: 12px;
   font-size: 12px;
 `;
+
+// Add these to your existing styled components file
+
+export const SubscriptionCard = styled.div`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 20px;
+  color: white;
+`;
+
+export const SubscriptionBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.2);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+`;
+
+export const PlansContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+`;
+
+export const PlanCard = styled.div`
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 24px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+  }
+`;
+
+export const PlanHeader = styled.div`
+  text-align: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+`;
+
+export const PlanName = styled.h3`
+  margin: 0 0 8px 0;
+  color: #0f172a;
+  font-size: 20px;
+`;
+
+export const PlanPrice = styled.div`
+  font-size: 32px;
+  font-weight: 700;
+  color: #6366f1;
+  margin: 8px 0;
+`;
+
+export const PlanDuration = styled.div`
+  color: #64748b;
+  font-size: 14px;
+`;
+
+export const PlanFeatures = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px 0;
+`;
+
+export const PlanFeature = styled.li`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  color: #334155;
+  font-size: 14px;
+`;
+
+export const SubscribeButton = styled.button`
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity 0.2s;
+  
+  &:hover {
+    opacity: 0.9;
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+export const ActiveSubscriptionCard = styled.div`
+  background: #ecfdf5;
+  border: 1px solid #10b981;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 16px;
+`;
+
+export const SubscriptionInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  
+  div {
+    display: flex;
+    flex-direction: column;
+    
+    strong {
+      color: #065f46;
+      font-size: 14px;
+    }
+    
+    small {
+      color: #047857;
+      font-size: 12px;
+    }
+  }
+`;
+
+export const SubscriptionRemaining = styled.div`
+  margin-top: 12px;
+`;
+
+export const ProgressBar = styled.div`
+  width: 100%;
+  height: 8px;
+  background: #d1fae5;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 8px;
+`;
+
+export const UsageText = styled.div`
+  color: #065f46;
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 8px;
+`;
+
+// In ExpertProfile.styles.js, after defining PlanCard
+export const SubscriptionPlanCard = PlanCard;
+
+// Add these to your ExpertProfile.styles.js file
+
+export const PricingOptionsContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin: 24px 0;
+`;
+
+export const PricingOptionCard = styled.div`
+  background: ${props => props.$featured ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#ffffff'};
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  border: 1px solid ${props => props.$featured ? 'transparent' : '#e5e7eb'};
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  }
+`;
+
+export const PricingOptionTitle = styled.h3`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: ${props => props.$featured ? '#ffffff' : '#1f2937'};
+`;
+
+export const PricingOptionPrice = styled.div`
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: ${props => props.$featured ? '#ffffff' : '#0f172a'};
+`;
+
+export const PricingOptionDetails = styled.div`
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  color: ${props => props.$featured ? 'rgba(255, 255, 255, 0.9)' : '#6b7280'};
+`;
+
+export const PricingOptionButton = styled.button`
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  
+  ${props => props.$primary && `
+    background: #3b82f6;
+    color: white;
+    &:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+    }
+  `}
+  
+  ${props => props.$featured && `
+    background: white;
+    color: #667eea;
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+  `}
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+export const PricingModeTabs = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+`;
+
+export const PricingModeTab = styled.button`
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid ${props => props.$active ? '#6366f1' : '#e2e8f0'};
+  background: ${props => props.$active ? '#6366f1' : '#fff'};
+  color: ${props => props.$active ? '#fff' : '#475569'};
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #6366f1;
+    background: ${props => props.$active ? '#6366f1' : '#f8fafc'};
+  }
+`;
+
+export const PricingInfo = styled.div`
+  font-size: 13px;
+  color: #64748b;
+  padding: 8px 0;
+`;

@@ -17,6 +17,12 @@ import {
   updateExperienceApi,
   deleteExperienceApi
 } from "../../../../shared/api/expertapi/experience.api";
+import {
+  getPlansApi,
+  createPlanApi,
+  updatePlanApi,
+  deletePlanApi
+} from "../../../../shared/api/expertapi/subscription.api";
 import { toast } from "react-hot-toast";
 
 import {
@@ -45,8 +51,9 @@ import {
   FiPlus,
   FiTrash2,
   FiCalendar,
-  
-  FiClock
+  FiClock,
+  FiPackage,
+  FiDollarSign
 } from "react-icons/fi";
 
 import { useExpert } from "../../../../shared/context/ExpertContext";
@@ -89,6 +96,26 @@ export default function ExpertProfile() {
   const [draft, setDraft] = useState(null);
   const [saveLoading, setSaveLoading] = useState(false);
   const [hoveredDoc, setHoveredDoc] = useState(null);
+
+  // Session pricing state
+  const [sessionPrice, setSessionPrice] = useState(0);
+  const [sessionDuration, setSessionDuration] = useState(0);
+
+  // Subscription plans state
+  const [subscriptionPlans, setSubscriptionPlans] = useState([]);
+  const [plansLoading, setPlansLoading] = useState(false);
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [editingPlan, setEditingPlan] = useState(null);
+  const [planForm, setPlanForm] = useState({
+    name: "",
+    duration_type: "monthly",
+    price: "",
+    minutes_limit: "",
+    calls_limit: "",
+    call_enabled: true,
+    chat_enabled: true
+  });
+  const [planSubmitLoading, setPlanSubmitLoading] = useState(false);
 
   // Experience state
   const [experiences, setExperiences] = useState([]);
@@ -144,28 +171,35 @@ export default function ExpertProfile() {
     };
   }, []);
 
-  // INIT DRAFT
-  useEffect(() => {
-    if (!edit && expertData?.profile) {
-      setDraft({
-        name: expertData.name || "",
-        title: expertData.position || "",
-        email: expertData.email || "",
-        phone: expertData.phone || "",
-        description: expertData.profile.description || "",
-        education: expertData.profile.education || "",
-        location: expertData.profile.location || "",
-        callRate: expertPrice?.call_per_minute || 0,
-        chatRate: expertPrice?.chat_per_minute || 0,
-        documents: {
-          photo: expertData.profile_photo || DEFAULT_AVATAR,
-          experience_certificate: expertData.profile.experience_certificate,
-          marksheet: expertData.profile.marksheet,
-          aadhar_card: expertData.profile.aadhar_card
-        }
-      });
-    }
-  }, [expertData, expertPrice, edit]);
+  // INIT DRAFT with session pricing
+ useEffect(() => {
+  if (!edit && expertData?.profile && expertPrice?.pricing_modes) {
+    
+    const session = expertPrice?.session;
+console.log("PRICE:", expertPrice);
+    setDraft({
+      name: expertData.name || "",
+      title: expertData.position || "",
+      email: expertData.email || "",
+      phone: expertData.phone || "",
+      description: expertData.profile.description || "",
+      education: expertData.profile.education || "",
+      location: expertData.profile.location || "",
+      callRate: expertPrice?.call || 0,
+      chatRate: expertPrice?.chat || 0,
+      documents: {
+        photo: expertData.profile_photo || DEFAULT_AVATAR,
+        experience_certificate: expertData.profile.experience_certificate,
+        marksheet: expertData.profile.marksheet,
+        aadhar_card: expertData.profile.aadhar_card
+      }
+    });
+
+    // ✅ IMPORTANT FIX
+   setSessionPrice(Number(session?.price) || 0);
+setSessionDuration(Number(session?.duration) || 0);
+  }
+}, [expertData, expertPrice, edit]);
 
   // LOAD SUBCATEGORIES
   useEffect(() => {
@@ -201,6 +235,27 @@ export default function ExpertProfile() {
   useEffect(() => {
     loadExperiences();
   }, [loadExperiences]);
+
+  // LOAD SUBSCRIPTION PLANS
+  const loadSubscriptionPlans = useCallback(async () => {
+    if (!expertId) return;
+
+    setPlansLoading(true);
+    try {
+      const res = await getPlansApi(expertId);
+      const data = res.data || res;
+      setSubscriptionPlans(data.data || data || []);
+    } catch (err) {
+      console.error("Failed to load subscription plans", err);
+      setSubscriptionPlans([]);
+    } finally {
+      setPlansLoading(false);
+    }
+  }, [expertId]);
+
+  useEffect(() => {
+    loadSubscriptionPlans();
+  }, [loadSubscriptionPlans]);
 
   // FOLLOWER COUNT
   useEffect(() => {
@@ -292,7 +347,7 @@ export default function ExpertProfile() {
     !!draft &&
     (draft.email !== expertData.email || draft.phone !== expertData.phone);
 
-  // SAVE PROFILE
+  // ========== PRODUCTION READY HANDLE SAVE ==========
   const handleSave = async () => {
     try {
       setSaveLoading(true);
@@ -310,6 +365,7 @@ export default function ExpertProfile() {
         return;
       }
 
+      // ========== PROFILE PAYLOAD ==========
       const profilePayload = {
         name: draft.name,
         position: draft.title,
@@ -332,27 +388,54 @@ export default function ExpertProfile() {
       if (draft.documents.aadhar_cardFile)
         profilePayload.aadhar_card = draft.documents.aadhar_cardFile;
 
+      // ========== PRICING MODES (NO SUBSCRIPTION) ==========
+      const pricingModes = [];
+
+      // ✅ Per Minute Pricing
+      if (draft.callRate > 0 && draft.chatRate > 0) {
+        pricingModes.push("per_minute");
+      }
+
+      // ✅ Session Pricing
+      if (sessionPrice > 0 && sessionDuration > 0) {
+        pricingModes.push("session");
+      }
+
+      // ❌ DO NOT ADD "subscription" here
+
+      // ========== PRICE PAYLOAD ==========
       const pricePayload = {
         expert_id: expertId,
-        call_per_minute: draft.callRate,
-        chat_per_minute: draft.chatRate,
+        pricing_modes: pricingModes,
+        call_per_minute: pricingModes.includes("per_minute") ? draft.callRate : null,
+        chat_per_minute: pricingModes.includes("per_minute") ? draft.chatRate : null,
+        session_price: pricingModes.includes("session") ? sessionPrice : null,
+        session_duration: pricingModes.includes("session") ? sessionDuration : null,
         reason_for_price: "",
         handle_customer: "",
         strength: "",
         weakness: ""
       };
 
-      await Promise.all([
-        updateExpertProfileApi(expertId, profilePayload),
-        savePriceApi(pricePayload)
-      ]);
+      // ========== BUILD PROMISES ==========
+      const promises = [updateExpertProfileApi(expertId, profilePayload)];
 
+      // ✅ ONLY call price API if needed
+      if (pricingModes.length > 0) {
+        promises.push(savePriceApi(pricePayload));
+      }
+
+      // ========== EXECUTE ==========
+      await Promise.all(promises);
+
+      // ========== REFRESH ==========
       await Promise.all([refreshProfile(), refreshPrice()]);
       
       toast.success("Profile updated successfully!");
       
       setEdit(false);
       setDraft(null);
+      
     } catch (err) {
       console.error("Save failed", err);
       toast.error(err.response?.data?.message || "Failed to update profile");
@@ -366,9 +449,95 @@ export default function ExpertProfile() {
     setDraft(null);
   };
 
+  // ================= SUBSCRIPTION PLAN CRUD OPERATIONS =================
+  
+  const handleAddPlan = () => {
+    setEditingPlan(null);
+    setPlanForm({
+      name: "",
+      duration_type: "monthly",
+      price: "",
+      minutes_limit: "",
+      calls_limit: "",
+      call_enabled: true,
+      chat_enabled: true
+    });
+    setShowPlanModal(true);
+  };
+
+  const handleEditPlan = (plan) => {
+    setEditingPlan(plan);
+    setPlanForm({
+      name: plan.name,
+      duration_type: plan.duration_type,
+      price: plan.price.toString(),
+      minutes_limit: plan.minutes_limit?.toString() || "",
+      calls_limit: plan.calls_limit?.toString() || "",
+      call_enabled: plan.call_enabled,
+      chat_enabled: plan.chat_enabled
+    });
+    setShowPlanModal(true);
+  };
+
+  const handlePlanFormChange = (field, value) => {
+    setPlanForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmitPlan = async () => {
+    if (!planForm.name || !planForm.price) {
+      toast.error("Plan name and price are required");
+      return;
+    }
+
+    setPlanSubmitLoading(true);
+    
+    try {
+      const payload = {
+        name: planForm.name,
+        duration_type: planForm.duration_type,
+        price: Number(planForm.price),
+        minutes_limit: planForm.minutes_limit ? Number(planForm.minutes_limit) : null,
+        calls_limit: planForm.calls_limit ? Number(planForm.calls_limit) : null,
+        call_enabled: planForm.call_enabled,
+        chat_enabled: planForm.chat_enabled
+      };
+
+      if (editingPlan) {
+        await updatePlanApi(editingPlan.id, payload);
+        toast.success("Plan updated successfully!");
+      } else {
+        await createPlanApi(payload);
+        toast.success("Plan added successfully!");
+      }
+
+      await loadSubscriptionPlans();
+      setShowPlanModal(false);
+      
+    } catch (err) {
+      console.error("Failed to save plan", err);
+      toast.error(err.response?.data?.message || "Failed to save plan");
+    } finally {
+      setPlanSubmitLoading(false);
+    }
+  };
+
+  const handleDeletePlan = async (planId, planName) => {
+    if (!window.confirm(`Are you sure you want to delete "${planName}" plan?`)) {
+      return;
+    }
+
+    try {
+      await deletePlanApi(planId);
+      toast.success("Plan deleted successfully!");
+      await loadSubscriptionPlans();
+    } catch (err) {
+      console.error("Failed to delete plan", err);
+      toast.error(err.response?.data?.message || "Failed to delete plan");
+    }
+  };
+
   // ================= EXPERIENCE CRUD OPERATIONS =================
   
-  // Open modal for adding experience
   const handleAddExperience = () => {
     setEditingExperience(null);
     setExperienceForm({
@@ -382,7 +551,6 @@ export default function ExpertProfile() {
     setShowExperienceModal(true);
   };
 
-  // Open modal for editing experience
   const handleEditExperience = (exp) => {
     setEditingExperience(exp);
     setExperienceForm({
@@ -396,17 +564,14 @@ export default function ExpertProfile() {
     setShowExperienceModal(true);
   };
 
-  // Handle experience form input change
   const handleExperienceFormChange = (field, value) => {
     setExperienceForm(prev => ({ ...prev, [field]: value }));
   };
 
-  // Handle certificate file change
   const handleCertificateChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Clean up old preview URL if exists
     if (experienceForm.certificatePreview && typeof experienceForm.certificatePreview === 'string' && experienceForm.certificatePreview.startsWith('blob:')) {
       URL.revokeObjectURL(experienceForm.certificatePreview);
     }
@@ -418,9 +583,7 @@ export default function ExpertProfile() {
     }));
   };
 
-  // Submit experience (add or update)
   const handleSubmitExperience = async () => {
-    // Validation
     if (!experienceForm.title.trim()) {
       toast.error("Title is required");
       return;
@@ -447,19 +610,14 @@ export default function ExpertProfile() {
       }
 
       if (editingExperience) {
-        // Update existing experience
         await updateExperienceApi(editingExperience.id, formData);
         toast.success("Experience updated successfully!");
       } else {
-        // Add new experience
         await addExperienceApi(formData);
         toast.success("Experience added successfully!");
       }
 
-      // Reload experiences
       await loadExperiences();
-      
-      // Close modal
       setShowExperienceModal(false);
       setExperienceForm({
         title: "",
@@ -478,7 +636,6 @@ export default function ExpertProfile() {
     }
   };
 
-  // Delete experience
   const handleDeleteExperience = async (id) => {
     if (!window.confirm("Are you sure you want to delete this experience?")) {
       return;
@@ -553,7 +710,6 @@ export default function ExpertProfile() {
     return Math.min(rate, 100).toFixed(0);
   }, [totalReviews, followersCount]);
 
-  // Memoize stats
   const stats = useMemo(() => [
     {
       icon: <FiUsers />,
@@ -750,7 +906,7 @@ export default function ExpertProfile() {
             </S.ProfileCardInner>
           </S.ProfileCard>
 
-          {/* Pricing Cards */}
+          {/* Pricing Cards - Includes Session Pricing */}
           <S.PricingSection>
             <S.PricingCard gradient="call">
               <S.PricingIconWrapper gradient="call">
@@ -797,6 +953,40 @@ export default function ExpertProfile() {
                 </S.PricingSlider>
               )}
             </S.PricingCard>
+
+            {/* Session Pricing Card */}
+            <S.PricingCard gradient="session">
+              <S.PricingIconWrapper gradient="session">
+                <FiPackage />
+              </S.PricingIconWrapper>
+              <S.PricingContent>
+                <S.PricingLabel>Session Rate</S.PricingLabel>
+                <S.PricingValue>₹{sessionPrice}</S.PricingValue>
+                <S.PricingPeriod>per {sessionDuration} min session</S.PricingPeriod>
+              </S.PricingContent>
+              {edit && (
+                <S.PricingSlider>
+                  <S.SliderLabel>Session Price: ₹{sessionPrice}</S.SliderLabel>
+                  <S.PremiumSlider
+                    type="range"
+                    min="50"
+                    max="5000"
+                    step="50"
+                    value={sessionPrice}
+                    onChange={e => setSessionPrice(Number(e.target.value))}
+                  />
+                  <S.SliderLabel style={{ marginTop: 8 }}>Session Duration: {sessionDuration} minutes</S.SliderLabel>
+                  <S.PremiumSlider
+                    type="range"
+                    min="15"
+                    max="120"
+                    step="5"
+                    value={sessionDuration}
+                    onChange={e => setSessionDuration(Number(e.target.value))}
+                  />
+                </S.PricingSlider>
+              )}
+            </S.PricingCard>
           </S.PricingSection>
 
           {/* Premium Tabs */}
@@ -812,6 +1002,12 @@ export default function ExpertProfile() {
               onClick={() => setActiveTab("experience")}
             >
               <FiBriefcase /> Experience & Documents
+            </S.PremiumTab>
+            <S.PremiumTab
+              active={activeTab === "plans"}
+              onClick={() => setActiveTab("plans")}
+            >
+              <FiDollarSign /> Subscription Plans
             </S.PremiumTab>
           </S.PremiumTabs>
 
@@ -1040,7 +1236,6 @@ export default function ExpertProfile() {
 
                 {/* Documents Grid */}
                 <S.DocumentsGrid>
-                  {/* Experience Certificate - This is from profile documents, not experience list */}
                   <S.DocumentCard
                     onMouseEnter={() => setHoveredDoc('experience')}
                     onMouseLeave={() => setHoveredDoc(null)}
@@ -1084,7 +1279,6 @@ export default function ExpertProfile() {
                     </S.DocumentInfo>
                   </S.DocumentCard>
 
-                  {/* Marksheet */}
                   <S.DocumentCard
                     onMouseEnter={() => setHoveredDoc('marksheet')}
                     onMouseLeave={() => setHoveredDoc(null)}
@@ -1128,7 +1322,6 @@ export default function ExpertProfile() {
                     </S.DocumentInfo>
                   </S.DocumentCard>
 
-                  {/* Aadhar Card */}
                   <S.DocumentCard
                     onMouseEnter={() => setHoveredDoc('aadhar')}
                     onMouseLeave={() => setHoveredDoc(null)}
@@ -1173,6 +1366,74 @@ export default function ExpertProfile() {
                   </S.DocumentCard>
                 </S.DocumentsGrid>
               </S.ExperienceGrid>
+            )}
+
+            {activeTab === "plans" && (
+              <S.PlansContainer>
+                <S.PlansHeader>
+                  <S.CardHeader>
+                    <FiDollarSign /> Subscription Plans
+                  </S.CardHeader>
+                  <S.AddPlanButton onClick={handleAddPlan}>
+                    <FiPlus /> Add Plan
+                  </S.AddPlanButton>
+                </S.PlansHeader>
+
+                {plansLoading ? (
+                  <S.LoadingContainer style={{ padding: "40px" }}>
+                    <S.LoadingSpinnerSmall />
+                    <S.LoadingText>Loading plans...</S.LoadingText>
+                  </S.LoadingContainer>
+                ) : subscriptionPlans.length === 0 ? (
+                  <S.NoPlansMessage>
+                    <FiPackage size={48} />
+                    <h3>No subscription plans created yet</h3>
+                    <p>Click the "Add Plan" button to create subscription packages for your clients</p>
+                  </S.NoPlansMessage>
+                ) : (
+                  <S.PlansGrid>
+                    {subscriptionPlans.map((plan) => (
+                      <S.PlanCard key={plan.id}>
+                        <S.PlanHeader>
+                          <S.PlanName>{plan.name}</S.PlanName>
+                          <S.PlanActions>
+                            <S.PlanEditButton onClick={() => handleEditPlan(plan)}>
+                              <FiEdit />
+                            </S.PlanEditButton>
+                            <S.PlanDeleteButton onClick={() => handleDeletePlan(plan.id, plan.name)}>
+                              <FiTrash2 />
+                            </S.PlanDeleteButton>
+                          </S.PlanActions>
+                        </S.PlanHeader>
+                        
+                        <S.PlanPrice>₹{plan.price}</S.PlanPrice>
+                        <S.PlanDuration>
+                          {plan.duration_type?.replace('_', ' ').toUpperCase()}
+                        </S.PlanDuration>
+                        
+                        <S.PlanFeatures>
+                          {plan.minutes_limit && (
+                            <S.PlanFeature>
+                              <FiClock /> {plan.minutes_limit} minutes limit
+                            </S.PlanFeature>
+                          )}
+                          {plan.calls_limit && (
+                            <S.PlanFeature>
+                              <FiPhoneCall /> {plan.calls_limit} calls limit
+                            </S.PlanFeature>
+                          )}
+                          <S.PlanFeature>
+                            {plan.call_enabled ? '✅' : '❌'} Call Support
+                          </S.PlanFeature>
+                          <S.PlanFeature>
+                            {plan.chat_enabled ? '✅' : '❌'} Chat Support
+                          </S.PlanFeature>
+                        </S.PlanFeatures>
+                      </S.PlanCard>
+                    ))}
+                  </S.PlansGrid>
+                )}
+              </S.PlansContainer>
             )}
           </S.TabContent>
         </S.Content>
@@ -1282,8 +1543,108 @@ export default function ExpertProfile() {
                 Cancel
               </S.ModalCancelButton>
               <S.ModalSubmitButton onClick={handleSubmitExperience} disabled={experienceSubmitLoading}>
-                {experienceSubmitLoading ? <S.LoadingSpinnerSmall /> : (editingExperience ? "" : "")}
+                {experienceSubmitLoading ? <S.LoadingSpinnerSmall /> : null}
                 {experienceSubmitLoading ? "Saving..." : (editingExperience ? "Update Experience" : "Add Experience")}
+              </S.ModalSubmitButton>
+            </S.ModalFooter>
+          </S.ModalContent>
+        </S.ModalOverlay>
+      )}
+
+      {/* Plan Add/Edit Modal */}
+      {showPlanModal && (
+        <S.ModalOverlay onClick={() => setShowPlanModal(false)}>
+          <S.ModalContent onClick={(e) => e.stopPropagation()}>
+            <S.ModalHeader>
+              <h2>{editingPlan ? "Edit Subscription Plan" : "Add Subscription Plan"}</h2>
+              <S.ModalCloseButton onClick={() => setShowPlanModal(false)}>
+                <FiX />
+              </S.ModalCloseButton>
+            </S.ModalHeader>
+            
+            <S.ModalBody>
+              <S.FormGroup>
+                <S.FormLabel>Plan Name *</S.FormLabel>
+                <S.FormInput
+                  type="text"
+                  value={planForm.name}
+                  onChange={(e) => handlePlanFormChange("name", e.target.value)}
+                  placeholder="e.g., Basic, Premium, Pro"
+                />
+              </S.FormGroup>
+
+              <S.FormGroup>
+                <S.FormLabel>Duration Type *</S.FormLabel>
+                <S.FormSelect
+                  value={planForm.duration_type}
+                  onChange={(e) => handlePlanFormChange("duration_type", e.target.value)}
+                >
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly (3 months)</option>
+                  <option value="half_yearly">Half Yearly (6 months)</option>
+                  <option value="yearly">Yearly (12 months)</option>
+                </S.FormSelect>
+              </S.FormGroup>
+
+              <S.FormGroup>
+                <S.FormLabel>Price * (₹)</S.FormLabel>
+                <S.FormInput
+                  type="number"
+                  value={planForm.price}
+                  onChange={(e) => handlePlanFormChange("price", e.target.value)}
+                  placeholder="999"
+                />
+              </S.FormGroup>
+
+              <S.FormGroup>
+                <S.FormLabel>Minutes Limit</S.FormLabel>
+                <S.FormInput
+                  type="number"
+                  value={planForm.minutes_limit}
+                  onChange={(e) => handlePlanFormChange("minutes_limit", e.target.value)}
+                  placeholder="Unlimited if empty"
+                />
+                <S.FormHint>Total minutes available in this plan</S.FormHint>
+              </S.FormGroup>
+
+              <S.FormGroup>
+                <S.FormLabel>Calls Limit</S.FormLabel>
+                <S.FormInput
+                  type="number"
+                  value={planForm.calls_limit}
+                  onChange={(e) => handlePlanFormChange("calls_limit", e.target.value)}
+                  placeholder="Unlimited if empty"
+                />
+                <S.FormHint>Number of calls allowed</S.FormHint>
+              </S.FormGroup>
+
+              <S.CheckboxGroup>
+                <S.CheckboxLabel>
+                  <S.CheckboxInput
+                    type="checkbox"
+                    checked={planForm.call_enabled}
+                    onChange={(e) => handlePlanFormChange("call_enabled", e.target.checked)}
+                  />
+                  Enable Call Support
+                </S.CheckboxLabel>
+                <S.CheckboxLabel>
+                  <S.CheckboxInput
+                    type="checkbox"
+                    checked={planForm.chat_enabled}
+                    onChange={(e) => handlePlanFormChange("chat_enabled", e.target.checked)}
+                  />
+                  Enable Chat Support
+                </S.CheckboxLabel>
+              </S.CheckboxGroup>
+            </S.ModalBody>
+
+            <S.ModalFooter>
+              <S.ModalCancelButton onClick={() => setShowPlanModal(false)}>
+                Cancel
+              </S.ModalCancelButton>
+              <S.ModalSubmitButton onClick={handleSubmitPlan} disabled={planSubmitLoading}>
+                {planSubmitLoading ? <S.LoadingSpinnerSmall /> : null}
+                {planSubmitLoading ? "Saving..." : (editingPlan ? "Update Plan" : "Add Plan")}
               </S.ModalSubmitButton>
             </S.ModalFooter>
           </S.ModalContent>

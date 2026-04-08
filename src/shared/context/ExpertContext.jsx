@@ -38,13 +38,14 @@ const DEFAULT_STATE = {
 };
 
 const DEFAULT_PRICE = {
-  id: null,
-  call_per_minute: 0,
-  chat_per_minute: 0,
+  pricing_modes: [],
+  call: 0,
+  chat: 0,
+  session: null,
   reason_for_price: "",
   handle_customer: "",
   strength: "",
-  weakness: "",
+  weakness: ""
 };
 
 /* ================= PROVIDER ================= */
@@ -184,35 +185,40 @@ export const ExpertProvider = ({ children }) => {
 
   /* ================= FETCH PRICE (CRITICAL FIX) ================= */
 
-  const fetchPrice = useCallback(async () => {
-    try {
-      setPriceLoading(true);
+ const fetchPrice = useCallback(async () => {
+  try {
+    setPriceLoading(true);
 
-      // ✅ FIX: No expertId parameter needed - uses token from headers
-      const res = await getMyPriceApi();
-      const priceData = res?.data || res;
+    const res = await getMyPriceApi();
 
-      if (!priceData || !priceData.id) {
-        console.log("No price data found");
-        return;
-      }
+    // ✅ HANDLE BOTH CASES
+    const priceData = res?.data?.data || res?.data || res;
 
-      setExpertPrice({
-        id: priceData.id,
-        call_per_minute: Number(priceData.call_per_minute) || 0,
-        chat_per_minute: Number(priceData.chat_per_minute) || 0,
-        reason_for_price: priceData.reason_for_price || "",
-        handle_customer: priceData.handle_customer || "",
-        strength: priceData.strength || "",
-        weakness: priceData.weakness || "",
-      });
-    } catch (err) {
-      console.error("Price load failed", err);
-      // Don't set error state - just log and continue
-    } finally {
-      setPriceLoading(false);
+    console.log("API RAW:", res);
+    console.log("PARSED PRICE:", priceData);
+
+    if (!priceData || !priceData.pricing_modes) {
+      console.log("No price data found");
+      return;
     }
-  }, []);
+
+    setExpertPrice({
+      pricing_modes: priceData.pricing_modes || [],
+      call: priceData.call?.per_minute || 0,
+      chat: priceData.chat?.per_minute || 0,
+      session: priceData.session || null,
+      reason_for_price: priceData.reason_for_price || "",
+      handle_customer: priceData.handle_customer || "",
+      strength: priceData.strength || "",
+      weakness: priceData.weakness || ""
+    });
+
+  } catch (err) {
+    console.error("Price load failed", err);
+  } finally {
+    setPriceLoading(false);
+  }
+}, []);
 
   /* ================= AUTO LOAD AFTER LOGIN (OPTIMIZED) ================= */
 

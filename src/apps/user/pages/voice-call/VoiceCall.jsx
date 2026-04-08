@@ -30,6 +30,7 @@ import {
 import { usePublicExpert as useExpert } from "../../context/PublicExpertContext";
 import { useSocket } from "../../../../shared/hooks/useSocket";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
+import { useLocation } from "react-router-dom";
 
 import {
   createPeer,
@@ -54,7 +55,14 @@ export default function VoiceCall() {
   const userId = user?.id;
   const socket = useSocket(userId, "user");
   const audioRef = useRef(null);
-  
+  const location = useLocation();
+
+const validModes = ["per_minute", "session", "subscription"];
+
+const pricingMode = validModes.includes(location.state?.pricingMode)
+  ? location.state.pricingMode
+  : "per_minute";
+
   // Refs for stability
   const callIdRef = useRef(null);
   const callStartedRef = useRef(false);
@@ -121,11 +129,12 @@ export default function VoiceCall() {
   try {
     socket.emit(CALL_EVENTS.START, {
       expertId: Number(expertId),
+      pricing_mode: pricingMode,
     });
   } catch (error) {
     callStartedRef.current = false;
   }
-}, [expertId, socket]);
+}, [expertId, socket, pricingMode]);
   // Auto-start on mount
 useEffect(() => {
   if (!resumeChecked) return;
@@ -300,7 +309,7 @@ return () => {
   socket.on("expert_now_online", handleExpertOnline);
 
   return () => socket.off("expert_now_online", handleExpertOnline);
-}, [socket]);
+}, [socket , startCall]);
 
   // Reconnect handler
   useEffect(() => {

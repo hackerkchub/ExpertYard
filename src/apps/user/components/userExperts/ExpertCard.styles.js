@@ -232,3 +232,45 @@ export const GhostBtn = styled.button`
     color: #1d4ed8;
   }
 `;
+
+// Add these to your existing styles file
+
+export const PricingBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  
+  ${props => props.type === 'per_minute' && `
+    background: #dbeafe;
+    color: #1e40af;
+  `}
+  
+  ${props => props.type === 'session' && `
+    background: #fef3c7;
+    color: #92400e;
+  `}
+  
+  ${props => props.type === 'plans' && `
+    background: #ede9fe;
+    color: #5b21b6;
+  `}
+`;
+
+export const PricingInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: #f3e8ff;
+  border-radius: 8px;
+  font-size: 11px;
+  color: #6b21a5;
+  
+  span {
+    flex: 1;
+  }
+`;

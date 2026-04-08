@@ -24,9 +24,6 @@ export default function ProfileDropdown({ user, onLogout }) {
         <FiUser /> My Profile
       </DropItem>
 
-      <DropItem onClick={() => navigate("/expert/settings")}>
-        <FiSettings /> Settings
-      </DropItem>
 
       <DropItem danger onClick={onLogout}>
         <FiLogOut /> Logout

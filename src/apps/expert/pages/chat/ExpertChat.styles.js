@@ -10,23 +10,27 @@ export const PageWrap = styled.div`
   display: flex;
   flex-direction: column;
   position: fixed;
+  /* Desktop settings */
   top: 60px; 
   bottom: 0;
-  background: #f4f5f7;
-  overflow: hidden;
   left: 260px; 
   width: calc(100% - 260px); 
+  background: #f4f5f7;
+  overflow: hidden;
 
   @media (max-width: 768px) {
+    top: 0; /* Header alignment fix for mobile */
     left: 0; 
     width: 100%; 
+    /* Use dvh to prevent shifting when keyboard/address bar appears */
+    height: 100dvh; 
+    bottom: env(safe-area-inset-bottom);
   }
 `;
 
 export const ChatLayout = styled.div`
   height: 100%;
   width: 100%; 
-  margin: 0;
   grid-template-columns: 320px 1fr;
   background: #ffffff;
   border-top: 1px solid #e1e4e8;
@@ -37,6 +41,8 @@ export const ChatLayout = styled.div`
   }
 
   @media (max-width: 768px) {
+    display: flex;
+    flex-direction: column;
     grid-template-columns: 1fr; 
     border: none;
   }
@@ -52,6 +58,8 @@ export const LeftPanel = styled.div`
 
   @media (max-width: 768px) {
     width: 100%;
+    /* Hide list when a chat is active on mobile if you handle it in JS */
+    display: ${({ isChatting }) => (isChatting ? "none" : "flex")};
     border-right: none;
   }
 `;
@@ -100,6 +108,7 @@ export const LeftTab = styled.button`
 export const ChatList = styled.div`
   flex: 1;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   &::-webkit-scrollbar { width: 5px; }
   &::-webkit-scrollbar-thumb { background: #cfcfcf; border-radius: 10px; }
 `;
@@ -150,6 +159,7 @@ export const RightPanel = styled.div`
   height: 100%;
   overflow: hidden;
   min-width: 0;
+  position: relative;
 `;
 
 export const UserHeader = styled.div`
@@ -157,7 +167,10 @@ export const UserHeader = styled.div`
   padding: 14px 16px;
   border-bottom: 1px solid #e1e4e8;
   background: #ffffff;
-  z-index: 5;
+  z-index: 10;
+  /* Fix header at top for mobile */
+  position: sticky;
+  top: 0;
 `;
 
 export const UserInfo = styled.div`
@@ -185,6 +198,7 @@ export const ChatArea = styled.div`
   flex-direction: column;
   min-height: 0;
   background: #ffffff;
+  position: relative;
 `;
 
 export const Messages = styled.div`
@@ -194,6 +208,8 @@ export const Messages = styled.div`
   flex-direction: column;
   gap: 12px;
   overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
 
   &::-webkit-scrollbar { width: 6px; }
@@ -220,7 +236,6 @@ export const Bubble = styled.div`
   background: ${({ expert }) => (expert ? "#0a66c2" : "#efefef")};
   color: ${({ expert }) => (expert ? "#ffffff" : "#000000")};
   border: none;
-
   word-wrap: break-word;
   overflow-wrap: break-word;
   word-break: break-word; 
@@ -248,6 +263,11 @@ export const ChatInputWrap = styled.div`
   align-items: center; 
   gap: 12px;
   border-top: 1px solid #efefef;
+  /* Fix footer at bottom for mobile */
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
 
   @media (max-width: 480px) {
     padding: 10px;
@@ -257,21 +277,21 @@ export const ChatInputWrap = styled.div`
 
 export const ChatInput = styled.textarea`
   flex: 1;
-  padding: 12px 18px;
-  border-radius: 22px; 
+  padding: 10px 16px;
+  border-radius: 20px; 
   border: 1px solid #dbdbdb;
-  font-size: 14px;
+  font-size: 16px; /* 16px prevents iOS auto-zoom on focus */
   background: #fafafa;
   resize: none;
-  min-height: 44px;
-  max-height: 120px;
+  min-height: 40px;
+  max-height: 100px;
   outline: none;
   font-family: inherit;
   color: #000000;
   transition: all 0.2s ease;
 
   &:focus {
-    border-color: #a8a8a8;
+    border-color: #0a66c2;
     background: #ffffff;
   }
 
@@ -297,16 +317,13 @@ export const SendButton = styled.button`
     transform: scale(1.05);
   }
 
-  &:active:not(:disabled) {
-    transform: scale(0.95);
-  }
-
   &:disabled {
     color: #b2dffc; 
     cursor: not-allowed;
   }
 `;
 
+/* --- RE-EXPORTING ALL MISSING COMPONENTS TO PREVENT ERRORS --- */
 export const LoadingSpinner = styled.div` display: flex; align-items: center; justify-content: center; height: 100%; color: #0a66c2; font-weight: 600; `;
 export const NoChatSelected = styled.div` display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #666; font-size: 15px; font-weight: 500; `;
 export const ErrorMessage = styled.div` display: flex; align-items: center; justify-content: center; height: 100%; color: #d11124; font-weight: 600; `;

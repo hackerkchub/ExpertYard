@@ -25,7 +25,7 @@ import {
 } from "../styles/Topbar.styles"; // ✅ REMOVED SearchSuggestions
 
 import { FiBell, FiMessageSquare, FiMenu, FiPlus, FiHome, FiFileText, FiCalendar, FiBarChart2, FiSettings, FiX } from "react-icons/fi";
-import Logo from "../../../assets/logo.png";
+import Logo from "../../../assets/logo.webp";
 import NotificationPopover from "./NotificationPopover";
 import ProfileDropdown from "./ProfileDropdown";
 

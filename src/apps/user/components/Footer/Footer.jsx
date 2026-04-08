@@ -20,7 +20,7 @@ import {
   BottomLinks,
   BottomLink
 } from "./Footer.styles";
-import logoImg from "../../../../assets/logo.png";
+import logoImg from "../../../../assets/logo.webp";
 
 // Icons
 import { FaFacebookF, FaTwitter, FaLinkedinIn, FaYoutube, FaInstagram } from "react-icons/fa";

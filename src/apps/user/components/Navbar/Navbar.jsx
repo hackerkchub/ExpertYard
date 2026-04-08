@@ -12,7 +12,7 @@ import {
 
 import { FaWallet } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
-import logo from "../../../../assets/logo.png";
+import logo from "../../../../assets/logo.webp";
 
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";

@@ -1,41 +1,19 @@
 import styled, { keyframes } from "styled-components";
 
-// Animations
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 `;
 
+/* PAGE WRAPPER */
 export const PageWrap = styled.div`
-  height: 100vh;
-  width: 100%; /* 👈 Use 100% instead of 100vw to prevent scrollbar width push */
-  background-color: #f3f2ef;
-  padding: 24px 16px; /* Desktop side padding */
-  box-sizing: border-box;
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  /* Custom Scrollbar for Desktop/Laptop */
-  &::-webkit-scrollbar {
-    width: 6px; /* Slightly thinner for a modern look */
-  }
-  &::-webkit-scrollbar-thumb {
-    background-color: #c1c1c1;
-    border-radius: 4px;
-  }
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  @media (max-width: 768px) {
-    padding: 12px 8px; /* 👈 Clean, minimal side padding for mobile (no extra right gap) */
-  }
-
-  @media (max-width: 480px) {
-    padding: 8px 4px; /* Even smaller screens get tighter padding */
-  }
+  width: 100%;
+  min-height: 100vh;
+  background: #fafafa; 
+  display: flex;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 `;
-
 
 export const Content = styled.div`
   max-width: 1128px;
@@ -134,12 +112,13 @@ export const CreationInputFake = styled.div`
 export const CreationActions = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Mobile par icons ek taraf, button ek taraf */
-  gap: 12px;
+  justify-content: flex-start; /* Mobile par icons ek taraf, button ek taraf */
+  gap: 10px;
   width: 100%;
+  flex-wrap: wrap;
 
   @media (min-width: 769px) {
-    width: auto;
+    width: 100%;
     justify-content: flex-end;
   }
 `;
@@ -174,6 +153,7 @@ export const PrimaryButton = styled.button`
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
+  flex-shrink: 0; 
 
   &:hover {
     background: #004182;
@@ -182,6 +162,7 @@ export const PrimaryButton = styled.button`
   @media (max-width: 480px) {
     padding: 8px 20px;
     font-size: 14px;
+     width: 100%;
   }
 `;
 

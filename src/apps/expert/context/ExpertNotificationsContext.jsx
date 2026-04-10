@@ -562,11 +562,14 @@ export function ExpertNotificationsProvider({ children }) {
     };
 
     const handleCancelled = ({ callId }) => {
-      const notif = getNotification(callId);
-      if (notif) {
-        updateStatus(notif, "cancelled");
-      }
-    };
+  const notif = getNotification(callId);
+  if (notif) {
+    updateStatus(notif, "cancelled");
+    soundManager.stopAll();
+  }
+
+  window.dispatchEvent(new Event("call_cancelled")); // 🔥 ADD THIS
+};
     
     const handleRejected = ({ callId, status }) => {
       const notif = getNotification(callId);

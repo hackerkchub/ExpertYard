@@ -80,7 +80,13 @@ export const StatusDot = styled.span`
   height: 14px;
   border-radius: 999px;
   border: 2px solid #ffffff;
-  background: ${({ $online }) => ($online ? "#22c55e" : "#94a3b8")};
+background: ${({ $online }) =>
+  $online === true
+    ? "#22c55e"   // 🟢 online
+    : $online === false
+    ? "#ef4444"   // 🔴 offline
+    : "#94a3b8"   // ⚪ loading
+};
 `;
 
 /* ---------- text ---------- */

@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   PageWrapper,
   CallCard,
@@ -30,7 +29,7 @@ import {
 import { usePublicExpert as useExpert } from "../../context/PublicExpertContext";
 import { useSocket } from "../../../../shared/hooks/useSocket";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
-import { useLocation } from "react-router-dom";
+// import { useLocation } from "react-router-dom";
 
 import {
   createPeer,
@@ -224,6 +223,13 @@ return () => {
   useEffect(() => {
     console.log("📡 Setting up voice call listeners");
 
+    const onCallCreated = ({ callId }) => {
+  console.log("✅ Call created:", callId);
+
+  setCallId(callId);
+  callIdRef.current = callId; // 🔥 IMPORTANT
+};
+
     const onConnected = ({ callId: connectedCallId }) => {
       soundManager.stopAll();
       console.log("✅ Call connected:", connectedCallId);
@@ -253,28 +259,29 @@ return () => {
       addIce(candidate);
     };
 
-    const onBusy = () => {
-      soundManager.stopAll();
-      console.log("🚫 Expert busy");
-      setCallState("busy");
-      closePeer();
-    };
-
-  const onOffline = ({ message }) => {
+   const onBusy = () => {
   soundManager.stopAll();
-
-  setCallState("offline");
-
-  alert(message || "Expert is offline. Please try again later.");
+  callStartedRef.current = false; // ✅ ADD
+  setCallState("busy");
+  closePeer();
 };
 
-    const onEnded = ({ reason }) => {
-      soundManager.stopAll();
-      console.log("❌ Call ended:", reason);
-      setCallState("ended");
-      closePeer();
-    };
+const onOffline = ({ message }) => {
+  soundManager.stopAll();
+  callStartedRef.current = false; // ✅ ADD
+  setCallState("offline");
+};
 
+   const onEnded = ({ reason }) => {
+  soundManager.stopAll();
+  console.log("❌ Call ended:", reason);
+
+  callStartedRef.current = false; // ✅ ADD THIS
+
+  setCallState("ended");
+  closePeer();
+};
+    socket.on("call:created", onCallCreated);
     socket.on(CALL_EVENTS.CONNECTED, onConnected);
     socket.on("webrtc:answer", onWebRTCAnswer);
     socket.on("webrtc:ice", onWebRTCIce);
@@ -284,6 +291,7 @@ return () => {
 
     return () => {
       console.log("🧹 Cleaning up voice call listeners");
+      socket.off("call:created", onCallCreated);
       socket.off(CALL_EVENTS.CONNECTED, onConnected);
       socket.off("webrtc:answer", onWebRTCAnswer);
       socket.off("webrtc:ice", onWebRTCIce);
@@ -377,26 +385,36 @@ return () => {
 
   // End call
   const handleEnd = useCallback(() => {
-    if (isCleaningUpRef.current) return;
-    isCleaningUpRef.current = true;
+  if (isCleaningUpRef.current) return;
+  isCleaningUpRef.current = true;
 
-    console.log("🔚 Ending call:", callIdRef.current);
-    soundManager.stopAll();
-    
-    if (callIdRef.current) {
-      socket.emit(CALL_EVENTS.END, {
-        callId: callIdRef.current,
-        by: "user"
-      });
-    }
-    
-    setTimeout(() => {
-      closePeer();
-      goBackToProfile();
-      callStartedRef.current = false;
-      isCleaningUpRef.current = false;
-    }, 200);
-  }, [goBackToProfile, socket]);
+  console.log("🔚 Ending call:", callIdRef.current);
+
+  soundManager.stopAll();
+
+  if (callIdRef.current) {
+    // ✅ NORMAL END
+    socket.emit(CALL_EVENTS.END, {
+      callId: callIdRef.current,
+      by: "user"
+    });
+  } else {
+    // 🔥 IMPORTANT FIX
+    console.log("⚠️ No callId yet → cancelling attempt");
+
+    socket.emit("call:cancel_attempt", {
+      expertId: Number(expertId)
+    });
+  }
+
+  setTimeout(() => {
+    closePeer();
+    goBackToProfile();
+    callStartedRef.current = false;
+    isCleaningUpRef.current = false;
+  }, 200);
+}, [goBackToProfile, socket, expertId]);
+
 
   // Mute toggle
   const handleMute = useCallback(() => {

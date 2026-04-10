@@ -294,16 +294,16 @@ export const FiltersSidebar = styled.aside`
   min-width: 0;
   @media (max-width: 991px) {
     position: fixed; top: 0; left: 0; bottom: 0; width: 290px; background: white; z-index: 2001; padding: 25px;
-    display: ${props => props.show ? 'block' : 'none'}; animation: ${slideIn} 0.3s ease-out; overflow-y: auto;
+    display: ${props => props.$show ? 'block' : 'none'}; animation: ${slideIn} 0.3s ease-out; overflow-y: auto;
   }
 `;
 
 export const FilterSection = styled.div` background: white; border: 1px solid ${colors.border}; border-radius: 12px; padding: 18px; margin-bottom: 16px; width: 100%; box-sizing: border-box; `;
 export const FilterSectionTitle = styled.h3` font-size: 16px; font-weight: 700; margin-bottom: 14px; color: ${colors.textMain}; `;
 export const SubcategoryFilterList = styled.div` display: flex; flex-direction: column; gap: 10px; `;
-export const SubcategoryFilterItem = styled.div` display: flex; align-items: center; padding: 10px; border-radius: 8px; cursor: pointer; background: ${props => props.isSelected ? colors.primaryLight : 'transparent'}; `;
-export const SubcategoryRadio = styled.div` width: 18px; height: 18px; border-radius: 50%; border: 2px solid ${colors.border}; margin-right: 12px; flex-shrink: 0; background: ${props => props.isSelected ? colors.primary : 'transparent'}; `;
-export const SubcategoryFilterLabel = styled.span` font-size: 15px; font-weight: 600; color: ${props => props.isSelected ? colors.primary : colors.textMain}; `;
+export const SubcategoryFilterItem = styled.div` display: flex; align-items: center; padding: 10px; border-radius: 8px; cursor: pointer; background: ${props => props.$isSelected ? colors.primaryLight : 'transparent'}; `;
+export const SubcategoryRadio = styled.div` width: 18px; height: 18px; border-radius: 50%; border: 2px solid ${colors.border}; margin-right: 12px; flex-shrink: 0; background: ${props => props.$isSelected ? colors.primary : 'transparent'}; `;
+export const SubcategoryFilterLabel = styled.span` font-size: 15px; font-weight: 600; color: ${props => props.$isSelected ? colors.primary : colors.textMain}; `;
 export const SubcategoryCount = styled.span` margin-left: auto; font-size: 13px; color: ${colors.textSecondary}; font-weight: 700; background: #f0f2f5; padding: 3px 10px; border-radius: 14px; `;
 export const SortSelect = styled.select` width: 100%; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: 600; color: ${colors.textMain}; border: 1px solid ${colors.border}; background: white; `;
 export const ClearFiltersButton = styled.button` background: none; border: none; color: ${colors.danger}; font-size: 14px; margin-top: 15px; cursor: pointer; font-weight: 700; text-decoration: underline; `;
@@ -333,7 +333,7 @@ export const BadgeText = styled.div` font-size: 13px; color: #594300; line-heigh
 export const MobileFilterToggle = styled.div` display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; width: 100%; @media (min-width: 992px) { display: none; } `;
 export const FilterToggleButton = styled.button` background: white; border: 1px solid ${colors.border}; padding: 10px 18px; border-radius: 24px; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; cursor: pointer; color: ${colors.textMain}; `;
 export const MobileResultsInfo = styled.span` font-size: 14px; font-weight: 700; color: ${colors.textSecondary}; `;
-export const MobileFilterOverlay = styled.div` position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: ${props => props.show ? 'block' : 'none'}; `;
+export const MobileFilterOverlay = styled.div` position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: ${props => props.$show ? 'block' : 'none'}; `;
 export const MobileFilterHeader = styled.div` display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; h3 { font-size: 19px; font-weight: 800; color: ${colors.textMain}; } `;
 export const MobileFilterClose = styled.button` background: none; border: none; font-size: 26px; cursor: pointer; color: ${colors.textMain}; `;
 export const NoResults = styled.div` text-align: center; padding: 60px 20px; width: 100%; `;
@@ -504,9 +504,9 @@ export const PricingInfo = styled.div`
 // export const PrimaryButton = styled.button` background: white; color: ${colors.primary}; border: none; padding: 12px 24px; border-radius: 24px; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; margin: 0 auto; `;
 // export const SecondaryButton = styled.button` background: ${colors.primaryLight}; color: ${colors.primary}; border: none; padding: 12px 24px; border-radius: 24px; font-weight: 700; font-size: 14px; `;
 export const FilterChipsContainer = styled.div` display: flex; gap: 12px; overflow-x: auto; padding: 8px 4px 16px; scroll-behavior: smooth; position: relative; width: 100%; box-sizing: border-box; &::-webkit-scrollbar { display: none; } animation: ${scrollHintLoop} 2s ease-in-out; `;
-export const FilterChip = styled.button` white-space: nowrap; padding: 10px 18px; border-radius: 24px; font-size: 15px; font-weight: 600; border: 1px solid ${props => props.isActive ? colors.primary : colors.border}; background: ${props => props.isActive ? colors.primary : colors.white}; color: ${props => props.isActive ? colors.white : colors.textMain}; flex-shrink: 0; `;
+export const FilterChip = styled.button` white-space: nowrap; padding: 10px 18px; border-radius: 24px; font-size: 15px; font-weight: 600; border: 1px solid ${props => props.$isActive ? colors.primary : colors.border}; background: ${props => props.$isActive ? colors.primary : colors.white}; color: ${props => props.$isActive ? colors.white : colors.textMain}; flex-shrink: 0; `;
 export const Breadcrumb = styled.div` display: flex; align-items: center; gap: 8px; font-size: 14px; padding: 12px 16px; color: ${colors.textSecondary}; flex-wrap: wrap; `;
-export const BreadcrumbItem = styled.span` cursor: pointer; color: ${props => props.active ? colors.textMain : colors.primary}; font-weight: ${props => props.active ? '700' : '600'}; `;
+export const BreadcrumbItem = styled.span` cursor: pointer; color: ${props => props.$active ? colors.textMain : colors.primary}; font-weight: ${props => props.$active ? '700' : '600'}; `;
 export const BreadcrumbSeparator = styled.span` display: flex; align-items: center; font-size: 13px; `;
 export const ExpertVerified = styled.span` color: ${colors.verified}; font-size: 15px; flex-shrink: 0; `;
 export const VerificationBadge = styled.div` display: flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 700; color: ${colors.verified}; `;

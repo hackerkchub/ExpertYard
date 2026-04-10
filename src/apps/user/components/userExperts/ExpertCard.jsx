@@ -351,7 +351,7 @@ const ExpertCard = ({ data, mode, maxPrice, onStartChat, onStartCall }) => {
         <CardHeader>
           <AvatarWrap $isAI={false}>
             <AvatarImg src={data.profile_photo || DEFAULT_AVATAR} alt={data.name} />
-            <StatusDot $online />
+            <StatusDot $online={data.isOnline === true} />
           </AvatarWrap>
 
           <div>

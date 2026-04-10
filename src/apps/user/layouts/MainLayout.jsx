@@ -17,19 +17,24 @@ export default function MainLayout() {
   /* ----------------------------------
      🔌 CONNECT SOCKET AFTER LOGIN
   ---------------------------------- */
-  useEffect(() => {
-    if (!user?.id) return;
+ useEffect(() => {
+  if (!user?.id) return;
 
-    connectSocket({
-      userId: Number(user.id),
-      role: "user",
-    });
+  connectSocket({
+    userId: Number(user.id),
+    role: "user",
+  });
 
-    return () => {
-      disconnectSocket();
-    };
-  }, [user?.id]);
+  // ✅ IMPORTANT: register emit karo
+  socket.emit("register", {
+    userId: Number(user.id),
+    role: "user",
+  });
 
+  return () => {
+    disconnectSocket();
+  };
+}, [user?.id]);
   /* ----------------------------------
    🔔 GENERATE FCM TOKEN
 ---------------------------------- */

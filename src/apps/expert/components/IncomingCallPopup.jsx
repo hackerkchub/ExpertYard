@@ -11,6 +11,7 @@ import { FaPhoneAlt, FaVideo } from "react-icons/fa";
 import * as S from "../styles/IncomingCallPopup.styles";
 import { soundManager } from "../../../shared/services/sound/soundManager";
 import { SOUNDS } from "../../../shared/services/sound/soundRegistry";
+import { useSocket } from "../../../shared/hooks/useSocket";
 
 export default function IncomingCallPopup({
   caller,
@@ -22,6 +23,7 @@ export default function IncomingCallPopup({
   const [processing, setProcessing] = useState(false);
   const [visible, setVisible] = useState(true);
 
+  const socket = useSocket();
   /* 🔁 Re-open popup when new caller comes */
   useEffect(() => {
     if (caller) {
@@ -50,18 +52,24 @@ export default function IncomingCallPopup({
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-  const handleCancel = () => {
-    setVisible(false);
+  // correct path
+
+
+
+useEffect(() => {
+  const handleCancelled = ({ callId }) => {
+    console.log("❌ Call cancelled received:", callId);
+
     soundManager.stopAll();
+    setVisible(false);
   };
 
-  window.addEventListener("call_cancelled", handleCancel);
+  socket.on("call:cancelled", handleCancelled);
 
   return () => {
-    window.removeEventListener("call_cancelled", handleCancel);
+    socket.off("call:cancelled", handleCancelled);
   };
-}, []);
+}, [socket]);
 
   if (!caller || !visible) return null;
 

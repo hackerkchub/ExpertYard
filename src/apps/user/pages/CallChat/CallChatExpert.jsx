@@ -1,6 +1,6 @@
 // src/apps/user/pages/UserExpertsPage.jsx
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { useSearchParams, useNavigate, useLocation } from "react-router-dom"; // ✅ useLocation add
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { FiX } from "react-icons/fi";
 
 import {
@@ -68,16 +68,16 @@ const languagesOptions = [
 
 export default function UserExpertsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const location = useLocation(); // ✅ URL search params ke liye
+  const location = useLocation();
   const navigate = useNavigate();
   const modeFromUrl = searchParams.get("mode");
-  const searchQuery = searchParams.get("q"); // ✅ Navbar se aaya search query
+  const searchQuery = searchParams.get("q");
 
   const [tab, setTab] = useState("call");
 
   // base profiles from ExpertContext (/expert-profile/list)
   const { experts, expertsLoading } = useExpert();
-  const { categories, subCategories } = useCategory(); // ✅ categories bhi use
+  const { categories, subCategories } = useCategory();
   const { isLoggedIn, user } = useAuth();
   const userId = user?.id;
   const { balance } = useWallet();
@@ -88,7 +88,7 @@ export default function UserExpertsPage() {
   const [maxPrice, setMaxPrice] = useState("");
   const [sortPrice, setSortPrice] = useState("");
 
-  // ✅ SEARCH FILTERS FROM URL (Category/Subcategory auto-filter)
+  // SEARCH FILTERS FROM URL (Category/Subcategory auto-filter)
   const [searchCategoryId, setSearchCategoryId] = useState(null);
   const [searchSubcategoryId, setSearchSubcategoryId] = useState(null);
 
@@ -96,12 +96,15 @@ export default function UserExpertsPage() {
   const [serverExperts, setServerExperts] = useState([]);
   const [filterLoading, setFilterLoading] = useState(false);
 
-  // ✅ CHAT WAITING STATES (same as before)
+  // CHAT WAITING STATES
   const [showWaitingPopup, setShowWaitingPopup] = useState(false);
   const [waitingText, setWaitingText] = useState("Waiting for expert to accept...");
   const [chatRequestId, setChatRequestId] = useState(null);
   const [chatRejectedMessage, setChatRejectedMessage] = useState("");
   const [showChatCancelled, setShowChatCancelled] = useState(false);
+
+  // ✅ 1. ONLINE/OFFLINE STATE
+  const [onlineExperts, setOnlineExperts] = useState({});
 
   // URL → TAB sync
   useEffect(() => {
@@ -110,15 +113,13 @@ export default function UserExpertsPage() {
     }
   }, [modeFromUrl]);
 
-  // ✅ NEW: URL Search Query → Category/Subcategory Auto-Filter
+  // URL Search Query → Category/Subcategory Auto-Filter
   useEffect(() => {
     if (searchQuery && categories.length > 0 && subCategories.length > 0) {
-      // Check if query matches category name
       const matchedCategory = categories.find(cat => 
         cat.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
       
-      // Check if query matches subcategory name
       const matchedSubcategory = subCategories.find(sub => 
         sub.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
@@ -132,16 +133,14 @@ export default function UserExpertsPage() {
         setSearchCategoryId(null);
         console.log(`✅ Subcategory match: "${matchedSubcategory.name}" (ID: ${matchedSubcategory.id})`);
       } else {
-        // No category/subcategory match → clear filters
         setSearchCategoryId(null);
         setSearchSubcategoryId(null);
       }
     }
   }, [searchQuery, categories, subCategories]);
 
-  // ✅ FIXED SOCKET EVENTS (same as before - no change needed)
+  // SOCKET EVENTS FOR CHAT
   useEffect(() => {
-    // ... same socket handlers as before
     const handleRequestPending = ({ request_id }) => {
       console.log("⏳ USER: Request pending:", request_id);
       setChatRequestId(request_id);
@@ -192,6 +191,93 @@ export default function UserExpertsPage() {
     };
   }, [navigate, userId]);
 
+  // ✅ 2. SOCKET LISTENERS FOR ONLINE/OFFLINE STATUS
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleMultipleStatus = (data) => {
+      setOnlineExperts(prev => {
+        const updated = { ...prev };
+        Object.keys(data).forEach(id => {
+          updated[String(id)] = data[id];
+        });
+        return updated;
+      });
+    };
+
+    const handleOnline = ({ expert_id }) => {
+      setOnlineExperts(prev => ({
+        ...prev,
+        [String(expert_id)]: true
+      }));
+    };
+
+    const handleOffline = ({ expert_id }) => {
+      setOnlineExperts(prev => ({
+        ...prev,
+        [String(expert_id)]: false
+      }));
+    };
+
+    socket.on("multiple_expert_status", handleMultipleStatus);
+    socket.on("expert_online", handleOnline);
+    socket.on("expert_offline", handleOffline);
+
+    return () => {
+      socket.off("multiple_expert_status", handleMultipleStatus);
+      socket.off("expert_online", handleOnline);
+      socket.off("expert_offline", handleOffline);
+    };
+  }, []);
+
+  const filteredList = useMemo(() => {
+    if (tab === "ai") return [];
+
+    const baseList = serverExperts && serverExperts.length > 0 ? serverExperts : experts;
+    let list = [...baseList];
+
+    // Profession filter (client-side)
+    if (profession !== "all") {
+      const key = profession.toLowerCase();
+      list = list.filter((e) =>
+        (e.position || "").toLowerCase().includes(
+          key === "doctors" ? "doctor" : key.slice(0, 3)
+        )
+      );
+    }
+
+    // Language filter (placeholder)
+    if (selectedLanguages.length > 0) {
+      list = list.filter(() => true);
+    }
+
+    return list;
+  }, [tab, experts, serverExperts, profession, selectedLanguages, searchCategoryId, searchSubcategoryId]);
+
+
+  // ✅ 3. EMIT CHECK_MULTIPLE_EXPERTS FOR CURRENT LIST
+  useEffect(() => {
+    if (!socket || !filteredList.length) return;
+
+    const send = () => {
+      const expertIds = filteredList.map(e => Number(e.expert_id || e.id));
+      socket.emit("check_multiple_experts", { expertIds });
+    };
+
+    if (socket.connected) send();
+
+    socket.on("connect", send);
+
+    const interval = setInterval(() => {
+      if (socket.connected) send();
+    }, 5000);
+
+    return () => {
+      socket.off("connect", send);
+      clearInterval(interval);
+    };
+  }, [filteredList]);
+
   const toggleLanguage = (lang) => {
     setSelectedLanguages((prev) =>
       prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]
@@ -204,19 +290,18 @@ export default function UserExpertsPage() {
     setMinRating("0");
     setMaxPrice("");
     setSortPrice("");
-    setSearchCategoryId(null); // ✅ Reset search filters
+    setSearchCategoryId(null);
     setSearchSubcategoryId(null);
     setServerExperts([]);
   };
 
-  // ✅ START CHAT HANDLER (same as before)
   const handleStartChat = useCallback((expertId) => {
     if (!isLoggedIn) {
       window.location.href = "/user/auth";
       return;
     }
 
-    const minRequired = 5 * 30; // ₹150
+    const minRequired = 5 * 30;
     const userBalance = Number(balance || 0);
 
     if (userBalance >= minRequired) {
@@ -230,13 +315,12 @@ export default function UserExpertsPage() {
     }
   }, [isLoggedIn, userId, balance]);
 
-  // helper: subcategory name from id
   const getSubcategoryName = (subId) => {
     const sc = subCategories.find((s) => Number(s.id) === Number(subId));
     return sc ? sc.name : "";
   };
 
-  // ✅ UPDATED BACKEND FILTER CALL (with category/subcategory search)
+  // BACKEND FILTER CALL (with category/subcategory search)
   useEffect(() => {
     if (tab === "ai") return;
 
@@ -250,7 +334,6 @@ export default function UserExpertsPage() {
 
     const params = {};
 
-    // ✅ SEARCH CATEGORY/SUBCATEGORY FILTERS
     if (searchCategoryId) {
       params.category_id = searchCategoryId;
     }
@@ -294,39 +377,11 @@ export default function UserExpertsPage() {
     return () => {
       cancelled = true;
     };
-  }, [tab, maxPrice, minRating, sortPrice, searchCategoryId, searchSubcategoryId]); // ✅ Added search deps
+  }, [tab, maxPrice, minRating, sortPrice, searchCategoryId, searchSubcategoryId]);
 
-  // ✅ UPDATED FINAL LIST (searchCategoryId indicator)
-  const filteredList = useMemo(() => {
-    if (tab === "ai") return [];
-
-    const baseList = serverExperts && serverExperts.length > 0 ? serverExperts : experts;
-    let list = [...baseList];
-
-    // ✅ SEARCH INDICATOR - Show if category/subcategory filtered
-    const isCategoryFiltered = searchCategoryId || searchSubcategoryId;
-
-    // Profession filter (client-side)
-    if (profession !== "all") {
-      const key = profession.toLowerCase();
-      list = list.filter((e) =>
-        (e.position || "").toLowerCase().includes(
-          key === "doctors" ? "doctor" : key.slice(0, 3)
-        )
-      );
-    }
-
-    // Language filter (placeholder)
-    if (selectedLanguages.length > 0) {
-      list = list.filter(() => true);
-    }
-
-    return list;
-  }, [tab, experts, serverExperts, profession, selectedLanguages, searchCategoryId, searchSubcategoryId]);
-
+  
   const overallLoading = expertsLoading || filterLoading;
 
-  // ✅ CALLBACKS FOR MODALS (same)
   const handleCancelRequest = useCallback(() => {
     if (chatRequestId && userId) {
       socket.emit("cancel_chat_request", { 
@@ -346,7 +401,6 @@ export default function UserExpertsPage() {
     setShowChatCancelled(false);
   }, []);
 
-  // Spinner component (same)
   const Spinner = () => (
     <div
       style={{
@@ -420,7 +474,6 @@ export default function UserExpertsPage() {
           <FilterWrap>
             <FilterTitle>Filters</FilterTitle>
 
-            {/* ✅ SEARCH INDICATOR */}
             {searchQuery && (searchCategoryId || searchSubcategoryId) && (
               <div style={{
                 background: "#dbeafe", padding: "12px 16px", borderRadius: 12, marginBottom: 16,
@@ -452,7 +505,6 @@ export default function UserExpertsPage() {
               </FilterGroup>
             )}
 
-            {/* Rest of filters same... */}
             <FilterGroup>
               <FilterLabel>Language</FilterLabel>
               {languagesOptions.map((lang) => (
@@ -518,7 +570,7 @@ export default function UserExpertsPage() {
             </ResetFilterBtn>
           </FilterWrap>
 
-          {/* CONTENT - Same as before */}
+          {/* CONTENT */}
           <ExpertsWrap>
             {tab === "ai" ? (
               <AIComingSoon>
@@ -538,35 +590,43 @@ export default function UserExpertsPage() {
               </EmptyState>
             ) : (
               <Grid>
-                {filteredList.slice(0, 20).map((exp) => (
-                  <ExpertCard
-                    key={`${exp.expert_id || exp.id}`}
-                    mode={tab}
-                    data={{
-                      id: exp.expert_id || exp.id,
-                      profileId: exp.id,
-                      name: exp.name || exp.expert_name || "Expert",
-                      profile_photo: exp.profile_photo || null,
-                      position: exp.position || "Expert",
-                      speciality: getSubcategoryName(exp.subcategory_id),
-                      location: exp.location || "India",
-                      callPrice: 0,
-                      chatPrice: 0,
-                      avgRating: 0,
-                      totalReviews: 0,
-                      followersCount: 0,
-                      languages: [],
-                    }}
-                    maxPrice={maxPrice}
-                    onStartChat={tab === "chat" ? handleStartChat : undefined}
-                  />
-                ))}
+                {filteredList.slice(0, 20).map((exp) => {
+                  // ✅ 4. Calculate online status for each expert
+                  const expertId = String(exp.expert_id || exp.id);
+                  const isOnline = expertId in onlineExperts ? onlineExperts[expertId] : null;
+                  
+                  return (
+                    <ExpertCard
+                      key={`${exp.expert_id || exp.id}`}
+                      mode={tab}
+                      data={{
+                        id: exp.expert_id || exp.id,
+                        profileId: exp.id,
+                        name: exp.name || exp.expert_name || "Expert",
+                        profile_photo: exp.profile_photo || null,
+                        position: exp.position || "Expert",
+                        speciality: getSubcategoryName(exp.subcategory_id),
+                        location: exp.location || "India",
+                        // ✅ PASS ONLINE STATUS
+                        isOnline: isOnline,
+                        callPrice: 0,
+                        chatPrice: 0,
+                        avgRating: 0,
+                        totalReviews: 0,
+                        followersCount: 0,
+                        languages: [],
+                      }}
+                      maxPrice={maxPrice}
+                      onStartChat={tab === "chat" ? handleStartChat : undefined}
+                    />
+                  );
+                })}
               </Grid>
             )}
           </ExpertsWrap>
         </Layout>
 
-        {/* ✅ WAITING POPUP */}
+        {/* WAITING POPUP */}
         {showWaitingPopup && (
           <div style={{ 
             position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", 
@@ -596,43 +656,43 @@ export default function UserExpertsPage() {
           </div>
         )}
 
-        {/* ✅ CHAT REJECTED POPUP */}
-     {chatRejectedMessage && !showWaitingPopup && (
-  <div style={{ 
-    position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", 
-    display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 
-  }}>
-    <div style={{ 
-      background: "#fff", padding: 24, borderRadius: 16, 
-      width: "min(90vw, 400px)", textAlign: "center", 
-      boxShadow: "0 25px 50px rgba(0,0,0,0.15)" 
-    }}>
-      <FiX size={24} color="#ef4444" style={{ marginBottom: 12 }} />
-      <h3 style={{ margin: 0, marginBottom: 8, color: "#dc2626" }}>
-        Request Declined
-      </h3>
-      <p style={{ margin: 0, marginBottom: 20, color: "#475569" }}>
-        {chatRejectedMessage}
-      </p>
-      <button 
-        onClick={handleChatRejectedClose}
-        style={{
-          padding: "12px 24px",
-          borderRadius: 999,
-          background: "#3b82f6",
-          color: "white",
-          border: "none",
-          fontWeight: 500,
-          cursor: "pointer",
-        }}
-      >
-        OK
-      </button>
-    </div>
-  </div>
-)}
+        {/* CHAT REJECTED POPUP */}
+        {chatRejectedMessage && !showWaitingPopup && (
+          <div style={{ 
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", 
+            display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 
+          }}>
+            <div style={{ 
+              background: "#fff", padding: 24, borderRadius: 16, 
+              width: "min(90vw, 400px)", textAlign: "center", 
+              boxShadow: "0 25px 50px rgba(0,0,0,0.15)" 
+            }}>
+              <FiX size={24} color="#ef4444" style={{ marginBottom: 12 }} />
+              <h3 style={{ margin: 0, marginBottom: 8, color: "#dc2626" }}>
+                Request Declined
+              </h3>
+              <p style={{ margin: 0, marginBottom: 20, color: "#475569" }}>
+                {chatRejectedMessage}
+              </p>
+              <button 
+                onClick={handleChatRejectedClose}
+                style={{
+                  padding: "12px 24px",
+                  borderRadius: 999,
+                  background: "#3b82f6",
+                  color: "white",
+                  border: "none",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        )}
 
-        {/* ✅ CHAT CANCELLED POPUP - EXPERT & USER दोनों के लिए */}
+        {/* CHAT CANCELLED POPUP */}
         {showChatCancelled && (
           <div style={{ 
             position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", 

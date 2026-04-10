@@ -21,6 +21,7 @@ import { getReviewsByExpertApi } from "../../../../shared/api/expertapi/reviews.
 import { getPlansApi } from "../../../../shared/api/userApi/subscription.api";
 import ExpertCard from "../../components/userExperts/ExpertCard";
 import useChatRequest from "../../../../shared/hooks/useChatRequest";
+import { socket } from "../../../../shared/api/socket";
 import {
   PageContainer,
   PageHeader,
@@ -119,16 +120,25 @@ import {
   CategoryErrorTitle,
   CategoryErrorText,
   PricingInfo,
-  // PricingMethod
 } from "./SubcategoryPage.styles";
 
 const DEFAULT_AVATAR = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face";
+
+const horoscopeSigns = [
+  { sign: "Aries", date: "Mar 21 - Apr 19" },
+  { sign: "Taurus", date: "Apr 20 - May 20" },
+  { sign: "Gemini", date: "May 21 - Jun 20" },
+  { sign: "Cancer", date: "Jun 21 - Jul 22" },
+  { sign: "Leo", date: "Jul 23 - Aug 22" },
+  { sign: "Virgo", date: "Aug 23 - Sep 22" },
+];
 
 const SubcategoryPage = () => {
   const { categoryId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const latestRequestRef = useRef(0);
+  const socketEmitTimeoutRef = useRef(null);
 
   const {
     subCategories,
@@ -148,16 +158,18 @@ const SubcategoryPage = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [expertDetails, setExpertDetails] = useState({});
   const [expertPlans, setExpertPlans] = useState({});
+
+  const [onlineExperts, setOnlineExperts] = useState({});
+
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
   const [hoveredExpert, setHoveredExpert] = useState(null);
- const loading = categoryLoading || expertsLoading;
+  const loading = categoryLoading || expertsLoading;
 
-const selectedSubcategoryName = useMemo(() => {
-  return subCategories.find(s => s.id === selectedSubcategory)?.name;
-}, [subCategories, selectedSubcategory]);
+  const selectedSubcategoryName = useMemo(() => {
+    return subCategories.find(s => s.id === selectedSubcategory)?.name;
+  }, [subCategories, selectedSubcategory]);
 
   const resetStateForNewCategory = useCallback(() => {
-    console.log("Resetting state for new category:", categoryId);
     setActiveSubCategory(null);
     setExperts([]);
     setExpertDetails({});
@@ -179,6 +191,80 @@ const selectedSubcategoryName = useMemo(() => {
     loadSubCategories(categoryId);
     setPrevCategoryId(categoryId);
   }, [categoryId, prevCategoryId, loadSubCategories]);
+
+  // ✅ FIX 1: Socket duplicate listener fix - Single useEffect with proper cleanup
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleConnect = () => {
+      console.log("✅ Socket connected:", socket.id);
+    };
+
+   const handleMultipleStatus = (data) => {
+  setOnlineExperts(prev => {
+    const updated = { ...prev };
+
+    Object.keys(data).forEach(id => {
+     updated[String(id)] = data[id]; // ✅ correct
+    });
+
+    return updated;
+  });
+};
+
+    const handleOnline = ({ expert_id }) => {
+      console.log(`🔵 Expert ${expert_id} is online`);
+  setOnlineExperts(prev => ({
+    ...prev,
+    [String(expert_id)]: true
+  }));
+};
+
+   const handleOffline = ({ expert_id }) => {
+      console.log(`⚪ Expert ${expert_id} is offline`);
+  setOnlineExperts(prev => ({
+    ...prev,
+    [String(expert_id)]: false
+  }));
+};
+    socket.on("connect", handleConnect);
+    socket.on("multiple_expert_status", handleMultipleStatus);
+    socket.on("expert_online", handleOnline);
+    socket.on("expert_offline", handleOffline);
+
+    return () => {
+      socket.off("connect", handleConnect);
+      socket.off("multiple_expert_status", handleMultipleStatus);
+      socket.off("expert_online", handleOnline);
+      socket.off("expert_offline", handleOffline);
+    };
+  }, []); // Empty dependency array - only runs once
+
+  useEffect(() => {
+  if (!socket || !experts.length) return;
+
+  const send = () => {
+    const expertIds = experts.map(e => Number(e.expert_id || e.id));
+    socket.emit("check_multiple_experts", { expertIds });
+  };
+
+  // ✅ Initial fetch
+  if (socket.connected) send();
+
+  // ✅ Re-fetch on reconnect
+  socket.on("connect", send);
+
+  // ✅ 🔥 CRITICAL: periodic sync (backup)
+  const interval = setInterval(() => {
+    if (socket.connected) send();
+  }, 5000); // every 5 sec
+
+  return () => {
+    socket.off("connect", send);
+    clearInterval(interval);
+  };
+
+}, [experts]);
 
   const loadExpertsForSubcategory = useCallback(async (subCategoryId) => {
     if (!subCategoryId || !categoryId) return;
@@ -205,6 +291,8 @@ const selectedSubcategoryName = useMemo(() => {
       const newExpertDetails = {};
       const newExpertPlans = {};
       
+      // ⚠️ TODO: Replace with single API call for better performance
+      // For now, keeping existing logic but with Promise.allSettled for resilience
       const expertPromises = expertsList.map(async (expert) => {
         const expertId = expert.expert_id || expert.id;
         if (!expertId) return null;
@@ -219,10 +307,11 @@ const selectedSubcategoryName = useMemo(() => {
           
           const priceData = priceRes.status === "fulfilled" ? priceRes.value?.data || priceRes.value || {} : {};
           const followersData = followersRes.status === "fulfilled" ? followersRes.value?.data || {} : {};
-          const reviewsData = reviewsRes.status === "fulfilled" ? reviewsRes.value?.data || {} : {};
+          const reviewsData = reviewsRes.status === "fulfilled"
+            ? reviewsRes.value?.data?.data || {}
+            : {};
           const plansData = plansRes.status === "fulfilled" && plansRes.value?.data?.success ? plansRes.value.data.data || [] : [];
           
-          // Parse pricing modes
           let pricingModes = priceData.pricing_modes || [];
           if (typeof pricingModes === 'string') {
             try {
@@ -236,7 +325,6 @@ const selectedSubcategoryName = useMemo(() => {
           const hasSession = pricingModes.includes('session');
           const hasPlans = plansData.length > 0;
           
-          // Get prices
           const callPrice = priceData.call?.per_minute || priceData.call_per_minute || 0;
           const chatPrice = priceData.chat?.per_minute || priceData.chat_per_minute || 0;
           const sessionPrice = priceData.session?.price || priceData.session_price || 0;
@@ -383,21 +471,30 @@ const selectedSubcategoryName = useMemo(() => {
     );
   }, [experts, selectedSubcategory, categoryId]);
 
-  const formatExpertForCard = (expert) => {
-    const expertId = expert.expert_id || expert.id;
-    const details = expertDetails[expertId] || {};
-    
-    return {
-      id: expertId,
-      name: expert.name || expert.expert_name || "Expert",
-      profile_photo: expert.profile_photo || DEFAULT_AVATAR,
-      position: expert.position || "Expert",
-      speciality: getSubcategoryName(expert.subcategory_id) || expert.main_expertise || categoryName,
-      location: expert.location || "India",
-      ...details,
-      rawData: expert,
-    };
+ const formatExpertForCard = (expert) => {
+  const expertId = expert.expert_id || expert.id;
+  const details = expertDetails[expertId] || {};
+
+  const id = String(expertId); // ✅ FIX
+
+  return {
+    id,
+    name: expert.name || expert.expert_name || "Expert",
+    profile_photo: expert.profile_photo || DEFAULT_AVATAR,
+    position: expert.position || "Expert",
+    speciality:
+      getSubcategoryName(expert.subcategory_id) ||
+      expert.main_expertise ||
+      categoryName,
+    location: expert.location || "India",
+
+    // ✅ ONLINE STATUS FIX
+    isOnline: id in onlineExperts ? onlineExperts[id] : null,
+
+    ...details,
+    rawData: expert,
   };
+};
 
   const filteredAndSortedExperts = useMemo(() => {
     if (expertsLoading || currentSubcategoryExperts.length === 0) return [];
@@ -432,7 +529,7 @@ const selectedSubcategoryName = useMemo(() => {
     });
     
     return filtered;
-  }, [currentSubcategoryExperts, searchQuery, sortBy, expertsLoading]);
+  }, [currentSubcategoryExperts, searchQuery, sortBy, expertsLoading, onlineExperts]);
 
   const handleExpertAction = (expert, action) => {
     if (action === 'chat' && expert.hasPerMinute) {
@@ -485,15 +582,40 @@ const selectedSubcategoryName = useMemo(() => {
     }
   };
 
+  // ✅ FIX 4: Updated UI with better glow effect
   const renderExpertCard = (expert) => (
     <ExpertCardPremium
       key={expert.id}
       onMouseEnter={() => setHoveredExpert(expert.id)}
       onMouseLeave={() => setHoveredExpert(null)}
-      isHovered={hoveredExpert === expert.id}
+      $isHovered={hoveredExpert === expert.id}
     >
-      <ExpertHeader>
-        <ExpertAvatar src={expert.profile_photo} alt={expert.name} />
+      <ExpertHeader style={{ position: "relative" }}>
+        <div style={{ position: "relative", display: "inline-block" }}>
+          <ExpertAvatar src={expert.profile_photo} alt={expert.name} />
+          <div
+            style={{
+              position: "absolute",
+              bottom: 2,
+              right: 2,
+              width: 12,
+              height: 12,
+              borderRadius: "50%",
+              background: expert.isOnline === true 
+  ? "#22c55e" 
+  : expert.isOnline === false 
+    ? "#ef4444"
+    : "#ef4444" ,// loading state
+              border: "2px solid white",
+              // ✅ FIX 5: Enhanced glow effect
+              boxShadow: expert.isOnline 
+                ? "0 0 10px rgba(34, 197, 94, 0.9)" 
+                : "none",
+              zIndex: 1,
+            }}
+          />
+        </div>
+        
         <ExpertInfo>
           <ExpertName>
             {expert.name}
@@ -512,7 +634,6 @@ const selectedSubcategoryName = useMemo(() => {
         </ExpertInfo>
       </ExpertHeader>
 
-      {/* Pricing Modes Badges */}
       <PricingModesBadge>
         {expert.hasPerMinute && (
           <PricingModeBadge type="per_minute">💰 Per Minute</PricingModeBadge>
@@ -538,7 +659,6 @@ const selectedSubcategoryName = useMemo(() => {
         </StatItem>
       </ExpertStats>
 
-      {/* Pricing Display */}
       <ExpertPricing>
         {expert.hasPerMinute && (
           <>
@@ -584,7 +704,6 @@ const selectedSubcategoryName = useMemo(() => {
         {getPrimaryActionButton(expert)}
       </ActionButtons>
 
-      {/* Subscription hint for experts with both pricing modes */}
       {expert.hasPlans && expert.hasPerMinute && (
         <PricingInfo>
           <IoShieldCheckmark size={12} />
@@ -648,7 +767,7 @@ const selectedSubcategoryName = useMemo(() => {
           <BreadcrumbSeparator><FiChevronRight /></BreadcrumbSeparator>
           <BreadcrumbItem onClick={() => navigate('/user/categories')}>Categories</BreadcrumbItem>
           <BreadcrumbSeparator><FiChevronRight /></BreadcrumbSeparator>
-          <BreadcrumbItem active>{categoryName}</BreadcrumbItem>
+          <BreadcrumbItem $active>{categoryName}</BreadcrumbItem>
         </Breadcrumb>
 
         <PageHeader>
@@ -684,12 +803,12 @@ const selectedSubcategoryName = useMemo(() => {
         </MobileFilterToggle>
 
         <MobileFilterOverlay 
-          show={showMobileFilters} 
+          $show={showMobileFilters} 
           onClick={() => setShowMobileFilters(false)}
         />
 
         <PageLayout>
-          <FiltersSidebar show={showMobileFilters}>
+          <FiltersSidebar $show={showMobileFilters}>
             {showMobileFilters && (
               <MobileFilterHeader>
                 <h3>Filters</h3>
@@ -713,10 +832,10 @@ const selectedSubcategoryName = useMemo(() => {
                     <SubcategoryFilterItem
                       key={sc.id}
                       onClick={() => handleSubcategoryFilterChange(sc.id)}
-                      isSelected={isSelected}
+                      $isSelected={isSelected}
                     >
-                      <SubcategoryRadio isSelected={isSelected} />
-                      <SubcategoryFilterLabel isSelected={isSelected}>
+                      <SubcategoryRadio $isSelected={isSelected} />
+    <SubcategoryFilterLabel $isSelected={isSelected}>
                         {sc.name}
                       </SubcategoryFilterLabel>
                     </SubcategoryFilterItem>
@@ -763,7 +882,7 @@ const selectedSubcategoryName = useMemo(() => {
                 return (
                   <FilterChip
                     key={sc.id}
-                    isActive={isActive}
+                    $isActive={isActive}
                     onClick={() => handleSubCategoryClick(sc.id)}
                   >
                     {sc.name}

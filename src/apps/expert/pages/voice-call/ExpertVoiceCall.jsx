@@ -216,13 +216,25 @@ useEffect(() => {
   useEffect(() => {
     if (!normalizedCallId) return;
 
-    const onConnected = ({ callId: connectedId }) => {
-      if (Number(connectedId) !== callIdRef.current) return;
-      setReconnecting(false);
-      setSeconds(0);
-      setCallState("connected");
-    };
+   const onConnected = (data) => {
+  if (Number(data.callId) !== callIdRef.current) return;
 
+  console.log("✅ Connected data:", data);
+
+  setReconnecting(false);
+  setSeconds(0);
+  setCallState("connected");
+
+  // 🔥 ADD THIS
+  setCaller(prev => ({
+    ...prev,
+    name:
+      data?.user_name ||
+      data?.fromUserName ||
+      prev.name ||
+      "User",
+  }));
+};
     const onEnded = ({ callId: endedId }) => {
       if (Number(endedId) !== callIdRef.current) return;
       setCallState("ended");
@@ -427,6 +439,20 @@ if (callStateRef.current === "ended") return;
     });
   }, [socket]);
 
+  const getInitials = (name) => {
+  if (!name) return "U";
+
+  const words = name.trim().split(" ");
+
+  if (words.length === 1) {
+    return words[0][0].toUpperCase();
+  }
+
+  return (
+    words[0][0] + words[words.length - 1][0]
+  ).toUpperCase();
+};
+
   // Render wave animation for connected state
   const renderWaveAnimation = () => (
     <WaveContainer>
@@ -453,12 +479,15 @@ if (callStateRef.current === "ended") return;
           <ReconnectingBadge />
         )}
 
-        <ExpertAvatarWrapper>
-          <ExpertAvatar 
-            src={caller.avatar} 
-            alt={caller.name}
-          />
-        </ExpertAvatarWrapper>
+       <ExpertAvatarWrapper>
+  {caller.avatar ? (
+    <ExpertAvatar src={caller.avatar} alt={caller.name} />
+  ) : (
+    <div className="initial-avatar">
+      {getInitials(caller.name)}
+    </div>
+  )}
+</ExpertAvatarWrapper>
 
         <ExpertName>{caller.name}</ExpertName>
         <ExpertRole>{caller.role}</ExpertRole>

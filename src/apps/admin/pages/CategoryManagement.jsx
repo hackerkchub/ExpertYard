@@ -72,7 +72,7 @@ import {
   createCategoryApi,
   updateCategoryApi,
   deleteCategoryApi
-} from "../../../shared/api/expertapi/category.api";
+} from "../../../shared/api/admin/category.api";
 
 export default function CategoryManagement() {
   const [categories, setCategories] = useState([]);

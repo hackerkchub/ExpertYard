@@ -16,6 +16,29 @@ const api = axios.create({
 });
 
 /* ===============================
+   HELPER: GET ROLE FROM ROUTE
+================================ */
+const getRoleFromRoute = () => {
+  const path = window.location.pathname;
+
+  if (path.startsWith("/user")) return "user";
+  if (path.startsWith("/expert")) return "expert";
+
+  return null; // fallback
+};
+
+/* ===============================
+   HELPER: CLEAN CONFLICT TOKENS
+================================ */
+const cleanConflictingTokens = (activeRole) => {
+  if (activeRole === "user") {
+    localStorage.removeItem("expert_token");
+  } else if (activeRole === "expert") {
+    localStorage.removeItem("user_token");
+  }
+};
+
+/* ===============================
    REQUEST INTERCEPTOR
 ================================ */
 api.interceptors.request.use(
@@ -29,26 +52,53 @@ api.interceptors.request.use(
     const expertToken = localStorage.getItem("expert_token");
     const userToken = localStorage.getItem("user_token");
 
-    const token = expertToken || userToken;
+    const routeRole = getRoleFromRoute();
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    let token = null;
+    let role = null;
+
+    /* ===============================
+       ROUTE BASED TOKEN SELECTION
+    ============================== */
+
+    if (routeRole === "user" && userToken) {
+      token = userToken;
+      role = "user";
+      cleanConflictingTokens("user"); // ✅ auto clean
+    } 
+    else if (routeRole === "expert" && expertToken) {
+      token = expertToken;
+      role = "expert";
+      cleanConflictingTokens("expert"); // ✅ auto clean
+    } 
+    else {
+      /* ===============================
+         FALLBACK (SAFE MODE)
+      ============================== */
+      if (userToken) {
+        token = userToken;
+        role = "user";
+        cleanConflictingTokens("user");
+      } else if (expertToken) {
+        token = expertToken;
+        role = "expert";
+        cleanConflictingTokens("expert");
+      }
     }
 
-    /* OPTIONAL ROLE HEADER */
-    if (expertToken) {
-      config.headers["x-client-role"] = "expert";
-    } else if (userToken) {
-      config.headers["x-client-role"] = "user";
+    /* ===============================
+       ATTACH HEADERS
+    ============================== */
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+      config.headers["x-client-role"] = role;
     }
 
     return config;
 
   },
   (error) => {
-
     loader?.hideLoader();
-
     return Promise.reject(error);
   }
 );
@@ -76,7 +126,9 @@ api.interceptors.response.use(
 
     const status = error?.response?.status;
 
-    /* TOKEN EXPIRED */
+    /* ===============================
+       TOKEN EXPIRED / UNAUTHORIZED
+    ============================== */
     if (status === 401) {
 
       localStorage.removeItem("expert_token");
@@ -84,7 +136,6 @@ api.interceptors.response.use(
 
       // optional redirect
       // window.location.href = "/login";
-
     }
 
     return Promise.reject(
@@ -92,7 +143,6 @@ api.interceptors.response.use(
       error?.message ||
       "Server error"
     );
-
   }
 );
 

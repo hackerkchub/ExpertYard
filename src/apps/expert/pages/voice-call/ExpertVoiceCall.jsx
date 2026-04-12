@@ -33,6 +33,7 @@ import {
   toggleMute,
   createAnswer,
   handleSocketReconnect,
+  getStats,
 } from "../../../../shared/webrtc/voicePeer";
 import { soundManager } from "../../../../shared/services/sound/soundManager";
 
@@ -151,15 +152,15 @@ export default function ExpertVoiceCall() {
   return () => socket.off("call:resume_data", onResume);
 }, [socket, normalizedCallId]);
 
-useEffect(() => {
-  if (!streamRef.current) {
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(stream => {
-        streamRef.current = stream;
-      })
-      .catch(() => {});
-  }
-}, []);
+// useEffect(() => {
+//   if (!streamRef.current) {
+//     navigator.mediaDevices.getUserMedia({ audio: true })
+//       .then(stream => {
+//         streamRef.current = stream;
+//       })
+//       .catch(() => {});
+//   }
+// }, []);
 
   // Handle incoming call data
   useEffect(() => {
@@ -216,25 +217,13 @@ useEffect(() => {
   useEffect(() => {
     if (!normalizedCallId) return;
 
-   const onConnected = (data) => {
-  if (Number(data.callId) !== callIdRef.current) return;
+    const onConnected = ({ callId: connectedId }) => {
+      if (Number(connectedId) !== callIdRef.current) return;
+      setReconnecting(false);
+      setSeconds(0);
+      setCallState("connected");
+    };
 
-  console.log("✅ Connected data:", data);
-
-  setReconnecting(false);
-  setSeconds(0);
-  setCallState("connected");
-
-  // 🔥 ADD THIS
-  setCaller(prev => ({
-    ...prev,
-    name:
-      data?.user_name ||
-      data?.fromUserName ||
-      prev.name ||
-      "User",
-  }));
-};
     const onEnded = ({ callId: endedId }) => {
       if (Number(endedId) !== callIdRef.current) return;
       setCallState("ended");
@@ -277,12 +266,27 @@ useEffect(() => {
 
       handleSocketReconnect();
 
-      if (callIdRef.current && callStateRef.current === "connected") {
-        setTimeout(() => {
-          console.log("♻ Recreating answer after reconnect");
-          setReconnecting(false);
-        }, 400);
-      }
+     if (callIdRef.current && callStateRef.current === "connected") {
+  setTimeout(async () => {
+    console.log("♻ Recreating peer after reconnect");
+
+    await createPeer({
+      socket,
+      callId: callIdRef.current,
+      audioRef,
+      stream: streamRef.current
+    });
+
+    if (pc?.signalingState === "have-remote-offer") {
+  const answer = await createAnswer();
+  socket.emit("webrtc:answer", {
+    callId: callIdRef.current,
+    answer
+  });
+}
+
+  }, 400);
+}
     };
 
     socket.io?.on("reconnect", onReconnect);
@@ -290,17 +294,40 @@ useEffect(() => {
   }, [socket]);
 
   // Network quality monitoring (simulated)
-  useEffect(() => {
-    if (callState === "connected") {
-      const interval = setInterval(() => {
-        // Simulate network quality - replace with actual WebRTC stats if needed
-        const qualities = ["good", "average", "poor"];
-        const randomQuality = qualities[Math.floor(Math.random() * qualities.length)];
-        setNetworkQuality(randomQuality);
-      }, 5000);
+  // useEffect(() => {
+  //   if (callState === "connected") {
+  //     const interval = setInterval(() => {
+  //       // Simulate network quality - replace with actual WebRTC stats if needed
+  //       const qualities = ["good", "average", "poor"];
+  //       const randomQuality = qualities[Math.floor(Math.random() * qualities.length)];
+  //       setNetworkQuality(randomQuality);
+  //     }, 5000);
 
-      return () => clearInterval(interval);
-    }
+  //     return () => clearInterval(interval);
+  //   }
+  // }, [callState]);
+
+   useEffect(() => {
+    if (callState !== "connected") return;
+  
+    const interval = setInterval(async () => {
+      const stats = await getStats();
+      const inbound = stats?.find(s => s.type === "inbound");
+  
+      if (!inbound) return;
+  
+      const total = inbound.packetsReceived + inbound.packetsLost;
+      if (!total) return;
+  
+      const loss = inbound.packetsLost / total;
+  
+      if (loss < 0.03) setNetworkQuality("good");
+      else if (loss < 0.1) setNetworkQuality("average");
+      else setNetworkQuality("poor");
+  
+    }, 4000);
+  
+    return () => clearInterval(interval);
   }, [callState]);
 
   // WebRTC events with ANSWER SPAM PROTECTION + STREAM GUARD
@@ -319,11 +346,10 @@ if (callStateRef.current === "ended") return;
       }
 
       // GUARD: Wait for mic stream to be ready
-      if (!streamRef.current) {
-        console.log("⏳ Waiting for mic before answering");
-        return;
-      }
-
+     if (!streamRef.current) {
+  console.log("🎤 Getting mic before answer...");
+  streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+}
       makingAnswerRef.current = true;
 
       try {
@@ -377,27 +403,14 @@ if (callStateRef.current === "ended") return;
   }, [cleanupMedia]);
 
   // ACCEPT CALL - DOUBLE CLICK GUARD
-  const acceptCall = useCallback(async () => {
-    if (callStateRef.current !== "incoming") return;
+ const acceptCall = useCallback(() => {
+  if (callStateRef.current !== "incoming") return;
 
-    try {
-      streamRef.current = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          channelCount: { ideal: 1 },
-          sampleRate: { ideal: 16000 },
-        }
-      });
-      console.log("✅ Expert microphone permission granted, stream:", streamRef.current);
-      callStartedRef.current = true;
-      setCallState("connecting");
-      socket.emit(CALL_EVENTS.ACCEPT, { callId: callIdRef.current });
-    } catch (error) {
-      console.error("❌ Failed to get microphone permission:", error);
-    }
-  }, [socket]);
+  callStartedRef.current = true;
+  setCallState("connecting");
+
+  socket.emit(CALL_EVENTS.ACCEPT, { callId: callIdRef.current });
+}, [socket]);
 
   // REJECT CALL
   const rejectCall = useCallback(() => {
@@ -439,20 +452,6 @@ if (callStateRef.current === "ended") return;
     });
   }, [socket]);
 
-  const getInitials = (name) => {
-  if (!name) return "U";
-
-  const words = name.trim().split(" ");
-
-  if (words.length === 1) {
-    return words[0][0].toUpperCase();
-  }
-
-  return (
-    words[0][0] + words[words.length - 1][0]
-  ).toUpperCase();
-};
-
   // Render wave animation for connected state
   const renderWaveAnimation = () => (
     <WaveContainer>
@@ -479,15 +478,12 @@ if (callStateRef.current === "ended") return;
           <ReconnectingBadge />
         )}
 
-       <ExpertAvatarWrapper>
-  {caller.avatar ? (
-    <ExpertAvatar src={caller.avatar} alt={caller.name} />
-  ) : (
-    <div className="initial-avatar">
-      {getInitials(caller.name)}
-    </div>
-  )}
-</ExpertAvatarWrapper>
+        <ExpertAvatarWrapper>
+          <ExpertAvatar 
+            src={caller.avatar} 
+            alt={caller.name}
+          />
+        </ExpertAvatarWrapper>
 
         <ExpertName>{caller.name}</ExpertName>
         <ExpertRole>{caller.role}</ExpertRole>

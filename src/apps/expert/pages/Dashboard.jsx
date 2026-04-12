@@ -114,7 +114,7 @@ const bannerStyle = {
 const buttonStyle = {
   background: "none",
   border: "none",
-  color: "#0a66c2",
+  color: "#000080",
   fontWeight: "700",
   cursor: "pointer",
   fontSize: "14px"

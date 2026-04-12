@@ -6,31 +6,26 @@ const DEFAULT_CATEGORY_IMAGE = "/default-category.png";
 
 const Categories = () => {
   const navigate = useNavigate();
-  const { categories, loading } = useCategory(); // Get loading state from context
+  const { categories, loading } = useCategory();
   const [activeCategory, setActiveCategory] = useState(null);
 
-  // Set default category
-  useEffect(() => {
-    if (categories.length > 0 && !activeCategory) {
-      setActiveCategory(categories[0].id);
-    }
-  }, [categories, activeCategory]);
-
   const handleCategoryClick = (categoryId, categoryName) => {
+    setActiveCategory(categoryId);
     navigate(`/user/subcategories/${categoryId}`, {
       state: { categoryName: categoryName }
     });
   };
 
-  // Show skeleton loading while categories are loading
   if (loading) {
     return (
       <section className="section">
         <div className="category-grid">
           {Array.from({ length: 6 }).map((_, index) => (
-            <div className="category-card skeleton" key={index}>
-              <div className="category-icon skeleton-shimmer"></div>
-              <p className="skeleton-text"></p>
+            <div className="skeleton-card" key={index}>
+              <div className="skeleton-box">
+                <div className="shimmer"></div>
+              </div>
+              <div style={{ height: '12px', width: '60%', background: '#e5e7eb', marginTop: '10px', borderRadius: '4px' }}></div>
             </div>
           ))}
         </div>
@@ -38,43 +33,32 @@ const Categories = () => {
     );
   }
 
-  // Show empty state if no categories
-  if (!loading && categories.length === 0) {
-    return (
-      <section className="section">
-       
-        <div className="empty-state">
-          <p>No categories available at the moment.</p>
-        </div>
-      </section>
-    );
-  }
-
   return (
     <section className="section">
-      
       <div className="category-grid">
         {categories.map((cat) => (
           <div 
-  className={`category-card ${cat.id === activeCategory ? 'active' : ''}`}
-  key={cat.id}
-  onClick={() => handleCategoryClick(cat.id, cat.name)}
->
-  <div className="category-icon">
-    <img 
-      src={cat.image_url || DEFAULT_CATEGORY_IMAGE} 
-      alt={cat.name}
-      onError={(e) => {
-        e.target.style.display = 'none';
-        e.target.parentElement.style.fontSize = '24px';
-        e.target.parentElement.style.fontWeight = 'bold';
-        e.target.parentElement.style.color = '#555';
-        e.target.parentElement.textContent = cat.name.charAt(0);
-      }}
-    />
-  </div>
-  <p>{cat.name}</p>
-</div>
+            className="category-card"
+            key={cat.id}
+            onClick={() => handleCategoryClick(cat.id, cat.name)}
+          >
+            <div className="category-icon">
+              <img 
+                src={cat.image_url || DEFAULT_CATEGORY_IMAGE} 
+                alt={cat.name}
+                loading="lazy"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  const parent = e.target.parentElement;
+                  parent.style.background = '#f0edff';
+                  parent.style.fontSize = '32px';
+                  parent.style.color = '#000080';
+                  parent.textContent = cat.name.charAt(0);
+                }}
+              />
+            </div>
+            <p>{cat.name}</p>
+          </div>
         ))}
       </div>
     </section>

@@ -101,7 +101,7 @@ const Navbar = () => {
             />
 
             <BrandName className={!isHomePage ? "hide-logo-on-mobile" : ""}>
-              Expert<span>Yard</span>
+              Guidexa
             </BrandName>
           </BrandBox>
 
@@ -111,7 +111,7 @@ const Navbar = () => {
                 <FiHome />
               </button>
 
-              <button onClick={() => navigate("/user/my-offers")} title="Offers">
+              <button onClick={() => navigate("/user/all-services")} title="Offers">
                 <FiGift />
               </button>
 
@@ -162,7 +162,7 @@ const Navbar = () => {
               <FiHome /> Home
             </MobileItem>
 
-            <MobileItem onClick={() => handleNav("/user/my-offers")}>
+            <MobileItem onClick={() => handleNav("/user/all-services")}>
               <FiGift /> Offers
             </MobileItem>
 

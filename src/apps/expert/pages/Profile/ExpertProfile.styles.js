@@ -25,7 +25,7 @@ export const LoadingSpinner = styled.div`
   height: 40px;
   border: 3px solid rgba(0, 102, 194, 0.1);
   border-radius: 50%;
-  border-top-color: #0a66c2;
+  border-top-color: #000080;
   animation: ${spin} 1s linear infinite;
 `;
 
@@ -109,7 +109,7 @@ export const HeaderGreeting = styled.span`
 
 export const HeaderBadge = styled.div`
   background: #e7f3ff;
-  color: #0a66c2;
+  color: #000080;
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 13px;
@@ -311,9 +311,9 @@ export const QuickStatLabel = styled.div`
 
 /* Buttons */
 export const ActionButton = styled.button`
-  background: ${props => props.primary ? '#0A66C2' : 'transparent'};
-  color: ${props => props.primary ? '#fff' : '#0A66C2'};
-  border: ${props => props.primary ? 'none' : '1px solid #0A66C2'};
+  background: ${props => props.primary ? '#000080' : 'transparent'};
+  color: ${props => props.primary ? '#fff' : '#000080'};
+  border: ${props => props.primary ? 'none' : '1px solid #000080'};
   padding: 8px 24px;
   border-radius: 20px;
   font-weight: 600;
@@ -493,7 +493,7 @@ export const CardHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
-  svg { color: #0a66c2; }
+  svg { color: #000080; }
 `;
 
 export const InfoList = styled.div`
@@ -551,7 +551,7 @@ export const CategoriesList = styled.div`
 
 export const CategoryTag = styled.span`
   background: #e7f3ff;
-  color: #0a66c2;
+  color: #000080;
   padding: 4px 10px;
   border-radius: 4px;
   font-size: 12px;
@@ -566,8 +566,8 @@ export const PremiumInput = styled.input`
   font-size: 14px;
   &:focus { 
     outline: none; 
-    border-color: #0a66c2; 
-    box-shadow: 0 0 0 1px #0a66c2; 
+    border-color: #000080; 
+    box-shadow: 0 0 0 1px #000080; 
   }
 `;
 
@@ -580,7 +580,7 @@ export const TextArea = styled.textarea`
   min-height: 100px;
   &:focus {
     outline: none;
-    border-color: #0a66c2;
+    border-color: #000080;
   }
 `;
 
@@ -661,7 +661,7 @@ export const DocumentTitle = styled.span`
 
 export const DocumentUploadButton = styled.label`
   cursor: pointer;
-  color: #0a66c2;
+  color: #000080;
   position: relative;
   
   input {

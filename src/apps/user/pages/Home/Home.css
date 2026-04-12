@@ -35,7 +35,7 @@
   display: inline-block;
   padding: 6px 14px;
   background: rgba(10, 102, 194, 0.1);
-  color: #0a66c2;
+  color: #000080;
   border-radius: 50px;
   font-size: 13px;
   font-weight: 600;
@@ -51,7 +51,7 @@
 }
 
 .blue-text {
-  color: #0a66c2;
+  color: #000080;
 }
 
 .hero-desc {
@@ -70,7 +70,7 @@
 }
 
 .btn-solid {
-  background: #0a66c2;
+  background: #000080;
   color: white;
   padding: 14px 28px;
   border-radius: 28px;
@@ -85,10 +85,10 @@
 
 .btn-outline-blue {
   background: transparent;
-  color: #0a66c2;
+  color: #000080;
   padding: 14px 28px;
   border-radius: 28px;
-  border: 1.5px solid #0a66c2;
+  border: 1.5px solid #000080;
   font-weight: 600;
   cursor: pointer;
   transition: 0.3s;
@@ -116,7 +116,7 @@
   transition: 0.2s;
 }
 
-.tag.active { background: #0a66c2; color: white; border-color: #0a66c2; }
+.tag.active { background: #000080; color: white; border-color: #000080; }
 
 /* --- RIGHT VISUAL (CHAT CARD) --- */
 .hero-visual {
@@ -146,7 +146,7 @@
 
 .user-profile { display: flex; gap: 10px; align-items: center; }
 .u-avatar { 
-  width: 40px; height: 40px; background: #0a66c2; color: white; 
+  width: 40px; height: 40px; background: #000080; color: white; 
   border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;
 }
 
@@ -156,7 +156,7 @@
 
 .msg { padding: 8px 14px; border-radius: 12px; font-size: 13px; max-width: 80%; }
 .m-left { background: #f0f2f5; align-self: flex-start; }
-.m-right { background: #0a66c2; color: white; align-self: flex-end; }
+.m-right { background: #000080; color: white; align-self: flex-end; }
 .typing { font-size: 12px; color: #888; margin-top: 10px; }
 
 /* Floating Elements */
@@ -201,107 +201,116 @@
 /*
 category css
 */
+/* Container Layout */
 .section {
-  padding:2px;
+  padding: 10px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
-.section h2 {
-  font-size: 2rem;
-  font-weight: 700;
-  text-align: center;
-  margin-bottom: 2.5rem;
-  color: #333;
-}
-
-/* Container Grid */
+/* Category Grid */
 .category-grid {
   display: grid;
-  /* 4 columns on desktop, scales down automatically */
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); 
-  gap: 1.25rem;
-  padding: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+  gap: 20px;
+  padding: 1rem 0;
 }
 
-/* Category Card */
+/* Category Card - No Border, No Background */
 .category-card {
-  background: transparent; /* Clean look */
+  background: transparent;
   display: flex;
   flex-direction: column;
   align-items: center;
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease-in-out;
+  border: none; /* Border Hatadi */
+  padding: 0;    /* Extra space hatadi */
 }
 
 .category-card:hover {
-  transform: translateY(-3px);
+  transform: scale(1.03); /* Slight zoom on hover */
 }
 
-/* The Icon Container (The "Circle/Square" background) */
+/* The Icon Container - Bada aur Saaf */
 .category-icon {
-  width: 100px;  /* Smaller, standard size */
-  height: 100px;
-  background: #f0edff;
-  border-radius: 16px; /* Soft rounded corners */
+  width: 100%; /* Card ki poori width lega */
+  aspect-ratio: 1 / 1; /* Square shape maintain rakhega */
+  background: #f3f4f6; /* Light subtle background */
+  border-radius: 12px; /* Smooth corners */
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  margin-bottom: 0.75rem;
-  transition: background-color 0.3s ease;
+  margin-bottom: 10px;
 }
 
-/* If card is active or hovered, change background slightly */
-.category-card:hover .category-icon {
-  background-color: #e2e8f0;
-}
-
+/* Image styling - Badi aur clear dikhne ke liye */
 .category-icon img {
-  width: 85%; /* Image doesn't touch the edges */
-  height: 85%;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Image ko poore box mein stretch karega bina quality kharab kiye */
+  transition: transform 0.3s ease;
 }
 
-/* Text Styling */
+.category-card:hover .category-icon img {
+  transform: scale(1.1); /* Hover par image thodi aur badi hogi */
+}
+
+/* Text Styling - Bold aur readable */
 .category-card p {
   font-size: 16px;
-  font-family: -apple-system, system-ui, sans-serif; /* Cleaner font */
+  font-family: 'Inter', sans-serif;
   font-weight: 600;
-  color: #000000;
+  color: #111827;
   margin: 0;
   text-align: center;
-  line-height: 1.3;
+  width: 100%;
 }
 
 /* --- Responsive Adjustments --- */
 
-/* Mobile Devices (Max 640px) */
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .category-grid {
-    grid-template-columns: repeat(3, 1fr); /* 3 items per row on mobile */
-    gap: 0.75rem;
-    padding: 0.5rem;
+    grid-template-columns: repeat(2, 1fr); /* Mobile par 2 clean columns */
+    gap: 15px;
   }
 
   .category-icon {
-    width: 75px; /* Smaller icons for mobile */
-    height: 75px;
-    border-radius: 12px;
+    border-radius: 10px; /* Thoda kam radius mobile ke liye */
   }
 
   .category-card p {
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 14px; /* Mobile par readability ke liye perfect size */
   }
 }
 
-/* Skeleton Loading (Optional but matches new style) */
-.skeleton {
-  background: #eee;
-  border-radius: 16px;
+/* Skeleton Loading Shimmer */
+.skeleton-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
-
+.skeleton-box {
+  width: 100%;
+  aspect-ratio: 1/1;
+  background: #e5e7eb;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.shimmer {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: loading-shimmer 1.5s infinite;
+}
+@keyframes loading-shimmer {
+  100% { left: 100%; }
+}
 
 /* =====================
    EXPERTS
@@ -444,8 +453,8 @@ category css
 .btn-primary.small {
      padding: 6px 16px;
     background-color: transparent;
-    color: #0a66c2;
-    border: 1px solid #0a66c2;
+    color: #000080;
+    border: 1px solid #000080;
     border-radius: 16px;
     font-weight: 600;
     cursor: pointer;
@@ -461,7 +470,7 @@ category css
 /* Hover: Slightly darker blue with shadow */
 .btn-primary.small:hover {
   background-color: rgba(10, 102, 194, 0.1);
-    box-shadow: inset 0 0 0 1px #0a66c2;
+    box-shadow: inset 0 0 0 1px #000080;
     transform: none;
 }
 
@@ -590,7 +599,7 @@ category css
 
 .step-card:hover {
   background: #ffffff;
-  border-color: #0a66c2; /* LinkedIn Blue on Hover */
+  border-color: #000080; /* LinkedIn Blue on Hover */
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
   transform: translateY(-5px);
 }
@@ -599,7 +608,7 @@ category css
 .step-number-box {
   width: 44px;
   height: 44px;
-  background: #0a66c2;
+  background: #000080;
   color: white;
   border-radius: 50%;
   display: flex;
@@ -1027,8 +1036,8 @@ font-family: -apple-system, system-ui, sans-serif;
 .view-all-btn {
   padding: 6px 16px; /* Reduced vertical padding for LinkedIn look */
   background-color: transparent; /* Professional ghost button style */
-  color: #0a66c2; /* LinkedIn Blue */
-  border: 1px solid #0a66c2;
+  color: #000080; /* LinkedIn Blue */
+  border: 1px solid #000080;
   border-radius: 16px; /* Pill shape */
   font-weight: 600;
   cursor: pointer;
@@ -1043,7 +1052,7 @@ font-family: -apple-system, system-ui, sans-serif;
 
 .view-all-btn:hover {
   background-color: rgba(10, 102, 194, 0.1);
-  box-shadow: inset 0 0 0 1px #0a66c2;
+  box-shadow: inset 0 0 0 1px #000080;
   transform: none; /* Removed heavy jump for professional look */
 }
 

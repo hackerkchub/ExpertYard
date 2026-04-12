@@ -140,9 +140,9 @@ export const InputWrap = styled.div`
 
   &:focus-within {
     border-width: 2px;
-    border-color: #0a66c2; /* LinkedIn Blue on focus */
+    border-color: #000080; /* LinkedIn Blue on focus */
     padding: 13px 15px; /* Offset to prevent input jumping */
-    box-shadow: 0 0 0 1px #0a66c2;
+    box-shadow: 0 0 0 1px #000080;
   }
 `;
 
@@ -165,9 +165,9 @@ export const VerifyBtn = styled.button`
   padding: 0 24px;
   height: 48px;
   border-radius: 24px;
-  border: 1px solid #0a66c2; /* LinkedIn Outline Blue */
+  border: 1px solid #000080; /* LinkedIn Outline Blue */
   background: #ffffff;
-  color: #0a66c2;
+  color: #000080;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -192,7 +192,7 @@ export const PrimaryBtn = styled.button`
   height: 52px;
   border-radius: 28px;
   border: none;
-  background-color: #0a66c2; /* Exact LinkedIn Button Blue */
+  background-color: #000080; /* Exact LinkedIn Button Blue */
   color: #ffffff;
   font-size: 16px;
   font-weight: 600;
@@ -221,7 +221,7 @@ export const SwitchText = styled.div`
   color: rgba(0, 0, 0, 0.6);
 
   span {
-    color: #0a66c2;
+    color: #000080;
     font-weight: 600;
     cursor: pointer;
     text-decoration: none;

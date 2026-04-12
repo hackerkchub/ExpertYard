@@ -469,7 +469,7 @@ export const LogoText = styled.span`
   font-size: 1.6rem;
   font-weight: 800;
   color: transparent;
-  background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
+  background: #000080;
   -webkit-background-clip: text;
   background-clip: text;
   letter-spacing: -0.5px;

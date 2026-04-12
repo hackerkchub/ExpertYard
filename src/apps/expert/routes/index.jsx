@@ -17,6 +17,11 @@ import ExpertNotificationPage from "../pages/notification/ExpertNotificationPage
 import EarningDashboard from "../pages/earnings/ExpertEarningsDashboard";
 import Calendar from "../pages/calendar/Calendar";
 import ExpertSettings from "../pages/settings/ExpertSettings";
+import CreateService from "../pages/services/CreateServices";
+import MyServices from "../pages/services/MyServices";
+import ExpertBookings from "../pages/services/ExpertBookings";
+import SubscriptionPlan from "../pages/register/SubscriptionPlan";
+import GuidexaExpertPlan from "../pages/GuidexaExpertPlan/GuidexaExpertPlan";
 
 export default function ExpertAppRoutes() {
   const { expertData } = useExpert();
@@ -44,6 +49,43 @@ export default function ExpertAppRoutes() {
               redirectTo="/expert/register"
             >
               <Dashboard />
+            </ProtectedExpertRoute>
+          }
+        />
+
+         <Route
+          path="guidexa-plan"
+          element={
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <GuidexaExpertPlan />
+            </ProtectedExpertRoute>
+          }
+        />
+
+         <Route
+          path="mybookings"
+          element={
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <ExpertBookings />
+            </ProtectedExpertRoute>
+          }
+        />
+
+        
+        <Route
+          path="create-services"
+          element={
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <CreateService />
+            </ProtectedExpertRoute>
+          }
+        />
+
+        <Route
+          path="myservices"
+          element={
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <MyServices />
             </ProtectedExpertRoute>
           }
         />
@@ -191,6 +233,12 @@ export default function ExpertAppRoutes() {
 
       {/* 🔓 REGISTER FLOW - NO LAYOUT */}
       <Route path="register" element={<StepAccount />} />
+
+       <Route
+  path="register/subscription"
+  element={<SubscriptionPlan />}
+/>
+
       
       <Route
         path="register/category"
@@ -215,7 +263,7 @@ export default function ExpertAppRoutes() {
           </ProtectedExpertRoute>
         }
       />
-      
+       
       <Route
         path="register/profile"
         element={

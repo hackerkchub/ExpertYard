@@ -149,7 +149,7 @@ export const PrimaryButton = styled.button`
   font-size: 15px;
   font-weight: 600;
   color: #ffffff;
-  background: #0a66c2; /* LinkedIn Blue */
+  background: #000080; /* LinkedIn Blue */
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
@@ -284,7 +284,7 @@ export const StatusBadge = styled.span`
   font-weight: 700;
   text-transform: uppercase;
   background: ${p => p.status === "published" ? "#e1f0fe" : "#fff3cd"};
-  color: ${p => p.status === "published" ? "#0a66c2" : "#856404"};
+  color: ${p => p.status === "published" ? "#000080" : "#856404"};
 `;
 
 export const MoreButton = styled.button`

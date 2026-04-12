@@ -357,7 +357,7 @@ const UserAuth = () => {
         )}
 
         {isForgotMode && (
-          <Caption style={{ fontSize: "20px", color: "#0a66c2", marginBottom: "20px" }}>
+          <Caption style={{ fontSize: "20px", color: "#000080", marginBottom: "20px" }}>
             🔑 Forgot Password
           </Caption>
         )}
@@ -397,7 +397,7 @@ const UserAuth = () => {
             <div style={{ textAlign: "right", marginTop: "-10px" }}>
               <span 
                 onClick={() => { setIsForgotMode(true); showMessage(""); }} 
-                style={{ color: "#0a66c2", fontSize: "14px", fontWeight: "600", cursor: "pointer" }}
+                style={{ color: "#000080", fontSize: "14px", fontWeight: "600", cursor: "pointer" }}
               >
                 Forgot Password?
               </span>
@@ -473,7 +473,7 @@ const UserAuth = () => {
                 <div style={{ display: "flex", gap: "12px" }}>
                   <VerifyBtn 
                     type="button" 
-                    style={{ flex: 1, background: forgotData.type === 'email' ? '#0a66c2' : '#fff', color: forgotData.type === 'email' ? '#fff' : '#0a66c2' }} 
+                    style={{ flex: 1, background: forgotData.type === 'email' ? '#000080' : '#fff', color: forgotData.type === 'email' ? '#fff' : '#000080' }} 
                     onClick={() => { setForgotData(prev => ({ ...prev, type: "email" })); setForgotStep(1); }}
                     disabled={forgotStep > 1.4}
                   >
@@ -481,7 +481,7 @@ const UserAuth = () => {
                   </VerifyBtn>
                   <VerifyBtn 
                     type="button" 
-                    style={{ flex: 1, background: forgotData.type === 'mobile' ? '#0a66c2' : '#fff', color: forgotData.type === 'mobile' ? '#fff' : '#0a66c2' }} 
+                    style={{ flex: 1, background: forgotData.type === 'mobile' ? '#000080' : '#fff', color: forgotData.type === 'mobile' ? '#fff' : '#000080' }} 
                     onClick={() => { setForgotData(prev => ({ ...prev, type: "mobile" })); setForgotStep(1); }}
                     disabled={forgotStep > 1.4}
                   >

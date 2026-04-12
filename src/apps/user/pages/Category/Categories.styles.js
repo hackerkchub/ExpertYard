@@ -2,7 +2,7 @@ import styled, { keyframes, css } from 'styled-components';
 
 // Professional Colors (LinkedIn Palette)
 const colors = {
-  primary: '#0a66c2',
+  primary: '#000080',
   primaryLight: '#e7f3ff',
   primaryDark: '#004182',
   bgLight: '#f3f2ef', // LinkedIn gray background

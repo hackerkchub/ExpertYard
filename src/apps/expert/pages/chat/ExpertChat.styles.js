@@ -94,9 +94,9 @@ export const LeftTab = styled.button`
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
-  background: ${({ active }) => (active ? "#0a66c2" : "#ffffff")};
+  background: ${({ active }) => (active ? "#000080" : "#ffffff")};
   color: ${({ active }) => (active ? "#ffffff" : "#666666")};
-  border: 1.5px solid ${({ active }) => (active ? "#0a66c2" : "#8c8c8c")};
+  border: 1.5px solid ${({ active }) => (active ? "#000080" : "#8c8c8c")};
   transition: all 0.2s ease-in-out;
 
   &:hover {
@@ -118,7 +118,7 @@ export const ChatItem = styled.div`
   align-items: center;
   padding: 14px 16px;
   cursor: pointer;
-  border-left: 4px solid ${({ active }) => (active ? "#0a66c2" : "transparent")};
+  border-left: 4px solid ${({ active }) => (active ? "#000080" : "transparent")};
   background: ${({ active }) => (active ? "#f3f6f8" : "#ffffff")};
   border-bottom: 1px solid #f1f2f4;
   transition: background 0.15s ease-in-out;
@@ -233,7 +233,7 @@ export const Bubble = styled.div`
   border-radius: ${({ expert }) => (expert ? "18px 18px 2px 18px" : "18px 18px 18px 2px")};
   font-size: 14px;
   line-height: 1.5;
-  background: ${({ expert }) => (expert ? "#0a66c2" : "#efefef")};
+  background: ${({ expert }) => (expert ? "#000080" : "#efefef")};
   color: ${({ expert }) => (expert ? "#ffffff" : "#000000")};
   border: none;
   word-wrap: break-word;
@@ -291,7 +291,7 @@ export const ChatInput = styled.textarea`
   transition: all 0.2s ease;
 
   &:focus {
-    border-color: #0a66c2;
+    border-color: #000080;
     background: #ffffff;
   }
 
@@ -324,7 +324,7 @@ export const SendButton = styled.button`
 `;
 
 /* --- RE-EXPORTING ALL MISSING COMPONENTS TO PREVENT ERRORS --- */
-export const LoadingSpinner = styled.div` display: flex; align-items: center; justify-content: center; height: 100%; color: #0a66c2; font-weight: 600; `;
+export const LoadingSpinner = styled.div` display: flex; align-items: center; justify-content: center; height: 100%; color: #000080; font-weight: 600; `;
 export const NoChatSelected = styled.div` display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #666; font-size: 15px; font-weight: 500; `;
 export const ErrorMessage = styled.div` display: flex; align-items: center; justify-content: center; height: 100%; color: #d11124; font-weight: 600; `;
 export const EmptyChatMessage = styled.div` display: flex; align-items: center; justify-content: center; height: 100%; color: #888; font-size: 14px; `;

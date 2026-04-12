@@ -69,7 +69,7 @@ const Footer = () => {
           <Logo to="/">
             <LogoContainer>
               <LogoImage src={logoImg} alt="ExpertYard Logo" />
-              <LogoText>ExpertYard</LogoText>
+              <LogoText>Guidexa</LogoText>
             </LogoContainer>
           </Logo>
 

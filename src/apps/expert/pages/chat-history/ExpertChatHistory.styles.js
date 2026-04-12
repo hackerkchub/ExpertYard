@@ -63,7 +63,7 @@ export const TabButton = styled.button`
   align-items: center;
   gap: 8px;
   padding: 10px 28px;
-  background: ${props => props.active ? '#0a66c2' : 'transparent'};
+  background: ${props => props.active ? '#000080' : 'transparent'};
   color: ${props => props.active ? 'white' : '#000000'};
   border: none;
   border-radius: 24px;
@@ -83,9 +83,9 @@ export const MobileSummaryToggle = styled.button`
     gap: 8px;
     padding: 10px 20px;
     background: white;
-    border: 2px solid #0a66c2;
+    border: 2px solid #000080;
     border-radius: 24px;
-    color: #0a66c2;
+    color: #000080;
     font-size: 14px;
     font-weight: 700;
     margin-bottom: 16px;
@@ -124,7 +124,7 @@ export const StatCard = styled.div`
     border-radius: 10px;
     background: #f3f2ef;
     display: flex; align-items: center; justify-content: center;
-    font-size: 20px; color: #0a66c2;
+    font-size: 20px; color: #000080;
     flex-shrink: 0;
   }
 
@@ -173,8 +173,8 @@ export const SearchBar = styled.div`
 export const PillBadge = styled.button`
   padding: 8px 20px;
   border-radius: 20px;
-  border: 2px solid ${props => props.active ? '#0a66c2' : '#dbdbdb'};
-  background: ${props => props.active ? '#0a66c2' : 'white'};
+  border: 2px solid ${props => props.active ? '#000080' : '#dbdbdb'};
+  background: ${props => props.active ? '#000080' : 'white'};
   color: ${props => props.active ? 'white' : '#000000'};
   font-size: 14px;
   font-weight: 700;
@@ -269,7 +269,7 @@ export const Avatar = styled.div`
   border-radius: 50%;
   background: #e0e0e0;
   overflow: hidden;
-  border: 2px solid #0a66c2;
+  border: 2px solid #000080;
   flex-shrink: 0;
   display: none; /* FIX: Image wapas dikhegi */
   align-items: center;
@@ -286,7 +286,7 @@ export const Avatar = styled.div`
 
 export const EarningsBadge = styled.span`
   background: #e1f0fe;
-  color: #0a66c2;
+  color: #000080;
   padding: 4px 12px;
   border-radius: 6px;
   font-size: 13px;
@@ -322,28 +322,28 @@ export const SessionCard = styled.div`
     border-radius: 50%;
     font-size: 12px; font-weight: 800;
     display: flex; align-items: center; justify-content: center;
-    color: #0a66c2;
+    color: #000080;
     flex-shrink: 0;
   }
 
   .session-info { flex: 1; font-size: 14px; color: #000000; font-weight: 600; }
-  .session-earnings { font-weight: 800; color: #0a66c2; font-size: 15px; }
+  .session-earnings { font-weight: 800; color: #000080; font-size: 15px; }
 `;
 
 export const ActionButton = styled.button`
   background: white;
-  border: 2px solid #0a66c2;
-  color: #0a66c2;
+  border: 2px solid #000080;
+  color: #000080;
   padding: 8px 20px;
   border-radius: 24px;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
-  &:hover { background: #0a66c2; color: white; }
+  &:hover { background: #000080; color: white; }
 
   ${props => props.primary && `
-    background: #0a66c2; color: white; border: none;
+    background: #000080; color: white; border: none;
     &:hover { background: #004182; }
   `}
 `;
@@ -362,7 +362,7 @@ export const LoadingSpinner = styled.div`
   display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px;
   .spinner {
     width: 40px; height: 40px;
-    border: 4px solid #dbdbdb; border-top: 4px solid #0a66c2;
+    border: 4px solid #dbdbdb; border-top: 4px solid #000080;
     border-radius: 50%; animation: ${spin} 0.8s linear infinite;
   }
 `;
@@ -428,7 +428,7 @@ export const MessageBubble = styled.div`
   flex-direction: column;
   
   .message-content {
-    background: ${props => props.isExpert ? '#ffffff' : '#0a66c2'};
+    background: ${props => props.isExpert ? '#ffffff' : '#000080'};
     color: ${props => props.isExpert ? '#000000' : '#ffffff'};
     padding: 12px 16px;
     border-radius: 18px;
@@ -463,7 +463,7 @@ export const StatusBadge = styled.span`
   text-transform: uppercase;
   color: #000000;
   
-  &.completed { background: #e1f0fe; color: #0a66c2; border: 1px solid #0a66c2; }
+  &.completed { background: #e1f0fe; color: #000080; border: 1px solid #000080; }
   &.missed { background: #ffebee; color: #d32f2f; border: 1px solid #d32f2f; }
   &.rejected { background: #f5f5f5; color: #616161; border: 1px solid #616161; }
 `;

@@ -159,7 +159,7 @@ export const MessageBubble = styled.div`
   }
 
   &.user {
-    background: #0a66c2;
+    background: #000080;
     color: white;
     border-radius: 12px 0px 12px 12px;
   }
@@ -196,12 +196,12 @@ export const InputBox = styled.input`
 
   &:focus {
     background: white;
-    border-color: #0a66c2;
+    border-color: #000080;
   }
 `;
 
 export const SendButton = styled.button`
-  background: #0a66c2;
+  background: #000080;
   color: white;
   border: none;
   width: 36px;

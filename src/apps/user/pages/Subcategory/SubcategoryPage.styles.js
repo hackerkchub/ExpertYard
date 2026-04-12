@@ -1,7 +1,7 @@
 import styled, { keyframes } from 'styled-components';
 
 const colors = {
-  primary: '#0a66c2',
+  primary: '#000080',
   primaryLight: '#e7f3ff',
   primaryDark: '#004182',
   bgBody: '#f3f2ef',

@@ -475,7 +475,7 @@ export default function Auth() {
             </Field>
 
             <div style={{ textAlign: "right", marginTop: "-10px" }}>
-              <span onClick={() => { setIsForgotMode(true); showMessage(""); }} style={{ color: "#0a66c2", fontSize: "14px", fontWeight: "600", cursor: "pointer" }}>
+              <span onClick={() => { setIsForgotMode(true); showMessage(""); }} style={{ color: "#000080", fontSize: "14px", fontWeight: "600", cursor: "pointer" }}>
                 Forgot Password?
               </span>
             </div>
@@ -561,7 +561,7 @@ export default function Auth() {
                 <div style={{ display: "flex", gap: "12px" }}>
                   <SecondaryButton 
                     type="button" 
-                    style={{ flex: 1, background: forgotData.type === 'email' ? '#0a66c2' : '#fff', color: forgotData.type === 'email' ? '#fff' : '#0a66c2' }} 
+                    style={{ flex: 1, background: forgotData.type === 'email' ? '#000080' : '#fff', color: forgotData.type === 'email' ? '#fff' : '#000080' }} 
                     onClick={() => { setForgotData(prev => ({ ...prev, type: "email" })); setForgotStep(1); }}
                     disabled={forgotStep > 1.4 || submitting || loading}
                   >
@@ -569,7 +569,7 @@ export default function Auth() {
                   </SecondaryButton>
                   <SecondaryButton 
                     type="button" 
-                    style={{ flex: 1, background: forgotData.type === 'mobile' ? '#0a66c2' : '#fff', color: forgotData.type === 'mobile' ? '#fff' : '#0a66c2' }} 
+                    style={{ flex: 1, background: forgotData.type === 'mobile' ? '#000080' : '#fff', color: forgotData.type === 'mobile' ? '#fff' : '#000080' }} 
                     onClick={() => { setForgotData(prev => ({ ...prev, type: "mobile" })); setForgotStep(1); }}
                     disabled={forgotStep > 1.4 || submitting || loading}
                   >

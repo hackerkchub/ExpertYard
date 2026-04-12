@@ -88,12 +88,13 @@ export default function ExpertSidebar() {
   }
 };
  
-
   const menuItems = [
     { path: "/expert", icon: FiHome, label: "Dashboard", exact: true },
     { path: "/expert/my-content", icon: FiFileText, label: "My Content" },
     { path: "/expert/chat-history", icon: FiMessageSquare, label: "Chat History" },
     { path: "/expert/earnings", icon: FiBarChart2, label: "Earnings" },
+    { path: "/expert/myservices", icon: FiBell, label: "My Service" },
+    { path: "/expert/guidexa-plan", icon: FiBell, label: "Guidexa Plan" },
   ];
 
   return (

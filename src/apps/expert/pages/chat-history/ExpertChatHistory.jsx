@@ -99,7 +99,7 @@ const STATUS_CONFIG = {
   completed: {
     label: 'Completed',
     icon: FiCheckCircle,
-    color: '#0a66c2',
+    color: '#000080',
     bgColor: 'rgba(10, 102, 194, 0.1)'
   },
   missed: {
@@ -117,13 +117,13 @@ const STATUS_CONFIG = {
   accepted: {
     label: 'In Progress',
     icon: FiPhone,
-    color: '#0a66c2',
+    color: '#000080',
     bgColor: 'rgba(10, 102, 194, 0.1)'
   },
   ended: {
     label: 'Completed',
     icon: FiCheckCircle,
-    color: '#0a66c2',
+    color: '#000080',
     bgColor: 'rgba(10, 102, 194, 0.1)'
   }
 };
@@ -629,7 +629,7 @@ const ExpertChatHistory = () => {
         }
         
         .gradient-text {
-          background: linear-gradient(135deg, #0a66c2 0%, #0a66c2 100%);
+          background: linear-gradient(135deg, #000080 0%, #000080 100%);
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent;
@@ -660,7 +660,7 @@ const ExpertChatHistory = () => {
         
         .call-type-badge.voice {
           background: rgba(10, 102, 194, 0.1);
-          color: #0a66c2;
+          color: #000080;
         }
         
         .call-type-badge.video {
@@ -745,7 +745,7 @@ const ExpertChatHistory = () => {
                   <>
                     <StatCard>
                       <div className="stat-icon" style={{ background: 'rgba(10, 102, 194, 0.1)' }}>
-                        <HiUsers color="#0a66c2" />
+                        <HiUsers color="#000080" />
                       </div>
                       <div className="stat-content">
                         <span className="stat-value">{chatSummary.totalUsers}</span>
@@ -775,7 +775,7 @@ const ExpertChatHistory = () => {
                     
                     <StatCard primary>
                       <div className="stat-icon" style={{ background: 'rgba(10, 102, 194, 0.1)' }}>
-                        <FaIndianRupeeSign color="#0a66c2" />
+                        <FaIndianRupeeSign color="#000080" />
                       </div>
                       <div className="stat-content">
                         <span className="stat-value">₹{(chatSummary.expertEarn || 0).toFixed(0)}</span>
@@ -787,7 +787,7 @@ const ExpertChatHistory = () => {
                   <>
                     <StatCard>
                       <div className="stat-icon" style={{ background: 'rgba(10, 102, 194, 0.1)' }}>
-                        <IoMdCall color="#0a66c2" />
+                        <IoMdCall color="#000080" />
                       </div>
                       <div className="stat-content">
                         <span className="stat-value">{callSummary.totalCalls}</span>
@@ -817,7 +817,7 @@ const ExpertChatHistory = () => {
                     
                     <StatCard primary>
                       <div className="stat-icon" style={{ background: 'rgba(10, 102, 194, 0.1)' }}>
-                        <FaIndianRupeeSign color="#0a66c2" />
+                        <FaIndianRupeeSign color="#000080" />
                       </div>
                       <div className="stat-content">
                         <span className="stat-value">₹{(callSummary.netEarnings || 0).toFixed(0)}</span>

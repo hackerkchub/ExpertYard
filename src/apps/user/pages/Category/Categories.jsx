@@ -134,7 +134,7 @@ const Categories = () => {
         {popularCategories.length > 0 && !searchQuery && (
           <PopularSection>
             <div className="title">
-              <IoSparkles color="#0a66c2" /> Most Popular
+              <IoSparkles color="#000080" /> Most Popular
             </div>
             <PopularGrid>
               {popularCategories.map(cat => (

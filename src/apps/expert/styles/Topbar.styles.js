@@ -77,8 +77,8 @@ export const SearchBox = styled.input`
   &:focus {
     outline: none;
     background: #fff;
-    border-color: #0a66c2;
-    box-shadow: 0 0 0 1px #0a66c2;
+    border-color: #000080;
+    box-shadow: 0 0 0 1px #000080;
   }
 `;
 
@@ -98,7 +98,7 @@ export const CreateBtn = styled.button`
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #0a66c2;
+  background: #000080;
   color: #fff;
   padding: 8px 18px;
   border-radius: 20px;
@@ -232,7 +232,7 @@ export const MobileNavItem = styled.div`
 
   &:hover, &.active {
     background: #f0f7ff;
-    color: #0a66c2;
+    color: #000080;
   }
 `;
 

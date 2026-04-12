@@ -25,6 +25,9 @@ import PrivacyPolicy from "../pages/Privacy-Policy/PrivacyPolicy";
 import FAQ from "../pages/FAQ/Faq";
 import ContactUs from "../pages/Contact-Us/ContactUs";
 import Careers from "../pages/Careers/Career";
+import AllServices from "../pages/AllServicesByCatId/AllServices";
+import ServiceDetails from "../pages/AllServicesByCatId/ServiceDetails";
+import MyBookings from "../pages/AllServicesByCatId/MyBookings";
 
 export default function UserAppRoutes() {
   return (
@@ -50,6 +53,9 @@ export default function UserAppRoutes() {
         <Route path="/faq" element={<FAQ />} />
         <Route path="/contact" element={<ContactUs />} />
         <Route path="/careers" element={<Careers />} />
+        <Route path="/all-services" element={<AllServices />} />
+        <Route path="/service-details/:id" element={<ServiceDetails />} />
+         <Route path="/my-booking/:id" element={<MyBookings />} />
           <Route
           path="/voice-call/:expertId"
           element={

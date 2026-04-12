@@ -30,14 +30,14 @@ export const Container = styled.div`
 `;
 
 export const NavbarSpacer = styled.div`
-  height: 76px;
+  height: 80px;
   @media (max-width: 768px) { height: 70px; }
   @media (max-width: 480px) { height: 66px; }
 `;
 
 export const BrandLogo = styled.img`
-  width: 42px;
-  height: 42px;
+  width: 48px;
+  height: 50px;
   border-radius: 12px;
   object-fit: cover;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -47,7 +47,7 @@ export const BrandLogo = styled.img`
 export const BrandName = styled.h2`
   font-size: 24px;
   font-weight: 800;
-  background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+  background:#000080;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin: 0;

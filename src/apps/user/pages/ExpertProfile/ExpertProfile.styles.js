@@ -95,7 +95,7 @@ export const Name = styled.h1`
 
 export const VerifiedBadge = styled.span`
   background: #e7f3ff;
-  color: #0a66c2;
+  color: #000080;
   font-size: 11px;
   padding: 2px 8px;
   border-radius: 12px;
@@ -187,9 +187,9 @@ export const ActionButton = styled.button`
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
-  border: 1px solid #0a66c2;
-  background: ${props => props.$primary ? "#0a66c2" : "white"};
-  color: ${props => props.$primary ? "white" : "#0a66c2"};
+  border: 1px solid #000080;
+  background: ${props => props.$primary ? "#000080" : "white"};
+  color: ${props => props.$primary ? "white" : "#000080"};
   white-space: nowrap;
 
   &:hover {
@@ -206,9 +206,9 @@ export const PriceTag = styled.div`
 `;
 
 export const FollowButton = styled.button`
-  border: 1px solid #0a66c2;
+  border: 1px solid #000080;
   background: none;
-  color: #0a66c2;
+  color: #000080;
   border-radius: 20px;
   padding: 4px 12px;
   font-weight: 600;
@@ -304,7 +304,7 @@ export const TextAreaContainer = styled.div` position: relative; margin-bottom: 
 export const ReviewTextarea = styled.textarea`
   width: 100%; padding: 12px; border: 1px solid #dcdcdc; border-radius: 4px;
   font-family: inherit; font-size: 14px; resize: vertical;
-  &:focus { border-color: #0a66c2; outline: none; box-shadow: 0 0 0 1px #0a66c2; }
+  &:focus { border-color: #000080; outline: none; box-shadow: 0 0 0 1px #000080; }
 `;
 
 export const FormActions = styled.div` display: flex; gap: 12px; align-items: center; `;
@@ -343,7 +343,7 @@ export const ReviewText = styled.p` font-size: 14px; color: #000000e6; margin-to
 
 export const ViewAllButton = styled.button`
   width: 100%; padding: 12px; background: transparent; border: none;
-  color: #0a66c2; font-weight: 600; cursor: pointer;
+  color: #000080; font-weight: 600; cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 8px;
   &:hover { background: #eef3f8; }
 `;
@@ -393,13 +393,13 @@ export const TabButton = styled.button`
   border: none;
   font-size: 15px;
   font-weight: 600;
-  color: ${props => props.$active ? "#0a66c2" : "#666"};
+  color: ${props => props.$active ? "#000080" : "#666"};
   cursor: pointer;
   position: relative;
   transition: all 0.2s;
   
   &:hover {
-    color: #0a66c2;
+    color: #000080;
   }
   
   ${props => props.$active && `
@@ -410,7 +410,7 @@ export const TabButton = styled.button`
       left: 0;
       right: 0;
       height: 2px;
-      background: #0a66c2;
+      background: #000080;
     }
   `}
   
@@ -510,7 +510,7 @@ export const ExperienceCertificate = styled.a`
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #0a66c2;
+  color: #000080;
   text-decoration: none;
   padding: 6px 12px;
   background: #eef3f8;
@@ -623,7 +623,7 @@ export const PostActionBtn = styled.button`
   
   &:hover {
     background: #f3f2ef;
-    color: ${props => props.$liked ? "#dc2626" : "#0a66c2"};
+    color: ${props => props.$liked ? "#dc2626" : "#000080"};
   }
 `;
 
@@ -658,7 +658,7 @@ export const CommentText = styled.div`
 
 export const CommentMeta = styled.div`
   font-size: 11px;
-  color: #0a66c2;
+  color: #000080;
 `;
 
 export const InlineInput = styled.input`
@@ -670,12 +670,12 @@ export const InlineInput = styled.input`
   outline: none;
   
   &:focus {
-    border-color: #0a66c2;
+    border-color: #000080;
   }
 `;
 
 export const SendBtn = styled.button`
-  background: #0a66c2;
+  background: #000080;
   color: white;
   border: none;
   border-radius: 50%;

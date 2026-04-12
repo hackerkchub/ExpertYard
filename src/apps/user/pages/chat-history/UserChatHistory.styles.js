@@ -86,7 +86,7 @@ export const TabButton = styled.button`
   align-items: center;
   gap: 8px;
   padding: 10px 28px;
-  background: ${props => props.active ? '#0A66C2' : 'transparent'};
+  background: ${props => props.active ? '#000080' : 'transparent'};
   color: ${props => props.active ? 'white' : '#666666'};
   border: none;
   border-radius: 24px;
@@ -96,7 +96,7 @@ export const TabButton = styled.button`
   transition: all 0.2s ease;
 
   &:hover {
-    background: ${props => props.active ? '#0A66C2' : '#F3F2F0'};
+    background: ${props => props.active ? '#000080' : '#F3F2F0'};
     color: ${props => props.active ? 'white' : '#191919'};
   }
 
@@ -131,7 +131,7 @@ export const MobileSummaryToggle = styled.button`
   background: white;
   border: 1px solid #E9E5DF;
   border-radius: 24px;
-  color: #0A66C2;
+  color: #000080;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -165,7 +165,7 @@ export const SummaryCard = styled.div`
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #0A66C2;
+    color: #000080;
     font-weight: 600;
     margin-bottom: 16px;
     font-size: 14px;
@@ -251,12 +251,12 @@ export const StatCard = styled.div`
 
   ${props => props.accent && `
     background: white;
-    border-left: 4px solid #0A66C2;
+    border-left: 4px solid #000080;
   `}
 
   ${props => props.primary && `
     background: white;
-    border-left: 4px solid #0A66C2;
+    border-left: 4px solid #000080;
   `}
 
   &:hover {
@@ -355,7 +355,7 @@ export const SearchBar = styled.div`
     box-shadow: 0 2px 8px rgba(10, 102, 194, 0.08);
     
     &:focus-within {
-      border-color: #0A66C2;
+      border-color: #000080;
       box-shadow: 0 0 0 4px rgba(10, 102, 194, 0.1);
     }
   `}
@@ -383,8 +383,8 @@ export const SearchBar = styled.div`
 export const PillBadge = styled.button`
   padding: 8px 16px;
   border-radius: 30px;
-  border: 1px solid ${props => props.active ? '#0A66C2' : '#E9E5DF'};
-  background: ${props => props.active ? '#0A66C2' : 'white'};
+  border: 1px solid ${props => props.active ? '#000080' : '#E9E5DF'};
+  background: ${props => props.active ? '#000080' : 'white'};
   color: ${props => props.active ? 'white' : '#666666'};
   font-size: 13px;
   font-weight: 500;
@@ -395,8 +395,8 @@ export const PillBadge = styled.button`
   white-space: nowrap;
 
   &:hover {
-    background: ${props => props.active ? '#0A66C2' : '#F3F2F0'};
-    border-color: ${props => props.active ? '#0A66C2' : '#D0CBC4'};
+    background: ${props => props.active ? '#000080' : '#F3F2F0'};
+    border-color: ${props => props.active ? '#000080' : '#D0CBC4'};
   }
 
   @media (max-width: 768px) {
@@ -568,7 +568,7 @@ export const ChatHeader = styled.div`
   }
 
   .rate-badge {
-    background: #0A66C2;
+    background: #000080;
     color: white;
     padding: 4px 12px;
     border-radius: 20px;
@@ -653,7 +653,7 @@ export const Avatar = styled.div`
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: ${props => props.premium ? '#0A66C2' : '#d8d1c7'};
+  background: ${props => props.premium ? '#000080' : '#d8d1c7'};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -699,7 +699,7 @@ export const AvatarFallback = styled.div`
 `;
 
 export const ExpertBadge = styled.span`
-  background: #0A66C2;
+  background: #000080;
   color: white;
   padding: 4px 12px;
   border-radius: 20px;
@@ -777,7 +777,7 @@ export const SessionCard = styled.div`
 
   ${props => props.premium && `
     &:hover {
-      border-color: #0A66C2;
+      border-color: #000080;
       box-shadow: 0 4px 12px rgba(10, 102, 194, 0.08);
     }
   `}
@@ -881,7 +881,7 @@ export const SessionCard = styled.div`
 
       &.voice {
         background: rgba(10, 102, 194, 0.1);
-        color: #0A66C2;
+        color: #000080;
       }
 
       &.video {
@@ -915,7 +915,7 @@ export const SessionCard = styled.div`
     .amount {
       font-size: 16px;
       font-weight: 700;
-      color: #0A66C2;
+      color: #000080;
 
       @media (max-width: 480px) {
         font-size: 14px;
@@ -956,7 +956,7 @@ export const ActionButton = styled.button`
   gap: 6px;
 
   ${props => props.primary && `
-    background: #0A66C2;
+    background: #000080;
     color: white;
     border: none;
     
@@ -985,17 +985,17 @@ export const ActionButton = styled.button`
 
 export const ViewChatButton = styled(ActionButton)`
   background: white;
-  color: #0A66C2;
-  border-color: #0A66C2;
+  color: #000080;
+  border-color: #000080;
 
   &:hover {
-    background: #0A66C2;
+    background: #000080;
     color: white;
   }
 `;
 
 export const ChatAgainButton = styled(ActionButton)`
-  background: #0A66C2;
+  background: #000080;
   color: white;
   border: none;
 
@@ -1053,7 +1053,7 @@ export const EmptyState = styled.div`
   }
 
   .premium-btn {
-    background: #0A66C2;
+    background: #000080;
     color: white;
     border: none;
     padding: 12px 24px;
@@ -1091,7 +1091,7 @@ export const LoadingSpinner = styled.div`
     width: 48px;
     height: 48px;
     border: 3px solid rgba(10, 102, 194, 0.1);
-    border-top-color: #0A66C2;
+    border-top-color: #000080;
     border-radius: 50%;
     animation: ${spin} 0.8s linear infinite;
     margin-bottom: 16px;
@@ -1261,7 +1261,7 @@ export const ChatMessagesArea = styled.div`
 `;
 
 export const ChatMessageBubble = styled.div`
-  background: ${props => props.isExpert ? 'white' : '#0A66C2'};
+  background: ${props => props.isExpert ? 'white' : '#000080'};
   color: ${props => props.isExpert ? '#191919' : 'white'};
   padding: 16px;
   border-radius: 20px;

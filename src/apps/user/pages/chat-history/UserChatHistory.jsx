@@ -798,7 +798,7 @@ export const UserChatHistory = () => {
         }
         
         .user-gradient-text {
-          background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+          background: #000080;
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent;
@@ -864,9 +864,9 @@ export const UserChatHistory = () => {
             <div>
               <Title>
                 {activeMainTab === 'chat' ? (
-                  <FiMessageSquare style={{ marginRight: 12, color: '#0ea5e9' }} />
+                  <FiMessageSquare style={{ marginRight: 12, color: '#000080' }} />
                 ) : (
-                  <FiPhone style={{ marginRight: 12, color: '#0ea5e9' }} />
+                  <FiPhone style={{ marginRight: 12, color: '#000080' }} />
                 )}
                 <span className="user-gradient-text">
                   {activeMainTab === 'chat' ? 'Consultation History' : 'Call History'}

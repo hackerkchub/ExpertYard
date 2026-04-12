@@ -49,7 +49,7 @@ export default function Topbar({ setMobileOpen }) {
         <BrandingGroup>
           <BrandBox to="/">
             <BrandLogo src={logo} alt="logo" />
-            <BrandName>Expert<span>Yard</span></BrandName>
+            <BrandName>Guidexa</BrandName>
             <AdminTitle>Admin Panel</AdminTitle>
           </BrandBox>
         </BrandingGroup>

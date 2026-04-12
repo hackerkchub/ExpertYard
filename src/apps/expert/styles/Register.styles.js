@@ -109,7 +109,7 @@ export const ProgressBarInner = styled.div`
   height: 100%;
   border-radius: 3px;
   width: ${({ percent }) => `${percent}%`};
-  background-color: #0a66c2;
+  background-color: #000080;
   transition: width 0.4s ease-in-out;
   animation: ${progressLiquid} 0.6s ease;
 `;
@@ -159,8 +159,8 @@ export const Input = styled.input`
   width: 100%;
 
   &:focus {
-    border-color: #0a66c2;
-    box-shadow: 0 0 0 1px #0a66c2;
+    border-color: #000080;
+    box-shadow: 0 0 0 1px #000080;
     outline: none;
   }
 `;
@@ -188,7 +188,7 @@ export const PrimaryButton = styled.button`
   border: none;
   color: #fff;
   cursor: pointer;
-  background-color: #0a66c2;
+  background-color: #000080;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -208,9 +208,9 @@ export const SecondaryButton = styled.button`
   min-height: 44px;
   font-size: 14px;
   font-weight: 600;
-  border: 1px solid #0a66c2;
+  border: 1px solid #000080;
   background: #ffffff;
-  color: #0a66c2;
+  color: #000080;
   cursor: pointer;
   border-radius: 22px;
   transition: all 0.2s ease;
@@ -245,7 +245,7 @@ export const PasswordStrength = styled.div`
 // `;
 
 export const ToggleLink = styled.span`
-  color: #0a66c2 !important;
+  color: #000080 !important;
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
@@ -267,7 +267,7 @@ export const FileInput = styled.input.attrs({ type: "file" })`
   &::-webkit-file-upload-button {
     padding: 6px 12px;
     border-radius: 14px;
-    background-color: #0a66c2;
+    background-color: #000080;
     color: white;
     border: none;
     font-weight: 600;
@@ -296,7 +296,7 @@ export const CardGrid = styled.div`
 
 export const SelectCard = styled.button`
   border-radius: 12px;
-  border: 1px solid ${({ active }) => (active ? "#0a66c2" : "#e0e0e0")};
+  border: 1px solid ${({ active }) => (active ? "#000080" : "#e0e0e0")};
   background: ${({ active }) => (active ? "rgba(10, 102, 194, 0.04)" : "#ffffff")};
   padding: 20px;
   display: flex;
@@ -318,7 +318,7 @@ export const CardTitle = styled.div` font-weight: 600; color: #000; `;
 export const CardMeta = styled.div` font-size: 13px; color: #666; `;
 export const Chip = styled.span`
   font-size: 12px; padding: 4px 12px; border-radius: 14px;
-  background-color: #e7f3ff; color: #0a66c2; font-weight: 600;
+  background-color: #e7f3ff; color: #000080; font-weight: 600;
 `;
 
 export const PriceInputRow = styled.div`
@@ -338,7 +338,7 @@ export const CategoryStats = styled.div`
   background: #f4f2ee; border-radius: 8px; margin-bottom: 20px;
 `;
 
-export const SelectedCount = styled.span` color: #0a66c2; font-weight: 700; `;
+export const SelectedCount = styled.span` color: #000080; font-weight: 700; `;
 
 export const CategoryEmptyState = styled.div` padding: 40px 0; text-align: center; `;
 export const SubcategorySearch = styled(CategorySearch)``;
@@ -348,7 +348,7 @@ export const CategoryPreview = styled.div`
 `;
 
 export const MultiSelectToggle = styled.button`
-  padding: 6px 14px; border: 1px solid #0a66c2; background: #fff; border-radius: 20px; color: #0a66c2; cursor: pointer;
+  padding: 6px 14px; border: 1px solid #000080; background: #fff; border-radius: 20px; color: #000080; cursor: pointer;
 `;
 
 export const SelectedPreview = styled.div`
@@ -379,7 +379,7 @@ export const PricingStats = styled.div`
   @media (max-width: 480px) { grid-template-columns: 1fr; }
 `;
 
-export const SelectedPriceTag = styled.div` font-size: 20px; font-weight: 700; color: #0a66c2; `;
+export const SelectedPriceTag = styled.div` font-size: 20px; font-weight: 700; color: #000080; `;
 
 export const FeatureGrid = styled.div` display: grid; gap: 12px; margin: 24px 0; `;
 
@@ -403,11 +403,11 @@ export const RemoveFileButton = styled.button`
 
 export const ProgressBar = styled.div` width: 100%; height: 4px; background: #eee; border-radius: 2px; `;
 export const ProgressFill = styled.div`
-  height: 100%; background: #0a66c2; width: ${({ percent }) => `${percent}%`}; transition: width 0.3s;
+  height: 100%; background: #000080; width: ${({ percent }) => `${percent}%`}; transition: width 0.3s;
 `;
 
 export const UploadStatus = styled.div`
-  padding: 10px; background: #e7f3ff; border-radius: 4px; color: #0a66c2; font-size: 13px;
+  padding: 10px; background: #e7f3ff; border-radius: 4px; color: #000080; font-size: 13px;
 `;
 
 export const SuccessCard = styled.div`

@@ -38,6 +38,7 @@ import {
   addIce,
   toggleMute,
   handleSocketReconnect,
+  getStats,
 } from "../../../../shared/webrtc/voicePeer";
 
 import { CALL_EVENTS } from "../../../../shared/constants/call.constants";
@@ -117,6 +118,29 @@ const pricingMode = validModes.includes(location.state?.pricingMode)
     }
   }, [callState]);
 
+  useEffect(() => {
+  if (callState !== "connected") return;
+
+  const interval = setInterval(async () => {
+    const stats = await getStats();
+    const inbound = stats?.find(s => s.type === "inbound");
+
+    if (!inbound) return;
+
+    const total = inbound.packetsReceived + inbound.packetsLost;
+    if (!total) return;
+
+    const loss = inbound.packetsLost / total;
+
+    if (loss < 0.03) setNetworkQuality("good");
+    else if (loss < 0.1) setNetworkQuality("average");
+    else setNetworkQuality("poor");
+
+  }, 4000);
+
+  return () => clearInterval(interval);
+}, [callState]);
+
   // Start call
  const startCall = useCallback(async () => {
   if (callStartedRef.current) return;
@@ -143,39 +167,46 @@ useEffect(() => {
 }, [resumeChecked, isResumed, startCall]);
 
   // WebRTC Offer Handler
-  const handleWebRTCOffer = useCallback(async (currentCallId) => {
-    if (!currentCallId || makingOfferRef.current) return;
-if (callStateRef.current !== "connected") return;
-    console.log("📡 Creating WebRTC offer for call:", currentCallId);
-    makingOfferRef.current = true;
+const handleWebRTCOffer = useCallback(async (currentCallId) => {
+  if (!currentCallId || makingOfferRef.current) return;
 
-    try {
-      const pc = await createPeer({
-        socket,
-        callId: currentCallId,
-        audioRef,
-      });
+  console.log("📡 Creating WebRTC offer for call:", currentCallId);
+  makingOfferRef.current = true;
 
-      const offer = await pc.createOffer({
-        offerToReceiveAudio: true,
-        offerToReceiveVideo: false,
-      });
-      await pc.setLocalDescription(offer);
+  try {
+    const pc = await createPeer({
+      socket,
+      callId: currentCallId,
+      audioRef,
+    });
 
-      socket.emit("webrtc:offer", {
-        callId: currentCallId,
-        offer,
-      });
-
-      console.log("✅ Offer sent to expert");
-    } catch (err) {
-      console.error("❌ WebRTC offer failed:", err);
-      setCallState("ended");
-      closePeer();
-    } finally {
-      makingOfferRef.current = false;
+    // ✅ check AFTER peer created
+    if (pc.signalingState !== "stable") {
+      console.log("⛔ Skipping offer — not stable");
+      return;
     }
-  }, [socket]);
+
+    const offer = await pc.createOffer({
+      offerToReceiveAudio: true,
+      offerToReceiveVideo: false,
+    });
+
+    await pc.setLocalDescription(offer);
+
+    socket.emit("webrtc:offer", {
+      callId: currentCallId,
+      offer,
+    });
+
+    console.log("✅ Offer sent to expert");
+  } catch (err) {
+    console.error("❌ WebRTC offer failed:", err);
+    setCallState("ended");
+    closePeer();
+  } finally {
+    makingOfferRef.current = false;
+  }
+}, [socket]);
 
   // Preload audio permissions
   useEffect(() => {
@@ -238,9 +269,11 @@ return () => {
       setSeconds(0);
       setCallState("connected");
       
-      setTimeout(() => {
-        handleWebRTCOffer(connectedCallId);
-      }, 300);
+      if (!makingOfferRef.current) {
+setTimeout(() => {
+  handleWebRTCOffer(connectedCallId);
+}, 400);
+}
     };
 
     const onWebRTCAnswer = async ({ callId: answerCallId, answer }) => {
@@ -329,9 +362,9 @@ const onOffline = ({ message }) => {
       handleSocketReconnect();
       
       if (callIdRef.current && callStateRef.current === "connected") {
-        setTimeout(() => {
-          handleWebRTCOffer(callIdRef.current);
-        }, 500);
+       setTimeout(() => {
+  handleWebRTCOffer(callIdRef.current);
+}, 700);
       }
     };
 
@@ -363,19 +396,19 @@ const onOffline = ({ message }) => {
     };
   }, [callState]);
 
-  // Network quality monitoring (simulated)
-  useEffect(() => {
-    if (callState === "connected") {
-      const interval = setInterval(() => {
-        // Simulate network quality changes (you can replace with actual WebRTC stats)
-        const qualities = ["good", "average", "poor"];
-        const randomQuality = qualities[Math.floor(Math.random() * qualities.length)];
-        setNetworkQuality(randomQuality);
-      }, 5000);
+  // // Network quality monitoring (simulated)
+  // useEffect(() => {
+  //   if (callState === "connected") {
+  //     const interval = setInterval(() => {
+  //       // Simulate network quality changes (you can replace with actual WebRTC stats)
+  //       const qualities = ["good", "average", "poor"];
+  //       const randomQuality = qualities[Math.floor(Math.random() * qualities.length)];
+  //       setNetworkQuality(randomQuality);
+  //     }, 5000);
 
-      return () => clearInterval(interval);
-    }
-  }, [callState]);
+  //     return () => clearInterval(interval);
+  //   }
+  // }, [callState]);
 
   const formatTime = () => {
     const m = String(Math.floor(seconds / 60)).padStart(2, "0");
@@ -481,7 +514,7 @@ const onOffline = ({ message }) => {
 
   return (
     <PageWrapper>
-      <audio ref={audioRef} autoPlay playsInline style={{ display: "none" }} />
+     <audio ref={audioRef} autoPlay playsInline />
       
       {/* Network Status */}
       {callState === "connected" && networkQuality !== "good" && (

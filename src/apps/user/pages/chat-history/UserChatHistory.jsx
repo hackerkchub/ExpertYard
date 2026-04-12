@@ -213,7 +213,7 @@ const groupCallsByExpert = (calls = []) => {
     const displayStatus = call.status === 'ended' ? 'completed' : call.status;
     if (displayStatus === 'completed') {
       acc[id].completed_count++;
-      const mins = Number(call.duration || 0);
+      const mins = Number(call.duration_minutes || 0);
       const ppm = Number(call.price_per_minute || 16);
       acc[id].total_duration += mins;
       acc[id].total_spent += calculateBilledAmount(mins, ppm);
@@ -901,10 +901,10 @@ export const UserChatHistory = () => {
                         <span className="stat-value">{formatTime(chatSummary.totalMinutes)}</span>
                         <span className="stat-label">Time</span>
                       </div>
-                      <div className="summary-stat">
+                      {/* <div className="summary-stat">
                         <span className="stat-value">₹{chatSummary.totalSpent}</span>
                         <span className="stat-label">Spent</span>
-                      </div>
+                      </div> */}
                     </>
                   ) : (
                     <>
@@ -916,10 +916,10 @@ export const UserChatHistory = () => {
                         <span className="stat-value">{formatDuration(callSummary.totalDuration)}</span>
                         <span className="stat-label">Time</span>
                       </div>
-                      <div className="summary-stat">
+                      {/* <div className="summary-stat">
                         <span className="stat-value">₹{callSummary.totalSpent}</span>
                         <span className="stat-label">Spent</span>
-                      </div>
+                      </div> */}
                     </>
                   )}
                 </div>
@@ -979,7 +979,7 @@ export const UserChatHistory = () => {
                 </div>
               </StatCard>
               
-              <StatCard primary>
+              {/* <StatCard primary>
                 <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
                   <FiDollarSign color="#8b5cf6" />
                 </div>
@@ -987,7 +987,7 @@ export const UserChatHistory = () => {
                   <span className="stat-value">₹{chatSummary.totalSpent}</span>
                   <span className="stat-label">Total Spent</span>
                 </div>
-              </StatCard>
+              </StatCard> */}
               
               <StatCard>
                 <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)' }}>
@@ -1023,7 +1023,7 @@ export const UserChatHistory = () => {
                 </div>
               </StatCard>
               
-              <StatCard primary>
+              {/* <StatCard primary>
                 <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
                   <FiDollarSign color="#8b5cf6" />
                 </div>
@@ -1032,7 +1032,7 @@ export const UserChatHistory = () => {
                   <span className="stat-label">Total Spent</span>
                 </div>
               </StatCard>
-              
+               */}
               <StatCard>
                 <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)' }}>
                   <FiCheckCircle color="#f59e0b" />
@@ -1198,14 +1198,14 @@ export const UserChatHistory = () => {
                           
                           <div className="expert-stats">
                             <span className="meta-item">
-                              <FiClock size={12} /> {formatTime(c.total_minutes)} total
+                              <FiClock size={12} /> {formatTime(c.total_minutes)}
                             </span>
                             <span className="meta-item">
                               <FiMessageSquare size={12} /> {c.sessions_count} sessions
                             </span>
-                            <span className="meta-item">
+                            {/* <span className="meta-item">
                               ₹{c.total_spent.toFixed(0)} spent
-                            </span>
+                            </span> */}
                           </div>
                         </div>
                         
@@ -1420,7 +1420,7 @@ export const UserChatHistory = () => {
                             const config = STATUS_CONFIG[call.status === 'ended' ? 'completed' : call.status] || STATUS_CONFIG.missed;
                             const StatusIcon = config.icon;
                             const billedAmount = calculateBilledAmount(
-                              call.duration, 
+                              call.duration_minutes, 
                               call.price_per_minute
                             );
 
@@ -1438,7 +1438,7 @@ export const UserChatHistory = () => {
                                     </div>
                                     <div className="duration">
                                       <FiWatch size={14} />
-                                      {formatDuration(call.duration)}
+                                      {formatDuration(call.duration_minutes)}
                                     </div>
                                   </div>
                                   

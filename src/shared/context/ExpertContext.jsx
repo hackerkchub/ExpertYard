@@ -35,6 +35,8 @@ const DEFAULT_STATE = {
   profile: null,
   position: "",
   profile_photo: "",
+  is_subscribed: 0,
+  priceId: null, // ✅ NEW
 };
 
 const DEFAULT_PRICE = {
@@ -157,6 +159,7 @@ export const ExpertProvider = ({ children }) => {
           phone: profileData.phone || "",
           position: profileData.position || "",
           profile_photo: photoUrl,
+          is_subscribed: profileData.is_subscribed || 0,
         });
 
         // ✅ Load price data from profile if available
@@ -197,10 +200,12 @@ export const ExpertProvider = ({ children }) => {
     console.log("API RAW:", res);
     console.log("PARSED PRICE:", priceData);
 
-    if (!priceData || !priceData.pricing_modes) {
-      console.log("No price data found");
-      return;
-    }
+   if (!priceData || !priceData.pricing_modes) {
+  updateExpertData({ priceId: null });
+  return;
+}
+
+updateExpertData({ priceId: 1 }); // ✅ means pricing exists
 
     setExpertPrice({
       pricing_modes: priceData.pricing_modes || [],

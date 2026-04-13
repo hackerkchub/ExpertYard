@@ -80,7 +80,7 @@ const BillRow = styled.div`
 
 export default function SubscriptionPlan() {
   const navigate = useNavigate();
-  const { expertData } = useExpert(); // Get expert context
+  const { expertData, updateExpertData } = useExpert();// Get expert context
   const [years, setYears] = useState(1);
   const [selectedPlan, setSelectedPlan] = useState("advanced");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -141,11 +141,20 @@ export default function SubscriptionPlan() {
           const res = await axios.post("https://softmaxs.com/api/expert-plan/activate", payload);
 
           if (res.data.success) {
-            alert("Plan Activated Successfully!");
-            setIsModalOpen(false);
-            // 4. Redirect to Category Page
-            navigate("/expert/register/category");
-          } else {
+  alert("Plan Activated Successfully!");
+
+ if (!res.data.planId) {
+  throw new Error("Plan activation failed: Missing planId");
+}
+
+updateExpertData({
+  isSubscribed: 1   // ✅ MAIN FIX
+});
+  setIsModalOpen(false);
+
+  // ✅ Next step
+  navigate("/expert/register/category");
+} else {
             alert(res.data.message || "Activation failed.");
           }
         } catch (err) {

@@ -139,7 +139,10 @@ export default function ExpertVoiceCall() {
   useEffect(() => {
   const onResume = (data) => {
     if (data.callId !== normalizedCallId) return;
-
+ setCaller(prev => ({
+    ...prev, 
+    name: data.user_name || prev.name
+  }));
     setCallState("connected");
 
     const alreadyElapsed =
@@ -217,8 +220,13 @@ export default function ExpertVoiceCall() {
   useEffect(() => {
     if (!normalizedCallId) return;
 
-    const onConnected = ({ callId: connectedId }) => {
+    const onConnected = ({ callId: connectedId, user_name }) => {
       if (Number(connectedId) !== callIdRef.current) return;
+        setCaller(prev => ({
+    ...prev,
+    name: user_name || prev.name
+  }));
+
       setReconnecting(false);
       setSeconds(0);
       setCallState("connected");

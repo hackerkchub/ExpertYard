@@ -465,22 +465,22 @@ export default function StepPricing() {
           payload.session_duration = Number(sessionDuration);
         }
 
-        // Save pricing
-        const res = await savePrice(payload);
+const res = await savePrice(payload);
 
 console.log("SAVE PRICE RESPONSE 👉", res);
 
-// handle both cases (res.success OR res.data.success)
-const success = res?.success ?? res?.data?.success;
+// ✅ handle both wrapped + unwrapped cases
+const isSuccess =
+  res?.success === true || // if full response
+  res?.pricing_modes !== undefined; // if unwrapped
 
-if (!success) {
+if (!isSuccess) {
   const message =
     res?.message ||
     res?.data?.message ||
     "Failed to save pricing";
 
   toast.error(message);
-  setBackendErrors({ general: message });
   throw new Error(message);
 }
       }

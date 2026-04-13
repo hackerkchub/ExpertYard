@@ -49,6 +49,12 @@ export default function StepCategory() {
   }, []);
 
   useEffect(() => {
+  if (!expertData.isSubscribed) {
+    navigate("/expert/register/subscription");
+  }
+}, [expertData.isSubscribed, navigate]);
+
+  useEffect(() => {
     if (!searchQuery) {
       setFilteredCategories(categories);
     } else {

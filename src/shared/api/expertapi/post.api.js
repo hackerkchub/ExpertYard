@@ -10,6 +10,12 @@ export const getPostsApi = (expert_id) =>
     params: expert_id ? { expert_id } : {}
   });
 
+// ✅ NEW: GET EXPERT FEED (PROFILE PAGE)
+export const getExpertFeedApi = (expertId, userId) =>
+  api.get(`/expert-post/feed/expert/${expertId}`, {
+    params: userId ? { userId } : {}
+  });
+
 // GET FOLLOWING FEED (MY OFFERS)
 export const getFollowingFeedApi = (user_id) =>
   api.get(`/expert-post/feed/following/${user_id}`);
@@ -33,24 +39,22 @@ export const deletePostApi = (id, expert_id) =>
 ===================== */
 
 // LIKE POST
-// body: { post_id, user_id }
 export const likePostApi = ({ post_id, user_id }) =>
   api.post("/expert-post/like", { post_id, user_id });
 
 // UNLIKE POST
 export const unlikePostApi = ({ post_id, user_id }) =>
   api.post("/expert-post/unlike", { post_id, user_id });
-  
+
 /* =====================
    COMMENTS
 ===================== */
 
 // ADD COMMENT
-// body: { post_id, expert_id, comment }
 export const addCommentApi = ({ post_id, expert_id, comment }) =>
   api.post("/expert-post/comments", { post_id, expert_id, comment });
 
-// GET COMMENTS OF POST
+// GET COMMENTS
 export const getCommentsApi = (post_id) =>
   api.get(`/expert-post/${post_id}/comments`);
 

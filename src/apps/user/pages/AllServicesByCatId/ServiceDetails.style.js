@@ -5,265 +5,191 @@ const rotate = keyframes`
   to { transform: rotate(360deg); }
 `;
 
-// 1. Page Wrapper - LinkedIn background color
 export const PageWrapper = styled.div`
   background: #f3f2ef;
   min-height: 100vh;
-  padding: 24px 15px;
+  padding: 20px;
   font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 `;
 
 export const Container = styled.div`
-  max-width: 1128px;
+  max-width: 1200px;
   margin: 0 auto;
 `;
 
-// 2. Back Button - Improved hover and alignment
+export const TopBar = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+`;
+
 export const BackButton = styled.button`
-  background: transparent;
-  border: none;
-  color: rgba(0, 0, 0, 0.6);
+  background: white;
+  border: 1px solid #dcdcdc;
+  padding: 8px 16px;
+  border-radius: 20px;
   font-weight: 600;
+  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
-  cursor: pointer;
-  margin-bottom: 20px;
-  padding: 8px 12px;
-  border-radius: 4px;
-  transition: 0.2s ease;
-
-  &:hover {
-    background-color: rgba(0, 0, 0, 0.08);
-    color: #0a66c2;
-  }
+  &:hover { border-color: #0a66c2; color: #0a66c2; }
 `;
 
-// 3. Grid System - Responsive handling
-export const MainGrid = styled.div`
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 24px;
-
-  @media (max-width: 992px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-export const LeftCol = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-`;
-
-// 4. Hero Image - High quality rendering
-export const HeroImage = styled.img`
-  width: 100%;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  max-height: 480px;
-  object-fit: cover;
-  background: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-`;
-
-// 5. Info Box - Premium spacing
-export const InfoBox = styled.div`
-  background: white;
-  padding: 32px;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
-
-  h1 {
-    font-size: 28px;
-    color: rgba(0, 0, 0, 0.9);
-    margin-bottom: 12px;
-    font-weight: 600;
-  }
-
-  .meta-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    color: rgba(0, 0, 0, 0.6);
-    font-size: 14px;
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid #f0f0f0;
-
-    span {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: 500;
-    }
-  }
-
-  .description {
-    line-height: 1.6;
-    color: rgba(0, 0, 0, 0.7);
-    font-size: 16px;
-    white-space: pre-wrap;
-  }
-`;
-
-export const SectionTitle = styled.h3`
-  font-size: 20px;
-  margin: 32px 0 16px 0;
-  color: rgba(0, 0, 0, 0.9);
+export const FastTag = styled.div`
+  color: #057642;
   font-weight: 600;
+  font-size: 13px;
   display: flex;
   align-items: center;
-  
-  &::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background: #e0e0e0;
-    margin-left: 15px;
-  }
+  gap: 5px;
 `;
 
-// 6. Deliverable List - Modern Grid cards
-export const DeliverableList = styled.ul`
-  list-style: none;
-  padding: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-
-  li {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    font-size: 15px;
-    color: rgba(0, 0, 0, 0.7);
-    padding: 12px;
-    background: #f9fafb;
-    border-radius: 8px;
-    border: 1px solid #eee;
-  }
-
-  @media (max-width: 600px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-export const RightCol = styled.div``;
-
-// 7. Sticky Card - Professional pricing box
-export const StickyCard = styled.div`
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  padding: 24px;
-  position: sticky;
-  top: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 24px;
-  }
-
-  .label {
-    color: rgba(0, 0, 0, 0.6);
-    font-size: 14px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .price {
-    font-size: 36px;
-    font-weight: 700;
-    color: #0a66c2;
-    margin: 0;
-  }
-
-  .footer-text {
-    text-align: center;
-    font-size: 12px;
-    color: rgba(0, 0, 0, 0.5);
-    margin-top: 16px;
-  }
-`;
-
-// 8. Booking Button - LinkedIn Blue action
-export const BookingButton = styled.button`
-  width: 100%;
-  background: #0a66c2;
-  color: white;
-  border: none;
-  padding: 14px;
-  border-radius: 28px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-top: 20px;
-
-  &:hover {
-    background: #004182;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-`;
-
-export const Features = styled.div`
-  border-top: 1px solid #f0f0f0;
-  padding-top: 20px;
+// NEW HORIZONTAL LAYOUT
+export const HorizontalLayout = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  gap: 30px;
+  align-items: flex-start;
 
-  .feat-item {
+  @media (max-width: 992px) {
+    flex-direction: column;
+  }
+`;
+
+export const ImageSide = styled.div`
+  flex: 1;
+  position: relative;
+  max-width: 500px;
+  @media (max-width: 992px) { max-width: 100%; }
+`;
+
+export const HeroImage = styled.img`
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  border: 4px solid white;
+`;
+
+export const Badge = styled.div`
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #057642;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+export const ContentSide = styled.div`
+  flex: 1.5;
+`;
+
+export const MainInfoCard = styled.div`
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  border: 1px solid #e0e0e0;
+`;
+
+export const TitleSection = styled.div`
+  h1 { font-size: 28px; color: #000; margin-bottom: 8px; }
+  .meta-stats {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    color: #666;
+    .rating { color: #f59e0b; font-weight: 700; display: flex; align-items: center; gap: 4px; }
+  }
+`;
+
+export const DescriptionBox = styled.div`
+  margin-top: 25px;
+  h3 { font-size: 18px; margin-bottom: 10px; color: #333; }
+  p { line-height: 1.6; color: #555; font-size: 15px; }
+`;
+
+export const Divider = styled.div`
+  height: 1px;
+  background: #eee;
+  margin: 25px 0;
+`;
+
+export const PricingActionRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 25px;
+`;
+
+export const PriceBlock = styled.div`
+  .label { font-size: 12px; color: #666; font-weight: 600; text-transform: uppercase; }
+  .price-val { font-size: 34px; color: #0a66c2; font-weight: 800; margin: 0; }
+`;
+
+export const WalletBlock = styled.div`
+  background: ${props => props.isLow ? '#fff5f5' : '#f3f2ef'};
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid ${props => props.isLow ? '#feb2b2' : '#e0e0e0'};
+  .w-head {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     font-size: 14px;
-    color: rgba(0, 0, 0, 0.7);
-    
-    svg {
-      color: #057642; // Verified Green
-    }
+    color: #444;
+    strong { color: ${props => props.isLow ? '#c53030' : '#057642'}; }
   }
 `;
 
-// 9. Status States - Fixed exports
-export const LoaderWrapper = styled.div`
-  padding: 100px 20px;
-  text-align: center;
-  color: #0a66c2;
-  background: white;
-  border-radius: 8px;
-  margin: 20px 0;
+export const ButtonGroup = styled.div`
+  margin-top: 10px;
 `;
 
-export const Spinner = styled.div`
-  width: 40px;
-  height: 40px;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #0a66c2;
-  border-radius: 50%;
-  margin: 0 auto 20px;
-  animation: ${rotate} 0.8s linear infinite;
+export const PrimaryButton = styled.button`
+  width: 100%;
+  padding: 16px;
+  border-radius: 30px;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s;
+  color: white;
+  background: ${props => {
+    if (props.status === 'booked') return '#057642';
+    if (props.status === 'low') return '#718096';
+    return '#0a66c2';
+  }};
+
+  &:hover {
+    filter: brightness(0.9);
+    transform: translateY(-2px);
+  }
+
+  &:disabled { cursor: not-allowed; transform: none; }
 `;
 
-export const ErrorState = styled.div`
-  text-align: center;
-  padding: 80px 20px;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  
-  h2 { color: rgba(0,0,0,0.9); margin-bottom: 12px; }
-  p { color: rgba(0,0,0,0.6); }
+export const TrustBar = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+  font-size: 11px;
+  color: #888;
+  span { display: flex; align-items: center; gap: 4px; }
+  svg { color: #057642; }
 `;
+
+export const LoaderWrapper = styled.div` text-align: center; padding: 100px; `;
+export const Spinner = styled.div` 
+  width: 40px; height: 40px; border: 3px solid #f3f3f3; border-top-color: #0a66c2; 
+  border-radius: 50%; animation: ${rotate} 0.8s linear infinite; margin: 0 auto 10px;
+`;
+export const ErrorState = styled.div` text-align: center; padding: 50px; `;

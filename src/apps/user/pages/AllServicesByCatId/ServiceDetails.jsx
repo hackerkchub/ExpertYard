@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiCheckCircle, FiArrowLeft, FiShield, FiClock, FiStar } from "react-icons/fi";
+import { FiArrowLeft, FiShield, FiClock, FiStar, FiZap, FiCheck } from "react-icons/fi";
 import { FaWallet } from "react-icons/fa"; 
+
 
 import { useAuth } from "../../../../shared/context/UserAuthContext"; 
 import { useWallet } from "../../../../shared/context/WalletContext"; 
@@ -14,44 +15,50 @@ const ServiceDetail = () => {
   const { user, isLoggedIn } = useAuth(); 
   const { balance, fetchWalletHistory } = useWallet(); 
   
-  const [service, setService] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Instant Cache Loading
+  const [service, setService] = useState(() => {
+    const cachedData = localStorage.getItem(`service_cache_${id}`);
+    return cachedData ? JSON.parse(cachedData) : null;
+  });
+  
+  const [loading, setLoading] = useState(!service);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
 
-  useEffect(() => {
-    const fetchServiceData = async () => {
-      try {
-        setLoading(true);
-        const res = await axios.get(`https://softmaxs.com/api/services/${id}`);
-        if (res.data && res.data.success) {
-          setService(res.data.data);
-          
-          if (isLoggedIn && user?.id) {
-            checkExistingBooking(res.data.data.id, user.id);
-          }
+  const fetchServiceData = useCallback(async () => {
+    try {
+      const res = await axios.get(`https://softmaxs.com/api/services/${id}`);
+      if (res.data && res.data.success) {
+        const freshData = res.data.data;
+        setService(freshData);
+        localStorage.setItem(`service_cache_${id}`, JSON.stringify(freshData));
+        
+        if (isLoggedIn && user?.id) {
+          checkExistingBooking(freshData.id, user.id);
         }
-      } catch (err) {
-        console.error("Error fetching service detail:", err);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    const checkExistingBooking = async (serviceId, userId) => {
-      try {
-        const res = await axios.get(`https://softmaxs.com/api/bookings/user/${userId}`);
-        if (res.data && res.data.success) {
-          const exists = res.data.data.some(b => b.service_id === parseInt(serviceId) && b.status !== 'cancelled');
-          setIsBooked(exists);
-        }
-      } catch (err) {
-        console.error("Error checking existing booking:", err);
-      }
-    };
-
-    if (id) fetchServiceData();
+    } catch (err) {
+      console.error("Error fetching service:", err);
+    } finally {
+      setLoading(false);
+    }
   }, [id, isLoggedIn, user?.id]);
+
+  const checkExistingBooking = async (serviceId, userId) => {
+    try {
+      const res = await axios.get(`https://softmaxs.com/api/bookings/user/${userId}`);
+      if (res.data && res.data.success) {
+        const exists = res.data.data.some(b => b.service_id === parseInt(serviceId) && b.status !== 'cancelled');
+        setIsBooked(exists);
+      }
+    } catch (err) {
+      console.error("Error checking booking:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (id) fetchServiceData();
+  }, [id, fetchServiceData]);
 
   const handleBooking = async () => {
     if (!isLoggedIn) {
@@ -61,18 +68,15 @@ const ServiceDetail = () => {
 
     const servicePrice = parseFloat(service.price);
 
-    // ✅ balance check logic updated to auto-redirect
     if (balance < servicePrice) {
       await Swal.fire({
         title: "Insufficient Balance!",
-        text: `Wallet Balance: ₹${balance}. Required: ₹${servicePrice}. Redirecting to wallet...`,
+        text: `Required: ₹${servicePrice}. Your Wallet: ₹${balance}.`,
         icon: "warning",
-        timer: 3000, // 3 second ke baad auto redirect
-        showConfirmButton: true,
         confirmButtonText: "Top up Now",
         confirmButtonColor: "#0a66c2",
       });
-      return navigate("/user/wallet"); // Direct redirect to wallet page
+      return navigate("/user/wallet");
     }
 
     const confirm = await Swal.fire({
@@ -88,14 +92,7 @@ const ServiceDetail = () => {
 
     try {
       setBookingLoading(true);
-
-      const walletPayload = {
-        user_id: user.id,
-        amount: servicePrice,
-        expert_id: service.expert_id,
-        service_type: "service_booking"
-      };
-
+      const walletPayload = { user_id: user.id, amount: servicePrice, expert_id: service.expert_id, service_type: "service_booking" };
       const deductRes = await axios.post("https://softmaxs.com/api/wallet/deduct", walletPayload);
 
       if (deductRes.data.success) {
@@ -112,89 +109,84 @@ const ServiceDetail = () => {
 
         if (bookRes.data.success) {
           if (fetchWalletHistory) fetchWalletHistory(); 
-          
-          await Swal.fire({
-            title: "Booking Successful!",
-            text: "Payment processed via ExpertYard Wallet.",
-            icon: "success",
-            confirmButtonColor: "#0a66c2",
-          });
+          await Swal.fire({ title: "Booking Successful!", icon: "success", confirmButtonColor: "#0a66c2" });
           navigate(`/user/my-booking/${user.id}`);
         }
       }
     } catch (err) {
-      console.error("Transaction Error:", err.response);
-      Swal.fire({
-        title: "Payment Failed",
-        text: err.response?.data?.message || "Internal transaction error.",
-        icon: "error",
-      });
+      Swal.fire({ title: "Payment Failed", text: "Transaction error.", icon: "error" });
     } finally {
       setBookingLoading(false);
     }
   };
 
-  if (loading) return <S.LoaderWrapper><S.Spinner /> Fetching Service Details...</S.LoaderWrapper>;
+  if (loading && !service) return <S.LoaderWrapper><S.Spinner /> Loading...</S.LoaderWrapper>;
   if (!service) return <S.ErrorState>Service not found.</S.ErrorState>;
 
   return (
     <S.PageWrapper>
       <S.Container>
-        <S.BackButton onClick={() => navigate(-1)}><FiArrowLeft /> Back</S.BackButton>
-        <S.MainGrid>
-          <S.LeftCol>
+        <S.TopBar>
+           <S.BackButton onClick={() => navigate(-1)}><FiArrowLeft /> Back</S.BackButton>
+           <S.FastTag><FiZap /> Instant Expert Connection</S.FastTag>
+        </S.TopBar>
+
+        <S.HorizontalLayout>
+          {/* LEFT: Image Only */}
+          <S.ImageSide>
             <S.HeroImage src={service.image} alt={service.title} />
-            <S.InfoBox>
-              <h1>{service.title}</h1>
-              <div className="meta-tags">
-                <span><FiShield /> Verified Expert</span>
-                <span><FiStar /> Top Rated</span>
-              </div>
-              <S.SectionTitle>About Service</S.SectionTitle>
-              <p className="description">{service.description}</p>
-            </S.InfoBox>
-          </S.LeftCol>
+            <S.Badge><FiShield /> Verified Service</S.Badge>
+          </S.ImageSide>
 
-          <S.RightCol>
-            <S.StickyCard>
-              <div className="card-header">
-                <span className="label">Total Amount</span>
-                <h2 className="price">₹{Math.floor(service.price)}</h2>
-              </div>
-              
-              <div style={{ 
-                background: '#f3f2ef', 
-                padding: '12px', 
-                borderRadius: '8px', 
-                marginBottom: '20px',
-                display: 'flex', 
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                border: '1px solid #ddd'
-              }}>
-                <span style={{ fontSize: '14px', color: '#555' }}><FaWallet /> Wallet Balance</span>
-                <strong style={{ color: balance < service.price ? '#d33' : '#057642' }}>₹{balance}</strong>
-              </div>
+          {/* RIGHT: Content, Price & Buttons */}
+          <S.ContentSide>
+            <S.MainInfoCard>
+              <S.TitleSection>
+                <h1>{service.title}</h1>
+                <div className="meta-stats">
+                  <span className="rating"><FiStar /> 4.9 (High Rated)</span>
+                  <span className="time"><FiClock /> 30 Mins</span>
+                </div>
+              </S.TitleSection>
 
-              <S.BookingButton 
-                onClick={handleBooking} 
-                disabled={bookingLoading || isBooked}
-                style={{ 
-                  background: isBooked ? '#057642' : (balance < service.price ? '#999' : '#0a66c2'),
-                  cursor: (balance < service.price || isBooked) ? 'not-allowed' : 'pointer'
-                }}
-              >
-                {bookingLoading 
-                  ? "Processing..." 
-                  : isBooked 
-                    ? "Already Booked" 
-                    : (balance < service.price ? "Go to Wallet" : "Pay via Wallet")
-                }
-              </S.BookingButton>
-              <p className="footer-text">Instant & Secure Payment</p>
-            </S.StickyCard>
-          </S.RightCol>
-        </S.MainGrid>
+              <S.DescriptionBox>
+                <h3>About this Service</h3>
+                <p>{service.description}</p>
+              </S.DescriptionBox>
+
+              <S.Divider />
+
+              <S.PricingActionRow>
+                <S.PriceBlock>
+                  <span className="label">Total Price</span>
+                  <h2 className="price-val">₹{Math.floor(service.price)}</h2>
+                </S.PriceBlock>
+
+                <S.WalletBlock isLow={balance < service.price}>
+                  <div className="w-head">
+                    <FaWallet /> <span>Wallet Balance: <strong>₹{balance}</strong></span>
+                  </div>
+                </S.WalletBlock>
+              </S.PricingActionRow>
+
+              <S.ButtonGroup>
+                <S.PrimaryButton 
+                  onClick={handleBooking} 
+                  disabled={bookingLoading || isBooked}
+                  status={isBooked ? "booked" : (balance < service.price ? "low" : "ok")}
+                >
+                  {bookingLoading ? "Processing..." : isBooked ? "Service Already Booked" : (balance < service.price ? "Low Balance - Add Money" : "Book Now & Pay via Wallet")}
+                </S.PrimaryButton>
+              </S.ButtonGroup>
+
+              <S.TrustBar>
+                <span><FiCheck /> Secured Payments</span>
+                <span><FiCheck /> 24/7 Support</span>
+                <span><FiCheck /> Quality Guaranteed</span>
+              </S.TrustBar>
+            </S.MainInfoCard>
+          </S.ContentSide>
+        </S.HorizontalLayout>
       </S.Container>
     </S.PageWrapper>
   );

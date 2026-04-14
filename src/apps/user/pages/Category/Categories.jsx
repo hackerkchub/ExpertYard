@@ -116,8 +116,8 @@ const Categories = () => {
           <StatLabel>Categories</StatLabel>
         </StatItem>
         <StatItem>
-          <StatValue>500+</StatValue>
-          <StatLabel>Verified Experts</StatLabel>
+          <StatValue></StatValue>
+          <StatLabel></StatLabel>
         </StatItem>
         <StatItem>
           <StatValue>24/7</StatValue>
@@ -130,24 +130,7 @@ const Categories = () => {
       </StatsBar>
 
       <MainContent>
-        {/* 4. Popular Section - LinkedIn "Top Skills" feel */}
-        {popularCategories.length > 0 && !searchQuery && (
-          <PopularSection>
-            <div className="title">
-              <IoSparkles color="#000080" /> Most Popular
-            </div>
-            <PopularGrid>
-              {popularCategories.map(cat => (
-                <PopularCategory key={cat.id} onClick={() => handleCategoryClick(cat.id, cat.name)}>
-                  <img src={cat.image_url || DEFAULT_CATEGORY_IMAGE} alt={cat.name} />
-                  <h4>{cat.name}</h4>
-                  <p style={{fontSize: '12px', color: '#666'}}>{cat.popularity || '50+'} Experts</p>
-                </PopularCategory>
-              ))}
-            </PopularGrid>
-          </PopularSection>
-        )}
-
+       
         {/* 5. Header Actions - Grid/List Toggle */}
         <CategoriesHeader>
           <HeaderTitle>
@@ -196,13 +179,10 @@ const Categories = () => {
                   </CategoryName>
                   
                   <CategoryDescription>
-                    {cat.description || "Get expert advice and professional services in this category."}
+                    {cat.descriptiononal}
                   </CategoryDescription>
                   
-                  <CategoryMeta>
-                    <MetaItem><IoStatsChart /> {cat.popularity || "50+"} Experts</MetaItem>
-                    <MetaItem><FiStar color="#f59e0b" /> {cat.rating || "4.8"} Rating</MetaItem>
-                  </CategoryMeta>
+                 
 
                   <ViewButton>
                     View Details <FiChevronRight />

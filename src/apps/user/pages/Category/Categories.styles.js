@@ -28,7 +28,7 @@ export const PageContainer = styled.div`
 
 // --- Hero & Search ---
 export const HeroSection = styled.div`
-  background: linear-gradient(135deg, #1d2226 0%, #38434f 100%);
+  background:#000080;
   color: white;
   padding: 60px 20px;
   text-align: center;
@@ -190,7 +190,14 @@ export const SortSelect = styled.select`
 export const CategoriesGrid = styled.div`
   display: grid;
   gap: 16px;
-  grid-template-columns: ${props => props.$view === 'grid' ? 'repeat(auto-fill, minmax(260px, 1fr))' : '1fr'};
+  /* Desktop 4 columns, Tablet 2-3, Mobile 1-2 */
+  grid-template-columns: ${props => props.$view === 'grid' ? 'repeat(auto-fill, minmax(250px, 1fr))' : '1fr'};
+  
+  ${media.sm} {
+    /* Agli baar category mobile me 2 column chahiye to yahan grid-template-columns: repeat(2, 1fr) karsakte hain */
+    grid-template-columns: ${props => props.$view === 'grid' ? 'repeat(auto-fill, minmax(140px, 1fr))' : '1fr'};
+    gap: 12px;
+  }
 `;
 
 export const CategoryCard = styled.div`
@@ -199,21 +206,41 @@ export const CategoryCard = styled.div`
   border: 1px solid ${colors.border};
   transition: 0.3s;
   cursor: pointer;
+  overflow: hidden; /* Image corners round karne ke liye */
   display: flex;
   flex-direction: ${props => props.$view === 'list' ? 'row' : 'column'};
-  &:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  &:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.1); transform: translateY(-2px); }
+`;
+
+export const ImageWrapper = styled.div`
+  width: ${props => props.$view === 'list' ? '150px' : '100%'};
+  height: ${props => props.$view === 'list' ? '150px' : '200px'}; /* Height 200px set kardi */
+  background-color: #f8fafc; /* Image load na hone par neutral bg */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  ${media.sm} { 
+    width: ${props => props.$view === 'list' ? '100px' : '100%'}; 
+    height: ${props => props.$view === 'list' ? '100px' : '160px'}; /* Mobile me thodi kam height */
+  }
 `;
 
 export const CategoryImage = styled.img`
-  width: ${props => props.$view === 'list' ? '150px' : '100%'};
-  height: ${props => props.$view === 'list' ? '150px' : '140px'};
-  object-fit: cover;
-  ${media.sm} { width: ${props => props.$view === 'list' ? '100px' : '100%'}; }
+  width: 100%;
+  height: 100%;
+  /* Yahan focus karein: contain se puri image dikhegi bina kate, cover se full box fill hoga */
+  object-fit: ${props => props.contain ? 'contain' : 'cover'}; 
+  transition: 0.5s;
+  &:hover { transform: scale(1.05); }
 `;
 
 export const CategoryInfo = styled.div`
   padding: 16px;
   flex: 1;
+  display: flex;
+  flex-direction: column;
 `;
 
 export const CategoryName = styled.h3`
@@ -222,6 +249,7 @@ export const CategoryName = styled.h3`
   color: ${colors.textMain};
   margin-bottom: 6px;
   &:hover { color: ${colors.primary}; text-decoration: underline; }
+  ${media.sm} { font-size: 15px; }
 `;
 
 export const CategoryDescription = styled.p`
@@ -233,12 +261,14 @@ export const CategoryDescription = styled.p`
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  ${media.sm} { font-size: 12px; }
 `;
 
 export const CategoryMeta = styled.div`
   display: flex;
   gap: 15px;
   margin-bottom: 15px;
+  margin-top: auto; /* Buttons niche align karne ke liye */
 `;
 
 export const MetaItem = styled.div`

@@ -202,116 +202,157 @@
 category css
 */
 /* Container Layout */
+
+
+
+
 .section {
   padding: 10px;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
-/* Category Grid */
+/* --- Grid Config --- */
 .category-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+  /* Desktop: 8 per row */
+  grid-template-columns: repeat(8, 1fr); 
   gap: 20px;
-  padding: 1rem 0;
+  padding: 1.5rem 0;
 }
 
-/* Category Card - No Border, No Background */
-.category-card {
-  background: transparent;
+/* --- Category Item (No Card Look) --- */
+.category-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   cursor: pointer;
-  transition: transform 0.2s ease-in-out;
-  border: none; /* Border Hatadi */
-  padding: 0;    /* Extra space hatadi */
+  width: 100%;
+  background: none; /* Removed card background */
+  border: none;
+  padding: 5px;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.category-card:hover {
-  transform: scale(1.03); /* Slight zoom on hover */
+.category-item:hover {
+  transform: scale(1.1);
 }
 
-/* The Icon Container - Bada aur Saaf */
-.category-icon {
-  width: 100%; /* Card ki poori width lega */
-  aspect-ratio: 1 / 1; /* Square shape maintain rakhega */
-  background: #f3f4f6; /* Light subtle background */
-  border-radius: 12px; /* Smooth corners */
+/* --- Image Wrapper --- */
+.category-image-wrapper {
+  width: 100%;
+  aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  margin-bottom: 10px;
+  margin-bottom: 15px; /* Spacing between image and big text */
+  border-radius: 50%; /* Pure Circle look, change to 20% for rounded square */
 }
 
-/* Image styling - Badi aur clear dikhne ke liye */
-.category-icon img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover; /* Image ko poore box mein stretch karega bina quality kharab kiye */
-  transition: transform 0.3s ease;
+.category-image-wrapper img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.4s ease-in;
 }
 
-.category-card:hover .category-icon img {
-  transform: scale(1.1); /* Hover par image thodi aur badi hogi */
+.category-image-wrapper img.is-loaded {
+  opacity: 1;
 }
 
-/* Text Styling - Bold aur readable */
-.category-card p {
-  font-size: 16px;
+/* Fallback letter style */
+.fallback-mode {
+  background: #eee;
+  color: #333;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+/* --- Big Text Styling --- */
+.category-label {
+  font-size: 20px; /* Big font for desktop */
   font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  color: #111827;
+  font-weight: 700; /* Bold */
+  color: #1a1a1a;
   margin: 0;
   text-align: center;
   width: 100%;
+  line-height: 1.2;
+  /* Multi-line support: 2 lines allowed, then dots */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-/* --- Responsive Adjustments --- */
+/* --- Responsive View --- */
 
-@media (max-width: 480px) {
+/* Tablet View */
+@media (max-width: 1024px) {
   .category-grid {
-    grid-template-columns: repeat(2, 1fr); /* Mobile par 2 clean columns */
+    grid-template-columns: repeat(5, 1fr);
+  }
+  .category-label {
+    font-size: 18px;
+  }
+}
+
+/* Mobile View: Exact 3 per row as requested */
+@media (max-width: 600px) {
+  .category-grid {
+    grid-template-columns: repeat(3, 1fr);
     gap: 15px;
   }
 
-  .category-icon {
-    border-radius: 10px; /* Thoda kam radius mobile ke liye */
+  .category-label {
+    font-size: 15px; /* Large font for mobile */
+    font-weight: 600;
   }
-
-  .category-card p {
-    font-size: 14px; /* Mobile par readability ke liye perfect size */
+  
+  .category-image-wrapper {
+    margin-bottom: 10px;
   }
 }
 
-/* Skeleton Loading Shimmer */
+/* --- Fast Loading Skeletons --- */
 .skeleton-card {
-  width: 100%;
   display: flex;
   flex-direction: column;
+  align-items: center;
 }
-.skeleton-box {
+
+.skeleton-circle {
   width: 100%;
   aspect-ratio: 1/1;
-  background: #e5e7eb;
-  border-radius: 12px;
+  background: #e0e0e0;
+  border-radius: 50%;
   position: relative;
   overflow: hidden;
 }
+
+.skeleton-text {
+  height: 20px;
+  width: 80%;
+  background: #e0e0e0;
+  margin-top: 15px;
+  border-radius: 6px;
+}
+
 .shimmer {
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  animation: loading-shimmer 1.5s infinite;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+  animation: loading-shimmer 1.2s infinite;
 }
+
 @keyframes loading-shimmer {
   100% { left: 100%; }
 }
-
 /* =====================
    EXPERTS
 ===================== */

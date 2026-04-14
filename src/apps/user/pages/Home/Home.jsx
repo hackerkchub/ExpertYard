@@ -15,6 +15,7 @@ import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWebPush } from "../../../../shared/hooks/useWebPush";
 
 import { FiUserCheck, FiMessageCircle } from "react-icons/fi";
+import PopularServices from "./PopularServices";
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -91,6 +92,7 @@ const {
           </button>
         </div>
         <Categories />
+        <PopularServices/>
       </div>
       
      

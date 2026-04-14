@@ -1,128 +1,142 @@
 import styled from "styled-components";
 
 export const PageContainer = styled.div`
-  background-color: #f3f2ef; /* LinkedIn light grey bg */
+  background-color: #f8f9fb;
   min-height: 100vh;
-  padding: 40px 20px;
-  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 20px 0;
 `;
 
 export const ContentWrapper = styled.div`
-  max-width: 1128px;
+  max-width: 1200px;
   margin: 0 auto;
+  padding: 0 20px;
 `;
 
 export const HeaderSection = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 24px;
+  align-items: center;
+  margin-bottom: 30px;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 
   .title-area h2 {
     font-size: 24px;
-    color: rgba(0,0,0,0.9);
-    font-weight: 600;
-    margin-bottom: 4px;
+    color: #111827;
+    margin: 0;
+  }
+  .title-area p {
+    color: #6b7280;
+    margin: 5px 0 0 0;
+    font-size: 14px;
   }
 
-  .title-area p {
-    color: rgba(0,0,0,0.6);
-    font-size: 16px;
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
   }
 `;
 
 export const TopActionButton = styled.button`
-  background: white;
-  border: 1px solid #0a66c2;
-  color: #0a66c2;
-  padding: 8px 16px;
-  border-radius: 1600px; /* Pill shape */
-  font-weight: 600;
-  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
+  background: #000080;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
   transition: all 0.2s;
 
-  &:hover {
-    background: #eef3f8;
-    border-width: 2px;
-  }
+  &:hover { background: #000066; transform: translateY(-1px); }
 `;
 
 export const ServiceGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+
+  @media (max-width: 1024px) { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 650px) { grid-template-columns: 1fr; }
 `;
 
 export const ServiceCard = styled.div`
-  background: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  background: white;
+  border-radius: 12px;
   overflow: hidden;
-  transition: box-shadow 0.3s;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
 
   &:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.08);
   }
 `;
 
 export const ExpertIdentitySection = styled.div`
-  padding: 12px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   cursor: pointer;
-  border-bottom: 1px solid #f3f2ef;
+  border-bottom: 1px solid #f3f4f6;
 
   .expert-avatar {
-    width: 40px;
-    height: 40px;
-    background: #eef3f8;
+    width: 32px;
+    height: 32px;
+    background: #f0edff;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #0a66c2;
+    color: #000080;
   }
 
   .expert-info h4 {
     font-size: 14px;
     margin: 0;
-    color: rgba(0,0,0,0.9);
-    &:hover { text-decoration: underline; color: #0a66c2; }
+    color: #111827;
   }
-
   .expert-info span {
-    font-size: 12px;
-    color: rgba(0,0,0,0.6);
+    font-size: 11px;
+    color: #6b7280;
   }
 `;
 
 export const ImageWrapper = styled.div`
-  position: relative;
   height: 180px;
-  
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.5s ease;
   }
+  
+  &:hover img { transform: scale(1.05); }
 `;
 
 export const PriceBadge = styled.div`
   position: absolute;
-  bottom: 10px;
-  right: 10px;
-  background: rgba(0, 0, 0, 0.75);
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.7);
   color: white;
-  padding: 4px 12px;
-  border-radius: 4px;
-  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 700;
   font-size: 14px;
+  backdrop-filter: blur(4px);
 `;
 
 export const CardContent = styled.div`
@@ -130,26 +144,30 @@ export const CardContent = styled.div`
   flex-grow: 1;
 
   h3 {
-    font-size: 16px;
-    margin: 8px 0;
-    color: rgba(0,0,0,0.9);
+    font-size: 18px;
+    margin: 10px 0;
+    color: #111827;
     line-height: 1.4;
   }
 
   .description {
-    font-size: 14px;
-    color: rgba(0,0,0,0.6);
-    margin-bottom: 12px;
+    font-size: 13px;
+    color: #4b5563;
+    line-height: 1.5;
+    margin-bottom: 15px;
   }
 `;
 
 export const CategoryTag = styled.div`
-  font-size: 12px;
-  color: #0a66c2;
-  font-weight: 600;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
+  background: #f3f4f6;
+  color: #4b5563;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
   text-transform: uppercase;
 `;
 
@@ -159,53 +177,54 @@ export const DeliverablesContainer = styled.div`
   gap: 6px;
 
   .skill-pill {
-    background: #e1f0fe;
-    color: #0366d6;
-    padding: 2px 8px;
-    border-radius: 4px;
+    background: #f0f7ff;
+    color: #0056b3;
     font-size: 11px;
-    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 100px;
+    border: 1px solid #d0e7ff;
   }
 `;
 
 export const CardFooter = styled.div`
-  padding: 12px 16px;
-  border-top: 1px solid #f3f2ef;
+  padding: 16px;
+  border-top: 1px solid #f3f4f6;
 `;
 
 export const PrimaryButton = styled.button`
   width: 100%;
-  background: white;
-  color: #0a66c2;
-  border: 1px solid #0a66c2;
-  padding: 8px;
-  border-radius: 1600px;
+  padding: 10px;
+  background: #000080;
+  color: white;
+  border: none;
+  border-radius: 8px;
   font-weight: 600;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: all 0.2s;
+  cursor: pointer;
+  transition: background 0.2s;
 
-  &:hover {
-    background: #0a66c2;
-    color: white;
-  }
+  &:hover { background: #000066; }
 `;
 
-export const Loader = styled.div`
+export const LoaderContainer = styled.div`
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  height: 200px;
-  font-size: 18px;
-  color: #0a66c2;
-  font-weight: 600;
-`;
+  justify-content: center;
+  height: 60vh;
 
-export const EmptyState = styled.div`
-  text-align: center;
-  padding: 40px;
-  color: #666;
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #000080;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  p { margin-top: 15px; color: #6b7280; font-weight: 500; }
+  
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 `;

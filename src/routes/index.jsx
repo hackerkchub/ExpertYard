@@ -10,7 +10,7 @@ const AdminAppRoutes = lazy(() => import("../apps/admin/routes"));
 
 import { ExpertProvider } from "../shared/context/ExpertContext";
 import BottomNavbar from "../shared/components/BottomNavbar/BottomNavbar";
-import RouteLoader from "../shared/loaders/RouteLoader";
+// import RouteLoader from "../shared/loaders/RouteLoader";
 import RootRedirect from "./RootRedirect";
 import NetworkStatus from "../shared/components/NetworkStatus/NetworkStatus";
 
@@ -44,9 +44,9 @@ export default function AppRouter() {
           overflowX: "hidden"
         }}
       >
-        <RouteLoader />
+        {/* <RouteLoader /> */}
         
-        <Suspense fallback={<RouteLoader />}>
+        {/* <Suspense fallback={<RouteLoader />}> */}
           <Routes>
             <Route path="/" element={<RootRedirect />} />
 
@@ -66,7 +66,7 @@ export default function AppRouter() {
             {/* ADMIN */}
             <Route path="/admin/*" element={<AdminAppRoutes />} />
           </Routes>
-        </Suspense>
+        {/* </Suspense> */}
       </div>
 
       {showNavbar && <BottomNavbar />}

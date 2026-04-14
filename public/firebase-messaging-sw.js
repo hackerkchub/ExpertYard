@@ -45,8 +45,6 @@ self.registration.showNotification(title, {
 });
 });
 
-
-
 /* ================= NOTIFICATION CLICK ================= */
 
 self.addEventListener("notificationclick", (event) => {
@@ -82,4 +80,133 @@ self.addEventListener("notificationclick", (event) => {
 
   );
 
+});
+
+/* ================= ADDED CACHE & FETCH LOGIC ================= */
+
+const CACHE_NAME = "expert-yard-v1";
+const API_CACHE = "api-cache-v1";
+
+/* ================= INSTALL ================= */
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll([
+        "/",
+        "/index.html",
+        "/logo-192.png",
+        "/logo-512.png"
+      ]);
+    })
+  );
+  // Force waiting service worker to become active
+  self.skipWaiting();
+});
+
+/* ================= ACTIVATE ================= */
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME && cacheName !== API_CACHE) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+  return self.clients.claim();
+});
+
+/* ================= FETCH (MAIN FIX) ================= */
+
+self.addEventListener("fetch", (event) => {
+  if (event.request.method !== "GET") return;
+
+  const url = new URL(event.request.url);
+
+  // 👉 IMAGE CACHE (TOP PRIORITY - handled first)
+  if (event.request.destination === "image") {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+
+        return fetch(event.request)
+          .then((res) => {
+            // Allow opaque responses as well
+            if (res && (res.status === 200 || res.type === "opaque")) {
+              const clone = res.clone();
+              caches.open(CACHE_NAME).then((cache) => {
+                cache.put(event.request, clone);
+              });
+            }
+            return res;
+          })
+          .catch(() => {
+            return new Response("", { status: 404 });
+          });
+      })
+    );
+    return;
+  }
+
+  // 👉 API caching for softmaxs.com domain (only pure API calls, not images)
+  if (
+    url.hostname.includes("softmaxs.com") && 
+    event.request.destination === ""
+  ) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        const networkFetch = fetch(event.request)
+          .then((res) => {
+            // Allow opaque responses as well
+            if (res && (res.status === 200 || res.type === "opaque")) {
+              const clone = res.clone();
+              caches.open(API_CACHE).then((cache) => {
+                cache.put(event.request, clone);
+              });
+            }
+            return res;
+          })
+          .catch(() => cached);
+
+        return cached || networkFetch;
+      })
+    );
+    return;
+  }
+
+  // 👉 Static files caching (HTML, CSS, JS, fonts, etc.)
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      if (cached) {
+        return cached;
+      }
+      
+      return fetch(event.request)
+        .then((response) => {
+          // Cache valid responses for static assets (allow opaque)
+          if (response && (response.status === 200 || response.type === "opaque")) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Fallback to index.html for navigation requests
+          if (event.request.mode === 'navigate') {
+            return caches.match('/index.html');
+          }
+          return new Response('Offline content not available', {
+            status: 404,
+            statusText: 'Not Found'
+          });
+        });
+    })
+  );
 });

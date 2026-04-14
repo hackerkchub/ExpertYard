@@ -1,9 +1,9 @@
-export default function ButtonLoader({ loading, children }) {
+// export default function ButtonLoader({ loading, children }) {
 
-  return (
-    <button disabled={loading}>
-      {loading ? "Please wait..." : children}
-    </button>
-  );
+//   return (
+//     <button disabled={loading}>
+//       {loading ? "Please wait..." : children}
+//     </button>
+//   );
 
-}
+// }

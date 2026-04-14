@@ -1,26 +1,26 @@
-import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { useLoader } from "./LoaderContext";
+// import { useEffect } from "react";
+// import { useLocation } from "react-router-dom";
+// import { useLoader } from "./LoaderContext";
 
-export default function RouteLoader(){
+// export default function RouteLoader(){
 
-const location = useLocation()
-const { showLoader , hideLoader } = useLoader()
+// const location = useLocation()
+// const { showLoader , hideLoader } = useLoader()
 
-useEffect(() => {
+// useEffect(() => {
 
-  showLoader()
+//   showLoader()
 
-  const t = setTimeout(() => {
-    hideLoader()
-  },300)
+//   const t = setTimeout(() => {
+//     hideLoader()
+//   },300)
 
-  return () => {
-    clearTimeout(t)
-    hideLoader()
-  }
+//   return () => 
+//     clearTimeout(t)
+//     hideLoader()
+//   }
 
-},[location])
+// },[location])
 
-return null
-}
+// return null
+// }

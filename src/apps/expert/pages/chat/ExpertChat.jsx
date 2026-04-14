@@ -1,4 +1,4 @@
-// src/apps/expert/pages/chat/ExpertChat.jsx
+// ExpertChat.jsx
 import React, {
   useState,
   useEffect,
@@ -31,7 +31,7 @@ import { FiSend, FiUserX, FiClock } from "react-icons/fi";
 import { socket } from "../../../../shared/api/socket";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { getUserPublicProfileApi } from "../../../../shared/api/userApi";
-import { toast } from "react-hot-toast"; // 👈 Toast for feedback
+import { toast } from "react-hot-toast";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/150?img=1";
 
@@ -57,6 +57,8 @@ const ExpertChat = () => {
 
   const messagesEndRef = useRef(null);
   const timerIntervalRef = useRef(null);
+  const inputRef = useRef(null);
+  const messagesContainerRef = useRef(null);
 
   const { expert } = useExpert();
 
@@ -114,29 +116,124 @@ const ExpertChat = () => {
     }
   };
 
-
   /* ==========================================================
-      🚫 JUGAD: HIDE SIDEBAR & TOPBAR ONLY FOR CHAT (Cleanup on Leave)
+      HIDE SIDEBAR & TOPBAR FOR CHAT (Cleanup on Leave)
      ========================================================== */
   useEffect(() => {
     const topbar = document.querySelector(".main-app-topbar");
-    
-    // Yahan aapke sidebar component ka wrap select kijiye (Check class names)
     const sidebar = document.querySelector("aside") || document.querySelector("[class*='SidebarWrap']");
 
     if (topbar) topbar.style.display = "none";
     if (sidebar) sidebar.style.display = "none";
 
+    // Add class to body for mobile optimizations
+    document.body.classList.add("chat-active");
+
     return () => {
-      // Jab screen se exit karein, to dono ko wapas dikha dein
       if (topbar) topbar.style.display = "flex";
-      if (sidebar) sidebar.style.display = "flex"; // style file ke display property ke anusar check kar lein
+      if (sidebar) sidebar.style.display = "flex";
+      document.body.classList.remove("chat-active");
     };
   }, []);
 
+  /* ==========================================================
+      MOBILE KEYBOARD HANDLING
+     ========================================================== */
+  useEffect(() => {
+    const handleVisualViewport = () => {
+      if (window.visualViewport) {
+        const viewport = window.visualViewport;
+        const pageWrap = document.querySelector('.page-wrap');
+        
+        if (pageWrap && window.innerWidth <= 768) {
+          if (viewport.height < window.innerHeight) {
+            // Keyboard is open
+            pageWrap.style.height = `${viewport.height}px`;
+            pageWrap.style.top = '0';
+            
+            // Scroll messages to bottom after keyboard opens
+            setTimeout(() => {
+              messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+          } else {
+            // Keyboard is closed
+            pageWrap.style.height = '100dvh';
+          }
+        }
+      }
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleVisualViewport);
+      window.visualViewport.addEventListener('scroll', handleVisualViewport);
+    }
+
+    // Also handle resize event for older browsers
+    window.addEventListener('resize', handleVisualViewport);
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleVisualViewport);
+        window.visualViewport.removeEventListener('scroll', handleVisualViewport);
+      }
+      window.removeEventListener('resize', handleVisualViewport);
+    };
+  }, []);
 
   /* ==========================================================
-      🚫 BACK BUTTON BLOCK LOGIC
+      PREVENT KEYBOARD CLOSE AFTER SEND
+     ========================================================== */
+  const handleSendMessage = useCallback(() => {
+    if (!message.trim() || !room_id || !expertId) return;
+
+    const messageText = message.trim();
+    
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        sender_type: "expert",
+        sender_id: expertId,
+        message: messageText,
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      },
+    ]);
+
+    socket.emit("sendMessage", {
+      room_id,
+      message: messageText,
+    });
+
+    setMessage("");
+    
+    // Keep focus on input and prevent keyboard from closing
+    setTimeout(() => {
+      if (inputRef.current && sessionActive) {
+        inputRef.current.focus();
+      }
+    }, 0);
+  }, [message, room_id, expertId, sessionActive]);
+
+  /* ==========================================================
+      HANDLE KEY PRESS - PREVENT DEFAULT ENTER BEHAVIOR
+     ========================================================== */
+  const handleKeyPress = useCallback(
+    (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        if (message.trim() && sessionActive) {
+          handleSendMessage();
+        }
+      }
+    },
+    [handleSendMessage, message, sessionActive]
+  );
+
+  /* ==========================================================
+      BACK BUTTON BLOCK LOGIC
      ========================================================== */
   useEffect(() => {
     if (sessionActive) {
@@ -268,6 +365,11 @@ const ExpertChat = () => {
             },
           ];
         });
+        
+        // Auto-scroll to bottom on new message
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
       }
     };
 
@@ -277,7 +379,9 @@ const ExpertChat = () => {
         setTimerPaused(true);
         setChatData((prev) => (prev ? { ...prev, is_active: 0 } : prev));
         toast.success("Chat ended! Redirecting...");
-        navigate("/expert/chat-history");
+        setTimeout(() => {
+          navigate("/expert/chat-history");
+        }, 1500);
       }
     };
 
@@ -292,12 +396,14 @@ const ExpertChat = () => {
     };
   }, [room_id, navigate]);
 
+  // Scroll to bottom on messages change
   useEffect(() => {
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 80);
   }, [messages]);
 
+  // Initial fetch
   useEffect(() => {
     const init = async () => {
       await fetchChatDetails();
@@ -305,41 +411,6 @@ const ExpertChat = () => {
     };
     init();
   }, [fetchChatDetails]);
-
-  const handleSendMessage = () => {
-    if (!message.trim() || !room_id || !expertId) return;
-
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        sender_type: "expert",
-        sender_id: expertId,
-        message: message.trim(),
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      },
-    ]);
-
-    socket.emit("sendMessage", {
-      room_id,
-      message: message.trim(),
-    });
-
-    setMessage("");
-  };
-
-  const handleKeyPress = useCallback(
-    (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        handleSendMessage();
-      }
-    },
-    [handleSendMessage]
-  );
 
   const selectedUser = useMemo(() => {
     if (!chatData) return null;
@@ -361,29 +432,42 @@ const ExpertChat = () => {
     };
   }, [chatData, userProfile]);
 
+  // Format timer display
+  const formatTimer = () => {
+    const mins = Math.floor(displaySeconds / 60);
+    const secs = displaySeconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   if (loading && !isInitialized) {
     return (
-      <PageWrap>
+      <PageWrap className="page-wrap">
         <LoadingSpinner>Loading chat...</LoadingSpinner>
       </PageWrap>
     );
   }
 
   return (
-    <PageWrap style={{ top: 0, left: 0, width: '100%' }}> {/* 👈 Sidebar hatne par width 100% aur left chipka do */}
+    <PageWrap className="page-wrap" style={{ top: 0, left: 0, width: '100%' }}>
       <ChatLayout>
         <RightPanel style={{ width: "100%" }}>
           {chatData && selectedUser ? (
             <>
               <UserHeader>
                 <UserInfo>
-                  <Avatar src={selectedUser.avatar} />
+                  <Avatar src={selectedUser.avatar} alt={selectedUser.name} />
                   <UserMeta>
                     <h4>{selectedUser.name}</h4>
+                    {/* {sessionActive && (
+                      <span style={{ color: '#057642', fontSize: '12px' }}>
+                        ⏱ {formatTimer()}
+                      </span>
+                    )} */}
                     {userProfile ? (
                       <>
                         <span>{selectedUser.email}</span>
-                        <span>{selectedUser.phone}</span>
+                        <span> </span>
+                       <span>{selectedUser.phone}</span>
                       </>
                     ) : userProfileLoading ? (
                       <span>Loading user info...</span>
@@ -395,7 +479,7 @@ const ExpertChat = () => {
               </UserHeader>
 
               <ChatArea>
-                <Messages>
+                <Messages ref={messagesContainerRef}>
                   {messages.length === 0 ? (
                     <EmptyChatMessage>
                       💬 Chat ready! Send first message or wait for user.
@@ -415,18 +499,20 @@ const ExpertChat = () => {
 
                 <ChatInputWrap>
                   <ChatInput
+                    ref={inputRef}
                     placeholder={sessionActive ? "Type your response..." : "Chat session ended"}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
                     disabled={!sessionActive}
                     maxLength={1000}
+                    rows={1}
                   />
                   <SendButton
                     onClick={handleSendMessage}
                     disabled={!message.trim() || !sessionActive}
                   >
-                    <FiSend size={18} />
+                    <FiSend size={20} />
                   </SendButton>
                 </ChatInputWrap>
               </ChatArea>

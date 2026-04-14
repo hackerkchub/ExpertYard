@@ -1,5 +1,5 @@
-// src/apps/expert/pages/chat/ExpertChat.styles.js
-import styled, { keyframes } from "styled-components";
+// ExpertChat.styles.js
+import styled, { keyframes, css } from "styled-components";
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(10px); }
@@ -9,7 +9,7 @@ const fadeIn = keyframes`
 export const PageWrap = styled.div`
   display: flex;
   flex-direction: column;
-  position: fixed;
+  position: relative;
   /* Desktop settings */
   top: 60px; 
   bottom: 0;
@@ -17,20 +17,23 @@ export const PageWrap = styled.div`
   width: calc(100% - 260px); 
   background: #f4f5f7;
   overflow: hidden;
+  height: calc(100vh - 60px);
 
   @media (max-width: 768px) {
-    top: 0; /* Header alignment fix for mobile */
+    top: 0;
     left: 0; 
     width: 100%; 
-    /* Use dvh to prevent shifting when keyboard/address bar appears */
     height: 100dvh; 
-    bottom: env(safe-area-inset-bottom);
+    position: fixed;
+    bottom: 0;
+    background: #fff;
   }
 `;
 
 export const ChatLayout = styled.div`
   height: 100%;
   width: 100%; 
+  display: grid;
   grid-template-columns: 320px 1fr;
   background: #ffffff;
   border-top: 1px solid #e1e4e8;
@@ -45,6 +48,7 @@ export const ChatLayout = styled.div`
     flex-direction: column;
     grid-template-columns: 1fr; 
     border: none;
+    height: 100%;
   }
 `;
 
@@ -58,9 +62,9 @@ export const LeftPanel = styled.div`
 
   @media (max-width: 768px) {
     width: 100%;
-    /* Hide list when a chat is active on mobile if you handle it in JS */
     display: ${({ isChatting }) => (isChatting ? "none" : "flex")};
     border-right: none;
+    height: 100%;
   }
 `;
 
@@ -168,9 +172,16 @@ export const UserHeader = styled.div`
   border-bottom: 1px solid #e1e4e8;
   background: #ffffff;
   z-index: 10;
-  /* Fix header at top for mobile */
   position: sticky;
   top: 0;
+
+  @media (max-width: 768px) {
+    position: sticky;
+    top: 0;
+    background: #ffffff;
+    z-index: 20;
+    padding: 12px 16px;
+  }
 `;
 
 export const UserInfo = styled.div`
@@ -199,6 +210,7 @@ export const ChatArea = styled.div`
   min-height: 0;
   background: #ffffff;
   position: relative;
+  overflow: hidden;
 `;
 
 export const Messages = styled.div`
@@ -263,15 +275,15 @@ export const ChatInputWrap = styled.div`
   align-items: center; 
   gap: 12px;
   border-top: 1px solid #efefef;
-  /* Fix footer at bottom for mobile */
   position: sticky;
   bottom: 0;
   z-index: 10;
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  background: #ffffff;
 
-  @media (max-width: 480px) {
-    padding: 10px;
+  @media (max-width: 768px) {
+    padding: 10px 12px;
     gap: 8px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
   }
 `;
 
@@ -280,7 +292,7 @@ export const ChatInput = styled.textarea`
   padding: 10px 16px;
   border-radius: 20px; 
   border: 1px solid #dbdbdb;
-  font-size: 16px; /* 16px prevents iOS auto-zoom on focus */
+  font-size: 16px;
   background: #fafafa;
   resize: none;
   min-height: 40px;
@@ -289,6 +301,7 @@ export const ChatInput = styled.textarea`
   font-family: inherit;
   color: #000000;
   transition: all 0.2s ease;
+  line-height: 1.4;
 
   &:focus {
     border-color: #000080;
@@ -298,23 +311,36 @@ export const ChatInput = styled.textarea`
   &::placeholder {
     color: #8e8e8e;
   }
+
+  @media (max-width: 768px) {
+    font-size: 16px;
+    padding: 8px 14px;
+  }
 `;
 
 export const SendButton = styled.button`
   background: transparent; 
   border: none;
   color: #0095f6; 
-  padding: 4px 8px;
+  padding: 8px;
   cursor: pointer;
   font-size: 15px;
   font-weight: 700;
   height: auto;
   flex-shrink: 0;
   transition: color 0.2s ease, transform 0.1s ease;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover:not(:disabled) {
     color: #1877f2;
     transform: scale(1.05);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.95);
   }
 
   &:disabled {
@@ -323,11 +349,58 @@ export const SendButton = styled.button`
   }
 `;
 
-/* --- RE-EXPORTING ALL MISSING COMPONENTS TO PREVENT ERRORS --- */
-export const LoadingSpinner = styled.div` display: flex; align-items: center; justify-content: center; height: 100%; color: #000080; font-weight: 600; `;
-export const NoChatSelected = styled.div` display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #666; font-size: 15px; font-weight: 500; `;
-export const ErrorMessage = styled.div` display: flex; align-items: center; justify-content: center; height: 100%; color: #d11124; font-weight: 600; `;
-export const EmptyChatMessage = styled.div` display: flex; align-items: center; justify-content: center; height: 100%; color: #888; font-size: 14px; `;
+/* Loading and Error States */
+export const LoadingSpinner = styled.div` 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  height: 100%; 
+  color: #000080; 
+  font-weight: 600; 
+`;
+
+export const NoChatSelected = styled.div` 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; 
+  height: 100%; 
+  color: #666; 
+  font-size: 15px; 
+  font-weight: 500; 
+  
+  h3 { margin: 12px 0 8px; }
+  p { margin: 0; font-size: 13px; }
+`;
+
+export const ErrorMessage = styled.div` 
+  display: flex; 
+  flex-direction: column;
+  align-items: center; 
+  justify-content: center; 
+  height: 100%; 
+  color: #d11124; 
+  font-weight: 600; 
+  
+  button {
+    margin-top: 16px;
+    padding: 10px 20px;
+    background: #000080;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+`;
+
+export const EmptyChatMessage = styled.div` 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  height: 100%; 
+  color: #888; 
+  font-size: 14px; 
+`;
 
 export const PopoverContainer = styled.div` display: none; `;
 export const ProfileDropdownContainer = styled.div` display: none; `;

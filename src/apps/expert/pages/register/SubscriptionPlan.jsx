@@ -76,6 +76,14 @@ const BillRow = styled.div`
   &.total { font-weight: 800; font-size: 18px; border-top: 1px solid #eee; padding-top: 10px; margin-top: 15px; }
 `;
 
+const StickyActions = styled.div`
+  position: sticky;
+  bottom: 80px; /* navbar height */
+  background: #fff;
+  padding: 10px;
+  z-index: 10;
+`;
+
 /* ================= MAIN COMPONENT ================= */
 
 export default function SubscriptionPlan() {
@@ -217,7 +225,7 @@ updateExpertData({
         </PlanCard>
       </PlanGrid>
 
-      <ActionsRow style={{ marginTop: '0' }}>
+      <ActionsRow style={{ marginTop: '0', marginBottom: '35px' }}>
         <PrimaryButton onClick={() => setIsModalOpen(true)} style={{ width: '100%', fontSize: '20px', padding: '16px' }}>
           Activate {selectedPlan.toUpperCase()} Growth →
         </PrimaryButton>

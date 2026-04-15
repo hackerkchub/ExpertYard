@@ -55,8 +55,8 @@ export const AvatarFallback = styled.div`
   background: ${({ bg }) =>
     bg || "linear-gradient(135deg, #6366f1, #06b6d4)"};
   color: #fff;
-  font-size: 42px;
-  font-weight: 600;
+  font-size: 48px;
+  font-weight: 700;
 
   display: flex;
   align-items: center;
@@ -78,7 +78,7 @@ export const AvatarFallback = styled.div`
 // --- Name & Header Info ---
 export const Name = styled.h1`
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 800;
   color: #000000e6;
   margin-bottom: 2px;
   display: flex;
@@ -95,20 +95,21 @@ export const Name = styled.h1`
 
 export const VerifiedBadge = styled.span`
   background: #e7f3ff;
-  color: #000080;
+  color: #0a66c2;
   font-size: 11px;
   padding: 2px 8px;
   border-radius: 12px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-weight: 600;
+  font-weight: 700;
   flex-shrink: 0;
 `;
 
 export const Role = styled.p`
   font-size: 16px;
-  color: #000000bf;
+  color: #000;
+  font-weight: 650;
   margin-bottom: 4px;
   @media (max-width: 768px) { text-align: left; font-size: 14px; }
 `;
@@ -135,7 +136,8 @@ export const StatItem = styled.div`
   align-items: center;
   gap: 4px;
   font-size: 13px;
-  color: #666;
+  font-weight: 600;
+  color: #000;
   background: #f9f9f9;
   padding: 4px 10px;
   border-radius: 16px;
@@ -157,7 +159,7 @@ export const Tag = styled.span`
   padding: 4px 10px;
   border-radius: 4px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 650;
   border: 1px solid #dcdcdc;
   display: flex;
   align-items: center;
@@ -170,6 +172,8 @@ export const CallToAction = styled.div`
   display: flex;
   gap: 10px;
   margin-top: 15px;
+  font-weight: 800;
+  color: #000;
   @media (max-width: 768px) { 
     flex-direction: row; /* Mobile pe bhi side-by-side rakha hai */
     width: 100%;
@@ -184,12 +188,12 @@ export const ActionButton = styled.button`
   gap: 6px;
   padding: 10px 12px;
   border-radius: 24px;
-  font-weight: 600;
+  font-weight: 800;
   font-size: 14px;
   cursor: pointer;
-  border: 1px solid #000080;
-  background: ${props => props.$primary ? "#000080" : "white"};
-  color: ${props => props.$primary ? "white" : "#000080"};
+  border: 1px solid #0a66c2;
+  background: ${props => props.$primary ? "#0a66c2" : "white"};
+  color: ${props => props.$primary ? "white" : "#0a66c2"};
   white-space: nowrap;
 
   &:hover {
@@ -200,18 +204,18 @@ export const ActionButton = styled.button`
 export const PriceTag = styled.div`
   font-size: 14px;
   color: #000;
-  font-weight: 700;
+  font-weight: 600;
   margin-bottom: 6px;
   @media (max-width: 768px) { text-align: left; }
 `;
 
 export const FollowButton = styled.button`
-  border: 1px solid #000080;
+  border: 1px solid #0a66c2;
   background: none;
-  color: #000080;
+  color: #0a66c2;
   border-radius: 20px;
   padding: 4px 12px;
-  font-weight: 600;
+  font-weight: 650;
   cursor: pointer;
   transition: 0.3s;
 
@@ -245,7 +249,7 @@ export const Section = styled.div`
 
 export const SectionTitle = styled.h2`
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 1000;
   margin-bottom: 16px;
   color: #000000e6;
 `;
@@ -268,6 +272,8 @@ export const ReviewHeader = styled.div`
 export const ReviewForm = styled.div`
   background: #f8f9fa;
   padding: 20px;
+  color: #000;
+  font-weight: 600;
   border-radius: 8px;
   border: 1px solid #eee;
   margin-bottom: 24px;
@@ -288,7 +294,7 @@ export const RatingInput = styled.div`
   margin-bottom: 12px;
 `;
 
-export const RatingLabel = styled.span` font-size: 14px; font-weight: 600; `;
+export const RatingLabel = styled.span` font-size: 14px; font-weight: 650; `;
 
 export const StarRating = styled.div` display: flex; gap: 4px; `;
 
@@ -304,7 +310,7 @@ export const TextAreaContainer = styled.div` position: relative; margin-bottom: 
 export const ReviewTextarea = styled.textarea`
   width: 100%; padding: 12px; border: 1px solid #dcdcdc; border-radius: 4px;
   font-family: inherit; font-size: 14px; resize: vertical;
-  &:focus { border-color: #000080; outline: none; box-shadow: 0 0 0 1px #000080; }
+  &:focus { border-color: #0a66c2; outline: none; box-shadow: 0 0 0 1px #0a66c2; }
 `;
 
 export const FormActions = styled.div` display: flex; gap: 12px; align-items: center; `;
@@ -316,7 +322,7 @@ export const SubmitButton = styled(ActionButton)`
 
 export const DeleteButton = styled.button`
   background: transparent; border: none; color: #cc1016; font-size: 14px;
-  font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;
+  font-weight: 650; cursor: pointer; display: flex; align-items: center; gap: 4px;
   &:hover { text-decoration: underline; }
 `;
 
@@ -338,30 +344,30 @@ export const UserAvatar = styled.div`
 export const UserInfo = styled.div` flex: 1; `;
 export const UserName = styled.h4` font-size: 14px; font-weight: 600; margin: 0; `;
 export const ReviewMeta = styled.div` display: flex; align-items: center; gap: 8px; margin-top: 2px; `;
-export const ReviewDate = styled.span` font-size: 12px; color: #666; `;
+export const ReviewDate = styled.span` font-size: 12px; color: #000; `;
 export const ReviewText = styled.p` font-size: 14px; color: #000000e6; margin-top: 8px; line-height: 1.4; `;
 
 export const ViewAllButton = styled.button`
   width: 100%; padding: 12px; background: transparent; border: none;
-  color: #000080; font-weight: 600; cursor: pointer;
+  color: #0a66c2; font-weight: 650; cursor: pointer;
   display: flex; align-items: center; justify-content: center; gap: 8px;
   &:hover { background: #eef3f8; }
 `;
 
-export const LoginPrompt = styled.div` text-align: center; width: 100%; p { margin-bottom: 12px; color: #666; font-size: 14px; } `;
+export const LoginPrompt = styled.div` text-align: center; width: 100%; p { margin-bottom: 12px; color: #000; font-size: 14px; } `;
 export const LoginButton = styled(ActionButton)` margin: 0 auto; font-size: 14px; padding: 6px 20px; `;
 
 // --- Missing Exports for Error Resolution ---
-export const CharCount = styled.div` font-size: 12px; color: #666; text-align: right; margin-top: 4px; `;
+export const CharCount = styled.div` font-size: 12px; color: #000; text-align: right; margin-top: 4px; `;
 export const ExpertiseGrid = styled.div` display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px; `;
 export const ExpertiseCard = styled.div` background: #f9f9f9; padding: 16px; border-radius: 8px; border: 1px solid #eee; `;
 export const RecentReviewsTitle = styled.h3` font-size: 16px; font-weight: 600; margin: 24px 0 16px; display: flex; align-items: center; gap: 8px; `;
-export const LoadingReviews = styled.div` text-align: center; padding: 40px 0; color: #666; `;
-export const NoReviews = styled.div` text-align: center; padding: 40px 0; color: #666; h4 { margin: 12px 0 4px; color: #000; } `;
+export const LoadingReviews = styled.div` text-align: center; padding: 40px 0; color: #000; `;
+export const NoReviews = styled.div` text-align: center; padding: 40px 0; color: #000; h4 { margin: 12px 0 4px; color: #000; } `;
 
 // Fallback for missing styled components in JSX
 export const MiniRating = styled.div` display: flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 600; color: #000; `;
-export const RatingValue = styled.span` font-size: 14px; color: #666; `;
+export const RatingValue = styled.span` font-size: 14px; color: #000; `;
 export const LeftColumn = styled.div``;
 export const TopSection = styled.div``;
 export const RightInfo = styled.div``;
@@ -393,13 +399,13 @@ export const TabButton = styled.button`
   border: none;
   font-size: 15px;
   font-weight: 600;
-  color: ${props => props.$active ? "#000080" : "#666"};
+  color: ${props => props.$active ? "#0a66c2" : "#666"};
   cursor: pointer;
   position: relative;
   transition: all 0.2s;
   
   &:hover {
-    color: #000080;
+    color: #0a66c2;
   }
   
   ${props => props.$active && `
@@ -410,7 +416,7 @@ export const TabButton = styled.button`
       left: 0;
       right: 0;
       height: 2px;
-      background: #000080;
+      background: #0a66c2;
     }
   `}
   
@@ -444,9 +450,9 @@ export const InfoItem = styled.div`
 
 export const InfoLabel = styled.div`
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 650;
   text-transform: uppercase;
-  color: #666;
+  color: #000;
   letter-spacing: 0.5px;
   margin-bottom: 8px;
 `;
@@ -488,20 +494,21 @@ export const ExperienceHeader = styled.div`
 
 export const ExperienceTitle = styled.h3`
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 650;
   color: #000000e6;
   margin: 0 0 4px 0;
 `;
 
 export const ExperienceCompany = styled.div`
   font-size: 14px;
-  color: #666;
-  font-weight: 500;
+  color: #000;
+  font-weight: 550;
 `;
 
 export const ExperienceDate = styled.div`
   font-size: 12px;
-  color: #999;
+  color: #000;
+  font-weight:500;
   margin-bottom: 12px;
 `;
 
@@ -510,7 +517,8 @@ export const ExperienceCertificate = styled.a`
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #000080;
+   font-weight:500;
+  color: #0a66c2;
   text-decoration: none;
   padding: 6px 12px;
   background: #eef3f8;
@@ -555,7 +563,7 @@ export const PostHeader = styled.div`
 
 export const PostTitle = styled.h3`
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 650;
   color: #000000e6;
   margin: 0;
   display: -webkit-box;
@@ -566,6 +574,7 @@ export const PostTitle = styled.h3`
 
 export const PostDescription = styled.p`
   font-size: 14px;
+  font-weight: 600;
   color: #000000bf;
   line-height: 1.5;
   margin: 0 16px 12px 16px;
@@ -596,7 +605,7 @@ export const PostStat = styled.div`
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #666;
+  color: #000;
 `;
 
 export const PostActions = styled.div`
@@ -616,14 +625,14 @@ export const PostActionBtn = styled.button`
   border: none;
   border-radius: 4px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: ${props => props.$liked ? "#ef4444" : "#666"};
   cursor: pointer;
   transition: all 0.2s;
   
   &:hover {
     background: #f3f2ef;
-    color: ${props => props.$liked ? "#dc2626" : "#000080"};
+    color: ${props => props.$liked ? "#dc2626" : "#0a66c2"};
   }
 `;
 
@@ -658,7 +667,7 @@ export const CommentText = styled.div`
 
 export const CommentMeta = styled.div`
   font-size: 11px;
-  color: #000080;
+  color: #0a66c2;
 `;
 
 export const InlineInput = styled.input`
@@ -670,12 +679,12 @@ export const InlineInput = styled.input`
   outline: none;
   
   &:focus {
-    border-color: #000080;
+    border-color: #0a66c2;
   }
 `;
 
 export const SendBtn = styled.button`
-  background: #000080;
+  background: #0a66c2;
   color: white;
   border: none;
   border-radius: 50%;
@@ -789,7 +798,7 @@ export const PlanPrice = styled.div`
 `;
 
 export const PlanDuration = styled.div`
-  color: #64748b;
+  color: #000;
   font-size: 14px;
 `;
 
@@ -877,9 +886,9 @@ export const ProgressBar = styled.div`
 `;
 
 export const UsageText = styled.div`
-  color: #065f46;
+  color: #000;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   margin-top: 8px;
 `;
 
@@ -1000,6 +1009,6 @@ export const PricingModeTab = styled.button`
 
 export const PricingInfo = styled.div`
   font-size: 13px;
-  color: #64748b;
+  color: #000;
   padding: 8px 0;
 `;

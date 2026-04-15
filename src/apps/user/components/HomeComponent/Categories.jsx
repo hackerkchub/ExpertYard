@@ -1,74 +1,41 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategory } from "../../../../shared/context/CategoryContext";
 
-const DEFAULT_CATEGORY_IMAGE = "/default-category.png";
-
 const Categories = () => {
   const navigate = useNavigate();
-  const { categories: apiCategories, loading } = useCategory();
-  const [categories, setCategories] = useState(() => {
-    // Initial load from cache for instant display
-    const cached = localStorage.getItem("cached_categories");
-    return cached ? JSON.parse(cached) : [];
-  });
+  const { categories, loading } = useCategory();
 
-  // Sync state with API and update cache
-  useEffect(() => {
-    if (apiCategories && apiCategories.length > 0) {
-      setCategories(apiCategories);
-      localStorage.setItem("cached_categories", JSON.stringify(apiCategories));
-    }
-  }, [apiCategories]);
+  const handleCategoryClick = (category) => {
+    // Exact requirement path: /user/subcategories/:id
+    const targetUrl = `/user/subcategories/${category.id}`;
+    
+    console.log("Navigating to:", targetUrl);
 
-  const handleCategoryClick = (categoryId, categoryName) => {
-    navigate(`/user/subcategories/${categoryId}`, {
-      state: { categoryName: categoryName }
+    navigate(targetUrl, {
+      state: { categoryName: category.name }
     });
   };
 
-  // Prevent UI flickering if we have cached data
-  const showLoading = loading && categories.length === 0;
-
-  if (showLoading) {
-    return (
-      <section className="section">
-        <div className="category-grid">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <div className="skeleton-card" key={index}>
-              <div className="skeleton-circle"></div>
-              <div className="skeleton-text"></div>
-            </div>
-          ))}
-        </div>
-      </section>
-    );
-  }
+  if (loading) return <div className="skeleton-loader">Loading Categories...</div>;
 
   return (
-    <section className="section">
+    <section className="category-section">
       <div className="category-grid">
         {categories.map((cat) => (
           <div 
-            className="category-item"
+            className="category-card" 
             key={cat.id}
-            onClick={() => handleCategoryClick(cat.id, cat.name)}
+            onClick={() => handleCategoryClick(cat)}
           >
-            <div className="category-image-wrapper">
+            <div className="category-icon">
               <img 
-                src={cat.image_url || DEFAULT_CATEGORY_IMAGE} 
-                alt={cat.name}
-                loading="eager" // Important for fast reload
-                onLoad={(e) => e.target.classList.add('is-loaded')}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  const parent = e.target.parentElement;
-                  parent.classList.add('fallback-mode');
-                  parent.textContent = cat.name.charAt(0);
-                }}
+                src={cat.image_url || "/default-category.png"} 
+                alt={cat.name} 
+                onError={(e) => { e.target.src = "/fallback.png" }}
               />
             </div>
-            <p className="category-label">{cat.name}</p>
+            <p>{cat.name}</p>
           </div>
         ))}
       </div>

@@ -3,56 +3,101 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "styled-components";
 
+// Context Providers
 import { WalletProvider } from "./shared/context/WalletContext";
 import { CategoryProvider } from "./shared/context/CategoryContext";
 import { AuthProvider } from "./shared/context/UserAuthContext";
+import { LoaderProvider, useLoader } from "./shared/loaders/LoaderContext";
 
-// ✅ 1. API Import karein
-import { getCategoriesApi } from "./shared/api/expertapi/category.api"; 
-
-import { theme } from "./shared/styles/theme";
+// Components & UI
+import GlobalLoader from "./shared/loaders/GlobalLoader";
 import GlobalStyles from "./shared/styles/GlobalStyles";
+import { theme } from "./shared/styles/theme";
 import AppRouter from "./routes";
+
+// APIs & Services
+import { getCategoriesApi } from "./shared/api/expertapi/category.api"; 
 import { soundManager } from "./shared/services/sound/soundManager";
-// import { LoaderProvider, useLoader } from "./shared/loaders/LoaderContext";
-// import GlobalLoader from "./shared/loaders/GlobalLoader";
-// import { injectUserLoader } from "./shared/api/userApi/axiosInstance";
-// import { injectExpertLoader } from "./shared/api/expertapi/axiosInstance";
-// import { injectAdminLoader } from "./shared/api/admin/axiosInstance";
-// import { injectLoader } from "./shared/api/axiosInstance";
 
-// ✅ 2. Render se pehle hi call trigger kar dein (Background Fetch)
+// Axios Injectors (Loaders ko APIs ke saath connect karne ke liye)
+import { injectUserLoader } from "./shared/api/userApi/axiosInstance";
+import { injectExpertLoader } from "./shared/api/expertapi/axiosInstance";
+import { injectAdminLoader } from "./shared/api/admin/axiosInstance";
+import { injectLoader } from "./shared/api/axiosInstance";
+
+/* ========================================================
+    🚀 PERFORMANCE OPTIMIZATION (Background Fetch)
+   ======================================================== */
+// Render hone se pehle hi resources load karna shuru kar dein
 soundManager.preload();
-getCategoriesApi().catch(() => {}); 
+getCategoriesApi().catch(() => {
+  console.log("Pre-fetch failed, will retry in component");
+}); 
 
-// function LoaderInjector() {
-//   const loader = useLoader();
-//   useEffect(() => {
-//     injectLoader(loader);
-//     injectUserLoader(loader);
-//     injectExpertLoader(loader);
-//     injectAdminLoader(loader);
-//   }, [loader]);
-//   return null;
-// }
+/* ========================================================
+    🔗 LOADER INJECTION LOGIC
+   ======================================================== */
+function LoaderInjector() {
+  const loader = useLoader();
+  useEffect(() => {
+    // Ye injectors axios calls ke waqt automatically loading spinner dikhayenge
+    injectLoader(loader);
+    injectUserLoader(loader);
+    injectExpertLoader(loader);
+    injectAdminLoader(loader);
+  }, [loader]);
+  return null;
+}
 
-// ... (Service Worker logic same rahega)
+/* ========================================================
+    🔔 PWA & FIREBASE BACKGROUND NOTIFICATIONS
+   ======================================================== */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
+    try {
+      let registration = await navigator.serviceWorker.getRegistration("/firebase-messaging-sw.js");
 
+      if (!registration) {
+        registration = await navigator.serviceWorker.register(
+          "/firebase-messaging-sw.js",
+          { scope: "/" }
+        );
+        console.log("✅ Firebase SW Registered for Background Notifications");
+      }
+      await navigator.serviceWorker.ready;
+    } catch (err) {
+      console.error("❌ Service Worker Registration Error:", err);
+    }
+  });
+}
+
+/* ========================================================
+    ⚛️ REACT ROOT RENDER
+   ======================================================== */
 ReactDOM.createRoot(document.getElementById("root")).render(
   <ThemeProvider theme={theme}>
     <GlobalStyles />
-    {/* <LoaderProvider>
+    
+    <LoaderProvider>
+      {/* Axios Loader Injector: Isse API hit hote hi loader dikhega */}
       <LoaderInjector />
-      <GlobalLoader /> */}
+      
+      {/* Global Spinner Element: Jo screen par ghumega */}
+      <GlobalLoader />
+
       <CategoryProvider>
         <BrowserRouter>
           <AuthProvider>
             <WalletProvider>
+              
+              {/* Main App Routes */}
               <AppRouter />
+
             </WalletProvider>
           </AuthProvider>
         </BrowserRouter>
       </CategoryProvider>
-    {/* </LoaderProvider> */}
+      
+    </LoaderProvider>
   </ThemeProvider>
 );

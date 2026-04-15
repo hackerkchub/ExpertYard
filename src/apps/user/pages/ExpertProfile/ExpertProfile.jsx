@@ -383,6 +383,20 @@ const price = expertPrice || {};
     return modes;
   }, [displayPrices, hasActiveSubscription]);
 
+  useEffect(() => {
+  if (availablePricingModes?.length > 0) {
+    const sessionMode = availablePricingModes.find(
+      (mode) => mode.id === "session"
+    );
+
+    if (sessionMode) {
+      setSelectedPricingMode("session");
+    } else {
+      setSelectedPricingMode(availablePricingModes[0].id);
+    }
+  }
+}, [availablePricingModes]);
+
   const getRemainingPercentage = useCallback(() => {
     if (!activeSubscription) return 0;
     

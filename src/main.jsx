@@ -7,24 +7,26 @@ import { ThemeProvider } from "styled-components";
 import { WalletProvider } from "./shared/context/WalletContext";
 import { CategoryProvider } from "./shared/context/CategoryContext";
 import { AuthProvider } from "./shared/context/UserAuthContext";
+import { LoaderProvider, useLoader } from "./shared/loaders/LoaderContext";
+
+// Components & UI
+import GlobalLoader from "./shared/loaders/GlobalLoader";
+import GlobalStyles from "./shared/styles/GlobalStyles";
+import { theme } from "./shared/styles/theme";
+import AppRouter from "./routes";
 
 // APIs & Services
 import { getCategoriesApi } from "./shared/api/expertapi/category.api"; 
-import { theme } from "./shared/styles/theme";
-import GlobalStyles from "./shared/styles/GlobalStyles";
-import AppRouter from "./routes";
 import { soundManager } from "./shared/services/sound/soundManager";
-import { LoaderProvider, useLoader } from "./shared/loaders/LoaderContext";
-import GlobalLoader from "./shared/loaders/GlobalLoader";
 
-// Axios Injectors
+// Axios Injectors (Loaders ko APIs ke saath connect karne ke liye)
 import { injectUserLoader } from "./shared/api/userApi/axiosInstance";
 import { injectExpertLoader } from "./shared/api/expertapi/axiosInstance";
 import { injectAdminLoader } from "./shared/api/admin/axiosInstance";
 import { injectLoader } from "./shared/api/axiosInstance";
 
 /* ========================================================
-   🚀 PERFORMANCE OPTIMIZATION (Background Fetch)
+    🚀 PERFORMANCE OPTIMIZATION (Background Fetch)
    ======================================================== */
 // Render hone se pehle hi resources load karna shuru kar dein
 soundManager.preload();
@@ -33,11 +35,12 @@ getCategoriesApi().catch(() => {
 }); 
 
 /* ========================================================
-   🔗 LOADER INJECTION LOGIC
+    🔗 LOADER INJECTION LOGIC
    ======================================================== */
 function LoaderInjector() {
   const loader = useLoader();
   useEffect(() => {
+    // Ye injectors axios calls ke waqt automatically loading spinner dikhayenge
     injectLoader(loader);
     injectUserLoader(loader);
     injectExpertLoader(loader);
@@ -47,12 +50,11 @@ function LoaderInjector() {
 }
 
 /* ========================================================
-   🔔 PWA & FIREBASE BACKGROUND NOTIFICATIONS
+    🔔 PWA & FIREBASE BACKGROUND NOTIFICATIONS
    ======================================================== */
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", async () => {
     try {
-      // Background notifications ke liye firebase service worker zaroori hai
       let registration = await navigator.serviceWorker.getRegistration("/firebase-messaging-sw.js");
 
       if (!registration) {
@@ -62,10 +64,7 @@ if ("serviceWorker" in navigator) {
         );
         console.log("✅ Firebase SW Registered for Background Notifications");
       }
-
-      // Waiting for SW to be ready
       await navigator.serviceWorker.ready;
-      
     } catch (err) {
       console.error("❌ Service Worker Registration Error:", err);
     }
@@ -73,17 +72,17 @@ if ("serviceWorker" in navigator) {
 }
 
 /* ========================================================
-   ⚛️ REACT ROOT RENDER
+    ⚛️ REACT ROOT RENDER
    ======================================================== */
 ReactDOM.createRoot(document.getElementById("root")).render(
   <ThemeProvider theme={theme}>
     <GlobalStyles />
     
     <LoaderProvider>
-      {/* Axios Loader Injector */}
+      {/* Axios Loader Injector: Isse API hit hote hi loader dikhega */}
       <LoaderInjector />
       
-      {/* Global Spinner Element */}
+      {/* Global Spinner Element: Jo screen par ghumega */}
       <GlobalLoader />
 
       <CategoryProvider>

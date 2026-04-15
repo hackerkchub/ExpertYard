@@ -147,7 +147,7 @@ import {
 
 import { getExpertExperienceApi } from "../../../../shared/api/expertapi/experience.api";
 import { 
-  getPostsApi, 
+  getExpertFeedApi,   // 🔥 add this
   likePostApi, 
   unlikePostApi,
   getCommentsApi,
@@ -165,6 +165,9 @@ import {
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/300?img=12";
 const MIN_CHAT_MINUTES = 5;
+
+// Helper function to get post ID consistently
+const getPostId = (post) => post?.id || post?.post_id;
 
 const formatRelativeTime = (dateString) => {
   const date = new Date(dateString);
@@ -522,58 +525,116 @@ const price = expertPrice || {};
 
   // Fetch posts
   const fetchPosts = useCallback(async () => {
-    if (!numericExpertId) return;
-    setLoadingPosts(true);
-    try {
-      const response = await getPostsApi(numericExpertId);
-      if (response.data?.success) {
-        const postsData = response.data.data || [];
-        setPosts(postsData);
-        
-        const likedMap = {};
-        postsData.forEach(post => {
-          likedMap[post.id] = !!post.is_liked;
+  if (!numericExpertId) return;
+
+  setLoadingPosts(true);
+
+  try {
+    const response = await getExpertFeedApi(numericExpertId, userId);
+
+    if (response.data?.success) {
+      const postsData = response.data.data || [];
+      setPosts(postsData);
+
+      // ✅ liked map from backend
+      const likedMap = {};
+      postsData.forEach(post => {
+        const postId = getPostId(post);
+        likedMap[postId] = !!post.is_liked;
+      });
+      setLiked(likedMap);
+
+      // review stats (same)
+      try {
+        const reviewRes = await getReviewsByExpertApi(numericExpertId);
+        const reviewData = reviewRes.data.data || {};
+        setExpertReviewStats({
+          avg: Number(reviewData.avg_rating || 0),
+          total: reviewData.total_reviews || 0
         });
-        setLiked(likedMap);
-        
-        try {
-          const reviewRes = await getReviewsByExpertApi(numericExpertId);
-          const reviewData = reviewRes.data.data || {};
-          setExpertReviewStats({
-            avg: Number(reviewData.avg_rating || 0),
-            total: reviewData.total_reviews || 0
-          });
-        } catch (error) {
-          console.error("Failed to fetch review stats:", error);
-        }
+      } catch (error) {
+        console.error("Failed to fetch review stats:", error);
       }
-    } catch (error) {
-      console.error("Failed to fetch posts:", error);
-    } finally {
-      setLoadingPosts(false);
     }
-  }, [numericExpertId]);
+
+  } catch (error) {
+    console.error("Failed to fetch posts:", error);
+  } finally {
+    setLoadingPosts(false);
+  }
+}, [numericExpertId, userId]);
 
   const toggleLike = async (post) => {
-    if (!isLoggedIn || !userId) {
-      navigate("/user/auth", { state: { from: `/experts/${expertId}` } });
-      return;
-    }
-    
-    const isLiked = liked[post.id];
-    setLiked((p) => ({ ...p, [post.id]: !isLiked }));
+  if (!isLoggedIn || !userId) return;
 
-    try {
-      if (isLiked) {
-        await unlikePostApi({ post_id: post.id, user_id: userId });
-      } else {
-        await likePostApi({ post_id: post.id, user_id: userId });
+  const postId = getPostId(post);
+  const isLiked = liked[postId];
+
+  // ✅ Optimistic update
+  setLiked(prev => ({
+    ...prev,
+    [postId]: !isLiked
+  }));
+
+  setPosts(prev =>
+    prev.map(p => {
+      const pId = getPostId(p);
+      if (pId === postId) {
+        return {
+          ...p,
+          likes: p.likes + (isLiked ? -1 : 1)
+        };
       }
-    } catch (err) {
-      console.error("Like toggle error:", err);
-      setLiked((p) => ({ ...p, [post.id]: isLiked }));
+      return p;
+    })
+  );
+
+  try {
+    let res;
+
+    if (isLiked) {
+      res = await unlikePostApi({ post_id: postId, user_id: userId });
+    } else {
+      res = await likePostApi({ post_id: postId, user_id: userId });
     }
-  };
+
+    // ✅ Sync with backend (IMPORTANT)
+    setPosts(prev =>
+      prev.map(p => {
+        const pId = getPostId(p);
+        if (pId === postId) {
+          return {
+            ...p,
+            likes: res.data.likes // 🔥 exact backend value
+          };
+        }
+        return p;
+      })
+    );
+
+  } catch (err) {
+    console.error("Like error:", err);
+
+    // ❌ rollback
+    setLiked(prev => ({
+      ...prev,
+      [postId]: isLiked
+    }));
+
+    setPosts(prev =>
+      prev.map(p => {
+        const pId = getPostId(p);
+        if (pId === postId) {
+          return {
+            ...p,
+            likes: p.likes + (isLiked ? 1 : -1)
+          };
+        }
+        return p;
+      })
+    );
+  }
+};
 
   const toggleSection = async (section, postId) => {
     const key = `${section}-${postId}`;
@@ -595,32 +656,48 @@ const price = expertPrice || {};
   };
 
   const submitComment = async (post) => {
-    const text = commentText[post.id]?.trim();
-    if (!text) return;
+  const postId = getPostId(post);
+  const text = commentText[postId]?.trim();
+  if (!text) return;
 
-    try {
-      const res = await addCommentApi({
-        post_id: post.id,
-        expert_id: numericExpertId,
-        comment: text
-      });
+  try {
+    const res = await addCommentApi({
+      post_id: postId,
+      expert_id: numericExpertId,
+      comment: text
+    });
 
-      setPosts(prev =>
-        prev.map(p =>
-          p.id === post.id
-            ? { ...p, comments_count: p.comments_count + 1 }
-            : p
-        )
-      );
-      setComments((p) => ({
-        ...p,
-        [post.id]: [...(p[post.id] || []), res.data.data]
-      }));
-      setCommentText((p) => ({ ...p, [post.id]: "" }));
-    } catch (err) {
-      console.error("Add comment error:", err);
-    }
-  };
+    // ✅ NEW COMMENT OBJECT (IMPORTANT)
+    const newComment = {
+      id: res.data.data?.id || Date.now(),
+      comment: text,
+      user_id: userId,
+      created_at: new Date().toISOString()
+    };
+
+    // ✅ Update posts count
+    setPosts(prev =>
+      prev.map(p => {
+        const pId = getPostId(p);
+        if (pId === postId) {
+          return { ...p, comments_count: (p.comments_count || 0) + 1 };
+        }
+        return p;
+      })
+    );
+
+    // ✅ Instant UI update
+    setComments(prev => ({
+      ...prev,
+      [postId]: [...(prev[postId] || []), newComment]
+    }));
+
+    setCommentText(prev => ({ ...prev, [postId]: "" }));
+
+  } catch (err) {
+    console.error("Add comment error:", err);
+  }
+};
 
   // Followers & reviews loader
   const loadFollowersAndReviews = useCallback(() => {
@@ -1035,9 +1112,6 @@ const price = expertPrice || {};
     return <div style={{ padding: 30, textAlign: "center" }}>Expert not found.</div>;
   }
 
-  // const profile = expertData.profile;
-  // const price = expertPrice || {};
-
   return (
     <>
       <style>{`
@@ -1133,9 +1207,6 @@ const price = expertPrice || {};
                         <ProgressBar><div style={{ width: `${getRemainingPercentage()}%`, height: "100%", background: "#10b981", borderRadius: 4, transition: "width 0.3s ease" }} /></ProgressBar>
                       </>
                     )}
-                    {/* {activeSubscription.remaining_calls !== null && (
-                      <UsageText>{activeSubscription.remaining_calls} calls remaining</UsageText>
-                    )} */}
                   </SubscriptionRemaining>
                 </ActiveSubscriptionCard>
               )}
@@ -1260,33 +1331,82 @@ const price = expertPrice || {};
               ) : (
                 <PostGrid>
                   {posts.map((post) => {
-                    const isLiked = liked[post.id];
+                    // ✅ FIX: Consistent postId extraction
+                    const postId = getPostId(post);
+                    const isLiked = liked[postId];
+                    
                     return (
-                      <PostCard key={post.id}>
+                      <PostCard key={postId}>
                         {post.image_url && <PostImage src={post.image_url} alt={post.title} />}
                         <PostHeader><PostTitle>{post.title}</PostTitle></PostHeader>
                         {post.description && <PostDescription>{post.description}</PostDescription>}
-                        <PostStats>
-                          <PostStat><FiHeart fill={isLiked ? "#ef4444" : "none"} stroke={isLiked ? "#ef4444" : "#374151"} />{post.likes + (isLiked ? 1 : 0)}</PostStat>
-                          <PostStat><FiMessageCircle />{post.comments_count}</PostStat>
-                        </PostStats>
+                        
                         <PostActions>
-                          <PostActionBtn $liked={!!liked[post.id]} onClick={() => toggleLike(post)}><FiHeart fill={liked[post.id] ? "#ef4444" : "none"} />{liked[post.id] ? "Liked" : "Like"}</PostActionBtn>
-                          <PostActionBtn onClick={() => toggleSection("comments", post.id)}><FiMessageCircle /> Comment</PostActionBtn>
+                          {/* LIKE BUTTON */}
+                          <PostActionBtn
+                            $liked={!!isLiked}
+                            onClick={() => toggleLike(post)}
+                          >
+                            <FiHeart
+                              fill={isLiked ? "#ef4444" : "none"}
+                              stroke={isLiked ? "#ef4444" : "#374151"}
+                              style={{
+                                strokeWidth: isLiked ? 0 : 2,
+                                transition: "all 0.2s ease"
+                              }}
+                            />
+                           {post.likes}
+                          </PostActionBtn>
+
+                          {/* COMMENT BUTTON */}
+                          <PostActionBtn
+                            onClick={() => toggleSection("comments", postId)}
+                          >
+                            <FiMessageCircle />
+                            {post.comments_count}
+                          </PostActionBtn>
                         </PostActions>
-                        {activeSection === `comments-${post.id}` && (
-                          <div style={{ marginTop: 16, borderTop: "1px solid #e5e7eb", paddingTop: 12 }}>
-                            {(comments[post.id] || []).map((c) => (
-                              <div key={c.id} style={{ marginBottom: 12, padding: "8px 0", borderBottom: "1px solid #f3f4f6" }}>
-                                <div style={{ fontSize: 14, color: "#1f2937" }}>{c.comment}{c.user_id === userId && <span style={{ color: "#9ca3af", fontSize: 11, marginLeft: 8 }}>You</span>}</div>
-                                <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>{c.user_name || "User"} • {formatRelativeTime(c.created_at)}</div>
-                              </div>
-                            ))}
-                            <div style={{ display: "flex", gap: 8, alignItems: "flex-end", marginTop: 8 }}>
-                              <InlineInput placeholder="Write a comment…" value={commentText[post.id] || ""} onChange={(e) => setCommentText(p => ({ ...p, [post.id]: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && submitComment(post)} />
-                              <SendBtn onClick={() => submitComment(post)}><FiSend /></SendBtn>
+
+                        {/* COMMENTS SECTION */}
+                        {activeSection === `comments-${postId}` && (
+                          <CommentsBox>
+                            <CommentsList>
+                              {(comments[postId] || [])
+                                .filter(c => c && typeof c.comment === "string")
+                                .map((c) => (
+                                  <CommentItem key={c.id}>
+                                    <CommentText>
+                                      {c.comment}
+                                      {c.user_id === userId && (
+                                        <span style={{ marginLeft: 6, fontSize: 11, color: "#9ca3af" }}>
+                                          You
+                                        </span>
+                                      )}
+                                    </CommentText>
+                                    <CommentMeta>
+                                      {formatRelativeTime(c.created_at)}
+                                    </CommentMeta>
+                                  </CommentItem>
+                                ))}
+                            </CommentsList>
+
+                            <div style={{ display: "flex", gap: 8 }}>
+                              <InlineInput
+                                placeholder="Write a comment…"
+                                value={commentText[postId] || ""}
+                                onChange={(e) =>
+                                  setCommentText((p) => ({
+                                    ...p,
+                                    [postId]: e.target.value
+                                  }))
+                                }
+                                onKeyDown={(e) => e.key === "Enter" && submitComment(post)}
+                              />
+                              <SendBtn onClick={() => submitComment(post)}>
+                                <FiSend />
+                              </SendBtn>
                             </div>
-                          </div>
+                          </CommentsBox>
                         )}
                       </PostCard>
                     );

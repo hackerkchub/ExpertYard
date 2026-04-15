@@ -1,3 +1,4 @@
+// ExpertVoiceCall.jsx
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { CALL_EVENTS } from "../../../../shared/constants/call.constants";
@@ -7,22 +8,33 @@ import { useSocket } from "../../../../shared/hooks/useSocket";
 import {
   PageWrapper,
   CallCard,
-  StatusText,
-  IncomingActions,
-  ActionBtn,
+  CallHeader,
+  TimerSection,
+  TimerLabel,
+  Timer,
+  HeaderControls,
+  HeaderControlBtn,
+  ExpertInfo,
   ExpertAvatarWrapper,
   ExpertAvatar,
   ExpertName,
   ExpertRole,
-  Timer,
-  Controls,
-  ControlBtn,
-  Brand,
+  StatusBadge,
   WaveContainer,
   WaveBar,
+  ConnectingAnimation,
+  ConnectingDots,
+  Dot,
+  ConnectingText,
+  IncomingActions,
+  ActionBtn,
+  BottomActions,
+  ActionButton,
+  Brand,
   ReconnectingBadge,
   NetworkIndicator,
   Spinner,
+  Shimmer,
 } from "./ExpertVoiceCall.styles";
 
 import {
@@ -33,17 +45,24 @@ import {
   toggleMute,
   createAnswer,
   handleSocketReconnect,
+  getStats,
 } from "../../../../shared/webrtc/voicePeer";
 import { soundManager } from "../../../../shared/services/sound/soundManager";
 
-const DEFAULT_AVATAR = "https://i.pravatar.cc/300?img=44";
+// Simple user icon component (no external dependencies)
+const UserIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
 
 export default function ExpertVoiceCall() {
   const { callId } = useParams();
   const navigate = useNavigate();
   const { expertData } = useExpert();
 
-  // ✅ Normalized callId for all checks
+  // Normalized callId for all checks
   const normalizedCallId = Number(callId);
   const socket = useSocket(expertData?.expertId, "expert");
   
@@ -51,11 +70,10 @@ export default function ExpertVoiceCall() {
   const streamRef = useRef(null);
   const callIdRef = useRef(normalizedCallId);
   const callStartedRef = useRef(false);
-  
-  // Refs for protection
   const callStateRef = useRef("connecting");
   const makingAnswerRef = useRef(false);
   const isCleaningUpRef = useRef(false);
+  const pcRef = useRef(null);
   
   const [callState, setCallState] = useState("connecting");
   const [seconds, setSeconds] = useState(0);
@@ -69,7 +87,6 @@ export default function ExpertVoiceCall() {
   const [caller, setCaller] = useState({
     name: "Incoming Caller",
     role: "User",
-    avatar: DEFAULT_AVATAR,
   });
 
   // Stop all sounds on mount
@@ -102,6 +119,7 @@ export default function ExpertVoiceCall() {
     }
     
     closePeer();
+    pcRef.current = null;
   }, []);
 
   // Auto-start mic on connecting state
@@ -136,30 +154,24 @@ export default function ExpertVoiceCall() {
   }, [callState, socket]);
 
   useEffect(() => {
-  const onResume = (data) => {
-    if (data.callId !== normalizedCallId) return;
+    const onResume = (data) => {
+      if (data.callId !== normalizedCallId) return;
+      
+      setCaller(prev => ({
+        ...prev, 
+        name: data.user_name || prev.name
+      }));
+      setCallState("connected");
 
-    setCallState("connected");
+      const alreadyElapsed =
+        Math.floor((Date.now() - new Date(data.startedAt)) / 1000);
 
-    const alreadyElapsed =
-      Math.floor((Date.now() - new Date(data.startedAt)) / 1000);
+      setSeconds(alreadyElapsed);
+    };
 
-    setSeconds(alreadyElapsed);
-  };
-
-  socket.on("call:resume_data", onResume);
-  return () => socket.off("call:resume_data", onResume);
-}, [socket, normalizedCallId]);
-
-useEffect(() => {
-  if (!streamRef.current) {
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(stream => {
-        streamRef.current = stream;
-      })
-      .catch(() => {});
-  }
-}, []);
+    socket.on("call:resume_data", onResume);
+    return () => socket.off("call:resume_data", onResume);
+  }, [socket, normalizedCallId]);
 
   // Handle incoming call data
   useEffect(() => {
@@ -168,13 +180,11 @@ useEffect(() => {
 
       console.log("📞 Incoming call data:", data);
 
-      // Clear reconnecting state on new incoming
       setReconnecting(false);
 
       setCaller({
         name: data.user_name || "User",
         role: "User",
-        avatar: DEFAULT_AVATAR,
       });
 
       if (!callStartedRef.current) {
@@ -189,7 +199,7 @@ useEffect(() => {
     };
   }, [socket]);
 
-  // Timer with extra safety
+  // Timer
   useEffect(() => {
     if (callState === "connected") {
       if (!timerRef.current) {
@@ -216,25 +226,19 @@ useEffect(() => {
   useEffect(() => {
     if (!normalizedCallId) return;
 
-   const onConnected = (data) => {
-  if (Number(data.callId) !== callIdRef.current) return;
+    const onConnected = ({ callId: connectedId, user_name }) => {
+      if (Number(connectedId) !== callIdRef.current) return;
+      
+      setCaller(prev => ({
+        ...prev,
+        name: user_name || prev.name
+      }));
 
-  console.log("✅ Connected data:", data);
+      setReconnecting(false);
+      setSeconds(0);
+      setCallState("connected");
+    };
 
-  setReconnecting(false);
-  setSeconds(0);
-  setCallState("connected");
-
-  // 🔥 ADD THIS
-  setCaller(prev => ({
-    ...prev,
-    name:
-      data?.user_name ||
-      data?.fromUserName ||
-      prev.name ||
-      "User",
-  }));
-};
     const onEnded = ({ callId: endedId }) => {
       if (Number(endedId) !== callIdRef.current) return;
       setCallState("ended");
@@ -278,9 +282,24 @@ useEffect(() => {
       handleSocketReconnect();
 
       if (callIdRef.current && callStateRef.current === "connected") {
-        setTimeout(() => {
-          console.log("♻ Recreating answer after reconnect");
-          setReconnecting(false);
+        setTimeout(async () => {
+          console.log("♻ Recreating peer after reconnect");
+
+          const pc = await createPeer({
+            socket,
+            callId: callIdRef.current,
+            audioRef,
+            stream: streamRef.current
+          });
+          pcRef.current = pc;
+
+          if (pc?.signalingState === "have-remote-offer") {
+            const answer = await createAnswer();
+            socket.emit("webrtc:answer", {
+              callId: callIdRef.current,
+              answer
+            });
+          }
         }, 400);
       }
     };
@@ -289,28 +308,37 @@ useEffect(() => {
     return () => socket.io?.off("reconnect", onReconnect);
   }, [socket]);
 
-  // Network quality monitoring (simulated)
+  // Network quality monitoring
   useEffect(() => {
-    if (callState === "connected") {
-      const interval = setInterval(() => {
-        // Simulate network quality - replace with actual WebRTC stats if needed
-        const qualities = ["good", "average", "poor"];
-        const randomQuality = qualities[Math.floor(Math.random() * qualities.length)];
-        setNetworkQuality(randomQuality);
-      }, 5000);
-
-      return () => clearInterval(interval);
-    }
+    if (callState !== "connected") return;
+  
+    const interval = setInterval(async () => {
+      const stats = await getStats();
+      const inbound = stats?.find(s => s.type === "inbound");
+  
+      if (!inbound) return;
+  
+      const total = inbound.packetsReceived + inbound.packetsLost;
+      if (!total) return;
+  
+      const loss = inbound.packetsLost / total;
+  
+      if (loss < 0.03) setNetworkQuality("good");
+      else if (loss < 0.1) setNetworkQuality("average");
+      else setNetworkQuality("poor");
+    }, 4000);
+  
+    return () => clearInterval(interval);
   }, [callState]);
 
-  // WebRTC events with ANSWER SPAM PROTECTION + STREAM GUARD
+  // WebRTC events
   useEffect(() => {
     if (!normalizedCallId) return;
 
     const onOffer = async ({ callId: incomingId, offer }) => {
       if (Number(incomingId) !== callIdRef.current) return;
-if (callStateRef.current === "ended") return;
-      // Clear reconnecting when offer arrives
+      if (callStateRef.current === "ended") return;
+      
       setReconnecting(false);
 
       if (makingAnswerRef.current) {
@@ -318,23 +346,23 @@ if (callStateRef.current === "ended") return;
         return;
       }
 
-      // GUARD: Wait for mic stream to be ready
       if (!streamRef.current) {
-        console.log("⏳ Waiting for mic before answering");
-        return;
+        console.log("🎤 Getting mic before answer...");
+        streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
       }
-
+      
       makingAnswerRef.current = true;
 
       try {
         console.log("📡 Expert: Received WebRTC offer");
 
-        await createPeer({ 
+        const pc = await createPeer({ 
           socket, 
           callId: callIdRef.current, 
           audioRef,
           stream: streamRef.current
         });
+        pcRef.current = pc;
 
         await setRemote(offer);
 
@@ -376,27 +404,14 @@ if (callStateRef.current === "ended") return;
     };
   }, [cleanupMedia]);
 
-  // ACCEPT CALL - DOUBLE CLICK GUARD
-  const acceptCall = useCallback(async () => {
+  // ACCEPT CALL
+  const acceptCall = useCallback(() => {
     if (callStateRef.current !== "incoming") return;
 
-    try {
-      streamRef.current = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          channelCount: { ideal: 1 },
-          sampleRate: { ideal: 16000 },
-        }
-      });
-      console.log("✅ Expert microphone permission granted, stream:", streamRef.current);
-      callStartedRef.current = true;
-      setCallState("connecting");
-      socket.emit(CALL_EVENTS.ACCEPT, { callId: callIdRef.current });
-    } catch (error) {
-      console.error("❌ Failed to get microphone permission:", error);
-    }
+    callStartedRef.current = true;
+    setCallState("connecting");
+
+    socket.emit(CALL_EVENTS.ACCEPT, { callId: callIdRef.current });
   }, [socket]);
 
   // REJECT CALL
@@ -408,7 +423,7 @@ if (callStateRef.current === "ended") return;
     navigate("/expert/home", { replace: true });
   }, [socket, navigate, cleanupMedia]);
 
-  // SAFE END CALL (billing safe)
+  // END CALL
   const endCall = useCallback(() => {
     if (isCleaningUpRef.current) return;
     isCleaningUpRef.current = true;
@@ -423,11 +438,11 @@ if (callStateRef.current === "ended") return;
     }, 200);
   }, [socket, navigate, cleanupMedia]);
 
+  // MUTE TOGGLE
   const toggleMuteClick = useCallback(() => {
     setMuted((m) => {
       toggleMute(!m);
       
-      // Optional: Emit mute status to server
       if (callIdRef.current) {
         socket.emit("call:mute", {
           callId: callIdRef.current,
@@ -439,121 +454,203 @@ if (callStateRef.current === "ended") return;
     });
   }, [socket]);
 
-  const getInitials = (name) => {
-  if (!name) return "U";
+  const formatTime = () => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
 
-  const words = name.trim().split(" ");
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    }
+    return `${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
 
-  if (words.length === 1) {
-    return words[0][0].toUpperCase();
-  }
-
-  return (
-    words[0][0] + words[words.length - 1][0]
-  ).toUpperCase();
-};
-
-  // Render wave animation for connected state
+  // Render wave animation
   const renderWaveAnimation = () => (
     <WaveContainer>
-      {[1, 2, 3, 4, 5].map((_, index) => (
+      {[0, 1, 2, 3, 4].map((_, index) => (
         <WaveBar key={index} $index={index} />
       ))}
     </WaveContainer>
   );
 
+  // Render connecting animation
+  const renderConnectingAnimation = () => (
+    <ConnectingAnimation>
+      <ConnectingDots>
+        <Dot $delay={0} />
+        <Dot $delay={0.2} />
+        <Dot $delay={0.4} />
+      </ConnectingDots>
+      <ConnectingText>
+        {reconnecting ? "Reconnecting..." : "Connecting to caller..."}
+      </ConnectingText>
+    </ConnectingAnimation>
+  );
+
+  const getStatusText = () => {
+    switch (callState) {
+      case "connecting":
+        return "Connecting...";
+      case "connected":
+        return "Connected";
+      case "ended":
+        return "Call Ended";
+      case "incoming":
+        return "Incoming Call";
+      default:
+        return "";
+    }
+  };
+
+  const getStatusType = () => {
+    switch (callState) {
+      case "connecting":
+        return "connecting";
+      case "connected":
+        return "connected";
+      case "ended":
+        return "ended";
+      case "incoming":
+        return "incoming";
+      default:
+        return "";
+    }
+  };
+
   return (
     <PageWrapper>
+      <audio ref={audioRef} autoPlay playsInline />
+
+      {/* Network Quality Indicator */}
+      {callState === "connected" && networkQuality !== "good" && (
+        <NetworkIndicator $quality={networkQuality}>
+          {networkQuality === "average" ? "Unstable Connection" : "Poor Connection"}
+        </NetworkIndicator>
+      )}
+
+      {/* Reconnecting Badge */}
+      {reconnecting && callState === "connected" && (
+        <ReconnectingBadge>Reconnecting...</ReconnectingBadge>
+      )}
+
       <CallCard>
-        <audio ref={audioRef} autoPlay playsInline />
+        {/* Header with Timer and Controls */}
+        <CallHeader>
+          {callState === "connected" && (
+            <TimerSection>
+              <TimerLabel>Call Duration</TimerLabel>
+              <Timer>{formatTime()}</Timer>
+            </TimerSection>
+          )}
 
-        {/* Network Quality Indicator */}
-        {callState === "connected" && networkQuality !== "good" && (
-          <NetworkIndicator $quality={networkQuality}>
-            {networkQuality === "average" ? "Unstable Connection" : "Poor Connection"}
-          </NetworkIndicator>
-        )}
+          {callState === "connecting" && (
+            <TimerSection>
+              <TimerLabel>Connecting</TimerLabel>
+              <Timer>00:00</Timer>
+            </TimerSection>
+          )}
 
-        {/* Reconnecting UI */}
-        {reconnecting && callState === "connected" && (
-          <ReconnectingBadge />
-        )}
+          <HeaderControls>
+            {callState === "connected" && (
+              <>
+                <HeaderControlBtn
+                  onClick={toggleMuteClick}
+                  $active={muted}
+                  title={muted ? "Unmute" : "Mute"}
+                >
+                  {muted ? "🔇" : "🎤"}
+                </HeaderControlBtn>
+                <HeaderControlBtn
+                  $danger
+                  onClick={endCall}
+                  title="End Call"
+                >
+                  📞
+                </HeaderControlBtn>
+              </>
+            )}
 
-       <ExpertAvatarWrapper>
-  {caller.avatar ? (
-    <ExpertAvatar src={caller.avatar} alt={caller.name} />
-  ) : (
-    <div className="initial-avatar">
-      {getInitials(caller.name)}
-    </div>
-  )}
-</ExpertAvatarWrapper>
+            {(callState === "connecting" || callState === "incoming") && (
+              <HeaderControlBtn $danger onClick={rejectCall} title="Decline">
+                ✕
+              </HeaderControlBtn>
+            )}
 
-        <ExpertName>{caller.name}</ExpertName>
-        <ExpertRole>{caller.role}</ExpertRole>
+            {callState === "ended" && (
+              <HeaderControlBtn onClick={() => navigate("/expert/home")} title="Back">
+                ←
+              </HeaderControlBtn>
+            )}
+          </HeaderControls>
+        </CallHeader>
 
-        {/* Connecting State */}
-        {callState === "connecting" && (
-          <>
-            <StatusText $reconnecting={reconnecting}>
-              {reconnecting ? "RECONNECTING..." : "CONNECTING..."}
-            </StatusText>
-            <Spinner />
-          </>
-        )}
+        {/* Expert/Caller Info Section */}
+        <ExpertInfo>
+          <ExpertAvatarWrapper className={callState === "connected" ? "active" : ""}>
+            <ExpertAvatar>
+              <UserIcon />
+            </ExpertAvatar>
+            {callState === "connected" && <Shimmer />}
+          </ExpertAvatarWrapper>
 
-        {/* Incoming State */}
-        {callState === "incoming" && !callStartedRef.current && (
-          <>
-            <StatusText>INCOMING VOICE CALL</StatusText>
+          <ExpertName>{caller.name}</ExpertName>
+          <ExpertRole>{caller.role}</ExpertRole>
+
+          {callState !== "idle" && (
+            <StatusBadge $status={getStatusType()}>
+              <span>
+                {callState === "connected" && "🔵"}
+                {callState === "connecting" && "🔄"}
+                {callState === "ended" && "✓"}
+                {callState === "incoming" && "📞"}
+              </span>
+              {getStatusText()}
+            </StatusBadge>
+          )}
+
+          {/* Wave Animation for Active Call */}
+          {callState === "connected" && renderWaveAnimation()}
+
+          {/* Connecting Animation */}
+          {callState === "connecting" && renderConnectingAnimation()}
+
+          {/* Incoming Call Actions */}
+          {callState === "incoming" && (
             <IncomingActions>
-              <ActionBtn
-                $accept
-                disabled={callState !== "incoming"}
-                onClick={acceptCall}
-              >
+              <ActionBtn $accept onClick={acceptCall}>
                 ✔ Accept
               </ActionBtn>
-
               <ActionBtn onClick={rejectCall}>
                 ✕ Reject
               </ActionBtn>
             </IncomingActions>
-          </>
-        )}
+          )}
 
-        {/* Connected State */}
-        {callState === "connected" && (
-          <>
-            {renderWaveAnimation()}
-            <Timer>
-              {String(Math.floor(seconds / 60)).padStart(2, "0")}:
-              {String(seconds % 60).padStart(2, "0")}
-            </Timer>
+          {/* Ended State Spinner */}
+          {callState === "ended" && <Spinner />}
+        </ExpertInfo>
 
-            <Controls>
-              <ControlBtn 
-                $active={muted} 
-                onClick={toggleMuteClick}
-              >
-                {muted ? "🔇" : "🎤"} 
-                <span>{muted ? "Unmute" : "Mute"}</span>
-              </ControlBtn>
+        {/* Bottom Actions */}
+        <BottomActions>
+          {callState === "connected" && (
+            <ActionButton $danger onClick={endCall}>
+              📞 End Call
+            </ActionButton>
+          )}
 
-              <ControlBtn $danger onClick={endCall}>
-                ❌ <span>End</span>
-              </ControlBtn>
-            </Controls>
-          </>
-        )}
+          {(callState === "connecting" || callState === "incoming") && (
+            <ActionButton $danger onClick={rejectCall}>
+              ✕ Decline Call
+            </ActionButton>
+          )}
 
-        {/* Ended State */}
-        {callState === "ended" && (
-          <>
-            <StatusText>CALL ENDED</StatusText>
-            <Spinner />
-          </>
-        )}
+          {callState === "ended" && (
+            <ActionButton $primary onClick={() => navigate("/expert/home")}>
+              ← Back to Dashboard
+            </ActionButton>
+          )}
+        </BottomActions>
 
         <Brand>EXPERT YARD — Expert Panel</Brand>
       </CallCard>

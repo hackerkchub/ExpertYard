@@ -218,7 +218,7 @@ const groupCallsByUser = (calls = []) => {
     // Update counts by status
     if (call.status === 'ended') {
       acc[id].completed_count++;
-      const mins = Number(call.duration || 0);
+      const mins = Number(call.duration_minutes || 0);
       const ppm = Number(call.price_per_minute || 16);
       acc[id].total_duration += mins;
       acc[id].total_earnings += calculateEarnings(mins, ppm);
@@ -773,7 +773,7 @@ const ExpertChatHistory = () => {
                       </div>
                     </StatCard>
                     
-                    <StatCard primary>
+                    {/* <StatCard primary>
                       <div className="stat-icon" style={{ background: 'rgba(10, 102, 194, 0.1)' }}>
                         <FaIndianRupeeSign color="#000080" />
                       </div>
@@ -781,7 +781,7 @@ const ExpertChatHistory = () => {
                         <span className="stat-value">₹{(chatSummary.expertEarn || 0).toFixed(0)}</span>
                         <span className="stat-label">Earnings</span>
                       </div>
-                    </StatCard>
+                    </StatCard> */}
                   </>
                 ) : (
                   <>
@@ -815,7 +815,7 @@ const ExpertChatHistory = () => {
                       </div>
                     </StatCard>
                     
-                    <StatCard primary>
+                    {/* <StatCard primary>
                       <div className="stat-icon" style={{ background: 'rgba(10, 102, 194, 0.1)' }}>
                         <FaIndianRupeeSign color="#000080" />
                       </div>
@@ -823,7 +823,7 @@ const ExpertChatHistory = () => {
                         <span className="stat-value">₹{(callSummary.netEarnings || 0).toFixed(0)}</span>
                         <span className="stat-label">Earned</span>
                       </div>
-                    </StatCard>
+                    </StatCard> */}
                   </>
                 )}
               </StatsContainer>
@@ -981,7 +981,7 @@ const ExpertChatHistory = () => {
                         <div className="user-info">
                           <div className="user-name-section">
                             <h4>{c.username}</h4>
-                            <EarningsBadge>₹{totalEarnings.toFixed(0)}</EarningsBadge>
+                            {/* <EarningsBadge>₹{totalEarnings.toFixed(0)}</EarningsBadge> */}
                           </div>
                           
                           <div className="user-stats">
@@ -991,11 +991,11 @@ const ExpertChatHistory = () => {
                             <span className="meta-item">
                               <FiClock /> {formatTime(c.total_minutes)}
                             </span>
-                            {windowWidth >= 640 && (
+                            {/* {windowWidth >= 640 && (
                               <span className="meta-item">
                                 ₹{avgEarning.toFixed(0)} avg
                               </span>
-                            )}
+                            )} */}
                           </div>
                         </div>
                         
@@ -1054,14 +1054,14 @@ const ExpertChatHistory = () => {
                                   </div>
                                 </div>
                                 
-                                <div className="session-earnings">
+                                {/* <div className="session-earnings">
                                   {windowWidth >= 480 && <div className="amount-label">Earned</div>}
                                   <div className="amount">₹{earnings}</div>
-                                </div>
+                                </div> */}
                                 
-                                <ActionButton premium onClick={() => openSession(s)}>
-                                  <FiEye />
-                                  {windowWidth >= 480 ? 'View' : ''}
+                               <ActionButton premium onClick={() => openSession(s)}>
+                                   <FiEye />
+                                   {windowWidth >= 480 ? 'View' : ''}
                                 </ActionButton>
                               </SessionCard>
                             );
@@ -1113,7 +1113,7 @@ const ExpertChatHistory = () => {
                         <div className="user-info">
                           <div className="user-name-section">
                             <h4>{g.username}</h4>
-                            <EarningsBadge>₹{g.total_earnings}</EarningsBadge>
+                            {/* <EarningsBadge>₹{g.total_earnings}</EarningsBadge> */}
                           </div>
                           
                           <div className="user-stats">
@@ -1174,7 +1174,7 @@ const ExpertChatHistory = () => {
                             const config = STATUS_CONFIG[call.status === 'ended' ? 'completed' : call.status] || STATUS_CONFIG.missed;
                             const StatusIcon = config.icon;
                             const earnings = calculateEarnings(
-                              call.duration, 
+                              call.duration_minutes, 
                               call.price_per_minute || callPrice || 16
                             );
 
@@ -1192,7 +1192,7 @@ const ExpertChatHistory = () => {
                                     </div>
                                     <div className="duration">
                                       <FiClock />
-                                      {formatDuration(call.duration)}
+                                      {formatDuration(call.duration_minutes)}
                                     </div>
                                   </div>
                                   
@@ -1217,15 +1217,15 @@ const ExpertChatHistory = () => {
                                   </div>
                                 </div>
                                 
-                                <div className="session-earnings">
+                                {/* <div className="session-earnings">
                                   {windowWidth >= 480 && <div className="amount-label">Earned</div>}
                                   <div className="amount">₹{earnings}</div>
                                 </div>
-                                
-                                <ActionButton premium onClick={() => {}}>
+                                 */}
+                                {/* <ActionButton premium onClick={() => {}}>
                                   <FiEye />
                                   {windowWidth >= 480 ? 'Details' : ''}
-                                </ActionButton>
+                                </ActionButton> */}
                               </SessionCard>
                             );
                           })}

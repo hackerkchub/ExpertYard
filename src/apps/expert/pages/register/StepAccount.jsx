@@ -170,27 +170,32 @@ export default function Auth() {
       localStorage.setItem("last_panel", "expert");
 
       updateExpertData({
-        expertId: res.expert.id,
-        name: res.expert.name,
-        email: res.expert.email,
-        phone: res.expert.phone,
-        categoryId: res.expert.category_id || null,
-        subCategoryIds: res.expert.subcategory_id ? [res.expert.subcategory_id] : [],
-        profileId: res.expert.profile_id || null
-      });
+  expertId: res.expert.id,
+  name: res.expert.name,
+  email: res.expert.email,
+  phone: res.expert.phone,
+  isSubscribed: res.expert.is_subscribed, // ✅ IMPORTANT
+  categoryId: res.expert.category_id || null,
+  subCategoryIds: res.expert.subcategory_id ? [res.expert.subcategory_id] : [],
+  profileId: res.expert.profile_id || null,
+});
 
       const expert = res.expert;
 
       // ✅ Step Based Navigation
-      if (!expert.category_id) {
-        navigate("/expert/register/category");
-      } else if (!expert.subcategory_id) {
-        navigate("/expert/register/subcategory");
-      } else if (!expert.profile_id) {
-        navigate("/expert/register/profile");
-      } else {
-        navigate("/expert/home", { replace: true });
-      }
+     if (!expert.is_subscribed) {
+  navigate("/expert/register/subscription");
+} else if (!expert.category_id) {
+  navigate("/expert/register/category");
+} else if (!expert.subcategory_id) {
+  navigate("/expert/register/subcategory");
+} else if (!expert.profile_id) {
+  navigate("/expert/register/profile");
+} else if (!expert.price_id) {   // ✅ ADD THIS
+  navigate("/expert/register/pricing");
+} else {
+  navigate("/expert/home");
+}
 
     } catch (err) {
       showMessage(`❌ ${err.message || "Login failed. Try again."}`, true);
@@ -280,7 +285,7 @@ export default function Auth() {
         phone: registerForm.phone
       });
 
-      navigate("/expert/register/category");
+      navigate("/expert/register/subscription");
 
     } catch (err) {
       showMessage(`❌ Registration failed: ${err.message || "Try again."}`, true);
@@ -637,7 +642,7 @@ export default function Auth() {
               </PrimaryButton>
             ) : (
               <PrimaryButton disabled={!isRegisterValid || submitting || loading} onClick={handleRegister}>
-                {submitting || loading ? "Please wait..." : "Continue to Category →"}
+                {submitting || loading ? "Please wait..." : "Continue →"}
               </PrimaryButton>
             )}
           </ActionsRow>

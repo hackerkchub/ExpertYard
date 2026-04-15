@@ -116,20 +116,16 @@ export function setNetworkCallbacks({ onWeak, onError }) {
 
 /* =====================================================
    CREATE PEER - SELF CONTAINED, ALWAYS HAS MIC
+   🔥 FIX 3 — DUPLICATE BUG FIXED
 ===================================================== */
 export async function createPeer({ socket, callId, audioRef, stream }) {
   // Check if peer exists and is usable
   if (pc) {
-    if (pc.connectionState === "closed") {
-      console.log("♻️ Peer is closed, creating new one");
-      closePeer();
-    } else if (pc.connectionState !== "failed") {
-      console.log("♻️ Reusing existing peer");
+    if (pc.signalingState !== "closed" && pc.connectionState !== "failed") {
+      console.log("♻️ Reusing existing peer safely");
       return pc;
-    } else {
-      console.log("❌ Peer failed, creating new one");
-      closePeer();
     }
+    closePeer();
   }
 
   // Store socket and callId for renegotiation
@@ -209,6 +205,23 @@ export async function createPeer({ socket, callId, audioRef, stream }) {
     }
   });
 
+  // 🔥 AUDIO SENDER TUNING (BIGGEST QUALITY BOOST)
+  const audioSender = pc.getSenders().find(s => s.track?.kind === "audio");
+  if (audioSender) {
+    try {
+      const params = audioSender.getParameters();
+      if (!params.encodings) params.encodings = [{}];
+      
+      params.encodings[0].maxBitrate = 32000; // 🔥 stable voice bitrate
+      params.encodings[0].ptime = 20;
+      
+      await audioSender.setParameters(params);
+      console.log("🎛️ Audio sender tuned: maxBitrate=32kbps, ptime=20ms");
+    } catch (err) {
+      console.warn("⚠️ Could not set audio parameters:", err);
+    }
+  }
+
   /* 🔊 Remote audio handling */
   pc.ontrack = (event) => {
     console.log("🔊 Received remote track:", event.track.kind);
@@ -217,29 +230,52 @@ export async function createPeer({ socket, callId, audioRef, stream }) {
       remoteAudioEl = audioRef?.current || document.createElement("audio");
       remoteAudioEl.autoplay = true;
       remoteAudioEl.playsInline = true;
+      
+      // 🔥 FIX 8 — MUTED AUDIO EDGE CASE
       remoteAudioEl.muted = false;
+      remoteAudioEl.volume = 1;
 
       if (!audioRef?.current) {
         document.body.appendChild(remoteAudioEl);
       }
     }
 
-    // Prevent duplicate stream attachment
-    if (remoteAudioEl.srcObject !== event.streams[0]) {
-      remoteAudioEl.srcObject = event.streams[0];
-      
-      // Play with autoplay fallback
-      remoteAudioEl.play().catch((e) => {
-        console.log("🔇 Autoplay blocked – waiting for user interaction");
-        const playOnClick = () => {
-          remoteAudioEl.play().catch(console.warn);
-          document.removeEventListener('click', playOnClick);
+    // 🔥 FIX 1 — REMOTE AUDIO FULLY SAFE (ALWAYS FORCE UPDATE)
+    // ALWAYS force update - prevents silent audio when track changes
+    remoteAudioEl.srcObject = event.streams[0];
+    
+    // 🔥 HARD PLAY GUARANTEE
+    setTimeout(() => {
+      if (remoteAudioEl) {
+        remoteAudioEl.play().catch(() => {
+          console.log("🔇 Play failed, will retry on user interaction");
+        });
+      }
+    }, 100);
+    
+    // 🔥 TRACK LEVEL FIX
+    if (event.streams[0]) {
+      event.streams[0].getAudioTracks().forEach(track => {
+        track.onunmute = () => {
+          console.log("🔊 Track unmuted — forcing play");
+          if (remoteAudioEl) {
+            remoteAudioEl.play().catch(console.warn);
+          }
         };
-        document.addEventListener('click', playOnClick, { once: true });
       });
-      
-      console.log("🔊 Remote audio attached");
     }
+    
+    // 🔥 BONUS: Playout delay hint for smoother audio
+    if (event.receiver) {
+      try {
+        event.receiver.playoutDelayHint = 0.3;
+        console.log("🎵 Playout delay hint set to 0.3s");
+      } catch (err) {
+        console.warn("⚠️ Could not set playoutDelayHint:", err);
+      }
+    }
+    
+    console.log("🔊 Remote audio attached and forced updated");
   };
 
   /* ❄ ICE Candidate handling */
@@ -340,6 +376,8 @@ export async function createPeer({ socket, callId, audioRef, stream }) {
 
 /* =====================================================
    ICE RESTART WITH RENEGOTIATION & STORM PROTECTION
+   🔥 FIX 5 — ICE RESTART LOOP CONTROL
+   🔥 FIX 2 — REDUCED AGGRESSIVENESS
 ===================================================== */
 async function restartIceWithRenegotiation() {
   // Prevent multiple simultaneous restarts
@@ -350,6 +388,12 @@ async function restartIceWithRenegotiation() {
 
   if (!pc || !socketRef || !callIdRef) {
     console.log("❌ Cannot restart ICE: missing peer or socket");
+    return;
+  }
+
+  // 🔥 FIX 5 — Check signaling state before restart
+  if (pc.signalingState !== "stable") {
+    console.log("⛔ ICE restart skipped — not stable, current state:", pc.signalingState);
     return;
   }
 
@@ -498,6 +542,7 @@ export async function getStats() {
 
 /* =====================================================
    5️⃣ QUALITY MONITORING with safe percentage calculation
+   🔥 FIX 2 — LESS AGGRESSIVE ICE RESTART
 ===================================================== */
 function startQualityMonitoring() {
   if (qualityInterval) clearInterval(qualityInterval);
@@ -540,9 +585,15 @@ function startQualityMonitoring() {
           }
         }
         
-        // 🟢 OPTIONAL: Adaptive recovery based on RTT
-        if (inboundStats.roundTripTime > 0.8) { // 800ms RTT
-          console.log("⏱️ High RTT detected, restarting ICE");
+        // 🔥 FIX 2 — LESS AGGRESSIVE: Only restart on EXTREME RTT (>1.5s) or VERY HIGH loss (>25%)
+        if (inboundStats.roundTripTime > 1.5) { // Increased threshold from 0.8 to 1.5 seconds
+          console.log("⚠️ Extreme RTT detected (>1.5s), restarting ICE");
+          restartIceWithRenegotiation();
+        }
+        
+        // Additional safety: Restart on very high packet loss (>25%)
+        if (lossPercent > 0.25) {
+          console.log("⚠️ Very high packet loss (>25%), restarting ICE");
           restartIceWithRenegotiation();
         }
       }

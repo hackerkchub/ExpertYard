@@ -8,6 +8,7 @@ import { FaWallet } from "react-icons/fa";
 import { useAuth } from "../../../../shared/context/UserAuthContext"; 
 import { useWallet } from "../../../../shared/context/WalletContext"; 
 import * as S from "./ServiceDetails.style";
+import Swal from "sweetalert2";
 
 const ServiceDetail = () => {
   const { id } = useParams(); 
@@ -109,7 +110,17 @@ const ServiceDetail = () => {
 
         if (bookRes.data.success) {
           if (fetchWalletHistory) fetchWalletHistory(); 
-          await Swal.fire({ title: "Booking Successful!", icon: "success", confirmButtonColor: "#0a66c2" });
+
+          
+          await Swal.fire({
+            title: "Booking Successful!",
+            text: "Payment processed via Guidexa Wallet.",
+            icon: "success",
+            confirmButtonColor: "#0a66c2",
+          });
+
+//           await Swal.fire({ title: "Booking Successful!", icon: "success", confirmButtonColor: "#0a66c2" });
+
           navigate(`/user/my-booking/${user.id}`);
         }
       }

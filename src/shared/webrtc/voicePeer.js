@@ -21,6 +21,8 @@ let qualityInterval = null;
 
 // 🛡️ Protection flags
 let isRestartingIce = false; // Prevent renegotiation storm
+// 🔥 GLOBAL LOCK (top of file me add karo)
+let isGettingMic = false;
 
 // 1️⃣ & 2️⃣ Listener attachment guards
 let networkListenerAttached = false;
@@ -36,9 +38,9 @@ let onNetworkErrorCallback = null;
 const RTC_CONFIG = {
   iceServers: [
     // STUN servers (public)
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" },
-    { urls: "stun:stun2.l.google.com:19302" },
+     { urls: "stun:stun.l.google.com:19302" },
+    // { urls: "stun:stun1.l.google.com:19302" },
+    // { urls: "stun:stun2.l.google.com:19302" },
     
     // TURN servers (enterprise grade - REPLACE WITH YOUR CREDENTIALS)
     {
@@ -90,14 +92,31 @@ function setupNetworkListener() {
 ===================================================== */
 function setupVisibilityListener() {
   if (visibilityListenerAttached) return;
-  
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && pc && pc.connectionState !== "connected") {
-      console.log("👁️ Tab became visible, reconnecting...");
-      restartIceWithRenegotiation();
+ document.addEventListener("visibilitychange", async () => {
+  if (document.visibilityState === "visible" && pc && pc.connectionState !== "connected") {
+    
+    const track = localStream?.getAudioTracks()[0];
+
+    if (!track || track.readyState === "ended") {
+      console.log("🔄 Recovering mic after tab switch");
+
+      try {
+        const newStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const sender = pc?.getSenders().find(s => s.track?.kind === "audio");
+
+        if (sender && newStream.getAudioTracks()[0]) {
+          await sender.replaceTrack(newStream.getAudioTracks()[0]);
+          localStream = newStream;
+        }
+
+        restartIceWithRenegotiation();
+      } catch (err) {
+        console.error("❌ Visibility mic recovery failed:", err);
+      }
     }
-  });
-  
+  }
+});
+
   visibilityListenerAttached = true;
   console.log("👁️ Visibility change listener attached");
 }
@@ -154,41 +173,52 @@ export async function createPeer({ socket, callId, audioRef, stream }) {
     console.log(`🎤 Audio settings: ${settings?.sampleRate || 'unknown'}Hz, ${settings?.channelCount || 'unknown'} channels`);
 
     // 4️⃣ Track ended auto recovery (PROPER FIX)
-    localStream.getAudioTracks().forEach(track => {
-      track.onended = async () => {
-        console.log("🎤 Track ended – reacquiring microphone");
-        
-        try {
-          // Get new mic stream
-          const newStream = await navigator.mediaDevices.getUserMedia({ 
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true,
-              channelCount: { ideal: 1 },
-              sampleRate: { ideal: 16000 },
-            } 
-          });
-          
-          // Find and replace the audio track
-          const sender = pc?.getSenders().find(s => s.track?.kind === "audio");
-          if (sender && newStream.getAudioTracks()[0]) {
-            await sender.replaceTrack(newStream.getAudioTracks()[0]);
-            console.log("🎤 Track replaced successfully");
-            
-            // Update localStream reference
-            localStream = newStream;
-            
-            // Restart ICE to re-establish
-            restartIceWithRenegotiation();
-          }
-        } catch (err) {
-          console.error("❌ Failed to reacquire microphone:", err);
-          if (onNetworkErrorCallback) onNetworkErrorCallback();
-        }
-      };
-    });
+   localStream.getAudioTracks().forEach(track => {
+  track.onended = async () => {
+    console.log("🎤 Track ended – reacquiring microphone");
 
+    // 🔒 prevent multiple calls
+    if (isGettingMic) return;
+    isGettingMic = true;
+
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: { ideal: 1 },
+          sampleRate: { ideal: 16000 },
+        }
+      });
+
+      const newTrack = newStream.getAudioTracks()[0];
+
+      // 🔥 CRITICAL — rebind listener
+      newTrack.onended = track.onended;
+
+      const sender = pc?.getSenders().find(s => s.track?.kind === "audio");
+
+      if (sender && newTrack) {
+        await sender.replaceTrack(newTrack);
+        console.log("🎤 Track replaced successfully");
+
+        localStream = newStream;
+
+        // ⏱️ delay ICE restart (VERY IMPORTANT)
+        setTimeout(() => {
+          restartIceWithRenegotiation();
+        }, 800);
+      }
+
+    } catch (err) {
+      console.error("❌ Failed to reacquire microphone:", err);
+      if (onNetworkErrorCallback) onNetworkErrorCallback();
+    } finally {
+      isGettingMic = false;
+    }
+  };
+});
   } catch (err) {
     console.error("❌ WebRTC: Failed to get microphone:", err);
     throw new Error("Microphone access denied");

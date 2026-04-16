@@ -20,11 +20,10 @@ import {
   MobileNavItem,
   MobileNavIcon,
   MobileSectionTitle,
-  PopoverContainer,        // ✅ NEW
   ProfileDropdownContainer 
-} from "../styles/Topbar.styles"; // ✅ REMOVED SearchSuggestions
+} from "../styles/Topbar.styles";
 
-import { FiBell, FiMessageSquare, FiMenu, FiPlus, FiHome, FiFileText, FiCalendar, FiBarChart2, FiSettings, FiX } from "react-icons/fi";
+import { FiBell, FiMessageSquare, FiMenu, FiPlus, FiHome, FiFileText, FiCalendar, FiBarChart2, FiSettings, FiX, FiClock, FiDollarSign, FiLogOut, FiUser } from "react-icons/fi";
 import Logo from "../../../assets/logo.webp";
 import NotificationPopover from "./NotificationPopover";
 import ProfileDropdown from "./ProfileDropdown";
@@ -144,14 +143,23 @@ useEffect(() => {
   // SEARCH STATES (KEEP FOR FUTURE)
   const [searchTerm, setSearchTerm] = useState("");
 
-  // MOBILE NAV ITEMS
+  // COMPLETE MOBILE NAV ITEMS (Same as Sidebar)
   const mobileNavItems = [
-    { icon: FiHome, label: "Dashboard", path: "/expert" },
+    { icon: FiHome, label: "Dashboard", path: "/expert", exact: true },
     { icon: FiFileText, label: "My Content", path: "/expert/my-content" },
+    { icon: FiMessageSquare, label: "Chat History", path: "/expert/chat-history" },
     { icon: FiBarChart2, label: "Earnings", path: "/expert/earnings" },
+    { icon: FiBell, label: "My Service", path: "/expert/myservices" },
+    { icon: FiClock, label: "Guidexa Plan", path: "/expert/guidexa-plan" },
   ];
 
-  const isActivePath = (path) => location.pathname === path;
+  const isActivePath = (path) => {
+    if (path === "/expert") {
+      return location.pathname === "/expert";
+    }
+    return location.pathname.startsWith(path);
+  };
+
 const hasUnreadChat = notifications.some(
   n => n.type === "chat_request" && n.unread && !FINAL_STATES.includes(n.status)
 );
@@ -174,8 +182,8 @@ const hasRingingCall = notifications.some(
           </IconBtn>
 
           <Brand onClick={() => navigate("/expert")}>
-            <img src={Logo} alt="ExpertYard" />
-            ExpertYard
+            <img src={Logo} alt="Guidexa" />
+            Guidexa
           </Brand>
 
           {/* DESKTOP SEARCH - SIMPLIFIED */}
@@ -212,8 +220,6 @@ const hasRingingCall = notifications.some(
   }}
   removeById={removeById}
 />
-
-
 )}
 
           </div>
@@ -250,13 +256,14 @@ const hasRingingCall = notifications.some(
         />
       )}
 
-      {/* MOBILE MENU */}
+      {/* MOBILE MENU - Enhanced with complete sidebar navigation */}
       <MobileMenu open={mobileMenuOpen}>
         <MobileMenuHeader>
-          <MobileMenuTitle>ExpertYard</MobileMenuTitle>
-          <MobileMenuSubtitle>Manage your account</MobileMenuSubtitle>
+          <MobileMenuTitle>Expert Panel</MobileMenuTitle>
+          <MobileMenuSubtitle>{user.name}</MobileMenuSubtitle>
         </MobileMenuHeader>
 
+        {/* Main Navigation */}
         <MobileNavList>
           {mobileNavItems.map(({ icon: Icon, label, path }) => (
             <MobileNavItem
@@ -275,31 +282,31 @@ const hasRingingCall = notifications.some(
           ))}
         </MobileNavList>
 
-        <MobileSectionTitle>Quick Actions</MobileSectionTitle>
+        <MobileSectionTitle>Account</MobileSectionTitle>
         
         <MobileNavList style={{ paddingBottom: '24px' }}>
           <MobileNavItem
             onClick={() => {
-              navigate("/expert/chat-history");
+              navigate("/expert/profile");
               setMobileMenuOpen(false);
             }}
           >
             <MobileNavIcon>
-              <FiMessageSquare />
+              <FiUser />
             </MobileNavIcon>
-            Messages
+            Profile
           </MobileNavItem>
           
           <MobileNavItem
             onClick={() => {
-              navigate("/expert/my-content?mode=create");
+              handleLogout();
               setMobileMenuOpen(false);
             }}
           >
             <MobileNavIcon>
-              <FiPlus />
+              <FiLogOut />
             </MobileNavIcon>
-            Create Content
+            Logout
           </MobileNavItem>
         </MobileNavList>
       </MobileMenu>

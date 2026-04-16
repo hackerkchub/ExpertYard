@@ -31,13 +31,14 @@ export const LeftBlock = styled.div`
 
 /* BRAND */
 export const Brand = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 700;
-  font-size: 20px;
-  color: #0f172a;
-  cursor: pointer;
+  font-size: 24px;
+  font-weight: 800;
+  background:#000080;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+  span { color: #3b82f6; -webkit-text-fill-color: #3b82f6; }
+  @media (max-width: 480px) { font-size: 20px; }
 
   img {
     width: 34px;

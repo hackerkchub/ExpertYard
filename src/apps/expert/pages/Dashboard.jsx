@@ -58,7 +58,7 @@ export default function Dashboard() {
 
         <ContentInner>
           <Welcome>
-            {profileLoading ? "Loading..." : `Welcome, ${expertName}`}
+            {profileLoading ? "Loading..." : `Welcome on Guidexa, ${expertName}`}
           </Welcome>
 
           {/* 🔔 1. Default State: Jab user ne choose nahi kiya (Pehli baar load par) */}

@@ -153,7 +153,7 @@ const Footer = () => {
         </BottomLinks> */}
         
         <Copyright>
-          © {new Date().getFullYear()} ExpertYard.com. All rights reserved. ExpertYard is a registered trademark.
+          © {new Date().getFullYear()} Guidexa.com. All rights reserved. Guidexa is a registered trademark.
         </Copyright>
       </Container>
     </Wrapper>

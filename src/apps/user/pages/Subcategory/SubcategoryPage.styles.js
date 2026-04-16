@@ -141,7 +141,8 @@ export const ExpertsGrid = styled.div`
   width: 100%;
 
   @media (min-width: 768px) {
-    grid-template-columns: repeat(2, 1fr); /* Tablets/Small Desktop: 2 columns */
+    grid-template-columns: 1fr; /* Tablets/Small Desktop: 2 columns */
+    gap: 2px;
   }
 
   @media (min-width: 1300px) {
@@ -156,7 +157,7 @@ export const ExpertCardPremium = styled.div`
   padding: 16px;
   display: flex; 
   flex-direction: column; 
-  gap: 12px;
+  gap: 2px;
   width: 100%;
   box-sizing: border-box;
   overflow: hidden; 
@@ -164,6 +165,13 @@ export const ExpertCardPremium = styled.div`
   transition: transform 0.2s ease;
   &:hover {
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  
+   @media (max-width: 768px) {
+    flex-direction: column;              
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
   }
 `;
 
@@ -173,6 +181,10 @@ export const ExpertHeader = styled.div`
   align-items: center; 
   gap: 14px; 
   width: 100%;
+
+   @media (max-width: 768px) {
+    flex: 1; 
+  }
 `;
 
 export const ExpertAvatar = styled.img` 
@@ -182,6 +194,11 @@ export const ExpertAvatar = styled.img`
   object-fit: cover; 
   border: 2px solid ${colors.primaryLight}; 
   flex-shrink: 0; 
+
+   @media (max-width: 768px) {
+    width: 55px;
+    height: 55px;
+  }
 `;
 
 export const ExpertInfo = styled.div` 
@@ -215,8 +232,14 @@ export const ExpertTitle = styled.p`
 export const ExpertStats = styled.div` 
   display: flex; 
   justify-content: space-between; /* Better spacing in grid cards */
+   flex-wrap: wrap; 
   padding: 12px 0; 
   border-top: 1px solid #eef0f2; 
+
+   @media (max-width: 768px) {
+      font-size: 12px;
+       gap: 10px;
+  }
 `;
 
 export const StatItem = styled.div` 
@@ -224,6 +247,10 @@ export const StatItem = styled.div`
   align-items: center; 
   gap: 4px; 
   font-size: 13px; 
+
+   @media (max-width: 768px) {
+    font-size: 12px;
+  }
 `;
 
 export const StatValue = styled.span` 
@@ -234,21 +261,26 @@ export const StatValue = styled.span`
 export const ExpertPricing = styled.div` 
   display: grid; 
   grid-template-columns: 1fr 1fr; 
-  gap: 8px; 
-  padding: 6px 0;
   width: 100%;
+
+   @media (max-width: 768px) {
+     grid-template-columns: 1fr 1fr;
+  }
 `;
 
 export const PriceTag = styled.div` 
   background: #f9fafb; 
   border: 1px solid #eef0f2; 
-  padding: 8px; 
   border-radius: 10px; 
   display: flex; 
   flex-direction: column; /* Stacked icons for tighter grids */
   align-items: center; 
   justify-content: center;
   text-align: center;
+
+    @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
 export const ActionButtons = styled.div` 
@@ -257,9 +289,10 @@ export const ActionButtons = styled.div`
   gap: 8px; 
   margin-top: auto; 
   width: 100%;
+  margin-top:5px;
 
-  @media (min-width: 1400px) {
-    grid-template-columns: 1fr 1fr; /* Side by side only on very large screens */
+   @media (max-width: 768px) {
+     grid-template-columns: 1fr 1fr;   
   }
 `;
 
@@ -276,6 +309,12 @@ export const StartChatButton = styled.button`
   align-items: center; 
   justify-content: center; 
   gap: 8px; 
+
+ @media (max-width: 768px) {
+    padding: 8px;
+    font-size: 13px;
+  }
+  
 `;
 
 export const ViewProfileButton = styled.button` 
@@ -287,6 +326,9 @@ export const ViewProfileButton = styled.button`
   font-weight: 700; 
   font-size: 14px; 
   cursor: pointer; 
+
+   @media (max-width: 768px) {
+    font-size: 13px;
 `;
 
 // --- Rest of the exports kept to prevent errors ---
@@ -320,14 +362,14 @@ export const SkeletonCard = styled.div` height: 160px; background: white; border
 export const SkeletonAvatar = styled.div``; export const SkeletonLine = styled.div``; export const SkeletonButton = styled.div``;
 export const HoroscopeSection = styled.section` margin: 24px 0; background: white; padding: 24px; border-radius: 12px; border: 1px solid ${colors.border}; width: 100%; box-sizing: border-box; `;
 export const HoroscopeTitle = styled.h2` font-size: 20px; font-weight: 800; margin-bottom: 18px; color: ${colors.textMain}; `;
-export const HoroscopeGrid = styled.div` display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; `;
+export const HoroscopeGrid = styled.div` display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 2px; `;
 export const HoroscopeCard = styled.div` border: 1px solid #eef0f2; padding: 14px; border-radius: 12px; text-align: center; background: #fafbfc; `;
 export const HoroscopeSign = styled.div` h4 { font-size: 15px; font-weight: 700; margin: 0; color: ${colors.primary}; } span { font-size: 11px; color: ${colors.textSecondary}; font-weight: 600; } `;
 export const ReadButton = styled.button` margin-top: 10px; background: ${colors.primary}; color: white; border: none; padding: 6px 14px; border-radius: 18px; font-size: 12px; font-weight: 700; cursor: pointer; `;
 export const ExpertRating = styled.div` display: flex; align-items: center; gap: 8px; margin-top: 5px; `;
 export const RatingStars = styled.div` color: ${colors.star}; display: flex; font-size: 13px; `;
 export const RatingValue = styled.span` font-size: 13px; color: ${colors.textSecondary}; font-weight: 700; `;
-export const PremiumBadge = styled.div` background: #fff9e6; border: 1px solid #ffeeba; padding: 14px; border-radius: 12px; display: flex; gap: 12px; width: 100%; box-sizing: border-box; `;
+export const PremiumBadge = styled.div` background: #fff9e6; border: 1px solid #ffeeba; padding: 14px; border-radius: 12px; display: flex; gap: 2px; width: 100%; box-sizing: border-box; `;
 export const BadgeIcon = styled.div` color: ${colors.star}; font-size: 20px; `;
 export const BadgeText = styled.div` font-size: 13px; color: #594300; line-height: 1.5; font-weight: 600; `;
 export const MobileFilterToggle = styled.div` display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; width: 100%; @media (min-width: 992px) { display: none; } `;
@@ -414,6 +456,10 @@ export const PricingModesBadge = styled.div`
   gap: 8px;
   margin-bottom: 12px;
   flex-wrap: wrap;
+
+   @media (max-width: 768px) {
+    display: none;   
+  }
 `;
 
 export const PricingModeBadge = styled.span`
@@ -503,7 +549,7 @@ export const PricingInfo = styled.div`
 // export const CtaDescription = styled.p` font-size: 13px; opacity: 0.95; margin-bottom: 18px; font-weight: 500; line-height: 1.5; `;
 // export const PrimaryButton = styled.button` background: white; color: ${colors.primary}; border: none; padding: 12px 24px; border-radius: 24px; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; margin: 0 auto; `;
 // export const SecondaryButton = styled.button` background: ${colors.primaryLight}; color: ${colors.primary}; border: none; padding: 12px 24px; border-radius: 24px; font-weight: 700; font-size: 14px; `;
-export const FilterChipsContainer = styled.div` display: flex; gap: 12px; overflow-x: auto; padding: 8px 4px 16px; scroll-behavior: smooth; position: relative; width: 100%; box-sizing: border-box; &::-webkit-scrollbar { display: none; } animation: ${scrollHintLoop} 2s ease-in-out; `;
+export const FilterChipsContainer = styled.div` display: flex; gap: 2px; overflow-x: auto; padding: 8px 4px 16px; scroll-behavior: smooth; position: relative; width: 100%; box-sizing: border-box; &::-webkit-scrollbar { display: none; } animation: ${scrollHintLoop} 2s ease-in-out; `;
 export const FilterChip = styled.button` white-space: nowrap; padding: 10px 18px; border-radius: 24px; font-size: 15px; font-weight: 600; border: 1px solid ${props => props.$isActive ? colors.primary : colors.border}; background: ${props => props.$isActive ? colors.primary : colors.white}; color: ${props => props.$isActive ? colors.white : colors.textMain}; flex-shrink: 0; `;
 export const Breadcrumb = styled.div` display: flex; align-items: center; gap: 8px; font-size: 14px; padding: 12px 16px; color: ${colors.textSecondary}; flex-wrap: wrap; `;
 export const BreadcrumbItem = styled.span` cursor: pointer; color: ${props => props.$active ? colors.textMain : colors.primary}; font-weight: ${props => props.$active ? '700' : '600'}; `;
@@ -517,4 +563,3 @@ export const StatLabel = styled.span` color: ${colors.textSecondary}; font-size:
 export const PriceIcon = styled.div` color: ${colors.primary}; display: flex; font-size: 15px; `;
 export const PriceAmount = styled.span` font-weight: 800; font-size: 15px; color: ${colors.textMain}; `;
 export const PriceUnit = styled.span` font-size: 12px; color: ${colors.textSecondary}; font-weight: 600; `;
-

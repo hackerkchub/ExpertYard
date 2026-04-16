@@ -36,7 +36,43 @@ getCategoriesApi().catch(() => {});
 //   return null;
 // }
 
-// ... (Service Worker logic same rahega)
+if ("serviceWorker" in navigator) {
+
+  window.addEventListener("load", async () => {
+
+    try {
+
+      let registration = await navigator.serviceWorker.getRegistration();
+
+      if (!registration) {
+
+        registration = await navigator.serviceWorker.register(
+          "/firebase-messaging-sw.js",
+          { scope: "/" }
+        );
+
+        console.log("✅ Firebase SW registered:", registration.scope);
+
+      } else {
+
+        console.log("🔥 Service Worker already registered:", registration.scope);
+
+      }
+
+      // IMPORTANT
+      await navigator.serviceWorker.ready;
+
+      console.log("🚀 Service Worker ready for push");
+
+    } catch (err) {
+
+      console.error("❌ Firebase SW registration failed:", err);
+
+    }
+
+  });
+
+}
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <ThemeProvider theme={theme}>

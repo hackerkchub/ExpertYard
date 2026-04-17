@@ -1,7 +1,7 @@
 // src/apps/user/pages/chat-history/UserChatHistory.jsx
 // 🎨 PREMIUM POLISHED VERSION - Blue Theme with Chat & Call Tabs
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   FiMessageSquare,
   FiClock,
@@ -276,6 +276,8 @@ export const UserChatHistory = () => {
   // Expert pricing and plans data
   const [expertPricing, setExpertPricing] = useState({});
   const [expertPlans, setExpertPlans] = useState({});
+
+  const location = useLocation();
 
   const expertById = useMemo(() => {
     const map = {};

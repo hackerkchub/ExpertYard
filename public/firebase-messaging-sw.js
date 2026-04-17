@@ -154,30 +154,29 @@ self.addEventListener("fetch", (event) => {
   }
 
   // 👉 API caching for softmaxs.com domain (only pure API calls, not images)
-  if (
-    url.hostname.includes("softmaxs.com") && 
-    event.request.destination === ""
-  ) {
-    event.respondWith(
-      caches.match(event.request).then((cached) => {
-        const networkFetch = fetch(event.request)
-          .then((res) => {
-            // Allow opaque responses as well
-            if (res && (res.status === 200 || res.type === "opaque")) {
-              const clone = res.clone();
-              caches.open(API_CACHE).then((cache) => {
-                cache.put(event.request, clone);
-              });
-            }
-            return res;
-          })
-          .catch(() => cached);
-
-        return cached || networkFetch;
+ if (
+  url.hostname.includes("softmaxs.com") && 
+  event.request.destination === ""
+) {
+  event.respondWith(
+    fetch(event.request)
+      .then((res) => {
+        // cache updated response
+        if (res && (res.status === 200 || res.type === "opaque")) {
+          const clone = res.clone();
+          caches.open(API_CACHE).then((cache) => {
+            cache.put(event.request, clone);
+          });
+        }
+        return res;
       })
-    );
-    return;
-  }
+      .catch(() => {
+        // fallback to cache only if network fails
+        return caches.match(event.request);
+      })
+  );
+  return;
+}
 
   // 👉 Static files caching (HTML, CSS, JS, fonts, etc.)
   event.respondWith(

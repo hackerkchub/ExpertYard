@@ -83,6 +83,7 @@ export default function ExpertVoiceCall() {
 
   const audioRef = useRef(null);
   const timerRef = useRef(null);
+  // const hasRemoteOfferRef = useRef(false);
 
   const [caller, setCaller] = useState({
     name: "Incoming Caller",
@@ -284,22 +285,34 @@ export default function ExpertVoiceCall() {
       if (callIdRef.current && callStateRef.current === "connected") {
         setTimeout(async () => {
           console.log("♻ Recreating peer after reconnect");
+if (!streamRef.current || streamRef.current.getAudioTracks()[0]?.readyState !== "live") {
+  console.log("🎤 Re-acquiring mic after reconnect");
 
+  try {
+  streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+} catch (err) {
+  console.error("❌ Mic failed after reconnect", err);
+  return; // stop further execution
+}
+}
           const pc = await createPeer({
             socket,
             callId: callIdRef.current,
             audioRef,
             stream: streamRef.current
           });
+
           pcRef.current = pc;
 
-          if (pc?.signalingState === "have-remote-offer") {
-            const answer = await createAnswer();
-            socket.emit("webrtc:answer", {
-              callId: callIdRef.current,
-              answer
-            });
-          }
+          // hasRemoteOfferRef.current = false;
+
+          // if (pc?.remoteDescription && pc.signalingState === "have-remote-offer") { 
+          //   const answer = await createAnswer();
+          //   socket.emit("webrtc:answer", {
+          //     callId: callIdRef.current,
+          //     answer
+          //   });
+          // }
         }, 400);
       }
     };
@@ -336,51 +349,51 @@ export default function ExpertVoiceCall() {
     if (!normalizedCallId) return;
 
     const onOffer = async ({ callId: incomingId, offer }) => {
-      if (Number(incomingId) !== callIdRef.current) return;
-      if (callStateRef.current === "ended") return;
-      
-      setReconnecting(false);
+  if (Number(incomingId) !== callIdRef.current) return;
+  if (callStateRef.current === "ended") return;
+  if (makingAnswerRef.current) return;
 
-      if (makingAnswerRef.current) {
-        console.log("🛡 Answer already in progress");
-        return;
-      }
+  if (!streamRef.current) {
+    streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+  }
 
-      if (!streamRef.current) {
-        console.log("🎤 Getting mic before answer...");
-        streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
-      }
-      
-      makingAnswerRef.current = true;
+  makingAnswerRef.current = true;
 
-      try {
-        console.log("📡 Expert: Received WebRTC offer");
+  try {
+    const pc = await createPeer({
+      socket,
+      callId: callIdRef.current,
+      audioRef,
+      stream: streamRef.current
+    });
 
-        const pc = await createPeer({ 
-          socket, 
-          callId: callIdRef.current, 
-          audioRef,
-          stream: streamRef.current
-        });
-        pcRef.current = pc;
+    pcRef.current = pc;
+    if (pc.signalingState !== "stable") {
+  console.log("⛔ Skipping offer — not stable:", pc.signalingState);
+  return;
+}
 
-        await setRemote(offer);
 
-        const answer = await createAnswer();
+    // 🔥 RESET for new negotiation
+    // hasRemoteOfferRef.current = false;
 
-        socket.emit("webrtc:answer", { 
-          callId: callIdRef.current, 
-          answer 
-        });
+    await setRemote(offer);
 
-        console.log("✅ Expert: Answer sent");
-      } catch (err) {
-        console.error("❌ Answer failed", err);
-      } finally {
-        makingAnswerRef.current = false;
-      }
-    };
+    // hasRemoteOfferRef.current = true;
 
+    const answer = await createAnswer();
+
+    socket.emit("webrtc:answer", {
+      callId: callIdRef.current,
+      answer
+    });
+
+  } catch (err) {
+    console.error("❌ Answer failed", err);
+  } finally {
+    makingAnswerRef.current = false;
+  }
+};
     const onIce = ({ callId: iceId, candidate }) => {
       if (Number(iceId) !== callIdRef.current) return;
       addIce(candidate);

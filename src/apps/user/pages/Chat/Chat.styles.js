@@ -5,7 +5,7 @@ export const ChatGlobalStyle = createGlobalStyle`
     height: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden; 
+    overflow: hidden;
     background-color: #f4f2ee;
   }
 
@@ -29,11 +29,12 @@ export const PageWrap = styled.div`
   display: flex;
   flex-direction: column;
   /* dvh keyboard khulne par height ko automatically kam kar deta hai */
-  height: 100vh;
-  height: 100dvh; 
+  height: 100%;
+  /* height: 100dvh; */
   width: 100%;
   background: #f4f2ee;
   position: fixed;
+  inset: 0; /* top, right, bottom, left ko ek saath set karne ke liye */
   top: 0; /* Page ke ekdum top se start hoga */
   left: 0;
   z-index: 9999; /* Isse navbar iske niche chup jayega */
@@ -134,6 +135,7 @@ export const MessagesArea = styled.div`
   padding: 12px;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   background: #f4f2ee;
   -webkit-overflow-scrolling: touch;
 `;
@@ -175,12 +177,18 @@ export const MessageTime = styled.div`
 export const InputBar = styled.div`
   background: white;
   border-top: 1px solid rgba(0,0,0,0.1);
-  padding: 8px 12px;
+
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-shrink: 0; 
-  padding-bottom: max(8px, env(safe-area-inset-bottom));
+
+  padding: 8px 12px;
+
+  /* 👇 KEY FIX */
+  position: sticky;
+  bottom: 0;
+
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
 `;
 
 export const InputBox = styled.input`

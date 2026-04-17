@@ -67,17 +67,24 @@ export default function ExpertTopbar() {
 } = useExpertNotifications();
 
   // LOGOUT
- const handleLogout = () => {
- disconnectSocket();
+const handleLogout = async () => {
+  try {
+    // 🔌 socket disconnect (UI level)
+    disconnectSocket();
 
-localStorage.removeItem("expert_token");
-localStorage.setItem("last_panel", "expert");
+    // ✅ optional UI memory
+    localStorage.setItem("last_panel", "expert");
 
-logoutExpert();
+    // 🔥 MAIN LOGIC → context handle karega
+    await logoutExpert();
 
-navigate("/expert/register", { replace: true });
+    // ✅ redirect
+    navigate("/expert/register", { replace: true });
+
+  } catch (err) {
+    console.error("Logout error:", err);
+  }
 };
-
   // CHAT REDIRECT
   useEffect(() => {
     const onChatStarted = ({ room_id }) => {

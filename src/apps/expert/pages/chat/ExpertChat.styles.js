@@ -7,38 +7,34 @@ const fadeIn = keyframes`
 `;
 
 export const PageWrap = styled.div`
+  position: fixed;   /* 👈 IMPORTANT */
+  top: 0;
+  left: 0;
+  width: 100vw;      /* 👈 use vw instead of % */
+  height: 100vh;
+
   display: flex;
   flex-direction: column;
-  position: relative;
-  /* Desktop settings */
-  top: 60px; 
-  bottom: 0;
-  left: 260px; 
-  width: calc(100% - 260px); 
+
   background: #f4f5f7;
   overflow: hidden;
-  height: calc(100vh - 60px);
 
   @media (max-width: 768px) {
-    top: 0;
-    left: 0; 
-    width: 100%; 
-    height: 100dvh; 
-    position: fixed;
-    bottom: 0;
+    height: 100dvh;
     background: #fff;
   }
 `;
 
 export const ChatLayout = styled.div`
-  height: 100%;
+  flex: 1;
   width: 100%; 
-  display: grid;
+  height: 100%;
+  display: flex;
   grid-template-columns: 320px 1fr;
   background: #ffffff;
   border-top: 1px solid #e1e4e8;
   overflow: hidden;
-
+  
   @media (max-width: 960px) {
     grid-template-columns: 280px 1fr;
   }

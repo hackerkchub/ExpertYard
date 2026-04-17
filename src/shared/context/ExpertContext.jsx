@@ -1,5 +1,3 @@
-// src/shared/context/ExpertContext.jsx (FINAL PRODUCTION READY)
-
 import {
   createContext,
   useContext,
@@ -14,13 +12,36 @@ import {
   getExpertsProfileListApi,
 } from "../api/expertapi/profile.api";
 
-import { getMyPriceApi } from "../api/expertapi/price.api"; // ✅ FIX: Correct import
+import { getMyPriceApi } from "../api/expertapi/price.api";
 
 const ExpertContext = createContext(null);
 export const useExpert = () => useContext(ExpertContext);
 
 const STORAGE_KEY = "expert_session";
+const TOKEN_KEY = "expert_token";
 const DEFAULT_AVATAR = "https://i.pravatar.cc/40?img=12";
+
+/* ================= CACHE CLEAR (SAME AS AUTH) ================= */
+
+const clearApiCache = async () => {
+  if ("caches" in window) {
+    try {
+      const names = await caches.keys();
+      await Promise.all(
+        names.map((name) => {
+          if (name.includes("api-cache")) {
+            console.log(`🗑️ Clearing cache: ${name}`);
+            return caches.delete(name);
+          }
+          return Promise.resolve();
+        })
+      );
+      console.log("✅ API cache cleared successfully");
+    } catch (err) {
+      console.error("❌ Cache clear error:", err);
+    }
+  }
+};
 
 /* ================= DEFAULT STATES ================= */
 
@@ -36,7 +57,7 @@ const DEFAULT_STATE = {
   position: "",
   profile_photo: "",
   is_subscribed: 0,
-  priceId: null, // ✅ NEW
+  priceId: null,
 };
 
 const DEFAULT_PRICE = {
@@ -47,52 +68,16 @@ const DEFAULT_PRICE = {
   reason_for_price: "",
   handle_customer: "",
   strength: "",
-  weakness: ""
+  weakness: "",
 };
 
 /* ================= PROVIDER ================= */
 
 export const ExpertProvider = ({ children }) => {
   const BASE_URL = import.meta.env?.VITE_API_BASE_URL || "";
+
   const isInitialized = useRef(false);
-
-  /* ================= PUBLIC EXPERT LIST ================= */
-
-  const [experts, setExperts] = useState([]);
-  const [expertsLoading, setExpertsLoading] = useState(false);
-
-  useEffect(() => {
-    const loadExperts = async () => {
-      try {
-        setExpertsLoading(true);
-
-        const res = await getExpertsProfileListApi();
-        const raw = Array.isArray(res?.data) ? res.data : [];
-        const mapped = raw.map((p) => ({
-          id: p.expert_id,
-          profileId: p.id,
-          name: p.name || p.expert_name || "Expert",
-          position: p.position || "",
-          profile_photo: p.profile_photo || DEFAULT_AVATAR,
-          category_id: p.category_id,
-          subcategory_id: p.subcategory_id,
-          chat_per_minute: Number(p.chat_per_minute) || null,
-          call_per_minute: Number(p.call_per_minute) || null,
-        }));
-
-        setExperts(mapped);
-      } catch (err) {
-        console.error("Experts load failed", err);
-        setExperts([]);
-      } finally {
-        setExpertsLoading(false);
-      }
-    };
-
-    loadExperts();
-  }, []);
-
-  /* ================= LOGGED IN EXPERT ================= */
+  const isLoggingOut = useRef(false); // ✅ PREVENT double logout
 
   const [expertData, setExpertData] = useState(() => {
     try {
@@ -110,202 +95,314 @@ export const ExpertProvider = ({ children }) => {
   const [profileLoading, setProfileLoading] = useState(false);
   const [priceLoading, setPriceLoading] = useState(false);
 
-  /* ================= UPDATE EXPERT SESSION (OPTIMIZED) ================= */
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [prevExpertId, setPrevExpertId] = useState(null);
 
- const updateExpertData = useCallback((data) => {
-  setExpertData((prev) => {
-    const newState = { ...prev, ...data };
+  /* ================= PUBLIC EXPERT LIST ================= */
 
-    if (JSON.stringify(prev) !== JSON.stringify(newState)) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
+  const [experts, setExperts] = useState([]);
+  const [expertsLoading, setExpertsLoading] = useState(false);
+
+  useEffect(() => {
+    const loadExperts = async () => {
+      try {
+        setExpertsLoading(true);
+
+        const res = await getExpertsProfileListApi();
+        const raw = Array.isArray(res?.data) ? res.data : [];
+
+        const mapped = raw.map((p) => ({
+          id: p.expert_id,
+          profileId: p.id,
+          name: p.name || "Expert",
+          position: p.position || "",
+          profile_photo: p.profile_photo || DEFAULT_AVATAR,
+        }));
+
+        setExperts(mapped);
+      } catch (err) {
+        console.error("❌ Failed to load experts:", err);
+        setExperts([]);
+      } finally {
+        setExpertsLoading(false);
+      }
+    };
+
+    loadExperts();
+  }, []);
+
+  /* ================= UPDATE ================= */
+
+  const updateExpertData = useCallback((data) => {
+    setExpertData((prev) => {
+      const newState = { ...prev, ...data };
+
+      // ✅ PERFORMANCE: Only compare critical fields instead of deep compare
+      const hasChanged = prev.expertId !== newState.expertId ||
+                        prev.name !== newState.name ||
+                        prev.profile_photo !== newState.profile_photo ||
+                        prev.priceId !== newState.priceId;
+
+      if (hasChanged) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
+      }
+
+      return newState;
+    });
+  }, []);
+
+  /* ================= LOGOUT ================= */
+
+  const logoutExpert = useCallback(async () => {
+    // ✅ PREVENT double logout
+    if (isLoggingOut.current) {
+      console.log("⚠️ Logout already in progress, skipping...");
+      return;
     }
+    
+    isLoggingOut.current = true;
 
-    return newState;
-  });
-}, []);
-  /* ================= FETCH PROFILE (UPDATED WITH SAFETY) ================= */
+    try {
+      console.log("🚪 Logging out expert...");
+      
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(TOKEN_KEY);
+
+      await clearApiCache();
+
+      setExpertData(DEFAULT_STATE);
+      setExpertPrice(DEFAULT_PRICE);
+      setExperts([]); // ✅ Clear expert list to avoid stale data
+
+      isInitialized.current = false;
+      setPrevExpertId(null);
+
+      setRefreshKey((prev) => prev + 1); // 🔥 NO RELOAD
+      
+      console.log("✅ Expert logged out successfully");
+    } finally {
+      // ✅ Safer: Always reset flag, even if error occurs
+      isLoggingOut.current = false;
+    }
+  }, []);
+
+  /* ================= FETCH PROFILE ================= */
 
   const fetchProfile = useCallback(
     async (expertId) => {
       if (!expertId) return;
 
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        console.warn("❌ No token, skipping profile API");
+        return;
+      }
+
       try {
         setProfileLoading(true);
 
         const res = await getExpertProfileApi(expertId);
-        
-       const profileData = res?.data?.data;
+        const profileData = res?.data?.data;
 
-        // ✅ SAFETY FIX: Check if profile data exists and has ID
-        if (!profileData || !profileData.id) {
-          console.warn("Invalid profile data received");
-          return;
-        }
+        if (!profileData?.id) return;
 
-        let photoUrl = DEFAULT_AVATAR;
-
-        if (profileData.profile_photo) {
-          photoUrl = profileData.profile_photo.startsWith("http")
+        const photoUrl = profileData.profile_photo
+          ? profileData.profile_photo.startsWith("http")
             ? profileData.profile_photo
-            : `${BASE_URL}${profileData.profile_photo}`;
-        }
+            : `${BASE_URL}${profileData.profile_photo}`
+          : DEFAULT_AVATAR;
 
         updateExpertData({
-          expertId: profileData.expert_id || expertId,
+          expertId: profileData.expert_id,
           profileId: profileData.id,
           profile: profileData,
-          name: profileData.name || "",
-          email: profileData.email || "",
-          phone: profileData.phone || "",
-          position: profileData.position || "",
+          name: profileData.name,
           profile_photo: photoUrl,
-          is_subscribed: profileData.is_subscribed || 0,
         });
-
-        // ✅ Load price data from profile if available
-        if (
-          profileData.call_per_minute !== undefined ||
-          profileData.chat_per_minute !== undefined
-        ) {
-          setExpertPrice((prev) => ({
-            ...prev,
-            call_per_minute: Number(profileData.call_per_minute) || 0,
-            chat_per_minute: Number(profileData.chat_per_minute) || 0,
-            reason_for_price: profileData.reason_for_price || prev.reason_for_price,
-            handle_customer: profileData.handle_customer || prev.handle_customer,
-            strength: profileData.strength || prev.strength,
-            weakness: profileData.weakness || prev.weakness,
-          }));
-        }
       } catch (err) {
-        console.error("Profile load failed", err);
+        console.error("❌ Profile fetch error:", err);
+        
+        // ✅ Auto logout on 401
+        if (err.response?.status === 401) {
+          console.log("🚨 Token expired → logging out expert");
+          await logoutExpert();
+        }
       } finally {
         setProfileLoading(false);
       }
     },
-    [BASE_URL, updateExpertData]
+    [BASE_URL, updateExpertData, logoutExpert]
   );
 
-  /* ================= FETCH PRICE (CRITICAL FIX) ================= */
+  /* ================= FETCH PRICE ================= */
 
- const fetchPrice = useCallback(async () => {
-  try {
-    setPriceLoading(true);
+  const fetchPrice = useCallback(async () => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    
+    if (!token) {
+      console.warn("❌ No token, skipping price API");
+      return;
+    }
 
-    const res = await getMyPriceApi();
-
-    // ✅ HANDLE BOTH CASES
-    const priceData = res?.data?.data || res?.data || res;
-
-    console.log("API RAW:", res);
-    console.log("PARSED PRICE:", priceData);
-
-   if (!priceData || !priceData.pricing_modes) {
-  updateExpertData({ priceId: null });
-  return;
-}
-
-updateExpertData({ priceId: 1 }); // ✅ means pricing exists
-
-    setExpertPrice({
-      pricing_modes: priceData.pricing_modes || [],
-      call: priceData.call?.per_minute || 0,
-      chat: priceData.chat?.per_minute || 0,
-      session: priceData.session || null,
-      reason_for_price: priceData.reason_for_price || "",
-      handle_customer: priceData.handle_customer || "",
-      strength: priceData.strength || "",
-      weakness: priceData.weakness || ""
-    });
-
-  } catch (err) {
-    console.error("Price load failed", err);
-  } finally {
-    setPriceLoading(false);
-  }
-}, []);
-
-  /* ================= AUTO LOAD AFTER LOGIN (OPTIMIZED) ================= */
-
- useEffect(() => {
-  if (!expertData.expertId) {
-    isInitialized.current = false; // 🔥 reset when no expert
-    return;
-  }
-
-  if (isInitialized.current) return;
-
-  isInitialized.current = true;
-
-  const loadAllData = async () => {
     try {
-      await Promise.all([
-        fetchProfile(expertData.expertId),
-        fetchPrice()
-      ]);
+      setPriceLoading(true);
+
+      const res = await getMyPriceApi();
+      const priceData = res?.data?.data || res?.data || res;
+
+      if (!priceData?.pricing_modes) {
+        updateExpertData({ priceId: null });
+        setExpertPrice(DEFAULT_PRICE);
+        return;
+      }
+
+      updateExpertData({ priceId: 1 });
+
+      setExpertPrice({
+        pricing_modes: priceData.pricing_modes || [],
+        call: priceData.call?.per_minute || 0,
+        chat: priceData.chat?.per_minute || 0,
+        session: priceData.session || null,
+        reason_for_price: priceData.reason_for_price || "",
+        handle_customer: priceData.handle_customer || "",
+        strength: priceData.strength || "",
+        weakness: priceData.weakness || "",
+      });
     } catch (err) {
-      console.error("Failed to load expert data", err);
+      console.error("❌ Price fetch error:", err);
+      
+      // ✅ Auto logout on 401
+      if (err.response?.status === 401) {
+        console.log("🚨 Token expired → logging out expert");
+        await logoutExpert();
+        return;
+      }
+      
+      // Don't throw, just set default
+      setExpertPrice(DEFAULT_PRICE);
+    } finally {
+      setPriceLoading(false);
     }
-  };
+  }, [updateExpertData, logoutExpert]);
 
-  loadAllData();
-}, [expertData.expertId, fetchProfile, fetchPrice]);
+  /* ================= AUTO LOAD ================= */
 
-  /* ================= REFRESH FUNCTIONS ================= */
-
-  const refreshProfile = useCallback(() => {
-    if (expertData.expertId) fetchProfile(expertData.expertId);
-  }, [expertData.expertId, fetchProfile]);
-
-  const refreshPrice = useCallback(() => {
-    fetchPrice();
-  }, [fetchPrice]);
-
-  const refreshAll = useCallback(() => {
-    if (expertData.expertId) {
-      Promise.all([
-        fetchProfile(expertData.expertId),
-        fetchPrice()
-      ]);
+  useEffect(() => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    
+    // ✅ IMPROVED: Check both expertId AND token
+    if (!expertData.expertId || !token) {
+      isInitialized.current = false;
+      return;
     }
+
+    if (isInitialized.current) return;
+    isInitialized.current = true;
+
+    // ✅ FINAL FIX: Sequential calls with logout check
+    (async () => {
+      await fetchProfile(expertData.expertId);
+
+      // ✅ Stop if logout happened during profile fetch
+      if (!localStorage.getItem(TOKEN_KEY)) return;
+
+      await fetchPrice();
+    })().catch(err => {
+      console.error("❌ Auto load failed:", err);
+    });
   }, [expertData.expertId, fetchProfile, fetchPrice]);
 
-  /* ================= LOGOUT ================= */
+  /* ================= EXPERT SWITCH DETECTION ================= */
 
-  const logoutExpert = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem("expert_token");
+  // ✅ FIXED: Removed prevExpertId from dependencies
+  useEffect(() => {
+    const currentId = expertData?.expertId;
+
+    if (!currentId) return;
+
+    if (prevExpertId && prevExpertId !== currentId) {
+      console.log(`⚠️ Expert switched from ${prevExpertId} to ${currentId}`);
+      
+      (async () => {
+        await clearApiCache();
+        isInitialized.current = false; // 🔥 Reset initialization flag
+        setRefreshKey((prev) => prev + 1); // 🔥 NO RELOAD
+      })();
+    }
+
+    setPrevExpertId(currentId);
+  }, [expertData.expertId]); // ✅ Only depends on expertData.expertId
+
+  /* ================= SYNC ACROSS TABS ================= */
+
+  useEffect(() => {
+    const sync = () => {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      const parsed = saved ? JSON.parse(saved) : DEFAULT_STATE;
+
+      const oldId = expertData.expertId;
+      const newId = parsed.expertId;
+
+      setExpertData(parsed);
+
+      // If expert changed in another tab, trigger refresh
+      if (oldId && newId && oldId !== newId) {
+        console.log("⚠️ Expert changed in another tab - triggering refresh");
+        isInitialized.current = false; // 🔥 Reset initialization flag
+        setRefreshKey((prev) => prev + 1);
+      }
+    };
+
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
+  }, [expertData.expertId]);
+
+  /* ================= REFRESH EXPERT DATA ================= */
+  
+  const refreshExpertData = useCallback(async () => {
+    const token = localStorage.getItem(TOKEN_KEY);
     
-    setExpertData(DEFAULT_STATE);
-    setExpertPrice(DEFAULT_PRICE);
-    isInitialized.current = false; // Reset initialization flag
-  }, []);
+    if (!expertData.expertId || !token) {
+      console.warn("⚠️ Cannot refresh: No expert ID or token");
+      return;
+    }
+    
+    console.log("🔄 Refreshing expert data...");
+    isInitialized.current = false; // 🔥 Reset to allow re-initialization
+    
+    // ✅ FINAL FIX: Sequential calls with logout check
+    await fetchProfile(expertData.expertId);
 
-  /* ================= PROVIDER VALUE ================= */
+    // ✅ Stop if logout happened during profile fetch
+    if (!localStorage.getItem(TOKEN_KEY)) return;
+
+    await fetchPrice();
+    
+    isInitialized.current = true;
+    setRefreshKey((prev) => prev + 1);
+  }, [expertData.expertId, fetchProfile, fetchPrice]);
+
+  /* ================= VALUE ================= */
 
   return (
     <ExpertContext.Provider
       value={{
-        // Public experts list
         experts,
         expertsLoading,
 
-        // Expert data
         expertData,
         expertPrice,
 
-        // Loading states
         profileLoading,
         priceLoading,
 
-        // Actions
+        refreshKey, // 🔥 SAME AS AUTH
+
         fetchProfile,
         fetchPrice,
         updateExpertData,
-        refreshProfile,
-        refreshPrice,
-        refreshAll,
         logoutExpert,
+        refreshExpertData,
       }}
     >
       {children}

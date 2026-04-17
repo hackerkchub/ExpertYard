@@ -104,7 +104,7 @@ const ProfilePopup = ({ popupOpen, popupPos, user, onClose, onLogout }) => {
                 {profile?.full_name || "User"}
               </div>
 
-              <div
+              {/* <div
                 style={{
                   fontSize: 12,
                   color: "#64748b",
@@ -112,7 +112,7 @@ const ProfilePopup = ({ popupOpen, popupPos, user, onClose, onLogout }) => {
                 }}
               >
                 ID: #{user?.id || "--"}
-              </div>
+              </div> */}
             </div>
           </div>
 

@@ -57,6 +57,7 @@ export default function VoiceCall() {
   const userId = user?.id;
   const socket = useSocket(userId, "user");
   const audioRef = useRef(null);
+  const hasRemoteSetRef = useRef(false);
   const location = useLocation();
 
   const validModes = ["per_minute", "session", "subscription"];
@@ -168,6 +169,7 @@ export default function VoiceCall() {
   // WebRTC Offer Handler
   const handleWebRTCOffer = useCallback(
     async (currentCallId) => {
+       hasRemoteSetRef.current = false;
       if (!currentCallId || makingOfferRef.current) return;
 
       console.log("📡 Creating WebRTC offer for call:", currentCallId);
@@ -280,7 +282,13 @@ export default function VoiceCall() {
       if (answerCallId !== callIdRef.current) return;
 
       try {
-        await setRemote(answer);
+        if (hasRemoteSetRef.current) {
+  console.log("⛔ Duplicate answer ignored");
+  return;
+}
+
+await setRemote(answer);
+hasRemoteSetRef.current = true;
         console.log("✅ Remote description set");
       } catch (err) {
         console.error("❌ Failed to set remote:", err);

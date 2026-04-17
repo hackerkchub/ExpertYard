@@ -29,7 +29,7 @@ const BottomNavbar = () => {
     { name: 'Home', path: '/user', icon: <LayoutDashboard size={22} /> },
     { name: 'History', path: '/user/chat-history', icon: <History size={22} /> },
     { name: 'Categories', path: '/user/categories', icon: <Grid2X2 size={22} /> },
-    { name: 'Offers', path: '/user/my-offers', icon: <Tag size={22} /> },
+    { name: 'Offers', path: '/user/all-services', icon: <Tag size={22} /> },
   ];
 
   const expertMenu = [

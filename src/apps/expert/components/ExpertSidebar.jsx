@@ -61,33 +61,26 @@ export default function ExpertSidebar() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
- const handleLogout = () => {
+ const handleLogout = async () => {
   try {
-
+    // 🔌 socket disconnect
     if (socket?.connected) {
       socket.disconnect();
     }
 
-    // ❌ DO NOT CLEAR ALL
-    // localStorage.clear();
-
-    // ✅ remove only token
-    localStorage.removeItem("expert_token");
-
-    // ✅ keep panel memory
+    // ✅ optional UI memory (allowed)
     localStorage.setItem("last_panel", "expert");
 
-    sessionStorage.clear();
+    // 🔥 MAIN LOGIC → context handle karega
+    await logoutExpert();
 
-    logoutExpert();
-
+    // ✅ redirect
     navigate("/expert/register", { replace: true });
 
   } catch (err) {
     console.error("Logout error:", err);
   }
 };
- 
   const menuItems = [
     { path: "/expert", icon: FiHome, label: "Dashboard", exact: true },
     { path: "/expert/my-content", icon: FiFileText, label: "My Content" },

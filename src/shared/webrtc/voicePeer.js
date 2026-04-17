@@ -488,16 +488,29 @@ export async function setRemote(description) {
       ? description
       : new RTCSessionDescription(description);
 
-  await pc.setRemoteDescription(rtcDesc);
-  console.log("📥 Remote description set");
+  // 🔥 CRITICAL GUARD
+ if (
+  pc.signalingState !== "have-local-offer" &&
+  pc.signalingState !== "stable"
+) {
+  console.warn("⛔ Skipping setRemote — wrong state:", pc.signalingState);
+  return;
+}
 
-  // Flush pending ICE candidates
+  try {
+    await pc.setRemoteDescription(rtcDesc);
+    console.log("📥 Remote description set");
+  } catch (err) {
+    console.error("❌ setRemote failed:", err);
+    return;
+  }
+
+  // ICE flush
   for (const candidate of pendingIce) {
     try {
       await pc.addIceCandidate(candidate);
-      console.log("🧊 Pending ICE candidate added");
     } catch (err) {
-      console.warn("⚠️ Failed to add pending ICE:", err);
+      console.warn("⚠️ ICE flush error:", err);
     }
   }
   pendingIce = [];

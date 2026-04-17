@@ -9,6 +9,7 @@ import {
   FiMenu, FiX, FiHome, FiGift, FiUser,
   FiLogOut, FiMessageSquare, FiArrowLeft
 } from "react-icons/fi";
+import { Tag } from "lucide-react";
 
 import { FaWallet } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -112,7 +113,7 @@ const Navbar = () => {
               </button>
 
               <button onClick={() => navigate("/user/all-services")} title="Offers">
-                <FiGift />
+                <Tag />
               </button>
 
               <button onClick={() => navigate("/user/chat-history")} title="Messages">
@@ -163,7 +164,7 @@ const Navbar = () => {
             </MobileItem>
 
             <MobileItem onClick={() => handleNav("/user/all-services")}>
-              <FiGift /> Offers
+              <Tag /> Offers
             </MobileItem>
 
             <MobileItem onClick={() => handleNav("/user/chat-history")}>

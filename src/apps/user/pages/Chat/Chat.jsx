@@ -140,7 +140,13 @@ const Chat = () => {
       reason: "time_up"
     });
 
-    navigate("/user/chat-history", { replace: true });
+    navigate("/user/chat-history", {
+  replace: true,
+  state: {
+    from: "chat",
+    expertId: chatData?.expert_id
+  }
+});
   }, [room_id, navigate, isUnlimited]);
 
   // ✅ Manual End Chat (UPDATED)
@@ -157,34 +163,45 @@ const Chat = () => {
     });
 
     setSessionActive(false);
-    navigate("/user/chat-history", { replace: true });
+    navigate("/user/chat-history", {
+  replace: true,
+  state: {
+    from: "chat",
+    expertId: chatData?.expert_id
+  }
+});
 
   }, [room_id, navigate]);
 
   useEffect(() => {
-    if (!sessionActive) return;
+  if (!sessionActive) return;
 
-    const blockBack = () => {
-      const ok = window.confirm("Are you sure you want to leave and end this chat?");
+  const handlePopState = () => {
+    const ok = window.confirm("Are you sure you want to leave and end this chat?");
+    
+    if (ok) {
+      socket.emit("end_chat", { room_id, reason: "user_left" });
+      socket.disconnect();
 
-      if (ok) {
-        socket.emit("end_chat", { room_id, reason: "user_left" });
-        socket.disconnect();
-        navigate("/user/chat-history", { replace: true });
-      } else {
-        window.history.pushState(null, "", window.location.pathname);
-      }
-    };
+      navigate("/user/chat-history", {
+        replace: true,
+        state: {
+          from: "chat",
+          expertId: chatData?.expert_id
+        }
+      });
+    } else {
+      // ❗ IMPORTANT: forward navigation instead of push
+      window.history.go(1);
+    }
+  };
 
-    // push dummy state once
-    window.history.pushState(null, "", window.location.pathname);
+  window.addEventListener("popstate", handlePopState);
 
-    window.addEventListener("popstate", blockBack);
-
-    return () => {
-      window.removeEventListener("popstate", blockBack);
-    };
-  }, [sessionActive, room_id, navigate]);
+  return () => {
+    window.removeEventListener("popstate", handlePopState);
+  };
+}, [sessionActive, room_id, navigate, chatData?.expert_id]);
 
   // ✅ STEP 2: use chat timer hook - only when endTime exists (limited plans)
   const { formatted, secondsLeft, isExpired } = useChatTimer(
@@ -260,7 +277,13 @@ const Chat = () => {
     const handleChatEnded = ({ room_id: endedRoomId }) => {
       if (endedRoomId === room_id) {
         setSessionActive(false);
-        navigate("/user/chat-history", { replace: true });
+        navigate("/user/chat-history", {
+  replace: true,
+  state: {
+    from: "chat",
+    expertId: chatData?.expert_id
+  }
+});
       }
     };
 

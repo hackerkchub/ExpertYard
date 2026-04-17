@@ -43,6 +43,19 @@ const Navbar = () => {
     setOpen(false);
   };
 
+  const handleSmartBack = () => {
+  const state = location.state;
+
+  // 🎯 Case 1: Chat → History → Back → Expert Profile
+  if (state?.from === "chat" && state?.expertId) {
+    navigate(`/user/experts/${state.expertId}`, { replace: true });
+    return;
+  }
+
+  // 🎯 Default behavior
+  navigate(-1);
+};
+
   // ✅ Close popup on resize
   useEffect(() => {
     const close = () => setPopupOpen(false);
@@ -83,11 +96,11 @@ const Navbar = () => {
           <BrandBox
             to={isHomePage ? "/" : "#"}
             onClick={(e) => {
-              if (!isHomePage) {
-                e.preventDefault();
-                navigate(-1);
-              }
-            }}
+  if (!isHomePage) {
+    e.preventDefault();
+    handleSmartBack();
+  }
+}}
           >
             {!isHomePage && (
               <div style={{ display: "flex", alignItems: "center" }}>

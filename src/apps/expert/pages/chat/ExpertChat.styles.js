@@ -1,3 +1,4 @@
+// ExpertChat.styles.js
 import styled, { keyframes } from "styled-components";
 
 const fadeIn = keyframes`
@@ -7,24 +8,19 @@ const fadeIn = keyframes`
 
 /* --- 1. Main Page Wrappers --- */
 export const PageWrap = styled.div`
-  /* Screen ko fix karne ke liye */
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  
-  /* Modern Dynamic Viewport Height */
   height: 100vh;
   height: 100dvh; 
   width: 100%;
-  
   display: flex;
   flex-direction: column;
   background: #f4f5f7;
-  overflow: hidden; 
-  /* Prevent system bounce */
-  overscroll-behavior: none; 
+  overflow: hidden;
+  overscroll-behavior: none;
 `;
 
 export const ChatLayout = styled.div`
@@ -34,105 +30,9 @@ export const ChatLayout = styled.div`
   height: 100%;
   background: #ffffff;
   overflow: hidden;
-
-  @media (min-width: 769px) {
-    grid-template-columns: 320px 1fr;
-  }
 `;
 
-/* --- 2. Left Panel (Chat List) --- */
-export const LeftPanel = styled.div`
-  background: #ffffff;
-  border-right: 1px solid #e1e4e8;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-
-  @media (max-width: 768px) {
-    display: ${({ isChatting }) => (isChatting ? "none" : "flex")};
-    width: 100%;
-  }
-`;
-
-export const LeftHeader = styled.div`
-  padding: 16px;
-  border-bottom: 1px solid #e1e4e8;
-  flex-shrink: 0;
-`;
-
-export const LeftTitle = styled.h2`
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: #000;
-`;
-
-export const LeftTabs = styled.div`
-  display: flex;
-  gap: 8px;
-  padding: 12px 0 2px;
-  overflow-x: auto;
-  &::-webkit-scrollbar { display: none; }
-`;
-
-export const LeftTab = styled.button`
-  border: none;
-  cursor: pointer;
-  border-radius: 20px;
-  padding: 6px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-  background: ${({ active }) => (active ? "#000080" : "#ffffff")};
-  color: ${({ active }) => (active ? "#ffffff" : "#666666")};
-  border: 1.5px solid ${({ active }) => (active ? "#000080" : "#8c8c8c")};
-  transition: all 0.2s;
-`;
-
-export const ChatList = styled.div`
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-`;
-
-export const ChatItem = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 14px 16px;
-  cursor: pointer;
-  border-left: 4px solid ${({ active }) => (active ? "#000080" : "transparent")};
-  background: ${({ active }) => (active ? "#f3f6f8" : "#ffffff")};
-  border-bottom: 1px solid #f1f2f4;
-`;
-
-export const StatusDot = styled.span`
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-right: 12px;
-  background: ${({ online }) => (online ? "#057642" : "#919191")};
-  border: 2px solid white;
-  flex-shrink: 0;
-`;
-
-export const UserName = styled.div`
-  font-weight: 600;
-  font-size: 14px;
-  color: #000;
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-export const TimeText = styled.div`
-  font-size: 12px;
-  color: #666;
-  margin-left: 8px;
-`;
-
-/* --- 3. Right Panel (Chat View) --- */
+/* --- 2. Right Panel (Chat View) --- */
 export const RightPanel = styled.div`
   background: #ffffff;
   display: flex;
@@ -147,42 +47,155 @@ export const RightPanel = styled.div`
 
 export const UserHeader = styled.div`
   flex-shrink: 0;
-  padding: 10px 16px;
-  border-bottom: 1px solid #e1e4e8;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e9ecef;
   background: #ffffff;
   z-index: 20;
   display: flex;
   align-items: center;
-  /* Safe Area for Mobile Notch */
-  padding-top: max(10px, env(safe-area-inset-top));
+  gap: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  
+  @media (max-width: 768px) {
+    padding: 10px 16px;
+  }
+`;
+
+export const MobileBackButton = styled.button`
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  color: #000080;
+  transition: all 0.2s;
+  
+  &:hover {
+    background: #f0f0f0;
+  }
+  
+  @media (max-width: 768px) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 `;
 
 export const UserInfo = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  flex: 1;
 `;
 
 export const Avatar = styled.img`
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid #e1e4e8;
+  border: 2px solid #e9ecef;
   flex-shrink: 0;
+  
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+  }
+`;
+
+export const AvatarPlaceholder = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #000080, #1a1a8e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffffff;
+  flex-shrink: 0;
+  border: 2px solid #e9ecef;
+  
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
 `;
 
 export const UserMeta = styled.div`
-  h4 { margin: 0; font-size: 15px; font-weight: 600; color: #000; }
-  span { font-size: 12px; color: #666; }
+  flex: 1;
+  
+  h4 {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a2e;
+    
+    @media (max-width: 768px) {
+      font-size: 15px;
+    }
+  }
+  
+  .user-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 4px;
+    
+    @media (max-width: 480px) {
+      flex-direction: column;
+      gap: 4px;
+    }
+  }
+  
+  .detail-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #6c757d;
+    
+    svg {
+      opacity: 0.7;
+    }
+    
+    &.loading {
+      color: #adb5bd;
+      font-style: italic;
+    }
+  }
+`;
+
+export const TimerDisplay = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8f9fa;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #057642;
+  margin-top: 4px;
+  
+  svg {
+    animation: pulse 1s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
 `;
 
 export const ChatArea = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0; 
-  background: #f0f2f5; /* Background for WhatsApp look */
+  min-height: 0;
+  background: #f8f9fa;
   position: relative;
 `;
 
@@ -190,73 +203,103 @@ export const Messages = styled.div`
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  /* Prevent background bounce on iOS */
-  overscroll-behavior-y: contain; 
-  padding: 16px;
+  overscroll-behavior-y: contain;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
 `;
 
 export const Message = styled.div`
   display: flex;
   width: 100%;
-  justify-content: ${({ expert }) => (expert ? "flex-end" : "flex-start")};
+  justify-content: ${({ $expert }) => ($expert ? "flex-end" : "flex-start")};
   animation: ${fadeIn} 0.2s ease-out;
 `;
 
 export const Bubble = styled.div`
-  max-width: 80%;
+  max-width: 70%;
   padding: 10px 14px;
-  border-radius: ${({ expert }) => (expert ? "12px 12px 2px 12px" : "12px 12px 12px 2px")};
-  font-size: 15px;
-  line-height: 1.4;
-  background: ${({ expert }) => (expert ? "#000080" : "#ffffff")};
-  color: ${({ expert }) => (expert ? "#ffffff" : "#000000")};
-  box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+  border-radius: ${({ $expert }) => ($expert ? "18px 18px 4px 18px" : "18px 18px 18px 4px")};
+  font-size: 14px;
+  line-height: 1.5;
+  background: ${({ $expert }) => ($expert ? "#000080" : "#ffffff")};
+  color: ${({ $expert }) => ($expert ? "#ffffff" : "#1a1a2e")};
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
   word-wrap: break-word;
-
+  
+  @media (max-width: 768px) {
+    max-width: 85%;
+    font-size: 15px;
+    padding: 8px 12px;
+  }
+  
+  .message-text {
+    margin-bottom: 4px;
+  }
+  
   .time {
     font-size: 10px;
-    margin-top: 5px;
+    margin-top: 4px;
     text-align: right;
     opacity: 0.7;
+    display: block;
     color: inherit;
   }
 `;
 
-/* --- 4. Input Area (Locked at bottom) --- */
+/* --- 3. Input Area --- */
 export const ChatInputWrap = styled.div`
   flex-shrink: 0;
   background: #ffffff;
-  padding: 12px 16px;
-  border-top: 1px solid #e1e4e8;
+  padding: 12px 20px;
+  border-top: 1px solid #e9ecef;
   display: flex;
   align-items: flex-end;
-  gap: 10px;
+  gap: 12px;
   z-index: 20;
-  /* Notch/Home-bar support */
   padding-bottom: max(12px, env(safe-area-inset-bottom));
+  
+  @media (max-width: 768px) {
+    padding: 10px 16px;
+    gap: 8px;
+  }
 `;
 
 export const ChatInput = styled.textarea`
   flex: 1;
   padding: 10px 16px;
-  border-radius: 20px;
-  border: 1px solid #dbdbdb;
-  font-size: 16px; /* VERY IMPORTANT: Prevents iOS auto-zoom */
-  background: #fafafa;
+  border-radius: 24px;
+  border: 1.5px solid #e9ecef;
+  font-size: 14px;
+  background: #ffffff;
   resize: none;
   max-height: 120px;
   min-height: 40px;
   outline: none;
   font-family: inherit;
-  color: #000;
+  color: #1a1a2e;
   line-height: 1.4;
-  transition: border-color 0.2s;
-
+  transition: all 0.2s;
+  
+  @media (max-width: 768px) {
+    font-size: 16px;
+    padding: 8px 14px;
+  }
+  
   &:focus {
     border-color: #000080;
+    box-shadow: 0 0 0 3px rgba(0,0,128,0.1);
+  }
+  
+  &:disabled {
+    background: #f8f9fa;
+    color: #adb5bd;
+    cursor: not-allowed;
   }
 `;
 
@@ -264,35 +307,125 @@ export const SendButton = styled.button`
   background: #000080;
   color: #ffffff;
   border: none;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  transition: opacity 0.2s, transform 0.1s;
-
-  &:active { transform: scale(0.95); }
-  &:disabled { background: #cccccc; cursor: not-allowed; }
+  transition: all 0.2s;
+  
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+    
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+  
+  &:hover {
+    background: #000066;
+    transform: scale(1.02);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  &:disabled {
+    background: #ced4da;
+    cursor: not-allowed;
+    transform: none;
+  }
 `;
 
-/* --- 5. Status & Extra Components --- */
-export const LoadingSpinner = styled.div` display: flex; align-items: center; justify-content: center; height: 100%; color: #000080; font-weight: 600; `;
-export const NoChatSelected = styled.div` 
-  display: flex; flex-direction: column; align-items: center; justify-content: center; 
-  height: 100%; color: #666; text-align: center; padding: 20px;
-  h3 { margin: 10px 0 5px; color: #333; }
-  p { margin: 0; font-size: 14px; }
+/* --- 4. Status Components --- */
+export const LoadingSpinner = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #000080;
+  font-weight: 600;
+  font-size: 16px;
 `;
-export const ErrorMessage = styled.div` 
-  display: flex; flex-direction: column; align-items: center; justify-content: center; 
-  height: 100%; color: #d11124; padding: 20px; text-align: center;
-  button { margin-top: 15px; padding: 10px 20px; background: #000080; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
-`;
-export const EmptyChatMessage = styled.div` display: flex; align-items: center; justify-content: center; height: 100%; color: #888; font-size: 14px; `;
 
-/* Empty placeholders to avoid import errors if called in JSX */
+export const NoChatSelected = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #6c757d;
+  text-align: center;
+  padding: 20px;
+  
+  h3 {
+    margin: 16px 0 8px;
+    color: #1a1a2e;
+    font-size: 18px;
+  }
+  
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+  
+  svg {
+    opacity: 0.5;
+  }
+`;
+
+export const ErrorMessage = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #dc3545;
+  padding: 20px;
+  text-align: center;
+  
+  h3 {
+    margin: 16px 0;
+    font-size: 18px;
+  }
+  
+  button {
+    margin-top: 20px;
+    padding: 10px 24px;
+    background: #000080;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    
+    &:hover {
+      background: #000066;
+      transform: translateY(-1px);
+    }
+  }
+`;
+
+export const EmptyChatMessage = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #adb5bd;
+  font-size: 14px;
+  text-align: center;
+  padding: 20px;
+`;
+
+/* Empty placeholders for compatibility */
 export const PopoverContainer = styled.div` display: none; `;
 export const ProfileDropdownContainer = styled.div` display: none; `;
+export const BackButton = styled.button` display: none; `;

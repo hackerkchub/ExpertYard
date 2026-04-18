@@ -1,13 +1,14 @@
-// src/apps/user/pages/chat/Chat.jsx - ✅ FIXED Wallet Balance Check + Auto-Deduct + Unlimited Subscription
+// src/apps/user/pages/chat/Chat.jsx - UPGRADED VERSION
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiPaperclip, FiImage, FiVideo, FiFile, FiX } from "react-icons/fi";
+import { FiPaperclip, FiImage, FiVideo, FiFile, FiX, FiArrowLeft, FiClock, FiUser } from "react-icons/fi";
 import { IoMdSend } from "react-icons/io";
 import {
   PageWrap,
   Header,
   ExpertInfo,
   Avatar,
+  AvatarPlaceholder,
   AvatarWrapper,
   CallButton,
   StatusDot,
@@ -27,13 +28,28 @@ import {
   NoMessages,
   EndChatButton,
   EmptyChatMessage,
+  MobileBackButton,
+  TimerDisplay,
+  UnlimitedBadge,
+  HeaderActions,
 } from "./Chat.styles";
 
 import { socket } from "../../../../shared/api/socket";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { usePublicExpert as useExpert } from "../../context/PublicExpertContext";
-import { useWallet } from "../../../../shared/context/WalletContext"; // ✅ CORRECT WalletContext
-import useChatTimer from "../../../../shared/hooks/useChatTimer"; // ✅ ADD hook
+import { useWallet } from "../../../../shared/context/WalletContext";
+import useChatTimer from "../../../../shared/hooks/useChatTimer";
+
+// Helper function to get initials
+const getInitials = (name) => {
+  if (!name) return "E";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+};
 
 const Chat = () => {
   const { room_id } = useParams();
@@ -45,20 +61,34 @@ const Chat = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sessionActive, setSessionActive] = useState(null);
-
   const [isInitialized, setIsInitialized] = useState(false);
   const [showEndPopup, setShowEndPopup] = useState(false);
-  const [endTime, setEndTime] = useState(null); // ✅ ADD new state
+  const [endTime, setEndTime] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  
   const scrollRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const inputRef = useRef(null);
   
   const { user } = useAuth();
   const { experts, expertData, expertPrice } = useExpert();
-  const { balance: walletBalance } = useWallet(); // ✅ CORRECT Wallet API
+  const { balance: walletBalance } = useWallet();
 
-  // ✅ STEP 1: Detect if subscription is unlimited
+  // Check if mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Detect if subscription is unlimited
   const isUnlimited = useMemo(() => !endTime, [endTime]);
 
-  // ✅ PERFECT fetchChatDetails
+  // Fetch chat details
   const fetchChatDetails = useCallback(async () => {
     if (!room_id) return;
     
@@ -100,13 +130,13 @@ const Chat = () => {
           hour: '2-digit', minute: '2-digit', hour12: true 
         })
       })));
-      // Only set false if really ended
+      
       setSessionActive(Number(session.is_active) === 1);
 
       if (session?.end_time) {
         setEndTime(session.end_time);
       } else {
-        setEndTime(null); // ✅ Unlimited subscription - no end time
+        setEndTime(null);
       }
 
       setError("");
@@ -123,16 +153,14 @@ const Chat = () => {
     }
   }, [room_id]);
 
-  // ✅ Auto End Chat → redirect to history (only for limited plans)
+  // Auto end chat
   const handleAutoEndChat = useCallback(() => {
-    // ✅ Don't auto-end if unlimited
     if (isUnlimited) {
       console.log("♾️ Unlimited subscription - no auto-end");
       return;
     }
     
     console.log("⏰ Timer expired - Auto ending chat");
-
     setSessionActive(false);
 
     socket.emit("end_chat", {
@@ -141,15 +169,15 @@ const Chat = () => {
     });
 
     navigate("/user/chat-history", {
-  replace: true,
-  state: {
-    from: "chat",
-    expertId: chatData?.expert_id
-  }
-});
-  }, [room_id, navigate, isUnlimited]);
+      replace: true,
+      state: {
+        from: "chat",
+        expertId: chatData?.expert_id
+      }
+    });
+  }, [room_id, navigate, isUnlimited, chatData?.expert_id]);
 
-  // ✅ Manual End Chat (UPDATED)
+  // Manual end chat
   const handleEndChat = useCallback(() => {
     if (!room_id) return;
 
@@ -164,25 +192,29 @@ const Chat = () => {
 
     setSessionActive(false);
     navigate("/user/chat-history", {
-  replace: true,
-  state: {
-    from: "chat",
-    expertId: chatData?.expert_id
-  }
-});
+      replace: true,
+      state: {
+        from: "chat",
+        expertId: chatData?.expert_id
+      }
+    });
+  }, [room_id, navigate, chatData?.expert_id]);
 
-  }, [room_id, navigate]);
-
-  useEffect(() => {
-  if (!sessionActive) return;
-
-  const handlePopState = () => {
-    const ok = window.confirm("Are you sure you want to leave and end this chat?");
-    
-    if (ok) {
-      socket.emit("end_chat", { room_id, reason: "user_left" });
-      socket.disconnect();
-
+  // Handle back button
+  const handleBack = () => {
+    if (sessionActive) {
+      const ok = window.confirm("Are you sure you want to leave and end this chat?");
+      if (ok) {
+        socket.emit("end_chat", { room_id, reason: "user_left" });
+        navigate("/user/chat-history", {
+          replace: true,
+          state: {
+            from: "chat",
+            expertId: chatData?.expert_id
+          }
+        });
+      }
+    } else {
       navigate("/user/chat-history", {
         replace: true,
         state: {
@@ -190,44 +222,116 @@ const Chat = () => {
           expertId: chatData?.expert_id
         }
       });
-    } else {
-      // ❗ IMPORTANT: forward navigation instead of push
-      window.history.go(1);
     }
   };
 
-  window.addEventListener("popstate", handlePopState);
+  // Popstate handler
+  useEffect(() => {
+    if (!sessionActive) return;
 
-  return () => {
-    window.removeEventListener("popstate", handlePopState);
-  };
-}, [sessionActive, room_id, navigate, chatData?.expert_id]);
+    const handlePopState = () => {
+      const ok = window.confirm("Are you sure you want to leave and end this chat?");
+      
+      if (ok) {
+        socket.emit("end_chat", { room_id, reason: "user_left" });
+        navigate("/user/chat-history", {
+          replace: true,
+          state: {
+            from: "chat",
+            expertId: chatData?.expert_id
+          }
+        });
+      } else {
+        window.history.go(1);
+      }
+    };
 
-  // ✅ STEP 2: use chat timer hook - only when endTime exists (limited plans)
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [sessionActive, room_id, navigate, chatData?.expert_id]);
+
+  // Before unload handler
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (sessionActive) {
+        e.preventDefault();
+        e.returnValue = "Chat may be disconnected upon reloading!";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [sessionActive]);
+
+  // Use chat timer hook
   const { formatted, secondsLeft, isExpired } = useChatTimer(
-    isUnlimited ? null : endTime, // ✅ Pass null for unlimited plans
+    isUnlimited ? null : endTime,
     handleAutoEndChat
   );
 
-  // ✅ STEP 4: Timer color logic with unlimited support
+  // Timer color logic
   const getTimerColor = useCallback(() => {
     if (isUnlimited) return "#10b981";
     return secondsLeft <= 60 ? "#ef4444" : "#10b981";
   }, [isUnlimited, secondsLeft]);
 
-  // ✅ Close popup and go home
+  // Handle go home
   const handleGoHome = () => {
     setShowEndPopup(false);
     socket.emit("end_chat", { room_id, reason: "user_ended" });
     navigate("/user");
   };
 
-  // ✅ Real-time Socket
+  // Improved keyboard handling
+  useEffect(() => {
+    if (!isMobile) return;
+
+    let viewportHeight = window.visualViewport?.height || window.innerHeight;
+    let originalHeight = window.innerHeight;
+
+    const handleResize = () => {
+      const currentHeight = window.visualViewport?.height || window.innerHeight;
+      const keyboardOpen = currentHeight < originalHeight - 100;
+      
+      setIsKeyboardOpen(keyboardOpen);
+      
+      if (keyboardOpen && messagesContainerRef.current) {
+        setTimeout(() => {
+          scrollRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }, 100);
+      }
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+    }
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize);
+      }
+    };
+  }, [isMobile]);
+
+  // Socket events
   useEffect(() => {
     if (!room_id || !socket) return;
 
+    if (!socket.connected) {
+      socket.connect();
+    }
+
     console.log(`🔌 User joining room: ${room_id}`);
-    socket.emit("join_room", { room_id });
+    socket.emit("join_room", { 
+      room_id,
+      user_id: user?.id 
+    });
 
     const handleNewMessage = (msgData) => {
       if (msgData.room_id !== room_id) return;
@@ -255,6 +359,10 @@ const Chat = () => {
           }),
         }];
       });
+      
+      setTimeout(() => {
+        scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      }, 100);
     };
 
     const handleChatAccepted = (data) => {
@@ -262,7 +370,7 @@ const Chat = () => {
         if (data.endTime) {
           setEndTime(data.endTime);
         } else {
-          setEndTime(null); // ✅ Unlimited subscription
+          setEndTime(null);
         }
         setSessionActive(true); 
       }
@@ -277,31 +385,28 @@ const Chat = () => {
     const handleChatEnded = ({ room_id: endedRoomId }) => {
       if (endedRoomId === room_id) {
         setSessionActive(false);
-        navigate("/user/chat-history", {
-  replace: true,
-  state: {
-    from: "chat",
-    expertId: chatData?.expert_id
-  }
-});
+        setShowEndPopup(true);
       }
     };
 
     socket.on("message", handleNewMessage);
-    socket.on("chat_accepted", handleChatAccepted); // ✅ ADD listener
+    socket.on("chat_accepted", handleChatAccepted);
     socket.on("chat_updated", handleChatUpdate);
     socket.on("chat_ended", handleChatEnded);
 
     return () => {
       socket.off("message", handleNewMessage);
-      socket.off("chat_accepted", handleChatAccepted); // ✅ cleanup
+      socket.off("chat_accepted", handleChatAccepted);
       socket.off("chat_updated", handleChatUpdate);
       socket.off("chat_ended", handleChatEnded);
-      socket.emit("leave_room", { room_id });
+      
+      if (socket.connected) {
+        socket.emit("leave_room", { room_id });
+      }
     };
-  }, [room_id, fetchChatDetails]);
+  }, [room_id, user?.id, fetchChatDetails]);
 
-  // ✅ Expert Info
+  // Expert info
   const expertInfo = useMemo(() => {
     if (!chatData?.expert_id) return null;
     
@@ -309,7 +414,7 @@ const Chat = () => {
       return {
         name: expertData.name || `Expert #${chatData.expert_id}`,
         position: expertData.position || '',
-        avatar: expertData.profile_photo || `https://i.pravatar.cc/150?img=${chatData.expert_id}`,
+        avatar: expertData.profile_photo || null,
       };
     }
     
@@ -318,17 +423,18 @@ const Chat = () => {
       return {
         name: expert.name,
         position: expert.position || '',
-        avatar: expert.profile_photo,
+        avatar: expert.profile_photo || null,
       };
     }
     
     return {
       name: `Expert #${chatData.expert_id}`,
       position: '',
-      avatar: `https://i.pravatar.cc/150?img=${chatData.expert_id}`,
+      avatar: null,
     };
   }, [chatData?.expert_id, experts, expertData]);
 
+  // Scroll to bottom
   useLayoutEffect(() => {
     if (!scrollRef.current) return;
 
@@ -338,16 +444,17 @@ const Chat = () => {
     });
   }, [messages.length]);
 
+  // Initial fetch
   useEffect(() => {
     fetchChatDetails();
   }, [fetchChatDetails]);
 
+  // Send message
   const sendMessage = useCallback(() => {
-    if (!input.trim() || !room_id) return;
+    if (!input.trim() || !room_id || !sessionActive) return;
 
     const tempId = Date.now();
 
-    // ✅ INSTANT UI UPDATE
     setMessages(prev => [
       ...prev,
       {
@@ -365,7 +472,14 @@ const Chat = () => {
     });
 
     setInput("");
-  }, [input, room_id, user?.id]);
+    
+    // Keep focus on mobile
+    if (isMobile && inputRef.current) {
+      setTimeout(() => {
+        inputRef.current.focus();
+      }, 0);
+    }
+  }, [input, room_id, user?.id, sessionActive, isMobile]);
 
   const handleKeyPress = useCallback((e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -373,6 +487,8 @@ const Chat = () => {
       sendMessage();
     }
   }, [sendMessage]);
+
+  const isChatDisabled = sessionActive === false;
 
   if (loading && !isInitialized) {
     return (
@@ -385,91 +501,74 @@ const Chat = () => {
     );
   }
 
-  // Check if chat is disabled (either expired or session ended)
-  const isChatDisabled = sessionActive !== true;
-
   return (
     <>
       <ChatGlobalStyle />
       <PageWrap>
         <Header>
+          {isMobile && (
+            <MobileBackButton onClick={handleBack}>
+              <FiArrowLeft size={24} />
+            </MobileBackButton>
+          )}
+          
           {chatData && expertInfo ? (
             <>
               <ExpertInfo>
                 <AvatarWrapper>
-                  <Avatar src={expertInfo.avatar} alt={expertInfo.name} />
+                  {expertInfo.avatar ? (
+                    <Avatar src={expertInfo.avatar} alt={expertInfo.name} />
+                  ) : (
+                    <AvatarPlaceholder>
+                      {getInitials(expertInfo.name)}
+                    </AvatarPlaceholder>
+                  )}
+                  {/* <StatusDot $active={sessionActive === true} /> */}
                 </AvatarWrapper>
-                <div>
+                <div className="expert-details">
                   <div className="expert-name">
                     {expertInfo.name}
                     {expertInfo.position && (
-                      <span style={{ fontSize: '0.85em', color: '#64748b', marginLeft: '8px' }}>
-                        • {expertInfo.position}
-                      </span>
+                      <span className="expert-position"> • {expertInfo.position}</span>
                     )}
                   </div>
                   <div className="status">
-                    <span style={{ 
-                      color: sessionActive === true ? '#10b981' : '#ef4444',
-                      fontWeight: '500'
-                    }}>
-                     {sessionActive === true ? '🟢 Active' : '🔴 Ended'}
-                    </span>
+                    {sessionActive === true ? '🟢 Active' : '🔴 Ended'}
                   </div>
                 </div>
               </ExpertInfo>
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                {/* ✅ STEP 3: Show timer only for limited plans */}
-                {!isUnlimited && (
-                  <div style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    background: "#f8fafc",
-                    padding: "8px 12px",
-                    borderRadius: "8px",
-                    border: `2px solid ${getTimerColor()}`,
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    color: getTimerColor(),
-                    minWidth: "80px",
-                    justifyContent: "center"
-                  }}>
-                    ⏱️ {formatted}
-                  </div>
+              
+              <HeaderActions>
+                {/* Timer for limited plans */}
+                {!isUnlimited && sessionActive === true && (
+                  <TimerDisplay $color={getTimerColor()}>
+                    <FiClock size={14} />
+                    <span>{formatted}</span>
+                  </TimerDisplay>
                 )}
 
-                {/* ✅ STEP 3: Show unlimited badge for subscription users */}
-                {isUnlimited && (
-                  <div style={{
-                    background: "#ecfdf5",
-                    color: "#10b981",
-                    padding: "8px 12px",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px"
-                  }}>
+                {/* Unlimited badge */}
+                {isUnlimited && sessionActive === true && (
+                  <UnlimitedBadge>
                     <span>♾️</span> Unlimited
-                  </div>
+                  </UnlimitedBadge>
                 )}
 
                 <EndChatButton
                   onClick={handleEndChat}
                   disabled={isChatDisabled}
+                  $active={!isChatDisabled}
                 >
                   <FiX size={20} />
                 </EndChatButton>
-              </div>
+              </HeaderActions>
             </>
           ) : (
             <div style={{ color: "#64748b", padding: "20px" }}>Loading expert info...</div>
           )}
         </Header>
 
-        <MessagesArea>
+        <MessagesArea ref={messagesContainerRef}>
           {error && !showEndPopup ? (
             <ErrorMessage>
               <FiX size={48} />
@@ -482,8 +581,8 @@ const Chat = () => {
             </EmptyChatMessage>
           ) : (
             messages.map((msg, index) => (
-              <MessageRow key={msg.id || index} className={msg.sender_type}>
-                <MessageBubble className={msg.sender_type}>
+              <MessageRow key={msg.id || index} $senderType={msg.sender_type}>
+                <MessageBubble $senderType={msg.sender_type}>
                   <div className="message-text">{msg.message}</div>
                   <MessageTime>{msg.time}</MessageTime>
                 </MessageBubble>
@@ -493,8 +592,11 @@ const Chat = () => {
           <div ref={scrollRef} />
         </MessagesArea>
 
-        <InputBar>
-          <UploadButton onClick={() => setShowFileMenu(!showFileMenu)} disabled={isChatDisabled}>
+        <InputBar $isKeyboardOpen={isKeyboardOpen}>
+          <UploadButton 
+            onClick={() => setShowFileMenu(!showFileMenu)} 
+            disabled={isChatDisabled}
+          >
             <FiPaperclip size={20} />
           </UploadButton>
 
@@ -522,60 +624,31 @@ const Chat = () => {
           )}
 
           <InputBox
+            ref={inputRef}
             placeholder={isChatDisabled ? "Chat session ended" : "Type your message..."}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyPress}
+            onKeyPress={handleKeyPress}
             disabled={isChatDisabled}
             maxLength={1000}
           />
 
-          <SendButton onClick={sendMessage} disabled={!input.trim() || isChatDisabled}>
+          <SendButton 
+            onClick={sendMessage} 
+            disabled={!input.trim() || isChatDisabled}
+          >
             <IoMdSend size={20} />
           </SendButton>
         </InputBar>
 
-        {/* ✅ CHAT END POPUP */}
+        {/* Chat End Popup */}
         {showEndPopup && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.8)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999
-          }}>
-            <div style={{
-              background: 'white',
-              padding: '40px',
-              borderRadius: '16px',
-              maxWidth: '400px',
-              textAlign: 'center',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
-            }}>
-              <FiX size={64} style={{ color: '#ef4444', marginBottom: '20px' }} />
-              <h2 style={{ color: '#1e293b', marginBottom: '16px' }}>Chat Ended</h2>
-              <p style={{ color: '#64748b', marginBottom: '32px', fontSize: '16px' }}>
-                Your chat session has ended. Thank you for using our service!
-              </p>
-              <button 
-                onClick={handleGoHome}
-                style={{
-                  background: '#3b82f6',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 32px',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  width: '100%'
-                }}
-              >
+          <div className="popup-overlay">
+            <div className="popup-content">
+              <FiX size={64} className="popup-icon" />
+              <h2>Chat Ended</h2>
+              <p>Your chat session has ended. Thank you for using our service!</p>
+              <button onClick={handleGoHome} className="popup-button">
                 Back to Dashboard
               </button>
             </div>

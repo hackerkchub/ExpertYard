@@ -14,6 +14,7 @@ import {
   UserHeader,
   UserInfo,
   Avatar,
+  AvatarPlaceholder,
   UserMeta,
   ChatArea,
   Messages,
@@ -26,14 +27,28 @@ import {
   LoadingSpinner,
   ErrorMessage,
   EmptyChatMessage,
+  TimerDisplay,
+  BackButton,
+  MobileBackButton,
 } from "./ExpertChat.styles";
-import { FiSend, FiUserX, FiClock } from "react-icons/fi";
+import { FiSend, FiUserX, FiClock, FiArrowLeft, FiUser, FiPhone, FiMail } from "react-icons/fi";
 import { socket } from "../../../../shared/api/socket";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { getUserPublicProfileApi } from "../../../../shared/api/userApi";
 import { toast } from "react-hot-toast";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/150?img=1";
+
+// Helper function to get initials from name
+const getInitials = (name) => {
+  if (!name) return "U";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+};
 
 const ExpertChat = () => {
   const { room_id } = useParams();
@@ -54,13 +69,25 @@ const ExpertChat = () => {
   const [displaySeconds, setDisplaySeconds] = useState(0);
   const [sessionStartTime, setSessionStartTime] = useState(null);
   const [timerPaused, setTimerPaused] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const messagesEndRef = useRef(null);
   const timerIntervalRef = useRef(null);
   const inputRef = useRef(null);
   const messagesContainerRef = useRef(null);
+  const pageWrapRef = useRef(null);
 
   const { expert } = useExpert();
+
+  // Check if mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const expertId = useMemo(() => {
     return (
@@ -137,46 +164,80 @@ const ExpertChat = () => {
   }, []);
 
   /* ==========================================================
-      MOBILE KEYBOARD HANDLING
+      IMPROVED MOBILE KEYBOARD HANDLING - NO PAGE JUMP
      ========================================================== */
   useEffect(() => {
-    const handleVisualViewport = () => {
-      if (window.visualViewport) {
-        const viewport = window.visualViewport;
-        const pageWrap = document.querySelector('.page-wrap');
+    let initialScrollTop = 0;
+    let isKeyboardVisible = false;
+
+    const handleFocus = (e) => {
+      if (window.innerWidth <= 768 && e.target === inputRef.current) {
+        initialScrollTop = window.scrollY;
         
-        if (pageWrap && window.innerWidth <= 768) {
-          if (viewport.height < window.innerHeight) {
-            // Keyboard is open
-            pageWrap.style.height = `${viewport.height}px`;
-            pageWrap.style.top = '0';
-            
-            // Scroll messages to bottom after keyboard opens
-            setTimeout(() => {
-              messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
-          } else {
-            // Keyboard is closed
-            pageWrap.style.height = '100dvh';
+        // Store current scroll position of messages
+        if (messagesContainerRef.current) {
+          initialScrollTop = messagesContainerRef.current.scrollTop;
+        }
+
+        setTimeout(() => {
+          if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
           }
+        }, 150);
+      }
+    };
+
+    const handleBlur = () => {
+      if (window.innerWidth <= 768) {
+        // Restore scroll position
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+        }, 100);
+      }
+    };
+
+    const handleResize = () => {
+      if (window.innerWidth <= 768 && window.visualViewport) {
+        const viewportHeight = window.visualViewport.height;
+        const windowHeight = window.innerHeight;
+        
+        // Keyboard is open when viewport height is significantly smaller
+        const keyboardOpen = viewportHeight < windowHeight - 100;
+        
+        if (keyboardOpen && !isKeyboardVisible) {
+          isKeyboardVisible = true;
+          // Smooth scroll to bottom when keyboard opens
+          setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          }, 100);
+        } else if (!keyboardOpen && isKeyboardVisible) {
+          isKeyboardVisible = false;
+          // Restore when keyboard closes
+          setTimeout(() => {
+            window.scrollTo(0, 0);
+          }, 100);
         }
       }
     };
 
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleVisualViewport);
-      window.visualViewport.addEventListener('scroll', handleVisualViewport);
+    const inputElement = inputRef.current;
+    if (inputElement) {
+      inputElement.addEventListener('focus', handleFocus);
+      inputElement.addEventListener('blur', handleBlur);
     }
 
-    // Also handle resize event for older browsers
-    window.addEventListener('resize', handleVisualViewport);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+    }
 
     return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleVisualViewport);
-        window.visualViewport.removeEventListener('scroll', handleVisualViewport);
+      if (inputElement) {
+        inputElement.removeEventListener('focus', handleFocus);
+        inputElement.removeEventListener('blur', handleBlur);
       }
-      window.removeEventListener('resize', handleVisualViewport);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize);
+      }
     };
   }, []);
 
@@ -213,6 +274,8 @@ const ExpertChat = () => {
     setTimeout(() => {
       if (inputRef.current && sessionActive) {
         inputRef.current.focus();
+        // Ensure smooth scroll after sending
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
       }
     }, 0);
   }, [message, room_id, expertId, sessionActive]);
@@ -368,7 +431,7 @@ const ExpertChat = () => {
         
         // Auto-scroll to bottom on new message
         setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
         }, 100);
       }
     };
@@ -399,7 +462,7 @@ const ExpertChat = () => {
   // Scroll to bottom on messages change
   useEffect(() => {
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }, 80);
   }, [messages]);
 
@@ -421,59 +484,88 @@ const ExpertChat = () => {
         name: userProfile.full_name || `User #${chatData.user_id}`,
         email: userProfile.email,
         phone: userProfile.phone,
-        avatar: `https://i.pravatar.cc/150?img=${userProfile.id}`,
+        avatar: userProfile.avatar || null,
       };
     }
 
     return {
       id: chatData.user_id,
       name: `User #${chatData.user_id}`,
-      avatar: `https://i.pravatar.cc/150?img=${chatData.user_id}`,
+      email: null,
+      phone: null,
+      avatar: null,
     };
   }, [chatData, userProfile]);
 
   // Format timer display
   const formatTimer = () => {
-    const mins = Math.floor(displaySeconds / 60);
+    const hours = Math.floor(displaySeconds / 3600);
+    const mins = Math.floor((displaySeconds % 3600) / 60);
     const secs = displaySeconds % 60;
+    
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleBack = () => {
+    navigate("/expert/chat-history");
   };
 
   if (loading && !isInitialized) {
     return (
-      <PageWrap className="page-wrap">
+      <PageWrap ref={pageWrapRef} className="page-wrap">
         <LoadingSpinner>Loading chat...</LoadingSpinner>
       </PageWrap>
     );
   }
 
   return (
-    <PageWrap className="page-wrap" style={{ top: 0, left: 0, width: '100%' }}>
+    <PageWrap ref={pageWrapRef} className="page-wrap">
       <ChatLayout>
         <RightPanel style={{ width: "100%" }}>
           {chatData && selectedUser ? (
             <>
               <UserHeader>
+                {/* {isMobile && (
+                  <MobileBackButton onClick={handleBack}>
+                    <FiArrowLeft size={24} />
+                  </MobileBackButton>
+                )} */}
                 <UserInfo>
-                  <Avatar src={selectedUser.avatar} alt={selectedUser.name} />
+                  {selectedUser.avatar ? (
+                    <Avatar src={selectedUser.avatar} alt={selectedUser.name} />
+                  ) : (
+                    <AvatarPlaceholder>
+                      {getInitials(selectedUser.name)}
+                    </AvatarPlaceholder>
+                  )}
                   <UserMeta>
                     <h4>{selectedUser.name}</h4>
                     {/* {sessionActive && (
-                      <span style={{ color: '#057642', fontSize: '12px' }}>
-                        ⏱ {formatTimer()}
-                      </span>
+                      <TimerDisplay>
+                        <FiClock size={12} />
+                        <span>{formatTimer()}</span>
+                      </TimerDisplay>
                     )} */}
-                    {userProfile ? (
-                      <>
-                        <span>{selectedUser.email}</span>
-                        <span> </span>
-                       <span>{selectedUser.phone}</span>
-                      </>
-                    ) : userProfileLoading ? (
-                      <span>Loading user info...</span>
-                    ) : (
-                      <span>—</span>
-                    )}
+                    <div className="user-details">
+                      {selectedUser.email && (
+                        <span className="detail-item">
+                          <FiMail size={12} />
+                          {selectedUser.email}
+                        </span>
+                      )}
+                      {selectedUser.phone && (
+                        <span className="detail-item">
+                          <FiPhone size={12} />
+                          {selectedUser.phone}
+                        </span>
+                      )}
+                      {userProfileLoading && (
+                        <span className="detail-item loading">Loading...</span>
+                      )}
+                    </div>
                   </UserMeta>
                 </UserInfo>
               </UserHeader>
@@ -486,9 +578,9 @@ const ExpertChat = () => {
                     </EmptyChatMessage>
                   ) : (
                     messages.map((msg, index) => (
-                      <Message key={msg.id || index} expert={msg.sender_type === "expert"}>
-                        <Bubble expert={msg.sender_type === "expert"}>
-                          <div>{msg.message}</div>
+                      <Message key={msg.id || index} $expert={msg.sender_type === "expert"}>
+                        <Bubble $expert={msg.sender_type === "expert"}>
+                          <div className="message-text">{msg.message}</div>
                           <span className="time">{msg.time}</span>
                         </Bubble>
                       </Message>

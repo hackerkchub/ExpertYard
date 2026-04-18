@@ -8,20 +8,21 @@ const fadeIn = keyframes`
 /* WRAPPER */
 export const PageWrap = styled.div`
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
+  inset: 0;
   height: 100dvh;
+  width: 100%;
   display: flex;
   flex-direction: column;
   background: #f4f5f7;
   overflow: hidden;
 `;
 
+/* LAYOUT */
 export const ChatLayout = styled.div`
   flex: 1;
   display: flex;
   height: 100%;
+  overflow: hidden;
 `;
 
 /* PANEL */
@@ -29,6 +30,7 @@ export const RightPanel = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
+  height: 100%;
   overflow: hidden;
 
   @media (min-width: 1024px) {
@@ -37,16 +39,17 @@ export const RightPanel = styled.div`
   }
 `;
 
-/* HEADER */
+/* HEADER (FIXED ALWAYS) */
 export const UserHeader = styled.div`
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 100;
   background: #fff;
   padding: 12px;
   border-bottom: 1px solid #eee;
 `;
 
+/* USER INFO */
 export const UserInfo = styled.div`
   display: flex;
   gap: 10px;
@@ -82,14 +85,16 @@ export const UserMeta = styled.div`
   }
 `;
 
-/* CHAT */
+/* CHAT AREA */
 export const ChatArea = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 `;
 
+/* ONLY THIS SCROLLS */
 export const Messages = styled.div`
   flex: 1;
   overflow-y: auto;
@@ -97,8 +102,12 @@ export const Messages = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
+
+  /* 🔥 IMPORTANT */
+  height: 0;
 `;
 
+/* MESSAGE */
 export const Message = styled.div`
   display: flex;
   justify-content: ${({ $expert }) =>
@@ -121,14 +130,21 @@ export const Bubble = styled.div`
   }
 `;
 
-/* INPUT */
+/* INPUT FIX (KEYBOARD SAFE) */
 export const ChatInputWrap = styled.div`
   position: sticky;
   bottom: 0;
+  z-index: 50;
+
   display: flex;
   gap: 10px;
   padding: 10px;
   background: #fff;
+
+  border-top: 1px solid #eee;
+
+  /* 🔥 KEYBOARD FIX */
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
 `;
 
 export const ChatInput = styled.textarea`
@@ -172,7 +188,7 @@ export const EmptyChatMessage = styled.div`
   text-align: center;
 `;
 
-/* EMPTY EXPORTS */
+/* EMPTY EXPORTS (DON'T REMOVE) */
 export const PopoverContainer = styled.div``;
 export const ProfileDropdownContainer = styled.div``;
 export const BackButton = styled.button``;

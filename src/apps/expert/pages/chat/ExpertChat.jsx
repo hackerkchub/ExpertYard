@@ -281,7 +281,7 @@ const ExpertChat = () => {
               </UserHeader>
 
               <ChatArea>
-                <Messages>
+                <Messages style={{ WebkitOverflowScrolling: "touch" }}>
                   {messages.length === 0 ? (
                     <EmptyChatMessage>
                       💬 Start conversation

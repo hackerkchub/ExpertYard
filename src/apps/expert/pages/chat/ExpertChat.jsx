@@ -45,11 +45,9 @@ const getInitials = (name) => {
     .slice(0, 2);
 };
 
-/* ================= COMPONENT ================= */
 const ExpertChat = () => {
   const { room_id } = useParams();
   const navigate = useNavigate();
-
   const { expert } = useExpert();
 
   const [chatData, setChatData] = useState(null);
@@ -57,13 +55,31 @@ const ExpertChat = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   const [userProfile, setUserProfile] = useState(null);
-
   const [sessionActive, setSessionActive] = useState(false);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+
+  /* ------------------ HIDE GLOBAL HEADER ------------------ */
+  useEffect(() => {
+    const topbar = document.querySelector(".main-app-topbar");
+    const sidebar =
+      document.querySelector("aside") ||
+      document.querySelector("[class*='Sidebar']");
+
+    if (topbar) topbar.style.display = "none";
+    if (sidebar) sidebar.style.display = "none";
+
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      if (topbar) topbar.style.display = "flex";
+      if (sidebar) sidebar.style.display = "flex";
+
+      document.body.style.overflow = "auto";
+    };
+  }, []);
 
   /* ------------------ EXPERT ID ------------------ */
   const expertId = useMemo(() => {
@@ -74,18 +90,12 @@ const ExpertChat = () => {
   const fetchUserProfile = async (userId) => {
     try {
       const res = await getUserPublicProfileApi(userId);
-      if (res?.success) {
-        setUserProfile(res.data);
-      }
-    } catch (e) {
-      console.log(e);
-    }
+      if (res?.success) setUserProfile(res.data);
+    } catch (e) {}
   };
 
   /* ------------------ FETCH CHAT ------------------ */
   const fetchChat = useCallback(async () => {
-    if (!room_id) return;
-
     try {
       setLoading(true);
 
@@ -112,7 +122,7 @@ const ExpertChat = () => {
       );
 
       if (session.user_id) fetchUserProfile(session.user_id);
-    } catch (e) {
+    } catch {
       setError("Failed to load chat");
     } finally {
       setLoading(false);
@@ -138,8 +148,6 @@ const ExpertChat = () => {
           }),
         },
       ]);
-
-      scrollToBottom();
     });
 
     socket.on("chat_ended", () => {
@@ -155,51 +163,64 @@ const ExpertChat = () => {
     };
   }, [room_id, navigate]);
 
-  /* ------------------ INIT ------------------ */
   useEffect(() => {
     fetchChat();
   }, [fetchChat]);
 
-  /* ------------------ SCROLL ------------------ */
+  /* ------------------ SCROLL FIX ------------------ */
   const scrollToBottom = () => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({
+        behavior: "auto",
+        block: "end",
+      });
+    });
   };
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  /* ------------------ SEND MESSAGE ------------------ */
+  /* ------------------ KEYBOARD FIX ------------------ */
+  useEffect(() => {
+    const handleResize = () => {
+      messagesEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    };
+
+    window.visualViewport?.addEventListener("resize", handleResize);
+
+    return () => {
+      window.visualViewport?.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  /* ------------------ SEND ------------------ */
   const handleSendMessage = () => {
     if (!message.trim()) return;
 
-    const msg = {
-      id: Date.now(),
-      message,
-      sender_type: "expert",
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        message,
+        sender_type: "expert",
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      },
+    ]);
 
-    setMessages((prev) => [...prev, msg]);
-
-    socket.emit("sendMessage", {
-      room_id,
-      message,
-    });
+    socket.emit("sendMessage", { room_id, message });
 
     setMessage("");
 
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 0);
+    setTimeout(() => inputRef.current?.focus(), 0);
   };
 
-  /* ------------------ ENTER KEY ------------------ */
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -207,10 +228,8 @@ const ExpertChat = () => {
     }
   };
 
-  /* ------------------ USER ------------------ */
   const user = useMemo(() => {
     if (!chatData) return null;
-
     return {
       name: userProfile?.full_name || `User #${chatData.user_id}`,
       email: userProfile?.email,
@@ -219,7 +238,6 @@ const ExpertChat = () => {
     };
   }, [chatData, userProfile]);
 
-  /* ------------------ LOADING ------------------ */
   if (loading) {
     return (
       <PageWrap>
@@ -234,7 +252,6 @@ const ExpertChat = () => {
         <RightPanel>
           {chatData && user ? (
             <>
-              {/* HEADER */}
               <UserHeader>
                 <UserInfo>
                   {user.avatar ? (
@@ -247,7 +264,6 @@ const ExpertChat = () => {
 
                   <UserMeta>
                     <h4>{user.name}</h4>
-
                     <div className="user-details">
                       {user.email && (
                         <span className="detail-item">
@@ -264,7 +280,6 @@ const ExpertChat = () => {
                 </UserInfo>
               </UserHeader>
 
-              {/* CHAT */}
               <ChatArea>
                 <Messages>
                   {messages.length === 0 ? (
@@ -288,18 +303,16 @@ const ExpertChat = () => {
                   <div ref={messagesEndRef} />
                 </Messages>
 
-                {/* INPUT */}
                 <ChatInputWrap>
                   <ChatInput
                     ref={inputRef}
                     value={message}
-                    placeholder={
-                      sessionActive
-                        ? "Type message..."
-                        : "Chat ended"
-                    }
+                    onFocus={() => scrollToBottom()}
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyDown={handleKeyPress}
+                    placeholder={
+                      sessionActive ? "Type message..." : "Chat ended"
+                    }
                     disabled={!sessionActive}
                   />
 

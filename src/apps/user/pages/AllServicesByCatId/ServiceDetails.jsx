@@ -7,8 +7,8 @@ import { FaWallet } from "react-icons/fa";
 
 import { useAuth } from "../../../../shared/context/UserAuthContext"; 
 import { useWallet } from "../../../../shared/context/WalletContext"; 
+import { fireAlert } from "../../../../shared/utils/lazyNotifications";
 import * as S from "./ServiceDetails.style";
-import Swal from "sweetalert2";
 
 const ServiceDetail = () => {
   const { id } = useParams(); 
@@ -63,14 +63,14 @@ const ServiceDetail = () => {
 
   const handleBooking = async () => {
     if (!isLoggedIn) {
-      Swal.fire({ title: "Login Required", icon: "info", confirmButtonColor: "#0a66c2" });
+      fireAlert({ title: "Login Required", icon: "info", confirmButtonColor: "#0a66c2" });
       return navigate("/login");
     }
 
     const servicePrice = parseFloat(service.price);
 
     if (balance < servicePrice) {
-      await Swal.fire({
+      await fireAlert({
         title: "Insufficient Balance!",
         text: `Required: ₹${servicePrice}. Your Wallet: ₹${balance}.`,
         icon: "warning",
@@ -80,7 +80,7 @@ const ServiceDetail = () => {
       return navigate("/user/wallet");
     }
 
-    const confirm = await Swal.fire({
+    const confirm = await fireAlert({
       title: "Confirm Booking?",
       text: `₹${servicePrice} will be deducted from your wallet.`,
       icon: "question",
@@ -112,7 +112,7 @@ const ServiceDetail = () => {
           if (fetchWalletHistory) fetchWalletHistory(); 
 
           
-          await Swal.fire({
+          await fireAlert({
             title: "Booking Successful!",
             text: "Payment processed via Guidexa Wallet.",
             icon: "success",
@@ -125,7 +125,7 @@ const ServiceDetail = () => {
         }
       }
     } catch (err) {
-      Swal.fire({ title: "Payment Failed", text: "Transaction error.", icon: "error" });
+      fireAlert({ title: "Payment Failed", text: "Transaction error.", icon: "error" });
     } finally {
       setBookingLoading(false);
     }

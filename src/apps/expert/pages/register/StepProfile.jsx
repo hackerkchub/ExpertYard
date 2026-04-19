@@ -4,9 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { createProfileApi, updateExpertProfileApi, getExpertProfileApi } from "../../../../shared/api/expertapi/profile.api";
 import useApi from "../../../../shared/hooks/useApi";
-import { toast } from "react-toastify";
 import RegisterLayout from "../../components/RegisterLayout";
 import Loader from "../../../../shared/components/Loader/Loader";
+import { toastify } from "../../../../shared/utils/lazyNotifications";
 
 // ✅ साफ़ सुथरे और पक्के इंपोर्ट्स
 import {
@@ -77,6 +77,8 @@ export default function StepProfile() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [isLoadingExisting, setIsLoadingExisting] = useState(true);
+  const notifyError = (message) => void toastify("error", message);
+  const notifySuccess = (message) => void toastify("success", message);
 
   const { request: createProfile, loading: createLoading } = useApi(createProfileApi);
   const { request: updateProfile, loading: updateLoading } = useApi(updateExpertProfileApi);
@@ -161,7 +163,7 @@ export default function StepProfile() {
 
     for (const [field, message] of Object.entries(textFields)) {
       if (!form[field]?.trim()) {
-        toast.error(message);
+        notifyError(message);
         return false;
       }
     }
@@ -175,7 +177,7 @@ export default function StepProfile() {
 
     for (const [field, message] of Object.entries(requiredFiles)) {
       if (!form[field] && !existingFiles[field]) {
-        toast.error(message);
+        notifyError(message);
         return false;
       }
     }
@@ -214,7 +216,7 @@ export default function StepProfile() {
       const profile = res.data || res;
       updateExpertData({ profileId: profile?.id, profile });
 
-      toast.success("Profile saved successfully! 🎉");
+      notifySuccess("Profile saved successfully! 🎉");
       setTimeout(() => navigate("/expert/register/pricing"), 500);
     } catch (err) {
       setSubmitError(err || "Failed to save profile.");

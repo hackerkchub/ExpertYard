@@ -32,7 +32,7 @@ import { FiSend, FiUserX, FiClock, FiMail, FiPhone } from "react-icons/fi";
 import { socket } from "../../../../shared/api/socket";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { getUserPublicProfileApi } from "../../../../shared/api/userApi";
-import { toast } from "react-hot-toast";
+import { hotToast } from "../../../../shared/utils/lazyNotifications";
 
 /* ------------------ HELPERS ------------------ */
 const getInitials = (name) => {
@@ -152,7 +152,7 @@ const ExpertChat = () => {
 
     socket.on("chat_ended", () => {
       setSessionActive(false);
-      toast.success("Chat Ended");
+      hotToast("success", "Chat Ended");
       navigate("/expert/chat-history");
     });
 

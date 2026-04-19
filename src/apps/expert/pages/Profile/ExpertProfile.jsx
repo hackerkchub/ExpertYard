@@ -23,7 +23,7 @@ import {
   updatePlanApi,
   deletePlanApi
 } from "../../../../shared/api/expertapi/subscription.api";
-import { toast } from "react-hot-toast";
+import { hotToast } from "../../../../shared/utils/lazyNotifications";
 
 import {
   FiEdit,
@@ -76,6 +76,9 @@ const isImageUrl = (url) => {
 // Utility to check if string is a blob URL
 const isBlobUrl = (url) =>
   typeof url === "string" && url.startsWith("blob:");
+
+const notifySuccess = (message) => void hotToast("success", message);
+const notifyError = (message) => void hotToast("error", message);
 
 export default function ExpertProfile() {
   const {
@@ -224,7 +227,7 @@ setSessionDuration(Number(session?.duration) || 0);
       });
     } catch (err) {
       console.error("Failed to load experiences", err);
-      toast.error("Failed to load experience data");
+      notifyError("Failed to load experience data");
       setExperiences([]);
       setTotalExperience({ years: 0, months: 0 });
     } finally {
@@ -360,7 +363,7 @@ setSessionDuration(Number(session?.duration) || 0);
 
       if (!expertId) {
         console.error("Missing expertId");
-        toast.error("Expert ID not found");
+        notifyError("Expert ID not found");
         setSaveLoading(false);
         return;
       }
@@ -431,14 +434,14 @@ setSessionDuration(Number(session?.duration) || 0);
       // ========== REFRESH ==========
       await Promise.all([refreshProfile(), refreshPrice()]);
       
-      toast.success("Profile updated successfully!");
+      notifySuccess("Profile updated successfully!");
       
       setEdit(false);
       setDraft(null);
       
     } catch (err) {
       console.error("Save failed", err);
-      toast.error(err.response?.data?.message || "Failed to update profile");
+      notifyError(err.response?.data?.message || "Failed to update profile");
     } finally {
       setSaveLoading(false);
     }
@@ -485,7 +488,7 @@ setSessionDuration(Number(session?.duration) || 0);
 
   const handleSubmitPlan = async () => {
     if (!planForm.name || !planForm.price) {
-      toast.error("Plan name and price are required");
+      notifyError("Plan name and price are required");
       return;
     }
 
@@ -504,10 +507,10 @@ setSessionDuration(Number(session?.duration) || 0);
 
       if (editingPlan) {
         await updatePlanApi(editingPlan.id, payload);
-        toast.success("Plan updated successfully!");
+        notifySuccess("Plan updated successfully!");
       } else {
         await createPlanApi(payload);
-        toast.success("Plan added successfully!");
+        notifySuccess("Plan added successfully!");
       }
 
       await loadSubscriptionPlans();
@@ -515,7 +518,7 @@ setSessionDuration(Number(session?.duration) || 0);
       
     } catch (err) {
       console.error("Failed to save plan", err);
-      toast.error(err.response?.data?.message || "Failed to save plan");
+      notifyError(err.response?.data?.message || "Failed to save plan");
     } finally {
       setPlanSubmitLoading(false);
     }
@@ -528,11 +531,11 @@ setSessionDuration(Number(session?.duration) || 0);
 
     try {
       await deletePlanApi(planId);
-      toast.success("Plan deleted successfully!");
+      notifySuccess("Plan deleted successfully!");
       await loadSubscriptionPlans();
     } catch (err) {
       console.error("Failed to delete plan", err);
-      toast.error(err.response?.data?.message || "Failed to delete plan");
+      notifyError(err.response?.data?.message || "Failed to delete plan");
     }
   };
 
@@ -585,15 +588,15 @@ setSessionDuration(Number(session?.duration) || 0);
 
   const handleSubmitExperience = async () => {
     if (!experienceForm.title.trim()) {
-      toast.error("Title is required");
+      notifyError("Title is required");
       return;
     }
     if (!experienceForm.start_date) {
-      toast.error("Start date is required");
+      notifyError("Start date is required");
       return;
     }
     if (experienceForm.end_date && experienceForm.end_date < experienceForm.start_date) {
-      toast.error("End date cannot be before start date");
+      notifyError("End date cannot be before start date");
       return;
     }
 
@@ -611,10 +614,10 @@ setSessionDuration(Number(session?.duration) || 0);
 
       if (editingExperience) {
         await updateExperienceApi(editingExperience.id, formData);
-        toast.success("Experience updated successfully!");
+        notifySuccess("Experience updated successfully!");
       } else {
         await addExperienceApi(formData);
-        toast.success("Experience added successfully!");
+        notifySuccess("Experience added successfully!");
       }
 
       await loadExperiences();
@@ -630,7 +633,7 @@ setSessionDuration(Number(session?.duration) || 0);
       
     } catch (err) {
       console.error("Failed to save experience", err);
-      toast.error(err.response?.data?.message || "Failed to save experience");
+      notifyError(err.response?.data?.message || "Failed to save experience");
     } finally {
       setExperienceSubmitLoading(false);
     }
@@ -643,11 +646,11 @@ setSessionDuration(Number(session?.duration) || 0);
 
     try {
       await deleteExperienceApi(id);
-      toast.success("Experience deleted successfully!");
+      notifySuccess("Experience deleted successfully!");
       await loadExperiences();
     } catch (err) {
       console.error("Failed to delete experience", err);
-      toast.error(err.response?.data?.message || "Failed to delete experience");
+      notifyError(err.response?.data?.message || "Failed to delete experience");
     }
   };
 
@@ -670,7 +673,7 @@ setSessionDuration(Number(session?.duration) || 0);
     } catch (err) {
       console.error("Failed to load followers", err);
       setFollowersList([]);
-      toast.error("Failed to load followers");
+      notifyError("Failed to load followers");
     } finally {
       setFollowersLoading(false);
     }
@@ -696,7 +699,7 @@ setSessionDuration(Number(session?.duration) || 0);
       setReviewsList([]);
       setTotalReviews(0);
       setAvgRating(0);
-      toast.error("Failed to load reviews");
+      notifyError("Failed to load reviews");
     } finally {
       setReviewsLoading(false);
     }

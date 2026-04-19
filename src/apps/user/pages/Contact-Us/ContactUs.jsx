@@ -151,7 +151,7 @@ const ContactUs = () => {
                 placeholder="John Doe"
                 className={errors.name ? 'error' : ''}
               />
-              {errors.name && <span style={{ color: '#e53e3e', fontSize: '14px', marginTop: '5px' }}>{errors.name}</span>}
+              {errors.name && <span style={{ color: '#000080', fontSize: '14px', marginTop: '5px' }}>{errors.name}</span>}
             </FormGroup>
 
             <FormGroup>
@@ -164,7 +164,7 @@ const ContactUs = () => {
                 placeholder="john@example.com"
                 className={errors.email ? 'error' : ''}
               />
-              {errors.email && <span style={{ color: '#e53e3e', fontSize: '14px', marginTop: '5px' }}>{errors.email}</span>}
+              {errors.email && <span style={{ color: '#000080', fontSize: '14px', marginTop: '5px' }}>{errors.email}</span>}
             </FormGroup>
 
             <FormGroup>
@@ -177,7 +177,7 @@ const ContactUs = () => {
                 placeholder="+1 (123) 456-7890"
                 className={errors.phone ? 'error' : ''}
               />
-              {errors.phone && <span style={{ color: '#e53e3e', fontSize: '14px', marginTop: '5px' }}>{errors.phone}</span>}
+              {errors.phone && <span style={{ color: '#000080', fontSize: '14px', marginTop: '5px' }}>{errors.phone}</span>}
             </FormGroup>
 
             <FormGroup>
@@ -222,7 +222,7 @@ const ContactUs = () => {
             <CardContent>
               <ContactDetail>{contactInfo.phone}</ContactDetail>
               <ContactDetail>{contactInfo.hours}</ContactDetail>
-              <ContactDetail style={{ color: '#667eea', fontWeight: '500' }}>
+              <ContactDetail style={{ color: '#000080', fontWeight: '500' }}>
                 {contactInfo.support}
               </ContactDetail>
             </CardContent>

@@ -14,7 +14,7 @@ export const HeroSection = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  background: #000080;
   color: white;
   padding: 4rem 1rem;
   text-align: center;

@@ -15,7 +15,7 @@ export default function Hero() {
             with Verified Experts
           </h1>
           <p className="hero-desc">
-            Get personalized advice from certified professionals across 12+ categories. 
+            Get personalized advice from certified professionals across 20+ categories. 
             Real solutions, real conversations, real results.
           </p>
 

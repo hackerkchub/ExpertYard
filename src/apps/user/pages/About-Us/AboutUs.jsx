@@ -73,28 +73,28 @@ const AboutUs = () => {
       name: "Alex Johnson",
       role: "CEO & Founder",
       bio: "Former Google Product Lead with 15+ years in tech industry",
-      color: "#3B82F6"
+      color: "#000080"
     },
     {
       icon: <FaUserGraduate />,
       name: "Sarah Williams",
       role: "CTO",
       bio: "AI/ML Specialist from Stanford, built scalable platforms for Fortune 500",
-      color: "#8B5CF6"
+      color: "#000080"
     },
     {
       icon: <FaUserMd />,
       name: "Michael Chen",
       role: "Head of Partnerships",
       bio: "Ex-McKinsey consultant with global business development expertise",
-      color: "#10B981"
+      color: "#000080"
     },
     {
       icon: <FaUserNinja />,
       name: "Priya Sharma",
       role: "VP of Operations",
       bio: "Operations expert with decade of experience in service platforms",
-      color: "#EF4444"
+      color: "#000080"
     }
   ];
 
@@ -157,7 +157,7 @@ const AboutUs = () => {
             <CTAButton to="/user/call-chat">
               Find Your Expert
             </CTAButton>
-            <CTAButton to="/user/how-it-works" style={{ background: 'transparent', border: '2px solid #3B82F6', color: '#3B82F6' }}>
+            <CTAButton to="/user/how-it-works" style={{ background: 'transparent', border: '2px solid #000080', color: '#000080' }}>
               How It Works
             </CTAButton>
           </div>
@@ -175,7 +175,7 @@ const AboutUs = () => {
         <StatsContainer>
           {stats.map((stat, index) => (
             <StatItem key={index}>
-              <div style={{ fontSize: '2.5rem', color: '#3b82f6', marginBottom: '1rem' }}>
+              <div style={{ fontSize: '2.5rem', color: '#000080', marginBottom: '1rem' }}>
                 {stat.icon}
               </div>
               <StatNumber>{stat.number}</StatNumber>
@@ -193,7 +193,7 @@ const AboutUs = () => {
 
     <MissionVisionCard>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div style={{ fontSize: '2rem', color: '#3B82F6' }}>
+        <div style={{ fontSize: '2rem', color: '#000080' }}>
           <FaRocket />
         </div>
         <SectionTitle style={{ marginBottom: 0 }}>
@@ -211,7 +211,7 @@ const AboutUs = () => {
 
     <MissionVisionCard>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div style={{ fontSize: '2rem', color: '#8B5CF6' }}>
+        <div style={{ fontSize: '2rem', color: '#000080' }}>
           <FaLightbulb />
         </div>
         <SectionTitle style={{ marginBottom: 0 }}>
@@ -328,10 +328,10 @@ const AboutUs = () => {
           </CTAButton>
           <CTAButton to="/expert/register" style={{ 
             background: 'transparent', 
-            border: '2px solid #3b82f6',
-            color: '#3b82f6',
+            border: '2px solid #000080',
+            color: '#000080',
             '&:hover': {
-              background: '#3b82f6',
+              background: '#000080',
               color: 'white'
             }
           }}>

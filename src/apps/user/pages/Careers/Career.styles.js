@@ -3,7 +3,7 @@ import styled from 'styled-components';
 export const PageContainer = styled.div`
   min-height: 100vh;
   width: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   position: relative;
   overflow-x: hidden;
@@ -27,7 +27,7 @@ export const HeroSection = styled.section`
   color: white;
   width: 100%;
 box-sizing: border-box;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
+  background: #000080;
   overflow: hidden;
 
   &::before {
@@ -191,7 +191,7 @@ export const SectionTitle = styled.h2`
     left: 0;
     width: 80px;
     height: 4px;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(90deg, #000080 0%, #000080 100%);
     border-radius: 2px;
   }
 `;
@@ -208,7 +208,7 @@ export const JobGrid = styled.div`
 `;
 
 export const JobCard = styled.div`
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  background: ;
   border-radius: 20px;
   padding: 25px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
@@ -222,7 +222,7 @@ export const JobCard = styled.div`
   &:hover {
     transform: translateY(-5px);
     box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
-    border-color: #667eea;
+    border-color: #000080;
   }
 `;
 
@@ -236,7 +236,7 @@ export const JobTitle = styled.h3`
 export const JobLocation = styled.div`
   display: inline-block;
   padding: 5px 15px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   color: white;
   border-radius: 20px;
   font-size: 12px;
@@ -252,8 +252,8 @@ export const JobDescription = styled.p`
 
 export const ApplyButton = styled.button`
   background: transparent;
-  border: 2px solid #667eea;
-  color: #667eea;
+  border: 2px solid #000080;
+  color: #000080;
   padding: 8px 20px;
   border-radius: 25px;
   font-size: 14px;
@@ -262,7 +262,7 @@ export const ApplyButton = styled.button`
   transition: all 0.3s ease;
 
   &:hover {
-    background: #667eea;
+    background: #000080;
     color: white;
   }
 `;
@@ -310,7 +310,7 @@ export const Label = styled.label`
 
   &::before {
     content: '•';
-    color: #667eea;
+    color: #000080;
     font-size: 20px;
   }
 `;
@@ -326,7 +326,7 @@ export const Input = styled.input`
 
   &:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #000080;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
   }
 `;
@@ -344,7 +344,7 @@ export const TextArea = styled.textarea`
 
   &:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #000080;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
   }
 `;
@@ -358,7 +358,7 @@ export const FileInput = styled.input`
   cursor: pointer;
 
   &::-webkit-file-upload-button {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #000080 0%, #000080 100%);
     color: white;
     padding: 10px 20px;
     border: none;
@@ -375,7 +375,7 @@ export const FileInput = styled.input`
 `;
 
 export const SubmitButton = styled.button`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   color: white;
   border: none;
   padding: 16px;
@@ -529,7 +529,7 @@ export const PopupMessage = styled.p`
 `;
 
 export const CloseButton = styled.button`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   color: white;
   border: none;
   padding: 12px 30px;

@@ -2,7 +2,7 @@ import styled from 'styled-components';
 
 export const PageContainer = styled.div`
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   position: relative;
   overflow-x: hidden;
@@ -14,7 +14,7 @@ export const PageContainer = styled.div`
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #ff6b6b 0%, #4ecdc4 100%);
+    background: #000080;
     z-index: 10;
   }
 `;
@@ -24,7 +24,7 @@ export const HeroSection = styled.section`
   padding: 100px 20px 60px;
   text-align: center;
   color: white;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%);
+  background: #000080;
   overflow: hidden;
 
   &::before {
@@ -130,7 +130,7 @@ export const FormTitle = styled.h2`
     left: 0;
     width: 80px;
     height: 4px;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    background: #000080;
     border-radius: 2px;
   }
 `;
@@ -164,7 +164,7 @@ export const Label = styled.label`
 
   &::before {
     content: '•';
-    color: #667eea;
+    color: #000080;
     font-size: 20px;
   }
 `;
@@ -181,7 +181,7 @@ box-sizing: border-box;
 
   &:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #000080;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
   }
 
@@ -204,7 +204,7 @@ box-sizing: border-box;
 
   &:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #000080;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
   }
 
@@ -214,7 +214,7 @@ box-sizing: border-box;
 `;
 
 export const SubmitButton = styled.button`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #000080;
   color: white;
   border: none;
   padding: 18px 30px;
@@ -280,8 +280,7 @@ box-sizing: border-box;
 export const CardIcon = styled.div`
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 50%;
+  background: #000080;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -310,7 +309,7 @@ export const ContactDetail = styled.p`
   color: #4a5568;
 
   &:hover {
-    color: #667eea;
+    color: #000080;
   }
 `;
 
@@ -328,13 +327,13 @@ export const SocialLink = styled.a`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #667eea;
+  color: #000080;
   font-size: 20px;
   transition: all 0.3s ease;
   text-decoration: none;
 
   &:hover {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #000080;
     color: white;
     transform: translateY(-3px);
   }
@@ -422,7 +421,7 @@ export const PopupMessage = styled.p`
 `;
 
 export const CloseButton = styled.button`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #000080;
   color: white;
   border: none;
   padding: 15px 40px;
@@ -459,7 +458,7 @@ export const FloatingLabel = styled.span`
   background: white;
   padding: 0 5px;
   font-size: 12px;
-  color: #667eea;
+  color: #000080;
   font-weight: 600;
 `;
 

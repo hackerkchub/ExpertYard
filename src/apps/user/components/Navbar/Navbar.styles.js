@@ -116,7 +116,7 @@ export const WalletBadge = styled.div`
 `;
 
 export const AuthButton = styled.button`
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #000080, #1d4ed8 100%);
   color: white;
   border: none;
   padding: 10px 24px;

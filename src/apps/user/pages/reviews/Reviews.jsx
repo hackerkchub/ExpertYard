@@ -76,7 +76,7 @@ const reviewsData = [
     rating: 5,
     date: "2024-01-15",
     review: "ExpertYard connected me with a marketing strategist who transformed our digital presence. The insights were game-changing!",
-    avatarColor: "#4f46e5",
+    avatarColor: "#000080",
     verified: true,
     // featured: true
   },
@@ -87,7 +87,7 @@ const reviewsData = [
     rating: 5,
     date: "2024-01-12",
     review: "As a startup founder, I needed legal guidance quickly. Found the perfect lawyer who helped us navigate complex contracts.",
-    avatarColor: "#7c3aed",
+    avatarColor: "#000080",
     verified: true
   },
   {
@@ -97,7 +97,7 @@ const reviewsData = [
     rating: 4,
     date: "2024-01-10",
     review: "My career coach provided actionable advice that helped me land a promotion within 3 months. Worth every penny!",
-    avatarColor: "#10b981",
+    avatarColor: "#000080",
     verified: true
   },
   {
@@ -107,7 +107,7 @@ const reviewsData = [
     rating: 5,
     date: "2024-01-08",
     review: "The financial expert helped me create a solid investment plan. My portfolio has grown by 25% in 6 months.",
-    avatarColor: "#f59e0b",
+    avatarColor: "#000080",
     verified: true,
     // featured: true
   },
@@ -118,7 +118,7 @@ const reviewsData = [
     rating: 4,
     date: "2024-01-05",
     review: "Found a nutritionist who understood my specific needs. The personalized plan has improved my energy levels significantly.",
-    avatarColor: "#ef4444",
+    avatarColor: "#000080",
     verified: true
   },
   {
@@ -128,7 +128,7 @@ const reviewsData = [
     rating: 5,
     date: "2024-01-02",
     review: "Helped us choose the right tech stack for our SaaS product. Saved us months of research and potential mistakes.",
-    avatarColor: "#3b82f6",
+    avatarColor: "#000080",
     verified: true
   },
   {
@@ -138,7 +138,7 @@ const reviewsData = [
     rating: 5,
     date: "2023-12-28",
     review: "The real estate expert guided us through our first home purchase. Negotiated a great deal and saved us thousands.",
-    avatarColor: "#8b5cf6",
+    avatarColor: "#000080",
     verified: true
   },
   {
@@ -148,7 +148,7 @@ const reviewsData = [
     rating: 4,
     date: "2023-12-25",
     review: "Our marketing strategy consultant provided fresh perspectives that increased our conversions by 40% in 2 months.",
-    avatarColor: "#f97316",
+    avatarColor: "#000080",
     verified: true
   }
 ];
@@ -291,7 +291,7 @@ const Reviews = () => {
         <PlatformMetrics>
           {platformMetrics.map((metric, index) => (
             <MetricCard key={index}>
-              <div style={{ fontSize: '2rem', color: '#4f46e5', marginBottom: '0.5rem' }}>
+              <div style={{ fontSize: '2rem', color: '#000080', marginBottom: '0.5rem' }}>
                 {metric.platform === "Google" && <FaGoogle />}
                 {metric.platform === "Facebook" && <FaFacebook />}
                 {metric.platform === "Trustpilot" && <FaStarIcon />}
@@ -363,7 +363,7 @@ const Reviews = () => {
         {/* Featured Review */}
         {selectedCategory === "All Categories" && (
           <FeaturedReview>
-            <FaQuoteLeft style={{ fontSize: '2.5rem', color: '#4f46e5', marginBottom: '1.5rem', opacity: 0.7 }} />
+            <FaQuoteLeft style={{ fontSize: '2.5rem', color: '#000080', marginBottom: '1.5rem', opacity: 0.7 }} />
             <ReviewText style={{ fontSize: '1.2rem', lineHeight: '1.8' }}>
               "ExpertYard completely transformed how we approach business strategy. The quality of experts is unmatched, 
               and the platform makes it so easy to find exactly what you need. We've saved countless hours and made better 
@@ -375,7 +375,7 @@ const Reviews = () => {
                   width: '50px', 
                   height: '50px', 
                   borderRadius: '50%', 
-                  background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                  background: 'linear-gradient(135deg, #000080, #000080)',
                   marginRight: '1rem',
                   display: 'flex',
                   alignItems: 'center',
@@ -414,7 +414,7 @@ const Reviews = () => {
                       position: 'absolute',
                       top: '20px',
                       right: '20px',
-                      background: '#10b981',
+                      background: '#000080',
                       color: 'white',
                       padding: '0.5rem 1rem',
                       borderRadius: '20px',
@@ -520,7 +520,7 @@ const Reviews = () => {
         margin: '0 auto'
       }}>
         <div style={{ 
-          background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+          background: 'linear-gradient(135deg, #000080 0%, #000080 100%)',
           color: 'white',
           borderRadius: '20px',
           padding: '4rem 3rem',
@@ -547,7 +547,7 @@ const Reviews = () => {
           }}>
             <CTAButton to="/user/contact-us" style={{ 
               background: 'white', 
-              color: '#4f46e5',
+              color: '#000080',
               fontWeight: '600',
               '&:hover': {
                 background: '#f9fafb'

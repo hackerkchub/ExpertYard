@@ -1,11 +1,11 @@
 // src/apps/expert/pages/register/StepPricing.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { savePriceApi, getMyPriceApi } from "../../../../shared/api/expertapi/price.api";
 import { getPlansApi, createPlanApi, deletePlanApi, updatePlanApi } from "../../../../shared/api/expertapi/subscription.api";
 import useApi from "../../../../shared/hooks/useApi";
+import { toastify } from "../../../../shared/utils/lazyNotifications";
 
 import RegisterLayout from "../../components/RegisterLayout";
 import { getSmartPricing } from "../../utils/pricingEngine";
@@ -88,6 +88,9 @@ export default function StepPricing() {
   const { request: createPlan, loading: creatingPlan } = useApi(createPlanApi);
   const { request: deletePlan, loading: deletingPlanApi } = useApi(deletePlanApi);
   const { request: updatePlan, loading: updatingPlan } = useApi(updatePlanApi);
+  const notifyInfo = useCallback((message) => void toastify("info", message), []);
+  const notifySuccess = useCallback((message) => void toastify("success", message), []);
+  const notifyError = useCallback((message) => void toastify("error", message), []);
 
   // Route guard
   useEffect(() => {
@@ -179,7 +182,7 @@ export default function StepPricing() {
       setReasonForPrice(`Expert in ${expertData.categoryName} with proven track record`);
     }
 
-    toast.info(`Suggested pricing loaded!`);
+    notifyInfo("Suggested pricing loaded!");
   }, [expertData.categoryName, reasonForPrice, selectedModes]);
 
   // Validate form
@@ -319,7 +322,7 @@ export default function StepPricing() {
   // Handle add/update plan
   const handleAddPlan = async () => {
     if (!planForm.name || !planForm.price) {
-      toast.error("Please fill plan name and price");
+      notifyError("Please fill plan name and price");
       return;
     }
 
@@ -347,10 +350,10 @@ export default function StepPricing() {
           setSelectedModes(prev => [...prev, "subscription"]);
         }
       }
-      toast.success(editingPlan !== null ? "Plan updated successfully" : "Plan added successfully");
+      notifySuccess(editingPlan !== null ? "Plan updated successfully" : "Plan added successfully");
       resetPlanForm();
     } else {
-      toast.error(result.message);
+      notifyError(result.message);
     }
   };
 
@@ -384,12 +387,12 @@ export default function StepPricing() {
               setSelectedModes(prev => prev.filter(m => m !== "subscription"));
             }
           }
-          toast.success("Plan removed successfully");
+          notifySuccess("Plan removed successfully");
         } else {
           throw new Error(response?.message || "Failed to delete plan");
         }
       } catch (err) {
-        toast.error(err.message || "Failed to delete plan");
+        notifyError(err.message || "Failed to delete plan");
       } finally {
         setDeletingPlan(false);
       }
@@ -480,19 +483,19 @@ if (!isSuccess) {
     res?.data?.message ||
     "Failed to save pricing";
 
-  toast.error(message);
+  notifyError(message);
   throw new Error(message);
 }
       }
 
-      toast.success("Pricing saved successfully! 🎉");
+      notifySuccess("Pricing saved successfully! 🎉");
       
       // Navigate to completion
       navigate(`/expert/register?completed=1&email=${expertData.email}`);
 
     } catch (err) {
       console.error("Pricing API failed:", err);
-      toast.error(err.message || "Failed to save pricing. Please try again.");
+      notifyError(err.message || "Failed to save pricing. Please try again.");
       
       // Parse backend error response
       if (err.response?.data?.message) {

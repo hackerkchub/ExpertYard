@@ -14,7 +14,7 @@ export const HeroSection = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   color: white;
   padding: 4rem 1rem;
   text-align: center;
@@ -98,7 +98,7 @@ export const SectionTitle = styled.h2`
     display: ${props => props.center ? 'block' : 'none'};
     width: 60px;
     height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    background: linear-gradient(90deg, #000080, #000080);
     margin: 1rem auto 0;
     border-radius: 2px;
   }
@@ -154,7 +154,7 @@ export const StepCard = styled.div`
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    background: linear-gradient(90deg, #000080, #000080);
     border-radius: 4px 4px 0 0;
   }
 
@@ -172,7 +172,7 @@ export const StepNumber = styled.div`
   width: 70px;
   height: 70px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -192,7 +192,7 @@ export const StepNumber = styled.div`
     right: -5px;
     bottom: -5px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #000080 0%, #000080 100%);
     opacity: 0.2;
     z-index: 1;
   }
@@ -201,7 +201,7 @@ export const StepNumber = styled.div`
 export const StepIcon = styled.div`
   font-size: 3rem;
   margin-bottom: 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -349,7 +349,7 @@ export const PlayButton = styled.button`
   width: 90px;
   height: 90px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   color: white;
   border: none;
   font-size: 1.8rem;
@@ -396,7 +396,7 @@ export const FAQItem = styled.div`
   &:hover {
     transform: translateY(-3px);
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
-    border-left-color: #667eea;
+    border-left-color: #000080;
   }
 `;
 
@@ -409,7 +409,7 @@ export const FAQQuestion = styled.h3`
   align-items: flex-start;
 
   span {
-    color: #667eea;
+    color: #000080;
     margin-right: 1rem;
     font-weight: 700;
   }
@@ -433,7 +433,7 @@ export const CTAButton = styled(Link)`
   display: inline-flex;
   align-items: center;
   padding: 1rem 2.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   color: white;
   text-decoration: none;
   border-radius: 12px;
@@ -478,12 +478,12 @@ export const CTAButton = styled(Link)`
 
 export const SecondaryButton = styled(CTAButton)`
   background: transparent;
-  border: 2px solid #667eea;
-  color: #667eea;
+  border: 2px solid #000080;
+  color: #000080;
   box-shadow: none;
 
   &:hover {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #000080 0%, #000080 100%);
     color: white;
     box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
   }

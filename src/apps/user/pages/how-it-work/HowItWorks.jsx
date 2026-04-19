@@ -219,7 +219,7 @@ const HowItWorks = () => {
                   top: '50%',
                   width: '25%',
                   height: '2px',
-                  background: 'linear-gradient(90deg, #3B82F6, #8B5CF6)',
+                  background: 'linear-gradient(90deg, #000080, #000080)',
                   transform: 'translateY(-50%)',
                   zIndex: -1,
                   display: 'none',
@@ -292,7 +292,7 @@ const HowItWorks = () => {
           {faqs.map((faq, index) => (
             <FAQItem key={index}>
               <FAQQuestion>
-                <span style={{ color: '#3B82F6', marginRight: '1rem' }}>Q{index + 1}.</span>
+                <span style={{ color: '#000080', marginRight: '1rem' }}>Q{index + 1}.</span>
                 {faq.question}
               </FAQQuestion>
               <FAQAnswer>
@@ -306,7 +306,7 @@ const HowItWorks = () => {
 
       {/* Final CTA */}
       <div style={{ 
-        background: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)',
+        background: 'linear-gradient(135deg, #000080 0%, #000080 100%)',
         color: 'white',
         padding: '5rem 2rem',
         textAlign: 'center',

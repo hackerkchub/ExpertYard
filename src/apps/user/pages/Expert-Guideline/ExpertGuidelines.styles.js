@@ -14,7 +14,7 @@ export const HeroSection = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   color: white;
   padding: 6rem 2rem;
   text-align: center;
@@ -137,13 +137,13 @@ export const GuidelineCard = styled.div`
   &:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-    border-color: #3b82f6;
+    border-color: #000080;
   }
 `;
 
 export const GuidelineIcon = styled.div`
   font-size: 2.5rem;
-  color: #3b82f6;
+  color: #000080;
   margin-bottom: 1.5rem;
 `;
 
@@ -228,7 +228,7 @@ export const RequirementCard = styled.div`
 
 export const RequirementIcon = styled.div`
   font-size: 2.5rem;
-  color: ${props => props.mandatory ? '#10b981' : '#3b82f6'};
+  color: ${props => props.mandatory ? '#10b981' : '#000080'};
   margin-bottom: 1.5rem;
 `;
 
@@ -253,7 +253,7 @@ export const Badge = styled.div`
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 600;
-  background: ${props => props.mandatory ? '#10b981' : '#3b82f6'};
+  background: ${props => props.mandatory ? '#10b981' : '#000080'};
   color: white;
 `;
 
@@ -279,7 +279,7 @@ export const TabHeader = styled.div`
 export const TabButton = styled.button`
   padding: 1.5rem 2rem;
   background: ${props => props.active ? 'white' : 'transparent'};
-  color: ${props => props.active ? '#3b82f6' : '#6b7280'};
+  color: ${props => props.active ? '#000080' : '#6b7280'};
   border: none;
   font-size: 1.1rem;
   font-weight: 600;
@@ -289,10 +289,10 @@ export const TabButton = styled.button`
   align-items: center;
   justify-content: center;
   white-space: nowrap;
-  border-bottom: 3px solid ${props => props.active ? '#3b82f6' : 'transparent'};
+  border-bottom: 3px solid ${props => props.active ? '#000080' : 'transparent'};
 
   &:hover {
-    color: ${props => props.active ? '#3b82f6' : '#4b5563'};
+    color: ${props => props.active ? '#000080' : '#4b5563'};
     background: ${props => props.active ? 'white' : '#f1f5f9'};
   }
 
@@ -332,7 +332,7 @@ export const StepNumber = styled.div`
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -371,7 +371,7 @@ export const CTAButton = styled(Link)`
   justify-content: center;
   padding: 1.125rem 2.5rem;
   background: white;
-  color: #3b82f6;
+  color: #000080;
   text-decoration: none;
   border-radius: 14px;
   font-weight: 700;
@@ -479,7 +479,7 @@ export const ResourceLink = styled.a`
 
   &:hover {
     background: #f1f5f9;
-    border-color: #3b82f6;
+    border-color: #000080;
     transform: translateY(-2px);
   }
 `;
@@ -498,7 +498,7 @@ export const FAQItem = styled.div`
   transition: all 0.3s ease;
 
   &:hover {
-    border-color: #3b82f6;
+    border-color: #000080;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   }
 `;

@@ -58,7 +58,7 @@ export const HeroTitle = styled.h1`
 `;
 
 export const GradientText = styled.span`
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -161,7 +161,7 @@ export const StatItem = styled.div`
 export const StatNumber = styled.div`
   font-size: 2.5rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -235,7 +235,7 @@ export const MemberName = styled.h3`
 
 export const MemberRole = styled.div`
   font-size: 1rem;
-  color: #3b82f6;
+  color: #000080;
   font-weight: 600;
   margin-bottom: 1rem;
 `;
@@ -272,7 +272,7 @@ export const ValueCard = styled.div`
 
 export const ValueIcon = styled.div`
   font-size: 2.5rem;
-  color: #3b82f6;
+  color: #000080;
   margin-bottom: 1.5rem;
 `;
 
@@ -307,7 +307,7 @@ export const ValuesGrid = styled.div`
 export const CTAButton = styled(Link)`
   display: inline-block;
   padding: 0.875rem 2rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   color: white;
   text-decoration: none;
   border-radius: 10px;
@@ -349,7 +349,7 @@ export const PartnerIcon = styled.div`
   cursor: pointer;
   
   &:hover {
-    color: #3b82f6;
+    color: #000080;
     transform: scale(1.1);
   }
 
@@ -376,7 +376,7 @@ export const TimelineContainer = styled.div`
     transform: translateX(-50%);
     width: 2px;
     height: 100%;
-    background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
+    background: linear-gradient(to bottom, #000080, #000080);
   }
  }
 `;
@@ -404,7 +404,7 @@ export const TimelineItem = styled.div`
 export const TimelineYear = styled.div`
   font-size: 1.3rem;
   font-weight: 700;
-  color: #3b82f6;
+  color: #000080;
   margin-bottom: 0.5rem;
 
   @media (max-width: 768px) {

@@ -353,19 +353,19 @@ const ExpertGuidelines = () => {
           margin: '0 auto'
         }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '2.5rem', fontWeight: '700', color: '#4f46e5', marginBottom: '0.5rem' }}>10,000+</div>
+            <div style={{ fontSize: '2.5rem', fontWeight: '700', color: '#000080', marginBottom: '0.5rem' }}>10,000+</div>
             <div style={{ color: '#6b7280', fontWeight: '600' }}>Active Experts</div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '2.5rem', fontWeight: '700', color: '#4f46e5', marginBottom: '0.5rem' }}>$5M+</div>
+            <div style={{ fontSize: '2.5rem', fontWeight: '700', color: '#000080', marginBottom: '0.5rem' }}>$5M+</div>
             <div style={{ color: '#6b7280', fontWeight: '600' }}>Paid to Experts</div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '2.5rem', fontWeight: '700', color: '#4f46e5', marginBottom: '0.5rem' }}>4.9/5</div>
+            <div style={{ fontSize: '2.5rem', fontWeight: '700', color: '#000080', marginBottom: '0.5rem' }}>4.9/5</div>
             <div style={{ color: '#6b7280', fontWeight: '600' }}>Average Rating</div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '2.5rem', fontWeight: '700', color: '#4f46e5', marginBottom: '0.5rem' }}>150+</div>
+            <div style={{ fontSize: '2.5rem', fontWeight: '700', color: '#000080', marginBottom: '0.5rem' }}>150+</div>
             <div style={{ color: '#6b7280', fontWeight: '600' }}>Countries Served</div>
           </div>
         </div>
@@ -452,14 +452,14 @@ const ExpertGuidelines = () => {
                         </div>
                       </FeatureItem>
                       <FeatureItem>
-                        <FaGlobe style={{ color: '#3b82f6', fontSize: '1.5rem' }} />
+                        <FaGlobe style={{ color: '#000080', fontSize: '1.5rem' }} />
                         <div>
                           <h3 style={{ color: '#111827', marginBottom: '0.25rem' }}>Global Reach</h3>
                           <p style={{ color: '#6b7280' }}>Connect with clients from 150+ countries worldwide</p>
                         </div>
                       </FeatureItem>
                       <FeatureItem>
-                        <FaShieldAlt style={{ color: '#8b5cf6', fontSize: '1.5rem' }} />
+                        <FaShieldAlt style={{ color: '#000080', fontSize: '1.5rem' }} />
                         <div>
                           <h3 style={{ color: '#111827', marginBottom: '0.25rem' }}>Secure Platform</h3>
                           <p style={{ color: '#6b7280' }}>Enterprise-grade security and reliable payment processing</p>
@@ -475,7 +475,7 @@ const ExpertGuidelines = () => {
                     </FeatureList>
 
                     <InfoCard>
-                      <FaInfoCircle style={{ fontSize: '1.5rem', color: '#3b82f6' }} />
+                      <FaInfoCircle style={{ fontSize: '1.5rem', color: '#000080' }} />
                       <div>
                         <h3 style={{ color: '#111827', marginBottom: '0.5rem' }}>Additional Perks</h3>
                         <ul style={{ color: '#6b7280', lineHeight: '1.6', paddingLeft: '1.5rem' }}>
@@ -622,7 +622,7 @@ const ExpertGuidelines = () => {
 
         <div style={{ marginTop: '4rem' }}>
           <h3 style={{ color: '#111827', fontSize: '1.5rem', marginBottom: '1.5rem' }}>
-            <FaLock style={{ color: '#4f46e5', marginRight: '0.5rem' }} />
+            <FaLock style={{ color: '#000080', marginRight: '0.5rem' }} />
             Code of Conduct
           </h3>
           <div style={{ 
@@ -645,7 +645,7 @@ const ExpertGuidelines = () => {
                   marginBottom: '0.75rem'
                 }}>
                   <FaHandshake style={{ 
-                    color: '#4f46e5', 
+                    color: '#000080', 
                     marginRight: '1rem', 
                     marginTop: '0.25rem',
                     flexShrink: 0 
@@ -740,7 +740,7 @@ const ExpertGuidelines = () => {
                 </div>
                 <div style={{ 
                   fontSize: '0.75rem', 
-                  color: '#4f46e5', 
+                  color: '#000080', 
                   fontWeight: '600',
                   background: '#f5f3ff',
                   padding: '0.25rem 0.75rem',
@@ -766,7 +766,7 @@ const ExpertGuidelines = () => {
             {faqs.map((faq, index) => (
               <FAQItem key={index}>
                 <FAQQuestion>
-                  <FaInfoCircle style={{ color: '#4f46e5', marginRight: '1rem', flexShrink: 0 }} />
+                  <FaInfoCircle style={{ color: '#000080', marginRight: '1rem', flexShrink: 0 }} />
                   {faq.question}
                 </FAQQuestion>
                 <FAQAnswer>{faq.answer}</FAQAnswer>
@@ -778,7 +778,7 @@ const ExpertGuidelines = () => {
 
       {/* Final CTA */}
       <Section style={{ 
-        background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+        background: 'linear-gradient(135deg, #000080 0%, #7c3aed 100%)',
         color: 'white',
         borderRadius: '24px',
         padding: '5rem 2rem',
@@ -799,7 +799,7 @@ const ExpertGuidelines = () => {
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           <CTAButton to="/expert/apply" style={{ 
             background: 'white', 
-            color: '#4f46e5',
+            color: '#000080',
             fontWeight: '700',
             '&:hover': {
               background: '#f9fafb'

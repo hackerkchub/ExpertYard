@@ -9,9 +9,9 @@ export const Container = styled.div`
 
   background: linear-gradient(
     to bottom,
-    #6a5acd 0%,      
-    #5f7cff 35%,     
-    #5f7cff 100%
+    #000080 0%,      
+    #000080 35%,     
+    #000080 100%
   );
 
   &::before {
@@ -21,7 +21,7 @@ export const Container = styled.div`
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(90deg, #000080 0%, #000080 100%);
     z-index: 2;
   }
 `;
@@ -90,7 +90,7 @@ export const ContentWrapper = styled.div`
 export const Title = styled.h1`
   font-size: 42px;
   font-weight: 800;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -160,7 +160,7 @@ export const SectionTitle = styled.h2`
     content: '';
     width: 4px;
     height: 28px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #000080 0%, #000080 100%);
     border-radius: 2px;
   }
 
@@ -189,7 +189,7 @@ export const Paragraph = styled.p`
   transition: border-color 0.3s ease;
 
   &:hover {
-    border-left-color: #667eea;
+    border-left-color: #000080;
   }
 
   &:last-child {
@@ -258,7 +258,7 @@ export const MobileNavToggle = styled.button`
     display: block;
     width: 24px;
     height: 2px;
-    background: ${props => props.isOpen ? '#667eea' : '#2d3748'};
+    background: ${props => props.isOpen ? '#000080' : '#2d3748'};
     transition: all 0.3s ease;
 
     &:first-child {
@@ -361,7 +361,7 @@ export const SidebarTitle = styled.h3`
     left: 0;
     width: 60px;
     height: 2px;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(90deg, #000080 0%, #000080 100%);
   }
 
   @media (max-width: 480px) {
@@ -387,7 +387,7 @@ export const NavItem = styled.li`
 
 export const NavLink = styled.a`
   text-decoration: none;
-  color: ${props => props.active ? '#667eea' : '#4a5568'};
+  color: ${props => props.active ? '#000080' : '#4a5568'};
   font-size: 15px;
   font-weight: ${props => props.active ? '600' : '400'};
   display: flex;
@@ -400,7 +400,7 @@ export const NavLink = styled.a`
   cursor: pointer;
 
   &:hover {
-    color: #667eea;
+    color: #000080;
     background: rgba(102, 126, 234, 0.05);
     transform: translateX(5px);
   }
@@ -428,7 +428,7 @@ export const ScrollToTop = styled.button`
   width: 50px;
   height: 50px;
   border-radius: 25px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   color: white;
   border: none;
   cursor: pointer;
@@ -444,7 +444,7 @@ export const ScrollToTop = styled.button`
 
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+    box-shadow: #000080;
   }
 
   @media (max-width: 768px) {
@@ -470,7 +470,7 @@ export const ProgressBar = styled.div`
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(90deg, #000080 0%, #000080 100%);
   transform-origin: 0%;
   z-index: 1001;
 `;

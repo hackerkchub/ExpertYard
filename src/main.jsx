@@ -1,94 +1,47 @@
-import { useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "styled-components";
 
-import { WalletProvider } from "./shared/context/WalletContext";
+import AppRouter from "./routes";
 import { CategoryProvider } from "./shared/context/CategoryContext";
 import { AuthProvider } from "./shared/context/UserAuthContext";
-
-// ✅ 1. API Import karein
-import { getCategoriesApi } from "./shared/api/expertapi/category.api"; 
-
-import { theme } from "./shared/styles/theme";
-import GlobalStyles from "./shared/styles/GlobalStyles";
-import AppRouter from "./routes";
+import { WalletProvider } from "./shared/context/WalletContext";
 import { soundManager } from "./shared/services/sound/soundManager";
-// import { LoaderProvider, useLoader } from "./shared/loaders/LoaderContext";
-// import GlobalLoader from "./shared/loaders/GlobalLoader";
-// import { injectUserLoader } from "./shared/api/userApi/axiosInstance";
-// import { injectExpertLoader } from "./shared/api/expertapi/axiosInstance";
-// import { injectAdminLoader } from "./shared/api/admin/axiosInstance";
-// import { injectLoader } from "./shared/api/axiosInstance";
+import GlobalStyles from "./shared/styles/GlobalStyles";
+import { theme } from "./shared/styles/theme";
 
-// ✅ 2. Render se pehle hi call trigger kar dein (Background Fetch)
 soundManager.preload();
-getCategoriesApi().catch(() => {}); 
-
-// function LoaderInjector() {
-//   const loader = useLoader();
-//   useEffect(() => {
-//     injectLoader(loader);
-//     injectUserLoader(loader);
-//     injectExpertLoader(loader);
-//     injectAdminLoader(loader);
-//   }, [loader]);
-//   return null;
-// }
 
 if ("serviceWorker" in navigator) {
-
   window.addEventListener("load", async () => {
-
     try {
-
       let registration = await navigator.serviceWorker.getRegistration();
 
       if (!registration) {
-
-        registration = await navigator.serviceWorker.register(
-          "/firebase-messaging-sw.js",
-          { scope: "/" }
-        );
-
-        console.log("✅ Firebase SW registered:", registration.scope);
-
-      } else {
-
-        console.log("🔥 Service Worker already registered:", registration.scope);
-
+        registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js", {
+          scope: "/",
+        });
+        console.log("Firebase service worker registered:", registration.scope);
       }
 
-      // IMPORTANT
       await navigator.serviceWorker.ready;
-
-      console.log("🚀 Service Worker ready for push");
-
     } catch (err) {
-
-      console.error("❌ Firebase SW registration failed:", err);
-
+      console.error("Firebase service worker registration failed:", err);
     }
-
   });
-
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <ThemeProvider theme={theme}>
     <GlobalStyles />
-    {/* <LoaderProvider>
-      <LoaderInjector />
-      <GlobalLoader /> */}
-      <CategoryProvider>
-        <BrowserRouter>
-          <AuthProvider>
-            <WalletProvider>
-              <AppRouter />
-            </WalletProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </CategoryProvider>
-    {/* </LoaderProvider> */}
+    <CategoryProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <WalletProvider>
+            <AppRouter />
+          </WalletProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </CategoryProvider>
   </ThemeProvider>
 );

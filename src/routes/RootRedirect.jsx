@@ -1,7 +1,11 @@
 import { Navigate } from "react-router-dom";
 
 export default function RootRedirect() {
+  const redirectedPath = new URLSearchParams(window.location.search).get("redirect");
 
+  if (redirectedPath && redirectedPath.startsWith("/")) {
+    return <Navigate to={redirectedPath} replace />;
+  }
   const adminToken = localStorage.getItem("admin_token");
   const expertToken = localStorage.getItem("expert_token");
   const userToken = localStorage.getItem("user_token");

@@ -2,7 +2,7 @@ import styled from 'styled-components';
 
 export const PageContainer = styled.div`
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   position: relative;
   overflow-x: hidden;
@@ -24,7 +24,7 @@ export const HeroSection = styled.section`
   padding: 100px 20px 80px;
   text-align: center;
   color: white;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%);
+  background: #000080;
   overflow: hidden;
 
   &::before {
@@ -107,7 +107,7 @@ export const SearchIcon = styled.span`
   right: 20px;
   top: 50%;
   transform: translateY(-50%);
-  color: #667eea;
+  color: #000080;
   font-size: 20px;
   cursor: pointer;
 `;
@@ -178,9 +178,9 @@ export const CategoryItem = styled.li`
   cursor: pointer;
   font-size: 16px;
   font-weight: ${props => props.active ? '600' : '400'};
-  color: ${props => props.active ? '#667eea' : '#4a5568'};
+  color: ${props => props.active ? '#000080' : '#4a5568'};
   background: ${props => props.active ? 'rgba(102, 126, 234, 0.1)' : 'transparent'};
-  border: 1px solid ${props => props.active ? '#667eea' : 'transparent'};
+  border: 1px solid ${props => props.active ? '#000080' : 'transparent'};
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
@@ -189,7 +189,7 @@ export const CategoryItem = styled.li`
   &:hover {
     background: rgba(102, 126, 234, 0.05);
     transform: translateX(5px);
-    border-color: #667eea;
+    border-color: #000080;
   }
 
   &::before {
@@ -234,7 +234,7 @@ export const CategoryTitle = styled.h3`
     left: 0;
     width: 80px;
     height: 4px;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(90deg, #000080 0%, #000080 100%);
     border-radius: 2px;
   }
 `;
@@ -289,7 +289,7 @@ export const ToggleIcon = styled.span`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: ${props => props.open ? '#667eea' : '#e2e8f0'};
+  background: ${props => props.open ? '#000080' : '#000080'};
   color: ${props => props.open ? 'white' : '#4a5568'};
   border-radius: 50%;
   font-size: 20px;
@@ -357,7 +357,7 @@ export const ContactButton = styled.button`
   gap: 8px;
 
   &.chat {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #000080 0%, #000080 100%);
     color: white;
 
     &:hover {
@@ -368,11 +368,11 @@ export const ContactButton = styled.button`
 
   &.email {
     background: white;
-    color: #667eea;
-    border: 2px solid #667eea;
+    color: #000080;
+    border: 2px solid #000080;
 
     &:hover {
-      background: #667eea;
+      background: #000080;
       color: white;
       transform: translateY(-2px);
     }
@@ -425,7 +425,7 @@ export const TopicTag = styled.span`
   transition: all 0.3s ease;
 
   &:hover {
-    background: #667eea;
+    background: #000080;
     color: white;
     transform: translateY(-2px);
   }
@@ -449,7 +449,7 @@ export const ScrollToTop = styled.button`
   width: 50px;
   height: 50px;
   border-radius: 25px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   color: white;
   border: none;
   cursor: pointer;

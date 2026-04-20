@@ -2,7 +2,7 @@ import styled from 'styled-components';
 
 export const PageContainer = styled.div`
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   position: relative;
   overflow-x: hidden;
@@ -55,7 +55,7 @@ export const HeroTitle = styled.h1`
   font-size: 56px;
   font-weight: 800;
   margin-bottom: 20px;
-  background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+  background: #000080;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -149,7 +149,7 @@ export const SectionTitle = styled.h2`
     left: 0;
     width: 60px;
     height: 4px;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(90deg, #000080 0%, #000080 100%);
     border-radius: 2px;
   }
 
@@ -161,7 +161,7 @@ export const SectionTitle = styled.h2`
     top: 0;
     font-size: 16px;
     font-weight: 600;
-    color: #667eea;
+    color: #000080;
     background: white;
     width: 30px;
     height: 30px;
@@ -183,7 +183,7 @@ export const Paragraph = styled.p`
   transition: all 0.3s ease;
 
   &:hover {
-    border-left-color: #667eea;
+    border-left-color: #000080;
     transform: translateX(5px);
   }
 
@@ -193,7 +193,7 @@ export const Paragraph = styled.p`
 `;
 
 export const HighlightText = styled.span`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -256,7 +256,7 @@ export const DataListItem = styled.li`
 
   &::before {
     content: '✓';
-    color: #667eea;
+    color: #000080;
     font-weight: bold;
   }
 `;
@@ -314,7 +314,7 @@ export const NavItem = styled.li`
 
 export const NavLink = styled.a`
   text-decoration: none;
-  color: ${props => props.active ? '#667eea' : '#4a5568'};
+  color: ${props => props.active ? '#000080' : '#4a5568'};
   font-size: 15px;
   font-weight: ${props => props.active ? '600' : '400'};
   display: flex;
@@ -324,13 +324,13 @@ export const NavLink = styled.a`
   border-radius: 12px;
   transition: all 0.3s ease;
   background: ${props => props.active ? 'rgba(102, 126, 234, 0.1)' : 'transparent'};
-  border: 1px solid ${props => props.active ? '#667eea' : 'transparent'};
+  border: 1px solid ${props => props.active ? '#000080' : 'transparent'};
 
   &:hover {
-    color: #667eea;
+    color: #000080;
     background: rgba(102, 126, 234, 0.05);
     transform: translateX(5px);
-    border-color: #667eea;
+    border-color: #000080;
   }
 
   &::before {
@@ -358,7 +358,7 @@ export const ScrollToTop = styled.button`
   width: 50px;
   height: 50px;
   border-radius: 25px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #000080 0%, #000080 100%);
   color: white;
   border: none;
   cursor: pointer;
@@ -390,13 +390,13 @@ export const FooterNote = styled.div`
 `;
 
 export const ContactLink = styled.a`
-  color: #667eea;
+  color: #000080;
   text-decoration: none;
   font-weight: 600;
   transition: all 0.3s ease;
 
   &:hover {
-    color: #764ba2;
+    color: #000080;
     text-decoration: underline;
   }
 `;
@@ -464,7 +464,7 @@ export const CookieButton = styled.button`
   transition: all 0.3s ease;
 
   &.accept {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #000080 0%, #000080 100%);
     color: white;
 
     &:hover {

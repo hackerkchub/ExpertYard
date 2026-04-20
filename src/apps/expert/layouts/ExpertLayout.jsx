@@ -8,7 +8,6 @@ import IncomingCallPopup from "../components/IncomingCallPopup";
 import { LayoutWrapper, ContentWrapper } from "./expertLayout.styles";
 
 import {
-  ExpertProvider,
   useExpert,
 } from "../../../shared/context/ExpertContext";
 
@@ -307,10 +306,8 @@ function ExpertLayoutInner() {
 
 export default function ExpertLayout() {
   return (
-    <ExpertProvider>
-      <ExpertNotificationsProvider>
-        <ExpertLayoutInner />
-      </ExpertNotificationsProvider>
-    </ExpertProvider>
+    <ExpertNotificationsProvider>
+      <ExpertLayoutInner />
+    </ExpertNotificationsProvider>
   );
 }

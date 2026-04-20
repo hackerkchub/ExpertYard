@@ -1,26 +1,39 @@
-import { useEffect, lazy, Suspense } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
-import { socket } from "../shared/api/socket";
-import { useSoundInit } from "../shared/services/sound/useSoundInit";
+import { useEffect, lazy, useMemo } from "react";
+import { Route, Routes, useLocation } from "react-router-dom";
 
-// ✅ Code Splitting (Breaking the 429KB chain)
+import { socket } from "../shared/api/socket";
+import BottomNavbar from "../shared/components/BottomNavbar/BottomNavbar";
+import NetworkStatus from "../shared/components/NetworkStatus/NetworkStatus";
+import { ExpertProvider } from "../shared/context/ExpertContext";
+import { useSoundInit } from "../shared/services/sound/useSoundInit";
+import LazyRoute from "./LazyRoute";
+import RootRedirect from "./RootRedirect";
+
 const UserAppRoutes = lazy(() => import("../apps/user/routes"));
 const ExpertAppRoutes = lazy(() => import("../apps/expert/routes"));
 const AdminAppRoutes = lazy(() => import("../apps/admin/routes"));
 
-import { ExpertProvider } from "../shared/context/ExpertContext";
-import BottomNavbar from "../shared/components/BottomNavbar/BottomNavbar";
-// import RouteLoader from "../shared/loaders/RouteLoader";
-import RootRedirect from "./RootRedirect";
-import NetworkStatus from "../shared/components/NetworkStatus/NetworkStatus";
+const APP_SHELL_STYLE = {
+  width: "100%",
+  overflowX: "hidden",
+  position: "relative",
+};
+
+const CONTENT_WRAPPER_STYLE = {
+  width: "100%",
+  overflowX: "hidden",
+};
 
 export default function AppRouter() {
   useSoundInit();
   const location = useLocation();
 
-  const showNavbar =
-    location.pathname.startsWith("/user") ||
-    location.pathname.startsWith("/expert");
+  const showNavbar = useMemo(
+    () =>
+      location.pathname.startsWith("/user") ||
+      location.pathname.startsWith("/expert"),
+    [location.pathname]
+  );
 
   useEffect(() => {
     const handleVisibility = () => {
@@ -28,48 +41,49 @@ export default function AppRouter() {
         socket.connect();
       }
     };
+
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, []);
 
   return (
-    /* Aapka Original CSS Layout - NO CHANGES HERE */
-    <div className="app-main-layout" style={{ width: "100%", overflowX: "hidden", position: "relative" }}>
+    <div className="app-main-layout" style={APP_SHELL_STYLE}>
       <NetworkStatus />
 
-         <div
-        className="main-content-wrapper"
-        style={{
-          width: "100%",
-          overflowX: "hidden"
-        }}
-      >
-        {/* <RouteLoader /> */}
-        
-        {/* <Suspense fallback={<RouteLoader />}> */}
-          <Routes>
-            <Route path="/" element={<RootRedirect />} />
-
-            {/* USER */}
-            <Route path="/user/*" element={<UserAppRoutes />} />
-
-            {/* EXPERT */}
-            <Route
-              path="/expert/*"
-              element={
-                <ExpertProvider>
+      <div className="main-content-wrapper" style={CONTENT_WRAPPER_STYLE}>
+        <Routes>
+          <Route path="/" element={<RootRedirect />} />
+          <Route
+            path="/user/*"
+            element={
+              <LazyRoute>
+                <UserAppRoutes />
+              </LazyRoute>
+            }
+          />
+          <Route
+            path="/expert/*"
+            element={
+              <ExpertProvider>
+                <LazyRoute>
                   <ExpertAppRoutes />
-                </ExpertProvider>
-              }
-            />
-
-            {/* ADMIN */}
-            <Route path="/admin/*" element={<AdminAppRoutes />} />
-          </Routes>
-        {/* </Suspense> */}
+                </LazyRoute>
+              </ExpertProvider>
+            }
+          />
+          <Route
+            path="/admin/*"
+            element={
+              <LazyRoute>
+                <AdminAppRoutes />
+              </LazyRoute>
+            }
+          />
+          <Route path="*" element={<RootRedirect />} />
+        </Routes>
       </div>
 
-      {showNavbar && <BottomNavbar />}
+      {showNavbar ? <BottomNavbar /> : null}
     </div>
   );
 }

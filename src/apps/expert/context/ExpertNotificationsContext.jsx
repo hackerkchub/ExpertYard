@@ -19,8 +19,7 @@ import {
 } from "../../../shared/api/notification.api";
 import { soundManager } from "../../../shared/services/sound/soundManager";
 import { SOUNDS } from "../../../shared/services/sound/soundRegistry";
-import { onMessage } from "firebase/messaging";
-import { messaging } from "../../../firebase/firebase";
+import { getMessagingClient } from "../../../shared/utils/lazyFirebase";
 
 const Ctx = createContext(null);
 const getStorageKey = (expertId) =>
@@ -379,18 +378,29 @@ export function ExpertNotificationsProvider({ children }) {
   }, [createIncomingCallNotification]);
 
   /* =====================================================
+  /* =====================================================
      🔥 FCM LISTENER FOR INCOMING CALLS (PRO IMPROVEMENT 1)
   ===================================================== */
   useEffect(() => {
-    if (!messaging || !expertId) return;
+    if (!expertId) return;
 
-    const unsubscribe = onMessage(messaging, (payload) => {
-      console.log("📱 FCM message received:", payload);
-      const type = payload.data?.type;
-      // FCM handling logic here
-    });
+    let unsubscribe = () => {};
+    let isActive = true;
 
-    return () => unsubscribe();
+    getMessagingClient()
+      .then((firebase) => {
+        if (!firebase?.messaging || !isActive) return;
+
+        unsubscribe = firebase.onMessage(firebase.messaging, (payload) => {
+          console.log("FCM message received:", payload);
+        });
+      })
+      .catch(() => {});
+
+    return () => {
+      isActive = false;
+      unsubscribe();
+    };
   }, [expertId, createIncomingCallNotification]);
 
   /* =====================================================

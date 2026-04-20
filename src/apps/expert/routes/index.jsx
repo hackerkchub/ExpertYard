@@ -1,46 +1,51 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import ExpertLayout from "../layouts/ExpertLayout";
-import StepAccount from "../pages/register/StepAccount";
-import StepCategory from "../pages/register/StepCategory";
-import StepSubcategory from "../pages/register/StepSubcategory";
-import StepProfile from "../pages/register/StepProfile";
-import StepPricing from "../pages/register/StepPricing";
-import Dashboard from "../pages/Dashboard";
-import Profile from "../pages/Profile/ExpertProfile";
-import MyContent from "../pages/MyContent/MyContent";
-import ExpertChat from "../pages/chat/ExpertChat";
-import ExpertChatHistory from "../pages/chat-history/ExpertChatHistory";
-import ProtectedExpertRoute from "./ProtectedExpertRoute";
+import { lazy } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
+
 import { useExpert } from "../../../shared/context/ExpertContext";
-import ExpertVoiceCall from "../pages/voice-call/ExpertVoiceCall";
-import ExpertNotificationPage from "../pages/notification/ExpertNotificationPage";
-import EarningDashboard from "../pages/earnings/ExpertEarningsDashboard";
-import Calendar from "../pages/calendar/Calendar";
-import ExpertSettings from "../pages/settings/ExpertSettings";
-import CreateService from "../pages/services/CreateServices";
-import MyServices from "../pages/services/MyServices";
-import ExpertBookings from "../pages/services/ExpertBookings";
-import SubscriptionPlan from "../pages/register/SubscriptionPlan";
-import GuidexaExpertPlan from "../pages/GuidexaExpertPlan/GuidexaExpertPlan";
+import LazyRoute from "../../../routes/LazyRoute";
+import ExpertLayout from "../layouts/ExpertLayout";
+import ProtectedExpertRoute from "./ProtectedExpertRoute";
+
+const StepAccount = lazy(() => import("../pages/register/StepAccount"));
+const StepCategory = lazy(() => import("../pages/register/StepCategory"));
+const StepSubcategory = lazy(() => import("../pages/register/StepSubcategory"));
+const StepProfile = lazy(() => import("../pages/register/StepProfile"));
+const StepPricing = lazy(() => import("../pages/register/StepPricing"));
+const Dashboard = lazy(() => import("../pages/Dashboard"));
+const Profile = lazy(() => import("../pages/Profile/ExpertProfile"));
+const MyContent = lazy(() => import("../pages/MyContent/MyContent"));
+const ExpertChat = lazy(() => import("../pages/chat/ExpertChat"));
+const ExpertChatHistory = lazy(() => import("../pages/chat-history/ExpertChatHistory"));
+const ExpertVoiceCall = lazy(() => import("../pages/voice-call/ExpertVoiceCall"));
+const ExpertNotificationPage = lazy(() => import("../pages/notification/ExpertNotificationPage"));
+const EarningDashboard = lazy(() => import("../pages/earnings/ExpertEarningsDashboard"));
+const Calendar = lazy(() => import("../pages/calendar/Calendar"));
+const ExpertSettings = lazy(() => import("../pages/settings/ExpertSettings"));
+const CreateService = lazy(() => import("../pages/services/CreateServices"));
+const MyServices = lazy(() => import("../pages/services/MyServices"));
+const ExpertBookings = lazy(() => import("../pages/services/ExpertBookings"));
+const SubscriptionPlan = lazy(() => import("../pages/register/SubscriptionPlan"));
+const GuidexaExpertPlan = lazy(() => import("../pages/GuidexaExpertPlan/GuidexaExpertPlan"));
+
+const withLazyRoute = (node) => <LazyRoute>{node}</LazyRoute>;
 
 export default function ExpertAppRoutes() {
   const { expertData } = useExpert();
 
   return (
     <Routes>
-      {/* Default redirect */}
       <Route
-  index
-  element={
-    expertData?.expertId
-      ? <Navigate to="home" />
-      : <Navigate to="register" />
-  }
-/>
+        index
+        element={
+          expertData?.expertId ? (
+            <Navigate to="home" replace />
+          ) : (
+            <Navigate to="register" replace />
+          )
+        }
+      />
 
-      {/* 🔐 PROTECTED ROUTES WITH EXPERT LAYOUT (SIDEBAR + TOPBAR) */}
       <Route element={<ExpertLayout />}>
-        {/* DASHBOARD */}
         <Route
           path="home"
           element={
@@ -48,210 +53,177 @@ export default function ExpertAppRoutes() {
               condition={expertData.expertId}
               redirectTo="/expert/register"
             >
-              <Dashboard />
+              <LazyRoute>
+                <Dashboard />
+              </LazyRoute>
             </ProtectedExpertRoute>
           }
         />
-
-         <Route
+        <Route
           path="guidexa-plan"
           element={
             <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
-              <GuidexaExpertPlan />
+              <LazyRoute>
+                <GuidexaExpertPlan />
+              </LazyRoute>
             </ProtectedExpertRoute>
           }
         />
-
-         <Route
+        <Route
           path="mybookings"
           element={
             <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
-              <ExpertBookings />
+              <LazyRoute>
+                <ExpertBookings />
+              </LazyRoute>
             </ProtectedExpertRoute>
           }
         />
-
-        
         <Route
           path="create-services"
           element={
             <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
-              <CreateService />
+              <LazyRoute>
+                <CreateService />
+              </LazyRoute>
             </ProtectedExpertRoute>
           }
         />
-
         <Route
           path="myservices"
           element={
             <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
-              <MyServices />
+              <LazyRoute>
+                <MyServices />
+              </LazyRoute>
             </ProtectedExpertRoute>
           }
         />
-
-        {/* PROFILE */}
         <Route
           path="profile"
           element={
-            <ProtectedExpertRoute
-              condition={expertData.expertId}
-              redirectTo="/expert/home"
-            >
-              <Profile />
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <LazyRoute>
+                <Profile />
+              </LazyRoute>
             </ProtectedExpertRoute>
           }
         />
-
-        {/* MY CONTENT */}
         <Route
           path="my-content"
           element={
-            <ProtectedExpertRoute
-              condition={expertData.expertId}
-              redirectTo="/expert/home"
-            >
-              <MyContent />
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <LazyRoute>
+                <MyContent />
+              </LazyRoute>
             </ProtectedExpertRoute>
           }
         />
-        {/* SETTINGS */}
         <Route
           path="settings"
           element={
-            <ProtectedExpertRoute
-              condition={expertData.expertId}
-              redirectTo="/expert/home"
-            >
-              <ExpertSettings />
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <LazyRoute>
+                <ExpertSettings />
+              </LazyRoute>
             </ProtectedExpertRoute>
           }
         />
-        
-        {/* 📅 CALENDAR - NOW INSIDE LAYOUT ✅ */}
         <Route
           path="calendar"
           element={
-            <ProtectedExpertRoute
-              condition={expertData.expertId}
-              redirectTo="/expert/home"
-            >
-              <Calendar />
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <LazyRoute>
+                <Calendar />
+              </LazyRoute>
             </ProtectedExpertRoute>
           }
         />
-
-        {/* 💰 EARNINGS - NOW INSIDE LAYOUT ✅ */}
         <Route
           path="earnings"
           element={
-            <ProtectedExpertRoute
-              condition={expertData.expertId}
-              redirectTo="/expert/home"
-            >
-              <EarningDashboard />
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <LazyRoute>
+                <EarningDashboard />
+              </LazyRoute>
             </ProtectedExpertRoute>
           }
         />
-
-        {/* 💬 LIVE CHAT ROUTES */}
         <Route
           path="chat"
           element={
-            <ProtectedExpertRoute
-              condition={expertData.expertId}
-              redirectTo="/expert/home"
-            >
-              <ExpertChat />
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <LazyRoute>
+                <ExpertChat />
+              </LazyRoute>
             </ProtectedExpertRoute>
           }
         />
-
         <Route
           path="chat/:room_id"
           element={
-            <ProtectedExpertRoute
-              condition={expertData.expertId}
-              redirectTo="/expert/home"
-            >
-              <ExpertChat />
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <LazyRoute>
+                <ExpertChat />
+              </LazyRoute>
             </ProtectedExpertRoute>
           }
         />
-
-        {/* 📋 CHAT HISTORY ROUTES */}
         <Route
           path="chat-history"
           element={
-            <ProtectedExpertRoute
-              condition={expertData.expertId}
-              redirectTo="/expert/home"
-            >
-              <ExpertChatHistory />
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <LazyRoute>
+                <ExpertChatHistory />
+              </LazyRoute>
             </ProtectedExpertRoute>
           }
         />
-
         <Route
           path="chat-history/:session_id"
           element={
-            <ProtectedExpertRoute
-              condition={expertData.expertId}
-              redirectTo="/expert/home"
-            >
-              <ExpertChatHistory />
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <LazyRoute>
+                <ExpertChatHistory />
+              </LazyRoute>
             </ProtectedExpertRoute>
           }
         />
-
-        {/* 🔔 NOTIFICATIONS - INSIDE LAYOUT (with sidebar) */}
         <Route
           path="notifications"
           element={
-            <ProtectedExpertRoute
-              condition={expertData.expertId}
-              redirectTo="/expert/home"
-            >
-              <ExpertNotificationPage />
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <LazyRoute>
+                <ExpertNotificationPage />
+              </LazyRoute>
             </ProtectedExpertRoute>
           }
         />
       </Route>
 
-      {/* 📞 VOICE CALL - OUTSIDE LAYOUT (FULL SCREEN) ✅ */}
       <Route
         path="voice-call/:callId"
         element={
-          <ProtectedExpertRoute
-            condition={expertData.expertId}
-            redirectTo="/expert/home"
-          >
-            <ExpertVoiceCall />
+          <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+            <LazyRoute>
+              <ExpertVoiceCall />
+            </LazyRoute>
           </ProtectedExpertRoute>
         }
       />
 
-      {/* 🔓 REGISTER FLOW - NO LAYOUT */}
-      <Route path="register" element={<StepAccount />} />
-
-       <Route
-  path="register/subscription"
-  element={<SubscriptionPlan />}
-/>
-
-      
+      <Route path="register" element={withLazyRoute(<StepAccount />)} />
+      <Route path="register/subscription" element={withLazyRoute(<SubscriptionPlan />)} />
       <Route
         path="register/category"
         element={
-          <ProtectedExpertRoute
-            condition={expertData.expertId}
-            redirectTo="/expert/home"
-          >
-            <StepCategory />
+          <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+            <LazyRoute>
+              <StepCategory />
+            </LazyRoute>
           </ProtectedExpertRoute>
         }
       />
-      
       <Route
         path="register/subcategory"
         element={
@@ -259,11 +231,12 @@ export default function ExpertAppRoutes() {
             condition={expertData.expertId && expertData.categoryId}
             redirectTo="/expert/register/category"
           >
-            <StepSubcategory />
+            <LazyRoute>
+              <StepSubcategory />
+            </LazyRoute>
           </ProtectedExpertRoute>
         }
       />
-       
       <Route
         path="register/profile"
         element={
@@ -275,24 +248,23 @@ export default function ExpertAppRoutes() {
             }
             redirectTo="/expert/register/subcategory"
           >
-            <StepProfile />
+            <LazyRoute>
+              <StepProfile />
+            </LazyRoute>
           </ProtectedExpertRoute>
         }
       />
-      
       <Route
         path="register/pricing"
         element={
-          <ProtectedExpertRoute
-            condition={expertData.expertId}
-            redirectTo="/expert/register/profile"
-          >
-            <StepPricing />
+          <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/register/profile">
+            <LazyRoute>
+              <StepPricing />
+            </LazyRoute>
           </ProtectedExpertRoute>
         }
       />
 
-      {/* 404 Fallback */}
       <Route path="*" element={<h1>Expert 404 - Page Not Found</h1>} />
     </Routes>
   );

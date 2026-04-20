@@ -59,6 +59,9 @@ const CreateService = () => {
         setMessage({ type: "success", text: "Service published successfully!" });
         setFormData({ title: "", deliverables: "", description: "", price: "" });
         setImageFile(null);
+         setTimeout(() => {
+      navigate("/expert/myservices");
+    }, 800);
       }
     } catch (error) {
       setMessage({ type: "error", text: error.response?.data?.message || "Failed to create service" });

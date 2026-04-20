@@ -94,8 +94,6 @@ const {
         <Categories />
         <PopularServices/>
       </div>
-      
-     
       <HowItWorks />
       {/* <Testimonials /> */}
     </>

@@ -1,211 +1,221 @@
+/* ================= FIREBASE IMPORTS ================= */
+
 importScripts("https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js");
 
+/* ================= WORKBOX IMPORTS ================= */
+
+importScripts("https://storage.googleapis.com/workbox-cdn/releases/6.5.4/workbox-sw.js");
+
+// Disable Workbox logs in production
+self.__WB_DISABLE_DEV_LOGS = true;
+
+/* ================= IMMEDIATE ACTIVATION (CRITICAL) ================= */
+// ⚡ BOTH are required for instant updates
+workbox.core.skipWaiting();      // Forces waiting SW to activate
+workbox.core.clientsClaim();      // Takes control of all clients immediately
+
+/* ================= CACHE VERSIONING ================= */
+
+const IMAGE_CACHE = 'images-cache-v2';
+const API_CACHE = 'api-cache-v2';
+const STATIC_CACHE = 'static-cache-v2';
+const PRECACHE_VERSION = 'v2';  // ⚡ Increment on every deploy (v1 → v2 → v3)
+
+/* ================= PRECACHING (NO DUPLICATION) ================= */
+// ⚡ Only cache index.html, not root (prevents duplicate cache entries)
+
+workbox.precaching.precacheAndRoute([
+  { url: '/index.html', revision: PRECACHE_VERSION },
+  { url: '/logo-192.png', revision: PRECACHE_VERSION },
+  { url: '/logo-512.png', revision: PRECACHE_VERSION },
+  { url: '/manifest.json', revision: PRECACHE_VERSION },
+]);
+
+/* ================= FIREBASE INITIALIZATION ================= */
+
 firebase.initializeApp({
-  apiKey: "AIzaSyDSPw3lTarBu6X0rTqM8KLNVh7Av6XgKXI",
+  apiKey: "AIzaSyDSP...",            // Replace with your full key
   authDomain: "expert-yard-f2d19.firebaseapp.com",
   projectId: "expert-yard-f2d19",
   storageBucket: "expert-yard-f2d19.firebasestorage.app",
   messagingSenderId: "172378612980",
-  appId: "1:172378612980:web:2550393e0c0e155d76aaa1",
-  measurementId: "G-2XTQD0S6XD"
+  appId: "1:172378612980:web:2550393e0c0e155d76aaa1"
 });
 
 const messaging = firebase.messaging();
 
-/* ================= BACKGROUND MESSAGE ================= */
+/* ================= BACKGROUND MESSAGE HANDLER ================= */
 
 messaging.onBackgroundMessage(async (payload) => {
-
-  console.log("📩 Background FCM:", payload);
-
   const type = payload.data?.type;
-
   const title = payload.data?.title || "Notification";
   const body = payload.data?.body || "";
-
   const tag =
     payload.data?.request_id ||
     payload.data?.callId ||
     payload.data?.type;
 
+  // Avoid duplicate notifications using tag
   const existing = await self.registration.getNotifications({ tag });
+  if (existing.length > 0) return;
 
-if (existing.length > 0) return;
-// ❌ DO NOT show popup for real call
-if (type === "voice_call") return;
+  // Ignore voice call notifications (handled by your app UI)
+  if (type === "voice_call") return;
 
-// ✅ show for everything else
-self.registration.showNotification(title, {
-  body,
-  icon: "/logo-192.png",
-  badge: "/logo-192.png",
-  tag,
-  data: payload.data
+  self.registration.showNotification(title, {
+    body,
+    icon: "/logo-192.png",
+    badge: "/logo-192.png",
+    tag,
+    data: payload.data
+  });
 });
-});
 
-/* ================= NOTIFICATION CLICK ================= */
+/* ================= NOTIFICATION CLICK HANDLER ================= */
 
 self.addEventListener("notificationclick", (event) => {
-
   event.notification.close();
 
   const data = event.notification?.data || {};
-
-  const url =
-    data.url ||
-    data.click_action ||
-    "/";
+  const url = data.url || data.click_action || "/";
 
   event.waitUntil(
-
     clients.matchAll({ type: "window", includeUncontrolled: true })
       .then((clientList) => {
-
         for (const client of clientList) {
-
-          if (client.url.includes(self.location.origin) && "focus" in client) {
-
+          if (client.url.includes(self.location.origin)) {
             client.navigate(url);
             return client.focus();
-
           }
-
         }
-
         return clients.openWindow(url);
-
       })
-
   );
-
 });
 
-/* ================= ADDED CACHE & FETCH LOGIC ================= */
+/* ================= SMART CACHE CLEANUP ON ACTIVATE ================= */
+// ⚡ Never delete Workbox precache (regardless of version naming)
 
-const CACHE_NAME = "expert-yard-v1";
-const API_CACHE = "api-cache-v1";
+self.addEventListener('activate', (event) => {
+  const keepCaches = [IMAGE_CACHE, API_CACHE, STATIC_CACHE];
 
-/* ================= INSTALL ================= */
-
-self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll([
-        "/",
-        "/index.html",
-        "/logo-192.png",
-        "/logo-512.png"
-      ]);
-    })
-  );
-  // Force waiting service worker to become active
-  self.skipWaiting();
-});
-
-/* ================= ACTIVATE ================= */
-
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME && cacheName !== API_CACHE) {
-            return caches.delete(cacheName);
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys.map((key) => {
+          // ⚡ CRITICAL: Keep ANY cache that includes 'workbox-precache'
+          if (!keepCaches.includes(key) && !key.includes('workbox-precache')) {
+            console.log(`[SW] Deleting old cache: ${key}`);
+            return caches.delete(key);
           }
         })
-      );
-    })
+      )
+    )
   );
-  return self.clients.claim();
 });
 
-/* ================= FETCH (MAIN FIX) ================= */
+/* ================= WORKBOX CACHING STRATEGIES ================= */
 
-self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return;
+// ---------- IMAGES (StaleWhileRevalidate + Expiration) ----------
+workbox.routing.registerRoute(
+  ({ request }) => request.destination === 'image',
+  new workbox.strategies.StaleWhileRevalidate({
+    cacheName: IMAGE_CACHE,
+    plugins: [
+      new workbox.expiration.ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+      }),
+      new workbox.cacheableResponse.CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
+    ],
+  })
+);
 
-  const url = new URL(event.request.url);
+// ---------- API CALLS (NetworkFirst – ONLY /api/* endpoints) ----------
+// ⚡ Supports both same-origin AND custom domain
+workbox.routing.registerRoute(
+  ({ url }) =>
+    (url.origin === self.location.origin || url.hostname.includes("softmaxs.com")) &&
+    url.pathname.startsWith("/api"),
+  new workbox.strategies.NetworkFirst({
+    cacheName: API_CACHE,
+    networkTimeoutSeconds: 5,  // ⚡ 5 seconds for weak networks
+    plugins: [
+      new workbox.expiration.ExpirationPlugin({
+        maxEntries: 20,
+        maxAgeSeconds: 5 * 60, // 5 minutes
+      }),
+      new workbox.cacheableResponse.CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
+    ],
+  })
+);
 
-  // 👉 IMAGE CACHE (TOP PRIORITY - handled first)
-  if (event.request.destination === "image") {
-    event.respondWith(
-      caches.match(event.request).then((cached) => {
-        if (cached) return cached;
-
-        return fetch(event.request)
-          .then((res) => {
-            // Allow opaque responses as well
-            if (res && (res.status === 200 || res.type === "opaque")) {
-              const clone = res.clone();
-              caches.open(CACHE_NAME).then((cache) => {
-                cache.put(event.request, clone);
-              });
-            }
-            return res;
-          })
-          .catch(() => {
-            return new Response("", { status: 404 });
-          });
-      })
+// ---------- STATIC FILES (JS, CSS, HTML) – exclude dev files ----------
+workbox.routing.registerRoute(
+  ({ request, url }) => {
+    // Ignore development files (Vite, source maps, etc.)
+    if (
+      url.pathname.startsWith('/src') ||
+      url.pathname.startsWith('/@vite') ||
+      url.pathname.startsWith('/node_modules')
+    ) {
+      return false;
+    }
+    return (
+      request.destination === 'script' ||
+      request.destination === 'style' ||
+      request.destination === 'document'
     );
-    return;
+  },
+  new workbox.strategies.StaleWhileRevalidate({
+    cacheName: STATIC_CACHE,
+    plugins: [
+      new workbox.expiration.ExpirationPlugin({
+        maxEntries: 30,
+        maxAgeSeconds: 24 * 60 * 60, // 1 day
+      }),
+    ],
+  })
+);
+
+/* ================= NAVIGATION ROUTE FIX (REACT ROUTER) ================= */
+// ⚡ Whitelist navigation, exclude API & dev routes
+
+workbox.routing.registerRoute(
+  new workbox.routing.NavigationRoute(
+    workbox.precaching.createHandlerBoundToURL('/index.html'),
+    {
+      denylist: [
+        /^\/api/,
+        /^\/_vite/,
+        /^\/src/,
+        /^\/node_modules/,
+        /.*\.(?:js|css|png|jpg|jpeg|svg)$/
+      ],
+    }
+  )
+);
+/* ================= STRONG OFFLINE FALLBACKS ================= */
+// ⚡ Handles missing cache scenarios gracefully
+
+workbox.routing.setCatchHandler(async ({ event }) => {
+  // Fallback for images: try cache first, then use default
+  if (event.request.destination === 'image') {
+    const cachedFallback = await caches.match('/logo-192.png');
+    return cachedFallback || Response.error();
   }
 
-  // 👉 API caching for softmaxs.com domain (only pure API calls, not images)
- if (
-  url.hostname.includes("softmaxs.com") && 
-  event.request.destination === ""
-) {
-  event.respondWith(
-    fetch(event.request)
-      .then((res) => {
-        // cache updated response
-        if (res && (res.status === 200 || res.type === "opaque")) {
-          const clone = res.clone();
-          caches.open(API_CACHE).then((cache) => {
-            cache.put(event.request, clone);
-          });
-        }
-        return res;
-      })
-      .catch(() => {
-        // fallback to cache only if network fails
-        return caches.match(event.request);
-      })
-  );
-  return;
-}
+  // Fallback for navigation requests: serve the app shell (index.html)
+  if (event.request.mode === 'navigate') {
+    const cachedIndex = await caches.match('/index.html');
+    return cachedIndex || Response.error();
+  }
 
-  // 👉 Static files caching (HTML, CSS, JS, fonts, etc.)
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) {
-        return cached;
-      }
-      
-      return fetch(event.request)
-        .then((response) => {
-          // Cache valid responses for static assets (allow opaque)
-          if (response && (response.status === 200 || response.type === "opaque")) {
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          // Fallback to index.html for navigation requests
-          if (event.request.mode === 'navigate') {
-            return caches.match('/index.html');
-          }
-          return new Response('Offline content not available', {
-            status: 404,
-            statusText: 'Not Found'
-          });
-        });
-    })
-  );
+  // For everything else, return a generic error
+  return Response.error();
 });

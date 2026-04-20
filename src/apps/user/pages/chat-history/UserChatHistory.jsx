@@ -444,6 +444,17 @@ export const UserChatHistory = () => {
     }
   }, [isLoggedIn, navigate, balance, expertPricing, fetchExpertPricing, expertById]);
 
+  const handleBack = useCallback(() => {
+  const from = location.state?.from;
+  const expertId = location.state?.expertId;
+
+  if (from === "chat" && expertId) {
+    navigate(`/user/experts/${expertId}`, { replace: true });
+  } else {
+    navigate(-1);
+  }
+}, [location.state, navigate]);
+
   // Filter chat history
   const filteredCounterparties = useMemo(() => {
     let arr = [...(counterparties || [])];

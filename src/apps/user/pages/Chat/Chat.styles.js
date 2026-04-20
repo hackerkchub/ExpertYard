@@ -112,7 +112,8 @@ export const ChatGlobalStyle = createGlobalStyle`
 export const PageWrap = styled.div`
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  height: 100vh;
+height: -webkit-fill-available;
   width: 100%;
   background: #f4f2ee;
   position: fixed;
@@ -395,7 +396,7 @@ export const InputBar = styled.div`
   align-items: center;
   gap: 10px;
   padding: 10px 16px;
-  position: relative;
+  position: sticky;
   padding-bottom: calc(10px + env(safe-area-inset-bottom));
   transition: all 0.2s;
   

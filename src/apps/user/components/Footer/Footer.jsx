@@ -153,7 +153,7 @@ const Footer = () => {
         </BottomLinks> */}
         
         <Copyright>
-          © {new Date().getFullYear()} Guidexa.com. All rights reserved. Guidexa is a registered trademark.
+          © {new Date().getFullYear()} Guidexa.in All rights reserved. Guidexa is a registered trademark.
         </Copyright>
       </Container>
     </Wrapper>

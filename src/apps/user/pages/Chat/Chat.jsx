@@ -288,36 +288,36 @@ const Chat = () => {
     navigate("/user");
   };
 
-  // Improved keyboard handling
-  useEffect(() => {
-    if (!isMobile) return;
+  // // Improved keyboard handling
+  // useEffect(() => {
+  //   if (!isMobile) return;
 
-    let viewportHeight = window.visualViewport?.height || window.innerHeight;
-    let originalHeight = window.innerHeight;
+  //   let viewportHeight = window.visualViewport?.height || window.innerHeight;
+  //   let originalHeight = window.innerHeight;
 
-    const handleResize = () => {
-      const currentHeight = window.visualViewport?.height || window.innerHeight;
-      const keyboardOpen = currentHeight < originalHeight - 100;
+  //   const handleResize = () => {
+  //     const currentHeight = window.visualViewport?.height || window.innerHeight;
+  //     const keyboardOpen = currentHeight < originalHeight - 100;
       
-      setIsKeyboardOpen(keyboardOpen);
+  //     setIsKeyboardOpen(keyboardOpen);
       
-      if (keyboardOpen && messagesContainerRef.current) {
-        setTimeout(() => {
-          scrollRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }, 100);
-      }
-    };
+  //     if (keyboardOpen && messagesContainerRef.current) {
+  //       setTimeout(() => {
+  //         scrollRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  //       }, 100);
+  //     }
+  //   };
 
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleResize);
-    }
+  //   if (window.visualViewport) {
+  //     window.visualViewport.addEventListener('resize', handleResize);
+  //   }
 
-    return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleResize);
-      }
-    };
-  }, [isMobile]);
+  //   return () => {
+  //     if (window.visualViewport) {
+  //       window.visualViewport.removeEventListener('resize', handleResize);
+  //     }
+  //   };
+  // }, [isMobile]);
 
   // Socket events
   useEffect(() => {

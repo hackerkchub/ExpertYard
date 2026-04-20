@@ -47,7 +47,7 @@ const AllServices = () => {
   }, [experts]);
 
   const handleGoToMyBookings = () => {
-    isLoggedIn && user?.id ? navigate(`/user/my-booking/${user.id}`) : navigate("/login");
+    isLoggedIn && user?.id ? navigate(`/user/my-booking/${user.id}`) : navigate("/user/auth");
   };
 
   // Professional Skeleton Loader

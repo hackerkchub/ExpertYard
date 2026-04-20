@@ -61,11 +61,14 @@ const MyBookings = () => {
           <S.BookingList>
             {bookings.map((booking) => (
               <S.BookingCard key={booking.id}>
-                <S.ServiceImage 
-                  src={`http://localhost:5000/${booking.service_image}`} 
-                  alt={booking.service_title} 
-                  onError={(e) => { e.target.src = "https://via.placeholder.com/100"; }}
-                />
+             <S.ServiceImage 
+  src={`https://softmaxs.com/${booking.service_image}`} 
+  alt={booking.service_title} 
+  onError={(e) => {
+    e.target.onerror = null;
+    e.target.src = "https://placehold.co/100x100?text=No+Image";
+  }}
+/>
                 
                 <S.BookingInfo>
                   <div className="top-row">

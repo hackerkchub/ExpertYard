@@ -20,8 +20,6 @@ import {
 import { soundManager } from "../../../shared/services/sound/soundManager";
 import { SOUNDS } from "../../../shared/services/sound/soundRegistry";
 import { getMessagingClient } from "../../../shared/utils/lazyFirebase";
-import { persistActiveCallSession } from "../../../shared/utils/callSession";
-
 const Ctx = createContext(null);
 const getStorageKey = (expertId) =>
   expertId ? `expert_notifications_${expertId}` : "expert_notifications_guest";
@@ -875,17 +873,7 @@ export function ExpertNotificationsProvider({ children }) {
         expertId: Number(expertId),
       });
 
-      persistActiveCallSession({
-        role: "expert",
-        callId: Number(notification.payload.callId),
-        expertId: Number(expertId),
-        callState: "incoming",
-        routePath: `/expert/voice-call/${notification.payload.callId}`,
-        callerName:
-          notification.payload?.user_name ||
-          notification.title?.replace("Incoming call from ", "") ||
-          "User",
-      });
+     
       
       // Broadcast to other tabs
       if (broadcastChannel.current) {

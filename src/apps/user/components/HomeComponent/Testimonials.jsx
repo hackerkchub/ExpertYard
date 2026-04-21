@@ -2,22 +2,22 @@ import React from "react";
 
 const reviews = [
   {
-    name: "Aarav",
-    role: "Career consultation",
+    name: "Priya S.",
+    role: "Career guidance",
     quote:
-      "I found a verified expert quickly, understood the pricing up front, and got useful guidance in one session.",
+      "I needed help with a job switch and resume direction. The expert was easy to find, the conversation felt professional, and the advice was directly useful.",
   },
   {
-    name: "Neha",
-    role: "Legal support",
+    name: "Rohit M.",
+    role: "Legal advice",
     quote:
-      "The profile details and user ratings helped me choose with confidence. The process felt private and professional.",
+      "I had questions before signing a document and wanted clear legal guidance online. The profile details and ratings helped me choose someone I could trust.",
   },
   {
-    name: "Rahul",
-    role: "Finance advice",
+    name: "Ananya K.",
+    role: "Parenting advice",
     quote:
-      "Fast response time, clean experience, and no unnecessary steps before connecting to the right person.",
+      "I was looking for parenting advice and did not want to spend time guessing who to talk to. The platform felt private, fast, and straightforward.",
   },
 ];
 
@@ -27,10 +27,10 @@ export default function Testimonials() {
       <div className="section-header">
         <div className="section-heading-block">
           <span className="section-kicker">Real user ratings</span>
-          <h2>What users say after connecting on ExpertYard</h2>
+          <h2>What users say after getting expert advice online</h2>
           <p>
-            Static testimonials keep the section fast while still reinforcing trust, clarity,
-            and service quality.
+            Lightweight testimonials reinforce trust without sliders, autoplay, or extra client
+            complexity.
           </p>
         </div>
       </div>

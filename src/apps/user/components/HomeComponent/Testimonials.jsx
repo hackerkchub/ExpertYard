@@ -1,50 +1,49 @@
-import React, { useRef } from 'react';
+import React from "react";
 
 const reviews = [
-  "Great advice, very helpful!",
-  "The best consultation I've had!",
-  "Quick and insightful responses!",
-  "Very professional and knowledgeable!",
-  "Solved my issue in minutes!",
+  {
+    name: "Aarav",
+    role: "Career consultation",
+    quote:
+      "I found a verified expert quickly, understood the pricing up front, and got useful guidance in one session.",
+  },
+  {
+    name: "Neha",
+    role: "Legal support",
+    quote:
+      "The profile details and user ratings helped me choose with confidence. The process felt private and professional.",
+  },
+  {
+    name: "Rahul",
+    role: "Finance advice",
+    quote:
+      "Fast response time, clean experience, and no unnecessary steps before connecting to the right person.",
+  },
 ];
 
 export default function Testimonials() {
-  const scrollRef = useRef(null);
-
-  const scroll = (direction) => {
-    if (scrollRef.current) {
-      const cardWidth = window.innerWidth <= 640 ? 280 : 360;
-      scrollRef.current.scrollBy({
-        left: direction === 'left' ? -cardWidth : cardWidth,
-        behavior: 'smooth'
-      });
-    }
-  };
-
   return (
     <section className="section-whatusersay">
       <div className="section-header">
-        <h2>What Our Users Say</h2>
-        <div className="scroll-buttons">
-          <button className="scroll-btn" onClick={() => scroll('left')} aria-label="Scroll left">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          <button className="scroll-btn" onClick={() => scroll('right')} aria-label="Scroll right">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+        <div className="section-heading-block">
+          <span className="section-kicker">Real user ratings</span>
+          <h2>What users say after connecting on ExpertYard</h2>
+          <p>
+            Static testimonials keep the section fast while still reinforcing trust, clarity,
+            and service quality.
+          </p>
         </div>
       </div>
-      
-      <div className="testimonial-row" ref={scrollRef}>
-        {reviews.map((text, i) => (
-          <div className="testimonial-card" key={i}>
-            <div className="avatar">🙂</div>
-            <div className="rating">★★★★★</div>
-            <p>{text}</p>
+
+      <div className="testimonial-grid">
+        {reviews.map((review) => (
+          <div className="testimonial-card" key={review.name}>
+            <div className="testimonial-rating">4.9/5 user-rated</div>
+            <p>{review.quote}</p>
+            <div className="testimonial-meta">
+              <strong>{review.name}</strong>
+              <span>{review.role}</span>
+            </div>
           </div>
         ))}
       </div>

@@ -2,20 +2,16 @@ import React from "react";
 
 const steps = [
   {
-    title: "Find Your Expert",
-    desc: "Browse through our verified experts by category or rating."
+    title: "Choose a category or expert",
+    desc: "Browse verified profiles across legal, health, career, relationship, parenting, and other real-life needs.",
   },
   {
-    title: "Instant Connection",
-    desc: "Start a real-time chat session within seconds, no waiting."
+    title: "Start chat or call",
+    desc: "Pick the expert that fits your need, review trust signals, and begin a private online consultation.",
   },
   {
-    title: "Get Expert Advice",
-    desc: "Discuss your queries securely with professional guidance."
-  },
-  {
-    title: "Solve & Grow",
-    desc: "Receive actionable solutions and complete your consultation."
+    title: "Get guidance quickly",
+    desc: "Receive practical advice for day-to-day decisions without a long signup flow or unnecessary steps.",
   },
 ];
 
@@ -24,15 +20,17 @@ export default function HowItWorks() {
     <section className="section-howitworks">
       <div className="header-container">
         <h2>How it works</h2>
-        <p className="subtitle">Simple steps to get professional solutions instantly</p>
+        <p className="subtitle">
+          A simple three-step flow to help users find trusted guidance quickly
+        </p>
       </div>
-      
+
       <div className="steps-wrapper">
         <div className="steps-grid">
-          {steps.map((step, i) => (
-            <div className="step-card" key={i}>
+          {steps.map((step, index) => (
+            <div className="step-card" key={step.title}>
               <div className="step-number-box">
-                <span className="step-num">{i + 1}</span>
+                <span className="step-num">{index + 1}</span>
               </div>
               <div className="step-content">
                 <h4>{step.title}</h4>

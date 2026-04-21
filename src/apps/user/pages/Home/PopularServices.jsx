@@ -154,7 +154,7 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.1rem;
   padding: 0 1.5rem;
   width: 100%;
 
@@ -182,6 +182,12 @@ const Header = styled.div`
     flex-direction: column;
     align-items: flex-start;
     padding: 0 1rem;
+    gap: 0.85rem;
+    margin-bottom: 0.9rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0 0.85rem;
   }
 `;
 
@@ -208,34 +214,43 @@ const ViewAllBtn = styled.button`
 const HorizontalScrollContainer = styled.div`
   display: flex;
   overflow-x: auto;
-  gap: 1rem;
-  padding: 0.25rem 1.5rem 0.25rem;
+  gap: clamp(0.8rem, 1.6vw, 1.1rem);
+  padding: 0.25rem 1.5rem 0.4rem;
   scroll-behavior: smooth;
   scrollbar-width: none;
   scroll-snap-type: x proximity;
+  align-items: stretch;
 
   &::-webkit-scrollbar {
     display: none;
   }
 
   & > div {
-    flex: 0 0 min(320px, calc(33.33% - 0.75rem));
+    flex: 0 0 clamp(260px, calc((100% - 2 * clamp(0.8rem, 1.6vw, 1.1rem)) / 3), 320px);
     scroll-snap-align: start;
   }
 
-  @media (max-width: 768px) {
-    padding: 0.25rem 1rem 0.25rem;
-
+  @media (min-width: 1280px) {
     & > div {
-      flex: 0 0 74%;
-      min-width: 250px;
+      flex-basis: clamp(250px, calc((100% - 3 * clamp(0.8rem, 1.6vw, 1.1rem)) / 4), 300px);
     }
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 768px) {
+    gap: 0.8rem;
+    padding: 0.25rem 1rem 0.35rem;
+
     & > div {
-      flex: 0 0 86%;
-      min-width: 240px;
+      flex: 0 0 calc((100% - 0.8rem) / 2);
+      min-width: 0;
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.25rem 0.85rem 0.35rem;
+
+    & > div {
+      flex: 0 0 calc((100% - 0.8rem) / 2);
     }
   }
 `;
@@ -248,7 +263,8 @@ const ServiceCard = styled.div`
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  min-height: clamp(300px, 34vw, 370px);
+  height: 100%;
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 
@@ -257,11 +273,21 @@ const ServiceCard = styled.div`
     border-color: rgba(0, 0, 128, 0.2);
     box-shadow: 0 24px 52px rgba(15, 23, 42, 0.14);
   }
+
+  @media (max-width: 768px) {
+    min-height: 290px;
+    border-radius: 22px;
+  }
+
+  @media (max-width: 480px) {
+    min-height: 270px;
+    border-radius: 20px;
+  }
 `;
 
 const ImageContainer = styled.div`
   width: 100%;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 16 / 9;
   background:
     radial-gradient(circle at top right, rgba(255, 255, 255, 0.4), transparent 35%),
     linear-gradient(135deg, #e8eefc, #f7fafc);
@@ -296,77 +322,120 @@ const ImageContainer = styled.div`
     font-weight: 700;
     letter-spacing: 0.03em;
   }
+
+  @media (max-width: 768px) {
+    aspect-ratio: 16 / 10;
+
+    .service-badge {
+      left: 0.75rem;
+      top: 0.75rem;
+      min-height: 30px;
+      padding: 0.28rem 0.62rem;
+      font-size: 0.68rem;
+    }
+  }
 `;
 
 const CardBody = styled.div`
-  padding: 1rem 1rem 1.1rem;
+  padding: 0.95rem 0.95rem 1rem;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.65rem;
 
   .service-title {
-    font-size: 1.06rem;
+    font-size: 1rem;
     font-weight: 700;
     color: #111827;
     margin: 0;
-    line-height: 1.35;
+    line-height: 1.3;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    min-height: 2.8rem;
+    min-height: 2.6rem;
     font-family: Georgia, "Times New Roman", serif;
   }
 
   .service-description {
     margin: 0;
-    font-size: 0.93rem;
-    line-height: 1.65;
+    font-size: 0.9rem;
+    line-height: 1.55;
     color: #526071;
-    min-height: 3rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.8rem;
   }
 
   .price-tag {
     color: #000080;
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 700;
     white-space: nowrap;
   }
 
   .expert-name {
-    font-size: 0.83rem;
+    font-size: 0.82rem;
     color: #475467;
     margin: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 70%;
+    max-width: 68%;
   }
 
   .footer-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.75rem;
+    gap: 0.6rem;
     margin-top: auto;
-    padding-top: 0.2rem;
+    padding-top: 0.15rem;
   }
 
-  @media (max-width: 600px) {
-    padding: 0.9rem;
+  @media (min-width: 1024px) {
+    padding: 1rem 1rem 1.05rem;
 
     .service-title {
-      font-size: 0.98rem;
+      font-size: 1.03rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.85rem 0.85rem 0.95rem;
+    gap: 0.55rem;
+
+    .service-title {
+      font-size: 0.95rem;
+      min-height: 2.45rem;
     }
 
     .service-description {
-      font-size: 0.88rem;
-      min-height: 2.8rem;
+      font-size: 0.84rem;
+      min-height: 2.55rem;
     }
 
     .price-tag {
-      font-size: 0.98rem;
+      font-size: 0.94rem;
+    }
+
+    .expert-name {
+      font-size: 0.76rem;
+      max-width: 62%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.8rem;
+
+    .service-title {
+      font-size: 0.92rem;
+    }
+
+    .service-description {
+      font-size: 0.82rem;
     }
   }
 `;
@@ -377,6 +446,7 @@ const ServiceSkeleton = styled.div`
   border: 1px solid rgba(148, 163, 184, 0.16);
   overflow: hidden;
   padding-bottom: 1rem;
+  min-height: clamp(300px, 34vw, 370px);
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.05);
 
   .media,
@@ -387,7 +457,7 @@ const ServiceSkeleton = styled.div`
   }
 
   .media {
-    aspect-ratio: 16 / 10;
+    aspect-ratio: 16 / 9;
     margin-bottom: 1rem;
   }
 
@@ -425,5 +495,19 @@ const ServiceSkeleton = styled.div`
     100% {
       transform: translateX(100%);
     }
+  }
+
+  @media (max-width: 768px) {
+    min-height: 290px;
+    border-radius: 22px;
+
+    .media {
+      aspect-ratio: 16 / 10;
+    }
+  }
+
+  @media (max-width: 480px) {
+    min-height: 270px;
+    border-radius: 20px;
   }
 `;

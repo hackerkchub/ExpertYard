@@ -1,7 +1,7 @@
 export const SITE_CONFIG = {
   siteName: "ExpertYard",
   baseUrl: (import.meta.env.VITE_SITE_URL || "https://softmaxs.com").replace(/\/$/, ""),
-  defaultOgImage: "/logo-512.png",
+  defaultOgImage: "/logo-512.webp",
   organizationName: "ExpertYard",
 };
 

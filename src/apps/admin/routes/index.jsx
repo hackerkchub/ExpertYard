@@ -1,6 +1,7 @@
 import { lazy } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
+import AppNotFound from "../../../routes/AppNotFound";
 import LazyRoute from "../../../routes/LazyRoute";
 import AdminLayout from "../layouts/adminLayout";
 import AdminProtectedRoute from "./AdminProtectedRoute";
@@ -35,6 +36,18 @@ export default function AdminAppRoutes() {
           <Route path="payout-management" element={withLazyRoute(<PayoutManagement />)} />
         </Route>
       </Route>
+
+      <Route
+        path="*"
+        element={
+          <AppNotFound
+            title="Admin page not found"
+            description="The requested admin route does not exist."
+            homePath="/admin/login"
+            actionLabel="Go to admin login"
+          />
+        }
+      />
     </Routes>
   );
 }

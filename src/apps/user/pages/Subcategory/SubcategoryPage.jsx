@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { FiFilter, FiSearch, FiCheck, FiX, FiChevronRight, FiZap } from "react-icons/fi";
 import { 
   IoStar, 
@@ -22,6 +22,16 @@ import { getPlansApi } from "../../../../shared/api/userApi/subscription.api";
 import ExpertCard from "../../components/userExperts/ExpertCard";
 import useChatRequest from "../../../../shared/hooks/useChatRequest";
 import { socket } from "../../../../shared/api/socket";
+import { useSeo } from "../../../../shared/seo/useSeo";
+import { toAbsoluteUrl } from "../../../../shared/seo/siteConfig";
+import {
+  buildCategorySeoDescription,
+  buildCategorySeoHeadline,
+  buildCategorySeoTitle,
+  findCategoryById,
+  findCategoryBySlug,
+  getCategoryPath,
+} from "../../../../shared/utils/categoryRoutes";
 import {
   PageContainer,
   PageHeader,
@@ -121,6 +131,7 @@ import {
   CategoryErrorText,
   PricingInfo,
 } from "./SubcategoryPage.styles";
+import "./SubcategorySeo.css";
 
 const DEFAULT_AVATAR = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face";
 
@@ -134,14 +145,15 @@ const horoscopeSigns = [
 ];
 
 const SubcategoryPage = () => {
-  const { categoryId } = useParams();
+  const { categoryId, slug } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const latestRequestRef = useRef(0);
   const socketEmitTimeoutRef = useRef(null);
 
   const {
+    categories,
     subCategories,
+    subCategoriesLoading,
     loadSubCategories,
     loading: categoryLoading,
   } = useCategory();
@@ -163,11 +175,50 @@ const SubcategoryPage = () => {
 
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
   const [hoveredExpert, setHoveredExpert] = useState(null);
-  const loading = categoryLoading || expertsLoading;
+  const loading = categoryLoading || subCategoriesLoading || expertsLoading;
+  const matchedCategory = useMemo(() => {
+    if (slug) return findCategoryBySlug(categories, slug);
+    if (categoryId) return findCategoryById(categories, categoryId);
+    return null;
+  }, [categories, categoryId, slug]);
+  const resolvedCategoryId = matchedCategory?.id ? String(matchedCategory.id) : null;
+  const resolvedCategorySlug = matchedCategory?.slug || slug || "";
+  const canonicalCategoryPath = resolvedCategorySlug
+    ? `/user/categories/${resolvedCategorySlug}`
+    : "/user/categories";
+  const isLegacyIdRoute = Boolean(categoryId && !slug);
+  const relatedCategories = useMemo(
+    () =>
+      categories
+        .filter((category) => category.id !== matchedCategory?.id)
+        .slice(0, 6),
+    [categories, matchedCategory?.id]
+  );
 
-  const selectedSubcategoryName = useMemo(() => {
-    return subCategories.find(s => s.id === selectedSubcategory)?.name;
-  }, [subCategories, selectedSubcategory]);
+  const faqItems = useMemo(() => {
+    const label = (matchedCategory?.name || categoryName || "expert").toLowerCase();
+
+    return [
+      {
+        question: `How quickly can I connect with a verified ${label} expert?`,
+        answer: `Most users can browse available ${label} experts and start a chat or call within minutes, depending on expert availability.`,
+      },
+      {
+        question: `Are the ${label} experts verified on ExpertYard?`,
+        answer: `Yes. ExpertYard is built around verified experts so users can discover trusted professionals before starting a consultation.`,
+      },
+      {
+        question: `Can I compare different ${label} experts before connecting?`,
+        answer: `Yes. You can review subcategories, pricing signals, ratings, and profiles to choose the right expert for your needs.`,
+      },
+    ];
+  }, [categoryName, matchedCategory?.name]);
+
+  const selectedSubcategoryName = useMemo(
+    () =>
+      subCategories.find((s) => String(s.id) === String(selectedSubcategory))?.name,
+    [subCategories, selectedSubcategory]
+  );
 
   const resetStateForNewCategory = useCallback(() => {
     setActiveSubCategory(null);
@@ -188,9 +239,11 @@ const SubcategoryPage = () => {
       localStorage.removeItem(`selectedSubcategory_${prevCategoryId}`);
     }
     
-    loadSubCategories(categoryId);
-    setPrevCategoryId(categoryId);
-  }, [categoryId, prevCategoryId, loadSubCategories]);
+    if (resolvedCategoryId) {
+      loadSubCategories(resolvedCategoryId);
+      setPrevCategoryId(resolvedCategoryId);
+    }
+  }, [loadSubCategories, prevCategoryId, resolvedCategoryId]);
 
   // ✅ FIX 1: Socket duplicate listener fix - Single useEffect with proper cleanup
   useEffect(() => {
@@ -267,7 +320,7 @@ const SubcategoryPage = () => {
 }, [experts]);
 
   const loadExpertsForSubcategory = useCallback(async (subCategoryId) => {
-    if (!subCategoryId || !categoryId) return;
+    if (!subCategoryId || !resolvedCategoryId) return;
 
     const requestId = ++latestRequestRef.current;
 
@@ -282,7 +335,7 @@ const SubcategoryPage = () => {
 
       const expertsWithCategory = expertsList.map(exp => ({
         ...exp,
-        category_id: categoryId,
+        category_id: resolvedCategoryId,
         subcategory_id: subCategoryId
       }));
 
@@ -389,37 +442,70 @@ const SubcategoryPage = () => {
       
     } catch (err) {
       console.error("Experts load failed", err);
+      if (requestId === latestRequestRef.current) {
+        setExperts([]);
+        setExpertDetails({});
+        setExpertPlans({});
+      }
     } finally {
-      setExpertsLoading(false);
+      if (requestId === latestRequestRef.current) {
+        setExpertsLoading(false);
+      }
     }
-  }, [categoryId]);
+  }, [resolvedCategoryId]);
 
   useEffect(() => {
-    if (categoryId && categoryId !== prevCategoryId) {
+    if (resolvedCategoryId && resolvedCategoryId !== prevCategoryId) {
       resetStateForNewCategory();
     }
-  }, [categoryId, prevCategoryId, resetStateForNewCategory]);
+  }, [prevCategoryId, resetStateForNewCategory, resolvedCategoryId]);
 
   useEffect(() => {
-    if (!categoryId || subCategories.length === 0) return;
+    if (!resolvedCategoryId || subCategories.length === 0) return;
 
-    const savedId = localStorage.getItem(`selectedSubcategory_${categoryId}`);
-    const firstId = subCategories[0]?.id;
-    const defaultId = savedId ? Number(savedId) : firstId;
+    const savedId = localStorage.getItem(`selectedSubcategory_${resolvedCategoryId}`);
+    const firstId = subCategories[0]?.id ? String(subCategories[0].id) : null;
+    const hasSavedId = savedId
+      ? subCategories.some((subCategory) => String(subCategory.id) === String(savedId))
+      : false;
+    const defaultId = hasSavedId ? String(savedId) : firstId;
 
     if (defaultId) {
       setSelectedSubcategory(defaultId);
       setActiveSubCategory(defaultId);
     }
-  }, [categoryId, subCategories]);
+  }, [resolvedCategoryId, subCategories]);
 
   useEffect(() => {
-    if (selectedSubcategory && categoryId) {
+    const hasValidSelectedSubcategory = subCategories.some(
+      (subCategory) => String(subCategory.id) === String(selectedSubcategory)
+    );
+
+    if (selectedSubcategory && resolvedCategoryId && hasValidSelectedSubcategory) {
       loadExpertsForSubcategory(selectedSubcategory);
     }
-  }, [selectedSubcategory, categoryId, loadExpertsForSubcategory]);
+  }, [loadExpertsForSubcategory, resolvedCategoryId, selectedSubcategory, subCategories]);
 
   useEffect(() => {
+    if (slug || !categoryId || categoryLoading || categories.length === 0) return;
+
+    const legacyCategory = findCategoryById(categories, categoryId);
+    if (legacyCategory) {
+      navigate(getCategoryPath(legacyCategory), { replace: true });
+    }
+  }, [categories, categoryId, categoryLoading, navigate, slug]);
+
+  useEffect(() => {
+    if (!slug || categoryLoading || categories.length === 0 || matchedCategory) return;
+    navigate("/user/categories", { replace: true });
+  }, [categories.length, categoryLoading, matchedCategory, navigate, slug]);
+
+  useEffect(() => {
+    if (matchedCategory?.name) {
+      setCategoryName(matchedCategory.name);
+      return;
+    }
+
     if (subCategories.length > 0) {
       const firstSubCategory = subCategories[0];
       if (firstSubCategory) {
@@ -433,17 +519,19 @@ const SubcategoryPage = () => {
         }
       }
     }
-  }, [subCategories]);
+  }, [matchedCategory?.name, subCategories]);
 
   const handleSubCategoryClick = (subCategoryId) => {
-    if (subCategoryId === selectedSubcategory) return;
-    setSelectedSubcategory(subCategoryId);
-    setActiveSubCategory(subCategoryId);
+    const normalizedSubCategoryId = String(subCategoryId);
+    if (normalizedSubCategoryId === String(selectedSubcategory)) return;
+    setSelectedSubcategory(normalizedSubCategoryId);
+    setActiveSubCategory(normalizedSubCategoryId);
   };
 
   const handleSubcategoryFilterChange = (subCategoryId) => {
-    setSelectedSubcategory(subCategoryId);
-    setActiveSubCategory(subCategoryId);
+    const normalizedSubCategoryId = String(subCategoryId);
+    setSelectedSubcategory(normalizedSubCategoryId);
+    setActiveSubCategory(normalizedSubCategoryId);
     setShowMobileFilters(false);
   };
 
@@ -451,14 +539,14 @@ const SubcategoryPage = () => {
     setSortBy("price-high");
     setSearchQuery("");
     if (subCategories.length > 0) {
-      const firstId = subCategories[0].id;
+      const firstId = String(subCategories[0].id);
       setSelectedSubcategory(firstId);
       setActiveSubCategory(firstId);
     }
   };
 
   const getSubcategoryName = (subId) => {
-    const sc = subCategories.find((s) => Number(s.id) === Number(subId));
+    const sc = subCategories.find((s) => String(s.id) === String(subId));
     return sc ? sc.name : "";
   };
 
@@ -466,10 +554,78 @@ const SubcategoryPage = () => {
     if (!selectedSubcategory) return [];
     
     return experts.filter(expert => 
-      expert.subcategory_id === selectedSubcategory && 
-      (!expert.category_id || expert.category_id === categoryId)
+      String(expert.subcategory_id) === String(selectedSubcategory) && 
+      (!expert.category_id || String(expert.category_id) === String(resolvedCategoryId))
     );
-  }, [experts, selectedSubcategory, categoryId]);
+  }, [experts, resolvedCategoryId, selectedSubcategory]);
+
+  const seoTitle = matchedCategory?.meta_title?.trim() || buildCategorySeoTitle(matchedCategory?.name || categoryName || "Expert");
+  const seoDescription = buildCategorySeoDescription(matchedCategory || { name: categoryName || "Expert" });
+  const categoryStructuredData = useMemo(
+    () =>
+      matchedCategory
+        ? [
+            {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                {
+                  "@type": "ListItem",
+                  position: 1,
+                  name: "Home",
+                  item: toAbsoluteUrl("/user"),
+                },
+                {
+                  "@type": "ListItem",
+                  position: 2,
+                  name: "Categories",
+                  item: toAbsoluteUrl("/user/categories"),
+                },
+                {
+                  "@type": "ListItem",
+                  position: 3,
+                  name: matchedCategory.name,
+                  item: toAbsoluteUrl(canonicalCategoryPath),
+                },
+              ],
+            },
+            {
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: faqItems.map((item) => ({
+                "@type": "Question",
+                name: item.question,
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: item.answer,
+                },
+              })),
+            },
+            {
+              "@context": "https://schema.org",
+              "@type": "CollectionPage",
+              name: `${matchedCategory.name} Experts`,
+              url: toAbsoluteUrl(canonicalCategoryPath),
+              description: seoDescription,
+            },
+          ]
+        : [],
+    [canonicalCategoryPath, faqItems, matchedCategory, seoDescription]
+  );
+
+  useSeo({
+    title: seoTitle,
+    description: seoDescription,
+    canonicalPath: canonicalCategoryPath,
+    robots: isLegacyIdRoute ? "noindex,follow" : "index,follow",
+    og: {
+      title: seoTitle,
+      description: seoDescription,
+      type: "website",
+      image: matchedCategory?.image_url || undefined,
+    },
+    structuredData: categoryStructuredData,
+  });
 
  const formatExpertForCard = (expert) => {
   const expertId = expert.expert_id || expert.id;
@@ -530,6 +686,11 @@ const SubcategoryPage = () => {
     
     return filtered;
   }, [currentSubcategoryExperts, searchQuery, sortBy, expertsLoading, onlineExperts]);
+
+  const formatRatingValue = useCallback((value) => {
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? numericValue.toFixed(1) : "0.0";
+  }, []);
 
   const handleExpertAction = (expert, action) => {
     if (action === 'chat' && expert.hasPerMinute) {
@@ -649,7 +810,7 @@ const SubcategoryPage = () => {
       <ExpertStats>
         <StatItem>
           <StatIcon><IoStar size={16} /></StatIcon>
-          <StatValue>{expert.avgRating.toFixed(1)}</StatValue>
+          <StatValue>{formatRatingValue(expert.avgRating)}</StatValue>
           <StatLabel>({expert.totalReviews} reviews)</StatLabel>
         </StatItem>
         <StatItem>
@@ -774,7 +935,7 @@ const SubcategoryPage = () => {
           <HeaderContent>
             <HeaderTitle>{categoryName} Experts</HeaderTitle>
             <HeaderSubtitle>
-              Connect with verified {categoryName.toLowerCase()} experts for personalized insights and guidance
+              {buildCategorySeoHeadline(categoryName || matchedCategory?.name || "expert")} for personalized insights and guidance.
             </HeaderSubtitle>
             
             <SearchContainer>
@@ -826,7 +987,7 @@ const SubcategoryPage = () => {
               
               <SubcategoryFilterList>
                 {subCategories.map((sc) => {
-                  const isSelected = sc.id === selectedSubcategory;
+                  const isSelected = String(sc.id) === String(selectedSubcategory);
                   
                   return (
                     <SubcategoryFilterItem
@@ -875,9 +1036,31 @@ const SubcategoryPage = () => {
           </FiltersSidebar>
 
           <MainContent>
+            <section className="category-seo-intro" aria-labelledby="category-seo-heading">
+              <div className="category-seo-intro__copy">
+                <span className="category-seo-intro__eyebrow">Verified category experts</span>
+                <h2 id="category-seo-heading">{matchedCategory?.name || categoryName} consultations online</h2>
+                <p>{seoDescription}</p>
+              </div>
+
+              {relatedCategories.length > 0 ? (
+                <div className="category-seo-intro__links" aria-label="Related expert categories">
+                  {relatedCategories.map((category) => (
+                    <Link
+                      key={category.id}
+                      to={getCategoryPath(category)}
+                      className="category-seo-chip"
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </section>
+
             <FilterChipsContainer>
               {subCategories.map((sc) => {
-                const isActive = sc.id === selectedSubcategory;
+                const isActive = String(sc.id) === String(selectedSubcategory);
                 
                 return (
                   <FilterChip
@@ -992,6 +1175,47 @@ const SubcategoryPage = () => {
                     </PrimaryButton>
                   </CtaBanner>
                 </CtaSection>
+
+                <section className="category-seo-bottom">
+                  <div className="category-seo-card">
+                    <h2>Why users choose ExpertYard for {matchedCategory?.name || categoryName}</h2>
+                    <p>
+                      Users landing from search can immediately browse relevant subcategories,
+                      compare verified experts, and start a conversation without an extra discovery
+                      step. That keeps the experience lightweight while still exposing indexable,
+                      category-specific content.
+                    </p>
+                  </div>
+
+                  <div className="category-seo-card">
+                    <h2>Frequently asked questions</h2>
+                    <div className="category-seo-faq">
+                      {faqItems.map((item) => (
+                        <details key={item.question} className="category-seo-faq__item">
+                          <summary>{item.question}</summary>
+                          <p>{item.answer}</p>
+                        </details>
+                      ))}
+                    </div>
+                  </div>
+
+                  {relatedCategories.length > 0 ? (
+                    <div className="category-seo-card">
+                      <h2>Related expert categories</h2>
+                      <div className="category-seo-links">
+                        {relatedCategories.map((category) => (
+                          <Link
+                            key={`related-${category.id}`}
+                            to={getCategoryPath(category)}
+                            className="category-seo-link"
+                          >
+                            {category.name}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </section>
               </>
             ) : !loading ? (
               <NoResults>

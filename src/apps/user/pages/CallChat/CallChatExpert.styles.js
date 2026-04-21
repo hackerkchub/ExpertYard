@@ -113,7 +113,7 @@ export const Layout = styled.div`
 
 export const FilterWrap = styled.aside`
   ${cardGlass};
-  border-radius: 20px;
+  border-radius: 24px;
   padding: 18px;
   display: flex;
   flex-direction: column;
@@ -205,7 +205,7 @@ export const ResetFilterBtn = styled.button`
 
 export const ExpertsWrap = styled.section`
   ${cardGlass};
-  border-radius: 22px;
+  border-radius: 24px;
   padding: 20px;
 `;
 

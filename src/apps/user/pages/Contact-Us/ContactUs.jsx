@@ -33,7 +33,6 @@ import {
   CloseButton,
   LoadingSpinner
 } from './ContactUs.styles';
-// import { FiFacebookF, FiTwitter ,FiInstagram, FiLinkedin, FiYoutube } from "react-icons/fi";
 import { FaFacebookF, FaTwitter, FaLinkedinIn, FaYoutube, FaInstagram } from "react-icons/fa";
 
 const ContactUs = () => {
@@ -48,27 +47,19 @@ const ContactUs = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // Form validation
+  // Form validation logic
   const validateForm = () => {
     const newErrors = {};
-    
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
-    
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
-    
     if (formData.phone && !/^[\d\s-+()]{10,}$/.test(formData.phone)) {
       newErrors.phone = 'Phone number is invalid';
     }
-    
-    if (!formData.message.trim()) {
-      newErrors.message = 'Message is required';
-    }
+    if (!formData.message.trim()) newErrors.message = 'Message is required';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -77,7 +68,6 @@ const ContactUs = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear error for this field when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -85,21 +75,14 @@ const ContactUs = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsSubmitting(true);
-
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 2000));
-
     console.log('Form submitted:', formData);
     setIsSubmitting(false);
     setShowPopup(true);
 
-    // Reset form
     setFormData({ 
       name: '', 
       email: '', 
@@ -109,14 +92,12 @@ const ContactUs = () => {
     });
   };
 
-  const closePopup = () => {
-    setShowPopup(false);
-  };
+  const closePopup = () => setShowPopup(false);
 
   const contactInfo = {
-    phone: '+1 (888) 123-4567',
-    email: 'contact@expertyard.com',
-    address: '123 Innovation Drive, Silicon Valley, CA 94025',
+    phone: '+91 (810) 31-23106',
+    email: 'suraj.singh@guidexa.in',
+    address: '',
     hours: 'Monday - Friday: 9:00 AM - 6:00 PM PST',
     support: '24/7 Support Available'
   };
@@ -238,32 +219,32 @@ const ContactUs = () => {
             </CardContent>
           </InfoCard>
 
-          <InfoCard>
-            <CardIcon>📍</CardIcon>
-            <CardTitle>Visit Us</CardTitle>
-            <CardContent>
-              <ContactDetail>{contactInfo.address}</ContactDetail>
-              <ContactDetail>Office Hours: {contactInfo.hours}</ContactDetail>
-            </CardContent>
-            
-            <MapContainer>
-              <MapImage 
-                src="https://via.placeholder.com/400x250?text=Office+Location+Map" 
-                alt="Office Location"
-              />
-            </MapContainer>
-          </InfoCard>
+     
 
           <InfoCard>
             <CardTitle>Connect With Us</CardTitle>
             <CardContent>
               Follow us on social media for updates and news.
+              
+              {/* --- New Section Added Below --- */}
+              <div style={{ marginTop: '20px', padding: '15px 0', borderTop: '1px solid #eee' }}>
+                <div style={{ marginBottom: '12px' }}>
+                  <p style={{ margin: '0', fontWeight: 'bold', color: '#333', fontSize: '15px' }}>Suraj Singh Goud</p>
+                  <p style={{ margin: '0', color: '#000080', fontSize: '14px' }}>📞 8103123106</p>
+                </div>
+                <div>
+                  <p style={{ margin: '0', fontWeight: 'bold', color: '#333', fontSize: '15px' }}>Himanshu Dhote</p>
+                  <p style={{ margin: '0', color: '#000080', fontSize: '14px' }}>📞 8103007446</p>
+                </div>
+              </div>
+              {/* --------------------------------- */}
+
             </CardContent>
             <SocialLinks>
               <SocialLink href="#" target="_blank"><FaFacebookF /></SocialLink>
               <SocialLink href="#" target="_blank"><FaTwitter /></SocialLink>
               <SocialLink href="#" target="_blank"><FaInstagram /></SocialLink>
-                <SocialLink href="#" target="_blank"><FaLinkedinIn /></SocialLink>
+              <SocialLink href="#" target="_blank"><FaLinkedinIn /></SocialLink>
               <SocialLink href="#" target="_blank"><FaYoutube /></SocialLink>
             </SocialLinks>
           </InfoCard>

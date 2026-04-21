@@ -13,8 +13,10 @@ const spin = keyframes`
 export const PageWrap = styled.div`
   max-width: 1128px; // LinkedIn Standard Container
   margin: 0 auto;
-  padding: 24px 15px;
-  background-color: #f3f2ef; // LinkedIn light grey background
+  padding: 28px 16px 56px;
+  background:
+    radial-gradient(circle at top left, rgba(63, 81, 181, 0.08), transparent 24%),
+    #f3f6fb;
   min-height: 100vh;
   font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   animation: ${fadeIn} 0.5s ease-out;
@@ -28,13 +30,13 @@ export const PageWrap = styled.div`
 // --- Main Profile Section ---
 export const ProfileCard = styled.div`
   background: #fff;
-  border-radius: 10px;
-  border: 1px solid #e0e0e0;
-  padding: 24px;
-  margin-bottom: 12px;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.02), 0 2px 4px rgba(0,0,0,0.06);
+  border-radius: 24px;
+  border: 1px solid #d8e0eb;
+  padding: 28px;
+  margin-bottom: 16px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
 
-  @media (max-width: 768px) { border-radius: 0; padding: 20px 16px; }
+  @media (max-width: 768px) { border-radius: 18px; padding: 20px 16px; }
 `;
 
 export const LeftImage = styled.img`
@@ -124,8 +126,8 @@ export const Status = styled.div`
 // --- Stats & Tags (No Overflow) ---
 export const QuickStats = styled.div`
   display: flex;
-  gap: 8px;
-  margin: 12px 0;
+  gap: 10px;
+  margin: 16px 0;
   flex-wrap: wrap; /* Screen ke bahar nahi jayega */
   @media (max-width: 768px) { justify-content: flex-start; }
 `;
@@ -136,10 +138,10 @@ export const StatItem = styled.div`
   gap: 4px;
   font-size: 13px;
   color: #666;
-  background: #f9f9f9;
-  padding: 4px 10px;
-  border-radius: 16px;
-  border: 1px solid #ebebeb;
+  background: #f8fafc;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
   white-space: nowrap;
 `;
 
@@ -152,13 +154,13 @@ export const TagList = styled.div`
 `;
 
 export const Tag = styled.span`
-  background: #f3f2ef;
-  color: #000000bf;
-  padding: 4px 10px;
-  border-radius: 4px;
+  background: #eef3f8;
+  color: #334155;
+  padding: 6px 12px;
+  border-radius: 999px;
   font-size: 12px;
   font-weight: 500;
-  border: 1px solid #dcdcdc;
+  border: 1px solid #d8e0eb;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -183,7 +185,7 @@ export const ActionButton = styled.button`
   justify-content: center;
   gap: 6px;
   padding: 10px 12px;
-  border-radius: 24px;
+  border-radius: 999px;
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
@@ -194,6 +196,7 @@ export const ActionButton = styled.button`
 
   &:hover {
     background: ${props => props.$primary ? "#004182" : "#eef3f8"};
+    transform: translateY(-1px);
   }
 `;
 
@@ -236,11 +239,12 @@ export const FollowButton = styled.button`
 // --- Content Sections ---
 export const Section = styled.div`
   background: #fff;
-  border-radius: 10px;
-  border: 1px solid #e0e0e0;
+  border-radius: 24px;
+  border: 1px solid #d8e0eb;
   padding: 24px;
-  margin-bottom: 12px;
-  @media (max-width: 768px) { border-radius: 0; padding: 16px; }
+  margin-bottom: 16px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+  @media (max-width: 768px) { border-radius: 18px; padding: 16px; }
 `;
 
 export const SectionTitle = styled.h2`
@@ -266,10 +270,10 @@ export const ReviewHeader = styled.div`
 `;
 
 export const ReviewForm = styled.div`
-  background: #f8f9fa;
+  background: #f8fafc;
   padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #eee;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
   margin-bottom: 24px;
 `;
 

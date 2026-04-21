@@ -193,17 +193,6 @@ function ExpertLayoutInner() {
   /* =====================================================
      📞 RESUME CALL CHECK AFTER CONNECT
   ===================================================== */
-  useEffect(() => {
-    if (!expertId) return;
-
-    const handleConnect = () => {
-      socket.emit("call:resume_check");
-    };
-
-    socket.on("connect", handleConnect);
-
-    return () => socket.off("connect", handleConnect);
-  }, [expertId]);
 
   /* =====================================================
      💬 CHAT REDIRECT

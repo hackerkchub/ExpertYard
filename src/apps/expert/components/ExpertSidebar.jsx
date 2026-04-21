@@ -32,22 +32,14 @@ import {
   FiUser,
 } from "react-icons/fi";
 
-import { useNavigate, useLocation } from "react-router-dom";
-import { socket } from "../../../shared/api/socket";
+import { useNavigate } from "react-router-dom";
+import { disconnectSocket } from "../../../shared/api/socket";
 import { useExpert } from "../../../shared/context/ExpertContext";
 
 export default function ExpertSidebar() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState(3);
-  const [onlineStatus, setOnlineStatus] = useState("online");
   const { logoutExpert } = useExpert();
-
-  // Close sidebar on route change (mobile)
-  useEffect(() => {
-    setIsOpen(false);
-  }, [location.pathname]);
 
   // Handle window resize
   useEffect(() => {
@@ -64,9 +56,7 @@ export default function ExpertSidebar() {
  const handleLogout = async () => {
   try {
     // 🔌 socket disconnect
-    if (socket?.connected) {
-      socket.disconnect();
-    }
+    disconnectSocket();
 
     // ✅ optional UI memory (allowed)
     localStorage.setItem("last_panel", "expert");

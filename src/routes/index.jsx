@@ -8,6 +8,7 @@ import { ExpertProvider } from "../shared/context/ExpertContext";
 import { useSoundInit } from "../shared/services/sound/useSoundInit";
 import LazyRoute from "./LazyRoute";
 import RootRedirect from "./RootRedirect";
+import { shouldShowBottomNavbar } from "./routeShells";
 
 const UserAppRoutes = lazy(() => import("../apps/user/routes"));
 const ExpertAppRoutes = lazy(() => import("../apps/expert/routes"));
@@ -29,9 +30,7 @@ export default function AppRouter() {
   const location = useLocation();
 
   const showNavbar = useMemo(
-    () =>
-      location.pathname.startsWith("/user") ||
-      location.pathname.startsWith("/expert"),
+    () => shouldShowBottomNavbar(location.pathname),
     [location.pathname]
   );
 
@@ -56,7 +55,7 @@ export default function AppRouter() {
           <Route
             path="/user/*"
             element={
-              <LazyRoute>
+              <LazyRoute variant="app">
                 <UserAppRoutes />
               </LazyRoute>
             }
@@ -65,7 +64,7 @@ export default function AppRouter() {
             path="/expert/*"
             element={
               <ExpertProvider>
-                <LazyRoute>
+                <LazyRoute variant="app">
                   <ExpertAppRoutes />
                 </LazyRoute>
               </ExpertProvider>
@@ -74,7 +73,7 @@ export default function AppRouter() {
           <Route
             path="/admin/*"
             element={
-              <LazyRoute>
+              <LazyRoute variant="app">
                 <AdminAppRoutes />
               </LazyRoute>
             }

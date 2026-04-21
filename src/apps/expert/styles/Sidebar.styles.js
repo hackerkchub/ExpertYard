@@ -6,16 +6,18 @@ export const SidebarWrap = styled.aside`
   width: 244px;
   min-width: 244px;
   height: calc(100vh - 70px);
-  background: #ffffff;
-  border-right: 1px solid #dbdbdb;
+  background: rgba(255, 255, 255, 0.96);
+  border-right: 1px solid #d8e0eb;
   display: flex;
   flex-direction: column;
-  padding: 20px 12px;
+  padding: 18px 12px;
   position: fixed;
   top: 70px;
   left: 0;
   z-index: 1200;
   transition: all 0.3s ease;
+  backdrop-filter: blur(20px);
+  box-shadow: 14px 0 40px rgba(15, 23, 42, 0.04);
 
   &::-webkit-scrollbar { width: 0px; }
   scrollbar-width: none;
@@ -63,25 +65,30 @@ export const NavItem = styled(NavLink)`
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 400;
-  color: #000000;
+  padding: 13px 14px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #1f2937;
   text-decoration: none;
   transition: all 0.2s ease;
 
-  &:hover { background-color: #f2f2f2; }
+  &:hover {
+    background-color: #f8fafc;
+    color: #000080;
+  }
 
   &.active {
     font-weight: 700;
+    background: linear-gradient(135deg, rgba(63, 81, 181, 0.1), rgba(59, 130, 246, 0.08));
+    color: #000080;
     &::before {
       content: '';
       position: absolute;
       left: -12px;
       height: 24px;
       width: 4px;
-      background-color: #000;
+      background-color: #000080;
       border-radius: 0 4px 4px 0;
     }
   }
@@ -92,7 +99,7 @@ export const IconWrap = styled.div`
   align-items: center;
   justify-content: center;
   font-size: 24px;
-  color: #000;
+  color: currentColor;
 `;
 
 /* ✅ FIXED: ALL MISSING EXPORTS ADDED BELOW */
@@ -129,9 +136,10 @@ export const Divider = styled.div`
 export const SidebarStatus = styled.div`
   margin-top: auto;
   padding: 16px 12px;
-  border-radius: 12px;
-  background: #fafafa;
-  border: 1px solid #efefef;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
 `;
 
 export const StatusHeader = styled.div`
@@ -175,7 +183,7 @@ export const MenuToggle = styled.button`
     bottom: 20px;
     right: 20px;
     z-index: 2000;
-    background: #000;
+    background: #000080;
     color: #fff;
     border: none;
     border-radius: 50%;
@@ -183,5 +191,6 @@ export const MenuToggle = styled.button`
     height: 48px;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 14px 28px rgba(0, 0, 128, 0.22);
   }
 `;

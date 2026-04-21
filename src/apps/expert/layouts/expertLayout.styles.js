@@ -7,9 +7,11 @@ const TOPBAR_HEIGHT = "70px";
 export const LayoutWrapper = styled.div`
   display: flex;
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
   overflow: hidden; /* Main window scroll block taaki dashboard smooth scroll ho */
-  background: #F3F2EF; 
+  background:
+    radial-gradient(circle at top left, rgba(63, 81, 181, 0.08), transparent 28%),
+    linear-gradient(180deg, #f7f9fc 0%, #eef3f8 100%);
 
   /* Global Scrollbar Reset for modern UI */
   & * {
@@ -52,9 +54,9 @@ export const ContentWrapper = styled.main`
   height: calc(100vh - ${TOPBAR_HEIGHT}); 
   min-height: calc(100vh - ${TOPBAR_HEIGHT});
   
-  padding: 24px;
+  padding: clamp(16px, 2.2vw, 28px);
   box-sizing: border-box;
-  background: #F3F2EF;  
+  background: transparent;
   color: #1D2226;
   
   /* Smooth scrolling behaviour */
@@ -70,14 +72,14 @@ export const ContentWrapper = styled.main`
     /* Tablet par sidebar thoda chota ya toggle layout ho sakta hai */
     margin-left: 240px; 
     width: calc(100% - 240px);
-    padding: 24px;
+    padding: 20px;
   }
 
   /* --- LARGE MOBILE & SMALL TABLETS (Up to 991px) --- */
   @media (max-width: 991px) {
     margin-left: 0; /* Sidebar niche overlay ya drawer me shift hoga */
     width: 100%;
-    padding: 20px;
+    padding: 18px 16px 88px;
   }
 
   /* --- MOBILE VIEW (Up to 768px) --- */
@@ -85,7 +87,7 @@ export const ContentWrapper = styled.main`
     margin-top: 60px; /* Chota Header height */
     height: calc(100vh - 60px);
     min-height: calc(100vh - 60px);
-    padding: 16px;
+    padding: 16px 14px 88px;
   }
 
   /* --- SMALL MOBILE (Up to 480px) --- */
@@ -93,13 +95,18 @@ export const ContentWrapper = styled.main`
     margin-top: 56px;
     height: calc(100vh - 56px);
     min-height: calc(100vh - 56px);
-    padding: 12px;
+    padding: 12px 12px 84px;
   }
 
   /* Content inside children constraint */
   & > * {
     max-width: 100%;
     overflow-wrap: break-word;
+  }
+
+  & > section,
+  & > div {
+    min-width: 0;
   }
 
   /* Responsive Typography using CSS Clamp */

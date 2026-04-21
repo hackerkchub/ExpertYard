@@ -1,0 +1,95 @@
+.category-seo-intro,
+.category-seo-bottom {
+  display: grid;
+  gap: 16px;
+}
+
+.category-seo-intro {
+  margin-bottom: 18px;
+  padding: 18px;
+  background: #ffffff;
+  border: 1px solid #dce6e9;
+  border-radius: 14px;
+}
+
+.category-seo-intro__copy h2,
+.category-seo-card h2 {
+  margin: 0 0 10px;
+  color: #101828;
+  line-height: 1.2;
+}
+
+.category-seo-intro__copy p,
+.category-seo-card p {
+  margin: 0;
+  color: #475467;
+  line-height: 1.7;
+}
+
+.category-seo-intro__eyebrow {
+  display: inline-flex;
+  margin-bottom: 10px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #000080;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.category-seo-intro__links,
+.category-seo-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.category-seo-chip,
+.category-seo-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 8px 14px;
+  border: 1px solid #d0dae7;
+  border-radius: 999px;
+  background: #fff;
+  color: #172554;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.category-seo-card {
+  padding: 18px;
+  background: #ffffff;
+  border: 1px solid #dce6e9;
+  border-radius: 14px;
+}
+
+.category-seo-faq {
+  display: grid;
+  gap: 12px;
+}
+
+.category-seo-faq__item {
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: #f8fafc;
+}
+
+.category-seo-faq__item summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #111827;
+}
+
+.category-seo-faq__item p {
+  margin-top: 10px;
+}
+
+@media (max-width: 768px) {
+  .category-seo-intro,
+  .category-seo-card {
+    padding: 15px;
+  }
+}

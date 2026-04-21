@@ -98,13 +98,14 @@ export const NameRow = styled.div`
 `;
 
 export const Name = styled.h3`
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.3;
+  font-weight: 700;
   color: #020617;
 `;
 
 export const Badge = styled.span`
-  font-size: 10px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   padding: 3px 7px;
@@ -116,7 +117,8 @@ export const Badge = styled.span`
 
 export const Role = styled.div`
   margin-top: 2px;
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.5;
   color: #475569;
 `;
 
@@ -127,7 +129,8 @@ export const MetaRow = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  font-size: 11px;
+  font-size: 12px;
+  line-height: 1.5;
   color: #475569;
 `;
 
@@ -139,7 +142,7 @@ export const MetaItem = styled.span`
 
 export const RatingStar = styled.span`
   color: #f59e0b;
-  font-size: 12px;
+  font-size: 13px;
 `;
 
 /* ---------- languages ---------- */
@@ -153,7 +156,7 @@ export const LangRow = styled.div`
 export const LangChip = styled.span`
   border-radius: 999px;
   padding: 3px 8px;
-  font-size: 11px;
+  font-size: 12px;
   background: rgba(226,232,240,0.8);
   border: 1px solid rgba(203,213,225,0.9);
   color: #334155;
@@ -166,7 +169,7 @@ export const PriceRow = styled.div`
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  font-size: 12px;
+  font-size: 13px;
 `;
 
 export const PriceLabel = styled.div`
@@ -175,7 +178,8 @@ export const PriceLabel = styled.div`
 
 export const PriceTag = styled.div`
   margin-top: 2px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   color: #020617;
 `;
 
@@ -197,9 +201,9 @@ export const PrimaryBtn = styled.button`
   border: none;
   outline: none;
 
-  padding: 7px 12px;
-  font-size: 12px;
-  font-weight: 500;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
 
   background: linear-gradient(135deg, #2563eb, #4f46e5);
@@ -226,9 +230,9 @@ export const GhostBtn = styled.button`
   border: 1px solid rgba(203,213,225,0.9);
   background: #ffffff;
   color: #334155;
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
-  padding: 6px 10px;
+  padding: 7px 10px;
 
   transition: all 0.14s ease;
 
@@ -246,7 +250,7 @@ export const PricingBadge = styled.span`
   align-items: center;
   padding: 4px 10px;
   border-radius: 20px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   
   ${props => props.type === 'per_minute' && `
@@ -273,7 +277,8 @@ export const PricingInfo = styled.div`
   padding: 6px 10px;
   background: #f3e8ff;
   border-radius: 8px;
-  font-size: 11px;
+  font-size: 12px;
+  line-height: 1.45;
   color: #6b21a5;
   
   span {

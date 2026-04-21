@@ -1,6 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useCategory } from "../../../../shared/context/CategoryContext";
+import { useSeo } from "../../../../shared/seo/useSeo";
+import { toAbsoluteUrl } from "../../../../shared/seo/siteConfig";
+import {
+  buildCategorySeoDescription,
+  getCategoryPath,
+} from "../../../../shared/utils/categoryRoutes";
 
 // Icons
 import { FiSearch, FiGrid, FiList, FiChevronRight, FiStar, FiUsers, FiClock, FiAward } from "react-icons/fi";
@@ -71,12 +77,50 @@ const Categories = () => {
   const popularCategories = [...categories]
     .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
     .slice(0, 3);
+  const categoriesStructuredData = useMemo(
+    () => [
+      {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        name: "Expert Categories",
+        url: toAbsoluteUrl("/user/categories"),
+        description:
+          "Browse expert categories and connect with verified professionals on ExpertYard.",
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: toAbsoluteUrl("/user"),
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Categories",
+            item: toAbsoluteUrl("/user/categories"),
+          },
+        ],
+      },
+    ],
+    []
+  );
 
-  const handleCategoryClick = (categoryId, categoryName) => {
-    navigate(`/user/subcategories/${categoryId}`, {
-      state: { categoryName }
-    });
-  };
+  useSeo({
+    title: "Browse Expert Categories | ExpertYard",
+    description:
+      "Explore expert categories on ExpertYard and connect instantly with verified professionals across legal, health, astrology, fitness, finance, property, and more.",
+    canonicalPath: "/user/categories",
+    og: {
+      title: "Browse Expert Categories | ExpertYard",
+      description:
+        "Explore expert categories on ExpertYard and connect instantly with verified professionals across legal, health, astrology, fitness, finance, property, and more.",
+    },
+    structuredData: categoriesStructuredData,
+  });
 
   if (loading) return null; // Or show your SkeletonGrid here
 
@@ -157,10 +201,12 @@ const Categories = () => {
         {sortedCategories.length > 0 ? (
           <CategoriesGrid $view={viewMode}>
             {sortedCategories.map((cat) => (
-              <CategoryCard 
+              <CategoryCard
+                as={Link}
                 key={cat.id} 
                 $view={viewMode}
-                onClick={() => handleCategoryClick(cat.id, cat.name)}
+                to={getCategoryPath(cat)}
+                aria-label={`Browse ${cat.name} experts`}
               >
                 <CategoryImage 
                   src={cat.image_url || DEFAULT_CATEGORY_IMAGE} 
@@ -179,7 +225,7 @@ const Categories = () => {
                   </CategoryName>
                   
                   <CategoryDescription>
-                    {cat.descriptiononal}
+                    {cat.meta_desc?.trim() || buildCategorySeoDescription(cat)}
                   </CategoryDescription>
                   
                  

@@ -1,19 +1,17 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useCategory } from "../../../../shared/context/CategoryContext";
+import { getCategoryPath } from "../../../../shared/utils/categoryRoutes";
 
 const DEFAULT_CATEGORY_IMAGE = "/default-category.png";
 
 const Categories = () => {
-  const navigate = useNavigate();
   const { categories: apiCategories, loading } = useCategory();
   const [categories, setCategories] = useState(() => {
-    // Initial load from cache for instant display
     const cached = localStorage.getItem("cached_categories");
     return cached ? JSON.parse(cached) : [];
   });
 
-  // Sync state with API and update cache
   useEffect(() => {
     if (apiCategories && apiCategories.length > 0) {
       setCategories(apiCategories);
@@ -21,13 +19,6 @@ const Categories = () => {
     }
   }, [apiCategories]);
 
-  const handleCategoryClick = (categoryId, categoryName) => {
-    navigate(`/user/subcategories/${categoryId}`, {
-      state: { categoryName: categoryName }
-    });
-  };
-
-  // Prevent UI flickering if we have cached data
   const showLoading = loading && categories.length === 0;
 
   if (showLoading) {
@@ -36,8 +27,8 @@ const Categories = () => {
         <div className="category-grid">
           {Array.from({ length: 8 }).map((_, index) => (
             <div className="skeleton-card" key={index}>
-              <div className="skeleton-circle"></div>
-              <div className="skeleton-text"></div>
+              <div className="skeleton-circle" />
+              <div className="skeleton-text" />
             </div>
           ))}
         </div>
@@ -48,28 +39,37 @@ const Categories = () => {
   return (
     <section className="section">
       <div className="category-grid">
-        {categories.map((cat) => (
-          <div 
+        {categories.map((cat, index) => (
+          <Link
             className="category-item"
             key={cat.id}
-            onClick={() => handleCategoryClick(cat.id, cat.name)}
+            to={getCategoryPath(cat)}
+            aria-label={`Browse ${cat.name} experts`}
           >
             <div className="category-image-wrapper">
-              <img 
-                src={cat.image_url || DEFAULT_CATEGORY_IMAGE} 
+              <span className="category-initial" aria-hidden="true">
+                {cat.name?.charAt(0)}
+              </span>
+              <img
+                src={cat.image_url || DEFAULT_CATEGORY_IMAGE}
                 alt={cat.name}
-                loading="eager" // Important for fast reload
-                onLoad={(e) => e.target.classList.add('is-loaded')}
+                loading={index < 4 ? "eager" : "lazy"}
+                decoding="async"
+                fetchPriority={index < 2 ? "high" : "auto"}
+                onLoad={(e) => e.currentTarget.classList.add("is-loaded")}
                 onError={(e) => {
-                  e.target.style.display = 'none';
-                  const parent = e.target.parentElement;
-                  parent.classList.add('fallback-mode');
-                  parent.textContent = cat.name.charAt(0);
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.style.opacity = "0";
+                  e.currentTarget.src = DEFAULT_CATEGORY_IMAGE;
                 }}
               />
             </div>
-            <p className="category-label">{cat.name}</p>
-          </div>
+
+            <div className="category-copy">
+              <p className="category-label">{cat.name}</p>
+              <span className="category-meta">Verified experts</span>
+            </div>
+          </Link>
         ))}
       </div>
     </section>

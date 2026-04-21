@@ -31,13 +31,15 @@ const media = {
 const maxWidth = (breakpoint) => `@media (max-width: ${breakpoint})`;
 
 export const Wrapper = styled.footer`
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background:
+    radial-gradient(circle at top left, rgba(63, 81, 181, 0.06), transparent 28%),
+    linear-gradient(180deg, #f8fafc 0%, #eef3f8 100%);
   color: #334155;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
   position: relative;
   overflow: hidden;
-  border-top: 1px solid #e2e8f0;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+  border-top: 1px solid #d8e0eb;
+  box-shadow: 0 -12px 36px rgba(15, 23, 42, 0.05);
   padding: 2rem 0 1rem;
 
   &::before {
@@ -66,11 +68,11 @@ export const Wrapper = styled.footer`
 export const Container = styled.div`
   display: flex;
   flex-direction: column; 
-  gap: 1.5rem;
+  gap: 2rem;
 
   max-width: 1200px;     
   margin: 0 auto;        
-  padding: 0 1.5rem;     
+  padding: 0 1.25rem;
 
   @media (min-width: 768px) {
     flex-direction: row;
@@ -118,10 +120,10 @@ width: 100%;
 `;
 
 export const SectionTitle = styled.h4`
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   margin-bottom: 0.75rem;
-  color: #000000;
+  color: #0f172a;
   font-family: -apple-system, system-ui, sans-serif;
   text-transform: uppercase;
   letter-spacing: 1px; 
@@ -222,7 +224,7 @@ export const FooterLink = styled(Link)`
   display: flex;
   text-decoration: none;
   font-size: 16px;
-  color: #191515ff;
+  color: #334155;
   font-family: -apple-system, system-ui, sans-serif;
   transition: all 0.3s ease;
   line-height: 1.4;
@@ -237,7 +239,7 @@ export const FooterLink = styled(Link)`
   text-align: left;
 
   &:hover {
-    color: #000000;
+    color: #0f172a;
     list-style:none;
   }
 
@@ -493,7 +495,7 @@ export const LogoText = styled.span`
 `;
 
 export const Tagline = styled.p`
-  color: #000000;
+  color: #475569;
   font-size: 16px;
   line-height: 1.5;
   margin-top: 0.75rem;

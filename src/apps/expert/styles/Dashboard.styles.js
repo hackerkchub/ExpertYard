@@ -5,7 +5,9 @@ export const Layout = styled.div`
   display: flex;
   width: 100%;
   min-height: 100vh;
-  background-color: #f3f2ef; /* LinkedIn Soft Background */
+  background:
+    radial-gradient(circle at top left, rgba(63, 81, 181, 0.06), transparent 24%),
+    #f3f6fb;
   font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 `;
 
@@ -25,7 +27,7 @@ export const MainContent = styled.main`
 `;
 
 export const ContentInner = styled.div`
-  padding: 24px;
+  padding: clamp(16px, 2.2vw, 28px);
   width: 100%;
   max-width: 1128px; /* LinkedIn standard width */
   margin: 0 auto; /* ✅ Center Align Desktop Content */
@@ -66,10 +68,11 @@ export const StatsRow = styled.div`
 
 export const StatCard = styled.div`
   background: #ffffff;
-  border: 1px solid #dbdbdb; /* Instagram-ish border */
-  border-radius: 12px;
-  padding: 20px;
+  border: 1px solid #d8e0eb; /* Instagram-ish border */
+  border-radius: 20px;
+  padding: 22px;
   transition: transform 0.2s;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06);
 
   &:hover {
     transform: translateY(-2px);
@@ -102,10 +105,10 @@ export const StatCard = styled.div`
 /* Queue Card Section - Clean LinkedIn Look */
 export const QueueCardWrap = styled.div`
   background: #ffffff;
-  border: 1px solid #dbdbdb;
-  border-radius: 12px;
+  border: 1px solid #d8e0eb;
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06);
 `;
 
 export const QueueTabs = styled.div`

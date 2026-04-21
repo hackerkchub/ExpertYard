@@ -268,7 +268,10 @@ const price = expertPrice || {};
     Boolean(userId && reviews.some((r) => Number(r.user_id) === Number(userId))),
   [userId, reviews]
   );
-  const formattedAvgRating = useMemo(() => avgRating.toFixed(1), [avgRating]);
+  const formattedAvgRating = useMemo(() => {
+    const numericRating = Number(avgRating);
+    return Number.isFinite(numericRating) ? numericRating.toFixed(1) : "0.0";
+  }, [avgRating]);
   const recentReviews = useMemo(() => reviews.slice(0, 3), [reviews]);
 
   // Get pricing modes from expert price data

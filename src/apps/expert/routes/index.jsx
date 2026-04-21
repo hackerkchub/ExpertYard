@@ -1,6 +1,7 @@
 import { lazy } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
+import AppNotFound from "../../../routes/AppNotFound";
 import { useExpert } from "../../../shared/context/ExpertContext";
 import LazyRoute from "../../../routes/LazyRoute";
 import ExpertLayout from "../layouts/ExpertLayout";
@@ -264,8 +265,17 @@ export default function ExpertAppRoutes() {
           </ProtectedExpertRoute>
         }
       />
-
-      <Route path="*" element={<h1>Expert 404 - Page Not Found</h1>} />
+      <Route
+        path="*"
+        element={
+          <AppNotFound
+            title="Expert page not found"
+            description="The requested expert route does not exist."
+            homePath="/expert"
+            actionLabel="Go to expert home"
+          />
+        }
+      />
     </Routes>
   );
 }

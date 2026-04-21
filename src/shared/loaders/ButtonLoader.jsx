@@ -1,9 +1,14 @@
-// export default function ButtonLoader({ loading, children }) {
+import Button from "../components/Button/Button";
 
-//   return (
-//     <button disabled={loading}>
-//       {loading ? "Please wait..." : children}
-//     </button>
-//   );
-
-// }
+export default function ButtonLoader({
+  loading,
+  children,
+  loadingText = "Please wait...",
+  ...props
+}) {
+  return (
+    <Button loading={loading} loadingText={loadingText} {...props}>
+      {children}
+    </Button>
+  );
+}

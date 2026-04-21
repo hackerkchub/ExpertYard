@@ -30,7 +30,9 @@ const rotate = keyframes`
 /* Main Container */
 export const PremiumContainer = styled.div`
   min-height: 100vh;
-  background: linear-gradient(145deg, #f9fafb 0%, #f3f4f6 100%);
+  background:
+    radial-gradient(circle at top left, rgba(63, 81, 181, 0.08), transparent 24%),
+    linear-gradient(180deg, #f7f9fc 0%, #eef3f8 100%);
   padding: 24px;
   position: relative;
   overflow-x: hidden;
@@ -109,11 +111,11 @@ export const SettingsGrid = styled.div`
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 24px;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.78);
   backdrop-filter: blur(10px);
   border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #d8e0eb;
+  box-shadow: 0 24px 50px rgba(15, 23, 42, 0.08);
   overflow: hidden;
 
   @media (max-width: 768px) {
@@ -124,7 +126,7 @@ export const SettingsGrid = styled.div`
 /* Sidebar Navigation */
 export const SettingsSidebar = styled.div`
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  border-right: 1px solid #e2e8f0;
+  border-right: 1px solid #d8e0eb;
   padding: 24px 16px;
 
   @media (max-width: 768px) {

@@ -13,7 +13,9 @@ export const PageWrap = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
-  background: #f4f5f7;
+  background:
+    radial-gradient(circle at top left, rgba(63, 81, 181, 0.08), transparent 24%),
+    #eef3f8;
   overflow: hidden;
 `;
 
@@ -44,9 +46,11 @@ export const UserHeader = styled.div`
   position: sticky;
   top: 0;
   z-index: 100;
-  background: #fff;
-  padding: 12px;
-  border-bottom: 1px solid #eee;
+  background: rgba(255, 255, 255, 0.94);
+  padding: 14px 16px;
+  border-bottom: 1px solid #d8e0eb;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
 `;
 
 /* USER INFO */
@@ -98,10 +102,11 @@ export const ChatArea = styled.div`
 export const Messages = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 18px 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
 
   /* 🔥 IMPORTANT */
   height: 0;
@@ -116,13 +121,15 @@ export const Message = styled.div`
 `;
 
 export const Bubble = styled.div`
-  max-width: 70%;
-  padding: 10px;
-  border-radius: 10px;
+  max-width: min(72%, 720px);
+  padding: 12px 14px;
+  border-radius: 18px;
   background: ${({ $expert }) =>
     $expert ? "#000080" : "#fff"};
   color: ${({ $expert }) =>
     $expert ? "#fff" : "#000"};
+  border: ${({ $expert }) => ($expert ? "none" : "1px solid #d8e0eb")};
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 
   .time {
     font-size: 10px;
@@ -138,10 +145,10 @@ export const ChatInputWrap = styled.div`
 
   display: flex;
   gap: 10px;
-  padding: 10px;
-  background: #fff;
-
-  border-top: 1px solid #eee;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1px solid #d8e0eb;
+  backdrop-filter: blur(16px);
 
   /* 🔥 KEYBOARD FIX */
   padding-bottom: max(10px, env(safe-area-inset-bottom));
@@ -149,11 +156,19 @@ export const ChatInputWrap = styled.div`
 
 export const ChatInput = styled.textarea`
   flex: 1;
-  padding: 10px;
+  padding: 12px 14px;
   border-radius: 20px;
-  border: 1px solid #ccc;
+  border: 1px solid #d8e0eb;
   font-size: 16px;
   resize: none;
+  background: #f8fafc;
+
+  &:focus {
+    outline: none;
+    border-color: #000080;
+    box-shadow: 0 0 0 4px rgba(0, 0, 128, 0.1);
+    background: #fff;
+  }
 `;
 
 export const SendButton = styled.button`

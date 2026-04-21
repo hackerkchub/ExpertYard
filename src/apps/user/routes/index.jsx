@@ -1,8 +1,11 @@
 import { lazy } from "react";
 import { Route, Routes } from "react-router-dom";
 
+import AppNotFound from "../../../routes/AppNotFound";
 import LazyRoute from "../../../routes/LazyRoute";
+import MinimalLayout from "../layouts/MinimalLayout";
 import MainLayout from "../layouts/MainLayout";
+import UserRouteBoundary from "../layouts/UserRouteBoundary";
 import ScrollToTop from "../components/ScrollToTop";
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -38,103 +41,103 @@ export default function UserAppRoutes() {
     <>
       <ScrollToTop />
       <Routes>
-        <Route element={<MainLayout />}>
-          <Route index element={withLazyRoute(<HomePage />)} />
-          <Route path="experts" element={withLazyRoute(<ExpertList />)} />
-          <Route path="experts/:expertId" element={withLazyRoute(<ExpertProfile />)} />
-          <Route path="call-chat" element={withLazyRoute(<CallChatExpert />)} />
-          <Route path="auth" element={withLazyRoute(<UserAuth />)} />
-          <Route path="my-offers" element={withLazyRoute(<MyOffer />)} />
-          <Route path="categories" element={withLazyRoute(<Categories />)} />
-          <Route path="about" element={withLazyRoute(<AboutUs />)} />
-          <Route path="how-it-works" element={withLazyRoute(<HowItWorks />)} />
-          <Route path="reviews" element={withLazyRoute(<Reviews />)} />
-          <Route path="guidelines" element={withLazyRoute(<ExpertGuidelines />)} />
-          <Route path="terms" element={withLazyRoute(<TermsAndConditions />)} />
-          <Route path="subcategories/:categoryId" element={withLazyRoute(<SubcategoryPage />)} />
-          <Route path="privacy" element={withLazyRoute(<PrivacyPolicy />)} />
-          <Route path="faq" element={withLazyRoute(<FAQ />)} />
-          <Route path="contact" element={withLazyRoute(<ContactUs />)} />
-          <Route path="careers" element={withLazyRoute(<Careers />)} />
-          <Route path="all-services" element={withLazyRoute(<AllServices />)} />
-          <Route path="service-details/:id" element={withLazyRoute(<ServiceDetails />)} />
-          <Route path="my-booking/:id" element={withLazyRoute(<MyBookings />)} />
-          <Route
-            path="voice-call/:expertId"
-            element={
-              <ProtectedRoute>
-                <LazyRoute>
-                  <VoiceCall />
-                </LazyRoute>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="wallet"
-            element={
-              <ProtectedRoute>
-                <LazyRoute>
-                  <WalletPage />
-                </LazyRoute>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="chat"
-            element={
-              <ProtectedRoute>
-                <LazyRoute>
-                  <Chat />
-                </LazyRoute>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="chat/:room_id"
-            element={
-              <ProtectedRoute>
-                <LazyRoute>
-                  <Chat />
-                </LazyRoute>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="chat-history"
-            element={
-              <ProtectedRoute>
-                <LazyRoute>
-                  <UserChatHistory />
-                </LazyRoute>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="chat-history/:session_id"
-            element={
-              <ProtectedRoute>
-                <LazyRoute>
-                  <UserChatHistory />
-                </LazyRoute>
-              </ProtectedRoute>
-            }
-          />
+        <Route element={<UserRouteBoundary />}>
+          <Route element={<MainLayout />}>
+            <Route index element={withLazyRoute(<HomePage />)} />
+            <Route path="experts" element={withLazyRoute(<ExpertList />)} />
+            <Route path="experts/:expertId" element={withLazyRoute(<ExpertProfile />)} />
+            <Route path="call-chat" element={withLazyRoute(<CallChatExpert />)} />
+            <Route path="my-offers" element={withLazyRoute(<MyOffer />)} />
+            <Route path="categories" element={withLazyRoute(<Categories />)} />
+            <Route path="categories/:slug" element={withLazyRoute(<SubcategoryPage />)} />
+            <Route path="about" element={withLazyRoute(<AboutUs />)} />
+            <Route path="how-it-works" element={withLazyRoute(<HowItWorks />)} />
+            <Route path="reviews" element={withLazyRoute(<Reviews />)} />
+            <Route path="guidelines" element={withLazyRoute(<ExpertGuidelines />)} />
+            <Route path="terms" element={withLazyRoute(<TermsAndConditions />)} />
+            <Route path="subcategories/:categoryId" element={withLazyRoute(<SubcategoryPage />)} />
+            <Route path="privacy" element={withLazyRoute(<PrivacyPolicy />)} />
+            <Route path="faq" element={withLazyRoute(<FAQ />)} />
+            <Route path="contact" element={withLazyRoute(<ContactUs />)} />
+            <Route path="careers" element={withLazyRoute(<Careers />)} />
+            <Route path="all-services" element={withLazyRoute(<AllServices />)} />
+            <Route path="service-details/:id" element={withLazyRoute(<ServiceDetails />)} />
+            <Route path="my-booking/:id" element={withLazyRoute(<MyBookings />)} />
+            <Route
+              path="wallet"
+              element={
+                <ProtectedRoute>
+                  <LazyRoute>
+                    <WalletPage />
+                  </LazyRoute>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="chat-history"
+              element={
+                <ProtectedRoute>
+                  <LazyRoute>
+                    <UserChatHistory />
+                  </LazyRoute>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="chat-history/:session_id"
+              element={
+                <ProtectedRoute>
+                  <LazyRoute>
+                    <UserChatHistory />
+                  </LazyRoute>
+                </ProtectedRoute>
+              }
+            />
+          </Route>
+
+          <Route element={<MinimalLayout />}>
+            <Route path="auth" element={withLazyRoute(<UserAuth />)} />
+            <Route
+              path="voice-call/:expertId"
+              element={
+                <ProtectedRoute>
+                  <LazyRoute>
+                    <VoiceCall />
+                  </LazyRoute>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="chat"
+              element={
+                <ProtectedRoute>
+                  <LazyRoute>
+                    <Chat />
+                  </LazyRoute>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="chat/:room_id"
+              element={
+                <ProtectedRoute>
+                  <LazyRoute>
+                    <Chat />
+                  </LazyRoute>
+                </ProtectedRoute>
+              }
+            />
+          </Route>
         </Route>
         <Route
           path="*"
           element={
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100vh",
-                flexDirection: "column",
-              }}
-            >
-              <h1>404 - Page Not Found</h1>
-              <p>The page you&apos;re looking for doesn&apos;t exist.</p>
-            </div>
+            <AppNotFound
+              title="User page not found"
+              description="The requested user route does not exist."
+              homePath="/user"
+              actionLabel="Go to user home"
+            />
           }
         />
       </Routes>

@@ -23,7 +23,7 @@ export const Container = styled.div`
   align-items: center;
   justify-content: space-between;
   height: 76px;
-  padding: 0 20px;
+  padding: 0 clamp(14px, 3vw, 24px);
   
   @media (max-width: 768px) { height: 70px; padding: 0 16px; }
   @media (max-width: 480px) { height: 66px; padding: 0 12px; }
@@ -59,6 +59,7 @@ export const RightActions = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 `;
 
 export const IconBox = styled.div`
@@ -69,7 +70,8 @@ export const IconBox = styled.div`
   button, .wallet-btn {
     border: none;
     background: #f8fafc;
-    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
     width: 42px;
     height: 42px;
     display: flex;
@@ -82,9 +84,10 @@ export const IconBox = styled.div`
 
     svg { font-size: 20px; }
     &:hover { 
-      background: #eff6ff; 
-      color: #3b82f6;
+      background: #eff6ff;
+      color: #000080;
       transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
     }
   }
 
@@ -154,14 +157,15 @@ export const MobileMenu = styled.div`
   top: 70px;
   left: 0;
   right: 0;
-  background: white;
+  background: rgba(255, 255, 255, 0.98);
   padding: 16px;
-  border-bottom: 1px solid #f1f5f9;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   z-index: 999;
+  backdrop-filter: blur(18px);
   @media (max-width: 480px) { top: 66px; }
 `;
 

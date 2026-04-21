@@ -50,8 +50,10 @@ export const LoadingText = styled.p`
 /* Page Layout - LinkedIn Background */
 export const PageWrap = styled.div`
   min-height: 100vh;
-  background-color: #f3f2ef;
-  padding: 24px 0;
+  background:
+    radial-gradient(circle at top left, rgba(63, 81, 181, 0.06), transparent 24%),
+    #f3f6fb;
+  padding: 24px 0 48px;
   
   @media (max-width: 768px) {
     padding: 0;
@@ -72,8 +74,8 @@ export const Content = styled.div`
 /* Premium Header */
 export const PremiumHeader = styled.div`
   background: #ffffff;
-  border: 1px solid #dbdbdb;
-  border-radius: 12px;
+  border: 1px solid #d8e0eb;
+  border-radius: 24px;
   padding: 24px;
   margin-bottom: 20px;
   display: flex;
@@ -150,10 +152,11 @@ export const HeaderStatValue = styled.div`
 /* Profile Card */
 export const ProfileCard = styled.div`
   background: #fff;
-  border: 1px solid #dbdbdb;
-  border-radius: 12px;
+  border: 1px solid #d8e0eb;
+  border-radius: 24px;
   overflow: hidden;
   margin-bottom: 20px;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06);
 
   @media (max-width: 768px) {
     border-radius: 0;
@@ -479,10 +482,11 @@ export const TabContent = styled.div``;
 /* Cards & Lists */
 export const InfoCard = styled.div`
   background: #fff;
-  border: 1px solid #dbdbdb;
-  border-radius: 12px;
+  border: 1px solid #d8e0eb;
+  border-radius: 24px;
   padding: 24px;
   margin-bottom: 20px;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06);
 `;
 
 export const CardHeader = styled.div`

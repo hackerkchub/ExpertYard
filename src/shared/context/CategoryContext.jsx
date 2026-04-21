@@ -21,9 +21,11 @@ export const CategoryProvider = ({ children }) => {
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [subCategoriesLoading, setSubCategoriesLoading] = useState(false);
 
   const subCatCache = useRef({});
   const isFetched = useRef(false);
+  const activeSubCategoryRequest = useRef(0);
 
   const loadCategories = useCallback(async (forceRefresh = false) => {
     if (categories.length > 0 && !forceRefresh) return;
@@ -51,20 +53,35 @@ export const CategoryProvider = ({ children }) => {
   const loadSubCategories = useCallback(async (categoryId) => {
     if (!categoryId) return;
 
-    if (subCatCache.current[categoryId]) {
-      setSubCategories(subCatCache.current[categoryId]);
+    const normalizedCategoryId = String(categoryId);
+
+    if (subCatCache.current[normalizedCategoryId]) {
+      setSubCategories(subCatCache.current[normalizedCategoryId]);
+      setSubCategoriesLoading(false);
       return;
     }
 
+    const requestId = ++activeSubCategoryRequest.current;
+
     try {
+      setSubCategories([]);
+      setSubCategoriesLoading(true);
       const res = await getSubCategoriesApi(categoryId);
       const data = res?.data?.data || res?.data || [];
 
-      subCatCache.current[categoryId] = data;
+      if (requestId !== activeSubCategoryRequest.current) return;
+
+      subCatCache.current[normalizedCategoryId] = data;
       setSubCategories(data);
     } catch (err) {
       console.error("Subcategory load failed", err);
-      setSubCategories([]);
+      if (requestId === activeSubCategoryRequest.current) {
+        setSubCategories([]);
+      }
+    } finally {
+      if (requestId === activeSubCategoryRequest.current) {
+        setSubCategoriesLoading(false);
+      }
     }
   }, []);
 
@@ -74,11 +91,19 @@ export const CategoryProvider = ({ children }) => {
     () => ({
       categories,
       subCategories,
+      subCategoriesLoading,
       loadSubCategories,
       loading,
       refreshCategories,
     }),
-    [categories, subCategories, loadSubCategories, loading, refreshCategories]
+    [
+      categories,
+      subCategories,
+      subCategoriesLoading,
+      loadSubCategories,
+      loading,
+      refreshCategories,
+    ]
   );
 
   return <CategoryContext.Provider value={value}>{children}</CategoryContext.Provider>;

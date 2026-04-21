@@ -9,11 +9,20 @@ export const ModalBackdrop = styled.div`
   align-items: center;
   justify-content: center;
   z-index: 50;
+  padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+
+  @media (max-width: 480px) {
+    align-items: flex-end;
+    padding: 12px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
 `;
 
 export const ModalShell = styled.div`
   width: 100%;
   max-width: 460px;
+  max-height: min(85vh, 720px);
   background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(248,250,252,0.75));
   backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
@@ -23,6 +32,16 @@ export const ModalShell = styled.div`
     0 30px 60px rgba(15,23,42,0.35),
     0 0 0 1px rgba(255,255,255,0.8);
   border: 1px solid rgba(148,163,184,0.32);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 480px) {
+    max-width: 100%;
+    max-height: min(90dvh, 760px);
+    border-radius: 20px;
+    padding: 18px 16px 16px;
+  }
 `;
 
 export const ModalHeader = styled.div`
@@ -56,6 +75,8 @@ export const CloseIconBtn = styled.button`
 
 export const ModalBody = styled.div`
   margin-top: 18px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 `;
 
 export const ModalFooter = styled.div`
@@ -63,6 +84,7 @@ export const ModalFooter = styled.div`
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  flex-wrap: wrap;
 
   button {
     border-radius: 999px;
@@ -70,5 +92,6 @@ export const ModalFooter = styled.div`
     border: none;
     cursor: pointer;
     font-size: 13px;
+    min-height: 42px;
   }
 `;

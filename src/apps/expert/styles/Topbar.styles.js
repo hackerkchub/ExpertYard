@@ -7,13 +7,15 @@ export const TopbarWrap = styled.div`
   left: 0;
   right: 0;
   height: 70px;
-  background: #ffffff;
-  border-bottom: 1px solid #e0e0e0;
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid #d8e0eb;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
   z-index: 2000;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
 
   @media (max-width: 768px) {
     height: 64px;
@@ -68,10 +70,10 @@ export const SearchRow = styled.div`
 
 export const SearchBox = styled.input`
   width: 100%;
-  background: #f1f5f9;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  padding: 10px 16px;
+  background: #f8fafc;
+  border: 1px solid #d8e0eb;
+  border-radius: 999px;
+  padding: 11px 16px;
   font-size: 14px;
   transition: all 0.2s;
 
@@ -79,7 +81,7 @@ export const SearchBox = styled.input`
     outline: none;
     background: #fff;
     border-color: #000080;
-    box-shadow: 0 0 0 1px #000080;
+    box-shadow: 0 0 0 4px rgba(0, 0, 128, 0.1);
   }
 `;
 
@@ -121,8 +123,8 @@ export const CreateBtn = styled.button`
 
 /* ICON BUTTONS */
 export const IconBtn = styled.button`
-  background: transparent;
-  border: none;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   width: 40px;
   height: 40px;
   display: flex;
@@ -130,13 +132,15 @@ export const IconBtn = styled.button`
   justify-content: center;
   border-radius: 50%;
   font-size: 22px;
-  color: #666;
+  color: #475569;
   cursor: pointer;
   position: relative;
+  transition: all 0.2s ease;
 
   &:hover {
-    background: rgba(0,0,0,0.05);
-    color: #000;
+    background: #eef3ff;
+    color: #000080;
+    transform: translateY(-1px);
   }
 
   &.mobile-only {
@@ -164,7 +168,8 @@ export const ProfileImg = styled.div`
   border-radius: 50%;
   overflow: hidden;
   cursor: pointer;
-  border: 1px solid #e0e0e0;
+  border: 2px solid #e0e7ff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 
   img {
     width: 100%;

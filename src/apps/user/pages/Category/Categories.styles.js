@@ -23,7 +23,7 @@ const media = {
 export const PageContainer = styled.div`
   min-height: 100vh;
   background-color: ${colors.bgLight};
-  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 `;
 
 // --- Hero & Search ---
@@ -41,16 +41,18 @@ export const HeroContent = styled.div`
 `;
 
 export const HeroTitle = styled.h1`
-  font-size: 2.5rem;
-  font-weight: 600;
-  margin-bottom: 12px;
-  ${media.sm} { font-size: 1.8rem; }
+  font-size: clamp(1.95rem, 3vw, 2.35rem);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 10px;
+  ${media.sm} { font-size: 1.7rem; }
 `;
 
 export const HeroSubtitle = styled.p`
-  font-size: 1.1rem;
+  font-size: 1rem;
+  line-height: 1.65;
   opacity: 0.9;
-  margin-bottom: 30px;
+  margin-bottom: 26px;
 `;
 
 export const SearchContainer = styled.div`
@@ -68,7 +70,7 @@ export const SearchInput = styled.input`
   border: none;
   outline: none;
   padding: 0 20px;
-  font-size: 16px;
+  font-size: 15px;
   color: ${colors.textMain};
   border-radius: 32px;
 `;
@@ -115,13 +117,14 @@ export const StatItem = styled.div`
 `;
 
 export const StatValue = styled.span`
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: ${colors.primary};
 `;
 
 export const StatLabel = styled.span`
   font-size: 12px;
+  line-height: 1.45;
   color: ${colors.textSecondary};
   text-transform: uppercase;
   font-weight: 600;
@@ -143,10 +146,11 @@ export const CategoriesHeader = styled.div`
 `;
 
 export const HeaderTitle = styled.h2`
-  font-size: 20px;
+  font-size: 18px;
+  line-height: 1.3;
   color: ${colors.textMain};
   .count {
-    font-size: 14px;
+    font-size: 13px;
     background: ${colors.primaryLight};
     color: ${colors.primary};
     padding: 2px 10px;
@@ -170,6 +174,7 @@ export const ViewToggle = styled.div`
 
 export const ToggleButton = styled.button`
   padding: 8px 12px;
+  font-size: 13px;
   background: ${props => props.$active ? colors.primaryLight : 'white'};
   color: ${props => props.$active ? colors.primary : colors.textSecondary};
   border: none;
@@ -180,6 +185,7 @@ export const ToggleButton = styled.button`
 
 export const SortSelect = styled.select`
   padding: 8px 12px;
+  font-size: 13px;
   border-radius: 4px;
   border: 1px solid ${colors.border};
   color: ${colors.textMain};
@@ -206,6 +212,8 @@ export const CategoryCard = styled.div`
   border: 1px solid ${colors.border};
   transition: 0.3s;
   cursor: pointer;
+  color: inherit;
+  text-decoration: none;
   overflow: hidden; /* Image corners round karne ke liye */
   display: flex;
   flex-direction: ${props => props.$view === 'list' ? 'row' : 'column'};
@@ -241,11 +249,13 @@ export const CategoryInfo = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 2px;
 `;
 
 export const CategoryName = styled.h3`
-  font-size: 17px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
   color: ${colors.textMain};
   margin-bottom: 6px;
   &:hover { color: ${colors.primary}; text-decoration: underline; }
@@ -255,7 +265,7 @@ export const CategoryName = styled.h3`
 export const CategoryDescription = styled.p`
   font-size: 14px;
   color: ${colors.textSecondary};
-  line-height: 1.4;
+  line-height: 1.6;
   margin-bottom: 12px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -275,19 +285,20 @@ export const MetaItem = styled.div`
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.45;
   color: ${colors.textSecondary};
   svg { color: ${colors.primary}; }
 `;
 
 export const ViewButton = styled.div`
   text-align: center;
-  padding: 8px;
+  padding: 8px 10px;
   border: 1px solid ${colors.primary};
   color: ${colors.primary};
   border-radius: 20px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   transition: 0.2s;
   display: flex;
   align-items: center;
@@ -298,7 +309,7 @@ export const ViewButton = styled.div`
 
 // --- Extras ---
 export const TrendingTag = styled.div`
-  font-size: 11px;
+  font-size: 12px;
   color: ${colors.trending};
   background: #fff0ed;
   display: inline-flex;
@@ -311,7 +322,7 @@ export const TrendingTag = styled.div`
 export const PremiumBadge = styled.span`
   background: #f8e7cd;
   color: #855f1d;
-  font-size: 10px;
+  font-size: 11px;
   padding: 1px 6px;
   border-radius: 4px;
   margin-left: 8px;
@@ -324,7 +335,7 @@ export const Breadcrumb = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: 14px;
 `;
 
 export const BreadcrumbItem = styled.span`
@@ -340,7 +351,7 @@ export const BreadcrumbSeparator = styled.span`
 
 export const PopularSection = styled.div`
   margin-bottom: 35px;
-  .title { font-size: 18px; font-weight: 600; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+  .title { font-size: 17px; font-weight: 700; line-height: 1.3; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
 `;
 
 export const PopularGrid = styled.div`
@@ -357,7 +368,7 @@ export const PopularCategory = styled.div`
   padding: 12px;
   text-align: center;
   img { width: 100%; height: 80px; object-fit: cover; border-radius: 4px; }
-  h4 { margin: 8px 0; font-size: 14px; }
+  h4 { margin: 8px 0; font-size: 15px; line-height: 1.35; }
 `;
 
 export const EmptyState = styled.div`

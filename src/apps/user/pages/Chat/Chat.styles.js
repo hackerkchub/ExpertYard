@@ -17,7 +17,7 @@ export const ChatGlobalStyle = createGlobalStyle`
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background-color: #f4f2ee;
+    background-color: #eef3f8;
   }
 
   /* Hide navbar and spacer */
@@ -115,22 +115,26 @@ export const PageWrap = styled.div`
   height: 100vh;
 height: -webkit-fill-available;
   width: 100%;
-  background: #f4f2ee;
+  background:
+    radial-gradient(circle at top left, rgba(63, 81, 181, 0.08), transparent 24%),
+    #eef3f8;
   position: fixed;
   inset: 0;
   z-index: 9999;
 `;
 
 export const Header = styled.div`
-  min-height: 60px;
-  background: white;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  min-height: 68px;
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid #d8e0eb;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
   flex-shrink: 0;
   gap: 12px;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
   
   @media (max-width: 768px) {
     padding: 8px 12px;
@@ -338,11 +342,12 @@ export const EndChatButton = styled.button`
 export const MessagesArea = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 18px 16px;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: #f8fafc;
+  background:
+    linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
   -webkit-overflow-scrolling: touch;
   
   @media (max-width: 768px) {
@@ -359,16 +364,17 @@ export const MessageRow = styled.div`
 `;
 
 export const MessageBubble = styled.div`
-  max-width: 75%;
-  padding: 10px 14px;
+  max-width: min(75%, 720px);
+  padding: 12px 14px;
   font-size: 14px;
-  line-height: 1.5;
-  background: ${props => props.$senderType === 'user' ? '#000080' : 'white'};
+  line-height: 1.6;
+  background: ${props => props.$senderType === 'user' ? '#000080' : 'rgba(255, 255, 255, 0.98)'};
   color: ${props => props.$senderType === 'user' ? 'white' : '#1e293b'};
   border-radius: ${props => props.$senderType === 'user' 
     ? '18px 18px 4px 18px' 
     : '18px 18px 18px 4px'};
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  border: ${props => props.$senderType === "user" ? "none" : "1px solid #d8e0eb"};
   word-wrap: break-word;
   
   @media (max-width: 768px) {
@@ -390,8 +396,8 @@ export const MessageTime = styled.div`
 `;
 
 export const InputBar = styled.div`
-  background: white;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1px solid #d8e0eb;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -399,6 +405,7 @@ export const InputBar = styled.div`
   position: sticky;
   padding-bottom: calc(10px + env(safe-area-inset-bottom));
   transition: all 0.2s;
+  backdrop-filter: blur(16px);
   
   @media (max-width: 768px) {
     padding: 8px 12px;
@@ -408,10 +415,10 @@ export const InputBar = styled.div`
 
 export const InputBox = styled.input`
   flex: 1;
-  height: 44px;
+  min-height: 46px;
   padding: 0 16px;
-  background: #f1f5f9;
-  border: 1.5px solid transparent;
+  background: #f8fafc;
+  border: 1px solid #d8e0eb;
   border-radius: 24px;
   font-size: 15px;
   outline: none;
@@ -427,7 +434,7 @@ export const InputBox = styled.input`
   &:focus {
     background: white;
     border-color: #000080;
-    box-shadow: 0 0 0 3px rgba(0, 0, 128, 0.1);
+    box-shadow: 0 0 0 4px rgba(0, 0, 128, 0.1);
   }
   
   &:disabled {
@@ -479,8 +486,8 @@ export const SendButton = styled.button`
 
 export const UploadButton = styled.button`
   color: #64748b;
-  background: transparent;
-  border: none;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   padding: 8px;
   display: flex;
   align-items: center;
@@ -491,8 +498,8 @@ export const UploadButton = styled.button`
   transition: all 0.2s;
   
   &:hover {
-    background: #f1f5f9;
-    color: #1e293b;
+    background: #eef3ff;
+    color: #000080;
   }
   
   @media (max-width: 768px) {

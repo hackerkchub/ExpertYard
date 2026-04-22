@@ -1,66 +1,67 @@
 /*********************************************************
-  🌿 ExpertYard – Stable WebRTC Voice Peer (FINAL)
-  Production safe version - Self-contained mic handling
-  With TURN support, network recovery, and low bandwidth optimization
+  ExpertYard - Stable WebRTC Voice Peer
+  Frontend-side reliability fixes for audio attach, cleanup,
+  reconnect, and resume renegotiation.
 **********************************************************/
 
 let pc = null;
 let localStream = null;
+let remoteStream = null;
 let remoteAudioEl = null;
 let pendingIce = [];
 
-// Store socket and callId for renegotiation
 let socketRef = null;
 let callIdRef = null;
 
-// ⏱️ Timers for network monitoring
 let disconnectTimer = null;
 let iceTimeout = null;
 let connectionTimeout = null;
 let qualityInterval = null;
+let playRetryTimer = null;
 
-// 🛡️ Protection flags
-let isRestartingIce = false; // Prevent renegotiation storm
-// 🔥 GLOBAL LOCK (top of file me add karo)
+let isRestartingIce = false;
 let isGettingMic = false;
-
-// 1️⃣ & 2️⃣ Listener attachment guards
 let networkListenerAttached = false;
 let visibilityListenerAttached = false;
 
-// 🟢 Callbacks for UI
 let onNetworkWeakCallback = null;
 let onNetworkErrorCallback = null;
 
-/* =====================================================
-   CONFIG - TURN + STUN
-===================================================== */
+const AUDIO_CONSTRAINTS = {
+  echoCancellation: true,
+  noiseSuppression: true,
+  autoGainControl: true,
+  channelCount: { ideal: 1 },
+  sampleRate: { ideal: 16000 },
+  sampleSize: { ideal: 16 },
+  volume: 1.0,
+};
+
 const RTC_CONFIG = {
   iceServers: [
-    // STUN servers (public)
-     { urls: "stun:stun.l.google.com:19302" },
-    // { urls: "stun:stun1.l.google.com:19302" },
-    // { urls: "stun:stun2.l.google.com:19302" },
-    
-    // TURN servers (enterprise grade - REPLACE WITH YOUR CREDENTIALS)
+    { urls: "stun:stun.l.google.com:19302" },
     {
-      urls: "turn:turn.expertyard.com:3478", // ⚠️ REPLACE WITH YOUR TURN SERVER
-      username: "expertyard",                 // ⚠️ REPLACE WITH YOUR USERNAME
-      credential: "securepass123",            // ⚠️ REPLACE WITH YOUR PASSWORD
-    },
-    {
-      urls: "turns:turn.expertyard.com:5349", // TURN over TLS (more secure)
+      urls: "turn:turn.expertyard.com:3478",
       username: "expertyard",
       credential: "securepass123",
-    }
+    },
+    {
+      urls: "turns:turn.expertyard.com:5349",
+      username: "expertyard",
+      credential: "securepass123",
+    },
   ],
-  // Dynamic transport policy based on network
   iceTransportPolicy: (() => {
     const connection = navigator.connection;
     if (connection) {
-      const isLowNetwork = connection.effectiveType?.includes('2g') || 
-                          connection.downlink < 0.5;
-      console.log(`📶 Initial network: ${connection.effectiveType}, forcing ${isLowNetwork ? 'relay' : 'all'}`);
+      const isLowNetwork =
+        connection.effectiveType?.includes("2g") || connection.downlink < 0.5;
+      console.log(
+        "[voicePeer] initial network",
+        connection.effectiveType,
+        "policy=",
+        isLowNetwork ? "relay" : "all"
+      );
       return isLowNetwork ? "relay" : "all";
     }
     return "all";
@@ -70,587 +71,7 @@ const RTC_CONFIG = {
   rtcpMuxPolicy: "require",
 };
 
-/* =====================================================
-   1️⃣ Network change detection (with guard)
-===================================================== */
-function setupNetworkListener() {
-  if (!navigator.connection || networkListenerAttached) return;
-  
-  navigator.connection.addEventListener("change", () => {
-    console.log("📶 Network changed – restarting ICE");
-    if (pc && (pc.connectionState === "connected" || pc.connectionState === "disconnected")) {
-      restartIceWithRenegotiation();
-    }
-  });
-  
-  networkListenerAttached = true;
-  console.log("📡 Network change listener attached");
-}
-
-/* =====================================================
-   2️⃣ Tab visibility recovery (with guard)
-===================================================== */
-function setupVisibilityListener() {
-  if (visibilityListenerAttached) return;
- document.addEventListener("visibilitychange", async () => {
-  if (document.visibilityState === "visible" && pc && pc.connectionState !== "connected") {
-    
-    const track = localStream?.getAudioTracks()[0];
-
-    if (!track || track.readyState === "ended") {
-      console.log("🔄 Recovering mic after tab switch");
-
-      try {
-        const newStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const sender = pc?.getSenders().find(s => s.track?.kind === "audio");
-
-        if (sender && newStream.getAudioTracks()[0]) {
-          await sender.replaceTrack(newStream.getAudioTracks()[0]);
-          localStream = newStream;
-        }
-
-        restartIceWithRenegotiation();
-      } catch (err) {
-        console.error("❌ Visibility mic recovery failed:", err);
-      }
-    }
-  }
-});
-
-  visibilityListenerAttached = true;
-  console.log("👁️ Visibility change listener attached");
-}
-
-// Initialize listeners once
-setupNetworkListener();
-setupVisibilityListener();
-
-/* =====================================================
-   SET CALLBACKS for network events
-===================================================== */
-export function setNetworkCallbacks({ onWeak, onError }) {
-  onNetworkWeakCallback = onWeak;
-  onNetworkErrorCallback = onError;
-}
-
-/* =====================================================
-   CREATE PEER - SELF CONTAINED, ALWAYS HAS MIC
-   🔥 FIX 3 — DUPLICATE BUG FIXED
-===================================================== */
-export async function createPeer({ socket, callId, audioRef, stream }) {
-  // Check if peer exists and is usable
-  if (pc) {
-    if (pc.signalingState !== "closed" && pc.connectionState !== "failed") {
-      console.log("♻️ Reusing existing peer safely");
-      return pc;
-    }
-    closePeer();
-  }
-
-  // Store socket and callId for renegotiation
-  socketRef = socket;
-  callIdRef = callId;
-
-  pc = new RTCPeerConnection(RTC_CONFIG);
-
-  /* 🎤 Get microphone stream */
-  try {
-    // Safe constraints with fallback
-    localStream = stream || await navigator.mediaDevices.getUserMedia({ 
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
-        channelCount: { ideal: 1 },
-        sampleRate: { ideal: 16000 },
-        sampleSize: { ideal: 16 },
-        volume: 1.0,
-      } 
-    });
-    
-    console.log("✅ WebRTC: Got audio stream", localStream.id);
-    const settings = localStream.getAudioTracks()[0]?.getSettings();
-    console.log(`🎤 Audio settings: ${settings?.sampleRate || 'unknown'}Hz, ${settings?.channelCount || 'unknown'} channels`);
-
-    // 4️⃣ Track ended auto recovery (PROPER FIX)
-   localStream.getAudioTracks().forEach(track => {
-  track.onended = async () => {
-    console.log("🎤 Track ended – reacquiring microphone");
-
-    // 🔒 prevent multiple calls
-    if (isGettingMic) return;
-    isGettingMic = true;
-
-    try {
-      const newStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          channelCount: { ideal: 1 },
-          sampleRate: { ideal: 16000 },
-        }
-      });
-
-      const newTrack = newStream.getAudioTracks()[0];
-
-      // 🔥 CRITICAL — rebind listener
-      newTrack.onended = track.onended;
-
-      const sender = pc?.getSenders().find(s => s.track?.kind === "audio");
-
-      if (sender && newTrack) {
-        await sender.replaceTrack(newTrack);
-        console.log("🎤 Track replaced successfully");
-
-        localStream = newStream;
-
-        // ⏱️ delay ICE restart (VERY IMPORTANT)
-        setTimeout(() => {
-          restartIceWithRenegotiation();
-        }, 800);
-      }
-
-    } catch (err) {
-      console.error("❌ Failed to reacquire microphone:", err);
-      if (onNetworkErrorCallback) onNetworkErrorCallback();
-    } finally {
-      isGettingMic = false;
-    }
-  };
-});
-  } catch (err) {
-    console.error("❌ WebRTC: Failed to get microphone:", err);
-    throw new Error("Microphone access denied");
-  }
-
-  // Add tracks with duplicate guard
-  localStream.getTracks().forEach(track => {
-    const sender = pc.getSenders().find(s => s.track?.id === track.id);
-    if (!sender) {
-      pc.addTrack(track, localStream);
-      console.log(`🎤 Added track: ${track.kind}`, track.enabled ? 'enabled' : 'disabled');
-    } else {
-      console.log(`🎤 Track ${track.kind} already exists, skipping`);
-    }
-  });
-
-  // 🔥 AUDIO SENDER TUNING (BIGGEST QUALITY BOOST)
-  const audioSender = pc.getSenders().find(s => s.track?.kind === "audio");
-  if (audioSender) {
-    try {
-      const params = audioSender.getParameters();
-      if (!params.encodings) params.encodings = [{}];
-      
-      params.encodings[0].maxBitrate = 32000; // 🔥 stable voice bitrate
-      params.encodings[0].ptime = 20;
-      
-      await audioSender.setParameters(params);
-      console.log("🎛️ Audio sender tuned: maxBitrate=32kbps, ptime=20ms");
-    } catch (err) {
-      console.warn("⚠️ Could not set audio parameters:", err);
-    }
-  }
-
-  /* 🔊 Remote audio handling */
-  pc.ontrack = (event) => {
-    console.log("🔊 Received remote track:", event.track.kind);
-    
-    if (!remoteAudioEl) {
-      remoteAudioEl = audioRef?.current || document.createElement("audio");
-      remoteAudioEl.autoplay = true;
-      remoteAudioEl.playsInline = true;
-      
-      // 🔥 FIX 8 — MUTED AUDIO EDGE CASE
-      remoteAudioEl.muted = false;
-      remoteAudioEl.volume = 1;
-
-      if (!audioRef?.current) {
-        document.body.appendChild(remoteAudioEl);
-      }
-    }
-
-    // 🔥 FIX 1 — REMOTE AUDIO FULLY SAFE (ALWAYS FORCE UPDATE)
-    // ALWAYS force update - prevents silent audio when track changes
-    remoteAudioEl.srcObject = event.streams[0];
-    
-    // 🔥 HARD PLAY GUARANTEE
-    setTimeout(() => {
-      if (remoteAudioEl) {
-        remoteAudioEl.play().catch(() => {
-          console.log("🔇 Play failed, will retry on user interaction");
-        });
-      }
-    }, 100);
-    
-    // 🔥 TRACK LEVEL FIX
-    if (event.streams[0]) {
-      event.streams[0].getAudioTracks().forEach(track => {
-        track.onunmute = () => {
-          console.log("🔊 Track unmuted — forcing play");
-          if (remoteAudioEl) {
-            remoteAudioEl.play().catch(console.warn);
-          }
-        };
-      });
-    }
-    
-    // 🔥 BONUS: Playout delay hint for smoother audio
-    if (event.receiver) {
-      try {
-        event.receiver.playoutDelayHint = 0.3;
-        console.log("🎵 Playout delay hint set to 0.3s");
-      } catch (err) {
-        console.warn("⚠️ Could not set playoutDelayHint:", err);
-      }
-    }
-    
-    console.log("🔊 Remote audio attached and forced updated");
-  };
-
-  /* ❄ ICE Candidate handling */
-  pc.onicecandidate = (event) => {
-    if (event.candidate && socketRef && callIdRef) {
-      socketRef.emit("webrtc:ice", {
-        callId: callIdRef,
-        candidate: event.candidate,
-      });
-    }
-  };
-
-  /* 🧠 Connection state monitoring + recovery */
-  pc.onconnectionstatechange = () => {
-    console.log("📡 PC state:", pc.connectionState);
-
-    // Clear timers when connected
-    if (pc.connectionState === "connected") {
-      if (disconnectTimer) {
-        clearTimeout(disconnectTimer);
-        disconnectTimer = null;
-      }
-      if (connectionTimeout) {
-        clearTimeout(connectionTimeout);
-        connectionTimeout = null;
-      }
-    }
-
-    if (pc.connectionState === "disconnected") {
-      // 3️⃣ Force TURN after disconnect (spec-safe version)
-      try {
-        const currentConfig = pc.getConfiguration();
-        pc.setConfiguration({
-          ...currentConfig,
-          iceTransportPolicy: "relay"
-        }).catch(err => console.warn("⚠️ Could not force TURN:", err));
-        console.log("🔄 Forcing TURN relay mode for recovery");
-      } catch (err) {
-        console.warn("⚠️ Failed to update config:", err);
-      }
-
-      disconnectTimer = setTimeout(() => {
-        if (pc && pc.connectionState !== "connected") {
-          console.log("♻️ Initiating ICE restart with renegotiation");
-          restartIceWithRenegotiation();
-        }
-      }, 4000);
-    }
-
-    if (pc.connectionState === "failed") {
-      console.log("❌ WebRTC connection failed");
-      if (onNetworkErrorCallback) onNetworkErrorCallback();
-      closePeer();
-    }
-  };
-
-  /* ❄️ ICE connection state monitoring */
-  pc.oniceconnectionstatechange = () => {
-    console.log("❄️ ICE state:", pc.iceConnectionState);
-
-    // Low network detection
-    if (pc.iceConnectionState === "checking") {
-      iceTimeout = setTimeout(() => {
-        if (pc && pc.iceConnectionState !== "connected" && pc.iceConnectionState !== "completed") {
-          console.log("📶 Network too weak - ICE stuck in checking");
-          if (onNetworkWeakCallback) onNetworkWeakCallback();
-        }
-      }, 10000);
-    }
-
-    if (pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") {
-      if (iceTimeout) {
-        clearTimeout(iceTimeout);
-        iceTimeout = null;
-      }
-    }
-
-    if (pc.iceConnectionState === "failed") {
-      console.log("❌ ICE failed");
-      if (onNetworkErrorCallback) onNetworkErrorCallback();
-    }
-  };
-
-  // Connection timeout
-  connectionTimeout = setTimeout(() => {
-    if (pc && pc.connectionState !== "connected") {
-      console.log("⏳ Connection timeout after 15s");
-      if (onNetworkErrorCallback) onNetworkErrorCallback();
-      closePeer();
-    }
-  }, 15000);
-
-  // Start quality monitoring
-  startQualityMonitoring();
-
-  return pc;
-}
-
-/* =====================================================
-   ICE RESTART WITH RENEGOTIATION & STORM PROTECTION
-   🔥 FIX 5 — ICE RESTART LOOP CONTROL
-   🔥 FIX 2 — REDUCED AGGRESSIVENESS
-===================================================== */
-async function restartIceWithRenegotiation() {
-  // Prevent multiple simultaneous restarts
-  if (isRestartingIce) {
-    console.log("🔄 ICE restart already in progress, skipping");
-    return;
-  }
-
-  if (!pc || !socketRef || !callIdRef) {
-    console.log("❌ Cannot restart ICE: missing peer or socket");
-    return;
-  }
-
-  // 🔥 FIX 5 — Check signaling state before restart
-  if (pc.signalingState !== "stable") {
-    console.log("⛔ ICE restart skipped — not stable, current state:", pc.signalingState);
-    return;
-  }
-
-  isRestartingIce = true;
-
-  try {
-    console.log("🔄 Creating new offer with iceRestart: true");
-    const offer = await pc.createOffer({ 
-      iceRestart: true,
-      offerToReceiveAudio: true 
-    });
-    
-    await pc.setLocalDescription(offer);
-    
-    socketRef.emit("webrtc:offer", {
-      callId: callIdRef,
-      offer,
-    });
-    
-    console.log("📤 Renegotiation offer sent");
-  } catch (err) {
-    console.error("❌ Renegotiation failed:", err);
-  } finally {
-    // Always reset the flag
-    isRestartingIce = false;
-  }
-}
-
-/* =====================================================
-   OFFER / ANSWER
-===================================================== */
-export async function createOffer() {
-  if (!pc) return null;
-
-  const offer = await pc.createOffer({
-    offerToReceiveAudio: true,
-    offerToReceiveVideo: false,
-  });
-  
-  await pc.setLocalDescription(offer);
-  console.log("📤 Offer created");
-  return offer;
-}
-
-export async function createAnswer() {
-  if (!pc) return null;
-
-  const answer = await pc.createAnswer();
-  await pc.setLocalDescription(answer);
-  console.log("📤 Answer created");
-  return answer;
-}
-
-/* =====================================================
-   REMOTE DESCRIPTION WITH PENDING ICE FLUSH
-===================================================== */
-export async function setRemote(description) {
-  if (!pc || !description) return;
-
-  const rtcDesc =
-    description instanceof RTCSessionDescription
-      ? description
-      : new RTCSessionDescription(description);
-
-  // 🔥 CRITICAL GUARD
- if (
-  pc.signalingState !== "have-local-offer" &&
-  pc.signalingState !== "stable"
-) {
-  console.warn("⛔ Skipping setRemote — wrong state:", pc.signalingState);
-  return;
-}
-
-  try {
-    await pc.setRemoteDescription(rtcDesc);
-    console.log("📥 Remote description set");
-  } catch (err) {
-    console.error("❌ setRemote failed:", err);
-    return;
-  }
-
-  // ICE flush
-  for (const candidate of pendingIce) {
-    try {
-      await pc.addIceCandidate(candidate);
-    } catch (err) {
-      console.warn("⚠️ ICE flush error:", err);
-    }
-  }
-  pendingIce = [];
-}
-
-/* =====================================================
-   ICE HANDLING
-===================================================== */
-export async function addIce(candidate) {
-  if (!candidate) return;
-
-  try {
-    if (pc && pc.remoteDescription) {
-      await pc.addIceCandidate(candidate);
-      console.log("🧊 ICE candidate added");
-    } else {
-      pendingIce.push(candidate);
-      console.log("🧊 ICE candidate queued (pending:", pendingIce.length, ")");
-    }
-  } catch (err) {
-    console.error("❌ ICE error:", err);
-  }
-}
-
-/* =====================================================
-   MUTE / UNMUTE
-===================================================== */
-export function toggleMute(muted) {
-  if (!localStream) return;
-
-  localStream.getAudioTracks().forEach((t) => {
-    t.enabled = !muted;
-  });
-  
-  console.log(`🎤 ${muted ? 'Muted' : 'Unmuted'}`);
-}
-
-/* =====================================================
-   GET STATS with percentage-based quality monitoring
-===================================================== */
-export async function getStats() {
-  if (!pc) return null;
-  
-  try {
-    const stats = await pc.getStats();
-    const report = [];
-    
-    stats.forEach(stat => {
-      if (stat.type === 'inbound-rtp' && stat.kind === 'audio') {
-        report.push({
-          type: 'inbound',
-          packetsLost: stat.packetsLost,
-          packetsReceived: stat.packetsReceived,
-          jitter: stat.jitter,
-          roundTripTime: stat.roundTripTime,
-        });
-      }
-      if (stat.type === 'outbound-rtp' && stat.kind === 'audio') {
-        report.push({
-          type: 'outbound',
-          packetsSent: stat.packetsSent,
-        });
-      }
-    });
-    
-    return report;
-  } catch (err) {
-    console.warn("Could not get stats:", err);
-    return null;
-  }
-}
-
-/* =====================================================
-   5️⃣ QUALITY MONITORING with safe percentage calculation
-   🔥 FIX 2 — LESS AGGRESSIVE ICE RESTART
-===================================================== */
-function startQualityMonitoring() {
-  if (qualityInterval) clearInterval(qualityInterval);
-  
-  qualityInterval = setInterval(async () => {
-    const stats = await getStats();
-    
-    if (stats) {
-      const inboundStats = stats.find(s => s.type === 'inbound');
-      if (inboundStats) {
-        // 5️⃣ Safe division with zero guard
-        const total = inboundStats.packetsReceived + inboundStats.packetsLost;
-        if (total === 0) return;
-        
-        const lossPercent = inboundStats.packetsLost / total;
-        
-        if (lossPercent > 0.08) { // 8% packet loss threshold
-          console.log(`📉 High packet loss: ${(lossPercent * 100).toFixed(1)}%`);
-          
-          // 🟢 OPTIONAL: Auto switch to relay on high loss
-          if (lossPercent > 0.15 && pc) {
-            try {
-              const currentConfig = pc.getConfiguration();
-              pc.setConfiguration({
-                ...currentConfig,
-                iceTransportPolicy: "relay"
-              }).catch(console.warn);
-              console.log("🔄 Auto-switching to relay due to high packet loss");
-            } catch (err) {
-              console.warn("⚠️ Could not force TURN:", err);
-            }
-          }
-          
-          if (onNetworkWeakCallback) {
-            onNetworkWeakCallback({
-              lossPercent,
-              jitter: inboundStats.jitter,
-              rtt: inboundStats.roundTripTime
-            });
-          }
-        }
-        
-        // 🔥 FIX 2 — LESS AGGRESSIVE: Only restart on EXTREME RTT (>1.5s) or VERY HIGH loss (>25%)
-        if (inboundStats.roundTripTime > 1.5) { // Increased threshold from 0.8 to 1.5 seconds
-          console.log("⚠️ Extreme RTT detected (>1.5s), restarting ICE");
-          restartIceWithRenegotiation();
-        }
-        
-        // Additional safety: Restart on very high packet loss (>25%)
-        if (lossPercent > 0.25) {
-          console.log("⚠️ Very high packet loss (>25%), restarting ICE");
-          restartIceWithRenegotiation();
-        }
-      }
-    }
-  }, 5000);
-}
-
-/* =====================================================
-   CLEANUP - COMPLETE RESET
-===================================================== */
-export function closePeer() {
-  console.log("🧹 WebRTC cleanup");
-  
-  // Clear all timers
+function clearTimers() {
   if (disconnectTimer) {
     clearTimeout(disconnectTimer);
     disconnectTimer = null;
@@ -667,54 +88,747 @@ export function closePeer() {
     clearInterval(qualityInterval);
     qualityInterval = null;
   }
-  
-  // Close peer connection
+  if (playRetryTimer) {
+    clearTimeout(playRetryTimer);
+    playRetryTimer = null;
+  }
+}
+
+function hasLiveLocalAudio(stream = localStream) {
+  const track = stream?.getAudioTracks?.()[0];
+  return Boolean(track && track.readyState === "live");
+}
+
+function ensureRemoteStream() {
+  if (!remoteStream) {
+    remoteStream = new MediaStream();
+  }
+  return remoteStream;
+}
+
+function logAudioTracks(prefix, stream) {
+  const tracks = stream?.getAudioTracks?.() || [];
+  console.log(
+    prefix,
+    tracks.map((track) => ({
+      id: track.id,
+      enabled: track.enabled,
+      muted: track.muted,
+      readyState: track.readyState,
+      label: track.label,
+    }))
+  );
+}
+
+async function safePlayAudio(audioEl, reason = "unknown") {
+  if (!audioEl) {
+    console.warn("[voicePeer] audio play skipped: no element", { reason });
+    return false;
+  }
+
+  try {
+    await audioEl.play();
+    console.log("[voicePeer] audio.play() success", { reason });
+    return true;
+  } catch (error) {
+    console.warn("[voicePeer] audio.play() failed", {
+      reason,
+      message: error?.message,
+      name: error?.name,
+    });
+
+    if (playRetryTimer) {
+      clearTimeout(playRetryTimer);
+    }
+
+    playRetryTimer = setTimeout(() => {
+      if (!audioEl?.srcObject) return;
+      audioEl.play().then(
+        () => console.log("[voicePeer] audio.play() retry success", { reason }),
+        (retryError) =>
+          console.warn("[voicePeer] audio.play() retry failed", {
+            reason,
+            message: retryError?.message,
+            name: retryError?.name,
+          })
+      );
+    }, 600);
+
+    return false;
+  }
+}
+
+function bindAudioElement(audioRef) {
+  const nextAudioEl = audioRef?.current || null;
+
+  if (nextAudioEl) {
+    remoteAudioEl = nextAudioEl;
+    remoteAudioEl.autoplay = true;
+    remoteAudioEl.playsInline = true;
+    remoteAudioEl.muted = false;
+    remoteAudioEl.volume = 1;
+    console.log("[voicePeer] bound remote audio element", {
+      tagName: remoteAudioEl.tagName,
+    });
+  } else if (!remoteAudioEl) {
+    remoteAudioEl = document.createElement("audio");
+    remoteAudioEl.autoplay = true;
+    remoteAudioEl.playsInline = true;
+    remoteAudioEl.muted = false;
+    remoteAudioEl.volume = 1;
+    remoteAudioEl.setAttribute("data-generated-voice-audio", "true");
+    document.body.appendChild(remoteAudioEl);
+    console.warn("[voicePeer] audioRef missing, using fallback audio element");
+  }
+
+  if (remoteAudioEl && remoteStream && remoteAudioEl.srcObject !== remoteStream) {
+    remoteAudioEl.srcObject = remoteStream;
+    console.log("[voicePeer] rebound srcObject to remote stream", {
+      streamId: remoteStream.id,
+    });
+    safePlayAudio(remoteAudioEl, "bind-audio-element");
+  }
+
+  return remoteAudioEl;
+}
+
+function cleanupRemoteAudioElement() {
+  if (!remoteAudioEl) return;
+
+  try {
+    remoteAudioEl.pause?.();
+    remoteAudioEl.srcObject = null;
+
+    if (remoteAudioEl.dataset?.generatedVoiceAudio === "true") {
+      remoteAudioEl.remove();
+    }
+  } catch (error) {
+    console.warn("[voicePeer] remote audio cleanup issue", error);
+  }
+
+  remoteAudioEl = null;
+}
+
+async function acquireMicrophone(providedStream) {
+  if (providedStream && hasLiveLocalAudio(providedStream)) {
+    logAudioTracks("[voicePeer] using provided local audio tracks", providedStream);
+    return providedStream;
+  }
+
+  const existingTrack = localStream?.getAudioTracks?.()[0];
+  if (existingTrack && existingTrack.readyState === "live") {
+    logAudioTracks("[voicePeer] reusing existing local audio tracks", localStream);
+    return localStream;
+  }
+
+  console.log("[voicePeer] requesting getUserMedia");
+  const newStream = await navigator.mediaDevices.getUserMedia({
+    audio: AUDIO_CONSTRAINTS,
+  });
+  console.log("[voicePeer] getUserMedia success", { streamId: newStream.id });
+  logAudioTracks("[voicePeer] local audio tracks", newStream);
+  return newStream;
+}
+
+function attachTrackRecovery(stream) {
+  stream?.getAudioTracks?.().forEach((track) => {
+    track.onended = async () => {
+      console.warn("[voicePeer] local audio track ended", { trackId: track.id });
+
+      if (isGettingMic) return;
+      isGettingMic = true;
+
+      try {
+        const newStream = await navigator.mediaDevices.getUserMedia({
+          audio: AUDIO_CONSTRAINTS,
+        });
+        console.log("[voicePeer] reacquired microphone", { streamId: newStream.id });
+        logAudioTracks("[voicePeer] reacquired local audio tracks", newStream);
+
+        const newTrack = newStream.getAudioTracks()[0];
+        attachTrackRecovery(newStream);
+
+        const sender = pc?.getSenders().find((item) => item.track?.kind === "audio");
+        if (sender && newTrack) {
+          await sender.replaceTrack(newTrack);
+          console.log("[voicePeer] sender.replaceTrack() success", {
+            oldTrackId: track.id,
+            newTrackId: newTrack.id,
+          });
+        }
+
+        localStream?.getTracks().forEach((item) => item.stop());
+        localStream = newStream;
+
+        setTimeout(() => {
+          restartIceWithRenegotiation();
+        }, 500);
+      } catch (error) {
+        console.error("[voicePeer] microphone reacquire failed", error);
+        if (onNetworkErrorCallback) onNetworkErrorCallback();
+      } finally {
+        isGettingMic = false;
+      }
+    };
+  });
+}
+
+async function ensureLocalAudioSender(stream) {
+  localStream = stream;
+  attachTrackRecovery(localStream);
+
+  const track = localStream.getAudioTracks()[0];
+  if (!track) {
+    throw new Error("No local audio track available");
+  }
+
+  const existingSender = pc
+    ?.getSenders()
+    .find((sender) => sender.track?.kind === "audio");
+
+  if (existingSender) {
+    if (existingSender.track?.id !== track.id) {
+      await existingSender.replaceTrack(track);
+      console.log("[voicePeer] replaceTrack()", {
+        senderTrackId: existingSender.track?.id,
+        nextTrackId: track.id,
+      });
+    } else {
+      console.log("[voicePeer] audio sender already up to date", {
+        trackId: track.id,
+      });
+    }
+  } else {
+    pc.addTrack(track, localStream);
+    console.log("[voicePeer] addTrack()", {
+      trackId: track.id,
+      enabled: track.enabled,
+    });
+  }
+
+  try {
+    const audioSender = pc.getSenders().find((sender) => sender.track?.kind === "audio");
+    if (audioSender) {
+      const params = audioSender.getParameters();
+      if (!params.encodings) params.encodings = [{}];
+      params.encodings[0].maxBitrate = 32000;
+      params.encodings[0].ptime = 20;
+      await audioSender.setParameters(params);
+      console.log("[voicePeer] audio sender tuned");
+    }
+  } catch (error) {
+    console.warn("[voicePeer] audio sender tuning failed", error);
+  }
+}
+
+function setupRemoteAudioLifecycle(audioRef) {
+  const audioEl = bindAudioElement(audioRef);
+  const stream = ensureRemoteStream();
+
+  if (audioEl.srcObject !== stream) {
+    audioEl.srcObject = stream;
+    console.log("[voicePeer] remote audio srcObject assigned", {
+      streamId: stream.id,
+    });
+  }
+
+  const replay = () => safePlayAudio(audioEl, "media-event");
+  audioEl.onloadedmetadata = replay;
+  audioEl.oncanplay = replay;
+}
+
+function setupNetworkListener() {
+  if (!navigator.connection || networkListenerAttached) return;
+
+  navigator.connection.addEventListener("change", () => {
+    console.log("[voicePeer] network change detected");
+    if (pc && (pc.connectionState === "connected" || pc.connectionState === "disconnected")) {
+      restartIceWithRenegotiation();
+    }
+  });
+
+  networkListenerAttached = true;
+}
+
+function setupVisibilityListener() {
+  if (visibilityListenerAttached) return;
+
+  document.addEventListener("visibilitychange", async () => {
+    console.log("[voicePeer] visibilitychange", document.visibilityState);
+
+    if (document.visibilityState !== "visible" || !pc) return;
+
+    bindAudioElement();
+    safePlayAudio(remoteAudioEl, "tab-visible");
+
+    const track = localStream?.getAudioTracks?.()[0];
+    if (!track || track.readyState === "ended") {
+      console.warn("[voicePeer] local track missing after tab restore");
+      try {
+        const recoveredStream = await navigator.mediaDevices.getUserMedia({
+          audio: AUDIO_CONSTRAINTS,
+        });
+        await ensureLocalAudioSender(recoveredStream);
+      } catch (error) {
+        console.error("[voicePeer] tab visibility mic recovery failed", error);
+      }
+    }
+
+    if (pc.connectionState !== "connected") {
+      restartIceWithRenegotiation();
+    }
+  });
+
+  visibilityListenerAttached = true;
+}
+
+setupNetworkListener();
+setupVisibilityListener();
+
+export function setNetworkCallbacks({ onWeak, onError }) {
+  onNetworkWeakCallback = onWeak;
+  onNetworkErrorCallback = onError;
+}
+
+export function attachRemoteAudio(audioRef) {
+  setupRemoteAudioLifecycle(audioRef);
+}
+
+export async function createPeer({ socket, callId, audioRef, stream }) {
+  const shouldReuseExistingPeer =
+    pc &&
+    pc.signalingState !== "closed" &&
+    pc.connectionState !== "failed" &&
+    callIdRef === callId;
+
+  socketRef = socket;
+  callIdRef = callId;
+
+  if (!shouldReuseExistingPeer) {
+    if (pc) {
+      console.log("[voicePeer] closing stale peer before createPeer", {
+        previousCallId: callIdRef,
+      });
+      closePeer();
+      socketRef = socket;
+      callIdRef = callId;
+    }
+
+    pc = new RTCPeerConnection(RTC_CONFIG);
+    remoteStream = new MediaStream();
+
+    console.log("[voicePeer] created RTCPeerConnection", { callId });
+
+    pc.ontrack = (event) => {
+      console.log("[voicePeer] ontrack fired", {
+        kind: event.track?.kind,
+        streamIds: event.streams?.map((item) => item.id) || [],
+        trackId: event.track?.id,
+      });
+
+      if (event.track?.kind !== "audio") return;
+
+      setupRemoteAudioLifecycle(audioRef);
+      const outputStream = ensureRemoteStream();
+
+      const alreadyAttached = outputStream
+        .getTracks()
+        .some((item) => item.id === event.track.id);
+
+      if (!alreadyAttached) {
+        outputStream.addTrack(event.track);
+      }
+
+      event.track.onunmute = () => {
+        console.log("[voicePeer] remote track unmuted", { trackId: event.track.id });
+        safePlayAudio(remoteAudioEl, "remote-track-unmute");
+      };
+
+      event.track.onmute = () => {
+        console.log("[voicePeer] remote track muted", { trackId: event.track.id });
+      };
+
+      event.track.onended = () => {
+        console.warn("[voicePeer] remote track ended", { trackId: event.track.id });
+      };
+
+      logAudioTracks("[voicePeer] remote audio tracks", outputStream);
+
+      if (event.receiver) {
+        try {
+          event.receiver.playoutDelayHint = 0.3;
+        } catch (error) {
+          console.warn("[voicePeer] playoutDelayHint unsupported", error);
+        }
+      }
+
+      safePlayAudio(remoteAudioEl, "ontrack");
+    };
+
+    pc.onicecandidate = (event) => {
+      if (!event.candidate || !socketRef || !callIdRef) return;
+
+      socketRef.emit("webrtc:ice", {
+        callId: callIdRef,
+        candidate: event.candidate,
+      });
+      console.log("[voicePeer] emitted ice candidate", {
+        callId: callIdRef,
+        sdpMid: event.candidate.sdpMid,
+      });
+    };
+
+    pc.onsignalingstatechange = () => {
+      console.log("[voicePeer] signalingState", pc.signalingState);
+    };
+
+    pc.onconnectionstatechange = () => {
+      console.log("[voicePeer] connectionState", pc.connectionState);
+
+      if (pc.connectionState === "connected") {
+        if (disconnectTimer) {
+          clearTimeout(disconnectTimer);
+          disconnectTimer = null;
+        }
+        if (connectionTimeout) {
+          clearTimeout(connectionTimeout);
+          connectionTimeout = null;
+        }
+        safePlayAudio(remoteAudioEl, "pc-connected");
+      }
+
+      if (pc.connectionState === "disconnected") {
+        disconnectTimer = setTimeout(() => {
+          if (pc && pc.connectionState !== "connected") {
+            console.warn("[voicePeer] disconnected too long, restarting ICE");
+            restartIceWithRenegotiation();
+          }
+        }, 4000);
+      }
+
+      if (pc.connectionState === "failed") {
+        console.error("[voicePeer] peer connection failed");
+        if (onNetworkErrorCallback) onNetworkErrorCallback();
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log("[voicePeer] iceConnectionState", pc.iceConnectionState);
+
+      if (pc.iceConnectionState === "checking") {
+        iceTimeout = setTimeout(() => {
+          if (
+            pc &&
+            pc.iceConnectionState !== "connected" &&
+            pc.iceConnectionState !== "completed"
+          ) {
+            console.warn("[voicePeer] ICE stuck in checking");
+            if (onNetworkWeakCallback) onNetworkWeakCallback();
+          }
+        }, 10000);
+      }
+
+      if (
+        pc.iceConnectionState === "connected" ||
+        pc.iceConnectionState === "completed"
+      ) {
+        if (iceTimeout) {
+          clearTimeout(iceTimeout);
+          iceTimeout = null;
+        }
+        safePlayAudio(remoteAudioEl, "ice-connected");
+      }
+
+      if (pc.iceConnectionState === "failed") {
+        console.error("[voicePeer] ICE failed");
+        if (onNetworkErrorCallback) onNetworkErrorCallback();
+      }
+    };
+  } else {
+    console.log("[voicePeer] reusing active peer", {
+      callId,
+      signalingState: pc.signalingState,
+      connectionState: pc.connectionState,
+    });
+  }
+
+  setupRemoteAudioLifecycle(audioRef);
+
+  try {
+    const nextStream = await acquireMicrophone(stream);
+    await ensureLocalAudioSender(nextStream);
+  } catch (error) {
+    console.error("[voicePeer] getUserMedia failed", error);
+    throw new Error("Microphone access denied");
+  }
+
+  clearTimers();
+  connectionTimeout = setTimeout(() => {
+    if (pc && pc.connectionState !== "connected") {
+      console.warn("[voicePeer] connection timeout after 15s");
+      if (onNetworkErrorCallback) onNetworkErrorCallback();
+    }
+  }, 15000);
+
+  startQualityMonitoring();
+  return pc;
+}
+
+async function restartIceWithRenegotiation() {
+  if (isRestartingIce) {
+    console.log("[voicePeer] ICE restart already in progress");
+    return;
+  }
+
+  if (!pc || !socketRef || !callIdRef) {
+    console.warn("[voicePeer] ICE restart skipped: missing peer/socket/callId");
+    return;
+  }
+
+  if (pc.signalingState !== "stable") {
+    console.warn("[voicePeer] ICE restart skipped: signaling not stable", {
+      signalingState: pc.signalingState,
+    });
+    return;
+  }
+
+  isRestartingIce = true;
+
+  try {
+    const offer = await pc.createOffer({
+      iceRestart: true,
+      offerToReceiveAudio: true,
+      offerToReceiveVideo: false,
+    });
+
+    await pc.setLocalDescription(offer);
+
+    socketRef.emit("webrtc:offer", {
+      callId: callIdRef,
+      offer,
+    });
+
+    console.log("[voicePeer] ICE restart offer sent", { callId: callIdRef });
+  } catch (error) {
+    console.error("[voicePeer] ICE restart failed", error);
+  } finally {
+    isRestartingIce = false;
+  }
+}
+
+export async function createOffer() {
+  if (!pc) return null;
+
+  const offer = await pc.createOffer({
+    offerToReceiveAudio: true,
+    offerToReceiveVideo: false,
+  });
+
+  await pc.setLocalDescription(offer);
+  console.log("[voicePeer] createOffer complete");
+  return offer;
+}
+
+export async function createAnswer() {
+  if (!pc) return null;
+
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  console.log("[voicePeer] createAnswer complete");
+  return answer;
+}
+
+export async function setRemote(description) {
+  if (!pc || !description) return;
+
+  const rtcDesc =
+    description instanceof RTCSessionDescription
+      ? description
+      : new RTCSessionDescription(description);
+
+  const isOffer = rtcDesc.type === "offer";
+  const canApplyOffer = pc.signalingState === "stable";
+  const canApplyAnswer = pc.signalingState === "have-local-offer";
+
+  if ((isOffer && !canApplyOffer) || (!isOffer && !canApplyAnswer)) {
+    console.warn("[voicePeer] setRemote skipped due to signaling state", {
+      type: rtcDesc.type,
+      signalingState: pc.signalingState,
+    });
+    return false;
+  }
+
+  try {
+    await pc.setRemoteDescription(rtcDesc);
+    console.log("[voicePeer] setRemote success", {
+      type: rtcDesc.type,
+      signalingState: pc.signalingState,
+    });
+  } catch (error) {
+    console.error("[voicePeer] setRemote failed", error);
+    return false;
+  }
+
+  while (pendingIce.length) {
+    const candidate = pendingIce.shift();
+    try {
+      await pc.addIceCandidate(candidate);
+      console.log("[voicePeer] flushed queued ICE candidate");
+    } catch (error) {
+      console.warn("[voicePeer] queued ICE flush failed", error);
+    }
+  }
+
+  return true;
+}
+
+export async function addIce(candidate) {
+  if (!candidate) return;
+
+  try {
+    if (pc && pc.remoteDescription) {
+      await pc.addIceCandidate(candidate);
+      console.log("[voicePeer] addIce success");
+    } else {
+      pendingIce.push(candidate);
+      console.log("[voicePeer] queued ICE candidate", {
+        pendingCount: pendingIce.length,
+      });
+    }
+  } catch (error) {
+    console.error("[voicePeer] addIce failed", error);
+  }
+}
+
+export function toggleMute(muted) {
+  if (!localStream) return;
+
+  localStream.getAudioTracks().forEach((track) => {
+    track.enabled = !muted;
+  });
+
+  logAudioTracks("[voicePeer] toggleMute", localStream);
+}
+
+export async function getStats() {
+  if (!pc) return null;
+
+  try {
+    const stats = await pc.getStats();
+    const report = [];
+
+    stats.forEach((stat) => {
+      if (stat.type === "inbound-rtp" && stat.kind === "audio") {
+        report.push({
+          type: "inbound",
+          packetsLost: stat.packetsLost,
+          packetsReceived: stat.packetsReceived,
+          jitter: stat.jitter,
+          roundTripTime: stat.roundTripTime,
+        });
+      }
+      if (stat.type === "outbound-rtp" && stat.kind === "audio") {
+        report.push({
+          type: "outbound",
+          packetsSent: stat.packetsSent,
+        });
+      }
+    });
+
+    return report;
+  } catch (error) {
+    console.warn("[voicePeer] getStats failed", error);
+    return null;
+  }
+}
+
+function startQualityMonitoring() {
+  if (qualityInterval) clearInterval(qualityInterval);
+
+  qualityInterval = setInterval(async () => {
+    const stats = await getStats();
+    const inbound = stats?.find((item) => item.type === "inbound");
+
+    if (!inbound) return;
+
+    const total = inbound.packetsReceived + inbound.packetsLost;
+    if (!total) return;
+
+    const lossPercent = inbound.packetsLost / total;
+
+    if (lossPercent > 0.08 && onNetworkWeakCallback) {
+      onNetworkWeakCallback({
+        lossPercent,
+        jitter: inbound.jitter,
+        rtt: inbound.roundTripTime,
+      });
+    }
+
+    if (inbound.roundTripTime > 1.5 || lossPercent > 0.25) {
+      console.warn("[voicePeer] quality degraded, triggering ICE restart", {
+        lossPercent,
+        roundTripTime: inbound.roundTripTime,
+      });
+      restartIceWithRenegotiation();
+    }
+  }, 5000);
+}
+
+export function closePeer() {
+  console.log("[voicePeer] cleanup start");
+
+  clearTimers();
+
   if (pc) {
     pc.ontrack = null;
     pc.onicecandidate = null;
     pc.onconnectionstatechange = null;
     pc.oniceconnectionstatechange = null;
+    pc.onsignalingstatechange = null;
+
+    try {
+      pc.getSenders().forEach((sender) => {
+        if (typeof sender.replaceTrack === "function") {
+          sender.replaceTrack(null).catch(() => {});
+        }
+      });
+    } catch (error) {
+      console.warn("[voicePeer] sender cleanup issue", error);
+    }
+
     pc.close();
     pc = null;
   }
 
-  // Stop all tracks in local stream
   if (localStream) {
-    localStream.getTracks().forEach((t) => {
-      t.stop();
-      console.log(`🛑 Stopped track: ${t.kind}`);
+    localStream.getTracks().forEach((track) => {
+      console.log("[voicePeer] stopping local track", {
+        kind: track.kind,
+        id: track.id,
+      });
+      track.stop();
     });
     localStream = null;
   }
 
-  // Safer audio element cleanup
-  if (remoteAudioEl && !remoteAudioEl.hasAttribute('data-keep')) {
-    remoteAudioEl.srcObject = null;
-    remoteAudioEl.pause?.();
-    remoteAudioEl.remove();
-    remoteAudioEl = null;
-  } else if (remoteAudioEl) {
-    remoteAudioEl.srcObject = null;
-    remoteAudioEl = null;
+  if (remoteStream) {
+    remoteStream.getTracks().forEach((track) => remoteStream.removeTrack(track));
+    remoteStream = null;
   }
+
+  cleanupRemoteAudioElement();
 
   pendingIce = [];
   socketRef = null;
   callIdRef = null;
   isRestartingIce = false;
-  
-  // Reset callbacks
   onNetworkWeakCallback = null;
   onNetworkErrorCallback = null;
-  
-  console.log("✅ WebRTC cleanup complete");
+
+  console.log("[voicePeer] cleanup complete");
 }
 
-/* =====================================================
-   SOCKET RECONNECT HANDLER
-===================================================== */
 export function handleSocketReconnect() {
-  console.log("🔄 Socket reconnected - cleaning up peer for renegotiation");
+  console.log("[voicePeer] socket reconnect: resetting peer state");
   closePeer();
-  // Consumer should call createPeer again
 }

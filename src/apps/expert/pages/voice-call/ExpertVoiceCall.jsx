@@ -46,6 +46,7 @@ import {
   createAnswer,
   handleSocketReconnect,
   getStats,
+  attachRemoteAudio,
 } from "../../../../shared/webrtc/voicePeer";
 import { soundManager } from "../../../../shared/services/sound/soundManager";
 
@@ -103,6 +104,10 @@ export default function ExpertVoiceCall() {
   useEffect(() => {
     callIdRef.current = normalizedCallId;
   }, [normalizedCallId]);
+
+  useEffect(() => {
+    attachRemoteAudio(audioRef);
+  }, []);
 
   // Cleanup media tracks
   const cleanupMedia = useCallback(() => {
@@ -163,6 +168,7 @@ export default function ExpertVoiceCall() {
         name: data.user_name || prev.name
       }));
       setCallState("connected");
+      callStartedRef.current = true;
 
       const alreadyElapsed =
         Math.floor((Date.now() - new Date(data.startedAt)) / 1000);
@@ -280,6 +286,7 @@ export default function ExpertVoiceCall() {
       console.log("🔄 Expert socket reconnected");
       setReconnecting(true);
 
+      socket.emit("call:resume_check");
       handleSocketReconnect();
 
       if (callIdRef.current && callStateRef.current === "connected") {
@@ -319,6 +326,19 @@ if (!streamRef.current || streamRef.current.getAudioTracks()[0]?.readyState !== 
 
     socket.io?.on("reconnect", onReconnect);
     return () => socket.io?.off("reconnect", onReconnect);
+  }, [socket]);
+
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+      if (callStateRef.current !== "connected" || !callIdRef.current) return;
+
+      attachRemoteAudio(audioRef);
+      socket.emit("call:resume_check");
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
   }, [socket]);
 
   // Network quality monitoring
@@ -377,7 +397,10 @@ if (!streamRef.current || streamRef.current.getAudioTracks()[0]?.readyState !== 
     // 🔥 RESET for new negotiation
     // hasRemoteOfferRef.current = false;
 
-    await setRemote(offer);
+    const applied = await setRemote(offer);
+    if (!applied) {
+      return;
+    }
 
     // hasRemoteOfferRef.current = true;
 

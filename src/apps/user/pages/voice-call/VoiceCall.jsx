@@ -41,6 +41,7 @@ import {
   toggleMute,
   handleSocketReconnect,
   getStats,
+  attachRemoteAudio,
 } from "../../../../shared/webrtc/voicePeer";
 
 import { CALL_EVENTS } from "../../../../shared/constants/call.constants";
@@ -103,6 +104,10 @@ export default function VoiceCall() {
   useEffect(() => {
     callIdRef.current = callId;
   }, [callId]);
+
+  useEffect(() => {
+    attachRemoteAudio(audioRef);
+  }, []);
 
   // Sound management
   useEffect(() => {
@@ -229,6 +234,8 @@ export default function VoiceCall() {
       setIsResumed(true);
       setCallId(data.callId);
       setCallState("connected");
+      callStartedRef.current = true;
+      hasRemoteSetRef.current = false;
 
       const alreadyElapsed = Math.floor(
         (Date.now() - new Date(data.startedAt)) / 1000
@@ -236,11 +243,9 @@ export default function VoiceCall() {
 
       setSeconds(alreadyElapsed);
 
-      if (callStateRef.current === "connected") {
-        setTimeout(() => {
-          handleWebRTCOffer(data.callId);
-        }, 400);
-      }
+      setTimeout(() => {
+        handleWebRTCOffer(data.callId);
+      }, 300);
     };
 
     socket.on("call:resume_data", onResume);
@@ -270,6 +275,7 @@ export default function VoiceCall() {
       setCallId(connectedCallId);
       setSeconds(0);
       setCallState("connected");
+      hasRemoteSetRef.current = false;
 
       if (!makingOfferRef.current) {
         setTimeout(() => {
@@ -287,8 +293,8 @@ export default function VoiceCall() {
   return;
 }
 
-await setRemote(answer);
-hasRemoteSetRef.current = true;
+const applied = await setRemote(answer);
+hasRemoteSetRef.current = Boolean(applied);
         console.log("✅ Remote description set");
       } catch (err) {
         console.error("❌ Failed to set remote:", err);
@@ -365,7 +371,9 @@ hasRemoteSetRef.current = true;
     const onReconnect = () => {
       console.log("🔄 Socket reconnected – reinitializing peer");
       setReconnecting(true);
+      socket.emit("call:resume_check");
       handleSocketReconnect();
+      hasRemoteSetRef.current = false;
 
       if (callIdRef.current && callStateRef.current === "connected") {
         setTimeout(() => {
@@ -379,6 +387,25 @@ hasRemoteSetRef.current = true;
     return () => {
       socket.io?.off("reconnect", onReconnect);
     };
+  }, [socket, handleWebRTCOffer]);
+
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+      if (callStateRef.current !== "connected" || !callIdRef.current) return;
+
+      attachRemoteAudio(audioRef);
+      socket.emit("call:resume_check");
+
+      setTimeout(() => {
+        if (callIdRef.current) {
+          handleWebRTCOffer(callIdRef.current);
+        }
+      }, 250);
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
   }, [socket, handleWebRTCOffer]);
 
   // Timer

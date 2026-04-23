@@ -440,6 +440,19 @@ if (!streamRef.current || streamRef.current.getAudioTracks()[0]?.readyState !== 
     };
   }, [cleanupMedia]);
 
+  // Add this effect in VoiceCall.jsx after other effects
+useEffect(() => {
+  if (callState !== "connected") return;
+  
+  // Periodic check to ensure audio is still playing
+  const audioCheckInterval = setInterval(async () => {
+    const { ensureAudioPlaying } = await import("../../../../shared/webrtc/voicePeer");
+    await ensureAudioPlaying();
+  }, 5000); // Check every 5 seconds
+  
+  return () => clearInterval(audioCheckInterval);
+}, [callState]);
+
   // ACCEPT CALL
   const acceptCall = useCallback(() => {
     if (callStateRef.current !== "incoming") return;

@@ -502,6 +502,19 @@ hasRemoteSetRef.current = Boolean(applied);
     }
   }, [callState, goBackToProfile]);
 
+  // Add this effect in VoiceCall.jsx after other effects
+useEffect(() => {
+  if (callState !== "connected") return;
+  
+  // Periodic check to ensure audio is still playing
+  const audioCheckInterval = setInterval(async () => {
+    const { ensureAudioPlaying } = await import("../../../../shared/webrtc/voicePeer");
+    await ensureAudioPlaying();
+  }, 5000); // Check every 5 seconds
+  
+  return () => clearInterval(audioCheckInterval);
+}, [callState]);
+
   // Render wave animation for connected state
   const renderWaveAnimation = () => (
     <WaveContainer>

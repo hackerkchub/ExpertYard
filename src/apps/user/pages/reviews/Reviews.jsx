@@ -75,7 +75,7 @@ const reviewsData = [
     category: "Business Strategy",
     rating: 5,
     date: "2024-01-15",
-    review: "ExpertYard connected me with a marketing strategist who transformed our digital presence. The insights were game-changing!",
+    review: "G9Expert connected me with a marketing strategist who transformed our digital presence. The insights were game-changing!",
     avatarColor: "#000080",
     verified: true,
     // featured: true
@@ -249,7 +249,7 @@ const Reviews = () => {
             Real Reviews from <span>Real Users</span>
           </HeroTitle>
           <HeroSubtitle>
-            Discover what thousands of satisfied customers have to say about their ExpertYard experience.
+            Discover what thousands of satisfied customers have to say about their G9Expert experience.
           </HeroSubtitle>
           
           {/* Stats */}
@@ -365,7 +365,7 @@ const Reviews = () => {
           <FeaturedReview>
             <FaQuoteLeft style={{ fontSize: '2.5rem', color: '#000080', marginBottom: '1.5rem', opacity: 0.7 }} />
             <ReviewText style={{ fontSize: '1.2rem', lineHeight: '1.8' }}>
-              "ExpertYard completely transformed how we approach business strategy. The quality of experts is unmatched, 
+              "G9Expert completely transformed how we approach business strategy. The quality of experts is unmatched, 
               and the platform makes it so easy to find exactly what you need. We've saved countless hours and made better 
               decisions thanks to the guidance we received."
             </ReviewText>

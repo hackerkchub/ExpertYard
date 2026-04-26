@@ -228,7 +228,7 @@ const GuidexaExpertPlan = () => {
             </div>
 
             <div className="footer-note">
-              This is a digital receipt. For any queries, contact ExpertYard support.
+              This is a digital receipt. For any queries, contact G9Expert support.
             </div>
           </>
         )}

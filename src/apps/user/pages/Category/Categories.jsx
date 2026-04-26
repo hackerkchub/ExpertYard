@@ -85,7 +85,7 @@ const Categories = () => {
         name: "Expert Categories",
         url: toAbsoluteUrl("/user/categories"),
         description:
-          "Browse expert categories and connect with verified professionals on ExpertYard.",
+          "Browse expert categories and connect with verified professionals on G9Expert.",
       },
       {
         "@context": "https://schema.org",
@@ -110,14 +110,14 @@ const Categories = () => {
   );
 
   useSeo({
-    title: "Browse Expert Categories | ExpertYard",
+    title: "Browse Expert Categories | G9Expert",
     description:
-      "Explore expert categories on ExpertYard and connect instantly with verified professionals across legal, health, astrology, fitness, finance, property, and more.",
+      "Explore expert categories on G9Expert and connect instantly with verified professionals across legal, health, astrology, fitness, finance, property, and more.",
     canonicalPath: "/user/categories",
     og: {
-      title: "Browse Expert Categories | ExpertYard",
+      title: "Browse Expert Categories | G9Expert",
       description:
-        "Explore expert categories on ExpertYard and connect instantly with verified professionals across legal, health, astrology, fitness, finance, property, and more.",
+        "Explore expert categories on G9Expert and connect instantly with verified professionals across legal, health, astrology, fitness, finance, property, and more.",
     },
     structuredData: categoriesStructuredData,
   });

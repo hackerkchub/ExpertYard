@@ -88,7 +88,7 @@ const ExpertSettings = () => {
   // Form States
   const [profileForm, setProfileForm] = useState({
     fullName: "Dr. Sarah Johnson",
-    email: "sarah.johnson@expertyard.com",
+    email: "sarah.johnson@G9Expert.com",
     phone: "+1 234 567 8900",
     location: "New York, USA",
     bio: "Expert financial advisor with 10+ years of experience in investment banking and wealth management.",

@@ -204,8 +204,8 @@ const SubcategoryPage = () => {
         answer: `Most users can browse available ${label} experts and start a chat or call within minutes, depending on expert availability.`,
       },
       {
-        question: `Are the ${label} experts verified on ExpertYard?`,
-        answer: `Yes. ExpertYard is built around verified experts so users can discover trusted professionals before starting a consultation.`,
+        question: `Are the ${label} experts verified on G9Expert?`,
+        answer: `Yes. G9Expert is built around verified experts so users can discover trusted professionals before starting a consultation.`,
       },
       {
         question: `Can I compare different ${label} experts before connecting?`,
@@ -1178,7 +1178,7 @@ const SubcategoryPage = () => {
 
                 <section className="category-seo-bottom">
                   <div className="category-seo-card">
-                    <h2>Why users choose ExpertYard for {matchedCategory?.name || categoryName}</h2>
+                    <h2>Why users choose G9Expert for {matchedCategory?.name || categoryName}</h2>
                     <p>
                       Users landing from search can immediately browse relevant subcategories,
                       compare verified experts, and start a conversation without an extra discovery

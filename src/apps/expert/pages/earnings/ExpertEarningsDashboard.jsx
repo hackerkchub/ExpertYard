@@ -798,7 +798,7 @@ const ExpertEarningsDashboard = () => {
     accountType: "savings",
     upiId: "sarah@okhdfcbank",
     phone: expertData?.phone || "+91 98765 43210",
-    email: expertData?.email || "sarah@expertyard.com",
+    email: expertData?.email || "sarah@G9Expert.com",
     panNumber: "ABCDE1234F",
     address: "Mumbai, Maharashtra",
   });

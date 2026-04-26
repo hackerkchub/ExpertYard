@@ -268,7 +268,7 @@ const ExpertGuidelines = () => {
   const resources = [
     {
       title: "Expert Onboarding Guide",
-      description: "Complete guide to getting started on ExpertYard",
+      description: "Complete guide to getting started on G9Expert",
       type: "PDF Guide",
       icon: <FaBook />
     },
@@ -286,7 +286,7 @@ const ExpertGuidelines = () => {
     },
     {
       title: "Platform Tools Tutorial",
-      description: "How to use all ExpertYard features effectively",
+      description: "How to use all G9Expert features effectively",
       type: "Interactive Tutorial",
       icon: <FaTools />
     }
@@ -299,12 +299,12 @@ const ExpertGuidelines = () => {
       answer: "Typically 7-10 business days from application submission to final approval, depending on document verification speed."
     },
     {
-      question: "What percentage does ExpertYard take from my earnings?",
+      question: "What percentage does G9Expert take from my earnings?",
       answer: "We charge a 15% platform fee on all consultations. This covers payment processing, platform maintenance, marketing, and client support."
     },
     {
       question: "Can I work with clients outside the platform?",
-      answer: "No, all consultations must be conducted through the ExpertYard platform. This ensures client protection, quality control, and compliance with our terms of service."
+      answer: "No, all consultations must be conducted through the G9Expert platform. This ensures client protection, quality control, and compliance with our terms of service."
     },
     {
       question: "What happens if I receive a negative review?",
@@ -326,7 +326,7 @@ const ExpertGuidelines = () => {
       <HeroSection>
         <HeroContent>
           <HeroTitle>
-            Become an <span>ExpertYard</span> Professional
+            Become an <span>G9Expert</span> Professional
           </HeroTitle>
           <HeroSubtitle>
             Join our elite network of verified experts. Deliver exceptional value, grow your practice, 
@@ -427,7 +427,7 @@ const ExpertGuidelines = () => {
                     <h3 style={{ color: '#111827', marginBottom: '0.5rem' }}>Important Notice</h3>
                     <p style={{ color: '#6b7280', lineHeight: '1.6' }}>
                       Providing false information during the application process will result in immediate 
-                      disqualification and permanent ban from the ExpertYard platform.
+                      disqualification and permanent ban from the G9Expert platform.
                     </p>
                   </div>
                 </WarningCard>
@@ -438,7 +438,7 @@ const ExpertGuidelines = () => {
               <>
                 <SectionTitle>Expert Benefits</SectionTitle>
                 <SectionSubtitle>
-                  Why top professionals choose to work with ExpertYard
+                  Why top professionals choose to work with G9Expert
                 </SectionSubtitle>
 
                 <ContentContainer>
@@ -759,7 +759,7 @@ const ExpertGuidelines = () => {
         <FAQSection>
           <SectionTitle center>Frequently Asked Questions</SectionTitle>
           <SectionSubtitle center>
-            Everything you need to know about becoming an ExpertYard professional
+            Everything you need to know about becoming an G9Expert professional
           </SectionSubtitle>
 
           <div style={{ maxWidth: '800px', margin: '3rem auto 0' }}>

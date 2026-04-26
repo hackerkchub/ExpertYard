@@ -1,8 +1,8 @@
 export const SITE_CONFIG = {
-  siteName: "ExpertYard",
+  siteName: "G9Expert",
   baseUrl: (import.meta.env.VITE_SITE_URL || "https://softmaxs.com").replace(/\/$/, ""),
   defaultOgImage: "/logo-512.webp",
-  organizationName: "ExpertYard",
+  organizationName: "G9Expert",
 };
 
 export function toAbsoluteUrl(path = "/") {

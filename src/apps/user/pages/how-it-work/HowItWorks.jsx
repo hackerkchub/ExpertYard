@@ -162,7 +162,7 @@ const HowItWorks = () => {
             Connect with Experts in <span style={{ color: '#3B82F6' }}>4 Simple Steps</span>
           </HeroTitle>
           <HeroSubtitle>
-            ExpertYard makes professional guidance accessible, reliable, and effortless. 
+            G9Expert makes professional guidance accessible, reliable, and effortless. 
             Get expert advice anytime, anywhere with our seamless platform.
           </HeroSubtitle>
           <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -184,7 +184,7 @@ const HowItWorks = () => {
 
       {/* Steps Section */}
       <StepsContainer>
-        <SectionTitle center>How ExpertYard Works</SectionTitle>
+        <SectionTitle center>How G9Expert Works</SectionTitle>
         <SectionSubtitle center>
           Simple, Secure, and Effective - Get Expert Guidance in Minutes
         </SectionSubtitle>
@@ -236,7 +236,7 @@ const HowItWorks = () => {
       {/* Video Demo Section */}
       <VideoSection>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
-          <SectionTitle center>See ExpertYard in Action</SectionTitle>
+          <SectionTitle center>See G9Expert in Action</SectionTitle>
           <SectionSubtitle center>
             Watch how easy it is to connect with top experts
           </SectionSubtitle>
@@ -263,7 +263,7 @@ const HowItWorks = () => {
 
       {/* Key Features */}
       <FeaturesSection>
-        <SectionTitle center>Why Choose ExpertYard</SectionTitle>
+        <SectionTitle center>Why Choose G9Expert</SectionTitle>
         <SectionSubtitle center>
           Everything you need for successful expert consultations
         </SectionSubtitle>
@@ -285,7 +285,7 @@ const HowItWorks = () => {
       <FAQSection>
         <SectionTitle center>Frequently Asked Questions</SectionTitle>
         <SectionSubtitle center>
-          Everything you need to know about using ExpertYard
+          Everything you need to know about using G9Expert
         </SectionSubtitle>
         
         <div style={{ maxWidth: '800px', margin: '3rem auto 0' }}>
@@ -316,7 +316,7 @@ const HowItWorks = () => {
           Ready to Get Expert Advice?
         </h2>
         <p style={{ fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto 2rem', opacity: 0.9 }}>
-          Join thousands of satisfied users who found solutions through ExpertYard
+          Join thousands of satisfied users who found solutions through G9Expert
         </p>
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           <CTAButton to="user/auth" style={{ 

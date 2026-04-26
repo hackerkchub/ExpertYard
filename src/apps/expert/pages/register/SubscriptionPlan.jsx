@@ -131,7 +131,7 @@ export default function SubscriptionPlan() {
       key: "rzp_test_RZ9SA1VOWXjQBJ", 
       amount: Math.round(totalWithTax * 100),
       currency: "INR",
-      name: "ExpertYard",
+      name: "G9Expert",
       description: `${selectedPlan.toUpperCase()} Growth - ${years} Year(s)`,
       handler: async function (response) {
         try {

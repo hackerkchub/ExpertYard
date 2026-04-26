@@ -31,9 +31,7 @@ const media = {
 const maxWidth = (breakpoint) => `@media (max-width: ${breakpoint})`;
 
 export const Wrapper = styled.footer`
-  background:
-    radial-gradient(circle at top left, rgba(63, 81, 181, 0.06), transparent 28%),
-    linear-gradient(180deg, #f8fafc 0%, #eef3f8 100%);
+  background:#fff;
   color: #334155;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
   position: relative;
@@ -439,31 +437,24 @@ export const LogoContainer = styled.div`
     justify-content: center;
   }
 `;
-
 export const LogoImage = styled.img`
-  height: 40px;
-  width: auto;
-  object-fit: contain;
-  border-radius: 6px;
-  transition: transform 0.3s ease;
+  /* Mobile (default, up to 480px) */
+  width: 120px;          /* Adjust to your desired mobile width */
+  height: auto;          /* Maintains aspect ratio */
+  object-fit: contain;   /* Ensures the whole logo is visible without cropping */
+  flex-shrink: 0;
+  transition: all 0.2s ease;
 
-  ${Logo}:hover & {
-    transform: scale(1.05);
+  /* Tablet (481px – 1024px) */
+  @media (min-width: 481px) and (max-width: 1024px) {
+    width: 180px;        /* Slightly larger than mobile */
+    height: auto;
   }
 
-  ${media.minSm} {
-    height: 42px;
-    border-radius: 7px;
-  }
-
-  ${media.minMd} {
-    height: 45px;
-    border-radius: 8px;
-  }
-
-  ${maxWidth(breakpoints.xs)} {
-    height: 36px;
-    border-radius: 5px;
+  /* Desktop (1025px and above) */
+  @media (min-width: 1025px) {
+    width: 280px;        /* Your original desktop size */
+    height: auto;
   }
 `;
 

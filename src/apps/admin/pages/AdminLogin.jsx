@@ -230,7 +230,7 @@ const AdminLogin = () => {
 
         <Footer>
           <FooterText>
-            Protected by <span>ExpertYard</span> Security
+            Protected by <span>G9Expert</span> Security
           </FooterText>
           <SecurityBadge>
             <FiShield />

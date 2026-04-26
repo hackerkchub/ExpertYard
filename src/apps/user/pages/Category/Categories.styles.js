@@ -44,6 +44,7 @@ export const HeroTitle = styled.h1`
   font-size: clamp(1.95rem, 3vw, 2.35rem);
   font-weight: 700;
   line-height: 1.15;
+  color:#fff;
   margin-bottom: 10px;
   ${media.sm} { font-size: 1.7rem; }
 `;

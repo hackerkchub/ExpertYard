@@ -150,7 +150,7 @@ const AboutUs = () => {
             Connecting <GradientText>World-Class Experts</GradientText> with Global Seekers
           </HeroTitle>
           <HeroSubtitle>
-            ExpertYard is the premier platform that bridges the gap between top-tier professionals 
+            G9Expert is the premier platform that bridges the gap between top-tier professionals 
             and individuals seeking expert guidance across diverse domains. We make expert knowledge accessible to everyone.
           </HeroSubtitle>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
@@ -279,7 +279,7 @@ const AboutUs = () => {
       <Section>
         <SectionTitle center>Meet Our Leadership</SectionTitle>
         <SectionSubtitle center>
-          The minds behind ExpertYard's success
+          The minds behind G9Expert's success
         </SectionSubtitle>
         <TeamSection>
           {teamMembers.map((member, index) => (

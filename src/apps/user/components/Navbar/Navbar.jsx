@@ -110,13 +110,10 @@ const Navbar = () => {
 
             <BrandLogo
               src={logo}
-              alt="ExpertYard"
+              alt="G9Expert"
               className={!isHomePage ? "hide-logo-on-mobile" : ""}
             />
 
-            <BrandName className={!isHomePage ? "hide-logo-on-mobile" : ""}>
-              Guidexa
-            </BrandName>
           </BrandBox>
 
           <RightActions>

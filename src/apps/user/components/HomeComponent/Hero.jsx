@@ -14,7 +14,7 @@ export default function Hero() {
             guidance
           </h1>
           <p className="hero-desc">
-            ExpertYard helps people get online consultation across legal advice, doctor guidance,
+            G9Expert helps people get online consultation across legal advice, doctor guidance,
             diet and fitness consultation, relationship support, career guidance, parenting
             advice, astrology, and financial guidance. Clear profiles, private conversations, and
             secure payments make it easier to choose help with confidence.
@@ -23,9 +23,6 @@ export default function Hero() {
           <div className="hero-actions">
             <Link className="btn-solid" to="/user/categories">
               Talk to a Verified Expert
-            </Link>
-            <Link className="btn-outline-blue" to="/user/experts">
-              Find the Right Expert
             </Link>
           </div>
 

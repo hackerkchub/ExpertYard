@@ -167,7 +167,7 @@ const Header = styled.div`
     font-weight: 700;
     color: #101828;
     margin: 0;
-    font-family: Georgia, "Times New Roman", serif;
+    font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     letter-spacing: -0.02em;
   }
 

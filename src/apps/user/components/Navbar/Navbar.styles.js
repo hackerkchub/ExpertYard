@@ -36,12 +36,25 @@ export const NavbarSpacer = styled.div`
 `;
 
 export const BrandLogo = styled.img`
-  width: 48px;
-  height: 50px;
-  border-radius: 12px;
-  object-fit: cover;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  @media (max-width: 480px) { width: 36px; height: 36px; }
+   /* Mobile (up to 480px) – suitable for navbar */
+  width: 100px;          /* Adjust this value as needed */
+  height: auto;          /* Maintains original aspect ratio */
+  object-fit: contain;   /* No cropping, whole logo visible */
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+
+  /* Tablet (481px – 1024px) */
+  @media (min-width: 481px) and (max-width: 1024px) {
+    width: 150px;        /* Slightly bigger than mobile */
+    height: auto;
+  }
+
+  /* Desktop (1025px and above) – your original working size */
+  @media (min-width: 1025px) {
+    width: 280px;
+    height: 48px;        /* Keep your fixed height for desktop if needed */
+    object-fit: cover;   /* Or contain – whichever looks better */
+  }
 `;
 
 export const BrandName = styled.h2`

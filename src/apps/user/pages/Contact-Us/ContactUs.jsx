@@ -214,8 +214,8 @@ const ContactUs = () => {
             <CardTitle>Email Us</CardTitle>
             <CardContent>
               <ContactDetail>{contactInfo.email}</ContactDetail>
-              <ContactDetail>careers@expertyard.com</ContactDetail>
-              <ContactDetail>support@expertyard.com</ContactDetail>
+              <ContactDetail>careers@G9Expert.com</ContactDetail>
+              <ContactDetail>support@G9Expert.com</ContactDetail>
             </CardContent>
           </InfoCard>
 
@@ -259,7 +259,7 @@ const ContactUs = () => {
             <PopupMessage>
               Thank you for reaching out to us! Our team has received your message 
               and will get back to you within 24-48 hours. We appreciate your 
-              interest in ExpertYard.
+              interest in G9Expert.
             </PopupMessage>
             <CloseButton onClick={closePopup}>Got it, thanks!</CloseButton>
           </Popup>

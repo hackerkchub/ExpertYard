@@ -41,7 +41,7 @@ export function findCategoryById(categories, categoryId) {
 }
 
 export function buildCategorySeoTitle(categoryName) {
-  return `${categoryName} Experts Online | Instant Advice on ExpertYard`;
+  return `${categoryName} Experts Online | Instant Advice on G9Expert`;
 }
 
 export function buildCategorySeoDescription(category) {
@@ -51,7 +51,7 @@ export function buildCategorySeoDescription(category) {
     return category.meta_desc.trim();
   }
 
-  return `Connect instantly with verified ${categoryName.toLowerCase()} experts on ExpertYard. Get trusted guidance, quick answers, and real-time support online.`;
+  return `Connect instantly with verified ${categoryName.toLowerCase()} experts on G9Expert. Get trusted guidance, quick answers, and real-time support online.`;
 }
 
 export function buildCategorySeoHeadline(categoryName) {

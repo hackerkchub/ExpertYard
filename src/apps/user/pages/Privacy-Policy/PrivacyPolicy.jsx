@@ -133,13 +133,13 @@ const PrivacyPolicy = () => {
               platform.
             </Paragraph>
             <Paragraph>
-              <HighlightText>ExpertYard</HighlightText> (“we”, “us”, “our”) is committed to protecting the privacy and 
+              <HighlightText>G9Expert</HighlightText> (“we”, “us”, “our”) is committed to protecting the privacy and 
               personal data of every user who accesses or uses our platform. This Privacy Policy explains in detail 
-              how ExpertYard collects, uses, stores, processes, and safeguards personal information when you interact 
+              how G9Expert collects, uses, stores, processes, and safeguards personal information when you interact 
               with our website, mobile applications, or related services.
             </Paragraph>
             <Paragraph>
-              ExpertYard is designed as a digital platform that connects users with skilled professionals, consultants, 
+              G9Expert is designed as a digital platform that connects users with skilled professionals, consultants, 
               mentors, and service providers across various domains. In order to deliver reliable, secure, and personalized 
               services, we need to collect certain information from users. This Privacy Policy governs how that information 
               is handled.
@@ -147,17 +147,17 @@ const PrivacyPolicy = () => {
             <ImportantNote>
               <ImportantNoteTitle>Important Note</ImportantNoteTitle>
               <ImportantNoteText>
-                By accessing or using ExpertYard, you agree to the collection and use of information in accordance with 
+                By accessing or using G9Expert, you agree to the collection and use of information in accordance with 
                 this Privacy Policy. If you do not agree with the terms described here, you are advised not to use the platform.
               </ImportantNoteText>
             </ImportantNote>
             <Paragraph>
               This Privacy Policy should be read together with our <ContactLink href="/terms">Terms and Conditions</ContactLink>, 
-              as both documents govern your use of ExpertYard. Any capitalized terms not defined in this Privacy Policy shall 
+              as both documents govern your use of G9Expert. Any capitalized terms not defined in this Privacy Policy shall 
               have the meaning assigned to them in the Terms and Conditions.
             </Paragraph>
             <Paragraph>
-              ExpertYard reserves the right to update or modify this Privacy Policy at any time to reflect changes in legal 
+              G9Expert reserves the right to update or modify this Privacy Policy at any time to reflect changes in legal 
               requirements, technology, business practices, or user needs. Any changes will be effective immediately upon 
               posting on this page. Users are encouraged to review this page periodically.
             </Paragraph>
@@ -166,7 +166,7 @@ const PrivacyPolicy = () => {
           <Section id="data-collect">
             <SectionTitle>Personal Data That We Collect</SectionTitle>
             <Paragraph>
-              ExpertYard may collect different types of personal and non-personal data depending on how you interact with 
+              G9Expert may collect different types of personal and non-personal data depending on how you interact with 
               the platform. The information we collect is necessary to provide services, ensure platform security, and 
               improve user experience.
             </Paragraph>
@@ -181,7 +181,7 @@ const PrivacyPolicy = () => {
             </DataList>
 
             <Paragraph>
-              If you are a service provider or expert on ExpertYard, we may collect additional information such as identity 
+              If you are a service provider or expert on G9Expert, we may collect additional information such as identity 
               verification details, certifications, experience history, bank account details for payouts, and tax-related 
               information where required by law.
             </Paragraph>
@@ -191,11 +191,11 @@ const PrivacyPolicy = () => {
             </Paragraph>
             <Paragraph>
               Technical data such as IP address, device type, browser type, operating system, referral URLs, and usage 
-              patterns may be automatically collected when you access ExpertYard. This data helps us monitor performance 
+              patterns may be automatically collected when you access G9Expert. This data helps us monitor performance 
               and prevent fraud.
             </Paragraph>
             <Paragraph>
-              Payment-related data is collected through secure third-party payment gateways. ExpertYard does not store 
+              Payment-related data is collected through secure third-party payment gateways. G9Expert does not store 
               sensitive card details but may retain transaction references and billing information for record-keeping 
               and compliance purposes.
             </Paragraph>
@@ -204,7 +204,7 @@ const PrivacyPolicy = () => {
           <Section id="data-usage">
             <SectionTitle>How Do We Use Your Personal Data?</SectionTitle>
             <Paragraph>
-              ExpertYard uses personal data strictly for legitimate business purposes and in compliance with applicable 
+              G9Expert uses personal data strictly for legitimate business purposes and in compliance with applicable 
               laws. The primary purpose of data usage is to provide, operate, and improve our services.
             </Paragraph>
             <Paragraph>
@@ -219,11 +219,11 @@ const PrivacyPolicy = () => {
               <DataListItem>Provide customer support and resolve disputes</DataListItem>
             </DataList>
             <Paragraph>
-              Your data helps us personalize your experience on ExpertYard by recommending relevant experts, services, 
+              Your data helps us personalize your experience on G9Expert by recommending relevant experts, services, 
               or content based on your preferences and usage behavior.
             </Paragraph>
             <Paragraph>
-              ExpertYard may use aggregated and anonymized data for analytics, research, and business intelligence purposes. 
+              G9Expert may use aggregated and anonymized data for analytics, research, and business intelligence purposes. 
               This helps us understand user behavior and improve platform features without identifying individual users.
             </Paragraph>
             <Paragraph>
@@ -236,7 +236,7 @@ const PrivacyPolicy = () => {
           <Section id="cookies">
             <SectionTitle>Cookies</SectionTitle>
             <Paragraph>
-              ExpertYard uses cookies and similar tracking technologies to enhance user experience and ensure smooth 
+              G9Expert uses cookies and similar tracking technologies to enhance user experience and ensure smooth 
               platform functionality. Cookies are small data files stored on your device that help us recognize repeat 
               users and remember preferences.
             </Paragraph>
@@ -256,12 +256,12 @@ const PrivacyPolicy = () => {
             </Paragraph>
             <Paragraph>
               Users can control or disable cookies through browser settings. However, disabling cookies may limit certain 
-              features or functionalities of ExpertYard.
+              features or functionalities of G9Expert.
             </Paragraph>
             <ImportantNote>
               <ImportantNoteTitle>Cookie Consent</ImportantNoteTitle>
               <ImportantNoteText>
-                By continuing to use ExpertYard without changing your cookie settings, you consent to our use of cookies 
+                By continuing to use G9Expert without changing your cookie settings, you consent to our use of cookies 
                 as described in this Privacy Policy.
               </ImportantNoteText>
             </ImportantNote>
@@ -270,7 +270,7 @@ const PrivacyPolicy = () => {
           <Section id="rights">
             <SectionTitle>Your Rights</SectionTitle>
             <Paragraph>
-              ExpertYard respects your rights regarding personal data and provides users with reasonable access and 
+              G9Expert respects your rights regarding personal data and provides users with reasonable access and 
               control over their information.
             </Paragraph>
             <DataList>
@@ -298,7 +298,7 @@ const PrivacyPolicy = () => {
             </Paragraph>
             <Paragraph>
               If you believe your privacy rights have been violated, you may contact our support team at{' '}
-              <ContactLink href="mailto:privacy@expertyard.com">privacy@expertyard.com</ContactLink>, and we will address 
+              <ContactLink href="mailto:privacy@G9Expert.com">privacy@G9Expert.com</ContactLink>, and we will address 
               your concerns in a timely manner.
             </Paragraph>
           </Section>
@@ -306,11 +306,11 @@ const PrivacyPolicy = () => {
           <FooterNote>
             <p>For any privacy-related questions or concerns, please contact our Data Protection Officer at:</p>
             <p>
-              <ContactLink href="mailto:dpo@expertyard.com">dpo@expertyard.com</ContactLink> | 
+              <ContactLink href="mailto:dpo@G9Expert.com">dpo@G9Expert.com</ContactLink> | 
               <ContactLink href="tel:+18881234567"> +1 (888) 123-4567</ContactLink>
             </p>
             <p style={{ marginTop: '10px', fontSize: '12px', color: '#718096' }}>
-              © 2026 ExpertYard. All rights reserved.
+              © 2026 G9Expert. All rights reserved.
             </p>
           </FooterNote>
         </ContentWrapper>

@@ -67,16 +67,16 @@ const HomePage = () => {
       {
         "@context": "https://schema.org",
         "@type": "Organization",
-        name: "ExpertYard",
+        name: "G9Expert",
         url: toAbsoluteUrl("/user"),
         logo: toAbsoluteUrl("/logo-512.webp"),
         description:
-          "ExpertYard is an online consultation platform that helps users connect with verified experts across high-intent categories.",
+          "G9Expert is an online consultation platform that helps users connect with verified experts across high-intent categories.",
       },
       {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        name: "ExpertYard",
+        name: "G9Expert",
         url: toAbsoluteUrl("/user"),
         potentialAction: {
           "@type": "SearchAction",
@@ -87,13 +87,13 @@ const HomePage = () => {
       {
         "@context": "https://schema.org",
         "@type": "WebPage",
-        name: "ExpertYard Homepage",
+        name: "G9Expert Homepage",
         url: toAbsoluteUrl("/user"),
         description:
-          "Connect with verified experts online through fast, secure, and trust-focused consultations on ExpertYard.",
+          "Connect with verified experts online through fast, secure, and trust-focused consultations on G9Expert.",
         isPartOf: {
           "@type": "WebSite",
-          name: "ExpertYard",
+          name: "G9Expert",
           url: toAbsoluteUrl("/user"),
         },
       },
@@ -102,14 +102,14 @@ const HomePage = () => {
   );
 
   useSeo({
-    title: "Verified Experts for Online Consultation | ExpertYard",
+    title: "Verified Experts for Online Consultation | G9Expert",
     description:
-      "Connect with verified experts online for legal, health, finance, career, astrology, property, and more. ExpertYard offers secure payments, real user ratings, and instant chat or call access.",
+      "Connect with verified experts online for legal, health, finance, career, astrology, property, and more. G9Expert offers secure payments, real user ratings, and instant chat or call access.",
     canonicalPath: "/user",
     keywords:
       "verified experts online, online consultation platform, secure expert advice, expert chat and call, legal consultation online, health consultation online, finance experts online, trusted professional advice",
     og: {
-      title: "Verified Experts for Online Consultation | ExpertYard",
+      title: "Verified Experts for Online Consultation | G9Expert",
       description:
         "Connect with verified experts online for legal, health, finance, career, astrology, property, and more with secure payments and real user ratings.",
     },
@@ -129,7 +129,7 @@ const HomePage = () => {
               <h2 id="home-categories-heading">Explore expert categories with clearer trust signals</h2>
               <p>
                 Stronger browsing and easier discovery across high-intent consultation categories
-                on ExpertYard.
+                on G9Expert.
               </p>
             </div>
             <button className="view-all-btn" onClick={() => navigate("/user/categories")}>
@@ -137,29 +137,6 @@ const HomePage = () => {
             </button>
           </div>
           <Categories />
-        </section>
-
-        <section className="home-seo-intro" aria-labelledby="home-seo-heading">
-          <div className="home-seo-copy">
-            <span className="home-seo-eyebrow">Fast, trustworthy expert discovery</span>
-            <h2 id="home-seo-heading">Find verified experts online and connect with confidence</h2>
-            <p>
-              ExpertYard is a trust-first online consultation platform where users can discover
-              verified experts, compare real user ratings, review service categories, and start a
-              secure chat or call without delay. The homepage is built to clearly explain the
-              business, strengthen confidence, and surface important service keywords naturally.
-            </p>
-          </div>
-
-          {featuredCategories.length > 0 && (
-            <div className="home-seo-links" aria-label="Popular expert categories">
-              {featuredCategories.map((category) => (
-                <Link key={category.id} to={getCategoryPath(category)} className="home-seo-link">
-                  {category.name}
-                </Link>
-              ))}
-            </div>
-          )}
         </section>
 
          <section className="home-panel home-panel-services" aria-labelledby="home-services-heading">
@@ -177,10 +154,34 @@ const HomePage = () => {
         </section>
 
 
+        <section className="home-seo-intro" aria-labelledby="home-seo-heading">
+          <div className="home-seo-copy">
+            <span className="home-seo-eyebrow">Fast, trustworthy expert discovery</span>
+            <h2 id="home-seo-heading">Find verified experts online and connect with confidence</h2>
+            <p>
+              G9Expert is a trust-first online consultation platform where users can discover
+              verified experts, compare real user ratings, review service categories, and start a
+              secure chat or call without delay. The homepage is built to clearly explain the
+              business, strengthen confidence, and surface important service keywords naturally.
+            </p>
+          </div>
+
+          {featuredCategories.length > 0 && (
+            <div className="home-seo-links" aria-label="Popular expert categories">
+              {featuredCategories.map((category) => (
+                <Link key={category.id} to={getCategoryPath(category)} className="home-seo-link">
+                  {category.name}
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+
+
         <section className="home-trust-section" aria-labelledby="home-trust-heading">
           <div className="section-header">
             <div className="section-heading-block">
-              <span className="section-kicker">Why users trust ExpertYard</span>
+              <span className="section-kicker">Why users trust G9Expert</span>
               <h2 id="home-trust-heading">Trust signals that matter before a user connects</h2>
               <p>
                 These sections reinforce business identity, service quality, and trust without

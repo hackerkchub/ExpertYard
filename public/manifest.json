@@ -1,6 +1,6 @@
 {
   "name": "Expert Yard",
-  "short_name": "ExpertYard",
+  "short_name": "G9Expert",
   "start_url": "/?pwa=true",
   "scope": "/",
   "display": "standalone",

@@ -413,6 +413,7 @@ export const CtaBanner = styled.div`
 export const CtaTitle = styled.h2` 
   font-size: 19px; /* Increased from 17px */
   margin-bottom: 8px; 
+  color:#fff;
   font-weight: 800;
 `;
 

@@ -188,26 +188,26 @@ const TermsAndConditions = () => {
 
         <MainContent>
           <ContentWrapper>
-            <Title>ExpertYard – Terms and Conditions</Title>
+            <Title>G9Expert – Terms and Conditions</Title>
             <UpdatedDate>Last updated: 2nd Feb 2026</UpdatedDate>
 
             <Section id="introduction" ref={el => sectionRefs.current.introduction = el}>
               <SectionTitle>1. Introduction</SectionTitle>
               <Paragraph>
                 These Terms and Conditions ("Terms") govern your access to and use of
-                the ExpertYard platform, including our website, mobile applications,
-                and any related services. ExpertYard is a technology platform that
+                the G9Expert platform, including our website, mobile applications,
+                and any related services. G9Expert is a technology platform that
                 connects users with independent experts, consultants, and service
                 providers.
               </Paragraph>
               <Paragraph>
-                By registering on or using ExpertYard as a service provider
+                By registering on or using G9Expert as a service provider
                 ("Expert", "Provider", "You"), you agree to be bound by these Terms.
                 If you do not agree with these Terms, you must not access or use the
                 platform.
               </Paragraph>
               <Paragraph>
-                ExpertYard does not itself provide professional services. All
+                G9Expert does not itself provide professional services. All
                 services are delivered by independent experts who use the platform
                 to connect with users.
               </Paragraph>
@@ -216,7 +216,7 @@ const TermsAndConditions = () => {
             <Section id="eligibility">
               <SectionTitle>2. Eligibility</SectionTitle>
               <Paragraph>
-                To register as an Expert on ExpertYard, you must be at least 18 years
+                To register as an Expert on G9Expert, you must be at least 18 years
                 of age and legally capable of entering into binding contracts.
               </Paragraph>
               <Paragraph>
@@ -224,7 +224,7 @@ const TermsAndConditions = () => {
                 registration is accurate, complete, and up to date.
               </Paragraph>
               <Paragraph>
-                ExpertYard reserves the right to suspend or terminate accounts that
+                G9Expert reserves the right to suspend or terminate accounts that
                 provide false, misleading, or incomplete information.
               </Paragraph>
             </Section>
@@ -237,11 +237,11 @@ const TermsAndConditions = () => {
                 account.
               </Paragraph>
               <Paragraph>
-                You agree to notify ExpertYard immediately of any unauthorized use
+                You agree to notify G9Expert immediately of any unauthorized use
                 or suspected security breach.
               </Paragraph>
               <Paragraph>
-                ExpertYard shall not be liable for any loss or damage arising from
+                G9Expert shall not be liable for any loss or damage arising from
                 your failure to protect your login credentials.
               </Paragraph>
             </Section>
@@ -249,8 +249,8 @@ const TermsAndConditions = () => {
             <Section id="services">
               <SectionTitle>4. Nature of Services</SectionTitle>
               <Paragraph>
-                Experts listed on ExpertYard are independent contractors and not
-                employees, agents, or partners of ExpertYard.
+                Experts listed on G9Expert are independent contractors and not
+                employees, agents, or partners of G9Expert.
               </Paragraph>
               <Paragraph>
                 You are solely responsible for the services you offer, including
@@ -258,7 +258,7 @@ const TermsAndConditions = () => {
                 laws.
               </Paragraph>
               <Paragraph>
-                ExpertYard does not guarantee the number of bookings, earnings, or
+                G9Expert does not guarantee the number of bookings, earnings, or
                 success for any Expert.
               </Paragraph>
             </Section>
@@ -266,12 +266,12 @@ const TermsAndConditions = () => {
             <Section id="fees">
               <SectionTitle>5. Fees and Payments</SectionTitle>
               <Paragraph>
-                ExpertYard may charge a platform service fee or commission on
+                G9Expert may charge a platform service fee or commission on
                 transactions completed through the platform.
               </Paragraph>
               <Paragraph>
                 Payment payouts to Experts will be processed according to the payout
-                schedule and policies defined by ExpertYard.
+                schedule and policies defined by G9Expert.
               </Paragraph>
               <Paragraph>
                 Experts are responsible for all applicable taxes arising from their
@@ -290,7 +290,7 @@ const TermsAndConditions = () => {
                 behavior is strictly prohibited.
               </Paragraph>
               <Paragraph>
-                ExpertYard reserves the right to suspend or permanently remove any
+                G9Expert reserves the right to suspend or permanently remove any
                 Expert who violates platform policies.
               </Paragraph>
             </Section>
@@ -299,7 +299,7 @@ const TermsAndConditions = () => {
               <SectionTitle>7. Content and Intellectual Property</SectionTitle>
               <Paragraph>
                 Experts retain ownership of the content they create but grant
-                ExpertYard a non-exclusive license to use such content for platform
+                G9Expert a non-exclusive license to use such content for platform
                 operations and marketing.
               </Paragraph>
               <Paragraph>
@@ -311,7 +311,7 @@ const TermsAndConditions = () => {
             <Section id="termination">
               <SectionTitle>8. Suspension and Termination</SectionTitle>
               <Paragraph>
-                ExpertYard may suspend or terminate your account at any time for
+                G9Expert may suspend or terminate your account at any time for
                 violations of these Terms.
               </Paragraph>
               <Paragraph>
@@ -325,7 +325,7 @@ const TermsAndConditions = () => {
             <Section id="liability">
               <SectionTitle>9. Limitation of Liability</SectionTitle>
               <Paragraph>
-                ExpertYard shall not be liable for indirect, incidental, or
+                G9Expert shall not be liable for indirect, incidental, or
                 consequential damages.
               </Paragraph>
               <Paragraph>

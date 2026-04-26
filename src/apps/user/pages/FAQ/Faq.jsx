@@ -39,9 +39,9 @@ import {
 const faqData = {
   "Getting Started": [
     {
-      question: "What is ExpertYard?",
+      question: "What is G9Expert?",
       answer:
-        "ExpertYard is a premium platform that connects customers with verified service professionals for home and personal services. We ensure all professionals undergo thorough background checks and skill verification to provide you with the best service experience.",
+        "G9Expert is a premium platform that connects customers with verified service professionals for home and personal services. We ensure all professionals undergo thorough background checks and skill verification to provide you with the best service experience.",
     },
     {
       question: "How do I book a service?",
@@ -109,7 +109,7 @@ const faqData = {
     {
       question: "How do I contact customer support?",
       answer:
-        "Our customer support team is available 24/7 through multiple channels: Live chat on our website/app (average response time: 2 minutes), Email at support@expertyard.com (response within 4 hours), or Phone at +1 (888) 123-4567 (toll-free). We're always here to help!",
+        "Our customer support team is available 24/7 through multiple channels: Live chat on our website/app (average response time: 2 minutes), Email at support@G9Expert.com (response within 4 hours), or Phone at +1 (888) 123-4567 (toll-free). We're always here to help!",
     },
     {
       question: "What if I have a complaint about a service?",

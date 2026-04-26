@@ -68,8 +68,7 @@ const Footer = () => {
         <BrandSection>
           <Logo to="/">
             <LogoContainer>
-              <LogoImage src={logoImg} alt="ExpertYard Logo" />
-              <LogoText>Guidexa</LogoText>
+              <LogoImage src={logoImg} alt="G9expert" />
             </LogoContainer>
           </Logo>
 

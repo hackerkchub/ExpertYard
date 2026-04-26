@@ -189,7 +189,7 @@ const hasRingingCall = notifications.some(
           </IconBtn>
 
           <Brand onClick={() => navigate("/expert")}>
-            <img src={Logo} alt="Guidexa" />
+            <img src={Logo} alt="G9expert" />
             Guidexa
           </Brand>
 

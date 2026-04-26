@@ -151,7 +151,7 @@ const Career = () => {
     <PageContainer>
       <HeroSection>
         <HeroContent>
-          <HeroTitle>Build Your Future With ExpertYard</HeroTitle>
+          <HeroTitle>Build Your Future With G9Expert</HeroTitle>
           <HeroSubtitle>
             Join a team of passionate innovators dedicated to transforming 
             the future of professional services. We're looking for talented 
@@ -282,7 +282,7 @@ const Career = () => {
 
         <RightColumn>
           <InfoCard>
-            <InfoCardTitle>Why Join ExpertYard?</InfoCardTitle>
+            <InfoCardTitle>Why Join G9Expert?</InfoCardTitle>
             <InfoCardText>
               • Work on innovative projects with global impact<br/>
               • Collaborative and inclusive culture<br/>
@@ -307,7 +307,7 @@ const Career = () => {
           <InfoCard>
             <InfoCardTitle>Contact HR</InfoCardTitle>
             <ContactInfo>
-              <ContactItem>hr@expertyard.com</ContactItem>
+              <ContactItem>hr@G9Expert.com</ContactItem>
               <ContactItem>+1 (888) 123-4567</ContactItem>
             </ContactInfo>
             <InfoCardText style={{ marginTop: '15px', fontSize: '14px' }}>
@@ -334,7 +334,7 @@ const Career = () => {
             <PopupIcon>🎉</PopupIcon>
             <PopupTitle>Application Submitted!</PopupTitle>
             <PopupMessage>
-              Thank you for your interest in joining ExpertYard! 
+              Thank you for your interest in joining G9Expert! 
               Our HR team will review your application and get back to you 
               within 2-3 working days.
             </PopupMessage>

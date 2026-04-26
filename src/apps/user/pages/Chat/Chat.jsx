@@ -1,4 +1,4 @@
-// src/apps/user/pages/chat/Chat.jsx - UPGRADED VERSION
+// src/apps/user/pages/chat/Chat.jsx - FIXED VERSION
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiPaperclip, FiImage, FiVideo, FiFile, FiX, FiArrowLeft, FiClock, FiUser } from "react-icons/fi";
@@ -67,9 +67,14 @@ const Chat = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   
+  // IMAGE UPLOAD STATES
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  
   const scrollRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const inputRef = useRef(null);
+  const fileInputRef = useRef(null);
   
   const { user } = useAuth();
   const { experts, expertData, expertPrice } = useExpert();
@@ -126,6 +131,8 @@ const Chat = () => {
         sender_type: msg.sender_type,
         sender_id: msg.sender_id,
         message: msg.message,
+        message_type: msg.message_type || "text",
+        image_url: msg.image_url || null,
         time: new Date(msg.created_at).toLocaleTimeString('en-US', { 
           hour: '2-digit', minute: '2-digit', hour12: true 
         })
@@ -288,36 +295,144 @@ const Chat = () => {
     navigate("/user");
   };
 
-  // // Improved keyboard handling
-  // useEffect(() => {
-  //   if (!isMobile) return;
+  // IMAGE UPLOAD FUNCTION
+  const uploadImage = async (file) => {
+    const formData = new FormData();
+    formData.append("image", file);
 
-  //   let viewportHeight = window.visualViewport?.height || window.innerHeight;
-  //   let originalHeight = window.innerHeight;
+    const response = await fetch("https://softmaxs.com/api/chat/upload", {
+      method: "POST",
+      body: formData,
+    });
 
-  //   const handleResize = () => {
-  //     const currentHeight = window.visualViewport?.height || window.innerHeight;
-  //     const keyboardOpen = currentHeight < originalHeight - 100;
+    if (!response.ok) {
+      throw new Error("Upload failed");
+    }
+
+    const data = await response.json();
+    return `https://softmaxs.com${data.imageUrl}`;
+  };
+
+  // IMAGE SELECT HANDLER
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size should be less than 5MB");
+      return;
+    }
+    
+    setSelectedImage(file);
+  };
+
+  // SEND MESSAGE (with immediate UI update)
+  const sendMessage = async () => {
+    if (!room_id || !sessionActive) return;
+    if (uploading) return;
+
+    // TEXT MESSAGE ONLY
+    if (!selectedImage && input.trim()) {
+      const tempId = Date.now();
+      const messageData = {
+        id: tempId,
+        client_id: tempId,
+        sender_type: "user",
+        sender_id: user?.id,
+        message: input.trim(),
+        message_type: "text",
+        image_url: null,
+        time: new Date().toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+      };
       
-  //     setIsKeyboardOpen(keyboardOpen);
+      // Add to UI immediately
+      setMessages(prev => [...prev, messageData]);
       
-  //     if (keyboardOpen && messagesContainerRef.current) {
-  //       setTimeout(() => {
-  //         scrollRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  //       }, 100);
-  //     }
-  //   };
+      // Send to socket
+      socket.emit("sendMessage", {
+        room_id,
+        message: input.trim(),
+        type: "text",
+        message_type: "text"
+      });
 
-  //   if (window.visualViewport) {
-  //     window.visualViewport.addEventListener('resize', handleResize);
-  //   }
+      setInput("");
+      setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }), 100);
+      return;
+    }
 
-  //   return () => {
-  //     if (window.visualViewport) {
-  //       window.visualViewport.removeEventListener('resize', handleResize);
-  //     }
-  //   };
-  // }, [isMobile]);
+    // IMAGE MESSAGE (with optional caption)
+    if (selectedImage) {
+      try {
+        setUploading(true);
+        
+        // Create temporary preview
+        const tempId = Date.now();
+        const tempImageUrl = URL.createObjectURL(selectedImage);
+        const messageData = {
+          id: tempId,
+          client_id: tempId,
+          sender_type: "user",
+          sender_id: user?.id,
+          message: input.trim() || "",
+          message_type: "image",
+          image_url: tempImageUrl,
+          time: new Date().toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+          isTemp: true // Mark as temporary
+        };
+        
+        // Add to UI immediately with preview
+        setMessages(prev => [...prev, messageData]);
+        setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }), 100);
+        
+        // Upload image
+        const imageUrl = await uploadImage(selectedImage);
+        
+        // Update the temporary message with real URL
+        setMessages(prev => prev.map(msg => 
+          msg.id === tempId 
+            ? { ...msg, image_url: imageUrl, isTemp: false }
+            : msg
+        ));
+        
+        // Send to socket
+        socket.emit("sendMessage", {
+          room_id,
+          message: input.trim() || "",
+          type: "image",
+          message_type: "image",
+          imageUrl: imageUrl
+        });
+
+        // Clear states
+        setSelectedImage(null);
+        setInput("");
+        
+      } catch (err) {
+        console.error("Upload failed:", err);
+        alert("Failed to upload image. Please try again.");
+        // Remove the temporary message on error
+        setMessages(prev => prev.filter(msg => !msg.isTemp));
+      } finally {
+        setUploading(false);
+      }
+    }
+  };
+
+  const handleKeyPress = useCallback((e) => {
+    if (e.key === "Enter" && !e.shiftKey && !uploading) {
+      e.preventDefault();
+      sendMessage();
+    }
+  }, [sendMessage, uploading]);
+
+  const isChatDisabled = sessionActive === false;
 
   // Socket events
   useEffect(() => {
@@ -337,22 +452,36 @@ const Chat = () => {
       if (msgData.room_id !== room_id) return;
 
       setMessages(prev => {
-        if (
-          prev.some(
-            m =>
-              m.id === msgData.id ||
-              (msgData.client_id && m.client_id === msgData.client_id)
-          )
-        ) {
-          return prev;
+        // Check if message already exists (by id or client_id)
+        const exists = prev.some(
+          m => m.id === msgData.id || (msgData.client_id && m.client_id === msgData.client_id)
+        );
+        
+        if (exists) {
+          // Update existing temporary message with real data
+          return prev.map(m => {
+            if ((msgData.client_id && m.client_id === msgData.client_id) || m.id === msgData.id) {
+              return {
+                ...m,
+                id: msgData.id,
+                message_type: msgData.message_type || "text",
+                image_url: msgData.image_url || m.image_url,
+                isTemp: false
+              };
+            }
+            return m;
+          });
         }
 
+        // Add new message
         return [...prev, {
           id: msgData.id,
           client_id: msgData.client_id,
           sender_type: msgData.sender_type,
           sender_id: msgData.sender_id,
           message: msgData.message,
+          message_type: msgData.message_type || "text",
+          image_url: msgData.image_url || null,
           time: new Date(msgData.time).toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit',
@@ -449,46 +578,35 @@ const Chat = () => {
     fetchChatDetails();
   }, [fetchChatDetails]);
 
-  // Send message
-  const sendMessage = useCallback(() => {
-    if (!input.trim() || !room_id || !sessionActive) return;
+  // Mobile keyboard handling
+  useEffect(() => {
+    if (!isMobile) return;
 
-    const tempId = Date.now();
+    let originalHeight = window.innerHeight;
 
-    setMessages(prev => [
-      ...prev,
-      {
-        id: tempId,
-        sender_type: "user",
-        sender_id: user.id,
-        message: input.trim(),
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    const handleResize = () => {
+      const currentHeight = window.visualViewport?.height || window.innerHeight;
+      const keyboardOpen = currentHeight < originalHeight - 100;
+      
+      setIsKeyboardOpen(keyboardOpen);
+      
+      if (keyboardOpen && messagesContainerRef.current) {
+        setTimeout(() => {
+          scrollRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }, 100);
       }
-    ]);
+    };
 
-    socket.emit("sendMessage", {
-      room_id,
-      message: input.trim(),
-    });
-
-    setInput("");
-    
-    // Keep focus on mobile
-    if (isMobile && inputRef.current) {
-      setTimeout(() => {
-        inputRef.current.focus();
-      }, 0);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
     }
-  }, [input, room_id, user?.id, sessionActive, isMobile]);
 
-  const handleKeyPress = useCallback((e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  }, [sendMessage]);
-
-  const isChatDisabled = sessionActive === false;
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize);
+      }
+    };
+  }, [isMobile]);
 
   if (loading && !isInitialized) {
     return (
@@ -523,7 +641,6 @@ const Chat = () => {
                       {getInitials(expertInfo.name)}
                     </AvatarPlaceholder>
                   )}
-                  {/* <StatusDot $active={sessionActive === true} /> */}
                 </AvatarWrapper>
                 <div className="expert-details">
                   <div className="expert-name">
@@ -539,7 +656,6 @@ const Chat = () => {
               </ExpertInfo>
               
               <HeaderActions>
-                {/* Timer for limited plans */}
                 {!isUnlimited && sessionActive === true && (
                   <TimerDisplay $color={getTimerColor()}>
                     <FiClock size={14} />
@@ -547,7 +663,6 @@ const Chat = () => {
                   </TimerDisplay>
                 )}
 
-                {/* Unlimited badge */}
                 {isUnlimited && sessionActive === true && (
                   <UnlimitedBadge>
                     <span>♾️</span> Unlimited
@@ -583,8 +698,37 @@ const Chat = () => {
             messages.map((msg, index) => (
               <MessageRow key={msg.id || index} $senderType={msg.sender_type}>
                 <MessageBubble $senderType={msg.sender_type}>
-                  <div className="message-text">{msg.message}</div>
-                  <MessageTime>{msg.time}</MessageTime>
+                  {/* IMAGE MESSAGE UI */}
+                  {msg.message_type === "image" && msg.image_url && (
+                    <img
+                      src={msg.image_url}
+                      alt="chat-img"
+                      style={{
+                        maxWidth: "200px",
+                        maxHeight: "200px",
+                        borderRadius: "10px",
+                        marginBottom: msg.message ? "6px" : "0",
+                        objectFit: "cover"
+                      }}
+                      onError={(e) => {
+                        if (msg.isTemp) {
+                          e.target.style.opacity = "0.5";
+                        } else {
+                          e.target.style.display = "none";
+                        }
+                      }}
+                    />
+                  )}
+                  
+                  {/* TEXT/CAPTION MESSAGE */}
+                  {msg.message && (
+                    <div className="message-text">{msg.message}</div>
+                  )}
+                  
+                  <MessageTime>
+                    {msg.time}
+                    {msg.isTemp && " (sending...)"}
+                  </MessageTime>
                 </MessageBubble>
               </MessageRow>
             ))
@@ -592,10 +736,60 @@ const Chat = () => {
           <div ref={scrollRef} />
         </MessagesArea>
 
+        {/* IMAGE PREVIEW BEFORE SEND */}
+        {selectedImage && (
+          <div style={{ 
+            padding: "10px", 
+            backgroundColor: "#f1f5f9",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            margin: "0 10px",
+            borderRadius: "12px"
+          }}>
+            <img
+              src={URL.createObjectURL(selectedImage)}
+              alt="preview"
+              style={{ 
+                width: "50px", 
+                height: "50px", 
+                borderRadius: "8px",
+                objectFit: "cover"
+              }}
+            />
+            <span style={{ fontSize: "12px", color: "#64748b", flex: 1 }}>
+              {selectedImage.name}
+            </span>
+            <button 
+              onClick={() => setSelectedImage(null)}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: "5px"
+              }}
+            >
+              <FiX size={18} />
+            </button>
+          </div>
+        )}
+
         <InputBar $isKeyboardOpen={isKeyboardOpen}>
+          {/* HIDDEN FILE INPUT */}
+          <input
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            ref={fileInputRef}
+            onChange={handleImageSelect}
+          />
+
           <UploadButton 
-            onClick={() => setShowFileMenu(!showFileMenu)} 
-            disabled={isChatDisabled}
+            onClick={() => {
+              fileInputRef.current?.click();
+              setShowFileMenu(false);
+            }} 
+            disabled={isChatDisabled || uploading}
           >
             <FiPaperclip size={20} />
           </UploadButton>
@@ -603,7 +797,7 @@ const Chat = () => {
           {showFileMenu && (
             <FileUploadMenu>
               <div className="menu-item" onClick={() => {
-                console.log('📎 Uploading image');
+                fileInputRef.current?.click();
                 setShowFileMenu(false);
               }}>
                 <FiImage size={18} /><span>Photos</span>
@@ -625,19 +819,19 @@ const Chat = () => {
 
           <InputBox
             ref={inputRef}
-            placeholder={isChatDisabled ? "Chat session ended" : "Type your message..."}
+            placeholder={isChatDisabled ? "Chat session ended" : (uploading ? "Uploading image..." : "Type your message...")}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            disabled={isChatDisabled}
+            disabled={isChatDisabled || uploading}
             maxLength={1000}
           />
 
           <SendButton 
             onClick={sendMessage} 
-            disabled={!input.trim() || isChatDisabled}
+            disabled={(uploading || (!input.trim() && !selectedImage)) || isChatDisabled}
           >
-            <IoMdSend size={20} />
+            {uploading ? "..." : <IoMdSend size={20} />}
           </SendButton>
         </InputBar>
 

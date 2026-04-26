@@ -28,7 +28,7 @@ import {
   EmptyChatMessage,
 } from "./ExpertChat.styles";
 
-import { FiSend, FiUserX, FiClock, FiMail, FiPhone } from "react-icons/fi";
+import { FiSend, FiUserX, FiClock, FiMail, FiPhone, FiPaperclip, FiX } from "react-icons/fi";
 import { socket } from "../../../../shared/api/socket";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { getUserPublicProfileApi } from "../../../../shared/api/userApi";
@@ -57,9 +57,14 @@ const ExpertChat = () => {
   const [error, setError] = useState("");
   const [userProfile, setUserProfile] = useState(null);
   const [sessionActive, setSessionActive] = useState(false);
+  
+  // IMAGE UPLOAD STATES
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   /* ------------------ HIDE GLOBAL HEADER ------------------ */
   useEffect(() => {
@@ -104,15 +109,17 @@ const ExpertChat = () => {
       );
       const data = await res.json();
 
-      const { session, messages } = data.data;
+      const { session, messages: fetchedMessages } = data.data;
 
       setChatData(session);
       setSessionActive(!!session.is_active);
 
       setMessages(
-        messages.map((m) => ({
+        (fetchedMessages || []).map((m) => ({
           id: m.id,
           message: m.message,
+          message_type: m.message_type || "text",
+          image_url: m.image_url || null,
           sender_type: m.sender_type,
           time: new Date(m.created_at).toLocaleTimeString([], {
             hour: "2-digit",
@@ -129,26 +136,187 @@ const ExpertChat = () => {
     }
   }, [room_id]);
 
+  /* ------------------ IMAGE UPLOAD ------------------ */
+  const uploadImage = async (file) => {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const response = await fetch("https://softmaxs.com/api/chat/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error("Upload failed");
+    }
+
+    const data = await response.json();
+   return `https://softmaxs.com${data.imageUrl}`;
+  };
+
+  /* ------------------ IMAGE SELECT ------------------ */
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 5 * 1024 * 1024) {
+      hotToast("error", "Image size should be less than 5MB");
+      return;
+    }
+    
+    setSelectedImage(file);
+  };
+
+  /* ------------------ SEND MESSAGE (with immediate UI update) ------------------ */
+  const handleSendMessage = async () => {
+    if (!room_id || !sessionActive) return;
+    if (uploading) return;
+
+    // TEXT MESSAGE ONLY
+    if (!selectedImage && message.trim()) {
+      const tempId = Date.now();
+      const messageData = {
+        id: tempId,
+        sender_type: "expert",
+        message: message.trim(),
+        message_type: "text",
+        image_url: null,
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        isTemp: true
+      };
+      
+      // Add to UI immediately
+      setMessages(prev => [...prev, messageData]);
+      
+      // Send to socket
+      socket.emit("sendMessage", { 
+        room_id, 
+        message: message.trim(),
+        type: "text",
+        message_type: "text"
+      });
+      
+      setMessage("");
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }), 100);
+      setTimeout(() => inputRef.current?.focus(), 0);
+      return;
+    }
+
+    // IMAGE MESSAGE WITH CAPTION
+    if (selectedImage) {
+      try {
+        setUploading(true);
+        
+        const tempId = Date.now();
+        const tempImageUrl = URL.createObjectURL(selectedImage);
+        const messageData = {
+          id: tempId,
+          sender_type: "expert",
+          message: message.trim() || "",
+          message_type: "image",
+          image_url: tempImageUrl,
+          time: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          isTemp: true
+        };
+        
+        // Add to UI immediately with preview
+        setMessages(prev => [...prev, messageData]);
+        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }), 100);
+        
+        // Upload image
+        const imageUrl = await uploadImage(selectedImage);
+        
+        // Update the temporary message with real URL
+        setMessages(prev => prev.map(msg => 
+          msg.id === tempId 
+            ? { ...msg, image_url: imageUrl, isTemp: false }
+            : msg
+        ));
+        
+        // Send to socket
+        socket.emit("sendMessage", {
+          room_id,
+          message: message.trim() || "",
+          type: "image",
+          message_type: "image",
+          imageUrl: imageUrl
+        });
+
+        setSelectedImage(null);
+        setMessage("");
+        
+      } catch (err) {
+        console.error("Upload failed:", err);
+        hotToast("error", "Failed to upload image");
+        // Remove the temporary message on error
+        setMessages(prev => prev.filter(msg => !msg.isTemp));
+      } finally {
+        setUploading(false);
+        setTimeout(() => inputRef.current?.focus(), 0);
+      }
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && !e.shiftKey && !uploading) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
   /* ------------------ SOCKET ------------------ */
   useEffect(() => {
     if (!room_id) return;
 
     socket.emit("join_room", { room_id });
 
-    socket.on("message", (msg) => {
-      setMessages((prev) => [
-        ...prev,
-        {
+    const handleNewMessage = (msg) => {
+      if (msg.room_id !== room_id) return;
+      
+      setMessages((prev) => {
+        // Check if message already exists (by id)
+        const exists = prev.some(m => m.id === msg.id);
+        
+        if (exists) {
+          // Update existing temporary message
+          return prev.map(m => 
+            m.id === msg.id 
+              ? { 
+                  ...m, 
+                  message_type: msg.message_type || "text",
+                  image_url: msg.image_url || m.image_url,
+                  isTemp: false 
+                }
+              : m
+          );
+        }
+        
+        // Add new message
+        return [...prev, {
           id: msg.id,
           message: msg.message,
+          message_type: msg.message_type || "text",
+          image_url: msg.image_url || null,
           sender_type: msg.sender_type,
           time: new Date(msg.time).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
           }),
-        },
-      ]);
-    });
+        }];
+      });
+      
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      }, 100);
+    };
+
+    socket.on("message", handleNewMessage);
 
     socket.on("chat_ended", () => {
       setSessionActive(false);
@@ -158,7 +326,7 @@ const ExpertChat = () => {
 
     return () => {
       socket.emit("leave_room", { room_id });
-      socket.off("message");
+      socket.off("message", handleNewMessage);
       socket.off("chat_ended");
     };
   }, [room_id, navigate]);
@@ -196,37 +364,6 @@ const ExpertChat = () => {
       window.visualViewport?.removeEventListener("resize", handleResize);
     };
   }, []);
-
-  /* ------------------ SEND ------------------ */
-  const handleSendMessage = () => {
-    if (!message.trim()) return;
-
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        message,
-        sender_type: "expert",
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      },
-    ]);
-
-    socket.emit("sendMessage", { room_id, message });
-
-    setMessage("");
-
-    setTimeout(() => inputRef.current?.focus(), 0);
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
 
   const user = useMemo(() => {
     if (!chatData) return null;
@@ -293,8 +430,37 @@ const ExpertChat = () => {
                         $expert={msg.sender_type === "expert"}
                       >
                         <Bubble $expert={msg.sender_type === "expert"}>
-                          <div>{msg.message}</div>
-                          <span className="time">{msg.time}</span>
+                          {/* IMAGE MESSAGE UI */}
+                          {msg.message_type === "image" && msg.image_url && (
+                            <img
+                              src={msg.image_url}
+                              alt="chat-img"
+                              style={{
+                                maxWidth: "200px",
+                                maxHeight: "200px",
+                                borderRadius: "10px",
+                                marginBottom: msg.message ? "6px" : "0",
+                                objectFit: "cover"
+                              }}
+                              onError={(e) => {
+                                if (msg.isTemp) {
+                                  e.target.style.opacity = "0.5";
+                                } else {
+                                  e.target.style.display = "none";
+                                }
+                              }}
+                            />
+                          )}
+                          
+                          {/* TEXT/CAPTION MESSAGE */}
+                          {msg.message && (
+                            <div>{msg.message}</div>
+                          )}
+                          
+                          <span className="time">
+                            {msg.time}
+                            {msg.isTemp && " (sending...)"}
+                          </span>
                         </Bubble>
                       </Message>
                     ))
@@ -303,7 +469,54 @@ const ExpertChat = () => {
                   <div ref={messagesEndRef} />
                 </Messages>
 
+                {/* IMAGE PREVIEW BEFORE SEND */}
+                {selectedImage && (
+                  <div style={{ 
+                    padding: "10px", 
+                    backgroundColor: "#f1f5f9",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    margin: "0 10px",
+                    borderRadius: "12px"
+                  }}>
+                    <img
+                      src={URL.createObjectURL(selectedImage)}
+                      alt="preview"
+                      style={{ 
+                        width: "50px", 
+                        height: "50px", 
+                        borderRadius: "8px",
+                        objectFit: "cover"
+                      }}
+                    />
+                    <span style={{ fontSize: "12px", color: "#64748b", flex: 1 }}>
+                      {selectedImage.name}
+                    </span>
+                    <button 
+                      onClick={() => setSelectedImage(null)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: "5px"
+                      }}
+                    >
+                      <FiX size={18} />
+                    </button>
+                  </div>
+                )}
+
                 <ChatInputWrap>
+                  {/* HIDDEN FILE INPUT */}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    ref={fileInputRef}
+                    onChange={handleImageSelect}
+                  />
+
                   <ChatInput
                     ref={inputRef}
                     value={message}
@@ -311,16 +524,34 @@ const ExpertChat = () => {
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyDown={handleKeyPress}
                     placeholder={
-                      sessionActive ? "Type message..." : "Chat ended"
+                      sessionActive 
+                        ? (uploading ? "Uploading image..." : "Type message...") 
+                        : "Chat ended"
                     }
-                    disabled={!sessionActive}
+                    disabled={!sessionActive || uploading}
                   />
+
+                  {/* ATTACH BUTTON */}
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={!sessionActive || uploading}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: !sessionActive || uploading ? "not-allowed" : "pointer",
+                      padding: "0 8px",
+                      color: "#64748b",
+                      opacity: !sessionActive || uploading ? 0.5 : 1
+                    }}
+                  >
+                    <FiPaperclip size={20} />
+                  </button>
 
                   <SendButton
                     onClick={handleSendMessage}
-                    disabled={!message.trim() || !sessionActive}
+                    disabled={(uploading || (!message.trim() && !selectedImage)) || !sessionActive}
                   >
-                    <FiSend />
+                    {uploading ? "..." : <FiSend />}
                   </SendButton>
                 </ChatInputWrap>
               </ChatArea>

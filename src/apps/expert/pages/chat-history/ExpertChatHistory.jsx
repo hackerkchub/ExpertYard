@@ -1314,8 +1314,24 @@ const ExpertChatHistory = () => {
                           </span>
                         </div>
                         <div className="message-content">
-                          {msg.message}
-                        </div>
+  {(msg.type === "image" || msg.file_url || 
+    (typeof msg.message === "string" && msg.message.match(/\.(jpeg|jpg|png|gif|webp)$/i))
+  ) ? (
+    <img
+      src={msg.file_url || msg.message}
+      alt="chat-img"
+      style={{
+        maxWidth: "220px",
+        borderRadius: "12px",
+        marginTop: "6px",
+        cursor: "pointer",
+      }}
+      onClick={() => window.open(msg.file_url || msg.message, "_blank")}
+    />
+  ) : (
+    <span>{msg.message}</span>
+  )}
+</div>
                       </MessageBubble>
                     ))
                   ) : (

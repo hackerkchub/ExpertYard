@@ -11,14 +11,14 @@ import { fireAlert } from "../../../../shared/utils/lazyNotifications";
 import * as S from "./ServiceDetails.style";
 
 const ServiceDetail = () => {
-  const { id } = useParams(); 
+  const { slug } = useParams(); 
   const navigate = useNavigate();
   const { user, isLoggedIn } = useAuth(); 
   const { balance, fetchWalletHistory } = useWallet(); 
   
   // Instant Cache Loading
   const [service, setService] = useState(() => {
-    const cachedData = localStorage.getItem(`service_cache_${id}`);
+    const cachedData = localStorage.getItem(`service_cache_${slug}`);
     return cachedData ? JSON.parse(cachedData) : null;
   });
   
@@ -28,11 +28,11 @@ const ServiceDetail = () => {
 
   const fetchServiceData = useCallback(async () => {
     try {
-      const res = await axios.get(`https://softmaxs.com/api/services/${id}`);
+      const res = await axios.get(`https://softmaxs.com/api/services/s/${slug}`);
       if (res.data && res.data.success) {
         const freshData = res.data.data;
         setService(freshData);
-        localStorage.setItem(`service_cache_${id}`, JSON.stringify(freshData));
+        localStorage.setItem(`service_cache_${slug}`, JSON.stringify(freshData));
         
         if (isLoggedIn && user?.id) {
           checkExistingBooking(freshData.id, user.id);
@@ -43,7 +43,7 @@ const ServiceDetail = () => {
     } finally {
       setLoading(false);
     }
-  }, [id, isLoggedIn, user?.id]);
+  }, [slug, isLoggedIn, user?.id]);
 
   const checkExistingBooking = async (serviceId, userId) => {
     try {
@@ -58,13 +58,13 @@ const ServiceDetail = () => {
   };
 
   useEffect(() => {
-    if (id) fetchServiceData();
-  }, [id, fetchServiceData]);
+    if (slug) fetchServiceData();
+  }, [slug, fetchServiceData]);
 
   const handleBooking = async () => {
     if (!isLoggedIn) {
       fireAlert({ title: "Login Required", icon: "info", confirmButtonColor: "#0a66c2" });
-      return navigate("/login");
+      return navigate("/user/auth");
     }
 
     const servicePrice = parseFloat(service.price);
@@ -98,7 +98,7 @@ const ServiceDetail = () => {
 
       if (deductRes.data.success) {
         const bookingPayload = {
-          service_id: parseInt(id),
+          service_id: parseInt(service.id),
           expert_id: service.expert_id,
           user_id: user.id,
           amount: servicePrice,

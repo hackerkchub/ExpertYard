@@ -20,3 +20,7 @@ export const getExpertsProfileListApi = async () => {
 export const getExpertProfileApi = (expertId) => {
   return api.get(`/expert-profile/expert/${expertId}`);
 };
+
+export const getExpertBySlugApi = (slug) => {
+  return api.get(`/expert-profile/slug/${slug}`);
+};

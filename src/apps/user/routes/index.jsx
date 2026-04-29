@@ -45,7 +45,7 @@ export default function UserAppRoutes() {
           <Route element={<MainLayout />}>
             <Route index element={withLazyRoute(<HomePage />)} />
             <Route path="experts" element={withLazyRoute(<ExpertList />)} />
-            <Route path="experts/:expertId" element={withLazyRoute(<ExpertProfile />)} />
+            <Route path="experts/:slug" element={withLazyRoute(<ExpertProfile />)} />
             <Route path="call-chat" element={withLazyRoute(<CallChatExpert />)} />
             <Route path="my-offers" element={withLazyRoute(<MyOffer />)} />
             <Route path="categories" element={withLazyRoute(<Categories />)} />
@@ -61,7 +61,7 @@ export default function UserAppRoutes() {
             <Route path="contact" element={withLazyRoute(<ContactUs />)} />
             <Route path="careers" element={withLazyRoute(<Careers />)} />
             <Route path="all-services" element={withLazyRoute(<AllServices />)} />
-            <Route path="service-details/:id" element={withLazyRoute(<ServiceDetails />)} />
+            <Route path="service-details/:slug" element={withLazyRoute(<ServiceDetails />)} />
             <Route path="my-booking/:id" element={withLazyRoute(<MyBookings />)} />
             <Route
               path="wallet"

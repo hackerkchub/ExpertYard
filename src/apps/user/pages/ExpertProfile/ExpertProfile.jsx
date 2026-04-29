@@ -191,7 +191,7 @@ const formatRelativeTime = (dateString) => {
 };
 
 const ExpertProfilePage = () => {
-  const { expertId } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const { isLoggedIn, user } = useAuth();
   const userId = user?.id;
@@ -208,7 +208,7 @@ const ExpertProfilePage = () => {
   const profile = expertData?.profile;
 const price = expertPrice || {};
 
-  const numericExpertId = useMemo(() => expertId ? Number(expertId) : null, [expertId]);
+ const numericExpertId = expertData?.expertId || null;
 
   // All states
   const [following, setFollowing] = useState(false);
@@ -448,7 +448,7 @@ const price = expertPrice || {};
     setPurchaseError(null);
     
     if (!isLoggedIn) {
-      navigate("/user/auth", { state: { from: `/experts/${expertId}` } });
+      navigate("/user/auth", { state: { from: `/experts/${slug}` } });
       return;
     }
 
@@ -488,7 +488,7 @@ const price = expertPrice || {};
     } finally {
       setPurchasingPlan(null);
     }
-  }, [isLoggedIn, navigate, expertId, balance, hasActiveSubscription, fetchActiveSubscription, fetchWallet]);
+  }, [isLoggedIn, navigate, balance, hasActiveSubscription, fetchActiveSubscription, fetchWallet]);
 
   // Fetch experience data
   const fetchExperience = useCallback(async () => {
@@ -690,9 +690,9 @@ const price = expertPrice || {};
 
   // Followers & reviews loader
   const loadFollowersAndReviews = useCallback(() => {
-    if (!expertId) return;
+    if (!numericExpertId) return;
 
-    getExpertFollowersApi(expertId)
+    getExpertFollowersApi(numericExpertId)
       .then((res) => {
         const followers = res.data.followers || [];
         setFollowersCount(res.data.total_followers || followers.length);
@@ -701,7 +701,7 @@ const price = expertPrice || {};
       .catch((err) => console.error("Followers fetch failed", err));
 
     setLoadingReviews(true);
-    getReviewsByExpertApi(expertId)
+    getReviewsByExpertApi(numericExpertId)
       .then((res) => {
         const data = res.data.data || {};
         const list = data.reviews || [];
@@ -725,7 +725,7 @@ const price = expertPrice || {};
         setAvgRating(0);
       })
       .finally(() => setLoadingReviews(false));
-  }, [expertId, userId]);
+  }, [numericExpertId, userId]);
 
   // Expert status listener
   useEffect(() => {
@@ -762,12 +762,19 @@ const price = expertPrice || {};
   }, [numericExpertId]);
 
   // Profile data fetch
-  useEffect(() => {
-    if (expertId) {
-      fetchProfile(expertId);
-      fetchPrice(expertId);
-    }
-  }, [expertId, fetchProfile, fetchPrice]);
+  // 🔹 Profile load
+useEffect(() => {
+  if (slug) {
+    fetchProfile(slug);
+  }
+}, [slug, fetchProfile]);
+
+// 🔹 Price load AFTER expertId mile
+useEffect(() => {
+  if (numericExpertId) {
+    fetchPrice(numericExpertId);
+  }
+}, [numericExpertId, fetchPrice]);
 
   useEffect(() => {
     if (numericExpertId) fetchExperience();
@@ -871,7 +878,7 @@ const price = expertPrice || {};
   // Handle start call/chat with selected pricing mode
   const handleStart = useCallback((type) => {
     if (!isLoggedIn) {
-      navigate("/user/auth", { state: { from: `/experts/${expertId}` } });
+      navigate("/user/auth", { state: { from: `/experts/${slug}` } });
       return;
     }
 
@@ -977,11 +984,11 @@ const price = expertPrice || {};
         setShowRecharge(true);
       }
     }
-  }, [isLoggedIn, navigate, expertId, displayPrices, balance, userId, numericExpertId, requestingChat, hasActiveSubscription, currentPricingInfo, profile]);
+  }, [isLoggedIn, navigate, displayPrices, balance, userId, numericExpertId, requestingChat, hasActiveSubscription, currentPricingInfo, profile]);
 
   const handleFollowAction = useCallback(async () => {
     if (!isLoggedIn || !userId || !numericExpertId) {
-      navigate("/user/auth", { state: { from: `/experts/${expertId}` } });
+      navigate("/user/auth", { state: { from: `/experts/${slug}` } });
       return;
     }
 
@@ -997,7 +1004,7 @@ const price = expertPrice || {};
       console.error("Follow error:", err);
       alert("Follow failed. Please try again.");
     }
-  }, [isLoggedIn, userId, numericExpertId, expertId, following, navigate]);
+  }, [isLoggedIn, userId, numericExpertId, following, navigate]);
 
   const handleUnfollowConfirm = useCallback(async () => {
     try {
@@ -1040,7 +1047,7 @@ const price = expertPrice || {};
   const handleDeleteReview = useCallback(async () => {
     if (!confirm("Delete your review?")) return;
     try {
-      await deleteReviewApi(expertId);
+      await deleteReviewApi(numericExpertId);
       setUserRating(0);
       setUserReviewText("");
       await loadFollowersAndReviews();
@@ -1048,7 +1055,7 @@ const price = expertPrice || {};
       console.error("Delete error:", err);
       alert("Delete failed. Please try again.");
     }
-  }, [expertId, loadFollowersAndReviews]);
+  }, [numericExpertId, loadFollowersAndReviews]);
 
   const handleStarClick = useCallback((rating) => setUserRating(rating), []);
   

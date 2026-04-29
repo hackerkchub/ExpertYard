@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback } from "rea
 import {
   getExpertProfileApi,
   getExpertsProfileListApi,
+    getExpertBySlugApi,
 } from "../../../shared/api/expertapi/profile.api";
 import { getExpertPriceByIdApi } from "../../../shared/api/expertapi/price.api";
 
@@ -76,13 +77,13 @@ pricing_modes: p.pricing_modes || [],
   }, []);
 
   /* ================= PROFILE ================= */
-  const fetchProfile = useCallback(async (expertId) => {
-    if (!expertId) return;
+  const fetchProfile = useCallback(async (slug) => {
+    if (!slug) return;
 
     try {
       setProfileLoading(true);
 
-      const res = await getExpertProfileApi(expertId);
+      const res = await getExpertBySlugApi(slug);
 
       // ✅ backend already returns full URL
      const data = res?.data?.data;

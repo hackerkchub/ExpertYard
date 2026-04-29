@@ -635,6 +635,7 @@ const SubcategoryPage = () => {
 
   return {
     id,
+    slug: expert.slug || expert.expert_slug || expert.rawData?.slug,
     name: expert.name || expert.expert_name || "Expert",
     profile_photo: expert.profile_photo || DEFAULT_AVATAR,
     position: expert.position || "Expert",
@@ -700,15 +701,15 @@ const SubcategoryPage = () => {
         expertName: expert.name,
       });
     } else if (action === 'session') {
-      navigate(`/user/experts/${expert.id}`, { 
+      navigate(`/user/experts/${expert.slug}`, { 
         state: { scrollToBooking: true, bookingType: "session" }
       });
     } else if (action === 'plans') {
-      navigate(`/user/experts/${expert.id}`, { 
+      navigate(`/user/experts/${expert.slug}`, { 
         state: { scrollToPlans: true }
       });
     } else {
-      navigate(`/user/experts/${expert.id}`);
+      navigate(`/user/experts/${expert.slug}`);
     }
   };
 
@@ -859,7 +860,7 @@ const SubcategoryPage = () => {
       </ExpertPricing>
 
       <ActionButtons>
-        <ViewProfileButton onClick={() => navigate(`/user/experts/${expert.id}`)}>
+        <ViewProfileButton onClick={() => navigate(`/user/experts/${expert.slug}`)}>
           View Profile
         </ViewProfileButton>
         {getPrimaryActionButton(expert)}
@@ -1168,7 +1169,7 @@ const SubcategoryPage = () => {
                     </CtaDescription>
                     <PrimaryButton
                       onClick={() => filteredAndSortedExperts.length > 0 && 
-                        navigate(`/user/experts/${filteredAndSortedExperts[0].id}`)}
+                        navigate(`/user/experts/${filteredAndSortedExperts[0].slug}`)}
                     >
                       <IoChatbubble size={20} />
                       Start Free Consultation

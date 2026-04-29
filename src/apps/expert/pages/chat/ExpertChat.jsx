@@ -368,7 +368,7 @@ const ExpertChat = () => {
   const user = useMemo(() => {
     if (!chatData) return null;
     return {
-      name: userProfile?.full_name || `User #${chatData.user_id}`,
+      name: userProfile?.full_name || `User `,
       email: userProfile?.email,
       phone: userProfile?.phone,
       avatar: userProfile?.avatar,

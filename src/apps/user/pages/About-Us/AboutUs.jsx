@@ -41,6 +41,7 @@ import {
   FaAward, 
   FaHandshake,
   FaLightbulb,
+  FaLaptopCode,
   FaShieldAlt,
   FaHeart,
   FaRocket,
@@ -67,36 +68,47 @@ const AboutUs = () => {
   ];
 
   // Team members with icons
-  const teamMembers = [
-    {
-      icon: <FaUserTie />,
-      name: "Alex Johnson",
-      role: "CEO & Founder",
-      bio: "Former Google Product Lead with 15+ years in tech industry",
-      color: "#000080"
-    },
-    {
-      icon: <FaUserGraduate />,
-      name: "Sarah Williams",
-      role: "CTO",
-      bio: "AI/ML Specialist from Stanford, built scalable platforms for Fortune 500",
-      color: "#000080"
-    },
-    {
-      icon: <FaUserMd />,
-      name: "Michael Chen",
-      role: "Head of Partnerships",
-      bio: "Ex-McKinsey consultant with global business development expertise",
-      color: "#000080"
-    },
-    {
-      icon: <FaUserNinja />,
-      name: "Priya Sharma",
-      role: "VP of Operations",
-      bio: "Operations expert with decade of experience in service platforms",
-      color: "#000080"
-    }
-  ];
+ const teamMembers = [
+  {
+    icon: <FaUserTie />,
+    name: "Himanshu Dhote",
+    role: "CEO & Founder",
+    bio: (
+      <>
+      <b> Vision • Strategy • Growth </b> <br />
+        📩 Email: <a href="mailto:support@g9expert.com">support@g9expert.com</a><br />
+        📞 Call: <a href="tel:+9181030 07446">+91-81030 07446</a>
+      </>
+    ),
+    color: "#000080"
+  },
+  {
+    icon: <FaLaptopCode />,
+    name: "Kapil Chilhate",
+    role: "CTO",
+    bio: (
+      <>
+       <b>Technology • Scalability • Innovation </b><br />
+        📩 Tech Queries: <a href="mailto:tech@g9expert.com">tech@g9expert.com</a><br />
+        📞 Call: <a href="tel:+919752509672">+91-9752509672</a>
+      </>
+    ),
+    color: "#000080"
+  },
+  {
+    icon: <FaHandshake />,
+    name: "Suraj Singh Goud",
+    role: "Head of Partnerships & Marketing",
+    bio: (
+      <>
+       <b>Partnerships • Growth • Expansion </b><br />
+        📩 Partnerships: <a href="mailto:partners@g9expert.com">partners@g9expert.com</a><br />
+        📞 Call: <a href="tel:+918103123106">+91-8103123106</a>
+      </>
+    ),
+    color: "#000080"
+  }
+];
 
   // Company values
   const values = [

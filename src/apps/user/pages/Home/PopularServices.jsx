@@ -98,7 +98,7 @@ const PopularServices = () => {
           : visibleServices.map((service, index) => (
               <ServiceCard
                 key={service.id}
-                onClick={() => navigate(`/user/service-details/${service.id}`)}
+                onClick={() => navigate(`/user/service-details/${service.slug}`)}
               >
                 <ImageContainer>
                   <img

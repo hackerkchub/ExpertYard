@@ -98,8 +98,8 @@ export default function VoiceCall() {
   const goBackToProfile = useCallback(() => {
     if (navigatedRef.current) return;
     navigatedRef.current = true;
-    navigate(`/user/experts/${expertId}`, { replace: true });
-  }, [navigate, expertId]);
+    navigate(`/user/experts/${expert?.slug}`, { replace: true });
+  }, [navigate, expert?.slug]);
 
   useEffect(() => {
     callIdRef.current = callId;

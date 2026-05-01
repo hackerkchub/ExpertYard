@@ -903,3 +903,32 @@ export const EmptyState = styled.div`
     margin: 0;
   }
 `;
+
+// Add this to your catagory.js styles file
+export const SelectFilter = styled.select`
+  width: 100%;
+  padding: 14px 18px;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  font-size: 14px;
+  color: #1e293b;
+  transition: all 0.3s ease;
+  cursor: pointer;
+
+  &:focus {
+    outline: none;
+    border-color: #0ea5ff;
+    box-shadow: 0 0 0 4px rgba(14, 165, 255, 0.1);
+  }
+
+  &:disabled {
+    background: #f8fafc;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  option {
+    padding: 10px;
+  }
+`;

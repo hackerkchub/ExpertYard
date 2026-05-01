@@ -54,3 +54,4 @@ export const SelectFilter = styled.select`
   width: 100%;
   margin-bottom: 15px;
 `;
+

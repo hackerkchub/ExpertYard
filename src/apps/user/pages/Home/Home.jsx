@@ -144,15 +144,11 @@ const HomePage = () => {
             <div className="section-heading-block">
               <span className="section-kicker">Ready-to-book offers</span>
               <h2 id="home-services-heading">Popular services from verified professionals</h2>
-              <p>
-                Browse service-led entry points that support category intent, clearer internal
-                linking, and stronger crawlable relevance for online consultation keywords.
-              </p>
+      
             </div>
           </div>
           <PopularServices />
         </section>
-
 
         <section className="home-seo-intro" aria-labelledby="home-seo-heading">
           <div className="home-seo-copy">
@@ -190,8 +186,6 @@ const HomePage = () => {
             </div>
           </div>
 
-
-
           <div className="trust-grid">
             {TRUST_PILLARS.map((item) => (
               <article key={item.title} className="trust-card">
@@ -201,8 +195,6 @@ const HomePage = () => {
             ))}
           </div>
         </section>
-
-        
 
         <section className="home-stats-section" aria-label="Platform trust stats">
           <div className="stats-grid">
@@ -222,38 +214,7 @@ const HomePage = () => {
        
         <Testimonials />
 
-        <section className="home-cta-panel" aria-labelledby="home-cta-heading">
-          <div className="home-cta-copy">
-            <span className="section-kicker">Private, secure, and easy to understand</span>
-            <h2 id="home-cta-heading">Connect with the right expert without second-guessing trust</h2>
-            <p>
-              Users should understand who the business serves, why the platform is trustworthy,
-              and what happens next. This section reinforces secure payments, private sessions,
-              and clear service expectations close to the primary call to action.
-            </p>
-            <div className="home-cta-actions">
-              <button className="btn-solid" onClick={() => navigate("/user/categories")}>
-                Explore categories
-              </button>
-              <button className="btn-outline-blue" onClick={() => navigate("/user/privacy")}>
-                Review privacy policy
-              </button>
-            </div>
-          </div>
-
-          <div className="home-cta-aside">
-            <div className="cta-reassurance-list">
-              {CTA_REASSURANCE.map((item) => (
-                <p key={item}>{item}</p>
-              ))}
-            </div>
-            <div className="cta-support-links">
-              <Link to="/user/terms">Terms</Link>
-              <Link to="/user/privacy">Privacy</Link>
-              <Link to="/user/faq">FAQ</Link>
-            </div>
-          </div>
-        </section>
+       
       </div>
     </>
   );

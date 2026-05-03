@@ -75,15 +75,6 @@ const PopularServices = () => {
 
   return (
     <SectionWrapper>
-      <Header>
-        <div className="heading-copy">
-          <h2 className="main-title">Popular Services</h2>
-          <p className="section-subtitle">
-            Curated service offers with upfront pricing and clearer expert attribution.
-          </p>
-        </div>
-        <ViewAllBtn onClick={() => navigate("/user/all-services")}>View All</ViewAllBtn>
-      </Header>
 
       <HorizontalScrollContainer>
         {loading && visibleServices.length === 0

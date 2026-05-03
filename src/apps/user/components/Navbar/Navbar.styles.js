@@ -3,16 +3,16 @@ import { Link } from "react-router-dom";
 
 export const Nav = styled.nav`
   width: 100%;
-  background: rgba(255, 255, 255, 0.98);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  position: fixed; 
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 10000;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.98);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
 `;
 
 export const Container = styled.div`
@@ -22,57 +22,137 @@ export const Container = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 76px;
+  gap: 1rem;
+  height: 68px;
   padding: 0 clamp(14px, 3vw, 24px);
-  
-  @media (max-width: 768px) { height: 70px; padding: 0 16px; }
-  @media (max-width: 480px) { height: 66px; padding: 0 12px; }
+
+  @media (max-width: 768px) {
+    height: 64px;
+    padding: 0 16px;
+  }
+
+  @media (max-width: 480px) {
+    height: 60px;
+    gap: 0.75rem;
+    padding: 0 12px;
+  }
 `;
 
 export const NavbarSpacer = styled.div`
-  height: 80px;
-  @media (max-width: 768px) { height: 70px; }
-  @media (max-width: 480px) { height: 66px; }
+  height: 68px;
+
+  @media (max-width: 768px) {
+    height: 64px;
+  }
+
+  @media (max-width: 480px) {
+    height: 60px;
+  }
+`;
+
+export const BrandBox = styled(Link)`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  .back-btn-mobile {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    .back-btn-mobile {
+      display: flex;
+    }
+
+    .hide-logo-on-mobile {
+      display: none !important;
+    }
+  }
 `;
 
 export const BrandLogo = styled.img`
-   /* Mobile (up to 480px) – suitable for navbar */
-  width: 100px;          /* Adjust this value as needed */
-  height: auto;          /* Maintains original aspect ratio */
-  object-fit: contain;   /* No cropping, whole logo visible */
+  width: 92px;
+  height: auto;
+  object-fit: contain;
   flex-shrink: 0;
-  transition: all 0.2s ease;
 
-  /* Tablet (481px – 1024px) */
   @media (min-width: 481px) and (max-width: 1024px) {
-    width: 150px;        /* Slightly bigger than mobile */
-    height: auto;
+    width: 128px;
   }
 
-  /* Desktop (1025px and above) – your original working size */
   @media (min-width: 1025px) {
-    width: 280px;
-    height: 48px;        /* Keep your fixed height for desktop if needed */
-    object-fit: cover;   /* Or contain – whichever looks better */
+    width: 182px;
+    height: 40px;
   }
 `;
 
 export const BrandName = styled.h2`
+  margin: 0;
   font-size: 24px;
   font-weight: 800;
-  background:#000080;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin: 0;
-  span { color: #3b82f6; -webkit-text-fill-color: #3b82f6; }
-  @media (max-width: 480px) { font-size: 20px; }
+  color: #000080;
+
+  @media (max-width: 480px) {
+    font-size: 20px;
+  }
+`;
+
+export const DesktopNav = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+
+  @media (max-width: 991px) {
+    display: none;
+  }
+`;
+
+export const NavList = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.3rem;
+  border-radius: 999px;
+  background: #f8fbff;
+  border: 1px solid rgba(219, 229, 240, 0.9);
+`;
+
+export const NavItem = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 40px;
+  padding: 0 1rem;
+  border: none;
+  border-radius: 999px;
+  background: ${({ $active }) => ($active ? "rgba(0, 0, 128, 0.08)" : "transparent")};
+  color: ${({ $active }) => ($active ? "#000080" : "#334155")};
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  svg {
+    font-size: 15px;
+  }
+
+  &:hover {
+    color: #000080;
+    background: rgba(0, 0, 128, 0.08);
+  }
 `;
 
 export const RightActions = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: flex-end;
+  gap: 10px;
   min-width: 0;
+  flex-shrink: 0;
 `;
 
 export const IconBox = styled.div`
@@ -80,34 +160,47 @@ export const IconBox = styled.div`
   align-items: center;
   gap: 8px;
 
-  button, .wallet-btn {
-    border: none;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    width: 42px;
-    height: 42px;
+  button,
+  .wallet-btn {
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    border: 1px solid #dbe5f0;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #334155;
     cursor: pointer;
     transition: all 0.2s ease;
-    position: relative;
-    color: #475569;
 
-    svg { font-size: 20px; }
-    &:hover { 
-      background: #eff6ff;
+    svg {
+      font-size: 18px;
+    }
+
+    &:hover {
+      background: #f5f9ff;
       color: #000080;
-      transform: translateY(-2px);
-      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+      border-color: rgba(0, 0, 128, 0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
     }
   }
 
-  /* Desktop par sab dikhega, mobile par icons adjust honge */
   @media (max-width: 768px) {
     gap: 4px;
-    button:not(.essential) { display: none; } /* Mobile par sirf zaroori icons */
+
+    button:not(.essential) {
+      display: none;
+    }
+
+    button,
+    .wallet-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+    }
   }
 `;
 
@@ -121,102 +214,117 @@ export const WalletBadge = styled.div`
   position: absolute;
   top: -6px;
   right: -6px;
-  background: #10b981;
-  color: white;
-  font-size: 10px;
-  font-weight: 700;
   padding: 2px 6px;
   border-radius: 20px;
   border: 2px solid white;
-  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+  background: #facc15;
+  color: #1f2937;
+  font-size: 10px;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(250, 204, 21, 0.3);
 `;
 
 export const AuthButton = styled.button`
-  background: linear-gradient(135deg, #000080, #1d4ed8 100%);
-  color: white;
   border: none;
-  padding: 10px 24px;
   border-radius: 12px;
-  font-size: 15px;
+  background: #000080;
+  color: #ffffff;
+  padding: 10px 18px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
+  transition: all 0.2s ease;
+  box-shadow: 0 10px 20px rgba(0, 0, 128, 0.16);
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 15px 30px rgba(37, 99, 235, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 14px 24px rgba(0, 0, 128, 0.22);
   }
-  @media (max-width: 480px) { padding: 8px 16px; font-size: 14px; }
+
+  @media (max-width: 768px) {
+    padding: 8px 14px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px 12px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
 `;
 
 export const MobileIcon = styled.div`
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #dbe5f0;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f5f9ff;
+    color: #000080;
+    border-color: rgba(0, 0, 128, 0.2);
+  }
+
   @media (max-width: 768px) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    background: #f8fafc;
-    cursor: pointer;
-    color: #475569;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
   }
 `;
 
 export const MobileMenu = styled.div`
   position: fixed;
-  top: 70px;
-  left: 0;
-  right: 0;
-  background: rgba(255, 255, 255, 0.98);
-  padding: 16px;
-  border-bottom: 1px solid #e2e8f0;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+  top: 76px;
+  right: clamp(12px, 2vw, 24px);
+  width: min(320px, calc(100vw - 24px));
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  z-index: 999;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 24px 44px rgba(15, 23, 42, 0.14);
   backdrop-filter: blur(18px);
-  @media (max-width: 480px) { top: 66px; }
+  z-index: 999;
+
+  @media (max-width: 768px) {
+    top: 70px;
+  }
+
+  @media (max-width: 480px) {
+    top: 64px;
+    right: 12px;
+    width: calc(100vw - 24px);
+  }
 `;
 
 export const MobileItem = styled.div`
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 12px;
-  background: #f8fafc;
-  font-size: 12px;
-  font-weight: 600;
-  color: #475569;
-  cursor: pointer;
-  svg { font-size: 22px; color: #3b82f6; }
-  &:active { background: #eff6ff; }
-`;
-
-export const BrandBox = styled(Link)`
-  display: flex;
   align-items: center;
   gap: 10px;
-  text-decoration: none;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
 
-  .back-btn-mobile {
-    display: none; /* Desktop pe default hide */
+  svg {
+    font-size: 18px;
+    color: #000080;
   }
 
-  @media (max-width: 768px) {
-    .back-btn-mobile {
-      display: flex; /* Mobile pe display flex */
-    }
-
-    /* 🆕 Logic to hide the logo inside BrandBox in Mobile View if Back Button is present */
-    .hide-logo-on-mobile {
-      display: none !important;
-    }
+  &:hover,
+  &:active {
+    background: #eef4ff;
+    color: #000080;
   }
 `;

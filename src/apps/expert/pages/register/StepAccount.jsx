@@ -24,6 +24,7 @@ import {
   ToggleLink,
   Divider
 } from "../../styles/Register.styles";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -47,6 +48,11 @@ export default function Auth() {
   const [showOtp, setShowOtp] = useState(false);
   const [verifyType, setVerifyType] = useState(null); 
   const [verified, setVerified] = useState({ email: false, phone: false });
+
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+const [showNewPassword, setShowNewPassword] = useState(false);
+const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // 📋 Password Strength
   const [passwordStrength, setPasswordStrength] = useState(0);
@@ -470,13 +476,29 @@ export default function Auth() {
             
             <Field>
               <Label>Password</Label>
-              <Input
-                type="password"
-                placeholder="Enter your password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                disabled={submitting || loading}
-              />
+              <div style={{ position: "relative" }}>
+  <Input
+    type={showLoginPassword ? "text" : "password"}
+    placeholder="Enter your password"
+    value={loginPassword}
+    onChange={(e) => setLoginPassword(e.target.value)}
+    disabled={submitting || loading}
+  />
+
+  <span
+    onClick={() => setShowLoginPassword(!showLoginPassword)}
+    style={{
+      position: "absolute",
+      right: "12px",
+      top: "50%",
+      transform: "translateY(-50%)",
+      cursor: "pointer",
+      color: "#666"
+    }}
+  >
+    {showLoginPassword ? <FiEyeOff /> : <FiEye />}
+  </span>
+</div>
             </Field>
 
             <div style={{ textAlign: "right", marginTop: "-10px" }}>
@@ -540,12 +562,28 @@ export default function Auth() {
 
             <Field>
               <Label>Password</Label>
-              <Input
-                type="password"
-                placeholder="Create strong password"
-                disabled={submitting || loading}
-                onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
-              />
+              <div style={{ position: "relative" }}>
+  <Input
+    type={showRegisterPassword ? "text" : "password"}
+    placeholder="Create strong password"
+    disabled={submitting || loading}
+    onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
+  />
+
+  <span
+    onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+    style={{
+      position: "absolute",
+      right: "12px",
+      top: "50%",
+      transform: "translateY(-50%)",
+      cursor: "pointer",
+      color: "#666"
+    }}
+  >
+    {showRegisterPassword ? <FiEyeOff /> : <FiEye />}
+  </span>
+</div>
               {registerForm.password && (
                 <PasswordStrength>
                   <div style={{ width: `${(passwordStrength / 5) * 100}%`, backgroundColor: getStrengthColor(passwordStrength) }} />
@@ -613,11 +651,53 @@ export default function Auth() {
               <>
                 <Field>
                   <Label>New Password</Label>
-                  <Input type="password" placeholder="Enter New Password" value={forgotData.newPassword} onChange={(e) => setForgotData({...forgotData, newPassword: e.target.value})} disabled={submitting || loading} />
+                  <div style={{ position: "relative" }}>
+  <Input
+    type={showNewPassword ? "text" : "password"}
+    placeholder="Enter New Password"
+    value={forgotData.newPassword}
+    onChange={(e) => setForgotData({...forgotData, newPassword: e.target.value})}
+    disabled={submitting || loading}
+  />
+
+  <span
+    onClick={() => setShowNewPassword(!showNewPassword)}
+    style={{
+      position: "absolute",
+      right: "12px",
+      top: "50%",
+      transform: "translateY(-50%)",
+      cursor: "pointer"
+    }}
+  >
+    {showNewPassword ? <FiEyeOff /> : <FiEye />}
+  </span>
+</div>
                 </Field>
                 <Field>
                   <Label>Confirm New Password</Label>
-                  <Input type="password" placeholder="Confirm Password" value={forgotData.confirmPassword} onChange={(e) => setForgotData({...forgotData, confirmPassword: e.target.value})} disabled={submitting || loading} />
+                  <div style={{ position: "relative" }}>
+  <Input
+    type={showConfirmPassword ? "text" : "password"}
+    placeholder="Confirm Password"
+    value={forgotData.confirmPassword}
+    onChange={(e) => setForgotData({...forgotData, confirmPassword: e.target.value})}
+    disabled={submitting || loading}
+  />
+
+  <span
+    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+    style={{
+      position: "absolute",
+      right: "12px",
+      top: "50%",
+      transform: "translateY(-50%)",
+      cursor: "pointer"
+    }}
+  >
+    {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
+  </span>
+</div>
                 </Field>
                 <PrimaryButton type="button" onClick={handleForgotResetPassword} disabled={submitting || loading}>
                   {submitting || loading ? "Updating Password..." : "Update Password"}

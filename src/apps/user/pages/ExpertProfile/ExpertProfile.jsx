@@ -1450,9 +1450,9 @@ useEffect(() => {
 
         {/* Subscription Plans Modal */}
         {showPlansModal && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, overflowY: "auto", padding: 20 }}>
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, overflowY: "auto", padding: 10 }}>
             <div style={{ background: "#fff", padding: 28, borderRadius: 24, width: "min(90vw, 800px)", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 25px 50px rgba(0,0,0,0.25)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "20px 0 24px" }}>
                 <h2 style={{ margin: 0, color: "#0f172a" }}>Subscription Plans</h2>
                 <FiX size={24} style={{ cursor: "pointer", color: "#64748b" }} onClick={() => setShowPlansModal(false)} />
               </div>

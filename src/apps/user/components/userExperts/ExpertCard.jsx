@@ -1,39 +1,53 @@
-// src/apps/user/components/userExperts/ExpertCard.jsx - ✅ UPDATED with multiple pricing modes
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+// src/apps/user/components/userExperts/ExpertCard.jsx - PREMIUM UPGRADED VERSION
+import React, { useCallback, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiStar, FiPhoneCall, FiMessageSquare, FiMapPin, FiX, FiZap, FiBookOpen } from "react-icons/fi";
+import { 
+  FiPhoneCall, FiMessageSquare, FiMapPin, FiZap, FiClock, 
+  FiUsers, FiStar, FiAward, FiTrendingUp, FiShield, 
+  FiCheckCircle, FiMoreHorizontal, FiHeart, FiShare2
+} from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
 
-import { getExpertPriceByIdApi } from "../../../../shared/api/expertapi/price.api";
-import { getExpertFollowersApi } from "../../../../shared/api/expertapi/follower.api";
-import { getReviewsByExpertApi } from "../../../../shared/api/expertapi/reviews.api";
-import { getPlansApi } from "../../../../shared/api/userApi/subscription.api";
-
 import {
   Card,
+  CardInner,
   CardHeader,
+  AvatarSection,
   AvatarWrap,
   AvatarImg,
   StatusDot,
+  ExpertInfo,
   NameRow,
   Name,
-  Badge,
+  VerifiedBadge,
+  PremiumBadge,
   Role,
   MetaRow,
   MetaItem,
   RatingStar,
-  LangRow,
-  LangChip,
+  StatsGrid,
+  StatCard,
+  PricingSection,
+  PricingBadges,
+  PricingBadge,
   PriceRow,
   PriceLabel,
   PriceTag,
+  PriceValue,
   ActionRow,
   PrimaryBtn,
   GhostBtn,
-  PricingBadge,
   PricingInfo,
+  QuickActions,
+  ActionIcon,
+  HoverGlow,
+  ShineEffect,
+  GradientBorder,
+  CategoryTags,
+  CategoryChip
 } from "./ExpertCard.styles";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/150?img=12";
@@ -44,122 +58,40 @@ const ExpertCard = ({ data, mode, maxPrice, onStartChat, onStartCall }) => {
   const { isLoggedIn, user } = useAuth();
   const userId = user?.id;
   const { balance } = useWallet();
-
-  // Pricing data
-  const [callPrice, setCallPrice] = useState(data.callPrice || 0);
-  const [chatPrice, setChatPrice] = useState(data.chatPrice || 0);
-  const [sessionPrice, setSessionPrice] = useState(data.sessionPrice || 0);
-  const [sessionDuration, setSessionDuration] = useState(data.sessionDuration || 0);
-  const [pricingModes, setPricingModes] = useState([]);
-  const [hasPlans, setHasPlans] = useState(false);
-  
-  // Meta data
-  const [followersCount, setFollowersCount] = useState(data.followersCount || 0);
-  const [avgRating, setAvgRating] = useState(data.avgRating || 0);
-  const [totalReviews, setTotalReviews] = useState(data.totalReviews || 0);
-  const [loadingMeta, setLoadingMeta] = useState(true);
-  
-  // UI states
+  const [isHovered, setIsHovered] = useState(false);
   const [showRecharge, setShowRecharge] = useState(false);
   const [requiredAmount, setRequiredAmount] = useState(0);
-  const [showPricingModal, setShowPricingModal] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
 
   const expertId = data.id;
+  const expertSlug = data.slug || data.id;
 
-  // Load price, plans, followers & reviews
-  useEffect(() => {
-    let cancelled = false;
-    if (!expertId) return;
+  // DIRECT DATA FROM API
+  const callPrice = data.call_per_minute || 0;
+  const chatPrice = data.chat_per_minute || 0;
+  const sessionPrice = data.session_price || 0;
+  const sessionDuration = data.session_duration || 30;
 
-    const loadMeta = async () => {
-      try {
-        setLoadingMeta(true);
+  const avgRating = Number(data.avg_rating) || 0;
+  const totalReviews = data.total_reviews || 0;
+  const followersCount = data.total_followers || 0;
 
-        // Fetch price data
-        const priceRes = await getExpertPriceByIdApi(expertId);
-        const priceData = priceRes?.data?.data || priceRes?.data || {};
-        
-        // Parse pricing modes
-        let modes = priceData.pricing_modes || [];
-        if (typeof modes === 'string') {
-          try {
-            modes = JSON.parse(modes);
-          } catch {
-            modes = [];
-          }
-        }
-        
-        if (!cancelled) {
-          setPricingModes(modes);
-          setCallPrice(Number(priceData.call?.per_minute || priceData.call_per_minute || 0));
-          setChatPrice(Number(priceData.chat?.per_minute || priceData.chat_per_minute || 0));
-          setSessionPrice(Number(priceData.session?.price || priceData.session_price || 0));
-          setSessionDuration(Number(priceData.session?.duration || priceData.session_duration || 0));
-        }
+  const totalExperience = data.total_experience || 0;
+  const totalTime = data.total_time || 0;
+  const chatTime = data.chat_time || 0;
+  const callTime = data.call_time || 0;
 
-        // Fetch subscription plans
-        try {
-          const plansRes = await getPlansApi(expertId);
-          const hasActivePlans = plansRes?.data?.success && plansRes.data.data?.length > 0;
-          if (!cancelled) {
-            setHasPlans(hasActivePlans);
-          }
-        } catch (error) {
-          console.error("Failed to fetch plans:", error);
-          if (!cancelled) setHasPlans(false);
-        }
+  const hasSubscription = data.has_subscription || false;
+  const categoryName = data.category_name || "";
+  const subcategoryName = data.subcategory_name || "";
+  const location = data.location || "";
+  const isPremium = data.is_premium || false;
+  const responseTime = data.avg_response_time || "< 1 min";
+  const consultationCount = data.total_consultations || 0;
 
-        // Fetch followers
-        const followersRes = await getExpertFollowersApi(expertId);
-        if (!cancelled && followersRes?.data) {
-          setFollowersCount(
-            followersRes.data.total_followers ||
-              followersRes.data.followers?.length ||
-              0
-          );
-        }
-
-        // Fetch reviews
-        const reviewsRes = await getReviewsByExpertApi(expertId);
-        const rData = reviewsRes?.data?.data || {};
-        if (!cancelled) {
-          setAvgRating(Number(rData.avg_rating || 0));
-          setTotalReviews(rData.total_reviews || (rData.reviews || []).length || 0);
-        }
-      } catch (err) {
-        console.error("ExpertCard meta load failed:", err);
-      } finally {
-        if (!cancelled) setLoadingMeta(false);
-      }
-    };
-
-    loadMeta();
-    return () => {
-      cancelled = true;
-    };
-  }, [expertId]);
-
-  // Check if expert has specific pricing mode
-  const hasPerMinute = useMemo(() => pricingModes.includes('per_minute'), [pricingModes]);
-  const hasSession = useMemo(() => pricingModes.includes('session'), [pricingModes]);
-  const hasSubscription = useMemo(() => hasPlans, [hasPlans]);
-
-  // Get display price for the card based on mode
-  const getDisplayPrice = useMemo(() => {
-    if (mode === "chat" && hasPerMinute) {
-      return { price: chatPrice, unit: "/min", label: "Chat Rate" };
-    }
-    if (mode === "call" && hasPerMinute) {
-      return { price: callPrice, unit: "/min", label: "Call Rate" };
-    }
-    if (hasSession && (mode === "chat" || mode === "call")) {
-      return { price: sessionPrice, unit: `/${sessionDuration}min`, label: "Session Rate" };
-    }
-    if (hasSubscription) {
-      return { price: null, unit: "", label: "Plans Available" };
-    }
-    return { price: 0, unit: "/min", label: "Rate" };
-  }, [mode, hasPerMinute, hasSession, hasSubscription, chatPrice, callPrice, sessionPrice, sessionDuration]);
+  // PRICING LOGIC
+  const hasPerMinute = callPrice > 0 || chatPrice > 0;
+  const hasSession = sessionPrice > 0;
 
   // Max price filter
   const isHiddenByPrice = useMemo(() => {
@@ -179,14 +111,22 @@ const ExpertCard = ({ data, mode, maxPrice, onStartChat, onStartCall }) => {
 
   if (isHiddenByPrice) return null;
 
-  // Handle start chat with balance check
+  // Get lowest price for display
+  const lowestPrice = useMemo(() => {
+    if (hasPerMinute) {
+      if (mode === "call") return callPrice;
+      if (mode === "chat") return chatPrice;
+    }
+    if (hasSession) return sessionPrice;
+    return 0;
+  }, [hasPerMinute, hasSession, mode, callPrice, chatPrice, sessionPrice]);
+
   const handleStartChatLocal = useCallback(() => {
     if (!isLoggedIn) {
-      navigate("/user/auth", { state: { from: `/user/experts/${expertId}` } });
+      navigate("/user/auth", { state: { from: `/user/experts/${expertSlug}` } });
       return;
     }
 
-    // Check if expert has per-minute pricing
     if (hasPerMinute && chatPrice > 0) {
       const minRequired = chatPrice * MIN_CHAT_MINUTES;
       const userBalance = Number(balance || 0);
@@ -195,7 +135,6 @@ const ExpertCard = ({ data, mode, maxPrice, onStartChat, onStartCall }) => {
         if (onStartChat) {
           onStartChat(expertId);
         } else {
-          // Direct socket emit
           window.socket?.emit("request_chat", { 
             user_id: userId, 
             expert_id: Number(expertId),
@@ -206,36 +145,29 @@ const ExpertCard = ({ data, mode, maxPrice, onStartChat, onStartCall }) => {
         setRequiredAmount(Math.max(0, minRequired - userBalance));
         setShowRecharge(true);
       }
-    }
-    // Check if expert has session pricing
-    else if (hasSession && sessionPrice > 0) {
+    } else if (hasSession && sessionPrice > 0) {
       const userBalance = Number(balance || 0);
       if (userBalance >= sessionPrice) {
-        navigate(`/user/experts/${expertId}`, { 
+        navigate(`/user/experts/${expertSlug}`, { 
           state: { scrollToBooking: true, bookingType: "session" }
         });
       } else {
         setRequiredAmount(Math.max(0, sessionPrice - userBalance));
         setShowRecharge(true);
       }
-    }
-    // Check if expert has subscription plans
-    else if (hasSubscription) {
-      navigate(`/user/experts/${expertId}`, { 
+    } else if (hasSubscription) {
+      navigate(`/user/experts/${expertSlug}`, { 
         state: { scrollToPlans: true }
       });
+    } else {
+      navigate(`/user/experts/${expertSlug}`);
     }
-    else {
-      alert("Chat is not available for this expert. Please check their profile for pricing options.");
-      navigate(`/user/experts/${expertId}`);
-    }
-  }, [isLoggedIn, navigate, expertId, hasPerMinute, hasSession, hasSubscription, 
+  }, [isLoggedIn, navigate, expertId, expertSlug, hasPerMinute, hasSession, hasSubscription, 
       chatPrice, sessionPrice, balance, userId, user, onStartChat]);
 
-  // Handle start call with balance check
   const handleStartCallLocal = useCallback(() => {
     if (!isLoggedIn) {
-      navigate("/user/auth", { state: { from: `/user/experts/${expertId}` } });
+      navigate("/user/auth", { state: { from: `/user/experts/${expertSlug}` } });
       return;
     }
 
@@ -244,76 +176,62 @@ const ExpertCard = ({ data, mode, maxPrice, onStartChat, onStartCall }) => {
       return;
     }
 
-    // Check if expert has per-minute pricing
     if (hasPerMinute && callPrice > 0) {
       const minRequired = callPrice * MIN_CHAT_MINUTES;
       const userBalance = Number(balance || 0);
 
       if (userBalance >= minRequired) {
-        navigate(`/user/voice-call/${expertId}`, {
+        navigate(`/user/voice-call/${expertSlug}`, {
           state: { fromCard: true, callType: "voice" },
         });
       } else {
         setRequiredAmount(Math.max(0, minRequired - userBalance));
         setShowRecharge(true);
       }
-    }
-    // Check if expert has session pricing
-    else if (hasSession && sessionPrice > 0) {
+    } else if (hasSession && sessionPrice > 0) {
       const userBalance = Number(balance || 0);
       if (userBalance >= sessionPrice) {
-        navigate(`/user/experts/${expertId}`, { 
+        navigate(`/user/experts/${expertSlug}`, { 
           state: { scrollToBooking: true, bookingType: "call_session" }
         });
       } else {
         setRequiredAmount(Math.max(0, sessionPrice - userBalance));
         setShowRecharge(true);
       }
-    }
-    // Check if expert has subscription plans
-    else if (hasSubscription) {
-      navigate(`/user/experts/${expertId}`, { 
+    } else if (hasSubscription) {
+      navigate(`/user/experts/${expertSlug}`, { 
         state: { scrollToPlans: true }
       });
+    } else {
+      navigate(`/user/experts/${expertSlug}`);
     }
-    else {
-      alert("Call is not available for this expert. Please check their profile for pricing options.");
-      navigate(`/user/experts/${expertId}`);
-    }
-  }, [isLoggedIn, navigate, expertId, hasPerMinute, hasSession, hasSubscription,
+  }, [isLoggedIn, navigate, expertId, expertSlug, hasPerMinute, hasSession, hasSubscription,
       callPrice, sessionPrice, balance, onStartCall]);
 
   const handleViewProfile = useCallback(() => {
-    navigate(`/user/experts/${expertId}`);
-  }, [expertId, navigate]);
+    navigate(`/user/experts/${expertSlug}`);
+  }, [expertSlug, navigate]);
 
   const handleRechargeClose = useCallback(() => {
     setShowRecharge(false);
     setRequiredAmount(0);
   }, []);
 
-  const languages = data.languages && data.languages.length > 0
-    ? data.languages
-    : ["English", "Hindi"];
-
-  // Get button text based on pricing mode
   const getButtonText = () => {
     if (mode === "chat") {
-      if (hasPerMinute) return `Chat ₹${chatPrice}/min`;
-      if (hasSession) return `Book Session (₹${sessionPrice})`;
-      if (hasSubscription) return "View Plans";
+      if (hasPerMinute) return `Start Chat • ₹${chatPrice}/min`;
+      if (hasSession) return `Book Session • ₹${sessionPrice}`;
+      if (hasSubscription) return "View Membership Plans";
       return "Contact Expert";
     } else {
-      if (hasPerMinute) return `Call ₹${callPrice}/min`;
-      if (hasSession) return `Book Call Session (₹${sessionPrice})`;
-      if (hasSubscription) return "View Plans";
+      if (hasPerMinute) return `Start Call • ₹${callPrice}/min`;
+      if (hasSession) return `Book Session • ₹${sessionPrice}`;
+      if (hasSubscription) return "View Membership Plans";
       return "Contact Expert";
     }
   };
 
-  // Check if button should be disabled
   const isButtonDisabled = () => {
-    if (loadingMeta) return true;
     if (mode === "chat") {
       if (hasPerMinute) return chatPrice <= 0;
       if (hasSession) return sessionPrice <= 0;
@@ -325,187 +243,315 @@ const ExpertCard = ({ data, mode, maxPrice, onStartChat, onStartCall }) => {
     }
   };
 
-  const Spinner = () => (
-    <div
-      style={{
-        width: 28,
-        height: 28,
-        border: "3px solid #e2e8f0",
-        borderTopColor: "#10b981",
-        borderRadius: "50%",
-        animation: "spin 0.8s linear infinite",
-        margin: "0 auto",
-      }}
-    />
-  );
+  // Animation variants
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+    hover: { y: -8, transition: { duration: 0.3 } }
+  };
 
   return (
     <>
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-      
-      <Card>
-        <CardHeader>
-          <AvatarWrap $isAI={false}>
-            <AvatarImg src={data.profile_photo || DEFAULT_AVATAR} alt={data.name} />
-            <StatusDot $online={data.isOnline === true} />
-          </AvatarWrap>
+      <motion.div
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        whileHover="hover"
+        onHoverStart={() => setIsHovered(true)}
+        onHoverEnd={() => setIsHovered(false)}
+      >
+        <Card>
+          <ShineEffect isHovered={isHovered} />
+          <GradientBorder isHovered={isHovered} />
+          
+          <CardInner>
+            <CardHeader>
+              <AvatarSection>
+                <AvatarWrap $isAI={false} isHovered={isHovered}>
+                  <AvatarImg src={data.profile_photo || DEFAULT_AVATAR} alt={data.name} />
+                  <StatusDot $online={data.isOnline === true} />
+                </AvatarWrap>
+                
+                {/* <QuickActions>
+                  <ActionIcon onClick={() => setIsLiked(!isLiked)} isActive={isLiked}>
+                    <FiHeart size={14} />
+                  </ActionIcon>
+                  <ActionIcon>
+                    <FiShare2 size={14} />
+                  </ActionIcon>
+                </QuickActions> */}
+              </AvatarSection>
 
-          <div>
-            <NameRow>
-              <Name>{data.name}</Name>
-              <Badge>Verified</Badge>
-            </NameRow>
-            <Role>{data.position || "Expert"}</Role>
+              <ExpertInfo>
+                <NameRow>
+                  <Name>{data.name}</Name>
+                  {data.is_verified && (
+                    <VerifiedBadge>
+                      <FiCheckCircle size={14} />
+                    </VerifiedBadge>
+                  )}
+                  {isPremium && (
+                    <PremiumBadge>
+                      <FiAward size={12} />
+                      Premium
+                    </PremiumBadge>
+                  )}
+                </NameRow>
+                
+                {(categoryName || subcategoryName) && (
+                  <Role>
+                    {categoryName}
+                    {subcategoryName && (
+                      <>
+                        <span style={{ margin: '0 4px' }}>•</span>
+                        {subcategoryName}
+                      </>
+                    )}
+                  </Role>
+                )}
 
-            <MetaRow>
-              <MetaItem>
-                <FiMapPin size={12} />
-                {data.location || "India"}
-              </MetaItem>
-              <MetaItem>
-                <RatingStar>★</RatingStar>
-                {avgRating ? avgRating.toFixed(1) : "—"} ({totalReviews})
-              </MetaItem>
-              <MetaItem>Followers: {followersCount}</MetaItem>
-            </MetaRow>
-          </div>
-        </CardHeader>
+                <MetaRow>
+                  {location && (
+                    <MetaItem>
+                      <FiMapPin size={12} />
+                      {location}
+                    </MetaItem>
+                  )}
+                  <MetaItem>
+                    <RatingStar>★</RatingStar>
+                    {avgRating ? avgRating.toFixed(1) : "New"} 
+                    <span style={{ color: '#94a3b8' }}>({totalReviews})</span>
+                  </MetaItem>
+                  <MetaItem>
+                    <FiUsers size={12} />
+                    {followersCount.toLocaleString()} followers
+                  </MetaItem>
+                </MetaRow>
 
-        {data.speciality && (
-          <MetaRow style={{ marginTop: 4 }}>
-            <MetaItem>{data.speciality}</MetaItem>
-          </MetaRow>
-        )}
+                <CategoryTags>
+                  {/* {responseTime && (
+                    <CategoryChip>
+                      <FiClock size={10} /> Response: {responseTime}
+                    </CategoryChip>
+                  )} */}
+                  {consultationCount > 0 && (
+                    <CategoryChip>
+                      <FiTrendingUp size={10} /> {consultationCount}+ consultations
+                    </CategoryChip>
+                  )}
+                </CategoryTags>
+              </ExpertInfo>
+            </CardHeader>
 
-        {/* Pricing Mode Badges */}
-        <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
-          {hasPerMinute && (
-            <PricingBadge type="per_minute">
-              💰 Per Minute
-            </PricingBadge>
-          )}
-          {hasSession && (
-            <PricingBadge type="session">
-              📋 Session Based
-            </PricingBadge>
-          )}
-          {hasSubscription && !hasPerMinute && !hasSession && (
-            <PricingBadge type="plans">
-              📦 Subscription Plans
-            </PricingBadge>
-          )}
-        </div>
+            {/* Stats Grid */}
+            <StatsGrid>
+              {totalExperience > 0 && (
+                <StatCard>
+                  <FiClock size={16} />
+                  <div>
+                    <strong>{totalExperience}+</strong>
+                    <span>Years Exp</span>
+                  </div>
+                </StatCard>
+              )}
+              {totalTime > 0 && (
+                <StatCard>
+                  <FiZap size={16} />
+                  <div>
+                    <strong>{totalTime}</strong>
+                    <span>Total Min</span>
+                  </div>
+                </StatCard>
+              )}
+              {chatTime > 0 && (
+                <StatCard>
+                  <FiMessageSquare size={16} />
+                  <div>
+                    <strong>{chatTime}</strong>
+                    <span>Chat Min</span>
+                  </div>
+                </StatCard>
+              )}
+              {callTime > 0 && (
+                <StatCard>
+                  <FiPhoneCall size={16} />
+                  <div>
+                    <strong>{callTime}</strong>
+                    <span>Call Min</span>
+                  </div>
+                </StatCard>
+              )}
+            </StatsGrid>
 
-        <LangRow>
-          {languages.map((lang) => (
-            <LangChip key={lang}>{lang}</LangChip>
-          ))}
-        </LangRow>
+            {/* Pricing Badges */}
+            <PricingBadges>
+              {hasPerMinute && (
+                <PricingBadge type="per_minute">
+                  <FiZap size={12} /> Flexible Pricing
+                </PricingBadge>
+              )}
+              {hasSession && (
+                <PricingBadge type="session">
+                  <FiClock size={12} /> Session Based
+                </PricingBadge>
+              )}
+              {hasSubscription && !hasPerMinute && !hasSession && (
+                <PricingBadge type="plans">
+                  <FiShield size={12} /> Subscription Plans
+                </PricingBadge>
+              )}
+            </PricingBadges>
 
-        {/* Price Display */}
-        <PriceRow>
-          {hasPerMinute ? (
-            <>
-              <div>
-                <PriceLabel>Call Rate</PriceLabel>
-                <PriceTag>₹{callPrice || 0} / min</PriceTag>
-              </div>
-              <div>
-                <PriceLabel>Chat Rate</PriceLabel>
-                <PriceTag>₹{chatPrice || 0} / min</PriceTag>
-              </div>
-            </>
-          ) : hasSession ? (
-            <div style={{ width: '100%' }}>
-              <PriceLabel>Session Rate</PriceLabel>
-              <PriceTag>₹{sessionPrice || 0} / {sessionDuration || 30} min session</PriceTag>
-            </div>
-          ) : hasSubscription ? (
-            <div style={{ width: '100%' }}>
-              <PriceLabel>Pricing Model</PriceLabel>
-              <PriceTag style={{ background: '#8b5cf6', color: 'white' }}>
-                <FiZap size={12} /> Subscription Plans Available
-              </PriceTag>
-            </div>
-          ) : (
-            <div style={{ width: '100%' }}>
-              <PriceLabel>Contact for Pricing</PriceLabel>
-              <PriceTag>Contact Expert</PriceTag>
-            </div>
-          )}
-        </PriceRow>
+            {/* Price Display */}
+            <PricingSection>
+              {hasPerMinute ? (
+                <PriceRow>
+                  {callPrice > 0 && (
+                    <div>
+                      <PriceLabel>
+                        <FiPhoneCall size={12} /> Call
+                      </PriceLabel>
+                      <PriceTag>
+                        <PriceValue>₹{callPrice}</PriceValue>
+                        <span>/min</span>
+                      </PriceTag>
+                    </div>
+                  )}
+                  {chatPrice > 0 && (
+                    <div>
+                      <PriceLabel>
+                        <FiMessageSquare size={12} /> Chat
+                      </PriceLabel>
+                      <PriceTag>
+                        <PriceValue>₹{chatPrice}</PriceValue>
+                        <span>/min</span>
+                      </PriceTag>
+                    </div>
+                  )}
+                </PriceRow>
+              ) : hasSession ? (
+                <PriceRow $fullWidth>
+                  <div>
+                    <PriceLabel>
+                      <FiClock size={12} /> Session Package
+                    </PriceLabel>
+                    <PriceTag>
+                      <PriceValue>₹{sessionPrice}</PriceValue>
+                      <span>/{sessionDuration}min session</span>
+                    </PriceTag>
+                  </div>
+                </PriceRow>
+              ) : hasSubscription ? (
+                <PriceRow $fullWidth>
+                  <div>
+                    <PriceLabel>Membership Plans Available</PriceLabel>
+                    <PriceTag $premium>
+                      <FiZap size={14} /> Starting from ₹499/month
+                    </PriceTag>
+                  </div>
+                </PriceRow>
+              ) : (
+                <PriceRow $fullWidth>
+                  <div>
+                    <PriceLabel>Custom Pricing</PriceLabel>
+                    <PriceTag>Contact for quote</PriceTag>
+                  </div>
+                </PriceRow>
+              )}
+            </PricingSection>
 
-        {/* Subscription hint */}
-        {hasSubscription && hasPerMinute && (
-          <PricingInfo>
-            <FiZap size={12} />
-            <span>Subscribe for savings on long-term consultations</span>
-          </PricingInfo>
-        )}
+            {/* Subscription Hint */}
+            {hasSubscription && hasPerMinute && (
+              <PricingInfo>
+                <FiZap size={14} />
+                <span>✨ Subscribe & save  on consultations!</span>
+              </PricingInfo>
+            )}
 
-        <ActionRow>
-          <PrimaryBtn
-            disabled={isButtonDisabled() || !isLoggedIn}
-            onClick={mode === "chat" ? handleStartChatLocal : handleStartCallLocal}
-          >
-            {mode === "chat" ? <FiMessageSquare size={14} /> : <FiPhoneCall size={14} />}
-            {getButtonText()}
-          </PrimaryBtn>
-          <GhostBtn type="button" onClick={handleViewProfile}>
-            View Profile
-          </GhostBtn>
-        </ActionRow>
-
-        {loadingMeta && (
-          <div style={{ marginTop: 6, fontSize: 11, color: "#64748b" }}>
-            Loading details…
-          </div>
-        )}
-      </Card>
+            {/* Action Buttons */}
+            <ActionRow>
+              <PrimaryBtn
+                disabled={isButtonDisabled() }
+                onClick={mode === "chat" ? handleStartChatLocal : handleStartCallLocal}
+                whileTap={{ scale: 0.97 }}
+              >
+                {mode === "chat" ? <FiMessageSquare size={16} /> : <FiPhoneCall size={16} />}
+                {getButtonText()}
+              </PrimaryBtn>
+              <GhostBtn onClick={handleViewProfile} whileTap={{ scale: 0.97 }}>
+                Profile
+              </GhostBtn>
+            </ActionRow>
+          </CardInner>
+        </Card>
+      </motion.div>
 
       {/* Low Balance Popup */}
-      {showRecharge && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.6)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 999,
-          }}
-        >
-          <div
+      <AnimatePresence>
+        {showRecharge && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             style={{
-              background: "#fff",
-              padding: 24,
-              borderRadius: 16,
-              width: "min(90vw, 380px)",
-              textAlign: "center",
-              boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.6)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 999,
+              backdropFilter: "blur(4px)"
             }}
+            onClick={handleRechargeClose}
           >
-            <h3 style={{ margin: 0, marginBottom: 12, color: "#0f172a" }}>
-              Insufficient Balance
-            </h3>
-            <p style={{ margin: 0, marginBottom: 20, color: "#475569" }}>
-              Need <strong>₹{requiredAmount.toFixed(2)}</strong> more
-              {hasPerMinute && ` for ${MIN_CHAT_MINUTES} minutes`}.
-            </p>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-              <PrimaryBtn onClick={() => navigate("/user/wallet")}>
-                Recharge Now
-              </PrimaryBtn>
-              <GhostBtn onClick={handleRechargeClose}>Cancel</GhostBtn>
-            </div>
-          </div>
-        </div>
-      )}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              style={{
+                background: "#fff",
+                padding: 28,
+                borderRadius: 24,
+                width: "min(90vw, 400px)",
+                textAlign: "center",
+                boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)"
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ marginBottom: 20 }}>
+                <div style={{
+                  width: 60,
+                  height: 60,
+                  background: "#fef3c7",
+                  borderRadius: 60,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 16px"
+                }}>
+                  <FiZap size={28} color="#d97706" />
+                </div>
+                <h3 style={{ margin: 0, marginBottom: 8, fontSize: 22, color: "#0f172a" }}>
+                  Insufficient Balance
+                </h3>
+                <p style={{ margin: 0, color: "#475569", fontSize: 14 }}>
+                  You need <strong style={{ color: "#d97706" }}>₹{requiredAmount.toFixed(2)}</strong> more
+                  {hasPerMinute && ` for ${MIN_CHAT_MINUTES} minutes of consultation`}
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+                <PrimaryBtn onClick={() => navigate("/user/wallet")}>
+                  Add Funds
+                </PrimaryBtn>
+                <GhostBtn onClick={handleRechargeClose}>
+                  Cancel
+                </GhostBtn>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

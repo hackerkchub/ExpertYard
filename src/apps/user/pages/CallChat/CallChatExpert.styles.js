@@ -310,3 +310,210 @@ export const AIHint = styled.div`
   font-weight: 500;
   color: #4338ca;
 `;
+
+export const PaginationWrap = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+`;
+
+export const PageButton = styled.button`
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  background: #10b981;
+  color: white;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+export const PageInfo = styled.div`
+  font-size: 14px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+`;
+
+// Add these to your CallChatExpert.styles.js file
+
+export const StatsBar = styled.div`
+  display: flex;
+  gap: 24px;
+  padding: 16px 0;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #e2e8f0;
+  
+  @media (max-width: 768px) {
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+`;
+
+export const StatItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #475569;
+  
+  svg {
+    color: #3b82f6;
+  }
+  
+  span {
+    font-weight: 500;
+  }
+`;
+
+export const SearchBar = styled.div`
+  position: relative;
+  margin-bottom: 20px;
+`;
+
+export const SearchInput = styled.input`
+  width: 100%;
+  padding: 12px 40px 12px 40px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+`;
+
+export const SearchIcon = styled.div`
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+`;
+
+export const ClearSearchBtn = styled.button`
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &:hover {
+    color: #ef4444;
+  }
+`;
+
+export const FilterHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+`;
+
+export const FilterCount = styled.span`
+  background: #3b82f6;
+  color: white;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+`;
+
+export const MobileFilterToggle = styled.button`
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 40px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 20px;
+  position: relative;
+  
+  .badge {
+    background: #3b82f6;
+    color: white;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-left: 4px;
+  }
+  
+  @media (max-width: 768px) {
+    display: flex;
+  }
+`;
+
+export const MobileFilterDrawer = styled.div`
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 85%;
+  max-width: 380px;
+  height: 100vh;
+  background: white;
+  z-index: 1001;
+  overflow-y: auto;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+`;
+
+export const Overlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+`;
+
+export const ActiveFilters = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 12px 0;
+`;
+
+export const ActiveFilterChip = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 30px;
+  font-size: 12px;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: #fee2e2;
+    border-color: #ef4444;
+    color: #ef4444;
+  }
+  
+  svg {
+    margin-left: 4px;
+  }
+`;

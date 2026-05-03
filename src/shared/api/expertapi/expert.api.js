@@ -71,6 +71,40 @@ export const getExpertsBySubCategoryApi = async (subCategoryId) => {
   return data;
 };
 
+
+/**
+ * 🔥 Get Experts (WITH FILTERS)
+ * GET /api/expert/list
+ */
+export const getExpertsApi = async (params = {}) => {
+  const {
+    page = 1,
+    limit = 20,
+    category,
+    subcategory,
+    search,
+    sortBy,
+    order,
+    top
+  } = params;
+
+  const query = new URLSearchParams();
+
+  query.append("page", page);
+  query.append("limit", limit);
+
+  if (category) query.append("category", category);
+  if (subcategory) query.append("subcategory", subcategory);
+  if (search) query.append("search", search);
+  if (sortBy) query.append("sortBy", sortBy);
+  if (order) query.append("order", order);
+  if (top) query.append("top", "true");
+
+  const { data } = await api.get(`/expert/public/list?${query.toString()}`);
+
+  return data;
+};
+
 /**
  * 🔹 Update expert profile by expert ID
  * PUT {{baseURL}}/api/expert-profile/expert/:id

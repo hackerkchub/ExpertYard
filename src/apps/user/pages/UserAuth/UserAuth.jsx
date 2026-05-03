@@ -21,7 +21,9 @@ import {
   FiLock,
   FiUser,
   FiPhone,
-  FiCheckCircle
+  FiCheckCircle,
+  FiEye,
+  FiEyeOff,
 } from "react-icons/fi";
 
 import OtpModal from "../../../expert/components/OtpModal";
@@ -50,6 +52,7 @@ const UserAuth = () => {
 
   // 🔑 OTP Modals
   const [showOtp, setShowOtp] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [verifyType, setVerifyType] = useState(null); // 'email' or 'phone'
 
   // ✅ Verification (For Registration)
@@ -389,10 +392,28 @@ const UserAuth = () => {
               <Input placeholder="Email Address" value={form.email} onChange={handleChange("email")} />
             </InputWrap>
 
-            <InputWrap>
-              <FiLock />
-              <Input type="password" placeholder="Password" value={form.password} onChange={handleChange("password")} />
-            </InputWrap>
+            <InputWrap style={{ position: "relative" }}>
+  <FiLock />
+
+  <Input
+    type={showPassword ? "text" : "password"}
+    placeholder="Password"
+    value={form.password}
+    onChange={handleChange("password")}
+  />
+
+  <span
+    onClick={() => setShowPassword(!showPassword)}
+    style={{
+      position: "absolute",
+      right: "12px",
+      cursor: "pointer",
+      color: "#666"
+    }}
+  >
+    {showPassword ? <FiEyeOff /> : <FiEye />}
+  </span>
+</InputWrap>
 
             <div style={{ textAlign: "right", marginTop: "-10px" }}>
               <span 
@@ -448,10 +469,28 @@ const UserAuth = () => {
               </VerifyBtn>
             </InputGroup>
 
-            <InputWrap>
-              <FiLock />
-              <Input type="password" placeholder="Create Password" value={form.password} onChange={handleChange("password")} />
-            </InputWrap>
+            <InputWrap style={{ position: "relative" }}>
+  <FiLock />
+
+  <Input
+    type={showPassword ? "text" : "password"}
+    placeholder="Create Password"
+    value={form.password}
+    onChange={handleChange("password")}
+  />
+
+  <span
+    onClick={() => setShowPassword(!showPassword)}
+    style={{
+      position: "absolute",
+      right: "12px",
+      cursor: "pointer",
+      color: "#666"
+    }}
+  >
+    {showPassword ? <FiEyeOff /> : <FiEye />}
+  </span>
+</InputWrap>
 
             <PrimaryBtn type="button" onClick={handleRegister} disabled={loading}>
               {loading ? "Registering..." : "Register"}

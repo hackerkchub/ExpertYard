@@ -3,19 +3,28 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   PageWrap,
   Card,
+  BrandMark,
   Caption,
   SubCaption,
+  BadgeRow,
+  Badge,
   Tabs,
   Tab,
   Form,
   InputGroup,
   InputWrap,
   Input,
+  InputIconCircle,
+  PasswordToggle,
+  UtilityRow,
+  CheckboxLabel,
+  TextLink,
+  MessageBar,
   VerifyBtn,
   PrimaryBtn,
-  SwitchText
+  SwitchText,
+  BottomTrustText,
 } from "./UserAuth.styles";
-
 import {
   FiMail,
   FiLock,
@@ -25,61 +34,51 @@ import {
   FiEye,
   FiEyeOff,
 } from "react-icons/fi";
-
 import OtpModal from "../../../expert/components/OtpModal";
+import logo from "../../../../assets/logo.webp";
 
-// APIs
 import { registerUserApi } from "../../../../shared/api/userApi";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 
 const UserAuth = () => {
-  // 🧭 Navigation & Auth
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
   const redirectTo = location.state?.from?.pathname || "/";
 
-  // 📂 Views State (login, register, forgot)
   const [activeTab, setActiveTab] = useState("login");
   const [isForgotMode, setIsForgotMode] = useState(false);
 
-  // ⏱️ Loaders
   const [loading, setLoading] = useState(false);
-  const [loadingType, setLoadingType] = useState(null); // 'phone' or 'email'
+  const [loadingType, setLoadingType] = useState(null);
 
-  // 🔔 Response Messages
   const [apiMessage, setApiMessage] = useState({ text: "", isError: false });
 
-  // 🔑 OTP Modals
   const [showOtp, setShowOtp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [verifyType, setVerifyType] = useState(null); // 'email' or 'phone'
+  const [verifyType, setVerifyType] = useState(null);
+  const [rememberMe, setRememberMe] = useState(false);
 
-  // ✅ Verification (For Registration)
   const [verified, setVerified] = useState({ email: false, phone: false });
 
-  // 🗃️ Forgot Password State Machine
-  const [forgotStep, setForgotStep] = useState(1); // 1: Send OTP, 1.5: Verify OTP, 2: Reset Password
+  const [forgotStep, setForgotStep] = useState(1);
   const [forgotData, setForgotData] = useState({
-    type: "email", // 'email' or 'mobile'
+    type: "email",
     email: "",
     mobile: "",
     otp: "",
     resetToken: "",
     newPassword: "",
-    confirmPassword: "" 
+    confirmPassword: "",
   });
 
-  // 📋 Normal Auth Form
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
     email: "",
     phone: "",
-    password: ""
+    password: "",
   });
-
-  /* ================= COMMON HANDLERS ================= */
 
   const handleChange = (key) => (e) => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
@@ -97,17 +96,22 @@ const UserAuth = () => {
     setActiveTab(tab);
     setIsForgotMode(false);
     setForgotStep(1);
-    setForgotData({ type: "email", email: "", mobile: "", otp: "", resetToken: "", newPassword: "", confirmPassword: "" });
+    setForgotData({
+      type: "email",
+      email: "",
+      mobile: "",
+      otp: "",
+      resetToken: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
     showMessage("");
   };
-
-
-  /* ================= LOGIN ================= */
 
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
     if (!form.email || !form.password) {
-      return showMessage("❌ Please enter email and password.", true);
+      return showMessage("Please enter email and password.", true);
     }
 
     try {
@@ -116,35 +120,34 @@ const UserAuth = () => {
 
       const res = await login({
         email: form.email,
-        password: form.password
+        password: form.password,
       });
 
       if (res?.success) {
-        showMessage("✅ Login successful. Redirecting...", false);
-        setTimeout(() => { navigate(redirectTo, { replace: true }); }, 1200);
+        showMessage("Login successful. Redirecting...", false);
+        setTimeout(() => {
+          navigate(redirectTo, { replace: true });
+        }, 1200);
       } else {
-        showMessage("❌ Invalid email or password. Please try again.", true);
+        showMessage("Invalid email or password. Please try again.", true);
       }
     } catch (err) {
-      showMessage(`❌ ${err.message || "Login failed. Try again."}`, true);
+      showMessage(err.message || "Login failed. Try again.", true);
     } finally {
       setLoading(false);
     }
   };
-
-
-  /* ================= REGISTER ================= */
 
   const handleRegister = async (e) => {
     if (e) e.preventDefault();
     const { first_name, last_name, email, phone, password } = form;
 
     if (!first_name || !last_name || !email || !phone || !password) {
-      return showMessage("❌ All fields are required.", true);
+      return showMessage("All fields are required.", true);
     }
 
     if (!verified.email || !verified.phone) {
-      return showMessage("❌ Please verify both email and phone number first.", true);
+      return showMessage("Please verify both email and phone number first.", true);
     }
 
     try {
@@ -154,26 +157,25 @@ const UserAuth = () => {
       const res = await registerUserApi(form);
 
       if (res?.success) {
-        showMessage("🎉 Registration Successful! Please Login to continue.", false);
-        setTimeout(() => { resetAllViews("login"); }, 2500);
+        showMessage("Registration successful. Please login to continue.", false);
+        setTimeout(() => {
+          resetAllViews("login");
+        }, 2500);
       } else {
-        showMessage(`❌ Registration Failed: ${res?.message || "Please try again."}`, true);
+        showMessage(`Registration failed: ${res?.message || "Please try again."}`, true);
       }
     } catch (err) {
-      showMessage(`❌ Error: ${err.message || "Something went wrong on the server."}`, true);
+      showMessage(err.message || "Something went wrong on the server.", true);
     } finally {
       setLoading(false);
     }
   };
 
-
-  /* ================= REGISTRATION OTP ================= */
-
   const openOtp = async (type) => {
     showMessage("");
 
-    if (type === "email" && !form.email) return showMessage("❌ Please enter an email address.", true);
-    if (type === "phone" && !form.phone) return showMessage("❌ Please enter a phone number.", true);
+    if (type === "email" && !form.email) return showMessage("Please enter an email address.", true);
+    if (type === "phone" && !form.phone) return showMessage("Please enter a phone number.", true);
 
     try {
       setLoadingType(type);
@@ -191,7 +193,7 @@ const UserAuth = () => {
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -200,10 +202,10 @@ const UserAuth = () => {
         setVerifyType(type);
         setShowOtp(true);
       } else {
-        showMessage(`❌ Failed to send OTP: ${data.message}`, true);
+        showMessage(`Failed to send OTP: ${data.message}`, true);
       }
     } catch (error) {
-      showMessage("❌ Server error while sending OTP.", true);
+      showMessage("Server error while sending OTP.", true);
     } finally {
       setLoadingType(null);
     }
@@ -212,23 +214,19 @@ const UserAuth = () => {
   const handleOtpVerifySuccess = () => {
     setVerified((prev) => ({ ...prev, [verifyType]: true }));
     setShowOtp(false);
-    showMessage(`✅ ${verifyType === "email" ? "Email" : "Phone"} verified successfully!`, false);
+    showMessage(`${verifyType === "email" ? "Email" : "Phone"} verified successfully.`, false);
   };
 
-
-  /* ================= 🔑 FORGOT PASSWORD FLOW (User Type Fixed) 🔑 ================= */
-
-  // 1️⃣ SEND OTP
   const handleForgotSendOtp = async () => {
     showMessage("");
     const { type, email, mobile } = forgotData;
 
-    if (type === "email" && !email) return showMessage("❌ Please enter email address.", true);
-    if (type === "mobile" && !mobile) return showMessage("❌ Please enter mobile number.", true);
+    if (type === "email" && !email) return showMessage("Please enter email address.", true);
+    if (type === "mobile" && !mobile) return showMessage("Please enter mobile number.", true);
 
     try {
       setLoading(true);
-      let payload = { userType: "user", type }; // ✅ userType 'user' fixed
+      let payload = { userType: "user", type };
 
       if (type === "email") {
         payload.email = email;
@@ -240,34 +238,33 @@ const UserAuth = () => {
       const response = await fetch("https://softmaxs.com/api/forgot-password/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        showMessage(`✅ OTP sent to your ${type === 'email' ? 'email' : 'mobile'}. Check inbox!`, false);
+        showMessage(`OTP sent to your ${type === "email" ? "email" : "mobile"}. Check inbox.`, false);
         setForgotStep(1.5);
       } else {
-        showMessage(`❌ Error: ${data.message}`, true);
+        showMessage(`Error: ${data.message}`, true);
       }
     } catch (error) {
-      showMessage("❌ Server error. Please try again later.", true);
+      showMessage("Server error. Please try again later.", true);
     } finally {
       setLoading(false);
     }
   };
 
-  // 2️⃣ VERIFY OTP
   const handleForgotVerifyOtp = async () => {
     showMessage("");
     const { type, email, mobile, otp } = forgotData;
 
-    if (!otp) return showMessage("❌ Please enter the 4-digit OTP.", true);
+    if (!otp) return showMessage("Please enter the 4-digit OTP.", true);
 
     try {
       setLoading(true);
-      let payload = { userType: "user", type, otp }; // ✅ userType 'user' fixed
+      let payload = { userType: "user", type, otp };
 
       if (type === "email") {
         payload.email = email;
@@ -279,45 +276,44 @@ const UserAuth = () => {
       const response = await fetch("https://softmaxs.com/api/forgot-password/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
       if (data.success && data.resetToken) {
-        setForgotData(prev => ({ ...prev, resetToken: data.resetToken }));
-        showMessage("✅ OTP Verified! You can now set your new password.", false);
+        setForgotData((prev) => ({ ...prev, resetToken: data.resetToken }));
+        showMessage("OTP verified. You can now set your new password.", false);
         setForgotStep(2);
       } else {
-        showMessage(`❌ OTP Verification failed: ${data.message || "Invalid OTP."}`, true);
+        showMessage(`OTP verification failed: ${data.message || "Invalid OTP."}`, true);
       }
     } catch (error) {
-      showMessage("❌ Server error during verification.", true);
+      showMessage("Server error during verification.", true);
     } finally {
       setLoading(false);
     }
   };
 
-  // 3️⃣ RESET PASSWORD
   const handleForgotResetPassword = async () => {
     showMessage("");
     const { type, email, mobile, resetToken, newPassword, confirmPassword } = forgotData;
 
     if (!newPassword || !confirmPassword) {
-      return showMessage("❌ Please enter and confirm your password.", true);
+      return showMessage("Please enter and confirm your password.", true);
     }
 
     if (newPassword !== confirmPassword) {
-      return showMessage("❌ Passwords do not match. Please re-check.", true);
+      return showMessage("Passwords do not match. Please re-check.", true);
     }
 
     if (newPassword.length < 6) {
-      return showMessage("❌ Password must be at least 6 characters long.", true);
+      return showMessage("Password must be at least 6 characters long.", true);
     }
 
     try {
       setLoading(true);
-      let payload = { userType: "user", type, resetToken, newPassword }; // ✅ userType 'user' fixed
+      let payload = { userType: "user", type, resetToken, newPassword };
 
       if (type === "email") {
         payload.email = email;
@@ -328,19 +324,21 @@ const UserAuth = () => {
       const response = await fetch("https://softmaxs.com/api/forgot-password/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        showMessage("🎉 Password reset successful! Redirecting to login...", false);
-        setTimeout(() => { resetAllViews("login"); }, 2000);
+        showMessage("Password reset successful. Redirecting to login...", false);
+        setTimeout(() => {
+          resetAllViews("login");
+        }, 2000);
       } else {
-        showMessage(`❌ Reset failed: ${data.message || "Try again."}`, true);
+        showMessage(`Reset failed: ${data.message || "Try again."}`, true);
       }
     } catch (error) {
-      showMessage("❌ Server error resetting password.", true);
+      showMessage("Server error resetting password.", true);
     } finally {
       setLoading(false);
     }
@@ -349,8 +347,21 @@ const UserAuth = () => {
   return (
     <PageWrap>
       <Card>
-        <Caption>Welcome to Expert Yard</Caption>
-        <SubCaption>Login or create an account to connect with verified experts</SubCaption>
+        <BrandMark src={logo} alt="G9 Expert logo" />
+        <Caption>{isForgotMode ? "Forgot Password" : "Welcome Back"}</Caption>
+        <SubCaption>
+          {isForgotMode
+            ? "Securely reset your account access and get back in."
+            : "Connect with Verified Experts Instantly"}
+        </SubCaption>
+
+        {!isForgotMode && (
+          <BadgeRow>
+            <Badge><span>⭐</span><span>4.8/5 Rating</span></Badge>
+            <Badge><span>•</span><span>10K+ Experts</span></Badge>
+            <Badge><span>•</span><span>Trusted by 50K+ Users</span></Badge>
+          </BadgeRow>
+        )}
 
         {!isForgotMode && (
           <Tabs>
@@ -359,99 +370,78 @@ const UserAuth = () => {
           </Tabs>
         )}
 
-        {isForgotMode && (
-          <Caption style={{ fontSize: "20px", color: "#000080", marginBottom: "20px" }}>
-            🔑 Forgot Password
-          </Caption>
-        )}
+        {apiMessage.text && <MessageBar $isError={apiMessage.isError}>{apiMessage.text}</MessageBar>}
 
-        {/* 🚦 Notification Bar */}
-        {apiMessage.text && (
-          <div
-            style={{
-              margin: "12px 0",
-              padding: "10px",
-              background: apiMessage.isError ? "rgba(239, 68, 68, 0.12)" : "rgba(34, 197, 94, 0.12)",
-              border: apiMessage.isError ? "1px solid rgba(239, 68, 68, 0.35)" : "1px solid rgba(34, 197, 94, 0.35)",
-              color: apiMessage.isError ? "#ef4444" : "#22c55e",
-              borderRadius: 8,
-              textAlign: "center",
-              fontSize: 14,
-              fontWeight: "500"
-            }}
-          >
-            {apiMessage.text}
-          </div>
-        )}
-
-        {/* ================= LOGIN UI ================= */}
         {!isForgotMode && activeTab === "login" && (
           <Form onSubmit={(e) => e.preventDefault()}>
             <InputWrap>
-              <FiMail />
+              <InputIconCircle>
+                <FiMail />
+              </InputIconCircle>
               <Input placeholder="Email Address" value={form.email} onChange={handleChange("email")} />
             </InputWrap>
 
-            <InputWrap style={{ position: "relative" }}>
-  <FiLock />
+            <InputWrap>
+              <InputIconCircle>
+                <FiLock />
+              </InputIconCircle>
+              <Input
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={form.password}
+                onChange={handleChange("password")}
+              />
+              <PasswordToggle type="button" onClick={() => setShowPassword(!showPassword)} aria-label="Toggle password visibility">
+                {showPassword ? <FiEyeOff /> : <FiEye />}
+              </PasswordToggle>
+            </InputWrap>
 
-  <Input
-    type={showPassword ? "text" : "password"}
-    placeholder="Password"
-    value={form.password}
-    onChange={handleChange("password")}
-  />
-
-  <span
-    onClick={() => setShowPassword(!showPassword)}
-    style={{
-      position: "absolute",
-      right: "12px",
-      cursor: "pointer",
-      color: "#666"
-    }}
-  >
-    {showPassword ? <FiEyeOff /> : <FiEye />}
-  </span>
-</InputWrap>
-
-            <div style={{ textAlign: "right", marginTop: "-10px" }}>
-              <span 
-                onClick={() => { setIsForgotMode(true); showMessage(""); }} 
-                style={{ color: "#000080", fontSize: "14px", fontWeight: "600", cursor: "pointer" }}
-              >
+            <UtilityRow>
+              <CheckboxLabel>
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                <span>Remember Me</span>
+              </CheckboxLabel>
+              <TextLink onClick={() => { setIsForgotMode(true); showMessage(""); }}>
                 Forgot Password?
-              </span>
-            </div>
+              </TextLink>
+            </UtilityRow>
 
             <PrimaryBtn type="button" onClick={handleLogin} disabled={loading}>
-              {loading ? "Logging in..." : "Login"}
+              {loading ? "Logging in..." : "Login to Continue →"}
             </PrimaryBtn>
 
             <SwitchText>
-              Don’t have an account?{" "}
-              <span onClick={() => resetAllViews("register")}>Register Here</span>
+              New to G9Experts? <span onClick={() => resetAllViews("register")}>Create Account</span>
             </SwitchText>
           </Form>
         )}
 
-        {/* ================= REGISTER UI ================= */}
         {!isForgotMode && activeTab === "register" && (
           <Form onSubmit={(e) => e.preventDefault()}>
             <InputGroup>
               <InputWrap>
-                <FiUser />
+                <InputIconCircle>
+                  <FiUser />
+                </InputIconCircle>
                 <Input placeholder="First Name" value={form.first_name} onChange={handleChange("first_name")} />
               </InputWrap>
               <InputWrap>
-                <FiUser />
+                <InputIconCircle>
+                  <FiUser />
+                </InputIconCircle>
                 <Input placeholder="Last Name" value={form.last_name} onChange={handleChange("last_name")} />
               </InputWrap>
             </InputGroup>
 
             <InputGroup>
               <InputWrap style={{ opacity: verified.phone ? 0.7 : 1 }}>
-                <FiPhone />
+                <InputIconCircle>
+                  <FiPhone />
+                </InputIconCircle>
                 <Input placeholder="Phone Number" value={form.phone} onChange={handleChange("phone")} disabled={verified.phone} />
               </InputWrap>
               <VerifyBtn type="button" onClick={() => openOtp("phone")} disabled={verified.phone || loadingType === "phone"}>
@@ -461,7 +451,9 @@ const UserAuth = () => {
 
             <InputGroup>
               <InputWrap style={{ opacity: verified.email ? 0.7 : 1 }}>
-                <FiMail />
+                <InputIconCircle>
+                  <FiMail />
+                </InputIconCircle>
                 <Input placeholder="Email Address" value={form.email} onChange={handleChange("email")} disabled={verified.email} />
               </InputWrap>
               <VerifyBtn type="button" onClick={() => openOtp("email")} disabled={verified.email || loadingType === "email"}>
@@ -469,73 +461,72 @@ const UserAuth = () => {
               </VerifyBtn>
             </InputGroup>
 
-            <InputWrap style={{ position: "relative" }}>
-  <FiLock />
-
-  <Input
-    type={showPassword ? "text" : "password"}
-    placeholder="Create Password"
-    value={form.password}
-    onChange={handleChange("password")}
-  />
-
-  <span
-    onClick={() => setShowPassword(!showPassword)}
-    style={{
-      position: "absolute",
-      right: "12px",
-      cursor: "pointer",
-      color: "#666"
-    }}
-  >
-    {showPassword ? <FiEyeOff /> : <FiEye />}
-  </span>
-</InputWrap>
+            <InputWrap>
+              <InputIconCircle>
+                <FiLock />
+              </InputIconCircle>
+              <Input
+                type={showPassword ? "text" : "password"}
+                placeholder="Create Password"
+                value={form.password}
+                onChange={handleChange("password")}
+              />
+              <PasswordToggle type="button" onClick={() => setShowPassword(!showPassword)} aria-label="Toggle password visibility">
+                {showPassword ? <FiEyeOff /> : <FiEye />}
+              </PasswordToggle>
+            </InputWrap>
 
             <PrimaryBtn type="button" onClick={handleRegister} disabled={loading}>
               {loading ? "Registering..." : "Register"}
             </PrimaryBtn>
 
             <SwitchText>
-              Already have an account?{" "}
-              <span onClick={() => resetAllViews("login")}>Login Here</span>
+              Already have an account? <span onClick={() => resetAllViews("login")}>Login Here</span>
             </SwitchText>
           </Form>
         )}
 
-        {/* ================= 🛡️ FORGOT PASSWORD UI SECTION 🛡️ ================= */}
         {isForgotMode && (
           <Form onSubmit={(e) => e.preventDefault()}>
-            
             {(forgotStep === 1 || forgotStep === 1.5) && (
               <>
-                <div style={{ display: "flex", gap: "12px" }}>
-                  <VerifyBtn 
-                    type="button" 
-                    style={{ flex: 1, background: forgotData.type === 'email' ? '#000080' : '#fff', color: forgotData.type === 'email' ? '#fff' : '#000080' }} 
-                    onClick={() => { setForgotData(prev => ({ ...prev, type: "email" })); setForgotStep(1); }}
+                <InputGroup>
+                  <VerifyBtn
+                    type="button"
+                    style={{ flex: 1, background: forgotData.type === "email" ? "#000080" : "#fff", color: forgotData.type === "email" ? "#fff" : "#000080" }}
+                    onClick={() => {
+                      setForgotData((prev) => ({ ...prev, type: "email" }));
+                      setForgotStep(1);
+                    }}
                     disabled={forgotStep > 1.4}
                   >
                     Use Email
                   </VerifyBtn>
-                  <VerifyBtn 
-                    type="button" 
-                    style={{ flex: 1, background: forgotData.type === 'mobile' ? '#000080' : '#fff', color: forgotData.type === 'mobile' ? '#fff' : '#000080' }} 
-                    onClick={() => { setForgotData(prev => ({ ...prev, type: "mobile" })); setForgotStep(1); }}
+                  <VerifyBtn
+                    type="button"
+                    style={{ flex: 1, background: forgotData.type === "mobile" ? "#000080" : "#fff", color: forgotData.type === "mobile" ? "#fff" : "#000080" }}
+                    onClick={() => {
+                      setForgotData((prev) => ({ ...prev, type: "mobile" }));
+                      setForgotStep(1);
+                    }}
                     disabled={forgotStep > 1.4}
                   >
                     Use Mobile
                   </VerifyBtn>
-                </div>
+                </InputGroup>
 
                 {forgotData.type === "email" ? (
                   <InputWrap style={{ opacity: forgotStep > 1.4 ? 0.7 : 1 }}>
-                    <FiMail />
+                    <InputIconCircle>
+                      <FiMail />
+                    </InputIconCircle>
                     <Input placeholder="Enter Email to Reset" value={forgotData.email} onChange={handleForgotChange("email")} disabled={forgotStep > 1.4} />
                   </InputWrap>
                 ) : (
                   <InputWrap style={{ opacity: forgotStep > 1.4 ? 0.7 : 1 }}>
-                    <FiPhone />
+                    <InputIconCircle>
+                      <FiPhone />
+                    </InputIconCircle>
                     <Input placeholder="Enter Mobile Number" value={forgotData.mobile} onChange={handleForgotChange("mobile")} disabled={forgotStep > 1.4} />
                   </InputWrap>
                 )}
@@ -551,7 +542,9 @@ const UserAuth = () => {
             {forgotStep === 1.5 && (
               <>
                 <InputWrap>
-                  <FiCheckCircle />
+                  <InputIconCircle>
+                    <FiCheckCircle />
+                  </InputIconCircle>
                   <Input placeholder="Enter 4-digit OTP" value={forgotData.otp} onChange={handleForgotChange("otp")} maxLength={4} />
                 </InputWrap>
                 <PrimaryBtn type="button" onClick={handleForgotVerifyOtp} disabled={loading}>
@@ -563,21 +556,25 @@ const UserAuth = () => {
             {forgotStep === 2 && (
               <>
                 <InputWrap>
-                  <FiLock />
-                  <Input 
-                    type="password" 
-                    placeholder="Enter New Password" 
-                    value={forgotData.newPassword} 
-                    onChange={handleForgotChange("newPassword")} 
+                  <InputIconCircle>
+                    <FiLock />
+                  </InputIconCircle>
+                  <Input
+                    type="password"
+                    placeholder="Enter New Password"
+                    value={forgotData.newPassword}
+                    onChange={handleForgotChange("newPassword")}
                   />
                 </InputWrap>
                 <InputWrap>
-                  <FiLock />
-                  <Input 
-                    type="password" 
-                    placeholder="Confirm New Password" 
-                    value={forgotData.confirmPassword} 
-                    onChange={handleForgotChange("confirmPassword")} 
+                  <InputIconCircle>
+                    <FiLock />
+                  </InputIconCircle>
+                  <Input
+                    type="password"
+                    placeholder="Confirm New Password"
+                    value={forgotData.confirmPassword}
+                    onChange={handleForgotChange("confirmPassword")}
                   />
                 </InputWrap>
                 <PrimaryBtn type="button" onClick={handleForgotResetPassword} disabled={loading}>
@@ -587,12 +584,12 @@ const UserAuth = () => {
             )}
 
             <SwitchText>
-              Remember your password?{" "}
-              <span onClick={() => resetAllViews("login")}>Back to Login</span>
+              Remember your password? <span onClick={() => resetAllViews("login")}>Back to Login</span>
             </SwitchText>
           </Form>
         )}
 
+        <BottomTrustText>100% Secure & Encrypted</BottomTrustText>
       </Card>
 
       {showOtp && (

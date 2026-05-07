@@ -1,6 +1,6 @@
 export const SITE_CONFIG = {
   siteName: "G9Expert",
-  baseUrl: (import.meta.env.VITE_SITE_URL || "https://softmaxs.com").replace(/\/$/, ""),
+  baseUrl: (import.meta.env.VITE_SITE_URL || "https://g9expert.com").replace(/\/$/, ""),
   defaultOgImage: "/logo-512.webp",
   organizationName: "G9Expert",
 };

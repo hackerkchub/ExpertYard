@@ -212,11 +212,11 @@ const WalletPage = () => {
         <TopupSection>
           <div className="action-section">
             <AddBalanceBtn onClick={() => {setPopupAmount(null); setPopupOpen(true)}}>
-              <FaPlus /> ADD BALANCE
+              <FaPlus /> Recharge Wallet
             </AddBalanceBtn>
             <QuickAddRow>
-              <span className="quick-label">Quick Add:</span>
-              {[500, 1000, 2000].map(amt => (
+              <span className="quick-label">Quick recharge:</span>
+              {[100, 250, 500, 1000].map(amt => (
                 <QuickAddBtn key={amt} className={amt >= 1000 ? "premium" : ""} onClick={() => {setPopupAmount(amt); setPopupOpen(true)}}>+₹{amt}</QuickAddBtn>
               ))}
             </QuickAddRow>
@@ -224,10 +224,16 @@ const WalletPage = () => {
         </TopupSection>
 
         <StatsGrid>
-          <StatCard><FaWallet className="stat-icon" /><div><span className="stat-label">Transactions</span><span className="stat-value">{stats.transactionCount}</span></div></StatCard>
-          <StatCard><FaCalendarAlt className="stat-icon" /><div><span className="stat-label">This Month</span><span className="stat-value">{formatCurrency(stats.monthlySpent)}</span></div></StatCard>
-          <StatCard><MdTrendingUp className="stat-icon" /><div><span className="stat-label">Status</span><span className="stat-value">Active</span></div></StatCard>
+          <StatCard><MdAccountBalanceWallet className="stat-icon" /><div><span className="stat-label">Total Recharge</span><span className="stat-value">{formatCurrency(stats.totalCredits)}</span></div></StatCard>
+          <StatCard><MdPayments className="stat-icon" /><div><span className="stat-label">Total Spent</span><span className="stat-value">{formatCurrency(stats.totalDebits)}</span></div></StatCard>
+          <StatCard><FaHistory className="stat-icon" /><div><span className="stat-label">Transactions</span><span className="stat-value">{stats.transactionCount}</span></div></StatCard>
+          <StatCard><FaWallet className="stat-icon" /><div><span className="stat-label">Available Balance</span><span className="stat-value">{formatCurrency(balance || 0)}</span></div></StatCard>
         </StatsGrid>
+
+        <div className="wallet-safety-card">
+          <MdAccountBalanceWallet />
+          <span>Your wallet balance is used for expert chat and call consultations.</span>
+        </div>
 
         <ExpenseSection>
           <SectionTitle>
@@ -328,7 +334,7 @@ const WalletPage = () => {
           )}
 
           {filteredTransactions.length === 0 ? (
-            <EmptyState>No records found</EmptyState>
+            <EmptyState>No transactions found yet.</EmptyState>
           ) : (
             <>
               {filteredTransactions.slice(0, visibleCount).map((item) => {

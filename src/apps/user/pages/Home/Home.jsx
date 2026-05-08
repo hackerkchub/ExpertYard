@@ -6,9 +6,7 @@ import {
   FiPhoneCall,
   FiPlayCircle,
   FiSearch,
-  FiShield,
   FiStar,
-  FiUserCheck,
   FiVideo,
   FiZap,
 } from "react-icons/fi";
@@ -18,6 +16,7 @@ import HowItWorks from "../../components/howItWorks/HowItWorks";
 import PopularServices from "./PopularServices";
 import PopularQuestions from "../../components/faq/PopularQuestions";
 import TestimonialsSection from "../../components/testimonials/TestimonialsSection";
+import TrustStats from "../../components/trustStats/TrustStats";
 import WhyChoose from "../../components/whyChoose/WhyChoose";
 import {
   HeroBackdrop,
@@ -87,12 +86,6 @@ const HERO_CHIPS = [
   "Business Services",
   "Career Guidance",
   "Astrology",
-];
-
-const TRUST_ITEMS = [
-  { title: "Verified Experts", icon: FiUserCheck },
-  { title: "Secure & Safe", icon: FiShield },
-  { title: "Affordable Pricing", icon: FiStar },
 ];
 
 const FINAL_STATS = [
@@ -173,8 +166,8 @@ const HomePage = () => {
     structuredData: homeStructuredData,
   });
 
-  const topCategories = categories.slice(0, 8);
-  const visibleExperts = experts.slice(0, 6);
+  const topCategories = categories.slice(0, 5);
+  const visibleExperts = experts.slice(0, 5);
   const expertOfTheDay = visibleExperts[0] || FALLBACK_EXPERT;
   const avatarExperts = visibleExperts.slice(0, 3);
 
@@ -298,7 +291,7 @@ const HomePage = () => {
           })}
         </section>
 
-        <section className="home-section-card">
+        <section className="home-section-card home-section-card--categories">
           <div className="section-topline">
             <div>
               <span className="section-kicker">Discover</span>
@@ -311,7 +304,7 @@ const HomePage = () => {
 
           <div className="category-grid-app">
             {categoriesLoading && topCategories.length === 0
-              ? Array.from({ length: 8 }).map((_, index) => (
+              ? Array.from({ length: 5 }).map((_, index) => (
                   <div className="category-card category-card--placeholder" key={index}>
                     <div className="category-card__media" />
                     <div className="category-card__line" />
@@ -328,7 +321,6 @@ const HomePage = () => {
                     </div>
                     <div className="category-card__copy">
                       <strong>{category.name}</strong>
-                      <small>Verified experts</small>
                     </div>
                   </Link>
                 ))}
@@ -337,32 +329,11 @@ const HomePage = () => {
 
         <PopularServices />
 
-        <section className="trust-banner">
-          <div className="trust-banner__lead">
-            <span className="trust-banner__icon">
-              <FiShield />
-            </span>
-            <div>
-              <strong>Trusted by 20,000+ Users</strong>
-              <p>Built for safe, simple, and quick expert consultations.</p>
-            </div>
-          </div>
-          <div className="trust-banner__items">
-            {TRUST_ITEMS.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.title} className="trust-banner__item">
-                  <Icon />
-                  <span>{item.title}</span>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+        <TrustStats />
 
         <HowItWorks />
 
-        <section className="home-section-card">
+        <section className="home-section-card home-section-card--experts">
           <div className="section-topline">
             <div>
               <span className="section-kicker">Experts</span>
@@ -375,35 +346,42 @@ const HomePage = () => {
 
           <div className="experts-list">
             {expertsLoading && visibleExperts.length === 0 ? (
-              Array.from({ length: 4 }).map((_, index) => (
+              Array.from({ length: 5 }).map((_, index) => (
                 <div className="expert-card-app expert-card-app--placeholder" key={index} />
               ))
             ) : (
-              visibleExperts.map((expert) => (
-                <button
-                  key={expert.id}
-                  type="button"
-                  className="expert-card-app"
-                  onClick={() => navigate(`/user/experts/${expert.id}`)}
-                >
-                  <div className="expert-card-app__avatar">
-                    {expert.profile_photo ? (
-                      <img src={expert.profile_photo} alt={expert.name} loading="lazy" />
-                    ) : (
-                      <span>{getInitials(expert.name)}</span>
-                    )}
-                    <i />
-                  </div>
-                  <div className="expert-card-app__info">
-                    <strong>{expert.name}</strong>
-                    <small>{expert.position || "Verified Expert"}</small>
-                    <div className="expert-card-app__meta">
-                      <span className="expert-rating">{renderStars(5)} 4.8</span>
-                      <span className="expert-online">Online</span>
+              visibleExperts.map((expert) => {
+                const expertPosition =
+                  expert.position && expert.position !== "Verified Expert"
+                    ? expert.position
+                    : "";
+
+                return (
+                  <button
+                    key={expert.id}
+                    type="button"
+                    className="expert-card-app"
+                    onClick={() => navigate(`/user/experts/${expert.id}`)}
+                  >
+                    <div className="expert-card-app__avatar">
+                      {expert.profile_photo ? (
+                        <img src={expert.profile_photo} alt={expert.name} loading="lazy" />
+                      ) : (
+                        <span>{getInitials(expert.name)}</span>
+                      )}
+                      <i />
                     </div>
-                  </div>
-                </button>
-              ))
+                    <div className="expert-card-app__info">
+                      <strong>{expert.name}</strong>
+                      {expertPosition && <small>{expertPosition}</small>}
+                      <div className="expert-card-app__meta">
+                        <span className="expert-rating">{renderStars(5)} 4.8</span>
+                        <span className="expert-online">Online</span>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })
             )}
           </div>
         </section>

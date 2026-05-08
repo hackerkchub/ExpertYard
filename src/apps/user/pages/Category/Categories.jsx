@@ -9,8 +9,16 @@ import {
 } from "../../../../shared/utils/categoryRoutes";
 
 // Icons
-import { FiSearch, FiGrid, FiList, FiChevronRight, FiStar, FiUsers, FiClock, FiAward } from "react-icons/fi";
-import { IoSparkles, IoShieldCheckmark, IoTrendingUp, IoStatsChart } from "react-icons/io5";
+import {
+  FiChevronRight,
+  FiGrid,
+  FiHeadphones,
+  FiList,
+  FiSearch,
+  FiShield,
+  FiUsers,
+} from "react-icons/fi";
+import { IoTrendingUp } from "react-icons/io5";
 
 // Styled Components
 import {
@@ -25,6 +33,7 @@ import {
   MainContent,
   StatsBar,
   StatItem,
+  StatIcon,
   StatValue,
   StatLabel,
   CategoriesHeader,
@@ -39,8 +48,6 @@ import {
   CategoryInfo,
   CategoryName,
   CategoryDescription,
-  CategoryMeta,
-  MetaItem,
   ViewButton,
   PremiumBadge,
   TrendingTag,
@@ -48,9 +55,8 @@ import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbSeparator,
-  PopularSection,
-  PopularGrid,
-  PopularCategory
+  CtaBlock,
+  CtaButton
 } from "./Categories.styles";
 
 const DEFAULT_CATEGORY_IMAGE = "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h-300&fit=crop";
@@ -74,9 +80,6 @@ const Categories = () => {
     return (b.popularity || 0) - (a.popularity || 0);
   });
 
-  const popularCategories = [...categories]
-    .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
-    .slice(0, 3);
   const categoriesStructuredData = useMemo(
     () => [
       {
@@ -156,20 +159,32 @@ const Categories = () => {
       {/* 3. Stats Bar - Floating effect */}
       <StatsBar>
         <StatItem>
-          <StatValue>{categories.length}</StatValue>
-          <StatLabel>Categories</StatLabel>
+          <StatIcon><FiGrid /></StatIcon>
+          <div>
+            <StatValue>13+</StatValue>
+            <StatLabel>Categories</StatLabel>
+          </div>
         </StatItem>
         <StatItem>
-          <StatValue></StatValue>
-          <StatLabel></StatLabel>
+          <StatIcon><FiUsers /></StatIcon>
+          <div>
+            <StatValue>20K+</StatValue>
+            <StatLabel>Experts</StatLabel>
+          </div>
         </StatItem>
         <StatItem>
-          <StatValue>24/7</StatValue>
-          <StatLabel>Support</StatLabel>
+          <StatIcon><FiHeadphones /></StatIcon>
+          <div>
+            <StatValue>24/7</StatValue>
+            <StatLabel>Support</StatLabel>
+          </div>
         </StatItem>
         <StatItem>
-          <StatValue>100%</StatValue>
-          <StatLabel>Secure</StatLabel>
+          <StatIcon><FiShield /></StatIcon>
+          <div>
+            <StatValue>100%</StatValue>
+            <StatLabel>Secure</StatLabel>
+          </div>
         </StatItem>
       </StatsBar>
 
@@ -214,7 +229,7 @@ const Categories = () => {
                   $view={viewMode}
                 />
                 
-                <CategoryInfo>
+                <CategoryInfo $view={viewMode}>
                   {cat.is_trending && (
                     <TrendingTag><IoTrendingUp size={12} /> Trending</TrendingTag>
                   )}
@@ -243,6 +258,16 @@ const Categories = () => {
             <p>Try adjusting your search to find what you're looking for.</p>
           </EmptyState>
         )}
+
+        <CtaBlock>
+          <div>
+            <h2>Still Confused? Talk to Our Experts Now</h2>
+            <p>Get instant guidance and the right solution for your need.</p>
+          </div>
+          <CtaButton type="button" onClick={() => navigate("/user/call-chat?page=1&mode=chat")}>
+            Talk to Expert
+          </CtaButton>
+        </CtaBlock>
       </MainContent>
     </PageContainer>
   );

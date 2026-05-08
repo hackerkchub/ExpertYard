@@ -75,10 +75,20 @@ const PopularServices = () => {
 
   return (
     <SectionWrapper>
+      <div className="section-topline">
+        <div>
+          <span className="section-kicker">Services</span>
+          <h2>Popular Services</h2>
+          <p className="services-subtitle">Ready-to-book services from verified professionals</p>
+        </div>
+        <button type="button" className="section-link" onClick={() => navigate("/user/all-services")}>
+          View All
+        </button>
+      </div>
 
       <HorizontalScrollContainer>
         {loading && visibleServices.length === 0
-          ? Array.from({ length: 4 }).map((_, index) => (
+          ? Array.from({ length: 5 }).map((_, index) => (
               <ServiceSkeleton key={index} aria-hidden="true">
                 <div className="media" />
                 <div className="line title" />
@@ -89,12 +99,12 @@ const PopularServices = () => {
           : visibleServices.map((service, index) => (
               <ServiceCard
                 key={service.id}
-                onClick={() => navigate(`/user/service-details/${service.slug}`)}
+                onClick={() => navigate(`/user/service-details/${service.slug || service.id}`)}
               >
                 <ImageContainer>
                   <img
-                    src={service.image}
-                    alt={service.title}
+                    src={service.image || FALLBACK_SERVICE_IMAGE}
+                    alt={service.title || "Service"}
                     loading="lazy"
                     decoding="async"
                     fetchPriority={index < 2 ? "high" : "auto"}
@@ -107,7 +117,7 @@ const PopularServices = () => {
                 </ImageContainer>
 
                 <CardBody>
-                  <h4 className="service-title">{service.title}</h4>
+                  <h4 className="service-title">{service.title || "Professional Service"}</h4>
                   <p className="service-description">
                     {service.description?.trim()
                       ? service.description.substring(0, 92)
@@ -118,11 +128,16 @@ const PopularServices = () => {
                     <p className="expert-name">
                       by {expertMap[service.expert_id] || "Expert Professional"}
                     </p>
-                    <span className="price-tag">₹{Math.floor(service.price)}</span>
+                    {Number(service.price) > 0 && (
+                      <span className="price-tag">{`\u20B9${Math.floor(service.price)}`}</span>
+                    )}
                   </div>
                 </CardBody>
               </ServiceCard>
             ))}
+        {!loading && visibleServices.length === 0 && (
+          <EmptyState>No services available right now.</EmptyState>
+        )}
       </HorizontalScrollContainer>
     </SectionWrapper>
   );
@@ -131,82 +146,50 @@ const PopularServices = () => {
 export default PopularServices;
 
 const SectionWrapper = styled.section`
-  padding: 0;
-  background-color: transparent;
-  max-width: 100%;
-  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid var(--home-border);
+  border-radius: 28px;
+  box-shadow: var(--home-shadow);
+  padding: 18px 0;
+  overflow: hidden;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   content-visibility: auto;
-  contain-intrinsic-size: 720px;
-`;
+  contain-intrinsic-size: 360px;
 
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.1rem;
-  padding: 0 1.5rem;
-  width: 100%;
-
-  .heading-copy {
-    max-width: 48rem;
+  .section-topline {
+    padding: 0 18px;
   }
 
-  .main-title {
-    font-size: clamp(1.5rem, 2vw, 1.9rem);
-    font-weight: 700;
-    color: #101828;
-    margin: 0;
-    font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    letter-spacing: -0.02em;
-  }
-
-  .section-subtitle {
-    margin: 0.45rem 0 0;
+  .services-subtitle {
+    margin: 6px 0 0;
     color: #526071;
-    font-size: 0.98rem;
-    line-height: 1.65;
+    font-size: 0.9rem;
+    line-height: 1.45;
   }
 
-  @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 0 1rem;
-    gap: 0.85rem;
-    margin-bottom: 0.9rem;
+  @media (min-width: 1024px) {
+    padding: 22px 0;
+
+    .section-topline {
+      padding: 0 22px;
+    }
   }
 
   @media (max-width: 480px) {
-    padding: 0 0.85rem;
-  }
-`;
+    border-radius: 24px;
+    padding: 16px 0;
 
-const ViewAllBtn = styled.button`
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 128, 0.16);
-  color: #000080;
-  font-size: 0.92rem;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0.78rem 1.15rem;
-  border-radius: 999px;
-  white-space: nowrap;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-
-  &:hover {
-    border-color: rgba(0, 0, 128, 0.35);
-    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.1);
-    transform: translateY(-1px);
+    .section-topline {
+      padding: 0 16px;
+    }
   }
 `;
 
 const HorizontalScrollContainer = styled.div`
   display: flex;
   overflow-x: auto;
-  gap: clamp(0.8rem, 1.6vw, 1.1rem);
-  padding: 0.25rem 1.5rem 0.4rem;
+  gap: 12px;
+  padding: 0.25rem 18px 0.35rem;
   scroll-behavior: smooth;
   scrollbar-width: none;
   scroll-snap-type: x proximity;
@@ -217,62 +200,60 @@ const HorizontalScrollContainer = styled.div`
   }
 
   & > div {
-    flex: 0 0 clamp(260px, calc((100% - 2 * clamp(0.8rem, 1.6vw, 1.1rem)) / 3), 320px);
+    flex: 0 0 230px;
     scroll-snap-align: start;
+  }
+
+  @media (min-width: 1024px) {
+    padding-inline: 22px;
+
+    & > div {
+      flex-basis: 228px;
+    }
   }
 
   @media (min-width: 1280px) {
     & > div {
-      flex-basis: clamp(250px, calc((100% - 3 * clamp(0.8rem, 1.6vw, 1.1rem)) / 4), 300px);
+      flex-basis: 220px;
     }
   }
 
   @media (max-width: 768px) {
-    gap: 0.8rem;
-    padding: 0.25rem 1rem 0.35rem;
-
     & > div {
-      flex: 0 0 calc((100% - 0.8rem) / 2);
-      min-width: 0;
+      flex-basis: 180px;
     }
   }
 
   @media (max-width: 480px) {
-    padding: 0.25rem 0.85rem 0.35rem;
+    padding-inline: 16px;
 
     & > div {
-      flex: 0 0 calc((100% - 0.8rem) / 2);
+      flex-basis: 168px;
     }
   }
 `;
 
 const ServiceCard = styled.div`
-  background: #ffffff;
-  border-radius: 24px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  border-radius: 22px;
+  border: 1px solid var(--home-border);
   overflow: hidden;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  min-height: clamp(300px, 34vw, 370px);
+  min-height: 284px;
   height: 100%;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 
   &:hover {
-    transform: translateY(-4px);
-    border-color: rgba(0, 0, 128, 0.2);
-    box-shadow: 0 24px 52px rgba(15, 23, 42, 0.14);
+    transform: translateY(-2px);
+    border-color: rgba(0, 0, 128, 0.12);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
   }
 
   @media (max-width: 768px) {
-    min-height: 290px;
-    border-radius: 22px;
-  }
-
-  @media (max-width: 480px) {
-    min-height: 270px;
-    border-radius: 20px;
+    min-height: 264px;
   }
 `;
 
@@ -299,43 +280,35 @@ const ImageContainer = styled.div`
 
   .service-badge {
     position: absolute;
-    left: 0.9rem;
-    top: 0.9rem;
+    left: 0.65rem;
+    top: 0.65rem;
     display: inline-flex;
     align-items: center;
-    min-height: 32px;
-    padding: 0.3rem 0.7rem;
+    min-height: 26px;
+    padding: 0.24rem 0.58rem;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.88);
     border: 1px solid rgba(255, 255, 255, 0.9);
     color: #14213d;
-    font-size: 0.74rem;
+    font-size: 0.66rem;
     font-weight: 700;
     letter-spacing: 0.03em;
   }
 
   @media (max-width: 768px) {
     aspect-ratio: 16 / 10;
-
-    .service-badge {
-      left: 0.75rem;
-      top: 0.75rem;
-      min-height: 30px;
-      padding: 0.28rem 0.62rem;
-      font-size: 0.68rem;
-    }
   }
 `;
 
 const CardBody = styled.div`
-  padding: 0.95rem 0.95rem 1rem;
+  padding: 0.9rem;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.55rem;
 
   .service-title {
-    font-size: 1rem;
+    font-size: 0.96rem;
     font-weight: 700;
     color: #111827;
     margin: 0;
@@ -344,31 +317,30 @@ const CardBody = styled.div`
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    min-height: 2.6rem;
-    font-family: Georgia, "Times New Roman", serif;
+    min-height: 2.5rem;
   }
 
   .service-description {
     margin: 0;
-    font-size: 0.9rem;
-    line-height: 1.55;
+    font-size: 0.86rem;
+    line-height: 1.5;
     color: #526071;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    min-height: 2.8rem;
+    min-height: 2.6rem;
   }
 
   .price-tag {
     color: #000080;
-    font-size: 1rem;
+    font-size: 0.96rem;
     font-weight: 700;
     white-space: nowrap;
   }
 
   .expert-name {
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     color: #475467;
     margin: 0;
     white-space: nowrap;
@@ -386,59 +358,38 @@ const CardBody = styled.div`
     padding-top: 0.15rem;
   }
 
-  @media (min-width: 1024px) {
-    padding: 1rem 1rem 1.05rem;
-
-    .service-title {
-      font-size: 1.03rem;
-    }
-  }
-
   @media (max-width: 768px) {
-    padding: 0.85rem 0.85rem 0.95rem;
-    gap: 0.55rem;
-
-    .service-title {
-      font-size: 0.95rem;
-      min-height: 2.45rem;
-    }
-
-    .service-description {
-      font-size: 0.84rem;
-      min-height: 2.55rem;
-    }
-
-    .price-tag {
-      font-size: 0.94rem;
-    }
-
-    .expert-name {
-      font-size: 0.76rem;
-      max-width: 62%;
-    }
-  }
-
-  @media (max-width: 480px) {
     padding: 0.8rem;
 
     .service-title {
-      font-size: 0.92rem;
+      font-size: 0.9rem;
+      min-height: 2.35rem;
     }
 
     .service-description {
-      font-size: 0.82rem;
+      font-size: 0.8rem;
+      min-height: 2.45rem;
+    }
+
+    .price-tag {
+      font-size: 0.9rem;
+    }
+
+    .expert-name {
+      font-size: 0.74rem;
+      max-width: 58%;
     }
   }
 `;
 
 const ServiceSkeleton = styled.div`
   background: #ffffff;
-  border-radius: 24px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 22px;
+  border: 1px solid var(--home-border);
   overflow: hidden;
   padding-bottom: 1rem;
-  min-height: clamp(300px, 34vw, 370px);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.05);
+  min-height: 284px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
 
   .media,
   .line {
@@ -489,16 +440,22 @@ const ServiceSkeleton = styled.div`
   }
 
   @media (max-width: 768px) {
-    min-height: 290px;
-    border-radius: 22px;
+    min-height: 264px;
 
     .media {
       aspect-ratio: 16 / 10;
     }
   }
+`;
 
-  @media (max-width: 480px) {
-    min-height: 270px;
-    border-radius: 20px;
-  }
+const EmptyState = styled.div`
+  min-height: 120px;
+  border: 1px dashed rgba(0, 0, 128, 0.16);
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #667085;
+  font-size: 0.9rem;
+  background: #ffffff;
 `;

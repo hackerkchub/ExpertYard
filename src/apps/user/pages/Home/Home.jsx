@@ -1,222 +1,539 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import {
+  FiClock,
+  FiGrid,
+  FiHelpCircle,
+  FiMic,
+  FiPhoneCall,
+  FiPlayCircle,
+  FiSearch,
+  FiShield,
+  FiStar,
+  FiUserCheck,
+  FiVideo,
+  FiZap,
+} from "react-icons/fi";
 
-import Categories from "../../components/HomeComponent/Categories";
-import Hero from "../../components/HomeComponent/Hero";
-import HowItWorks from "../../components/HomeComponent/HowItWorks";
-import Testimonials from "../../components/HomeComponent/Testimonials";
 import "./Home.css";
+import PopularServices from "./PopularServices";
+import PopularQuestions from "../../components/faq/PopularQuestions";
+import TestimonialsSection from "../../components/testimonials/TestimonialsSection";
+import {
+  HeroBackdrop,
+  HeroBadge,
+  HeroCopy,
+  HeroGradientWord,
+  HeroHighlight,
+  HeroImage,
+  HeroInner,
+  HeroPopularLabel,
+  HeroSearchArea,
+  HeroSection,
+  HeroSubtitle,
+  HeroTitle,
+  HeroTitleAccent,
+  HeroTitleLine,
+  HeroVisual,
+  ImageShell,
+  PillButton,
+  PillRow,
+  SearchButton,
+  SearchButtonText,
+  SearchForm,
+  SearchIconWrap,
+  SearchInput,
+} from "./Home.styles";
 
+import heroExpertImage from "../../../../assets/hero.webp";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWebPush } from "../../../../shared/hooks/useWebPush";
-import PopularServices from "./PopularServices";
 import { useCategory } from "../../../../shared/context/CategoryContext";
+import { usePublicExpert } from "../../context/PublicExpertContext";
 import { useSeo } from "../../../../shared/seo/useSeo";
 import { toAbsoluteUrl } from "../../../../shared/seo/siteConfig";
 import { getCategoryPath } from "../../../../shared/utils/categoryRoutes";
 
-const TRUST_PILLARS = [
+const QUICK_ACTIONS = [
+  {
+    title: "Chat",
+    subtitle: "Instant Reply",
+    icon: FiZap,
+    to: "/user/call-chat?page=1&mode=chat",
+  },
+  {
+    title: "Call",
+    subtitle: "Talk to Expert",
+    icon: FiPhoneCall,
+    to: "/user/call-chat?page=1&mode=call",
+  },
+  {
+    title: "Video Call",
+    subtitle: "Face to Face",
+    icon: FiVideo,
+    disabled: true,
+  },
+  {
+    title: "Consult Again",
+    subtitle: "Continue",
+    icon: FiClock,
+    to: "/user/chat-history",
+  },
+];
+
+const HERO_CHIPS = [
+  "Legal Advice",
+  "Doctor",
+  "Loan",
+  "Job Help",
+  "Property",
+];
+
+const TRUST_ITEMS = [
+  { title: "Verified Experts", icon: FiUserCheck },
+  { title: "Secure & Safe", icon: FiShield },
+  { title: "Affordable Pricing", icon: FiStar },
+];
+
+const HOW_IT_WORKS = [
+  { title: "Choose a Category", icon: FiGrid },
+  { title: "Connect with Expert", icon: FiPhoneCall },
+  { title: "Discuss Your Problem", icon: FiHelpCircle },
+  { title: "Get Solution", icon: FiHelpCircle },
+];
+
+const WHY_CHOOSE_ITEMS = [
   {
     title: "Verified Experts",
-    description:
-      "Profiles are built around verified professionals so users can review expertise before starting a consultation.",
+    description: "Trusted profiles with clear expertise and consultation options.",
+    icon: FiUserCheck,
   },
   {
-    title: "Secure Payments",
-    description:
-      "Clear payment flows and wallet support help users book expert advice with confidence.",
+    title: "Instant Connection",
+    description: "Move from search to chat or call in a few taps.",
+    icon: FiZap,
   },
   {
-    title: "Real User Ratings",
-    description:
-      "Ratings and review signals make it easier to compare experts and choose the right fit.",
+    title: "Secure & Safe",
+    description: "Private conversations with payment-first trust signals.",
+    icon: FiShield,
   },
   {
-    title: "Instant Connect",
-    description:
-      "Users can move from discovery to a private chat or call without unnecessary steps.",
+    title: "Affordable Pricing",
+    description: "See rates clearly before you connect with an expert.",
+    icon: FiStar,
   },
 ];
 
-const TRUST_STATS = [
-  { value: "10k+", label: "happy users" },
-  { value: "20+", label: "expert categories" },
-  { value: "Private", label: "chat and call sessions" },
-  { value: "4.9/5", label: "average user-rated experience" },
+const FINAL_STATS = [
+  { value: "50+", label: "Categories" },
+  { value: "1000+", label: "Experts" },
+  { value: "1L+", label: "Consultations" },
+  { value: "20K+", label: "Reviews" },
 ];
 
-const CTA_REASSURANCE = [
-  "Private conversations and account protection",
-  "Secure payments before expert sessions",
-  "Clear ratings, pricing, and category context",
-];
+const FALLBACK_EXPERT = {
+  id: "featured",
+  name: "Aarav Mehta",
+  position: "Legal Consultant",
+  profile_photo: "",
+  chat: 19,
+  call: 29,
+  session: { price: 199 },
+};
 
 const HomePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { categories } = useCategory();
+  const { categories, loading: categoriesLoading } = useCategory();
+  const { experts, expertsLoading } = usePublicExpert();
+  const [searchTerm, setSearchTerm] = useState("");
 
   useWebPush({
     panel: "user",
     userId: user?.id,
   });
 
-  const featuredCategories = categories.slice(0, 8);
   const homeStructuredData = useMemo(
     () => [
       {
         "@context": "https://schema.org",
         "@type": "Organization",
-        name: "G9Expert",
+        name: "G9Experts",
         url: toAbsoluteUrl("/user"),
         logo: toAbsoluteUrl("/logo-512.webp"),
         description:
-          "G9Expert is an online consultation platform that helps users connect with verified experts across high-intent categories.",
+          "G9Experts is an online consultation platform that helps users connect with verified experts across high-intent categories.",
       },
       {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        name: "G9Expert",
+        name: "G9Experts",
         url: toAbsoluteUrl("/user"),
         potentialAction: {
           "@type": "SearchAction",
-          target: `${toAbsoluteUrl("/user/experts")}?q={search_term_string}`,
+          target: `${toAbsoluteUrl("/user/call-chat")}?page=1&mode=chat&q={search_term_string}`,
           "query-input": "required name=search_term_string",
         },
       },
       {
         "@context": "https://schema.org",
         "@type": "WebPage",
-        name: "G9Expert Homepage",
+        name: "G9Experts Homepage",
         url: toAbsoluteUrl("/user"),
         description:
-          "Connect with verified experts online through fast, secure, and trust-focused consultations on G9Expert.",
-        isPartOf: {
-          "@type": "WebSite",
-          name: "G9Expert",
-          url: toAbsoluteUrl("/user"),
-        },
+          "Connect with verified experts online through chat, call, and trust-focused consultations on G9Experts.",
       },
     ],
     []
   );
 
   useSeo({
-    title: "Verified Experts for Online Consultation | G9Expert",
+    title: "Verified Experts for Online Consultation | G9Experts",
     description:
-      "Connect with verified experts online for legal, health, finance, career, astrology, property, and more. G9Expert offers secure payments, real user ratings, and instant chat or call access.",
+      "Connect with verified experts online for legal, health, finance, career, property, and more. G9Experts offers secure payments, real user ratings, and instant chat or call access.",
     canonicalPath: "/user",
     keywords:
       "verified experts online, online consultation platform, secure expert advice, expert chat and call, legal consultation online, health consultation online, finance experts online, trusted professional advice",
     og: {
-      title: "Verified Experts for Online Consultation | G9Expert",
+      title: "Verified Experts for Online Consultation | G9Experts",
       description:
-        "Connect with verified experts online for legal, health, finance, career, astrology, property, and more with secure payments and real user ratings.",
+        "Connect with verified experts online for legal, health, finance, career, property, and more with secure payments and real user ratings.",
     },
     structuredData: homeStructuredData,
   });
 
+  const topCategories = categories.slice(0, 8);
+  const visibleExperts = experts.slice(0, 6);
+  const expertOfTheDay = visibleExperts[0] || FALLBACK_EXPERT;
+  const avatarExperts = visibleExperts.slice(0, 3);
+
+  const handleSearch = (event) => {
+    event.preventDefault();
+    const query = searchTerm.trim();
+    const target = query
+      ? `/user/call-chat?page=1&mode=chat&q=${encodeURIComponent(query)}`
+      : "/user/call-chat?page=1&mode=chat";
+    navigate(target);
+  };
+
+  const renderStars = (count = 5) =>
+    Array.from({ length: count }).map((_, index) => (
+      <FiStar key={index} className="star-icon" aria-hidden="true" />
+    ));
+
+  const getInitials = (name = "") =>
+    name
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() || "")
+      .join("") || "GE";
+
+  const formatPrice = (value, fallback = "Ask") =>
+    Number(value) > 0 ? `₹${Math.floor(value)}` : fallback;
+
   return (
-    <>
-      <Hero />
+    <div className="home-page">
+      <div className="home-page__container">
+        <HeroSection>
+          <HeroBackdrop />
+          <HeroInner>
+            <HeroCopy>
+              <HeroBadge>G9Experts Trusted Help Platform</HeroBadge>
+              <HeroTitle>
+                <HeroTitleLine $delay="0.08s">Har Problem Ka</HeroTitleLine>
+                <HeroTitleLine $delay="0.18s">
+                  <HeroGradientWord $delay="0.18s">Expert</HeroGradientWord> Solution
+                </HeroTitleLine>
+              </HeroTitle>
+              <HeroTitleAccent aria-hidden="true" />
+              <HeroSubtitle>
+                Chat, Call aur Video Call par verified experts se turant guidance paaiye.
+              </HeroSubtitle>
+              <HeroHighlight>
+                20K+ Users • 1000+ Experts • Secure Consultation
+              </HeroHighlight>
+            </HeroCopy>
 
-      <div className="section-wrapper">
+            <HeroVisual>
+              <ImageShell>
+                <HeroImage src={heroExpertImage} alt="G9Experts expert panel with lawyer, doctor, astrologer, and business professionals" />
+              </ImageShell>
+            </HeroVisual>
 
-         <section className="home-panel home-panel-categories" aria-labelledby="home-categories-heading">
-          <div className="section-header">
-            <div className="section-heading-block">
-              <span className="section-kicker">Browse with confidence</span>
-              <h2 id="home-categories-heading">Explore expert categories with clearer trust signals</h2>
-              <p>
-                Stronger browsing and easier discovery across high-intent consultation categories
-                on G9Expert.
-              </p>
+            <HeroSearchArea>
+              <SearchForm onSubmit={handleSearch}>
+                <SearchIconWrap aria-hidden="true">
+                  <FiSearch />
+                </SearchIconWrap>
+                <SearchInput
+                  type="text"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Aapko kis chiz ki help chahiye?"
+                  aria-label="Search expert help"
+                />
+                <SearchButton type="submit" aria-label="Search help">
+                  <FiMic />
+                  <SearchButtonText>Search</SearchButtonText>
+                </SearchButton>
+              </SearchForm>
+
+              <PillRow aria-label="Popular searches">
+                <HeroPopularLabel>Popular searches:</HeroPopularLabel>
+                {HERO_CHIPS.map((chip) => (
+                  <PillButton
+                    key={chip}
+                    type="button"
+                    onClick={() => navigate("/user/categories")}
+                  >
+                    {chip}
+                  </PillButton>
+                ))}
+              </PillRow>
+            </HeroSearchArea>
+          </HeroInner>
+        </HeroSection>
+
+        <section className="quick-actions" aria-label="Quick actions">
+          {QUICK_ACTIONS.map((item) => {
+            const Icon = item.icon;
+
+            if (item.disabled) {
+              return (
+                <button key={item.title} type="button" className="quick-action quick-action--muted">
+                  <span className="quick-action__icon">
+                    <Icon />
+                  </span>
+                  <span>
+                    <strong>{item.title}</strong>
+                    <small>{item.subtitle}</small>
+                  </span>
+                </button>
+              );
+            }
+
+            return (
+              <Link key={item.title} to={item.to} className="quick-action">
+                <span className="quick-action__icon">
+                  <Icon />
+                </span>
+                <span>
+                  <strong>{item.title}</strong>
+                  <small>{item.subtitle}</small>
+                </span>
+              </Link>
+            );
+          })}
+        </section>
+
+        <section className="home-section-card">
+          <div className="section-topline">
+            <div>
+              <span className="section-kicker">Discover</span>
+              <h2>Top Categories</h2>
             </div>
-            <button className="view-all-btn" onClick={() => navigate("/user/categories")}>
-              View All Categories
+            <button type="button" className="section-link" onClick={() => navigate("/user/categories")}>
+              View All
             </button>
           </div>
-          <Categories />
+
+          <div className="category-grid-app">
+            {categoriesLoading && topCategories.length === 0
+              ? Array.from({ length: 8 }).map((_, index) => (
+                  <div className="category-card category-card--placeholder" key={index}>
+                    <div className="category-card__media" />
+                    <div className="category-card__line" />
+                  </div>
+                ))
+              : topCategories.map((category) => (
+                  <Link key={category.id} to={getCategoryPath(category)} className="category-card">
+                    <div className="category-card__media">
+                      {category.image_url ? (
+                        <img src={category.image_url} alt={category.name} loading="lazy" />
+                      ) : (
+                        <span>{category.name?.charAt(0)}</span>
+                      )}
+                    </div>
+                    <div className="category-card__copy">
+                      <strong>{category.name}</strong>
+                      <small>Verified experts</small>
+                    </div>
+                  </Link>
+                ))}
+          </div>
         </section>
 
-         <section className="home-panel home-panel-services" aria-labelledby="home-services-heading">
-          <div className="section-header section-header-services">
-            <div className="section-heading-block">
-              <span className="section-kicker">Ready-to-book offers</span>
-              <h2 id="home-services-heading">Popular services from verified professionals</h2>
-      
+        <PopularServices />
+
+        <section className="trust-banner">
+          <div className="trust-banner__lead">
+            <span className="trust-banner__icon">
+              <FiShield />
+            </span>
+            <div>
+              <strong>Trusted by 20,000+ Users</strong>
+              <p>Built for safe, simple, and quick expert consultations.</p>
             </div>
           </div>
-          <PopularServices />
+          <div className="trust-banner__items">
+            {TRUST_ITEMS.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.title} className="trust-banner__item">
+                  <Icon />
+                  <span>{item.title}</span>
+                </div>
+              );
+            })}
+          </div>
         </section>
 
-        <section className="home-seo-intro" aria-labelledby="home-seo-heading">
-          <div className="home-seo-copy">
-            <span className="home-seo-eyebrow">Fast, trustworthy expert discovery</span>
-            <h2 id="home-seo-heading">Find verified experts online and connect with confidence</h2>
-            <p>
-              G9Expert is a trust-first online consultation platform where users can discover
-              verified experts, compare real user ratings, review service categories, and start a
-              secure chat or call without delay. The homepage is built to clearly explain the
-              business, strengthen confidence, and surface important service keywords naturally.
+        <section className="home-section-card">
+          <div className="section-topline">
+            <div>
+              <span className="section-kicker">Simple Process</span>
+              <h2>How It Works</h2>
+            </div>
+          </div>
+
+          <div className="steps-grid-app">
+            {HOW_IT_WORKS.map((step, index) => {
+              const Icon = step.icon;
+              return (
+                <article key={step.title} className="step-card-app">
+                  <div className="step-card-app__index">{index + 1}</div>
+                  <div className="step-card-app__icon">
+                    <Icon />
+                  </div>
+                  <strong>{step.title}</strong>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="home-section-card">
+          <div className="section-topline">
+            <div>
+              <span className="section-kicker">Experts</span>
+              <h2>Recently Active Experts</h2>
+            </div>
+            <button type="button" className="section-link" onClick={() => navigate("/user/call-chat?page=1")}>
+              View All
+            </button>
+          </div>
+
+          <div className="experts-list">
+            {expertsLoading && visibleExperts.length === 0 ? (
+              Array.from({ length: 4 }).map((_, index) => (
+                <div className="expert-card-app expert-card-app--placeholder" key={index} />
+              ))
+            ) : (
+              visibleExperts.map((expert) => (
+                <button
+                  key={expert.id}
+                  type="button"
+                  className="expert-card-app"
+                  onClick={() => navigate(`/user/experts/${expert.id}`)}
+                >
+                  <div className="expert-card-app__avatar">
+                    {expert.profile_photo ? (
+                      <img src={expert.profile_photo} alt={expert.name} loading="lazy" />
+                    ) : (
+                      <span>{getInitials(expert.name)}</span>
+                    )}
+                    <i />
+                  </div>
+                  <div className="expert-card-app__info">
+                    <strong>{expert.name}</strong>
+                    <small>{expert.position || "Verified Expert"}</small>
+                    <div className="expert-card-app__meta">
+                      <span className="expert-rating">{renderStars(5)} 4.8</span>
+                      <span className="expert-online">Online</span>
+                    </div>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </section>
+
+        <section className="home-section-card home-section-card--soft">
+          <div className="section-topline section-topline--stack">
+            <div>
+              <span className="section-kicker">Why G9Experts</span>
+              <h2>Why Choose G9Experts?</h2>
+            </div>
+            <p className="section-copy">
+              Trusted design, clear pricing signals, and faster access to verified experts.
             </p>
           </div>
 
-          {featuredCategories.length > 0 && (
-            <div className="home-seo-links" aria-label="Popular expert categories">
-              {featuredCategories.map((category) => (
-                <Link key={category.id} to={getCategoryPath(category)} className="home-seo-link">
-                  {category.name}
-                </Link>
-              ))}
+          <div className="feature-grid">
+            {WHY_CHOOSE_ITEMS.map((item) => {
+              const Icon = item.icon;
+              return (
+                <article key={item.title} className="feature-card">
+                  <span className="feature-card__icon">
+                    <Icon />
+                  </span>
+                  <strong>{item.title}</strong>
+                  <p>{item.description}</p>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="rating-panel">
+          <div>
+            <span className="section-kicker section-kicker--gold">User Ratings</span>
+            <h2  style={{ color: "#ffffff" }} >Rated 4.8/5 by Users</h2>
+            <div className="rating-panel__stars">{renderStars(5)}</div>
+            <p>20K+ Happy Users</p>
+          </div>
+          <div className="rating-panel__aside">
+            <div className="avatar-stack">
+              {avatarExperts.length > 0
+                ? avatarExperts.map((expert) => (
+                    <span key={expert.id}>{getInitials(expert.name)}</span>
+                  ))
+                : ["A", "B", "C"].map((item) => <span key={item}>{item}</span>)}
             </div>
-          )}
-        </section>
-
-
-        <section className="home-trust-section" aria-labelledby="home-trust-heading">
-          <div className="section-header">
-            <div className="section-heading-block">
-              <span className="section-kicker">Why users trust G9Expert</span>
-              <h2 id="home-trust-heading">Trust signals that matter before a user connects</h2>
-              <p>
-                These sections reinforce business identity, service quality, and trust without
-                adding heavy media, extra requests, or client-side complexity.
-              </p>
-            </div>
-          </div>
-
-          <div className="trust-grid">
-            {TRUST_PILLARS.map((item) => (
-              <article key={item.title} className="trust-card">
-                <h3>{item.title}</h3>
-                <p>{item.description}</p>
-              </article>
-            ))}
+            <strong>98% Positive Feedback</strong>
+            <small>Trusted support across legal, health, finance, and career topics.</small>
           </div>
         </section>
 
-        <section className="home-stats-section" aria-label="Platform trust stats">
-          <div className="stats-grid">
-            {TRUST_STATS.map((stat) => (
-              <div key={stat.label} className="stat-card">
-                <strong>{stat.value}</strong>
-                <span>{stat.label}</span>
-              </div>
-            ))}
+        <PopularQuestions onTalkToExpert={() => navigate("/user/call-chat?page=1&mode=chat")} />
+
+      
+
+        <TestimonialsSection onViewAll={() => navigate("/user/reviews")} />
+
+        <section className="support-banner">
+          <div>
+            <span className="section-kicker section-kicker--gold">Support</span>
+            <h2  style={{ color: "#ffffff" }} >Have a Question?</h2>
+            <p>We are here to help you!</p>
           </div>
+          <button type="button" className="support-banner__button" onClick={() => navigate("/user/contact")}>
+            Contact Support
+          </button>
         </section>
 
-       
-
-        <HowItWorks />
-
-       
-        <Testimonials />
-
-       
+        <section className="stats-row-app" aria-label="Platform stats">
+          {FINAL_STATS.map((item) => (
+            <article key={item.label} className="stats-row-app__item">
+              <strong>{item.value}</strong>
+              <span>{item.label}</span>
+            </article>
+          ))}
+        </section>
       </div>
-    </>
+    </div>
   );
 };
 

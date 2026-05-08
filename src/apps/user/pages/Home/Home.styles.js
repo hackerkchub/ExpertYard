@@ -17,7 +17,7 @@ export const HeroSection = styled.section`
   position: relative;
   overflow: hidden;
   border-radius: 0 0 18px 18px;
-  min-height: 362px;
+  min-height: 320px;
   padding: 0;
   background:
     radial-gradient(circle at 75% 30%, rgba(59, 130, 246, 0.35), transparent 35%),
@@ -85,19 +85,19 @@ export const HeroBackdrop = styled.div`
 export const HeroInner = styled.div`
   position: relative;
   z-index: 1;
-  min-height: 362px;
-  padding: 36px 55px 24px 0;
+  min-height: 320px;
+  padding: 26px 55px 18px 0;
 
   @media (max-width: 1180px) {
-    min-height: 350px;
-    padding: 34px 34px 24px 0;
+    min-height: 318px;
+    padding: 24px 34px 18px 0;
   }
 
   @media (max-width: 767px) {
     display: flex;
     flex-direction: column;
     min-height: auto;
-    padding: 24px 18px 22px;
+    padding: 16px 18px 18px;
   }
 `;
 
@@ -109,8 +109,8 @@ export const HeroCopy = styled.div`
   align-items: flex-start;
   justify-content: flex-start;
   min-width: 0;
-  width: 42%;
-  max-width: 500px;
+  width: 56%;
+  max-width: 720px;
   padding-left: 70px;
   padding-top: 2px;
 
@@ -127,7 +127,7 @@ export const HeroBadge = styled.div`
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background: rgba(255, 255, 255, 0.1);
@@ -152,7 +152,7 @@ export const HeroBadge = styled.div`
   }
 
   @media (max-width: 767px) {
-    margin-bottom: 14px;
+    margin-bottom: 8px;
     font-size: 0.72rem;
   }
 `;
@@ -161,17 +161,18 @@ export const HeroTitle = styled.h1`
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-size: clamp(40px, 3vw, 46px);
-  line-height: 1.15;
+  gap: 0;
+  font-size: clamp(34px, 2.55vw, 40px);
+  line-height: 1.06;
   letter-spacing: -0.03em;
   font-weight: 800;
-  white-space: normal;
+  white-space: nowrap;
   position: relative;
 
   @media (max-width: 767px) {
-    font-size: clamp(32px, 8vw, 36px);
-    line-height: 1.14;
+    font-size: clamp(28px, 7.2vw, 32px);
+    line-height: 1.1;
+    white-space: normal;
   }
 `;
 
@@ -193,7 +194,7 @@ export const HeroGradientWord = styled.span`
 export const HeroTitleAccent = styled.span`
   width: 88px;
   height: 4px;
-  margin-top: 14px;
+  margin-top: 8px;
   border-radius: 999px;
   background: linear-gradient(90deg, #ffd54a 0%, rgba(255, 213, 74, 0.28) 100%);
   box-shadow: 0 8px 18px rgba(255, 213, 74, 0.18);
@@ -204,24 +205,24 @@ export const HeroTitleAccent = styled.span`
 
 export const HeroSubtitle = styled.p`
   max-width: 520px;
-  margin: 18px 0 0;
+  margin: 10px 0 0;
   color: rgba(255, 255, 255, 0.84);
   font-size: clamp(16px, 1.5vw, 18px);
-  line-height: 1.6;
+  line-height: 1.45;
   font-weight: 500;
   opacity: 0;
   animation: ${fadeUp} 0.7s ease forwards;
   animation-delay: 0.3s;
 
   @media (max-width: 767px) {
-    margin-top: 16px;
+    margin-top: 8px;
     max-width: 100%;
-    line-height: 1.55;
+    line-height: 1.45;
   }
 `;
 
 export const HeroHighlight = styled.div`
-  margin-top: 12px;
+  margin-top: 8px;
   color: rgba(255, 229, 148, 0.96);
   font-size: 0.88rem;
   font-weight: 700;
@@ -244,9 +245,9 @@ export const HeroSearchArea = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
   margin-left: 70px;
-  margin-top: 22px;
+  margin-top: 14px;
 
   @media (max-width: 1180px) {
     max-width: min(610px, calc(100% - 560px));
@@ -261,7 +262,7 @@ export const HeroSearchArea = styled.div`
     width: 100%;
     max-width: 100%;
     margin-left: 0;
-    margin-top: 16px;
+    margin-top: 12px;
   }
 `;
 

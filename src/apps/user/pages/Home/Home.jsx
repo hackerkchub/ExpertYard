@@ -2,8 +2,6 @@ import React, { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   FiClock,
-  FiGrid,
-  FiHelpCircle,
   FiMic,
   FiPhoneCall,
   FiPlayCircle,
@@ -16,9 +14,11 @@ import {
 } from "react-icons/fi";
 
 import "./Home.css";
+import HowItWorks from "../../components/howItWorks/HowItWorks";
 import PopularServices from "./PopularServices";
 import PopularQuestions from "../../components/faq/PopularQuestions";
 import TestimonialsSection from "../../components/testimonials/TestimonialsSection";
+import WhyChoose from "../../components/whyChoose/WhyChoose";
 import {
   HeroBackdrop,
   HeroBadge,
@@ -82,47 +82,17 @@ const QUICK_ACTIONS = [
 ];
 
 const HERO_CHIPS = [
-  "Legal Advice",
-  "Doctor",
-  "Loan",
-  "Job Help",
-  "Property",
+  "Legal Help",
+  "Health Advice",
+  "Business Services",
+  "Career Guidance",
+  "Astrology",
 ];
 
 const TRUST_ITEMS = [
   { title: "Verified Experts", icon: FiUserCheck },
   { title: "Secure & Safe", icon: FiShield },
   { title: "Affordable Pricing", icon: FiStar },
-];
-
-const HOW_IT_WORKS = [
-  { title: "Choose a Category", icon: FiGrid },
-  { title: "Connect with Expert", icon: FiPhoneCall },
-  { title: "Discuss Your Problem", icon: FiHelpCircle },
-  { title: "Get Solution", icon: FiHelpCircle },
-];
-
-const WHY_CHOOSE_ITEMS = [
-  {
-    title: "Verified Experts",
-    description: "Trusted profiles with clear expertise and consultation options.",
-    icon: FiUserCheck,
-  },
-  {
-    title: "Instant Connection",
-    description: "Move from search to chat or call in a few taps.",
-    icon: FiZap,
-  },
-  {
-    title: "Secure & Safe",
-    description: "Private conversations with payment-first trust signals.",
-    icon: FiShield,
-  },
-  {
-    title: "Affordable Pricing",
-    description: "See rates clearly before you connect with an expert.",
-    icon: FiStar,
-  },
 ];
 
 const FINAL_STATS = [
@@ -240,19 +210,19 @@ const HomePage = () => {
           <HeroBackdrop />
           <HeroInner>
             <HeroCopy>
-              <HeroBadge>G9Experts Trusted Help Platform</HeroBadge>
+              <HeroBadge>G9 Experts Online Consultation & Services</HeroBadge>
               <HeroTitle>
-                <HeroTitleLine $delay="0.08s">Har Problem Ka</HeroTitleLine>
-                <HeroTitleLine $delay="0.18s">
-                  <HeroGradientWord $delay="0.18s">Expert</HeroGradientWord> Solution
+                <HeroTitleLine $delay="0.08s">
+                  Instant Expert Help | <HeroGradientWord $delay="0.08s">Online Services</HeroGradientWord>
                 </HeroTitleLine>
               </HeroTitle>
               <HeroTitleAccent aria-hidden="true" />
               <HeroSubtitle>
-                Chat, Call aur Video Call par verified experts se turant guidance paaiye.
+                Connect with trusted professionals, book online services, and get real
+                solutions anytime through secure chat and call support.
               </HeroSubtitle>
               <HeroHighlight>
-                20K+ Users • 1000+ Experts • Secure Consultation
+                Verified Professionals • Instant Chat & Call • Trusted Online Services
               </HeroHighlight>
             </HeroCopy>
 
@@ -271,7 +241,7 @@ const HomePage = () => {
                   type="text"
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Aapko kis chiz ki help chahiye?"
+                  placeholder="Search experts or online services"
                   aria-label="Search expert help"
                 />
                 <SearchButton type="submit" aria-label="Search help">
@@ -390,29 +360,7 @@ const HomePage = () => {
           </div>
         </section>
 
-        <section className="home-section-card">
-          <div className="section-topline">
-            <div>
-              <span className="section-kicker">Simple Process</span>
-              <h2>How It Works</h2>
-            </div>
-          </div>
-
-          <div className="steps-grid-app">
-            {HOW_IT_WORKS.map((step, index) => {
-              const Icon = step.icon;
-              return (
-                <article key={step.title} className="step-card-app">
-                  <div className="step-card-app__index">{index + 1}</div>
-                  <div className="step-card-app__icon">
-                    <Icon />
-                  </div>
-                  <strong>{step.title}</strong>
-                </article>
-              );
-            })}
-          </div>
-        </section>
+        <HowItWorks />
 
         <section className="home-section-card">
           <div className="section-topline">
@@ -460,32 +408,7 @@ const HomePage = () => {
           </div>
         </section>
 
-        <section className="home-section-card home-section-card--soft">
-          <div className="section-topline section-topline--stack">
-            <div>
-              <span className="section-kicker">Why G9Experts</span>
-              <h2>Why Choose G9Experts?</h2>
-            </div>
-            <p className="section-copy">
-              Trusted design, clear pricing signals, and faster access to verified experts.
-            </p>
-          </div>
-
-          <div className="feature-grid">
-            {WHY_CHOOSE_ITEMS.map((item) => {
-              const Icon = item.icon;
-              return (
-                <article key={item.title} className="feature-card">
-                  <span className="feature-card__icon">
-                    <Icon />
-                  </span>
-                  <strong>{item.title}</strong>
-                  <p>{item.description}</p>
-                </article>
-              );
-            })}
-          </div>
-        </section>
+        <WhyChoose />
 
         <section className="rating-panel">
           <div>

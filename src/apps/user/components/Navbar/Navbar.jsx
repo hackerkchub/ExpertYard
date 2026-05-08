@@ -16,6 +16,8 @@ import {
   WalletBadge,
   AuthButton,
   RightActions,
+  LanguageSwitcher,
+  LanguageOption,
 } from "./Navbar.styles";
 import {
   FiMenu,
@@ -32,6 +34,7 @@ import {
 } from "react-icons/fi";
 import { FaWallet } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import logo from "../../../../assets/logo.webp";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
@@ -42,6 +45,7 @@ const HOME_PATHS = ["/", "/user", "/user/", "/user/home", "/user/home/"];
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t, i18n } = useTranslation();
   const { isLoggedIn, user, logout } = useAuth();
   const { balance } = useWallet();
 
@@ -116,10 +120,10 @@ const Navbar = () => {
   };
 
   const primaryMenuItems = [
-    { label: "Home", path: "/user", icon: FiHome },
-    { label: "Categories", path: "/user/categories", icon: FiGrid, hasArrow: true },
-    { label: "Offers", path: "/user/all-services", icon: FiGift },
-    { label: "History", path: "/user/chat-history", icon: FiClock },
+    { label: t("common.home"), path: "/user", icon: FiHome },
+    { label: t("common.categories"), path: "/user/categories", icon: FiGrid, hasArrow: true },
+    { label: t("common.offers"), path: "/user/all-services", icon: FiGift },
+    { label: t("common.history"), path: "/user/chat-history", icon: FiClock },
   ];
 
   return (
@@ -170,13 +174,13 @@ const Navbar = () => {
             <IconBox>
               {!isHomePage && (
                 <>
-                  <button onClick={() => navigate("/user")} title="Home">
+                  <button onClick={() => navigate("/user")} title={t("common.home")}>
                     <FiHome />
                   </button>
-                  <button onClick={() => navigate("/user/all-services")} title="Offers">
+                  <button onClick={() => navigate("/user/all-services")} title={t("common.offers")}>
                     <FiGift />
                   </button>
-                  <button onClick={() => navigate("/user/chat-history")} title="History">
+                  <button onClick={() => navigate("/user/chat-history")} title={t("common.history")}>
                     <FiMessageSquare />
                   </button>
                 </>
@@ -185,25 +189,42 @@ const Navbar = () => {
               <WalletIconWrap
                 className="wallet-btn essential"
                 onClick={() => navigate("/user/wallet")}
-                title="Wallet"
+                title={t("common.wallet")}
               >
                 <FaWallet />
                 {isLoggedIn && balance > 0 && <WalletBadge>₹{Math.floor(balance)}</WalletBadge>}
               </WalletIconWrap>
+
+              <LanguageSwitcher aria-label={t("common.language")}>
+                <LanguageOption
+                  type="button"
+                  $active={i18n.language === "en"}
+                  onClick={() => i18n.changeLanguage("en")}
+                >
+                  EN
+                </LanguageOption>
+                <LanguageOption
+                  type="button"
+                  $active={i18n.language === "hi"}
+                  onClick={() => i18n.changeLanguage("hi")}
+                >
+                  हिंदी
+                </LanguageOption>
+              </LanguageSwitcher>
 
               {isLoggedIn && (
                 <button
                   ref={userBtnRef}
                   className="essential"
                   onClick={togglePopup}
-                  title="Profile"
+                  title={t("nav.profile")}
                 >
                   <FiUser />
                 </button>
               )}
             </IconBox>
 
-            {!isLoggedIn && <AuthButton onClick={() => navigate("/user/auth")}>Sign In</AuthButton>}
+            {!isLoggedIn && <AuthButton onClick={() => navigate("/user/auth")}>{t("common.signIn")}</AuthButton>}
 
             <MobileIcon onClick={() => setOpen((prev) => !prev)}>
               {open ? <FiX size={20} /> : <FiMenu size={20} />}
@@ -222,7 +243,7 @@ const Navbar = () => {
 
             <MobileItem onClick={() => handleNav("/user/wallet")}>
               <FaWallet />
-              Wallet
+              {t("common.wallet")}
             </MobileItem>
 
             {isLoggedIn ? (
@@ -234,13 +255,13 @@ const Navbar = () => {
                   }}
                 >
                   <FiLogOut color="#dc2626" />
-                  Logout
+                  {t("common.logout")}
                 </MobileItem>
               </>
             ) : (
               <MobileItem onClick={() => handleNav("/user/auth")}>
                 <FiUser />
-                Sign In
+                {t("common.signIn")}
               </MobileItem>
             )}
           </MobileMenu>

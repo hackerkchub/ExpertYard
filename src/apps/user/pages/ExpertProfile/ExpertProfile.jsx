@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   FiArrowLeft,
   FiPhoneCall,
@@ -194,6 +195,7 @@ const formatRelativeTime = (dateString) => {
 const ExpertProfilePage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { isLoggedIn, user } = useAuth();
   const userId = user?.id;
   const { balance, fetchWallet} = useWallet();
@@ -1131,9 +1133,9 @@ useEffect(() => {
               )}
               <div>
                 {!following ? (
-                  <FollowButton onClick={handleFollowAction}><FiUserPlus /> Follow</FollowButton>
+                  <FollowButton onClick={handleFollowAction}><FiUserPlus /> {t("expertProfile.follow")}</FollowButton>
                 ) : (
-                  <FollowButton $active onClick={handleFollowAction}><FiUserCheck /> Following</FollowButton>
+                  <FollowButton $active onClick={handleFollowAction}><FiUserCheck /> {t("expertProfile.following")}</FollowButton>
                 )}
               </div>
             </div>
@@ -1220,7 +1222,7 @@ useEffect(() => {
                   ) : selectedPricingMode === "per_minute" && displayPrices.hasPerMinute ? (
                     <>
                       <PriceTag>₹{displayPrices.callPrice}/min</PriceTag>
-                      <ActionButton $primary onClick={() => handleStart("call")}><FiPhoneCall /> Start Call</ActionButton>
+                      <ActionButton $primary onClick={() => handleStart("call")}><FiPhoneCall /> {t("expertProfile.startCall")}</ActionButton>
                     </>
                   ) : selectedPricingMode === "session" && displayPrices.hasSession ? (
                     <>
@@ -1243,7 +1245,7 @@ useEffect(() => {
                   ) : selectedPricingMode === "per_minute" && displayPrices.hasPerMinute ? (
                     <>
                       <PriceTag>₹{displayPrices.chatPrice}/min</PriceTag>
-                      <ActionButton onClick={() => handleStart("chat")}><FiMessageSquare /> Start Chat</ActionButton>
+                      <ActionButton onClick={() => handleStart("chat")}><FiMessageSquare /> {t("expertProfile.startChat")}</ActionButton>
                     </>
                   ) : selectedPricingMode === "session" && displayPrices.hasSession ? (
                     <>
@@ -1278,7 +1280,7 @@ useEffect(() => {
         <div className="expert-profile-content-grid">
           <aside className="expert-profile-sidebar">
             <Section className="consult-card">
-              <SectionTitle>Consult With Me</SectionTitle>
+              <SectionTitle>{t("expertProfile.consultWithMe")}</SectionTitle>
               <div className="consult-options">
                 <button type="button" className="consult-option consult-call" onClick={() => handleStart("call")}>
                   <FiPhoneCall />
@@ -1303,7 +1305,7 @@ useEffect(() => {
             </Section>
 
             <Section className="about-me-card">
-              <SectionTitle>About Me</SectionTitle>
+              <SectionTitle>{t("expertProfile.aboutMe")}</SectionTitle>
               <SectionBody>{profile.description || "Experienced professional with proven track record in the field."}</SectionBody>
               <TagList>
                 {profile.category_name && <Tag><FiTarget />{profile.category_name}</Tag>}
@@ -1318,9 +1320,9 @@ useEffect(() => {
         {/* Tabs Section */}
         <Section className="profile-tabs-card">
           <TabContainer>
-            <TabButton $active={activeTab === "about"} onClick={() => setActiveTab("about")}><FiFileText /> About</TabButton>
-            <TabButton $active={activeTab === "experience"} onClick={() => setActiveTab("experience")}><FiBriefcase /> Experience</TabButton>
-            <TabButton $active={activeTab === "posts"} onClick={() => setActiveTab("posts")}><FiImage /> Posts</TabButton>
+            <TabButton $active={activeTab === "about"} onClick={() => setActiveTab("about")}><FiFileText /> {t("expertProfile.about")}</TabButton>
+            <TabButton $active={activeTab === "experience"} onClick={() => setActiveTab("experience")}><FiBriefcase /> {t("expertProfile.experience")}</TabButton>
+            <TabButton $active={activeTab === "posts"} onClick={() => setActiveTab("posts")}><FiImage /> {t("expertProfile.posts")}</TabButton>
           </TabContainer>
 
           {activeTab === "about" && (
@@ -1457,7 +1459,7 @@ useEffect(() => {
 
         {/* Review Section */}
         <ReviewSection>
-          <ReviewHeader><div><SectionTitle>Rating & Reviews</SectionTitle></div></ReviewHeader>
+          <ReviewHeader><div><SectionTitle>{t("expertProfile.ratingReviews")}</SectionTitle></div></ReviewHeader>
 
           <ReviewForm>
             <ReviewFormTitle><FiStar color="#f59e0b" />{hasUserReview ? 'Update Your Review' : 'Add Your Review'}</ReviewFormTitle>

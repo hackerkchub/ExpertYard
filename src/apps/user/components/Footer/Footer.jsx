@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import {
   Wrapper,
   Container,
@@ -24,31 +25,31 @@ import logoImg from "../../../../assets/logo.webp";
 import { FaFacebookF, FaTwitter, FaLinkedinIn, FaYoutube, FaInstagram } from "react-icons/fa";
 
 const COMPANY_LINKS = [
-  { label: "About Us", path: "/user/about" },
-  { label: "Careers", path: "/user/careers" },
-  { label: "Privacy Policy", path: "/user/privacy" },
-  { label: "Terms & Conditions", path: "/user/terms" },
+  { labelKey: "footer.aboutUs", path: "/user/about" },
+  { labelKey: "footer.careers", path: "/user/careers" },
+  { labelKey: "footer.privacyPolicy", path: "/user/privacy" },
+  { labelKey: "footer.terms", path: "/user/terms" },
 ];
 
 const CUSTOMER_LINKS = [
-  { label: "Find Experts", path: "/user/call-chat?page=1&mode=chat" },
-  { label: "Reviews", path: "/user/reviews" },
-  { label: "How It Works", path: "/user/how-it-works" },
-  { label: "FAQ", path: "/user/faq" },
+  { labelKey: "footer.findExperts", path: "/user/call-chat?page=1&mode=chat" },
+  { labelKey: "footer.reviews", path: "/user/reviews" },
+  { labelKey: "footer.howItWorks", path: "/user/how-it-works" },
+  { labelKey: "footer.faq", path: "/user/faq" },
 ];
 
 const PROFESSIONAL_LINKS = [
-  { label: "Become an Expert", path: "/expert/register" },
-  { label: "Expert Guidelines", path: "/user/guidelines" },
-  { label: "Earnings Model", path: "/user/guidelines" },
-  { label: "Support", path: "/user/contact" },
+  { labelKey: "footer.becomeExpert", path: "/expert/register" },
+  { labelKey: "footer.expertGuidelines", path: "/user/guidelines" },
+  { labelKey: "footer.earningsModel", path: "/user/guidelines" },
+  { labelKey: "common.support", path: "/user/contact" },
 ];
 
 const SERVICE_LINKS = [
-  { label: "Legal Advice", path: "/user/categories" },
-  { label: "Career Guidance", path: "/user/categories" },
-  { label: "Business Consultation", path: "/user/categories" },
-  { label: "Health & Wellness", path: "/user/categories" },
+  { labelKey: "footer.legalAdvice", path: "/user/categories" },
+  { labelKey: "footer.careerGuidance", path: "/user/categories" },
+  { labelKey: "footer.businessConsultation", path: "/user/categories" },
+  { labelKey: "footer.healthWellness", path: "/user/categories" },
 ];
 
 const SOCIAL_LINKS = [
@@ -59,13 +60,13 @@ const SOCIAL_LINKS = [
   { icon: <FaYoutube />, url: "https://www.youtube.com/", label: "YouTube" },
 ];
 
-const FooterColumn = ({ title, links }) => (
+const FooterColumn = ({ title, links, t }) => (
   <Section aria-label={title}>
     <SectionTitle>{title}</SectionTitle>
     <LinkList>
       {links.map((link) => (
-        <li key={`${title}-${link.label}`}>
-          <FooterLink to={link.path}>{link.label}</FooterLink>
+        <li key={`${title}-${link.labelKey}`}>
+          <FooterLink to={link.path}>{t(link.labelKey)}</FooterLink>
         </li>
       ))}
     </LinkList>
@@ -73,6 +74,8 @@ const FooterColumn = ({ title, links }) => (
 );
 
 const Footer = () => {
+  const { t } = useTranslation();
+
   return (
     <Wrapper>
       <Container>
@@ -85,7 +88,7 @@ const Footer = () => {
             </Logo>
 
             <Tagline>
-              Connect with verified experts for instant guidance, consultation, and online services.
+              {t("footer.description")}
             </Tagline>
 
             <SocialLinks>
@@ -103,21 +106,21 @@ const Footer = () => {
             </SocialLinks>
           </BrandSection>
 
-          <FooterColumn title="Company" links={COMPANY_LINKS} />
-          <FooterColumn title="For Customers" links={CUSTOMER_LINKS} />
-          <FooterColumn title="For Experts" links={PROFESSIONAL_LINKS} />
-          <FooterColumn title="Services" links={SERVICE_LINKS} />
+          <FooterColumn title={t("footer.company")} links={COMPANY_LINKS} t={t} />
+          <FooterColumn title={t("footer.forCustomers")} links={CUSTOMER_LINKS} t={t} />
+          <FooterColumn title={t("footer.forExperts")} links={PROFESSIONAL_LINKS} t={t} />
+          <FooterColumn title={t("footer.services")} links={SERVICE_LINKS} t={t} />
         </FooterTop>
       </Container>
 
       <BottomBar>
         <BottomMeta>
-          <Copyright>© {new Date().getFullYear()} G9 Experts. All rights reserved.</Copyright>
+          <Copyright>© {new Date().getFullYear()} {t("footer.copyright")}</Copyright>
           <PoweredBy>
-            Powered by <span>Softmaxs Solutions</span>
+            {t("footer.poweredBy")} <span>Softmaxs Solutions</span>
           </PoweredBy>
         </BottomMeta>
-        <TrustText>Secure consultations with trusted professionals</TrustText>
+        <TrustText>{t("footer.trustedText")}</TrustText>
       </BottomBar>
     </Wrapper>
   );

@@ -292,7 +292,7 @@ export const IconBox = styled.div`
   @media (max-width: 768px) {
     gap: 5px;
 
-    button:not(.essential) {
+    > button:not(.essential) {
       display: none;
     }
 
@@ -341,6 +341,53 @@ export const WalletBadge = styled.div`
     max-width: 54px;
     padding: 3px 6px;
     font-size: 9px;
+  }
+`;
+
+export const LanguageSwitcher = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 38px;
+  padding: 3px;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+
+  @media (max-width: 480px) {
+    min-height: 34px;
+  }
+`;
+
+export const LanguageOption = styled.button`
+  width: auto !important;
+  height: 30px !important;
+  min-width: 34px;
+  padding: 0 9px !important;
+  border-radius: 999px !important;
+  border: 0 !important;
+  background: ${({ $active }) =>
+    $active ? `linear-gradient(135deg, ${NAVY}, #1212a6) !important` : "transparent !important"};
+  color: ${({ $active }) => ($active ? "#ffffff" : "#475569")} !important;
+  box-shadow: ${({ $active }) =>
+    $active ? "0 8px 16px rgba(0, 0, 128, 0.16) !important" : "none !important"};
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.01em;
+
+  &:hover {
+    transform: none !important;
+    color: ${({ $active }) => ($active ? "#ffffff" : NAVY)} !important;
+    background: ${({ $active }) =>
+      $active ? `linear-gradient(135deg, ${NAVY}, #1212a6) !important` : "rgba(0, 0, 128, 0.07) !important"};
+  }
+
+  @media (max-width: 480px) {
+    min-width: 30px;
+    height: 28px !important;
+    padding: 0 7px !important;
+    font-size: 10px !important;
   }
 `;
 

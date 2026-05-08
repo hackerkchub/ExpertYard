@@ -1,6 +1,7 @@
 // src/apps/user/pages/UserExpertsPage.jsx - PREMIUM UPGRADED WITH WORKING FILTERS
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { 
   FiX, FiChevronLeft, FiChevronRight, FiSearch, FiFilter, 
   FiSliders, FiXCircle, FiTrendingUp, FiAward, FiClock,
@@ -56,8 +57,8 @@ import { useCategory } from "../../../../shared/context/CategoryContext";
 import { getExpertsApi } from "../../../../shared/api/expertapi/expert.api";
 
 const TABS = [
-  { id: "call", label: "Call with Experts", icon: "📞" },
-  { id: "chat", label: "Chat with Experts", icon: "💬" },
+  { id: "call", labelKey: "callChat.callTab", icon: "📞" },
+  { id: "chat", labelKey: "callChat.chatTab", icon: "💬" },
 ];
 
 // Rating options
@@ -92,6 +93,7 @@ const sortOptions = [
 export default function UserExpertsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const modeFromUrl = searchParams.get("mode");
   const searchQueryFromUrl = searchParams.get("q");
   const pageFromUrl = parseInt(searchParams.get("page")) || 1;
@@ -487,20 +489,20 @@ export default function UserExpertsPage() {
     <>
       <FilterHeader>
         <FilterTitle>
-          <FiSliders size={18} /> Filters
+          <FiSliders size={18} /> {t("callChat.filters", "Filters")}
         </FilterTitle>
         {activeFiltersCount > 0 && (
-          <FilterCount>{activeFiltersCount} active</FilterCount>
+          <FilterCount>{activeFiltersCount} {t("callChat.active", "active")}</FilterCount>
         )}
       </FilterHeader>
 
       {/* Search Bar */}
       <FilterGroup>
-        <FilterLabel>Search by Name</FilterLabel>
+        <FilterLabel>{t("callChat.searchByName")}</FilterLabel>
         <div style={{ position: 'relative' }}>
           <SearchInput
             type="text"
-            placeholder="Search experts by name..."
+            placeholder={t("callChat.searchPlaceholder")}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
@@ -517,12 +519,12 @@ export default function UserExpertsPage() {
 
       {/* Category Filter */}
       <FilterGroup>
-        <FilterLabel>Category</FilterLabel>
+        <FilterLabel>{t("common.categories")}</FilterLabel>
         <FilterSelect
           value={selectedCategoryId}
           onChange={(e) => setSelectedCategoryId(e.target.value)}
         >
-          <option value="">All Categories</option>
+          <option value="">{t("callChat.allCategories")}</option>
           {categories.map(cat => (
             <option key={cat.id} value={cat.id}>{cat.name}</option>
           ))}
@@ -532,12 +534,12 @@ export default function UserExpertsPage() {
       {/* Subcategory Filter - Only show when category selected */}
       {selectedCategoryId && (
         <FilterGroup>
-          <FilterLabel>Subcategory</FilterLabel>
+          <FilterLabel>{t("callChat.subcategory", "Subcategory")}</FilterLabel>
           <FilterSelect
             value={selectedSubcategoryId}
             onChange={(e) => setSelectedSubcategoryId(e.target.value)}
           >
-            <option value="">All Subcategories</option>
+            <option value="">{t("callChat.allSubcategories")}</option>
             {subCategories
               .filter(sub => sub.category_id == selectedCategoryId)
               .map(sub => (
@@ -622,15 +624,15 @@ export default function UserExpertsPage() {
       <PageWrap>
         <HeaderSection>
           <div>
-            <Title>Find the right expert – instantly</Title>
+            <Title>{t("callChat.title")}</Title>
             <SubTitle>
-              Choose a verified expert and start secure chat or call consultation in seconds.
+              {t("callChat.subtitle")}
             </SubTitle>
             <div className="trust-badges">
-              <span><FiUserCheck /> Verified Experts</span>
-              <span><FiDollarSign /> Secure Wallet</span>
-              <span><FiZap /> Instant Connect</span>
-              <span><FiClock /> 24/7 Support</span>
+              <span><FiUserCheck /> {t("callChat.verifiedExperts")}</span>
+              <span><FiDollarSign /> {t("callChat.secureWallet")}</span>
+              <span><FiZap /> {t("callChat.instantConnect")}</span>
+              <span><FiClock /> {t("callChat.support247")}</span>
             </div>
           </div>
           <div className="mode-indicator">
@@ -640,17 +642,17 @@ export default function UserExpertsPage() {
         </HeaderSection>
 
         <TabsRow>
-          {TABS.map((t) => (
+          {TABS.map((tabItem) => (
             <TabButton
-              key={t.id}
-              $active={tab === t.id}
+              key={tabItem.id}
+              $active={tab === tabItem.id}
               onClick={() => {
-                setTab(t.id);
+                setTab(tabItem.id);
                 setCurrentPage(1);
-                setSearchParams({ mode: t.id, ...(debouncedSearch && { q: debouncedSearch }) });
+                setSearchParams({ mode: tabItem.id, ...(debouncedSearch && { q: debouncedSearch }) });
               }}
             >
-              <span>{t.icon}</span> {t.label}
+              <span>{tabItem.icon}</span> {t(tabItem.labelKey)}
             </TabButton>
           ))}
         </TabsRow>
@@ -660,7 +662,7 @@ export default function UserExpertsPage() {
           <StatsBar>
             <StatItem>
               <FiUsers size={16} />
-              <span>{totalExperts} Experts Available</span>
+              <span>{totalExperts} {t("callChat.expertsAvailable")}</span>
             </StatItem>
             <StatItem>
               <FiStar size={16} />
@@ -793,7 +795,7 @@ export default function UserExpertsPage() {
             ) : experts.length === 0 ? (
               <EmptyState>
                 <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
-                No experts found. Try another category or search term.
+                {t("callChat.noExpertsFound")}
                 {(selectedCategoryId || minRating || maxPrice) && (
                   <button onClick={resetFilters} style={{
                     marginTop: 16,

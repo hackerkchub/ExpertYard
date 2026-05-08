@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { FiFilter, FiSearch, FiCheck, FiX, FiChevronRight, FiZap } from "react-icons/fi";
 import { 
   IoStar, 
@@ -147,6 +148,7 @@ const horoscopeSigns = [
 const SubcategoryPage = () => {
   const { categoryId, slug } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const latestRequestRef = useRef(0);
   const socketEmitTimeoutRef = useRef(null);
 
@@ -927,7 +929,7 @@ const SubcategoryPage = () => {
         <Breadcrumb>
           <BreadcrumbItem onClick={() => navigate('/')}>Home</BreadcrumbItem>
           <BreadcrumbSeparator><FiChevronRight /></BreadcrumbSeparator>
-          <BreadcrumbItem onClick={() => navigate('/user/categories')}>Categories</BreadcrumbItem>
+          <BreadcrumbItem onClick={() => navigate('/user/categories')}>{t("common.categories")}</BreadcrumbItem>
           <BreadcrumbSeparator><FiChevronRight /></BreadcrumbSeparator>
           <BreadcrumbItem $active>{categoryName}</BreadcrumbItem>
         </Breadcrumb>
@@ -942,13 +944,13 @@ const SubcategoryPage = () => {
             <SearchContainer>
               <SearchInput 
                 type="text" 
-                placeholder="Search experts by name, specialty, or keyword..." 
+                placeholder={t("expertListing.searchPlaceholder")} 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
               <SearchButton>
                 <FiSearch size={18} />
-                Search
+                {t("common.search")}
               </SearchButton>
             </SearchContainer>
           </HeaderContent>
@@ -960,7 +962,7 @@ const SubcategoryPage = () => {
             Filter & Sort
           </FilterToggleButton>
           <MobileResultsInfo>
-            {loading ? "Loading..." : `${filteredAndSortedExperts.length} experts available`}
+            {loading ? t("common.loading") : `${filteredAndSortedExperts.length} ${t("expertListing.expertsAvailable")}`}
           </MobileResultsInfo>
         </MobileFilterToggle>
 
@@ -1030,7 +1032,7 @@ const SubcategoryPage = () => {
                 <IoShieldCheckmark size={20} />
               </BadgeIcon>
               <BadgeText>
-                <strong>Premium Verified</strong>
+                <strong>{t("expertListing.premiumVerified")}</strong>
                 <span>All experts are verified and background checked</span>
               </BadgeText>
             </PremiumBadge>
@@ -1039,7 +1041,7 @@ const SubcategoryPage = () => {
           <MainContent>
             <section className="category-seo-intro" aria-labelledby="category-seo-heading">
               <div className="category-seo-intro__copy">
-                <span className="category-seo-intro__eyebrow">Verified category experts</span>
+                <span className="category-seo-intro__eyebrow">{t("expertListing.verifiedExperts")}</span>
                 <h2 id="category-seo-heading">{matchedCategory?.name || categoryName} consultations online</h2>
                 <p>{seoDescription}</p>
               </div>
@@ -1220,7 +1222,7 @@ const SubcategoryPage = () => {
               </>
             ) : !loading ? (
               <NoResults>
-                <NoResultsTitle>No Experts Found</NoResultsTitle>
+        <NoResultsTitle>{t("common.noExpertsFound")}</NoResultsTitle>
                 <NoResultsText>
                   We couldn't find any experts in {selectedSubcategoryName?.toLowerCase() || categoryName?.toLowerCase()}. 
                   Try selecting a different subcategory or adjusting your search.

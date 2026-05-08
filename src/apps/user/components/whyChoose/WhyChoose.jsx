@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import {
   FiClock,
   FiCreditCard,
@@ -11,61 +12,65 @@ import "./WhyChoose.css";
 
 const features = [
   {
-    title: "Verified Professionals",
-    description: "Connect with trusted and verified experts across multiple categories.",
+    titleKey: "whyChoose.verifiedTitle",
+    descriptionKey: "whyChoose.verifiedDesc",
     icon: FiUserCheck,
   },
   {
-    title: "Instant Chat & Call",
-    description: "Get real-time guidance through secure chat and voice consultation.",
+    titleKey: "whyChoose.chatTitle",
+    descriptionKey: "whyChoose.chatDesc",
     icon: FiMessageCircle,
   },
   {
-    title: "Secure Wallet System",
-    description: "Simple and transparent wallet-based payments for every consultation.",
+    titleKey: "whyChoose.walletTitle",
+    descriptionKey: "whyChoose.walletDesc",
     icon: FiCreditCard,
   },
   {
-    title: "Multiple Services",
-    description: "Access online services, consultation, and expert solutions from one platform.",
+    titleKey: "whyChoose.servicesTitle",
+    descriptionKey: "whyChoose.servicesDesc",
     icon: FiLayers,
   },
   {
-    title: "Fast Response",
-    description: "Receive quick support and instant expert availability.",
+    titleKey: "whyChoose.responseTitle",
+    descriptionKey: "whyChoose.responseDesc",
     icon: FiClock,
   },
   {
-    title: "Trusted Experience",
-    description: "Designed for users looking for reliable professional guidance online.",
+    titleKey: "whyChoose.trustedTitle",
+    descriptionKey: "whyChoose.trustedDesc",
     icon: FiShield,
   },
 ];
 
-const WhyChoose = () => (
-  <section className="home-section-card why-choose-section">
-    <div className="why-choose-section__header">
-      <span className="section-kicker">Why G9Experts</span>
-      <h2>Why Choose G9Experts?</h2>
-      <p>Professional guidance, online services, and trusted expert support — all in one platform.</p>
-    </div>
+const WhyChoose = () => {
+  const { t } = useTranslation();
 
-    <div className="why-choose-grid">
-      {features.map((item) => {
-        const Icon = item.icon;
+  return (
+    <section className="home-section-card why-choose-section">
+      <div className="why-choose-section__header">
+        <span className="section-kicker">{t("whyChoose.kicker")}</span>
+        <h2>{t("whyChoose.title")}</h2>
+        <p>{t("whyChoose.subtitle")}</p>
+      </div>
 
-        return (
-          <article className="why-choose-card" key={item.title}>
-            <span className="why-choose-card__icon">
-              <Icon aria-hidden="true" />
-            </span>
-            <h3>{item.title}</h3>
-            <p>{item.description}</p>
-          </article>
-        );
-      })}
-    </div>
-  </section>
-);
+      <div className="why-choose-grid">
+        {features.map((item) => {
+          const Icon = item.icon;
+
+          return (
+            <article className="why-choose-card" key={item.titleKey}>
+              <span className="why-choose-card__icon">
+                <Icon aria-hidden="true" />
+              </span>
+              <h3>{t(item.titleKey)}</h3>
+              <p>{t(item.descriptionKey)}</p>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+};
 
 export default WhyChoose;

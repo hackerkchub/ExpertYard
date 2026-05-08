@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   FiChevronDown,
   FiCreditCard,
@@ -15,66 +16,67 @@ import "./PopularQuestions.css";
 
 const popularQuestions = [
   {
-    question: "Can I talk to a verified expert instantly?",
-    answer: "Yes. You can choose chat or call and connect with available verified experts in just a few taps.",
+    questionKey: "faq.q1",
+    answerKey: "faq.a1",
     icon: FiZap,
   },
   {
-    question: "How does per-minute chat or call consultation work?",
-    answer: "Your wallet is charged based on the expert's per-minute rate while the consultation is active.",
+    questionKey: "faq.q2",
+    answerKey: "faq.a2",
     icon: FiMessageCircle,
   },
   {
-    question: "Can I choose an expert by category?",
-    answer: "Yes. Browse categories like legal, health, career, astrology, finance, business, and more.",
+    questionKey: "faq.q3",
+    answerKey: "faq.a3",
     icon: FiSearch,
   },
   {
-    question: "Is my chat with the expert private and secure?",
-    answer: "Consultations are designed for private one-to-one guidance between you and the selected expert.",
+    questionKey: "faq.q4",
+    answerKey: "faq.a4",
     icon: FiShield,
   },
   {
-    question: "How do I recharge my wallet before consultation?",
-    answer: "Open your wallet, add balance, and start a chat or call once your balance is ready.",
+    questionKey: "faq.q5",
+    answerKey: "faq.a5",
     icon: FiCreditCard,
   },
   {
-    question: "Can I get career, legal, health, astrology, or business advice?",
-    answer: "Yes. G9 Experts supports multiple professional categories for instant guidance.",
+    questionKey: "faq.q6",
+    answerKey: "faq.a6",
     icon: FiHelpCircle,
   },
   {
-    question: "How are experts verified on G9 Experts?",
-    answer: "Expert profiles include trust signals, category details, and review information to help users decide.",
+    questionKey: "faq.q7",
+    answerKey: "faq.a7",
     icon: FiUserCheck,
   },
   {
-    question: "Can I see expert ratings and reviews before connecting?",
-    answer: "Yes. Ratings, reviews, and profile details help you compare experts before starting.",
+    questionKey: "faq.q8",
+    answerKey: "faq.a8",
     icon: FiStar,
   },
   {
-    question: "What happens if my wallet balance is low?",
-    answer: "You can recharge your wallet before or during the consultation flow to continue smoothly.",
+    questionKey: "faq.q9",
+    answerKey: "faq.a9",
     icon: FiCreditCard,
   },
   {
-    question: "Can I follow an expert for future consultation?",
-    answer: "Yes. Following an expert makes it easier to find them again for future guidance.",
+    questionKey: "faq.q10",
+    answerKey: "faq.a10",
     icon: FiUsers,
   },
 ];
 
 const PopularQuestions = ({ onTalkToExpert }) => {
+  const { t } = useTranslation();
   const [openQuestion, setOpenQuestion] = useState(0);
 
   return (
     <section className="home-section-card popular-questions-section">
       <div className="popular-questions-section__header">
-        <span className="section-kicker">Popular Questions</span>
-        <h2>Popular Questions</h2>
-        <p>Everything you need to know before connecting with verified experts.</p>
+        <span className="section-kicker">{t("faq.kicker")}</span>
+        <h2>{t("faq.title")}</h2>
+        <p>{t("faq.subtitle")}</p>
       </div>
 
       <div className="popular-questions-grid">
@@ -85,7 +87,7 @@ const PopularQuestions = ({ onTalkToExpert }) => {
           return (
             <article
               className={`popular-question-card${isOpen ? " popular-question-card--open" : ""}`}
-              key={item.question}
+              key={item.questionKey}
             >
               <button
                 type="button"
@@ -96,12 +98,12 @@ const PopularQuestions = ({ onTalkToExpert }) => {
                 <span className="popular-question-card__icon">
                   <Icon aria-hidden="true" />
                 </span>
-                <span className="popular-question-card__question">{item.question}</span>
+                <span className="popular-question-card__question">{t(item.questionKey)}</span>
                 <FiChevronDown className="popular-question-card__chevron" aria-hidden="true" />
               </button>
 
               <div className="popular-question-card__answer" aria-hidden={!isOpen}>
-                <p>{item.answer}</p>
+                <p>{t(item.answerKey)}</p>
               </div>
             </article>
           );
@@ -109,10 +111,10 @@ const PopularQuestions = ({ onTalkToExpert }) => {
       </div>
 
       <div className="popular-questions-cta">
-        <p>Still have questions? Start chatting with an expert now.</p>
+        <p>{t("faq.cta")}</p>
         <button type="button" onClick={onTalkToExpert}>
           <FiMessageCircle aria-hidden="true" />
-          Talk to Expert
+          {t("common.talkToExpert")}
         </button>
       </div>
     </section>

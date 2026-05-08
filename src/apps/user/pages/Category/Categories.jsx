@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useCategory } from "../../../../shared/context/CategoryContext";
 import { useSeo } from "../../../../shared/seo/useSeo";
 import { toAbsoluteUrl } from "../../../../shared/seo/siteConfig";
@@ -63,6 +64,7 @@ const DEFAULT_CATEGORY_IMAGE = "https://images.unsplash.com/photo-1551288049-beb
 
 const Categories = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { categories, loading } = useCategory();
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'list'
@@ -131,26 +133,26 @@ const Categories = () => {
     <PageContainer>
       {/* 1. Breadcrumb - Desktop only or subtle on mobile */}
       <Breadcrumb>
-        <BreadcrumbItem onClick={() => navigate('/')}>Home</BreadcrumbItem>
+        <BreadcrumbItem onClick={() => navigate('/')}>{t("common.home")}</BreadcrumbItem>
         <BreadcrumbSeparator><FiChevronRight /></BreadcrumbSeparator>
-        <BreadcrumbItem active>Categories</BreadcrumbItem>
+        <BreadcrumbItem active>{t("common.categories")}</BreadcrumbItem>
       </Breadcrumb>
 
       {/* 2. Hero Section - Professional Dark Theme */}
       <HeroSection>
         <HeroContent>
-          <HeroTitle>Expert Solutions for Every Need</HeroTitle>
-          <HeroSubtitle>Browse top-rated categories and connect with verified professionals.</HeroSubtitle>
+          <HeroTitle>{t("categoriesPage.heroTitle")}</HeroTitle>
+          <HeroSubtitle>{t("categoriesPage.heroSubtitle")}</HeroSubtitle>
           
           <SearchContainer>
             <SearchInput
               type="text"
-              placeholder="Search for skills or services..."
+              placeholder={t("categoriesPage.searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
             <SearchButton>
-              <FiSearch /> <span>Search</span>
+              <FiSearch /> <span>{t("common.search")}</span>
             </SearchButton>
           </SearchContainer>
         </HeroContent>
@@ -162,28 +164,28 @@ const Categories = () => {
           <StatIcon><FiGrid /></StatIcon>
           <div>
             <StatValue>13+</StatValue>
-            <StatLabel>Categories</StatLabel>
+            <StatLabel>{t("common.categories")}</StatLabel>
           </div>
         </StatItem>
         <StatItem>
           <StatIcon><FiUsers /></StatIcon>
           <div>
             <StatValue>20K+</StatValue>
-            <StatLabel>Experts</StatLabel>
+            <StatLabel>{t("categoriesPage.experts")}</StatLabel>
           </div>
         </StatItem>
         <StatItem>
           <StatIcon><FiHeadphones /></StatIcon>
           <div>
             <StatValue>24/7</StatValue>
-            <StatLabel>Support</StatLabel>
+            <StatLabel>{t("categoriesPage.support")}</StatLabel>
           </div>
         </StatItem>
         <StatItem>
           <StatIcon><FiShield /></StatIcon>
           <div>
             <StatValue>100%</StatValue>
-            <StatLabel>Secure</StatLabel>
+            <StatLabel>{t("common.secure")}</StatLabel>
           </div>
         </StatItem>
       </StatsBar>
@@ -193,7 +195,7 @@ const Categories = () => {
         {/* 5. Header Actions - Grid/List Toggle */}
         <CategoriesHeader>
           <HeaderTitle>
-            All Categories <span className="count">{sortedCategories.length}</span>
+            {t("categoriesPage.allCategories")} <span className="count">{sortedCategories.length}</span>
           </HeaderTitle>
           <HeaderActions>
             <ViewToggle>
@@ -205,9 +207,9 @@ const Categories = () => {
               </ToggleButton>
             </ViewToggle>
             <SortSelect value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-              <option value="popular">Most Popular</option>
-              <option value="name">A to Z</option>
-              <option value="newest">Newest</option>
+              <option value="popular">{t("categoriesPage.mostPopular")}</option>
+              <option value="name">{t("categoriesPage.aToZ")}</option>
+              <option value="newest">{t("categoriesPage.newest")}</option>
             </SortSelect>
           </HeaderActions>
         </CategoriesHeader>
@@ -231,7 +233,7 @@ const Categories = () => {
                 
                 <CategoryInfo $view={viewMode}>
                   {cat.is_trending && (
-                    <TrendingTag><IoTrendingUp size={12} /> Trending</TrendingTag>
+                    <TrendingTag><IoTrendingUp size={12} /> {t("categoriesPage.trending")}</TrendingTag>
                   )}
                   
                   <CategoryName>
@@ -246,7 +248,7 @@ const Categories = () => {
                  
 
                   <ViewButton>
-                    View Details <FiChevronRight />
+                    {t("common.viewDetails")} <FiChevronRight />
                   </ViewButton>
                 </CategoryInfo>
               </CategoryCard>
@@ -254,18 +256,18 @@ const Categories = () => {
           </CategoriesGrid>
         ) : (
           <EmptyState>
-            <h3>No results found</h3>
-            <p>Try adjusting your search to find what you're looking for.</p>
+            <h3>{t("categoriesPage.noResultsTitle")}</h3>
+            <p>{t("categoriesPage.noResultsText")}</p>
           </EmptyState>
         )}
 
         <CtaBlock>
           <div>
-            <h2>Still Confused? Talk to Our Experts Now</h2>
-            <p>Get instant guidance and the right solution for your need.</p>
+            <h2>{t("categoriesPage.ctaTitle")}</h2>
+            <p>{t("categoriesPage.ctaText")}</p>
           </div>
           <CtaButton type="button" onClick={() => navigate("/user/call-chat?page=1&mode=chat")}>
-            Talk to Expert
+            {t("common.talkToExpert")}
           </CtaButton>
         </CtaBlock>
       </MainContent>

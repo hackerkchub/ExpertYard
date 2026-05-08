@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   FiClock,
   FiMic,
@@ -55,26 +56,26 @@ import { getCategoryPath } from "../../../../shared/utils/categoryRoutes";
 
 const QUICK_ACTIONS = [
   {
-    title: "Chat",
-    subtitle: "Instant Reply",
+    titleKey: "home.quickChat",
+    subtitleKey: "home.instantReply",
     icon: FiZap,
     to: "/user/call-chat?page=1&mode=chat",
   },
   {
-    title: "Call",
-    subtitle: "Talk to Expert",
+    titleKey: "home.quickCall",
+    subtitleKey: "home.talkToExpert",
     icon: FiPhoneCall,
     to: "/user/call-chat?page=1&mode=call",
   },
   {
-    title: "Video Call",
-    subtitle: "Face to Face",
+    titleKey: "home.videoCall",
+    subtitleKey: "home.faceToFace",
     icon: FiVideo,
     disabled: true,
   },
   {
-    title: "Consult Again",
-    subtitle: "Continue",
+    titleKey: "home.consultAgain",
+    subtitleKey: "home.continue",
     icon: FiClock,
     to: "/user/chat-history",
   },
@@ -107,6 +108,7 @@ const FALLBACK_EXPERT = {
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { categories, loading: categoriesLoading } = useCategory();
   const { experts, expertsLoading } = usePublicExpert();
@@ -203,20 +205,17 @@ const HomePage = () => {
           <HeroBackdrop />
           <HeroInner>
             <HeroCopy>
-              <HeroBadge>G9 Experts Online Consultation & Services</HeroBadge>
+              <HeroBadge>{t("home.heroBadge")}</HeroBadge>
               <HeroTitle>
                 <HeroTitleLine $delay="0.08s">
-                  Instant Expert Help | <HeroGradientWord $delay="0.08s">Online Services</HeroGradientWord>
+                  {t("home.heroTitleA")} <HeroGradientWord $delay="0.08s">{t("home.heroTitleB")}</HeroGradientWord>
                 </HeroTitleLine>
               </HeroTitle>
               <HeroTitleAccent aria-hidden="true" />
               <HeroSubtitle>
-                Connect with trusted professionals, book online services, and get real
-                solutions anytime through secure chat and call support.
+                {t("home.heroSubtitle")}
               </HeroSubtitle>
-              <HeroHighlight>
-                Verified Professionals • Instant Chat & Call • Trusted Online Services
-              </HeroHighlight>
+              <HeroHighlight>{t("home.heroTrust")}</HeroHighlight>
             </HeroCopy>
 
             <HeroVisual>
@@ -234,17 +233,17 @@ const HomePage = () => {
                   type="text"
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Search experts or online services"
-                  aria-label="Search expert help"
+                  placeholder={t("home.searchPlaceholder")}
+                  aria-label={t("home.searchAria")}
                 />
-                <SearchButton type="submit" aria-label="Search help">
+                <SearchButton type="submit" aria-label={t("home.searchAria")}>
                   <FiMic />
-                  <SearchButtonText>Search</SearchButtonText>
+                  <SearchButtonText>{t("common.search")}</SearchButtonText>
                 </SearchButton>
               </SearchForm>
 
-              <PillRow aria-label="Popular searches">
-                <HeroPopularLabel>Popular searches:</HeroPopularLabel>
+              <PillRow aria-label={t("home.popularSearches")}>
+                <HeroPopularLabel>{t("home.popularSearches")}</HeroPopularLabel>
                 {HERO_CHIPS.map((chip) => (
                   <PillButton
                     key={chip}
@@ -262,29 +261,31 @@ const HomePage = () => {
         <section className="quick-actions" aria-label="Quick actions">
           {QUICK_ACTIONS.map((item) => {
             const Icon = item.icon;
+            const title = t(item.titleKey);
+            const subtitle = t(item.subtitleKey);
 
             if (item.disabled) {
               return (
-                <button key={item.title} type="button" className="quick-action quick-action--muted">
+                <button key={item.titleKey} type="button" className="quick-action quick-action--muted">
                   <span className="quick-action__icon">
                     <Icon />
                   </span>
                   <span>
-                    <strong>{item.title}</strong>
-                    <small>{item.subtitle}</small>
+                    <strong>{title}</strong>
+                    <small>{subtitle}</small>
                   </span>
                 </button>
               );
             }
 
             return (
-              <Link key={item.title} to={item.to} className="quick-action">
+              <Link key={item.titleKey} to={item.to} className="quick-action">
                 <span className="quick-action__icon">
                   <Icon />
                 </span>
                 <span>
-                  <strong>{item.title}</strong>
-                  <small>{item.subtitle}</small>
+                  <strong>{title}</strong>
+                  <small>{subtitle}</small>
                 </span>
               </Link>
             );
@@ -294,11 +295,11 @@ const HomePage = () => {
         <section className="home-section-card home-section-card--categories">
           <div className="section-topline">
             <div>
-              <span className="section-kicker">Discover</span>
-              <h2>Top Categories</h2>
+              <span className="section-kicker">{t("home.discover")}</span>
+              <h2>{t("home.topCategories")}</h2>
             </div>
             <button type="button" className="section-link" onClick={() => navigate("/user/categories")}>
-              View All
+              {t("common.viewAll")}
             </button>
           </div>
 
@@ -336,11 +337,11 @@ const HomePage = () => {
         <section className="home-section-card home-section-card--experts">
           <div className="section-topline">
             <div>
-              <span className="section-kicker">Experts</span>
-              <h2>Recently Active Experts</h2>
+              <span className="section-kicker">{t("home.expertsKicker")}</span>
+              <h2>{t("home.recentlyActiveExperts")}</h2>
             </div>
             <button type="button" className="section-link" onClick={() => navigate("/user/call-chat?page=1")}>
-              View All
+              {t("common.viewAll")}
             </button>
           </div>
 
@@ -376,7 +377,7 @@ const HomePage = () => {
                       {expertPosition && <small>{expertPosition}</small>}
                       <div className="expert-card-app__meta">
                         <span className="expert-rating">{renderStars(5)} 4.8</span>
-                        <span className="expert-online">Online</span>
+                        <span className="expert-online">{t("home.online")}</span>
                       </div>
                     </div>
                   </button>
@@ -390,10 +391,10 @@ const HomePage = () => {
 
         <section className="rating-panel">
           <div>
-            <span className="section-kicker section-kicker--gold">User Ratings</span>
-            <h2  style={{ color: "#ffffff" }} >Rated 4.8/5 by Users</h2>
+            <span className="section-kicker section-kicker--gold">{t("home.userRatings")}</span>
+            <h2  style={{ color: "#ffffff" }} >{t("home.ratedByUsers")}</h2>
             <div className="rating-panel__stars">{renderStars(5)}</div>
-            <p>20K+ Happy Users</p>
+            <p>{t("home.happyUsers")}</p>
           </div>
           <div className="rating-panel__aside">
             <div className="avatar-stack">
@@ -403,8 +404,8 @@ const HomePage = () => {
                   ))
                 : ["A", "B", "C"].map((item) => <span key={item}>{item}</span>)}
             </div>
-            <strong>98% Positive Feedback</strong>
-            <small>Trusted support across legal, health, finance, and career topics.</small>
+            <strong>{t("home.positiveFeedback")}</strong>
+            <small>{t("home.trustedTopics")}</small>
           </div>
         </section>
 
@@ -416,12 +417,12 @@ const HomePage = () => {
 
         <section className="support-banner">
           <div>
-            <span className="section-kicker section-kicker--gold">Support</span>
-            <h2  style={{ color: "#ffffff" }} >Have a Question?</h2>
-            <p>We are here to help you!</p>
+            <span className="section-kicker section-kicker--gold">{t("common.support")}</span>
+            <h2  style={{ color: "#ffffff" }} >{t("home.haveQuestion")}</h2>
+            <p>{t("home.helpText")}</p>
           </div>
           <button type="button" className="support-banner__button" onClick={() => navigate("/user/contact")}>
-            Contact Support
+            {t("home.contactSupport")}
           </button>
         </section>
 

@@ -1,7 +1,19 @@
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { FiArrowRight, FiLayers, FiBriefcase, FiUser } from "react-icons/fi";
+import {
+  FiArrowRight,
+  FiLayers,
+  FiBriefcase,
+  FiUser,
+  FiSearch,
+  FiShield,
+  FiClock,
+  FiHeadphones,
+  FiCreditCard,
+  FiMessageCircle,
+  FiStar,
+} from "react-icons/fi";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { usePublicExpert } from "../../context/PublicExpertContext";
 import * as S from "./AllServices.style";
@@ -17,6 +29,8 @@ const AllServices = () => {
     return saved ? JSON.parse(saved) : [];
   });
   const [loading, setLoading] = useState(services.length === 0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All");
 
   useEffect(() => {
     const fetchAllServices = async () => {
@@ -50,6 +64,29 @@ const AllServices = () => {
     isLoggedIn && user?.id ? navigate(`/user/my-booking/${user.id}`) : navigate("/user/auth");
   };
 
+  const serviceCategories = useMemo(() => {
+    const categories = services
+      .map((service) => service.category_name || service.category || service.service_category)
+      .filter(Boolean);
+    return ["All", ...Array.from(new Set(categories))];
+  }, [services]);
+
+  const visibleServices = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+
+    return services.filter((service) => {
+      const category = service.category_name || service.category || service.service_category || "Digital Service";
+      const matchesCategory = activeCategory === "All" || category === activeCategory;
+      const matchesSearch =
+        !query ||
+        service.title?.toLowerCase().includes(query) ||
+        service.description?.toLowerCase().includes(query) ||
+        category.toLowerCase().includes(query);
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [activeCategory, searchTerm, services]);
+
   // Professional Skeleton Loader
   if (loading && services.length === 0) {
     return (
@@ -68,16 +105,50 @@ const AllServices = () => {
         
         <S.HeaderSection>
           <div className="title-area">
-            <h2>Professional Services</h2>
-            <p>Connect with verified experts to accelerate your goals.</p>
+            <span className="eyebrow">G9 Experts Marketplace</span>
+            <h2>Explore Professional Services</h2>
+            <p>Discover verified experts and trusted online services across multiple categories.</p>
+            <S.HeroSearch>
+              <FiSearch aria-hidden="true" />
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Search services, experts, or categories"
+              />
+            </S.HeroSearch>
+            <S.BadgeRow>
+              <span><FiShield /> Verified Services</span>
+              <span><FiHeadphones /> Instant Support</span>
+              <span><FiCreditCard /> Secure Payments</span>
+              <span><FiClock /> 24/7 Availability</span>
+            </S.BadgeRow>
           </div>
           <S.TopActionButton onClick={handleGoToMyBookings}>
             <FiBriefcase /> <span>My Bookings</span>
           </S.TopActionButton>
         </S.HeaderSection>
 
+        <S.CategoryStrip aria-label="Service categories">
+          {serviceCategories.map((category) => (
+            <S.CategoryChip
+              key={category}
+              type="button"
+              $active={activeCategory === category}
+              onClick={() => setActiveCategory(category)}
+            >
+              {category}
+            </S.CategoryChip>
+          ))}
+        </S.CategoryStrip>
+
+        <S.ServicesToolbar>
+          <div><span>{visibleServices.length}</span> services available</div>
+          <p>Ready-to-book services from verified professionals</p>
+        </S.ServicesToolbar>
+
         <S.ServiceGrid>
-          {services.map((service) => {
+          {visibleServices.map((service) => {
             let deliverableList = [];
             try {
               deliverableList = typeof service.deliverables === "string" 
@@ -85,6 +156,7 @@ const AllServices = () => {
             } catch { deliverableList = []; }
 
             const expertName = expertMap[service.expert_id] || "Expert Professional";
+            const serviceCategory = service.category_name || service.category || service.service_category || "Digital Service";
 
             return (
               <S.ServiceCard key={service.id}>
@@ -111,8 +183,12 @@ const AllServices = () => {
 
                 <S.CardContent>
                   <S.CategoryTag>
-                    <FiLayers size={12} /> Digital Service
+                    <FiLayers size={12} /> {serviceCategory}
                   </S.CategoryTag>
+                  <S.RatingLine>
+                    <span><FiStar /> 4.8</span>
+                    <span>Verified service</span>
+                  </S.RatingLine>
                   <h3>{service.title}</h3>
                   <p className="description">
                     {service.description?.substring(0, 90)}...
@@ -129,11 +205,32 @@ const AllServices = () => {
                   <S.PrimaryButton onClick={() => navigate(`/user/service-details/${service.id}`)}>
                     View Details <FiArrowRight />
                   </S.PrimaryButton>
+                  <S.SecondaryButton onClick={() => navigate("/user/call-chat?page=1&mode=chat")}>
+                    <FiMessageCircle /> Talk to Expert
+                  </S.SecondaryButton>
                 </S.CardFooter>
               </S.ServiceCard>
             );
           })}
         </S.ServiceGrid>
+
+        {visibleServices.length === 0 && (
+          <S.EmptyState>
+            <FiSearch />
+            <h3>No services found.</h3>
+            <p>Try another keyword or category.</p>
+          </S.EmptyState>
+        )}
+
+        <S.CtaSection>
+          <div>
+            <h2>Need help choosing the right service?</h2>
+            <p>Talk with verified experts and get the right solution instantly.</p>
+          </div>
+          <button type="button" onClick={() => navigate("/user/call-chat?page=1&mode=chat")}>
+            Talk to Expert
+          </button>
+        </S.CtaSection>
 
       </S.ContentWrapper>
     </S.PageContainer>

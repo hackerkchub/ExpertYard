@@ -28,6 +28,7 @@ import {
   FiClock as FiTimeIcon,
   FiZap,
   FiInfo,
+  FiVideo,
 } from "react-icons/fi";
 
 import {
@@ -1111,6 +1112,7 @@ useEffect(() => {
   return (
     <>
       <style>{`
+        html { scroll-behavior: smooth; }
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes slideIn {
           from { transform: translateY(-20px); opacity: 0; }
@@ -1273,8 +1275,48 @@ useEffect(() => {
           </div>
         </ProfileCard>
 
+        <div className="expert-profile-content-grid">
+          <aside className="expert-profile-sidebar">
+            <Section className="consult-card">
+              <SectionTitle>Consult With Me</SectionTitle>
+              <div className="consult-options">
+                <button type="button" className="consult-option consult-call" onClick={() => handleStart("call")}>
+                  <FiPhoneCall />
+                  <span>Call</span>
+                  <strong>
+                    {hasActiveSubscription ? "Free" : selectedPricingMode === "session" && displayPrices.hasSession ? `₹${displayPrices.sessionPrice}` : `₹${displayPrices.callPrice}/min`}
+                  </strong>
+                </button>
+                <button type="button" className="consult-option consult-chat" onClick={() => handleStart("chat")}>
+                  <FiMessageSquare />
+                  <span>Chat</span>
+                  <strong>
+                    {hasActiveSubscription ? "Free" : selectedPricingMode === "session" && displayPrices.hasSession ? `₹${displayPrices.sessionPrice}` : `₹${displayPrices.chatPrice}/min`}
+                  </strong>
+                </button>
+                <button type="button" className="consult-option consult-video" disabled>
+                  <FiVideo />
+                  <span>Video Call</span>
+                  <strong>Coming soon</strong>
+                </button>
+              </div>
+            </Section>
+
+            <Section className="about-me-card">
+              <SectionTitle>About Me</SectionTitle>
+              <SectionBody>{profile.description || "Experienced professional with proven track record in the field."}</SectionBody>
+              <TagList>
+                {profile.category_name && <Tag><FiTarget />{profile.category_name}</Tag>}
+                {profile.position && <Tag><FiBriefcase />{profile.position}</Tag>}
+                {profile.education && <Tag><FiBookOpen />{profile.education}</Tag>}
+              </TagList>
+            </Section>
+          </aside>
+
+          <main className="expert-profile-main">
+
         {/* Tabs Section */}
-        <Section>
+        <Section className="profile-tabs-card">
           <TabContainer>
             <TabButton $active={activeTab === "about"} onClick={() => setActiveTab("about")}><FiFileText /> About</TabButton>
             <TabButton $active={activeTab === "experience"} onClick={() => setActiveTab("experience")}><FiBriefcase /> Experience</TabButton>
@@ -1447,6 +1489,14 @@ useEffect(() => {
             ))}
           </ReviewList>
         </ReviewSection>
+
+          </main>
+        </div>
+
+        <div className="mobile-profile-actions">
+          <button type="button" className="mobile-message-btn" onClick={() => handleStart("chat")}><FiMessageSquare /> Message</button>
+          <button type="button" className="mobile-call-btn" onClick={() => handleStart("call")}><FiPhoneCall /> Call Now</button>
+        </div>
 
         {/* Subscription Plans Modal */}
         {showPlansModal && (

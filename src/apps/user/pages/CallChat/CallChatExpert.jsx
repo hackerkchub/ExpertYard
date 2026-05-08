@@ -4,7 +4,8 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { 
   FiX, FiChevronLeft, FiChevronRight, FiSearch, FiFilter, 
   FiSliders, FiXCircle, FiTrendingUp, FiAward, FiClock,
-  FiStar, FiDollarSign, FiUserCheck, FiUsers
+  FiStar, FiDollarSign, FiUserCheck, FiUsers, FiZap,
+  FiMessageSquare, FiPhoneCall
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -623,17 +624,18 @@ export default function UserExpertsPage() {
           <div>
             <Title>Find the right expert – instantly</Title>
             <SubTitle>
-              {debouncedSearch ? (
-                <>
-                  Showing results for <strong>"{debouncedSearch}"</strong>
-                  {selectedCategoryId && (
-                    <> in <strong>{categories.find(c => c.id == selectedCategoryId)?.name}</strong></>
-                  )}
-                </>
-              ) : (
-                "Talk 1:1 with verified professionals for career, health, finance, legal and more."
-              )}
+              Choose a verified expert and start secure chat or call consultation in seconds.
             </SubTitle>
+            <div className="trust-badges">
+              <span><FiUserCheck /> Verified Experts</span>
+              <span><FiDollarSign /> Secure Wallet</span>
+              <span><FiZap /> Instant Connect</span>
+              <span><FiClock /> 24/7 Support</span>
+            </div>
+          </div>
+          <div className="mode-indicator">
+            {tab === "chat" ? <FiMessageSquare /> : <FiPhoneCall />}
+            {tab === "chat" ? "Chat Mode" : "Call Mode"}
           </div>
         </HeaderSection>
 
@@ -791,9 +793,7 @@ export default function UserExpertsPage() {
             ) : experts.length === 0 ? (
               <EmptyState>
                 <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
-                {debouncedSearch 
-                  ? `No experts found for "${debouncedSearch}". Try different keywords.`
-                  : "No experts found for current filters."}
+                No experts found. Try another category or search term.
                 {(selectedCategoryId || minRating || maxPrice) && (
                   <button onClick={resetFilters} style={{
                     marginTop: 16,

@@ -1,37 +1,82 @@
 import styled, { keyframes } from "styled-components";
 
-/* ---------- helpers ---------- */
+const navy = "#000080";
+const navyDark = "#02044a";
+const yellow = "#FFC107";
+const yellowLight = "#FFD23F";
+const text = "#111827";
+const muted = "#667085";
+const border = "#e5e7eb";
 
-const glassBg = `
-  background:
-    radial-gradient(circle at top left, rgba(99,102,241,0.12), transparent 40%),
-    radial-gradient(circle at bottom right, rgba(56,189,248,0.12), transparent 40%),
-    linear-gradient(180deg, #f8fafc, #eef2ff);
+const shimmer = keyframes`
+  0% { transform: translateX(-45%); }
+  100% { transform: translateX(120%); }
 `;
-
-const cardGlass = `
-  background: rgba(240, 230, 230, 0.75);
-  backdrop-filter: blur(18px);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  box-shadow:
-    0 10px 30px rgba(88, 113, 171, 0.08),
-    inset 0 1px 0 rgba(255,255,255,0.6);
-`;
-
-/* ---------- page layout ---------- */
 
 export const PageWrap = styled.div`
   min-height: 100vh;
-  padding: 88px 5vw 56px;
-  ${glassBg};
-  color: #020617;
-
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 86px 18px 64px;
+  color: ${text};
+  background:
+    radial-gradient(circle at 8% 0%, rgba(0, 0, 128, 0.09), transparent 28%),
+    radial-gradient(circle at 92% 8%, rgba(255, 210, 63, 0.18), transparent 24%),
+    linear-gradient(180deg, #f7f8fc 0%, #f8fafc 48%, #ffffff 100%);
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 18px;
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+
+  .trust-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-top: 18px;
+  }
+
+  .trust-badges span,
+  .mode-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 34px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .trust-badges span {
+    color: rgba(255, 255, 255, 0.94);
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+
+  .mode-indicator {
+    color: ${navy};
+    background: linear-gradient(135deg, ${yellowLight}, ${yellow});
+    box-shadow: 0 16px 28px rgba(255, 193, 7, 0.24);
+  }
 
   @media (max-width: 768px) {
-    padding: 80px 14px 40px;
+    padding: 78px 12px 42px;
+    gap: 14px;
+
+    .trust-badges {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+
+    .trust-badges::-webkit-scrollbar {
+      display: none;
+    }
   }
 `;
 
@@ -39,127 +84,205 @@ export const HeaderSection = styled.header`
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
+  gap: 18px;
+  padding: 30px;
+  border-radius: 26px;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255, 255, 255, 0.18), transparent 28%),
+    radial-gradient(circle at 88% 18%, rgba(255, 210, 63, 0.25), transparent 24%),
+    linear-gradient(135deg, ${navy} 0%, #03045e 56%, #020329 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 24px 58px rgba(0, 0, 128, 0.2);
+
+  @media (max-width: 768px) {
+    padding: 22px 16px;
+    border-radius: 22px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
 `;
 
 export const Title = styled.h1`
-  font-size: clamp(26px, 3vw, 36px);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: #1e293b;
+  margin: 0;
+  font-size: clamp(27px, 4vw, 46px);
+  font-weight: 950;
+  line-height: 1.06;
+  letter-spacing: 0;
+  color: #ffffff;
 `;
 
 export const SubTitle = styled.p`
-  margin-top: 10px;
-  max-width: 640px;
-  font-size: 14px;
-  color: #475569;
+  margin: 11px 0 0;
+  max-width: 720px;
+  font-size: 15px;
+  line-height: 1.6;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.86);
 `;
-
-/* ---------- tabs ---------- */
 
 export const TabsRow = styled.div`
   display: inline-flex;
   align-self: flex-start;
-  padding: 4px;
+  gap: 6px;
+  padding: 6px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  background: #ffffff;
+  border: 1px solid ${border};
+  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.08);
 `;
 
 export const TabButton = styled.button`
   border: none;
   outline: none;
-  padding: 8px 18px;
+  padding: 10px 18px;
   border-radius: 999px;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 900;
   cursor: pointer;
-
-  color: ${({ $active }) => ($active ? "#ffffff" : "#334155")};
+  color: ${({ $active }) => ($active ? navy : "#344054")};
   background: ${({ $active }) =>
-    $active
-      ? "linear-gradient(135deg, #2563eb, #4f46e5)"
-      : "transparent"};
-
+    $active ? `linear-gradient(135deg, ${yellowLight}, ${yellow})` : "transparent"};
   box-shadow: ${({ $active }) =>
-    $active ? "0 8px 20px rgba(37,99,235,0.35)" : "none"};
-
-  transition: all 0.18s ease;
+    $active ? "0 10px 22px rgba(255, 193, 7, 0.24)" : "none"};
+  transition: transform 180ms ease, background 180ms ease;
 
   &:hover {
-    background: ${({ $active }) =>
-      $active
-        ? "linear-gradient(135deg, #1d4ed8, #4338ca)"
-        : "rgba(226,232,240,0.6)"};
+    transform: translateY(-1px);
+    background: ${({ $active }) => ($active ? `linear-gradient(135deg, ${yellowLight}, ${yellow})` : "#eef2ff")};
   }
 `;
 
-/* ---------- main layout ---------- */
-
 export const Layout = styled.div`
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
-  gap: 24px;
+  grid-template-columns: 292px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
 
   @media (max-width: 1024px) {
     grid-template-columns: minmax(0, 1fr);
   }
 `;
 
-/* ---------- filters ---------- */
-
 export const FilterWrap = styled.aside`
-  ${cardGlass};
-  border-radius: 24px;
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
   position: sticky;
   top: 84px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(0, 0, 128, 0.08);
+  box-shadow: 0 16px 36px rgba(16, 24, 40, 0.08);
 
   @media (max-width: 1024px) {
-    position: static;
-    order: 2;
+    display: none;
   }
 `;
 
+export const FilterHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid ${border};
+`;
+
 export const FilterTitle = styled.h3`
-  font-size: 15px;
-  font-weight: 600;
-  color: #020617;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 950;
+  color: ${navy};
+`;
+
+export const FilterCount = styled.span`
+  background: #eef2ff;
+  color: ${navy};
+  font-size: 12px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-weight: 900;
 `;
 
 export const FilterGroup = styled.div`
-  border-radius: 14px;
+  border-radius: 18px;
   padding: 12px;
-  background: rgba(241, 245, 249, 0.9);
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
 `;
 
 export const FilterLabel = styled.div`
-  font-size: 12px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #475569;
+  color: ${navy};
   margin-bottom: 8px;
+  font-weight: 900;
 `;
 
 export const FilterSelect = styled.select`
   width: 100%;
-  border-radius: 999px;
-  border: 1px solid rgba(203, 213, 225, 0.9);
+  border-radius: 14px;
+  border: 1px solid #d0d5dd;
   background: #ffffff;
-  color: #020617;
+  color: ${text};
   font-size: 13px;
-  padding: 7px 14px;
+  font-weight: 700;
+  padding: 10px 12px;
   outline: none;
 
   &:focus {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    border-color: ${navy};
+    box-shadow: 0 0 0 4px rgba(0, 0, 128, 0.08);
+  }
+`;
+
+export const SearchInput = styled.input`
+  width: 100%;
+  padding: 12px 38px 12px 38px;
+  border: 1px solid #d0d5dd;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 700;
+  box-sizing: border-box;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+
+  &:focus {
+    outline: none;
+    border-color: ${navy};
+    box-shadow: 0 0 0 4px rgba(0, 0, 128, 0.08);
+  }
+`;
+
+export const SearchIcon = styled.div`
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: ${navy};
+`;
+
+export const ClearSearchBtn = styled.button`
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #f2f4f7;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  color: #667085;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    color: #dc2626;
   }
 `;
 
@@ -168,13 +291,13 @@ export const FilterCheckboxRow = styled.label`
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: #334155;
+  color: #344054;
   margin-bottom: 6px;
   cursor: pointer;
 `;
 
 export const FilterCheckbox = styled.input`
-  accent-color: #2563eb;
+  accent-color: ${navy};
   width: 14px;
   height: 14px;
 `;
@@ -182,191 +305,149 @@ export const FilterCheckbox = styled.input`
 export const FilterText = styled.span``;
 
 export const ResetFilterBtn = styled.button`
-  margin-top: 8px;
+  margin-top: 4px;
   align-self: flex-start;
   border-radius: 999px;
-  padding: 6px 16px;
-  border: 1px solid rgba(203, 213, 225, 0.9);
+  padding: 9px 16px;
+  border: 1px solid rgba(0, 0, 128, 0.18);
   background: #ffffff;
-  color: #334155;
-  font-size: 12px;
+  color: ${navy};
+  font-size: 13px;
+  font-weight: 900;
   cursor: pointer;
-
-  transition: all 0.15s ease;
+  transition: transform 180ms ease, background 180ms ease;
 
   &:hover {
-    background: #f1f5f9;
-    border-color: #2563eb;
-    color: #1d4ed8;
+    transform: translateY(-1px);
+    background: #eef2ff;
   }
 `;
 
-/* ---------- experts grid ---------- */
-
 export const ExpertsWrap = styled.section`
-  ${cardGlass};
-  border-radius: 24px;
-  padding: 20px;
+  min-width: 0;
+  border-radius: 22px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(0, 0, 128, 0.08);
+  box-shadow: 0 16px 36px rgba(16, 24, 40, 0.08);
+
+  @media (max-width: 768px) {
+    padding: 13px;
+    border-radius: 20px;
+  }
 `;
 
 export const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  grid-auto-rows: 1fr;
+  align-items: stretch;
+  gap: 22px;
+
+  > div {
+    height: 100%;
+  }
 
   @media (max-width: 1100px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
   }
+
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
+    gap: 18px;
   }
 `;
 
 export const EmptyState = styled.div`
-  padding: 28px 14px;
+  padding: 44px 14px;
   text-align: center;
-  font-size: 14px;
-  color: #64748b;
-`;
-
-/* ---------- loader ---------- */
-
-const shimmer = keyframes`
-  0% { transform: translateX(-40%); }
-  100% { transform: translateX(120%); }
+  font-size: 15px;
+  color: ${muted};
+  border: 1px dashed #d0d5dd;
+  border-radius: 20px;
+  background: #f8fafc;
 `;
 
 export const LoaderRow = styled.div`
-  padding: 32px 12px;
+  padding: 42px 12px;
   text-align: center;
   font-size: 14px;
-  color: #334155;
+  color: #344054;
   position: relative;
   overflow: hidden;
+  border-radius: 20px;
+  background: #f8fafc;
 
   &::after {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-      120deg,
-      transparent,
-      rgba(203,213,225,0.5),
-      transparent
-    );
+    background: linear-gradient(120deg, transparent, rgba(203, 213, 225, 0.46), transparent);
     animation: ${shimmer} 1.4s infinite;
   }
-`;
-
-/* ---------- AI coming soon ---------- */
-
-export const AIComingSoon = styled.div`
-  min-height: 280px;
-  border-radius: 22px;
-  padding: 32px 20px;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-
-  text-align: center;
-
-  background: linear-gradient(
-    135deg,
-    rgba(56,189,248,0.12),
-    rgba(168,85,247,0.12),
-    rgba(249,115,22,0.12)
-  );
-
-  border: 1px dashed rgba(99,102,241,0.45);
-
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.4),
-    0 20px 45px rgba(15,23,42,0.15);
-`;
-
-export const AIIcon = styled.div`
-  font-size: 42px;
-`;
-
-export const AITitle = styled.h3`
-  font-size: 18px;
-  font-weight: 600;
-  color: #020617;
-`;
-
-export const AIDesc = styled.p`
-  max-width: 460px;
-  font-size: 14px;
-  color: #475569;
-  line-height: 1.5;
-`;
-
-export const AIHint = styled.div`
-  margin-top: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #4338ca;
 `;
 
 export const PaginationWrap = styled.div`
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 10px;
   margin-top: 20px;
+  flex-wrap: wrap;
 `;
 
 export const PageButton = styled.button`
-  padding: 6px 12px;
-  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 999px;
   border: none;
-  background: #10b981;
+  background: ${navy};
   color: white;
+  font-weight: 900;
   cursor: pointer;
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.45;
     cursor: not-allowed;
   }
 `;
 
 export const PageInfo = styled.div`
   font-size: 14px;
-  color: #64748b;
+  color: ${muted};
   display: flex;
   align-items: center;
+  font-weight: 800;
 `;
-
-// Add these to your CallChatExpert.styles.js file
 
 export const StatsBar = styled.div`
   display: flex;
-  gap: 24px;
-  padding: 16px 0;
-  margin-bottom: 24px;
-  border-bottom: 1px solid #e2e8f0;
-  
-  @media (max-width: 768px) {
-    gap: 16px;
-    flex-wrap: wrap;
-  }
+  flex-wrap: wrap;
+  gap: 10px;
 `;
 
 export const StatItem = styled.div`
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  color: #475569;
-  
+  min-height: 38px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: ${navy};
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 128, 0.1);
+  box-shadow: 0 8px 18px rgba(16, 24, 40, 0.05);
+
   svg {
-    color: #3b82f6;
+    color: ${yellow};
   }
-  
+
   span {
-    font-weight: 500;
+    font-weight: 900;
   }
 `;
 
@@ -375,90 +456,34 @@ export const SearchBar = styled.div`
   margin-bottom: 20px;
 `;
 
-export const SearchInput = styled.input`
-  width: 100%;
-  padding: 12px 40px 12px 40px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 14px;
-  transition: all 0.2s ease;
-  
-  &:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-`;
-
-export const SearchIcon = styled.div`
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #94a3b8;
-`;
-
-export const ClearSearchBtn = styled.button`
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #94a3b8;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  
-  &:hover {
-    color: #ef4444;
-  }
-`;
-
-export const FilterHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e2e8f0;
-`;
-
-export const FilterCount = styled.span`
-  background: #3b82f6;
-  color: white;
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-weight: 600;
-`;
-
 export const MobileFilterToggle = styled.button`
   display: none;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 12px 20px;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 40px;
+  width: fit-content;
+  padding: 11px 18px;
+  background: ${navy};
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 900;
   cursor: pointer;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
   position: relative;
-  
+  box-shadow: 0 12px 24px rgba(0, 0, 128, 0.16);
+
   .badge {
-    background: #3b82f6;
-    color: white;
+    background: ${yellow};
+    color: ${navy};
     font-size: 12px;
     padding: 2px 8px;
-    border-radius: 20px;
-    margin-left: 4px;
+    border-radius: 999px;
+    margin-left: 2px;
   }
-  
-  @media (max-width: 768px) {
+
+  @media (max-width: 1024px) {
     display: flex;
   }
 `;
@@ -467,53 +492,65 @@ export const MobileFilterDrawer = styled.div`
   position: fixed;
   top: 0;
   right: 0;
-  width: 85%;
-  max-width: 380px;
+  width: 88%;
+  max-width: 390px;
   height: 100vh;
   background: white;
   z-index: 1001;
   overflow-y: auto;
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+  -webkit-overflow-scrolling: touch;
+  box-shadow: -12px 0 32px rgba(15, 23, 42, 0.18);
 `;
 
 export const Overlay = styled.div`
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgba(2, 6, 23, 0.58);
   z-index: 1000;
 `;
 
 export const ActiveFilters = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 20px;
-  padding: 12px 0;
+  gap: 9px;
 `;
 
 export const ActiveFilterChip = styled.button`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 30px;
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 128, 0.12);
+  border-radius: 999px;
   font-size: 12px;
-  color: #475569;
+  color: ${navy};
+  font-weight: 900;
   cursor: pointer;
-  transition: all 0.2s ease;
-  
+  transition: all 180ms ease;
+
   &:hover {
     background: #fee2e2;
     border-color: #ef4444;
     color: #ef4444;
   }
-  
-  svg {
-    margin-left: 4px;
-  }
 `;
+
+export const AIComingSoon = styled.div`
+  min-height: 280px;
+  border-radius: 22px;
+  padding: 32px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  background: #f8fafc;
+  border: 1px dashed rgba(0, 0, 128, 0.25);
+`;
+
+export const AIIcon = styled.div`font-size: 42px;`;
+export const AITitle = styled.h3`font-size: 18px; font-weight: 900; color: ${navy};`;
+export const AIDesc = styled.p`max-width: 460px; font-size: 14px; color: ${muted}; line-height: 1.5;`;
+export const AIHint = styled.div`margin-top: 6px; font-size: 12px; font-weight: 900; color: ${navy};`;

@@ -1,178 +1,193 @@
-// src/components/Footer/Footer.styles.js
 import styled from "styled-components";
 import { Link } from "react-router-dom";
 
-// Breakpoints
 const breakpoints = {
-  xs: '320px',
-  sm: '480px',
-  md: '768px',
-  lg: '1024px',
-  xl: '1280px',
-  xxl: '1536px'
+  sm: "640px",
+  md: "768px",
+  lg: "1024px",
 };
-
-// Media query helpers - FIXED: Removed maxSm and other problematic queries
-const media = {
-  xs: `@media (max-width: ${breakpoints.xs})`,
-  sm: `@media (max-width: ${breakpoints.sm})`,
-  md: `@media (max-width: ${breakpoints.md})`,
-  lg: `@media (max-width: ${breakpoints.lg})`,
-  xl: `@media (max-width: ${breakpoints.xl})`,
-  xxl: `@media (max-width: ${breakpoints.xxl})`,
-  minSm: `@media (min-width: ${breakpoints.sm})`,
-  minMd: `@media (min-width: ${breakpoints.md})`,
-  minLg: `@media (min-width: ${breakpoints.lg})`,
-  minXl: `@media (min-width: ${breakpoints.xl})`,
-  minXxl: `@media (min-width: ${breakpoints.xxl})`
-};
-
-// Helper function for max-width queries
-const maxWidth = (breakpoint) => `@media (max-width: ${breakpoint})`;
 
 export const Wrapper = styled.footer`
-  background:#fff;
-  color: #334155;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
   position: relative;
   overflow: hidden;
-  border-top: 1px solid #d8e0eb;
-  box-shadow: 0 -12px 36px rgba(15, 23, 42, 0.05);
-  padding: 2rem 0 1rem;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255, 210, 63, 0.2), transparent 26%),
+    radial-gradient(circle at 92% 18%, rgba(96, 165, 250, 0.18), transparent 28%),
+    linear-gradient(135deg, #000080 0%, #05054d 48%, #020225 100%);
+  color: #ffffff;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 56px 0 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 
   &::before {
-    content: '';
+    content: "";
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, #cbd5e1, transparent);
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+      linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent 72%);
   }
 
-  ${media.minSm} {
-    padding: 3rem 0 2rem;
-  }
-
-  ${media.minMd} {
-    padding: 4rem 0 2rem;
-  }
-
-  ${maxWidth(breakpoints.xs)} {
-    padding: 2rem 0 1.25rem;
+  @media (max-width: ${breakpoints.md}) {
+    padding: 44px 0 22px;
   }
 `;
 
 export const Container = styled.div`
-  display: flex;
-  flex-direction: column; 
-  gap: 2rem;
+  position: relative;
+  z-index: 1;
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
 
-  max-width: 1200px;     
-  margin: 0 auto;        
-  padding: 0 1.25rem;
-
-  @media (min-width: 768px) {
-    flex-direction: row;
-  }
-;
-  
-
-  ${media.minSm} {
-    padding: 0 1.25rem;
-  }
-
-  ${media.minMd} {
-    padding: 0 1.5rem;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 2rem;
-  }
-
-  ${media.minLg} {
-    padding: 0 2rem;
-    gap: 2rem;
-  }
-
-  ${maxWidth(breakpoints.xs)} {
-    padding: 0 0.75rem;
-    gap: 2rem;
+  @media (max-width: ${breakpoints.sm}) {
+    width: min(100% - 28px, 520px);
   }
 `;
 
-export const Section = styled.div`
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start; 
+export const FooterTop = styled.div`
+  display: grid;
+  grid-template-columns: minmax(260px, 1.4fr) repeat(4, minmax(130px, 1fr));
+  gap: 32px;
+  align-items: start;
 
-  ${media.minLg} {
-    min-width: calc(20% - 1.8rem);
+  @media (max-width: ${breakpoints.lg}) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: ${breakpoints.sm}) {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    text-align: center;
   }
 `;
 
 export const BrandSection = styled.div`
-width: 100%;  
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(14px);
+
+  @media (max-width: ${breakpoints.lg}) {
+    grid-column: 1 / -1;
+  }
+
+  @media (max-width: ${breakpoints.sm}) {
+    padding: 22px 18px;
+  }
+`;
+
+export const Logo = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  margin-bottom: 16px;
+  -webkit-tap-highlight-color: transparent;
+`;
+
+export const LogoContainer = styled.div`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 58px;
+  padding: 10px 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+`;
+
+export const LogoImage = styled.img`
+  width: 172px;
+  height: auto;
+  object-fit: contain;
+  display: block;
+
+  @media (max-width: ${breakpoints.sm}) {
+    width: 148px;
+  }
+`;
+
+export const Tagline = styled.p`
+  max-width: 340px;
+  margin: 0 0 20px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.96rem;
+  line-height: 1.65;
+
+  @media (max-width: ${breakpoints.sm}) {
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 0.93rem;
+  }
+`;
+
+export const SocialLinks = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  @media (max-width: ${breakpoints.sm}) {
+    justify-content: center;
+  }
+`;
+
+export const SocialIcon = styled.a`
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  text-decoration: none;
+  transition: transform 0.25s ease, color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+
+  &:hover {
+    color: #000080;
+    background: linear-gradient(135deg, #ffd23f, #ffc107);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 26px rgba(255, 193, 7, 0.28);
+  }
+`;
+
+export const Section = styled.nav`
+  min-width: 0;
+
+  @media (max-width: ${breakpoints.sm}) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
 `;
 
 export const SectionTitle = styled.h4`
-  font-size: 14px;
-  font-weight: 700;
-  margin-bottom: 0.75rem;
-  color: #0f172a;
-  font-family: -apple-system, system-ui, sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 1px; 
-  display: flex;
-  align-items: flex-end;
   position: relative;
-  padding-bottom: 0.625rem;
+  margin: 0 0 18px;
+  padding-bottom: 12px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 
   &::after {
-    content: '';
+    content: "";
     position: absolute;
-    bottom: 0;
     left: 0;
-    width: 30px;
-    height: 2px;
-    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-    border-radius: 2px;
+    bottom: 0;
+    width: 34px;
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ffd23f, rgba(255, 255, 255, 0.45));
   }
 
-  ${media.minSm} {
-    font-size: 0.925rem;
-    margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
-
-    &::after {
-      width: 35px;
-    }
-  }
-
-  ${media.minMd} {
-    font-size: 0.95rem;
-
-    &::after {
-      width: 40px;
-    }
-  }
-
-  ${maxWidth(breakpoints.xs)} {
-    font-size: 0.875rem;
-    margin-bottom: 0.6rem;
-    padding-bottom: 0.5rem;
-
-    &::after {
-      width: 25px;
-    }
-  }
-
-  /* Center align for mobile */
   @media (max-width: ${breakpoints.sm}) {
-    text-align: center;
-    
     &::after {
       left: 50%;
       transform: translateX(-50%);
@@ -180,666 +195,123 @@ export const SectionTitle = styled.h4`
   }
 `;
 
-export const LinksRow = styled.div`
- display: flex;
-  flex-direction: row;
-  gap: 2rem;
-  width: 100%;
-  align-items: flex-start;
-  @media (max-width: 768px) {
-    flex-direction: column; 
-}
-`;
-
-
 export const LinkList = styled.ul`
+  display: grid;
+  gap: 10px;
   list-style: none;
-  padding: 0;
   margin: 0;
-  color: #000000;
-  font-family: -apple-system, system-ui, sans-serif;
-  
-
-  ${media.minSm} {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-
-  ${media.minMd} {
-    display: block;
-  }
-
-  ${maxWidth(breakpoints.xs)} {
-    grid-template-columns: 1fr;
-  }
-
-  @media (max-width: ${breakpoints.sm}) and (min-width: ${breakpoints.xs}) {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  padding: 0;
 `;
 
 export const FooterLink = styled(Link)`
-  display: flex;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 0.94rem;
+  line-height: 1.45;
   text-decoration: none;
-  font-size: 16px;
-  color: #334155;
-  font-family: -apple-system, system-ui, sans-serif;
-  transition: all 0.3s ease;
-  line-height: 1.4;
-  padding: 0.375rem 0;
-  position: relative;      
-  list-style: none;       
-  display: flex;                 
-  align-items: left; 
-  -webkit-tap-highlight-color: transparent;          
-
-  word-break: break-word;        
-  text-align: left;
-
-  &:hover {
-    color: #0f172a;
-    list-style:none;
-  }
+  transition: color 0.25s ease, transform 0.25s ease;
+  -webkit-tap-highlight-color: transparent;
 
   &::before {
-    content: '';
-    position: absolute;
-    left: -10px;
-    top: 50%;
-    transform: translateY(-50%) scale(0);
-    width: 4px;
-    height: 4px;
-    background: linear-gradient(45deg, #3b82f6, #8b5cf6);
-    border-radius: 50%;
-    transition: transform 0.3s ease;
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(255, 210, 63, 0.72);
+    opacity: 0;
+    transform: scale(0.5);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+
+  &:hover {
+    color: #ffd23f;
+    transform: translateX(4px);
   }
 
   &:hover::before {
-    transform: translateY(-50%) scale(1);
-  }
-
-  ${media.minSm} {
-    font-size: 16px;
-
-    
-    &:hover {
-      transform: translateX(5px);
-    }
-  }
-
-  ${media.minMd} {
-    font-size: 16px;
-  
-  }
-
-  ${maxWidth(breakpoints.xs)} {
-    font-size: 16px;
-    padding: 0.5rem 0.75rem;
-    margin-bottom: 0.375rem;
-    
-    &:hover {
-      background: #ffffff;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      transform: none;
-    }
-    
-    &::before {
-      display: none;
-    }
-  }
-
-  @media (max-width: ${breakpoints.sm}) {
-    font-size: 16px;
-  }
-`;
-
-export const SocialLinks = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
-  justify-content: center;
-
-  ${media.minSm} {
-    gap: 0.875rem;
-    margin-top: 0.75rem;
-    justify-content: flex-start;
-  }
-
-  ${media.minMd} {
-    gap: 1rem;
-  }
-
-  ${maxWidth(breakpoints.xs)} {
-    gap: 0.625rem;
-    margin-top: 1.25rem;
-  }
-
-  @media (max-width: ${breakpoints.sm}) {
-    text-align: left;     
-  
-  &::after {
-    left: 0;
-    transform: none;
-  }
-  }
-`;
-
-export const SocialIcon = styled.a`
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #64748b;
-  font-size: 0.875rem;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  border: 1px solid #e2e8f0;
-  text-decoration: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  -webkit-tap-highlight-color: transparent;
-
-  &:hover {
-    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-    color: #ffffff;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.2);
-    border-color: transparent;
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-
-  ${media.minSm} {
-    width: 38px;
-    height: 38px;
-    font-size: 0.9375rem;
-  }
-
-  ${media.minMd} {
-    width: 40px;
-    height: 50px;
-    font-size: 1rem;
-    border-radius: 10px;
-  }
-
-  ${maxWidth(breakpoints.xs)} {
-    width: 34px;
-    height: 34px;
-    font-size: 0.8125rem;
-    border-radius: 6px;
-  }
-`;
-
-export const Copyright = styled.p`
-  color: #94a3b8;
-  font-size: 0.75rem;
-  margin-top: 0.25;
-  text-align: center;
-  padding-top: 0.5rem;
-  border-top: 1px solid #e2e8f0;
-  width: 100%;
-  line-height: 1.4;
-
-  ${media.minSm} {
-    font-size: 0.8rem;
-    padding-top: 0.5rem;
-    margin-top: -0.25rem;
-  }
-
-  ${media.minMd} {
-    font-size: 0.85rem;
-  }
-
-  ${maxWidth(breakpoints.xs)} {
-    font-size: 0.7rem;
-    padding-top: 1.5rem;
-  }
-`;
-
-export const Logo = styled(Link)`
-  display: inline-block;
-  text-decoration: none;
-  margin-bottom: 0.75rem;
-  -webkit-tap-highlight-color: transparent;
-
-  &:hover {
-    opacity: 0.95;
-  }
-
-  @media (max-width: ${breakpoints.sm}) {
-    display: block;
-    text-align: center;
-    margin-bottom: 1rem;
-  }
-
-  ${media.minSm} {
-    margin-bottom: 0.5rem;
-  }
-`;
-
-export const LogoContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  justify-content: center;
-
-  ${media.minSm} {
-    gap: 0.75rem;
-    justify-content: flex-start;
+    opacity: 1;
+    transform: scale(1);
   }
 
   @media (max-width: ${breakpoints.sm}) {
     justify-content: center;
-  }
-`;
-export const LogoImage = styled.img`
-  /* Mobile (default, up to 480px) */
-  width: 120px;          /* Adjust to your desired mobile width */
-  height: auto;          /* Maintains aspect ratio */
-  object-fit: contain;   /* Ensures the whole logo is visible without cropping */
-  flex-shrink: 0;
-  transition: all 0.2s ease;
-
-  /* Tablet (481px – 1024px) */
-  @media (min-width: 481px) and (max-width: 1024px) {
-    width: 180px;        /* Slightly larger than mobile */
-    height: auto;
-  }
-
-  /* Desktop (1025px and above) */
-  @media (min-width: 1025px) {
-    width: 280px;        /* Your original desktop size */
-    height: auto;
-  }
-`;
-
-export const LogoText = styled.span`
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: transparent;
-  background: #000080;
-  -webkit-background-clip: text;
-  background-clip: text;
-  letter-spacing: -0.5px;
-  line-height: 1;
-
-  ${media.minSm} {
-    font-size: 1.7rem;
-  }
-
-  ${media.minMd} {
-    font-size: 1.8rem;
-  }
-
-  ${media.minLg} {
-    font-size: 2rem;
-  }
-
-  ${maxWidth(breakpoints.xs)} {
-    font-size: 1.5rem;
-  }
-`;
-
-export const Tagline = styled.p`
-  color: #475569;
-  font-size: 16px;
-  line-height: 1.5;
-  margin-top: 0.75rem;
-  text-align: center;
-  max-width: 100%;
-  font-family: -apple-system, system-ui, sans-serif;
-
-  ${media.minSm} {
-    font-size: 0.875rem;
-    margin-top: 1rem;
-    text-align: left;
-    max-width: 320px;
-  }
-
-  ${media.minMd} {
     font-size: 0.95rem;
-    line-height: 1.6;
-  }
 
-  ${maxWidth(breakpoints.xs)} {
-    font-size: 0.8rem;
-    line-height: 1.4;
-    margin-top: 0.625rem;
-  }
-
-  @media (max-width: ${breakpoints.sm}) {
-    text-align: center;
-    margin-left: auto;
-    margin-right: auto;
+    &:hover {
+      transform: none;
+    }
   }
 `;
 
-export const BottomLinks = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  justify-content: center;
-  margin-top: 1.25rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e2e8f0;
-
-  ${media.minSm} {
-    gap: 1.25rem;
-    margin-top: 1.5rem;
-    padding-top: 2rem;
-  }
-
-  ${media.minMd} {
-    gap: 1.5rem;
-  }
-
-  ${media.minLg} {
-    gap: 2rem;
-  }
-
-  ${maxWidth(breakpoints.xs)} {
-    gap: 0.75rem;
-    margin-top: 1rem;
-    padding-top: 1.25rem;
-  }
-`;
-
-export const BottomLink = styled(Link)`
-  color: #64748b;
-  text-decoration: none;
-  font-size: 0.8rem;
-  transition: all 0.3s ease;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
+export const BottomBar = styled.div`
   position: relative;
-  -webkit-tap-highlight-color: transparent;
-  white-space: nowrap;
+  z-index: 1;
+  width: min(1180px, calc(100% - 40px));
+  margin: 34px auto 0;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
 
-  &:hover {
-    color: #3b82f6;
-    background: rgba(59, 130, 246, 0.1);
-  }
-
-  ${media.minSm} {
-    font-size: 0.825rem;
-  }
-
-  ${media.minMd} {
-    font-size: 0.85rem;
-  }
-
-  ${media.minLg} {
-    font-size: 0.9rem;
-  }
-
-  ${maxWidth(breakpoints.xs)} {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.375rem;
+  @media (max-width: ${breakpoints.md}) {
+    flex-direction: column;
+    text-align: center;
+    margin-top: 30px;
   }
 
   @media (max-width: ${breakpoints.sm}) {
-    font-size: 0.8rem;
+    width: min(100% - 28px, 520px);
   }
 `;
 
-// New responsive grid component
-export const FooterGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.75rem;
-  width: 100%;
-
-  ${media.minSm} {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-  }
-
-  ${media.minMd} {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-  }
-
-  ${media.minLg} {
-    grid-template-columns: 2fr repeat(3, 1fr);
-    gap: 3rem;
-  }
-
-  ${maxWidth(breakpoints.xs)} {
-    gap: 1rem;
-  }
-`;
-
-// Responsive brand wrapper
-export const BrandWrapper = styled.div`
-  ${media.minSm} {
-    grid-column: 1 / -1;
-  }
-
-  ${media.minMd} {
-    grid-column: 1;
-  }
-
-  ${media.minLg} {
-    grid-column: 1;
-  }
-`;
-
-// Responsive links wrapper
-export const LinksWrapper = styled.div`
-  ${media.minSm} {
-    &:nth-child(2) {
-      grid-column: 1;
-      grid-row: 2;
-    }
-    &:nth-child(3) {
-      grid-column: 2;
-      grid-row: 2;
-    }
-    &:nth-child(4) {
-      grid-column: 1;
-      grid-row: 3;
-    }
-    &:nth-child(5) {
-      grid-column: 2;
-      grid-row: 3;
-    }
-  }
-
-  ${media.minMd} {
-    &:nth-child(2) {
-      grid-column: 2;
-      grid-row: 1;
-    }
-    &:nth-child(3) {
-      grid-column: 3;
-      grid-row: 1;
-    }
-    &:nth-child(4) {
-      grid-column: 4;
-      grid-row: 1;
-    }
-    &:nth-child(5) {
-      grid-column: 1;
-      grid-row: 2;
-      margin-top: 0rem;
-    }
-  }
-
-  ${media.minLg} {
-    &:nth-child(2) {
-      grid-column: 2;
-      grid-row: 1;
-    }
-    &:nth-child(3) {
-      grid-column: 3;
-      grid-row: 1;
-    }
-    &:nth-child(4) {
-      grid-column: 4;
-      grid-row: 1;
-    }
-    &:nth-child(5) {
-      grid-column: 1 / -1;
-      grid-row: 2;
-      margin-top: 0;
-    }
-  }
-`;
-
-// If you want to keep it simple, here's a minimal working version:
-
-// Alternative minimal version without complex media queries:
-export const SimpleFooterContainer = styled.div`
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 1rem;
-
-  display: flex;
-    gap: 1rem;
-
-  @media (min-width: 768px) {
-    padding: 0 2rem;
-  }
-`;
-
-export const FooterColumn = styled.div`
-  flex: 1;                
-`;
-
-export const FooterList = styled.ul`
-  list-style: none;
-  padding: 0;
-  margin: 0;
-
-  display: flex;
-  flex-direction: column;   /* Links vertical rahenge */
-`;
-
-
-export const SimpleSection = styled.div`
-  margin-bottom: 2rem;
-  flex: 0 0 33.33%;  
-
-`;
-
-export const SimpleSectionTitle = styled.h4`
-  font-size: 0.9rem;
-  font-weight: 700;
-  margin-bottom: 0 0 0.75rem 0;
-  color: #1e293b;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  
-  @media (max-width: 767px) {
-    text-align: center;
-  }
-`;
-
-/*  App Store & Google Play CSS */
-export const StoreContainer = styled.div`
-  display: flex;
-  gap: 20px;                 
-  margin-top: 2.5rem;        
-  flex-wrap: wrap;           
-
-  justify-content: center;
-
-  @media (min-width: 768px) {
-    justify-content: flex-start;
-  }
-`;
-
-export const StoreImage = styled.img`
-  height: 45px;
-  width: auto;
-  object-fit: contain;
-  cursor: pointer;
-  transition: transform 0.3s ease;
-  border-radius: 10px;
-
-  &:hover {
-    transform: scale(1.05);
-  }
-
-  @media (max-width: 480px) {
-    height: 40px;
-  }
-`;
-
-/* ===== MOBILE BOTTOM NAVIGATION ===== */
-export const BottomNav = styled.div`
-  width: 100%;
-  margin-top: 10px;
-  margin-bottom: 0px;
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  display: flex;
-  align-items: center;
-  border-top: 1px solid #e5e7eb;
-
-   /*Mobile + iPad full width spread*/
-  justify-content: space-between;
-
-  /*Optional: iPad thoda balanced spacing*/
-  @media (min-width: 768px) and (max-width: 1024px) {
-    padding: 12px 40px; 
-  }
-
-  /*Desktop hide*/
-  @media (min-width: 1025px) {
-    display: none;
-  }
-`;
-
-export const NavItem = styled.div`
+export const BottomMeta = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  color: #374151;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: 0.3s ease;
+  gap: 6px;
 `;
 
-export const NavIcon = styled.div`
-  width: 45px;
-  height: 45px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 6px;
-  transition: 0.3s ease;
-
-   /* iPad bigger */
-  @media (min-width: 768px) and (max-width: 1024px) {
-    width: 42px;
-    height: 42px;
-  }
-
-   @media (max-width: 768px) {
-    width: 32px;
-    height: 32px;
-  }
-
-  &:hover {
-    background: #f3f4f6;
-}
+export const Copyright = styled.p`
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.86rem;
+  line-height: 1.45;
 `;
 
-export const NavText = styled.span`
-  font-size: 12px;
+export const PoweredBy = styled.p`
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.86rem;
+  font-weight: 700;
 
-   @media (max-width: 768px) {
-    font-size: 10px;
+  span {
+    color: #ffd23f;
+  }
+`;
+
+export const TrustText = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.84rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+  &::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: #ffd23f;
+    box-shadow: 0 0 16px rgba(255, 210, 63, 0.75);
   }
 `;

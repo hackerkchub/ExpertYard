@@ -304,7 +304,7 @@ const HomePage = () => {
 
           <div className="category-grid-app">
             {categoriesLoading && topCategories.length === 0
-              ? Array.from({ length: 5 }).map((_, index) => (
+              ? Array.from({ length: 10 }).map((_, index) => (
                   <div className="category-card category-card--placeholder" key={index}>
                     <div className="category-card__media" />
                     <div className="category-card__line" />

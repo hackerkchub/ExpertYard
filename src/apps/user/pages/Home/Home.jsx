@@ -1,8 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   FiClock,
+  FiChevronLeft,
+  FiChevronRight,
   FiMic,
   FiPhoneCall,
   FiPlayCircle,
@@ -113,6 +115,11 @@ const HomePage = () => {
   const { categories, loading: categoriesLoading } = useCategory();
   const { experts, expertsLoading } = usePublicExpert();
   const [searchTerm, setSearchTerm] = useState("");
+  const topCategoriesRowRef = useRef(null);
+  const [categoryScrollState, setCategoryScrollState] = useState({
+    canScrollLeft: false,
+    canScrollRight: false,
+  });
 
   useWebPush({
     panel: "user",
@@ -168,7 +175,7 @@ const HomePage = () => {
     structuredData: homeStructuredData,
   });
 
-  const topCategories = categories.slice(0, 5);
+  const topCategories = categories.slice(0, 15);
   const visibleExperts = experts.slice(0, 5);
   const expertOfTheDay = visibleExperts[0] || FALLBACK_EXPERT;
   const avatarExperts = visibleExperts.slice(0, 3);
@@ -186,6 +193,42 @@ const HomePage = () => {
     Array.from({ length: count }).map((_, index) => (
       <FiStar key={index} className="star-icon" aria-hidden="true" />
     ));
+
+  useEffect(() => {
+    const row = topCategoriesRowRef.current;
+    if (!row) return undefined;
+
+    const updateScrollState = () => {
+      const maxScroll = row.scrollWidth - row.clientWidth;
+      setCategoryScrollState({
+        canScrollLeft: row.scrollLeft > 2,
+        canScrollRight: maxScroll > 2 && row.scrollLeft < maxScroll - 2,
+      });
+    };
+
+    updateScrollState();
+    row.addEventListener("scroll", updateScrollState, { passive: true });
+    window.addEventListener("resize", updateScrollState);
+
+    return () => {
+      row.removeEventListener("scroll", updateScrollState);
+      window.removeEventListener("resize", updateScrollState);
+    };
+  }, [categoriesLoading, topCategories.length]);
+
+  const scrollTopCategories = (direction) => {
+    const row = topCategoriesRowRef.current;
+    if (!row) return;
+
+    const card = row.querySelector(".category-card");
+    const gap = Number.parseFloat(window.getComputedStyle(row).columnGap || "0") || 0;
+    const cardWidth = card?.getBoundingClientRect().width || row.clientWidth / 2;
+
+    row.scrollBy({
+      left: direction === "left" ? -(cardWidth + gap) * 2 : (cardWidth + gap) * 2,
+      behavior: "smooth",
+    });
+  };
 
   const getInitials = (name = "") =>
     name
@@ -303,28 +346,50 @@ const HomePage = () => {
             </button>
           </div>
 
-          <div className="category-grid-app">
-            {categoriesLoading && topCategories.length === 0
-              ? Array.from({ length: 10 }).map((_, index) => (
-                  <div className="category-card category-card--placeholder" key={index}>
-                    <div className="category-card__media" />
-                    <div className="category-card__line" />
-                  </div>
-                ))
-              : topCategories.map((category) => (
-                  <Link key={category.id} to={getCategoryPath(category)} className="category-card">
-                    <div className="category-card__media">
-                      {category.image_url ? (
-                        <img src={category.image_url} alt={category.name} loading="lazy" />
-                      ) : (
-                        <span>{category.name?.charAt(0)}</span>
-                      )}
+          <div className="top-categories-scroll-shell">
+            <button
+              type="button"
+              className={`top-categories-arrow top-categories-arrow--left${categoryScrollState.canScrollLeft ? "" : " top-categories-arrow--hidden"}`}
+              onClick={() => scrollTopCategories("left")}
+              aria-label="Scroll categories left"
+              disabled={!categoryScrollState.canScrollLeft}
+            >
+              <FiChevronLeft aria-hidden="true" />
+            </button>
+
+            <div className="category-grid-app top-categories-row" ref={topCategoriesRowRef}>
+              {categoriesLoading && topCategories.length === 0
+                ? Array.from({ length: 10 }).map((_, index) => (
+                    <div className="category-card category-card--placeholder" key={index}>
+                      <div className="category-card__media" />
+                      <div className="category-card__line" />
                     </div>
-                    <div className="category-card__copy">
-                      <strong>{category.name}</strong>
-                    </div>
-                  </Link>
-                ))}
+                  ))
+                : topCategories.map((category) => (
+                    <Link key={category.id} to={getCategoryPath(category)} className="category-card">
+                      <div className="category-card__media">
+                        {category.image_url ? (
+                          <img src={category.image_url} alt={category.name} loading="lazy" />
+                        ) : (
+                          <span>{category.name?.charAt(0)}</span>
+                        )}
+                      </div>
+                      <div className="category-card__copy">
+                        <strong>{category.name}</strong>
+                      </div>
+                    </Link>
+                  ))}
+            </div>
+
+            <button
+              type="button"
+              className={`top-categories-arrow top-categories-arrow--right${categoryScrollState.canScrollRight ? "" : " top-categories-arrow--hidden"}`}
+              onClick={() => scrollTopCategories("right")}
+              aria-label="Scroll categories right"
+              disabled={!categoryScrollState.canScrollRight}
+            >
+              <FiChevronRight aria-hidden="true" />
+            </button>
           </div>
         </section>
 

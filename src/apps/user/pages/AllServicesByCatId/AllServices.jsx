@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
@@ -16,6 +16,7 @@ import {
 } from "react-icons/fi";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { usePublicExpert } from "../../context/PublicExpertContext";
+import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 import * as S from "./AllServices.style";
 
 const AllServices = () => {
@@ -32,8 +33,7 @@ const AllServices = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
 
-  useEffect(() => {
-    const fetchAllServices = async () => {
+  const fetchAllServices = useCallback(async () => {
       try {
         // Background fetch: User ko purana data dikhta rahega tab tak naya load hoga
         const res = await axios.get(`https://softmaxs.com/api/services`);
@@ -48,9 +48,13 @@ const AllServices = () => {
       } finally {
         setLoading(false);
       }
-    };
-    fetchAllServices();
   }, []);
+
+  useEffect(() => {
+    fetchAllServices();
+  }, [fetchAllServices]);
+
+  useNetworkReconnect(fetchAllServices);
 
   const expertMap = useMemo(() => {
     const map = {};

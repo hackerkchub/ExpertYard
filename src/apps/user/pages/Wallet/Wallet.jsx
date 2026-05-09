@@ -15,6 +15,7 @@ import AddBalancePopup from "../../components/AddBalancePopup/AddBalancePopup";
 import { useWallet } from "../../../../shared/context/WalletContext";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { getWalletHistoryApi } from "../../../../shared/api/userApi/walletApi";
+import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 
 const formatCurrency = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(amount);
 
@@ -95,6 +96,7 @@ const WalletPage = () => {
   }, []);
 
   useEffect(() => { fetchWalletHistory(); }, [fetchWalletHistory]);
+  useNetworkReconnect(fetchWalletHistory, { enabled: Boolean(user?.id) });
 
   // Apply filters
   const applyFilters = useCallback(() => {

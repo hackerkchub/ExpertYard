@@ -55,6 +55,7 @@ import { useWallet } from "../../../../shared/context/WalletContext";
 import { socket } from "../../../../shared/api/socket";
 import { useCategory } from "../../../../shared/context/CategoryContext";
 import { getExpertsApi } from "../../../../shared/api/expertapi/expert.api";
+import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 
 const TABS = [
   { id: "call", labelKey: "callChat.callTab", icon: "📞" },
@@ -289,6 +290,10 @@ export default function UserExpertsPage() {
   useEffect(() => {
     fetchExperts();
   }, [currentPage]);
+
+  useNetworkReconnect(fetchExperts, {
+    enabled: !showWaitingPopup && !chatRequestId,
+  });
 
   // Reset subcategory when category changes
   useEffect(() => {

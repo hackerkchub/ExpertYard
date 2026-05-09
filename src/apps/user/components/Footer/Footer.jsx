@@ -32,17 +32,17 @@ const COMPANY_LINKS = [
 ];
 
 const CUSTOMER_LINKS = [
-  { labelKey: "footer.findExperts", path: "/user/call-chat?page=1&mode=chat" },
+  { labelKey: "footer.findExperts", path: "/user/find-experts" },
   { labelKey: "footer.reviews", path: "/user/reviews" },
   { labelKey: "footer.howItWorks", path: "/user/how-it-works" },
   { labelKey: "footer.faq", path: "/user/faq" },
 ];
 
 const PROFESSIONAL_LINKS = [
-  { labelKey: "footer.becomeExpert", path: "/expert/register" },
+  { labelKey: "footer.becomeExpert", path: "/user/become-expert" },
   { labelKey: "footer.expertGuidelines", path: "/user/guidelines" },
-  { labelKey: "footer.earningsModel", path: "/user/guidelines" },
-  { labelKey: "common.support", path: "/user/contact" },
+  { labelKey: "footer.earningsModel", path: "/user/earnings-model" },
+  { labelKey: "common.support", path: "/user/support" },
 ];
 
 const SERVICE_LINKS = [

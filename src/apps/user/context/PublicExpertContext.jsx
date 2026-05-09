@@ -5,6 +5,7 @@ import {
     getExpertBySlugApi,
 } from "../../../shared/api/expertapi/profile.api";
 import { getExpertPriceByIdApi } from "../../../shared/api/expertapi/price.api";
+import useNetworkReconnect from "../../../shared/hooks/useNetworkReconnect";
 
 const ExpertContext = createContext(null);
 export const usePublicExpert = () => useContext(ExpertContext);
@@ -41,8 +42,7 @@ export const PublicExpertProvider = ({ children }) => {
   const [priceLoading, setPriceLoading] = useState(false);
 
   /* ================= ALL EXPERTS ================= */
-  useEffect(() => {
-    const loadExperts = async () => {
+  const loadExperts = useCallback(async () => {
       try {
         setExpertsLoading(true);
 
@@ -71,10 +71,13 @@ pricing_modes: p.pricing_modes || [],
       } finally {
         setExpertsLoading(false);
       }
-    };
-
-    loadExperts();
   }, []);
+
+  useEffect(() => {
+    loadExperts();
+  }, [loadExperts]);
+
+  useNetworkReconnect(loadExperts);
 
   /* ================= PROFILE ================= */
   const fetchProfile = useCallback(async (slug) => {

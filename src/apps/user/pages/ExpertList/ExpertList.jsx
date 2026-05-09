@@ -1,5 +1,5 @@
 // src/pages/ExpertList/ExpertList.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
@@ -39,6 +39,7 @@ import {
 
 import { useCategory } from "../../../../shared/context/CategoryContext";
 import { getExpertsBySubCategoryApi } from "../../../../shared/api/expertapi/auth.api";
+import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 
 /* ---------------- QUERY ---------------- */
 const useQuery = () => {
@@ -67,10 +68,9 @@ const ExpertListPage = () => {
   }, [categoryId]);
 
   /* ---------------- LOAD EXPERTS ---------------- */
-  useEffect(() => {
+  const loadExperts = useCallback(async () => {
     if (!subCategoryId) return;
 
-    const loadExperts = async () => {
       try {
         setLoading(true);
         const res = await getExpertsBySubCategoryApi(subCategoryId);
@@ -81,10 +81,16 @@ const ExpertListPage = () => {
       } finally {
         setLoading(false);
       }
-    };
-
-    loadExperts();
   }, [subCategoryId]);
+
+  useEffect(() => {
+    loadExperts();
+  }, [loadExperts]);
+
+  useNetworkReconnect(() => {
+    if (categoryId) loadSubCategories(categoryId, true);
+    loadExperts();
+  }, { enabled: Boolean(categoryId || subCategoryId) });
 
   /* ---------------- TITLES ---------------- */
   const categoryName =

@@ -22,6 +22,7 @@ import { getReviewsByExpertApi } from "../../../../shared/api/expertapi/reviews.
 import { getPlansApi } from "../../../../shared/api/userApi/subscription.api";
 import ExpertCard from "../../components/userExperts/ExpertCard";
 import useChatRequest from "../../../../shared/hooks/useChatRequest";
+import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 import { socket } from "../../../../shared/api/socket";
 import { useSeo } from "../../../../shared/seo/useSeo";
 import { toAbsoluteUrl } from "../../../../shared/seo/siteConfig";
@@ -455,6 +456,15 @@ const SubcategoryPage = () => {
       }
     }
   }, [resolvedCategoryId]);
+
+  useNetworkReconnect(() => {
+    if (!resolvedCategoryId) return;
+
+    loadSubCategories(resolvedCategoryId, true);
+    if (selectedSubcategory) {
+      loadExpertsForSubcategory(selectedSubcategory);
+    }
+  }, { enabled: Boolean(resolvedCategoryId) });
 
   useEffect(() => {
     if (resolvedCategoryId && resolvedCategoryId !== prevCategoryId) {

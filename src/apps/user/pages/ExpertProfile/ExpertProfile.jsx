@@ -158,6 +158,7 @@ import {
 import { usePublicExpert as useExpert } from "../../context/PublicExpertContext";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
+import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 import { socket } from "../../../../shared/api/socket";
 import { 
   getPlansApi, 
@@ -797,6 +798,29 @@ useEffect(() => {
   useEffect(() => {
     loadFollowersAndReviews();
   }, [loadFollowersAndReviews]);
+
+  useNetworkReconnect(() => {
+    if (slug) {
+      fetchProfile(slug);
+    }
+
+    if (numericExpertId) {
+      fetchPrice(numericExpertId);
+      fetchExperience();
+      loadFollowersAndReviews();
+
+      if (activeTab === "posts") {
+        fetchPosts();
+      }
+
+      if (isLoggedIn) {
+        fetchPlans();
+        fetchActiveSubscription();
+      }
+    }
+  }, {
+    enabled: Boolean(slug || numericExpertId) && !showWaitingPopup && !requestingChat,
+  });
 
   useEffect(() => {
     setChatRequestId(null);

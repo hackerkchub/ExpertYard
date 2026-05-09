@@ -7,6 +7,7 @@ import { FaWallet } from "react-icons/fa";
 
 import { useAuth } from "../../../../shared/context/UserAuthContext"; 
 import { useWallet } from "../../../../shared/context/WalletContext"; 
+import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 import { fireAlert } from "../../../../shared/utils/lazyNotifications";
 import * as S from "./ServiceDetails.style";
 
@@ -60,6 +61,8 @@ const ServiceDetail = () => {
   useEffect(() => {
     if (slug) fetchServiceData();
   }, [slug, fetchServiceData]);
+
+  useNetworkReconnect(fetchServiceData, { enabled: Boolean(slug) });
 
   const handleBooking = async () => {
     if (!isLoggedIn) {

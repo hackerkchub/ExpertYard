@@ -1,32 +1,35 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { usePublicExpert } from "../../context/PublicExpertContext";
+import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 
 const FALLBACK_SERVICE_IMAGE = "https://via.placeholder.com/640x420?text=Service";
 
 const PopularServices = () => {
   const navigate = useNavigate();
   const { experts } = usePublicExpert();
+  const servicesRowRef = useRef(null);
 
   const [services, setServices] = useState(() => {
     const saved = localStorage.getItem("popular_services_cache");
     return saved ? JSON.parse(saved) : [];
   });
   const [loading, setLoading] = useState(services.length === 0);
+  const [scrollState, setScrollState] = useState({
+    canScrollLeft: false,
+    canScrollRight: false,
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-    const controller = new AbortController();
-
-    const fetchServices = async () => {
+  const fetchServices = useCallback(async (signal) => {
       try {
         const res = await axios.get("https://softmaxs.com/api/services", {
-          signal: controller.signal,
+        signal,
         });
 
-        if (!cancelled && res.data?.success) {
+      if (res.data?.success) {
           const freshData = res.data.data || [];
           setServices(freshData);
           localStorage.setItem("popular_services_cache", JSON.stringify(freshData));
@@ -36,19 +39,19 @@ const PopularServices = () => {
           console.error("Error fetching services:", err);
         }
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+      setLoading(false);
       }
-    };
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
 
     const hasIdleCallback = typeof window !== "undefined" && "requestIdleCallback" in window;
     const scheduledTask = hasIdleCallback
-      ? window.requestIdleCallback(fetchServices, { timeout: 1200 })
-      : window.setTimeout(fetchServices, 180);
+      ? window.requestIdleCallback(() => fetchServices(controller.signal), { timeout: 1200 })
+      : window.setTimeout(() => fetchServices(controller.signal), 180);
 
     return () => {
-      cancelled = true;
       controller.abort();
 
       if (hasIdleCallback) {
@@ -57,7 +60,9 @@ const PopularServices = () => {
         window.clearTimeout(scheduledTask);
       }
     };
-  }, []);
+  }, [fetchServices]);
+
+  useNetworkReconnect(() => fetchServices());
 
   const expertMap = useMemo(() => {
     const map = {};
@@ -73,6 +78,42 @@ const PopularServices = () => {
 
   const visibleServices = useMemo(() => services.slice(0, 10), [services]);
 
+  useEffect(() => {
+    const row = servicesRowRef.current;
+    if (!row) return undefined;
+
+    const updateScrollState = () => {
+      const maxScroll = row.scrollWidth - row.clientWidth;
+      setScrollState({
+        canScrollLeft: row.scrollLeft > 2,
+        canScrollRight: maxScroll > 2 && row.scrollLeft < maxScroll - 2,
+      });
+    };
+
+    updateScrollState();
+    row.addEventListener("scroll", updateScrollState, { passive: true });
+    window.addEventListener("resize", updateScrollState);
+
+    return () => {
+      row.removeEventListener("scroll", updateScrollState);
+      window.removeEventListener("resize", updateScrollState);
+    };
+  }, [loading, visibleServices.length]);
+
+  const scrollServices = (direction) => {
+    const row = servicesRowRef.current;
+    if (!row) return;
+
+    const card = row.firstElementChild;
+    const gap = Number.parseFloat(window.getComputedStyle(row).columnGap || "0") || 0;
+    const cardWidth = card?.getBoundingClientRect().width || row.clientWidth / 2;
+
+    row.scrollBy({
+      left: direction === "left" ? -(cardWidth + gap) * 2 : (cardWidth + gap) * 2,
+      behavior: "smooth",
+    });
+  };
+
   return (
     <SectionWrapper>
       <div className="section-topline">
@@ -86,59 +127,83 @@ const PopularServices = () => {
         </button>
       </div>
 
-      <HorizontalScrollContainer>
-        {loading && visibleServices.length === 0
-          ? Array.from({ length: 5 }).map((_, index) => (
-              <ServiceSkeleton key={index} aria-hidden="true">
-                <div className="media" />
-                <div className="line title" />
-                <div className="line copy" />
-                <div className="line footer" />
-              </ServiceSkeleton>
-            ))
-          : visibleServices.map((service, index) => (
-              <ServiceCard
-                key={service.id}
-                onClick={() => navigate(`/user/service-details/${service.slug || service.id}`)}
-              >
-                <ImageContainer>
-                  <img
-                    src={service.image || FALLBACK_SERVICE_IMAGE}
-                    alt={service.title || "Service"}
-                    loading="lazy"
-                    decoding="async"
-                    fetchPriority={index < 2 ? "high" : "auto"}
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = FALLBACK_SERVICE_IMAGE;
-                    }}
-                  />
-                  <span className="service-badge">Verified service</span>
-                </ImageContainer>
+      <ServiceScrollShell>
+        <ScrollArrow
+          type="button"
+          $side="left"
+          $hidden={!scrollState.canScrollLeft}
+          onClick={() => scrollServices("left")}
+          aria-label="Scroll services left"
+          disabled={!scrollState.canScrollLeft}
+        >
+          <FiChevronLeft aria-hidden="true" />
+        </ScrollArrow>
 
-                <CardBody>
-                  <h4 className="service-title">{service.title || "Professional Service"}</h4>
-                  <p className="service-description">
-                    {service.description?.trim()
-                      ? service.description.substring(0, 92)
-                      : "Book a focused professional service session tailored to your requirement."}
-                    {service.description?.length > 92 ? "..." : ""}
-                  </p>
-                  <div className="footer-row">
-                    <p className="expert-name">
-                      by {expertMap[service.expert_id] || "Expert Professional"}
+        <HorizontalScrollContainer ref={servicesRowRef}>
+          {loading && visibleServices.length === 0
+            ? Array.from({ length: 5 }).map((_, index) => (
+                <ServiceSkeleton key={index} aria-hidden="true">
+                  <div className="media" />
+                  <div className="line title" />
+                  <div className="line copy" />
+                  <div className="line footer" />
+                </ServiceSkeleton>
+              ))
+            : visibleServices.map((service, index) => (
+                <ServiceCard
+                  key={service.id}
+                  onClick={() => navigate(`/user/service-details/${service.slug || service.id}`)}
+                >
+                  <ImageContainer>
+                    <img
+                      src={service.image || FALLBACK_SERVICE_IMAGE}
+                      alt={service.title || "Service"}
+                      loading="lazy"
+                      decoding="async"
+                      fetchPriority={index < 2 ? "high" : "auto"}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = FALLBACK_SERVICE_IMAGE;
+                      }}
+                    />
+                    <span className="service-badge">Verified service</span>
+                  </ImageContainer>
+
+                  <CardBody>
+                    <h4 className="service-title">{service.title || "Professional Service"}</h4>
+                    <p className="service-description">
+                      {service.description?.trim()
+                        ? service.description.substring(0, 92)
+                        : "Book a focused professional service session tailored to your requirement."}
+                      {service.description?.length > 92 ? "..." : ""}
                     </p>
-                    {Number(service.price) > 0 && (
-                      <span className="price-tag">{`\u20B9${Math.floor(service.price)}`}</span>
-                    )}
-                  </div>
-                </CardBody>
-              </ServiceCard>
-            ))}
-        {!loading && visibleServices.length === 0 && (
-          <EmptyState>No services available right now.</EmptyState>
-        )}
-      </HorizontalScrollContainer>
+                    <div className="footer-row">
+                      <p className="expert-name">
+                        by {expertMap[service.expert_id] || "Expert Professional"}
+                      </p>
+                      {Number(service.price) > 0 && (
+                        <span className="price-tag">{`\u20B9${Math.floor(service.price)}`}</span>
+                      )}
+                    </div>
+                  </CardBody>
+                </ServiceCard>
+              ))}
+          {!loading && visibleServices.length === 0 && (
+            <EmptyState>No services available right now.</EmptyState>
+          )}
+        </HorizontalScrollContainer>
+
+        <ScrollArrow
+          type="button"
+          $side="right"
+          $hidden={!scrollState.canScrollRight}
+          onClick={() => scrollServices("right")}
+          aria-label="Scroll services right"
+          disabled={!scrollState.canScrollRight}
+        >
+          <FiChevronRight aria-hidden="true" />
+        </ScrollArrow>
+      </ServiceScrollShell>
     </SectionWrapper>
   );
 };
@@ -181,6 +246,73 @@ const SectionWrapper = styled.section`
 
     .section-topline {
       padding: 0 16px;
+    }
+  }
+`;
+
+const ServiceScrollShell = styled.div`
+  position: relative;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+`;
+
+const ScrollArrow = styled.button`
+  position: absolute;
+  top: 50%;
+  ${({ $side }) => ($side === "left" ? "left: 8px;" : "right: 8px;")}
+  z-index: 3;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(244, 197, 66, 0.28);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at top left, rgba(244, 197, 66, 0.24), transparent 42%),
+    rgba(0, 0, 128, 0.9);
+  color: #ffffff;
+  box-shadow:
+    0 14px 28px rgba(0, 0, 128, 0.22),
+    0 0 18px rgba(244, 197, 66, 0.12);
+  backdrop-filter: blur(10px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transform: translateY(-50%) ${({ $hidden }) => ($hidden ? "scale(0.94)" : "scale(1)")};
+  opacity: ${({ $hidden }) => ($hidden ? 0 : 1)};
+  pointer-events: ${({ $hidden }) => ($hidden ? "none" : "auto")};
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+
+  svg {
+    width: 19px;
+    height: 19px;
+    stroke-width: 2.6;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-50%) scale(1.06);
+    border-color: rgba(244, 197, 66, 0.58);
+    box-shadow:
+      0 18px 34px rgba(0, 0, 128, 0.28),
+      0 0 24px rgba(244, 197, 66, 0.18);
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+
+  @media (max-width: 480px) {
+    width: 30px;
+    height: 30px;
+    ${({ $side }) => ($side === "left" ? "left: 6px;" : "right: 6px;")}
+
+    svg {
+      width: 17px;
+      height: 17px;
     }
   }
 `;

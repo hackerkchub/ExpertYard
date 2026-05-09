@@ -21,6 +21,15 @@
   }
 }
 
+@keyframes trustStatsMarquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 .trust-stats-section {
   position: relative;
   overflow: hidden;
@@ -91,6 +100,13 @@
   gap: 10px;
 }
 
+.trust-stats-scroll {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .trust-stat-card {
   min-width: 0;
   min-height: 126px;
@@ -112,6 +128,10 @@
     border-color 0.22s ease,
     background 0.22s ease,
     box-shadow 0.22s ease;
+}
+
+.trust-stat-card--clone {
+  display: none;
 }
 
 .trust-stat-card__icon {
@@ -180,6 +200,51 @@
   }
 }
 
+@media (max-width: 639px) {
+  .trust-stats-section {
+    overflow-x: hidden;
+  }
+
+  .trust-stats-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+
+  .trust-stats-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .trust-stats-grid {
+    display: flex;
+    grid-template-columns: none;
+    width: max-content;
+    min-width: max-content;
+    gap: 12px;
+    animation: trustStatsMarquee 24s linear infinite;
+    will-change: transform;
+  }
+
+  .trust-stats-scroll:hover .trust-stats-grid,
+  .trust-stats-scroll:active .trust-stats-grid,
+  .trust-stats-scroll:focus-within .trust-stats-grid {
+    animation-play-state: paused;
+  }
+
+  .trust-stat-card,
+  .trust-stat-card--clone {
+    display: block;
+    flex: 0 0 min(76vw, 260px);
+    width: min(76vw, 260px);
+    max-width: min(76vw, 260px);
+    scroll-snap-align: start;
+  }
+}
+
 @media (min-width: 1024px) {
   .trust-stats-section {
     padding: 20px;
@@ -187,6 +252,19 @@
 
   .trust-stats-grid {
     grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trust-stats-grid,
+  .trust-stat-card,
+  .trust-stat-card__icon {
+    animation: none;
+  }
+
+  .trust-stat-card {
+    opacity: 1;
+    transform: none;
   }
 }
 

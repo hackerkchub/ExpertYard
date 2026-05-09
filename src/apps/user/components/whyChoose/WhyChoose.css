@@ -1,4 +1,28 @@
 .why-choose-section {
+  --why-shadow: 0 14px 32px rgba(10, 20, 60, 0.07);
+}
+
+@keyframes whyChooseFade {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes whyChooseMarquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.why-choose-section {
   position: relative;
   overflow: hidden;
   background:
@@ -50,6 +74,13 @@
   gap: 12px;
 }
 
+.why-choose-scroll {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .why-choose-card {
   min-width: 0;
   min-height: 190px;
@@ -60,13 +91,20 @@
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 251, 255, 0.78)),
     radial-gradient(circle at top right, rgba(244, 197, 66, 0.12), transparent 42%);
-  box-shadow: 0 14px 32px rgba(10, 20, 60, 0.07);
+  box-shadow: var(--why-shadow);
   display: flex;
   flex-direction: column;
+  opacity: 0;
+  animation: whyChooseFade 0.48s ease forwards;
+  animation-delay: var(--why-delay);
   transition:
     transform 0.22s ease,
     border-color 0.22s ease,
     box-shadow 0.22s ease;
+}
+
+.why-choose-card--clone {
+  display: none;
 }
 
 .why-choose-card__icon {
@@ -106,8 +144,10 @@
 @media (hover: hover) and (pointer: fine) {
   .why-choose-card:hover {
     transform: translateY(-4px);
-    border-color: rgba(0, 0, 128, 0.2);
-    box-shadow: 0 22px 46px rgba(10, 20, 60, 0.12);
+    border-color: rgba(244, 197, 66, 0.42);
+    box-shadow:
+      0 22px 46px rgba(10, 20, 60, 0.12),
+      0 0 24px rgba(244, 197, 66, 0.12);
   }
 
   .why-choose-card:hover .why-choose-card__icon {
@@ -124,9 +164,54 @@
   }
 }
 
+@media (max-width: 639px) {
+  .why-choose-section {
+    overflow-x: hidden;
+  }
+
+  .why-choose-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+
+  .why-choose-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .why-choose-grid {
+    display: flex;
+    grid-template-columns: none;
+    width: max-content;
+    min-width: max-content;
+    gap: 12px;
+    animation: whyChooseMarquee 30s linear infinite;
+    will-change: transform;
+  }
+
+  .why-choose-scroll:hover .why-choose-grid,
+  .why-choose-scroll:active .why-choose-grid,
+  .why-choose-scroll:focus-within .why-choose-grid {
+    animation-play-state: paused;
+  }
+
+  .why-choose-card,
+  .why-choose-card--clone {
+    display: flex;
+    flex: 0 0 min(78vw, 276px);
+    width: min(78vw, 276px);
+    max-width: min(78vw, 276px);
+    scroll-snap-align: start;
+  }
+}
+
 @media (min-width: 1024px) {
   .why-choose-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -140,5 +225,18 @@
     width: 50px;
     height: 50px;
     border-radius: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .why-choose-grid,
+  .why-choose-card,
+  .why-choose-card__icon {
+    animation: none;
+  }
+
+  .why-choose-card {
+    opacity: 1;
+    transform: none;
   }
 }

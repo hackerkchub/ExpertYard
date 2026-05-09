@@ -12,37 +12,39 @@ import "./TrustStats.css";
 
 const stats = [
   {
-    value: "20,000+",
-    label: "Users",
+    value: "1000+",
+    label: "Happy Users",
     icon: FiUsers,
   },
   {
-    value: "5,000+",
+    value: "Verified",
     label: "Verified Experts",
     icon: FiUserCheck,
   },
   {
-    value: "24/7",
-    label: "Instant Support",
+    value: "Secure",
+    label: "Chat & Call",
     icon: FiHeadphones,
   },
   {
-    value: "50+",
+    value: "20+",
     label: "Categories",
     icon: FiGrid,
   },
   {
-    value: "Secure",
-    label: "Payments",
+    value: "Fast",
+    label: "Response",
     icon: FiShield,
   },
   {
-    value: "Real-Time",
-    label: "Consultation",
+    value: "Trusted",
+    label: "Online Services",
     icon: FiClock,
     accentIcon: FiZap,
   },
 ];
+
+const statItems = [...stats, ...stats];
 
 const TrustStats = () => (
   <section className="trust-stats-section">
@@ -52,22 +54,30 @@ const TrustStats = () => (
       <p>Connect instantly with verified experts and trusted online services across multiple categories.</p>
     </div>
 
-    <div className="trust-stats-grid">
-      {stats.map((item, index) => {
-        const Icon = item.icon;
-        const AccentIcon = item.accentIcon;
+    <div className="trust-stats-scroll">
+      <div className="trust-stats-grid">
+        {statItems.map((item, index) => {
+          const Icon = item.icon;
+          const AccentIcon = item.accentIcon;
+          const isClone = index >= stats.length;
 
-        return (
-          <article className="trust-stat-card" key={item.label} style={{ "--stat-delay": `${index * 70}ms` }}>
-            <span className="trust-stat-card__icon">
-              <Icon aria-hidden="true" />
-              {AccentIcon && <AccentIcon className="trust-stat-card__accent" aria-hidden="true" />}
-            </span>
-            <strong>{item.value}</strong>
-            <span>{item.label}</span>
-          </article>
-        );
-      })}
+          return (
+            <article
+              className={`trust-stat-card${isClone ? " trust-stat-card--clone" : ""}`}
+              key={`${item.label}-${index}`}
+              style={{ "--stat-delay": `${(index % stats.length) * 70}ms` }}
+              aria-hidden={isClone ? "true" : undefined}
+            >
+              <span className="trust-stat-card__icon">
+                <Icon aria-hidden="true" />
+                {AccentIcon && <AccentIcon className="trust-stat-card__accent" aria-hidden="true" />}
+              </span>
+              <strong>{item.value}</strong>
+              <span>{item.label}</span>
+            </article>
+          );
+        })}
+      </div>
     </div>
   </section>
 );

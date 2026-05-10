@@ -26,8 +26,6 @@ import {
   FiGift,
   FiUser,
   FiLogOut,
-  FiMessageSquare,
-  FiArrowLeft,
   FiChevronDown,
   FiClock,
   FiGrid,
@@ -39,8 +37,6 @@ import logo from "../../../../assets/logo.webp";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
 import ProfilePopup from "../ProfilePopup";
-
-const HOME_PATHS = ["/", "/user", "/user/", "/user/home", "/user/home/"];
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -58,22 +54,10 @@ const Navbar = () => {
   });
 
   const userBtnRef = useRef(null);
-  const isHomePage = HOME_PATHS.includes(location.pathname);
 
   const handleNav = (path) => {
     navigate(path);
     setOpen(false);
-  };
-
-  const handleSmartBack = () => {
-    const state = location.state;
-
-    if (state?.from === "chat" && state?.expertId) {
-      navigate(`/user/experts/${state.expertId}`, { replace: true });
-      return;
-    }
-
-    navigate(-1);
   };
 
   useEffect(() => {
@@ -131,61 +115,33 @@ const Navbar = () => {
       <Nav>
         <Container>
           <BrandBox
-            to={isHomePage ? "/user" : "#"}
-            onClick={(event) => {
-              if (!isHomePage) {
-                event.preventDefault();
-                handleSmartBack();
-              }
-            }}
+            to="/user"
+            onClick={() => setOpen(false)}
           >
-            {!isHomePage && (
-              <div className="back-btn-mobile" style={{ alignItems: "center" }}>
-                <FiArrowLeft size={22} style={{ color: "#111827" }} />
-              </div>
-            )}
-
             <BrandLogo
               src={logo}
               alt="G9Expert"
-              className={!isHomePage ? "hide-logo-on-mobile" : ""}
             />
           </BrandBox>
 
-          {isHomePage && (
-            <DesktopNav>
-              <NavList>
-                {primaryMenuItems.map(({ label, path, hasArrow }) => (
-                  <NavItem
-                    key={label}
-                    type="button"
-                    $active={location.pathname === path}
-                    onClick={() => handleNav(path)}
-                  >
-                    {label}
-                    {hasArrow && <FiChevronDown />}
-                  </NavItem>
-                ))}
-              </NavList>
-            </DesktopNav>
-          )}
+          <DesktopNav>
+            <NavList>
+              {primaryMenuItems.map(({ label, path, hasArrow }) => (
+                <NavItem
+                  key={label}
+                  type="button"
+                  $active={location.pathname === path}
+                  onClick={() => handleNav(path)}
+                >
+                  {label}
+                  {hasArrow && <FiChevronDown />}
+                </NavItem>
+              ))}
+            </NavList>
+          </DesktopNav>
 
           <RightActions>
             <IconBox>
-              {!isHomePage && (
-                <>
-                  <button onClick={() => navigate("/user")} title={t("common.home")}>
-                    <FiHome />
-                  </button>
-                  <button onClick={() => navigate("/user/all-services")} title={t("common.offers")}>
-                    <FiGift />
-                  </button>
-                  <button onClick={() => navigate("/user/chat-history")} title={t("common.history")}>
-                    <FiMessageSquare />
-                  </button>
-                </>
-              )}
-
               <WalletIconWrap
                 className="wallet-btn essential"
                 onClick={() => navigate("/user/wallet")}

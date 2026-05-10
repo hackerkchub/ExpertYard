@@ -11,11 +11,14 @@ export const Nav = styled.nav`
   left: 0;
   right: 0;
   z-index: 10000;
-  background: rgba(255, 255, 255, 0.9);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.82);
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
-  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.07);
+  background:
+    radial-gradient(circle at 8% 0%, rgba(255, 193, 7, 0.16), transparent 28%),
+    radial-gradient(circle at 90% 0%, rgba(0, 0, 128, 0.12), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 248, 255, 0.9));
+  border-bottom: 1px solid rgba(0, 0, 128, 0.1);
+  backdrop-filter: blur(20px) saturate(165%);
+  -webkit-backdrop-filter: blur(20px) saturate(165%);
+  box-shadow: 0 16px 40px rgba(0, 0, 128, 0.08);
 
   &::before {
     content: "";
@@ -33,7 +36,7 @@ export const Container = styled.div`
   width: 100%;
   height: 70px;
   margin: 0 auto;
-  padding: 0 clamp(14px, 3vw, 26px);
+  padding: 0 clamp(16px, 3vw, 28px);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -114,7 +117,10 @@ export const BrandLogo = styled.img`
   object-fit: contain;
   object-position: left center;
   flex-shrink: 0;
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 128, 0.08));
+  border-radius: 12px;
+  background: transparent;
+  mix-blend-mode: multiply;
+  filter: drop-shadow(0 7px 14px rgba(0, 0, 128, 0.1));
 
   @media (min-width: 1025px) {
     width: 176px;
@@ -164,9 +170,12 @@ export const NavList = styled.div`
   min-height: 46px;
   padding: 5px;
   border-radius: 999px;
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(255, 255, 255, 0.94));
-  border: 1px solid rgba(226, 232, 240, 0.95);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 10px 24px rgba(15, 23, 42, 0.04);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(248, 250, 255, 0.72));
+  border: 1px solid rgba(0, 0, 128, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 12px 28px rgba(0, 0, 128, 0.06);
 `;
 
 export const NavItem = styled.button`
@@ -210,7 +219,7 @@ export const NavItem = styled.button`
 
   &:hover {
     color: ${NAVY};
-    background: rgba(0, 0, 128, 0.07);
+    background: rgba(0, 0, 128, 0.08);
     transform: translateY(-1px);
   }
 
@@ -261,12 +270,12 @@ export const IconBox = styled.div`
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid rgba(226, 232, 240, 0.95);
+    border: 1px solid rgba(0, 0, 128, 0.1);
     border-radius: 15px;
-    background: linear-gradient(180deg, #ffffff, #f8fafc);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 255, 0.78));
     color: #334155;
     cursor: pointer;
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+    box-shadow: 0 10px 22px rgba(0, 0, 128, 0.06);
     transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease, border-color 0.2s ease,
       box-shadow 0.2s ease;
 
@@ -285,8 +294,9 @@ export const IconBox = styled.div`
 
   .wallet-btn {
     color: ${NAVY};
-    background: linear-gradient(180deg, #fff9db, #ffffff);
-    border-color: rgba(255, 193, 7, 0.42);
+    background: linear-gradient(180deg, #fff6cf, rgba(255, 255, 255, 0.9));
+    border-color: rgba(255, 193, 7, 0.5);
+    box-shadow: 0 12px 24px rgba(255, 193, 7, 0.16);
   }
 
   @media (max-width: 768px) {
@@ -351,9 +361,9 @@ export const LanguageSwitcher = styled.div`
   min-height: 38px;
   padding: 3px;
   border-radius: 999px;
-  background: #f8fafc;
-  border: 1px solid rgba(226, 232, 240, 0.95);
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+  background: rgba(248, 250, 255, 0.86);
+  border: 1px solid rgba(0, 0, 128, 0.1);
+  box-shadow: 0 10px 22px rgba(0, 0, 128, 0.05);
 
   @media (max-width: 480px) {
     min-height: 34px;
@@ -394,7 +404,7 @@ export const LanguageOption = styled.button`
 export const AuthButton = styled.button`
   border: 0;
   border-radius: 999px;
-  background: linear-gradient(135deg, ${NAVY}, #1111a8);
+  background: linear-gradient(135deg, ${NAVY}, #1212a6);
   color: #ffffff;
   min-height: 42px;
   padding: 0 18px;
@@ -403,7 +413,7 @@ export const AuthButton = styled.button`
   cursor: pointer;
   white-space: nowrap;
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-  box-shadow: 0 14px 26px rgba(0, 0, 128, 0.18);
+  box-shadow: 0 14px 28px rgba(0, 0, 128, 0.22);
 
   &:hover {
     transform: translateY(-2px);
@@ -427,9 +437,9 @@ export const MobileIcon = styled.button`
   justify-content: center;
   width: 42px;
   height: 42px;
-  border: 1px solid rgba(226, 232, 240, 0.95);
+  border: 1px solid rgba(0, 0, 128, 0.12);
   border-radius: 15px;
-  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 255, 0.82));
   color: ${NAVY};
   cursor: pointer;
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
@@ -461,12 +471,13 @@ export const MobileMenu = styled.div`
   display: grid;
   gap: 9px;
   padding: 12px;
-  border: 1px solid rgba(226, 232, 240, 0.92);
+  border: 1px solid rgba(0, 0, 128, 0.12);
   border-radius: 24px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98)),
+    radial-gradient(circle at top left, rgba(255, 193, 7, 0.14), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 249, 255, 0.98)),
     #ffffff;
-  box-shadow: 0 28px 54px rgba(15, 23, 42, 0.18);
+  box-shadow: 0 28px 58px rgba(0, 0, 128, 0.18);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   z-index: 10001;
@@ -480,8 +491,8 @@ export const MobileMenu = styled.div`
     height: 14px;
     transform: rotate(45deg);
     background: #ffffff;
-    border-left: 1px solid rgba(226, 232, 240, 0.92);
-    border-top: 1px solid rgba(226, 232, 240, 0.92);
+    border-left: 1px solid rgba(0, 0, 128, 0.12);
+    border-top: 1px solid rgba(0, 0, 128, 0.12);
   }
 
   @media (max-width: 768px) {
@@ -503,12 +514,12 @@ export const MobileItem = styled.div`
   min-height: 46px;
   padding: 12px 14px;
   border-radius: 16px;
-  background: #f8fafc;
+  background: rgba(248, 250, 255, 0.9);
   color: #1f2937;
   font-size: 14px;
   font-weight: 760;
   cursor: pointer;
-  border: 1px solid rgba(226, 232, 240, 0.72);
+  border: 1px solid rgba(0, 0, 128, 0.08);
   transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
   -webkit-tap-highlight-color: transparent;
 

@@ -70,16 +70,10 @@ const QUICK_ACTIONS = [
     to: "/user/call-chat?page=1&mode=call",
   },
   {
-    titleKey: "home.videoCall",
-    subtitleKey: "home.faceToFace",
-    icon: FiVideo,
-    disabled: true,
-  },
-  {
     titleKey: "home.consultAgain",
     subtitleKey: "home.continue",
     icon: FiClock,
-    to: "/user/chat-history",
+    to: "/user/all-services",
   },
 ];
 

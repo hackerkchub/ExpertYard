@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   FiArrowRight,
   FiBarChart2,
@@ -24,7 +25,7 @@ import {
 
 import { useSeo } from "../../../../shared/seo/useSeo";
 import { SITE_CONFIG, toAbsoluteUrl } from "../../../../shared/seo/siteConfig";
-import { getFooterPage } from "./footerPageData";
+import { getFooterPage, getFooterPageAction } from "./footerPageData";
 import {
   Badge,
   Breadcrumb,
@@ -88,9 +89,9 @@ const Icon = ({ name = "shield" }) => {
   );
 };
 
-const ActionLink = ({ action, variant }) => (
+const ActionLink = ({ action, label, variant }) => (
   <CtaLink to={action.to} $variant={action.variant || variant}>
-    {action.label}
+    {label}
     <FiArrowRight aria-hidden="true" />
   </CtaLink>
 );
@@ -111,7 +112,7 @@ const itemMatchesQuery = (item, query) => {
     .includes(query);
 };
 
-const buildStructuredData = (page, faqItems) => {
+const buildStructuredData = (page, copy, faqItems, homeLabel) => {
   const canonicalUrl = toAbsoluteUrl(page.path);
   const base = [
     {
@@ -124,8 +125,8 @@ const buildStructuredData = (page, faqItems) => {
     {
       "@context": "https://schema.org",
       "@type": "WebPage",
-      name: page.title,
-      description: page.description,
+      name: copy.title,
+      description: copy.description,
       url: canonicalUrl,
       isPartOf: {
         "@type": "WebSite",
@@ -140,13 +141,13 @@ const buildStructuredData = (page, faqItems) => {
         {
           "@type": "ListItem",
           position: 1,
-          name: "Home",
+          name: homeLabel,
           item: toAbsoluteUrl("/user"),
         },
         {
           "@type": "ListItem",
           position: 2,
-          name: page.title,
+          name: copy.title,
           item: canonicalUrl,
         },
       ],
@@ -172,13 +173,13 @@ const buildStructuredData = (page, faqItems) => {
 };
 
 const getFaqItems = (sections = []) =>
-  sections.flatMap((section) => (section.type === "faq" ? section.items || [] : []));
+  sections.flatMap((section) => (section.type === "faq" ? section.renderItems || [] : []));
 
 const SectionRenderer = ({ section }) => {
   if (section.type === "cards") {
     return (
       <CardsGrid>
-        {section.items?.map((item) => (
+        {section.renderItems?.map((item) => (
           <InfoCard key={`${section.id}-${item.title}`}>
             <Icon name={item.icon} />
             <h3>{item.title}</h3>
@@ -192,7 +193,7 @@ const SectionRenderer = ({ section }) => {
   if (section.type === "steps") {
     return (
       <Timeline>
-        {section.items?.map((item, index) => (
+        {section.renderItems?.map((item, index) => (
           <StepCard key={`${section.id}-${item.title}`}>
             <strong>{String(index + 1).padStart(2, "0")}</strong>
             <Icon name={item.icon || "zap"} />
@@ -207,7 +208,7 @@ const SectionRenderer = ({ section }) => {
   if (section.type === "list") {
     return (
       <Checklist>
-        {section.items?.map((item) => (
+        {section.renderItems?.map((item) => (
           <CheckItem key={`${section.id}-${item}`}>
             <FiCheckCircle aria-hidden="true" />
             <span>{item}</span>
@@ -220,7 +221,7 @@ const SectionRenderer = ({ section }) => {
   if (section.type === "faq") {
     return (
       <FaqList>
-        {section.items?.map((item) => (
+        {section.renderItems?.map((item) => (
           <FaqItem key={`${section.id}-${item.question}`}>
             <summary>
               {item.question}
@@ -236,7 +237,7 @@ const SectionRenderer = ({ section }) => {
   if (section.type === "legal") {
     return (
       <LegalText>
-        {section.items?.map((item) => (
+        {section.renderItems?.map((item) => (
           <article key={`${section.id}-${item.title}`}>
             <h3>{item.title}</h3>
             <p>{item.text}</p>
@@ -251,47 +252,121 @@ const SectionRenderer = ({ section }) => {
 
 const FooterPage = ({ pageKey }) => {
   const page = getFooterPage(pageKey);
+  const { t, i18n } = useTranslation();
   const [query, setQuery] = useState("");
 
-  const faqItems = useMemo(() => getFaqItems(page?.sections), [page]);
+  const prefix = `footerPages.${page?.key || pageKey}`;
+  const translate = (key, defaultValue = "") => t(`${prefix}.${key}`, { defaultValue });
+  const translateAction = (action) => {
+    const resolvedAction = getFooterPageAction(action);
+    const label = resolvedAction.labelKey
+      ? t(resolvedAction.labelKey)
+      : translate(`actions.${resolvedAction.labelId}`);
+
+    return { action: resolvedAction, label };
+  };
+
+  const copy = useMemo(() => {
+    if (!page) return null;
+
+    return {
+      label: translate("label"),
+      title: translate("title"),
+      subtitle: translate("subtitle"),
+      description: translate("description"),
+      keywords: translate("keywords"),
+      searchPlaceholder: page.search ? translate("searchPlaceholder") : "",
+      linksTitle: translate("linksTitle", t("footerPages.common.relatedPages")),
+      badges: page.badgeIds?.map((id) => translate(`badges.${id}`)) || [],
+      stats:
+        page.stats?.map((id) => ({
+          value: translate(`stats.${id}.value`),
+          label: translate(`stats.${id}.label`),
+        })) || [],
+      ctas: page.ctas?.map(translateAction) || [],
+      links:
+        page.links?.map((link) => ({
+          ...link,
+          label: translate(`links.${link.id}`),
+        })) || [],
+      cta: page.cta
+        ? {
+            title: translate(`cta.${page.cta.id}.title`),
+            text: translate(`cta.${page.cta.id}.text`),
+            ...translateAction(page.cta.action),
+          }
+        : null,
+      sections:
+        page.sections?.map((section) => ({
+          ...section,
+          title: translate(`sections.${section.id}.title`),
+          text: translate(`sections.${section.id}.text`),
+          renderItems:
+            section.items?.map((item) => {
+              const itemId = typeof item === "string" ? item : item.id;
+              const icon = typeof item === "string" ? undefined : item.icon;
+              const itemPrefix = `sections.${section.id}.items.${itemId}`;
+
+              if (section.type === "faq") {
+                return {
+                  question: translate(`${itemPrefix}.question`),
+                  answer: translate(`${itemPrefix}.answer`),
+                };
+              }
+
+              if (section.type === "list") {
+                return translate(itemPrefix);
+              }
+
+              return {
+                icon,
+                title: translate(`${itemPrefix}.title`),
+                text: translate(`${itemPrefix}.text`),
+              };
+            }) || [],
+        })) || [],
+    };
+  }, [i18n.language, page, prefix, t]);
+
+  const faqItems = useMemo(() => getFaqItems(copy?.sections), [copy]);
   const structuredData = useMemo(
-    () => (page ? buildStructuredData(page, faqItems) : []),
-    [page, faqItems]
+    () => (page && copy ? buildStructuredData(page, copy, faqItems, t("common.home")) : []),
+    [page, copy, faqItems, t]
   );
 
   useSeo({
-    title: page ? `${page.title} | ${SITE_CONFIG.siteName}` : SITE_CONFIG.siteName,
-    description: page?.description || "G9 Experts",
+    title: copy ? `${copy.title} | ${SITE_CONFIG.siteName}` : SITE_CONFIG.siteName,
+    description: copy?.description || "G9 Experts",
     canonicalPath: page?.path || "/user",
-    keywords: page?.keywords,
+    keywords: copy?.keywords,
     og: {
-      title: page ? `${page.title} | ${SITE_CONFIG.siteName}` : SITE_CONFIG.siteName,
-      description: page?.description,
+      title: copy ? `${copy.title} | ${SITE_CONFIG.siteName}` : SITE_CONFIG.siteName,
+      description: copy?.description,
     },
     twitter: {
-      title: page ? `${page.title} | ${SITE_CONFIG.siteName}` : SITE_CONFIG.siteName,
-      description: page?.description,
+      title: copy ? `${copy.title} | ${SITE_CONFIG.siteName}` : SITE_CONFIG.siteName,
+      description: copy?.description,
     },
     structuredData,
   });
 
   const filteredSections = useMemo(() => {
-    if (!page?.sections) return [];
+    if (!copy?.sections) return [];
     const normalizedQuery = normalizeText(query).trim();
-    if (!normalizedQuery) return page.sections;
+    if (!normalizedQuery) return copy.sections;
 
-    return page.sections
+    return copy.sections
       .map((section) => ({
         ...section,
-        items: section.items?.filter((item) => itemMatchesQuery(item, normalizedQuery)),
+        renderItems: section.renderItems?.filter((item) => itemMatchesQuery(item, normalizedQuery)),
       }))
       .filter((section) => {
         const sectionMatches = normalizeText(`${section.title} ${section.text}`).includes(normalizedQuery);
-        return sectionMatches || (section.items && section.items.length > 0);
+        return sectionMatches || (section.renderItems && section.renderItems.length > 0);
       });
-  }, [page, query]);
+  }, [copy, query]);
 
-  if (!page) return null;
+  if (!page || !copy) return null;
 
   const body = (
     <Content>
@@ -303,11 +378,11 @@ const FooterPage = ({ pageKey }) => {
         </Section>
       ))}
 
-      {page.links?.length ? (
+      {copy.links?.length ? (
         <Section aria-labelledby={`${pageKey}-links`}>
-          <h2 id={`${pageKey}-links`}>{page.linksTitle || "Related Pages"}</h2>
+          <h2 id={`${pageKey}-links`}>{copy.linksTitle}</h2>
           <LinkGrid>
-            {page.links.map((link) => (
+            {copy.links.map((link) => (
               <PillLink key={link.to} to={link.to}>
                 {link.label}
                 <FiArrowRight aria-hidden="true" />
@@ -323,25 +398,25 @@ const FooterPage = ({ pageKey }) => {
     <Page>
       <Hero>
         <HeroInner>
-          <Breadcrumb aria-label="Breadcrumb">
-            <Link to="/user">Home</Link>
+          <Breadcrumb aria-label={t("footerPages.common.breadcrumb")}>
+            <Link to="/user">{t("common.home")}</Link>
             <span>/</span>
-            <span>{page.title}</span>
+            <span>{copy.title}</span>
           </Breadcrumb>
 
           <HeroContent>
-            <Eyebrow>{page.label}</Eyebrow>
-            <Title>{page.title}</Title>
-            <Subtitle>{page.subtitle}</Subtitle>
+            <Eyebrow>{copy.label}</Eyebrow>
+            <Title>{copy.title}</Title>
+            <Subtitle>{copy.subtitle}</Subtitle>
 
-            {page.searchPlaceholder ? (
+            {copy.searchPlaceholder ? (
               <SearchBox role="search">
                 <input
                   type="search"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder={page.searchPlaceholder}
-                  aria-label={`Search ${page.title}`}
+                  placeholder={copy.searchPlaceholder}
+                  aria-label={t("footerPages.common.searchAria", { page: copy.title })}
                 />
                 <span aria-hidden="true">
                   <FiSearch />
@@ -349,12 +424,13 @@ const FooterPage = ({ pageKey }) => {
               </SearchBox>
             ) : null}
 
-            {page.ctas?.length ? (
+            {copy.ctas?.length ? (
               <HeroActions>
-                {page.ctas.map((action, index) => (
+                {copy.ctas.map(({ action, label }, index) => (
                   <ActionLink
-                    key={`${action.label}-${action.to}`}
+                    key={`${label}-${action.to}`}
                     action={action}
+                    label={label}
                     variant={index === 0 ? "primary" : "secondary"}
                   />
                 ))}
@@ -362,9 +438,9 @@ const FooterPage = ({ pageKey }) => {
             ) : null}
           </HeroContent>
 
-          {page.badges?.length ? (
-            <HeroBadges aria-label="Trust badges">
-              {page.badges.map((badge) => (
+          {copy.badges?.length ? (
+            <HeroBadges aria-label={t("footerPages.common.trustBadges")}>
+              {copy.badges.map((badge) => (
                 <Badge key={badge} $light>
                   <FiCheckCircle aria-hidden="true" />
                   {badge}
@@ -376,9 +452,9 @@ const FooterPage = ({ pageKey }) => {
       </Hero>
 
       <Container>
-        {page.stats?.length ? (
-          <StatsGrid aria-label={`${page.title} statistics`}>
-            {page.stats.map((stat) => (
+        {copy.stats?.length ? (
+          <StatsGrid aria-label={t("footerPages.common.statsAria", { page: copy.title })}>
+            {copy.stats.map((stat) => (
               <StatCard key={`${stat.value}-${stat.label}`}>
                 <strong>{stat.value}</strong>
                 <span>{stat.label}</span>
@@ -389,9 +465,9 @@ const FooterPage = ({ pageKey }) => {
 
         {page.legal ? (
           <SplitLayout>
-            <Toc aria-label={`${page.title} table of contents`}>
-              <h2>On this page</h2>
-              {page.sections.map((section) => (
+            <Toc aria-label={t("footerPages.common.tocAria", { page: copy.title })}>
+              <h2>{t("footerPages.common.onThisPage")}</h2>
+              {copy.sections.map((section) => (
                 <a href={`#${section.id}`} key={section.id}>
                   {section.title}
                 </a>
@@ -403,13 +479,13 @@ const FooterPage = ({ pageKey }) => {
           body
         )}
 
-        {page.cta ? (
+        {copy.cta ? (
           <CtaSection>
             <div>
-              <h2>{page.cta.title}</h2>
-              <p>{page.cta.text}</p>
+              <h2>{copy.cta.title}</h2>
+              <p>{copy.cta.text}</p>
             </div>
-            <ActionLink action={page.cta.action} />
+            <ActionLink action={copy.cta.action} label={copy.cta.label} />
           </CtaSection>
         ) : null}
       </Container>

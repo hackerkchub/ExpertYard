@@ -59,13 +59,34 @@ const AllServices = () => {
   const expertMap = useMemo(() => {
     const map = {};
     if (Array.isArray(experts)) {
-      experts.forEach((e) => { map[e.id] = e.name; });
+      experts.forEach((e) => {
+        map[e.id] = {
+          name: e.name,
+          slug: e.slug || e.expert_slug || e.expertSlug || e.profile_slug,
+        };
+      });
     }
     return map;
   }, [experts]);
 
   const handleGoToMyBookings = () => {
     isLoggedIn && user?.id ? navigate(`/user/my-booking/${user.id}`) : navigate("/user/auth");
+  };
+
+  const getServiceDetailsPath = (service) =>
+    `/user/service-details/${service.slug || service.service_slug || service.id}`;
+
+  const getExpertDetailsPath = (service) => {
+    const expert = expertMap[service.expert_id];
+    const expertSlug =
+      service.expert_slug ||
+      service.expertSlug ||
+      service.profile_slug ||
+      service.expert?.slug ||
+      expert?.slug ||
+      service.expert_id;
+
+    return `/user/experts/${expertSlug}`;
   };
 
   const serviceCategories = useMemo(() => {
@@ -159,12 +180,16 @@ const AllServices = () => {
                 ? JSON.parse(service.deliverables) : service.deliverables || [];
             } catch { deliverableList = []; }
 
-            const expertName = expertMap[service.expert_id] || "Expert Professional";
+            const expertName =
+              service.expert_name ||
+              service.expert?.name ||
+              expertMap[service.expert_id]?.name ||
+              "Expert Professional";
             const serviceCategory = service.category_name || service.category || service.service_category || "Digital Service";
 
             return (
               <S.ServiceCard key={service.id}>
-                <S.ExpertIdentitySection onClick={() => navigate(`/user/experts/${service.expert_id}`)}>
+                <S.ExpertIdentitySection onClick={() => navigate(getExpertDetailsPath(service))}>
                   <div className="expert-avatar">
                     <FiUser size={18} />
                   </div>
@@ -174,7 +199,7 @@ const AllServices = () => {
                   </div>
                 </S.ExpertIdentitySection>
 
-                <S.ImageWrapper onClick={() => navigate(`/user/service-details/${service.id}`)}>
+                <S.ImageWrapper onClick={() => navigate(getServiceDetailsPath(service))}>
                   <img 
                     src={service.image} 
                     alt={service.title} 
@@ -206,7 +231,7 @@ const AllServices = () => {
                 </S.CardContent>
 
                 <S.CardFooter>
-                  <S.PrimaryButton onClick={() => navigate(`/user/service-details/${service.id}`)}>
+                  <S.PrimaryButton onClick={() => navigate(getServiceDetailsPath(service))}>
                     View Details <FiArrowRight />
                   </S.PrimaryButton>
                   <S.SecondaryButton onClick={() => navigate("/user/call-chat?page=1&mode=chat")}>

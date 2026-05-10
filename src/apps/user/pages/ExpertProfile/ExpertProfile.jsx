@@ -1320,11 +1320,7 @@ useEffect(() => {
                     {hasActiveSubscription ? "Free" : selectedPricingMode === "session" && displayPrices.hasSession ? `₹${displayPrices.sessionPrice}` : `₹${displayPrices.chatPrice}/min`}
                   </strong>
                 </button>
-                <button type="button" className="consult-option consult-video" disabled>
-                  <FiVideo />
-                  <span>Video Call</span>
-                  <strong>Coming soon</strong>
-                </button>
+                
               </div>
             </Section>
 

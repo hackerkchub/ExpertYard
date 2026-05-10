@@ -53,11 +53,11 @@ const SERVICE_LINKS = [
 ];
 
 const SOCIAL_LINKS = [
-  { icon: <FaFacebookF />, url: "https://www.facebook.com/", label: "Facebook" },
-  { icon: <FaTwitter />, url: "https://twitter.com/", label: "Twitter/X" },
-  { icon: <FaLinkedinIn />, url: "https://www.linkedin.com/", label: "LinkedIn" },
-  { icon: <FaInstagram />, url: "https://www.instagram.com/", label: "Instagram" },
-  { icon: <FaYoutube />, url: "https://www.youtube.com/", label: "YouTube" },
+  { icon: <FaFacebookF />, url: "https://www.facebook.com/", labelKey: "footer.social.facebook" },
+  { icon: <FaTwitter />, url: "https://twitter.com/", labelKey: "footer.social.twitter" },
+  { icon: <FaLinkedinIn />, url: "https://www.linkedin.com/", labelKey: "footer.social.linkedin" },
+  { icon: <FaInstagram />, url: "https://www.instagram.com/", labelKey: "footer.social.instagram" },
+  { icon: <FaYoutube />, url: "https://www.youtube.com/", labelKey: "footer.social.youtube" },
 ];
 
 const FooterColumn = ({ title, links, t }) => (
@@ -94,11 +94,11 @@ const Footer = () => {
             <SocialLinks>
               {SOCIAL_LINKS.map((social) => (
                 <SocialIcon
-                  key={social.label}
+                  key={social.labelKey}
                   href={social.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={social.label}
+                  aria-label={t(social.labelKey)}
                 >
                   {social.icon}
                 </SocialIcon>

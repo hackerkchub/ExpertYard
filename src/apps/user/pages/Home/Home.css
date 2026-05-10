@@ -220,7 +220,7 @@
 
 .quick-actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -236,7 +236,41 @@
   color: var(--home-text);
   box-shadow: var(--home-shadow);
 }
+/* Mobile Responsive Fix */
+@media (max-width: 768px) {
+  .quick-action {
+    padding: 10px;
+    gap: 8px;
+    border-radius: 16px;
+    align-items: flex-start;
+    flex-direction: column;
+    text-align: center;
+    min-height: 120px;
+    justify-content: center;
+  }
 
+  .quick-action img,
+  .quick-action svg {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+  }
+
+  .quick-action h3,
+  .quick-action .title {
+    font-size: 13px;
+    line-height: 18px;
+    margin: 0;
+    word-break: break-word;
+  }
+
+  .quick-action p,
+  .quick-action .desc {
+    font-size: 11px;
+    line-height: 16px;
+    margin: 0;
+  }
+}
 .quick-action--muted {
   width: 100%;
   cursor: default;
@@ -1076,7 +1110,7 @@
   .quick-actions,
   .steps-grid-app,
   .stats-row-app {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .category-grid-app {

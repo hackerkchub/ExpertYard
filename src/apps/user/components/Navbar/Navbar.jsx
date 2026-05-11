@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
   Nav,
   Container,
+  HeaderLeft,
   NavbarSpacer,
   BrandBox,
   BrandLogo,
@@ -37,6 +38,7 @@ import logo from "../../../../assets/logo.webp";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
 import ProfilePopup from "../ProfilePopup";
+import BackButton from "../BackButton/BackButton";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -54,6 +56,8 @@ const Navbar = () => {
   });
 
   const userBtnRef = useRef(null);
+  const normalizedPath = location.pathname.replace(/\/+$/, "") || "/user";
+  const isHomePage = normalizedPath === "/user";
 
   const handleNav = (path) => {
     navigate(path);
@@ -114,15 +118,20 @@ const Navbar = () => {
     <>
       <Nav>
         <Container>
-          <BrandBox
-            to="/user"
-            onClick={() => setOpen(false)}
-          >
-            <BrandLogo
-              src={logo}
-              alt="G9Expert"
-            />
-          </BrandBox>
+          <HeaderLeft $compact={!isHomePage}>
+            {!isHomePage && <BackButton iconOnly />}
+            {isHomePage && (
+              <BrandBox
+                to="/user"
+                onClick={() => setOpen(false)}
+              >
+                <BrandLogo
+                  src={logo}
+                  alt="G9Expert"
+                />
+              </BrandBox>
+            )}
+          </HeaderLeft>
 
           <DesktopNav>
             <NavList>

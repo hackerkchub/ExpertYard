@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiShield, FiClock, FiStar, FiZap, FiCheck } from "react-icons/fi";
+import { FiShield, FiClock, FiStar, FiZap, FiCheck } from "react-icons/fi";
 import { FaWallet } from "react-icons/fa"; 
 
 
@@ -141,7 +141,6 @@ const ServiceDetail = () => {
     <S.PageWrapper>
       <S.Container>
         <S.TopBar>
-           <S.BackButton onClick={() => navigate(-1)}><FiArrowLeft /> Back</S.BackButton>
            <S.FastTag><FiZap /> Instant Expert Connection</S.FastTag>
         </S.TopBar>
 

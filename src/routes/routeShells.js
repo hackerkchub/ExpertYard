@@ -12,6 +12,8 @@ const EXPERT_IMMERSIVE_PREFIXES = [
 export function isKnownAppRoute(pathname) {
   return (
     pathname === "/" ||
+    pathname === "/categories" ||
+    pathname.startsWith("/category") ||
     pathname.startsWith("/user") ||
     pathname.startsWith("/expert") ||
     pathname.startsWith("/admin")
@@ -30,7 +32,7 @@ export function shouldShowBottomNavbar(pathname) {
     return false;
   }
 
-  return pathname.startsWith("/user") || pathname.startsWith("/expert");
+  return pathname.startsWith("/category") || pathname.startsWith("/user") || pathname.startsWith("/expert");
 }
 
 export function isImmersiveUserRoute(pathname) {

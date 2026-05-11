@@ -1,6 +1,7 @@
 import styled from "styled-components";
 
 export const PageWrap = styled.div`
+  position: relative;
   min-height: 100vh;
   background:
     radial-gradient(circle at top left, rgba(255, 198, 39, 0.26), transparent 32%),
@@ -15,6 +16,18 @@ export const PageWrap = styled.div`
 
   @media (max-width: 768px) {
     padding: 24px 16px;
+  }
+`;
+
+export const AuthBackWrap = styled.div`
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  z-index: 5;
+
+  @media (max-width: 480px) {
+    top: 12px;
+    left: 12px;
   }
 `;
 

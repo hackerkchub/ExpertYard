@@ -561,6 +561,40 @@ export const EmptyState = styled.div`
   }
 `;
 
+export const SeoContent = styled.section`
+  margin-top: 22px;
+  border: 1px solid rgba(0, 0, 128, 0.08);
+  border-radius: 22px;
+  padding: 20px;
+  background:
+    radial-gradient(circle at top right, rgba(244, 197, 66, 0.12), transparent 30%),
+    ${colors.white};
+  box-shadow: 0 12px 28px rgba(10, 20, 60, 0.06);
+
+  h2 {
+    margin: 0;
+    color: ${colors.textMain};
+    font-size: clamp(1.15rem, 2.6vw, 1.5rem);
+    line-height: 1.25;
+  }
+
+  p {
+    margin: 10px 0 0;
+    color: ${colors.textSecondary};
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+
+  ${media.sm} {
+    border-radius: 18px;
+    padding: 16px;
+
+    p {
+      font-size: 0.9rem;
+    }
+  }
+`;
+
 export const CtaBlock = styled.section`
   margin-top: 28px;
   border-radius: 24px;

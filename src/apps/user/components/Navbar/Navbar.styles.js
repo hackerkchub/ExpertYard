@@ -54,6 +54,18 @@ export const Container = styled.div`
   }
 `;
 
+export const HeaderLeft = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ $compact }) => ($compact ? "0" : "10px")};
+  min-width: 0;
+  flex-shrink: 0;
+
+  @media (max-width: 480px) {
+    gap: ${({ $compact }) => ($compact ? "0" : "7px")};
+  }
+`;
+
 export const NavbarSpacer = styled.div`
   height: 70px;
 
@@ -75,39 +87,6 @@ export const BrandBox = styled(Link)`
   cursor: pointer;
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
-
-  .back-btn-mobile {
-    display: none;
-    width: 38px;
-    height: 38px;
-    align-items: center;
-    justify-content: center;
-    border-radius: 13px;
-    background: #f8fafc;
-    border: 1px solid rgba(226, 232, 240, 0.9);
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
-    transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
-
-    svg {
-      color: ${NAVY} !important;
-    }
-  }
-
-  &:hover .back-btn-mobile {
-    background: rgba(0, 0, 128, 0.06);
-    border-color: rgba(0, 0, 128, 0.16);
-    transform: translateX(-1px);
-  }
-
-  @media (max-width: 768px) {
-    .back-btn-mobile {
-      display: inline-flex;
-    }
-
-    .hide-logo-on-mobile {
-      display: none !important;
-    }
-  }
 `;
 
 export const BrandLogo = styled.img`

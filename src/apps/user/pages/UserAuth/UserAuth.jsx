@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   PageWrap,
+  AuthBackWrap,
   Card,
   BrandMark,
   Caption,
@@ -25,6 +26,7 @@ import {
   SwitchText,
   BottomTrustText,
 } from "./UserAuth.styles";
+import BackButton from "../../components/BackButton/BackButton";
 import {
   FiMail,
   FiLock,
@@ -346,6 +348,9 @@ const UserAuth = () => {
 
   return (
     <PageWrap>
+      <AuthBackWrap>
+        <BackButton />
+      </AuthBackWrap>
       <Card>
         <BrandMark src={logo} alt="G9 Expert logo" />
         <Caption>{isForgotMode ? "Forgot Password" : "Welcome Back"}</Caption>

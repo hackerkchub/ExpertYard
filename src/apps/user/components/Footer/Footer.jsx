@@ -42,6 +42,7 @@ const PROFESSIONAL_LINKS = [
   { labelKey: "footer.becomeExpert", path: "/user/become-expert" },
   { labelKey: "footer.expertGuidelines", path: "/user/guidelines" },
   { labelKey: "footer.earningsModel", path: "/user/earnings-model" },
+  { label: "Marketing", path: "/user/marketing" },
   { labelKey: "common.support", path: "/user/support" },
 ];
 
@@ -65,8 +66,8 @@ const FooterColumn = ({ title, links, t }) => (
     <SectionTitle>{title}</SectionTitle>
     <LinkList>
       {links.map((link) => (
-        <li key={`${title}-${link.labelKey}`}>
-          <FooterLink to={link.path}>{t(link.labelKey)}</FooterLink>
+        <li key={`${title}-${link.labelKey || link.label}`}>
+          <FooterLink to={link.path}>{link.label || t(link.labelKey)}</FooterLink>
         </li>
       ))}
     </LinkList>

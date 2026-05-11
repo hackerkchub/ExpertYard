@@ -34,6 +34,7 @@ const FindExpertsPage = lazy(() => import("../pages/FooterPages/FindExperts"));
 const BecomeExpertPage = lazy(() => import("../pages/FooterPages/BecomeExpert"));
 const EarningsModelPage = lazy(() => import("../pages/FooterPages/EarningsModel"));
 const SupportPage = lazy(() => import("../pages/FooterPages/Support"));
+const MarketingPage = lazy(() => import("../pages/Marketing"));
 const AllServices = lazy(() => import("../pages/AllServicesByCatId/AllServices"));
 const ServiceDetails = lazy(() => import("../pages/AllServicesByCatId/ServiceDetails"));
 const MyBookings = lazy(() => import("../pages/AllServicesByCatId/MyBookings"));
@@ -68,6 +69,7 @@ export default function UserAppRoutes() {
             <Route path="become-expert" element={withLazyRoute(<BecomeExpertPage />)} />
             <Route path="earnings-model" element={withLazyRoute(<EarningsModelPage />)} />
             <Route path="support" element={withLazyRoute(<SupportPage />)} />
+            <Route path="marketing" element={withLazyRoute(<MarketingPage />)} />
             <Route path="all-services" element={withLazyRoute(<AllServices />)} />
             <Route path="service-details/:slug" element={withLazyRoute(<ServiceDetails />)} />
             <Route path="my-booking/:id" element={withLazyRoute(<MyBookings />)} />

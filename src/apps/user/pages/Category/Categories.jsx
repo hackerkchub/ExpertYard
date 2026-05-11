@@ -4,9 +4,9 @@ import { useTranslation } from "react-i18next";
 import { useCategory } from "../../../../shared/context/CategoryContext";
 import { useSeo } from "../../../../shared/seo/useSeo";
 import { toAbsoluteUrl } from "../../../../shared/seo/siteConfig";
+import { buildCategoryCanonicalPath } from "../../../../shared/seo/categorySeoData";
 import {
   buildCategorySeoDescription,
-  getCategoryPath,
 } from "../../../../shared/utils/categoryRoutes";
 
 // Icons
@@ -57,10 +57,15 @@ import {
   BreadcrumbItem,
   BreadcrumbSeparator,
   CtaBlock,
-  CtaButton
+  CtaButton,
+  SeoContent
 } from "./Categories.styles";
 
 const DEFAULT_CATEGORY_IMAGE = "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h-300&fit=crop";
+const CATEGORIES_SEO_TITLE =
+  "Expert Categories Online | Legal, Health, Astrology & Finance Experts - G9Experts";
+const CATEGORIES_SEO_DESCRIPTION =
+  "Explore verified expert categories on G9Experts. Connect online with legal, health, astrology, fitness, finance, property, career, business and education experts by chat or call.";
 
 const Categories = () => {
   const navigate = useNavigate();
@@ -87,10 +92,9 @@ const Categories = () => {
       {
         "@context": "https://schema.org",
         "@type": "CollectionPage",
-        name: "Expert Categories",
-        url: toAbsoluteUrl("/user/categories"),
-        description:
-          "Browse expert categories and connect with verified professionals on G9Expert.",
+        name: "Expert Categories Online",
+        url: toAbsoluteUrl("/categories"),
+        description: CATEGORIES_SEO_DESCRIPTION,
       },
       {
         "@context": "https://schema.org",
@@ -106,7 +110,7 @@ const Categories = () => {
             "@type": "ListItem",
             position: 2,
             name: "Categories",
-            item: toAbsoluteUrl("/user/categories"),
+            item: toAbsoluteUrl("/categories"),
           },
         ],
       },
@@ -115,14 +119,19 @@ const Categories = () => {
   );
 
   useSeo({
-    title: "Browse Expert Categories | G9Expert",
-    description:
-      "Explore expert categories on G9Expert and connect instantly with verified professionals across legal, health, astrology, fitness, finance, property, and more.",
-    canonicalPath: "/user/categories",
+    title: CATEGORIES_SEO_TITLE,
+    description: CATEGORIES_SEO_DESCRIPTION,
+    canonicalPath: "/categories",
+    robots: "index, follow",
     og: {
-      title: "Browse Expert Categories | G9Expert",
-      description:
-        "Explore expert categories on G9Expert and connect instantly with verified professionals across legal, health, astrology, fitness, finance, property, and more.",
+      title: CATEGORIES_SEO_TITLE,
+      description: CATEGORIES_SEO_DESCRIPTION,
+      url: "/categories",
+    },
+    twitter: {
+      title: CATEGORIES_SEO_TITLE,
+      description: CATEGORIES_SEO_DESCRIPTION,
+      url: "/categories",
     },
     structuredData: categoriesStructuredData,
   });
@@ -141,7 +150,7 @@ const Categories = () => {
       {/* 2. Hero Section - Professional Dark Theme */}
       <HeroSection>
         <HeroContent>
-          <HeroTitle>{t("categoriesPage.heroTitle")}</HeroTitle>
+          <HeroTitle>Browse Expert Categories Online</HeroTitle>
           <HeroSubtitle>{t("categoriesPage.heroSubtitle")}</HeroSubtitle>
           
           <SearchContainer>
@@ -222,7 +231,7 @@ const Categories = () => {
                 as={Link}
                 key={cat.id} 
                 $view={viewMode}
-                to={getCategoryPath(cat)}
+                to={buildCategoryCanonicalPath(cat)}
                 aria-label={`Browse ${cat.name} experts`}
               >
                 <CategoryImage 
@@ -260,6 +269,17 @@ const Categories = () => {
             <p>{t("categoriesPage.noResultsText")}</p>
           </EmptyState>
         )}
+
+        <SeoContent aria-labelledby="categories-seo-heading">
+          <h2 id="categories-seo-heading">Find verified experts by consultation category</h2>
+          <p>
+            G9Experts helps users explore expert categories online and connect with verified professionals by chat or call.
+            Browse legal consultation, health advice, astrology guidance, fitness support, finance planning, property advice,
+            career guidance, business consultation, relationship advice and education experts in one place. Each category is
+            organized to help you compare relevant experts, review consultation options, and start an online discussion when
+            you need quick, practical and trusted guidance.
+          </p>
+        </SeoContent>
 
         <CtaBlock>
           <div>

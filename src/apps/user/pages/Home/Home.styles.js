@@ -12,25 +12,27 @@ const fadeUp = keyframes`
 `;
 
 export const HeroSection = styled.section`
-  --hero-shadow: 0 24px 56px rgba(0, 0, 0, 0.22);
+  --hero-shadow: 0 26px 60px rgba(0, 0, 128, 0.18);
 
   position: relative;
   overflow: hidden;
-  border-radius: 0 0 18px 18px;
+  border-radius: 32px;
   min-height: 320px;
   padding: 0;
   background:
-    radial-gradient(circle at 75% 30%, rgba(59, 130, 246, 0.35), transparent 35%),
-    linear-gradient(135deg, #000080 0%, #02005c 100%);
+    radial-gradient(circle at 78% 28%, rgba(255, 213, 74, 0.18), transparent 22%),
+    radial-gradient(circle at 75% 42%, rgba(59, 130, 246, 0.35), transparent 35%),
+    linear-gradient(135deg, #000080 0%, #02005c 58%, #01033f 100%);
   color: #ffffff;
   box-shadow: var(--hero-shadow);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 
   @media (max-width: 1180px) {
     min-height: auto;
   }
 
   @media (max-width: 767px) {
-    border-radius: 0 0 18px 18px;
+    border-radius: 26px;
     min-height: auto;
   }
 `;
@@ -274,7 +276,7 @@ export const SearchForm = styled.form`
   min-height: 58px;
   height: 58px;
   padding: 6px 6px 6px 14px;
-  border-radius: 18px;
+  border-radius: 20px;
   background: rgba(255, 255, 255, 0.98);
   border: 1px solid rgba(255, 255, 255, 0.74);
   box-shadow:
@@ -405,11 +407,11 @@ export const HeroPopularLabel = styled.span`
 `;
 
 export const PillButton = styled.button`
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 224, 123, 0.2);
   min-height: 40px;
   padding: 10px 18px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   color: #f6f8ff;
   font-size: clamp(14px, 1.15vw, 15px);
   font-weight: 600;

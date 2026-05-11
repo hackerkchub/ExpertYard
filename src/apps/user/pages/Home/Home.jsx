@@ -7,10 +7,14 @@ import {
   FiChevronRight,
   FiMic,
   FiPhoneCall,
-  FiPlayCircle,
+  FiCreditCard,
+  FiHeadphones,
+  FiLayers,
+  FiLock,
   FiSearch,
+  FiShield,
   FiStar,
-  FiVideo,
+  FiUsers,
   FiZap,
 } from "react-icons/fi";
 
@@ -55,6 +59,7 @@ import { usePublicExpert } from "../../context/PublicExpertContext";
 import { useSeo } from "../../../../shared/seo/useSeo";
 import { toAbsoluteUrl } from "../../../../shared/seo/siteConfig";
 import { getCategoryPath } from "../../../../shared/utils/categoryRoutes";
+import { getAllServices } from "../../../../shared/api/service.api";
 
 const QUICK_ACTIONS = [
   {
@@ -92,15 +97,133 @@ const FINAL_STATS = [
   { value: "20K+", label: "Reviews" },
 ];
 
-const FALLBACK_EXPERT = {
-  id: "featured",
-  name: "Aarav Mehta",
-  position: "Legal Consultant",
-  profile_photo: "",
-  chat: 19,
-  call: 29,
-  session: { price: 199 },
-};
+const FALLBACK_CATEGORIES = [
+  { id: "legal", name: "Legal", slug: "legal", meta_desc: "Talk to verified legal experts online for quick guidance." },
+  { id: "health", name: "Health", slug: "health", meta_desc: "Get instant health advice from trusted professionals." },
+  { id: "astrology", name: "Astrology", slug: "astrology", meta_desc: "Consult astrologers online for personal guidance." },
+  { id: "fitness", name: "Fitness", slug: "fitness", meta_desc: "Connect with fitness experts for practical advice." },
+  { id: "career", name: "Career Guidance", slug: "career-guidance", meta_desc: "Find career guidance experts online." },
+  { id: "business", name: "Business", slug: "business", meta_desc: "Speak with business consultants online." },
+  { id: "finance", name: "Finance", slug: "finance", meta_desc: "Get financial advisor support online." },
+  { id: "property", name: "Property", slug: "property", meta_desc: "Consult property experts for real estate decisions." },
+  { id: "relationship", name: "Relationship", slug: "relationship", meta_desc: "Talk to relationship advice experts online." },
+  { id: "education", name: "Education", slug: "education", meta_desc: "Connect with education consultants online." },
+];
+
+const FALLBACK_SERVICES = [
+  { id: "lawyer-consultation", title: "Lawyer Consultation Online", slug: "lawyer-consultation-online" },
+  { id: "doctor-consultation", title: "Doctor Consultation Online", slug: "doctor-consultation-online" },
+  { id: "astrologer-consultation", title: "Astrologer Consultation Online", slug: "astrologer-consultation-online" },
+  { id: "fitness-consultation", title: "Fitness Expert Consultation", slug: "fitness-expert-consultation" },
+  { id: "career-guidance", title: "Career Guidance Expert", slug: "career-guidance-expert" },
+  { id: "business-consultant", title: "Business Consultant Online", slug: "business-consultant-online" },
+  { id: "property-consultant", title: "Property Consultant Online", slug: "property-consultant-online" },
+  { id: "financial-advisor", title: "Financial Advisor Online", slug: "financial-advisor-online" },
+];
+
+const STATIC_SEO_KEYWORDS = [
+  "online expert consultation",
+  "talk to verified experts",
+  "chat with experts online",
+  "instant expert advice",
+  "lawyer consultation online",
+  "doctor consultation online",
+  "astrologer consultation online",
+  "fitness expert consultation",
+  "career guidance expert",
+  "business consultant online",
+  "property consultant online",
+  "relationship advice expert",
+  "financial advisor online",
+  "parenting expert advice",
+  "education consultant online",
+];
+
+const FAQ_ITEMS = [
+  {
+    question: "What is G9Experts?",
+    answer:
+      "G9Experts is an online expert consultation platform where users can connect with verified professionals for advice across personal, professional, business, legal, health, education, finance, property, astrology, relationship, and lifestyle topics.",
+  },
+  {
+    question: "How can I talk to an expert online?",
+    answer:
+      "Choose a category, browse verified expert profiles, and start an online consultation by chat or call from the G9Experts user app.",
+  },
+  {
+    question: "Are experts on G9Experts verified?",
+    answer:
+      "G9Experts highlights verified expert profiles so users can review professional details, ratings, and consultation options before connecting.",
+  },
+  {
+    question: "Can I chat or call experts instantly?",
+    answer:
+      "Yes. Available experts can be reached through instant chat or call consultation, depending on their current availability and pricing setup.",
+  },
+  {
+    question: "How does wallet payment work?",
+    answer:
+      "Users can add balance to the secure G9Experts wallet and pay for eligible chat, call, or service consultations through wallet deduction.",
+  },
+  {
+    question: "Which categories are available on G9Experts?",
+    answer:
+      "G9Experts supports multiple consultation categories including legal, health, astrology, fitness, business, career, finance, property, relationship, education, parenting, and more as available on the platform.",
+  },
+  {
+    question: "Is G9Experts available 24/7?",
+    answer:
+      "Users can browse the platform anytime. Expert availability for chat or call depends on each verified professional's live status and schedule.",
+  },
+  {
+    question: "How do I choose the right expert?",
+    answer:
+      "Compare expert profiles, categories, services, ratings, reviews, pricing, and availability to choose the professional who best matches your consultation need.",
+  },
+];
+
+const TRUST_POINTS = [
+  { title: "Verified Experts", icon: FiShield },
+  { title: "Instant Chat & Call", icon: FiHeadphones },
+  { title: "Secure Wallet Payment", icon: FiLock },
+  { title: "Multiple Categories", icon: FiLayers },
+  { title: "Affordable Per-Minute Consultation", icon: FiCreditCard },
+  { title: "24/7 Expert Availability", icon: FiZap },
+  { title: "Transparent Expert Profiles", icon: FiUsers },
+  { title: "Ratings & Reviews", icon: FiStar },
+];
+
+const INTERNAL_LINKS = [
+  { label: "Browse verified expert categories", to: "/user/categories" },
+  { label: "Find online experts for chat or call", to: "/user/call-chat?page=1" },
+  { label: "Book popular expert services", to: "/user/all-services" },
+  { label: "Learn about G9Experts", to: "/user/about" },
+  { label: "Contact G9Experts support", to: "/user/contact" },
+  { label: "Read G9Experts privacy policy", to: "/user/privacy" },
+  { label: "View G9Experts terms and conditions", to: "/user/terms" },
+  { label: "Read expert consultation FAQs", to: "/user/faq" },
+];
+
+function toSeoSlug(value = "") {
+  return String(value)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function getServiceName(service) {
+  return service?.title || service?.name || service?.service_name || "Expert Service";
+}
+
+function getServiceSlug(service) {
+  return service?.slug?.trim() || toSeoSlug(getServiceName(service)) || String(service?.id || "");
+}
+
+function getServicePath(service) {
+  const slug = getServiceSlug(service);
+  return slug ? `/user/service-details/${slug}` : "/user/all-services";
+}
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -109,6 +232,15 @@ const HomePage = () => {
   const { categories, loading: categoriesLoading } = useCategory();
   const { experts, expertsLoading } = usePublicExpert();
   const [searchTerm, setSearchTerm] = useState("");
+  const [services, setServices] = useState(() => {
+    try {
+      const saved = localStorage.getItem("popular_services_cache");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [servicesLoading, setServicesLoading] = useState(services.length === 0);
   const topCategoriesRowRef = useRef(null);
   const [categoryScrollState, setCategoryScrollState] = useState({
     canScrollLeft: false,
@@ -120,6 +252,82 @@ const HomePage = () => {
     userId: user?.id,
   });
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadServices = async () => {
+      try {
+        setServicesLoading(true);
+        const res = await getAllServices();
+        const data = res?.data?.data || res?.data || [];
+        const list = Array.isArray(data) ? data : [];
+
+        if (!isMounted) return;
+
+        setServices(list);
+        localStorage.setItem("popular_services_cache", JSON.stringify(list));
+      } catch (err) {
+        console.error("Service load failed", err);
+      } finally {
+        if (isMounted) {
+          setServicesLoading(false);
+        }
+      }
+    };
+
+    const hasIdleCallback = typeof window !== "undefined" && "requestIdleCallback" in window;
+    const scheduledTask = hasIdleCallback
+      ? window.requestIdleCallback(loadServices, { timeout: 1200 })
+      : window.setTimeout(loadServices, 180);
+
+    return () => {
+      isMounted = false;
+
+      if (hasIdleCallback) {
+        window.cancelIdleCallback(scheduledTask);
+      } else {
+        window.clearTimeout(scheduledTask);
+      }
+    };
+  }, []);
+
+  const seoCategories = useMemo(
+    () => (categories.length > 0 ? categories : !categoriesLoading ? FALLBACK_CATEGORIES : []),
+    [categories, categoriesLoading]
+  );
+
+  const seoServices = useMemo(
+    () => (services.length > 0 ? services : !servicesLoading ? FALLBACK_SERVICES : []),
+    [services, servicesLoading]
+  );
+
+  const dynamicKeywords = useMemo(() => {
+    const categoryKeywords = seoCategories.flatMap((category) => {
+      const name = category.name;
+      if (!name) return [];
+
+      return [
+        `${name} expert consultation`,
+        `talk to verified ${name} experts online`,
+        `best online consultation for ${name} services`,
+      ];
+    });
+
+    const serviceKeywords = seoServices.flatMap((service) => {
+      const name = getServiceName(service);
+      if (!name) return [];
+
+      return [
+        `${name} advice`,
+        `get instant ${name} advice from trusted professionals`,
+      ];
+    });
+
+    return [...new Set([...STATIC_SEO_KEYWORDS, ...categoryKeywords, ...serviceKeywords])]
+      .slice(0, 80)
+      .join(", ");
+  }, [seoCategories, seoServices]);
+
   const homeStructuredData = useMemo(
     () => [
       {
@@ -129,7 +337,7 @@ const HomePage = () => {
         url: toAbsoluteUrl("/user"),
         logo: toAbsoluteUrl("/logo-512.webp"),
         description:
-          "G9Experts is an online consultation platform that helps users connect with verified experts across high-intent categories.",
+          "G9Experts is an online expert consultation platform that helps users connect with verified professionals by chat and call.",
       },
       {
         "@context": "https://schema.org",
@@ -144,34 +352,80 @@ const HomePage = () => {
       },
       {
         "@context": "https://schema.org",
-        "@type": "WebPage",
-        name: "G9Experts Homepage",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: toAbsoluteUrl("/user"),
+          },
+        ],
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: FAQ_ITEMS.map((item) => ({
+          "@type": "Question",
+          name: item.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: item.answer,
+          },
+        })),
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "Explore Expert Categories",
         url: toAbsoluteUrl("/user"),
-        description:
-          "Connect with verified experts online through chat, call, and trust-focused consultations on G9Experts.",
+        itemListElement: seoCategories.slice(0, 50).map((category, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: category.name,
+          url: toAbsoluteUrl(getCategoryPath(category)),
+        })),
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "Popular Expert Services",
+        url: toAbsoluteUrl("/user/all-services"),
+        itemListElement: seoServices.slice(0, 50).map((service, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: getServiceName(service),
+          url: toAbsoluteUrl(getServicePath(service)),
+        })),
       },
     ],
-    []
+    [seoCategories, seoServices]
   );
 
   useSeo({
-    title: "Verified Experts for Online Consultation | G9Experts",
+    title: "G9Experts - Talk to Verified Experts Online | Instant Chat & Call Consultation",
     description:
-      "Connect with verified experts online for legal, health, finance, career, property, and more. G9Experts offers secure payments, real user ratings, and instant chat or call access.",
+      "Connect with verified experts online on G9Experts. Get instant chat and call consultation for legal, health, astrology, fitness, business, career, finance, property, relationship, education and more.",
     canonicalPath: "/user",
-    keywords:
-      "verified experts online, online consultation platform, secure expert advice, expert chat and call, legal consultation online, health consultation online, finance experts online, trusted professional advice",
+    keywords: dynamicKeywords,
     og: {
-      title: "Verified Experts for Online Consultation | G9Experts",
+      title: "G9Experts - Talk to Verified Experts Online",
       description:
-        "Connect with verified experts online for legal, health, finance, career, property, and more with secure payments and real user ratings.",
+        "Get instant chat and call consultation from verified experts across legal, health, astrology, fitness, business, career, finance, property, relationship, education and more.",
+      image: toAbsoluteUrl("/logo-512.webp"),
+    },
+    twitter: {
+      title: "G9Experts - Talk to Verified Experts Online",
+      description:
+        "Connect with trusted professionals online for instant expert advice by chat or call.",
+      image: toAbsoluteUrl("/logo-512.webp"),
     },
     structuredData: homeStructuredData,
   });
 
-  const topCategories = categories.slice(0, 15);
+  const topCategories = seoCategories.slice(0, 15);
+  const topServices = seoServices.slice(0, 16);
   const visibleExperts = experts.slice(0, 5);
-  const expertOfTheDay = visibleExperts[0] || FALLBACK_EXPERT;
   const avatarExperts = visibleExperts.slice(0, 3);
 
   const handleSearch = (event) => {
@@ -232,9 +486,6 @@ const HomePage = () => {
       .map((part) => part[0]?.toUpperCase() || "")
       .join("") || "GE";
 
-  const formatPrice = (value, fallback = "Ask") =>
-    Number(value) > 0 ? `₹${Math.floor(value)}` : fallback;
-
   return (
     <div className="home-page">
       <div className="home-page__container">
@@ -245,14 +496,25 @@ const HomePage = () => {
               <HeroBadge>{t("home.heroBadge")}</HeroBadge>
               <HeroTitle>
                 <HeroTitleLine $delay="0.08s">
-                  {t("home.heroTitleA")} <HeroGradientWord $delay="0.08s">{t("home.heroTitleB")}</HeroGradientWord>
+                  Talk to Verified Experts Online
+                </HeroTitleLine>
+                <HeroTitleLine $delay="0.14s">
+                  <HeroGradientWord $delay="0.14s">Get Instant Advice Anytime</HeroGradientWord>
                 </HeroTitleLine>
               </HeroTitle>
               <HeroTitleAccent aria-hidden="true" />
               <HeroSubtitle>
-                {t("home.heroSubtitle")}
+                G9Experts connects you with trusted professionals across multiple categories like legal, health, astrology, fitness, business, career, finance, property, relationship, education and more.
               </HeroSubtitle>
               <HeroHighlight>{t("home.heroTrust")}</HeroHighlight>
+              <div className="hero-cta-row" aria-label="Home page expert consultation actions">
+                <Link className="hero-primary-cta" to="/user/call-chat?page=1&mode=chat">
+                  Talk to Expert
+                </Link>
+                <Link className="hero-secondary-cta" to="/user/categories">
+                  Explore Categories
+                </Link>
+              </div>
             </HeroCopy>
 
             <HeroVisual>
@@ -332,8 +594,11 @@ const HomePage = () => {
         <section className="home-section-card home-section-card--categories">
           <div className="section-topline">
             <div>
-              <span className="section-kicker">{t("home.discover")}</span>
-              <h2>{t("home.topCategories")}</h2>
+              <span className="section-kicker">Expert Categories</span>
+              <h2>Explore Expert Categories</h2>
+              <p className="section-copy">
+                Find verified experts across multiple professional categories and get instant consultation by chat or call.
+              </p>
             </div>
             <button type="button" className="section-link" onClick={() => navigate("/user/categories")}>
               {t("common.viewAll")}
@@ -363,13 +628,19 @@ const HomePage = () => {
                     <Link key={category.id} to={getCategoryPath(category)} className="category-card">
                       <div className="category-card__media">
                         {category.image_url ? (
-                          <img src={category.image_url} alt={category.name} loading="lazy" />
+                          <img
+                            src={category.image_url}
+                            alt={`Talk to verified ${category.name} experts online`}
+                            loading="lazy"
+                            decoding="async"
+                          />
                         ) : (
                           <span>{category.name?.charAt(0)}</span>
                         )}
                       </div>
                       <div className="category-card__copy">
                         <strong>{category.name}</strong>
+                        <small>Talk to verified {category.name} experts online</small>
                       </div>
                     </Link>
                   ))}
@@ -387,7 +658,27 @@ const HomePage = () => {
           </div>
         </section>
 
-        <PopularServices />
+        <PopularServices services={services} loading={servicesLoading} />
+
+        <section className="home-section-card home-section-card--seo-text" aria-labelledby="home-seo-heading">
+          <span className="section-kicker">Online Expert Consultation</span>
+          <h2 id="home-seo-heading">Instant expert advice from trusted professionals</h2>
+          <p>
+            G9Experts is an online expert consultation platform where users can instantly connect with verified professionals for personal, professional, business, legal, health, education, relationship, astrology, finance, property and lifestyle advice. Whether you need quick guidance, detailed consultation, or expert support, G9Experts helps you find the right expert anytime.
+          </p>
+          <div className="seo-keyword-grid" aria-label="Popular consultation searches">
+            {topCategories.slice(0, 8).map((category) => (
+              <Link key={`seo-category-${category.id}`} to={getCategoryPath(category)}>
+                Best online consultation for {category.name} services
+              </Link>
+            ))}
+            {topServices.slice(0, 8).map((service) => (
+              <Link key={`seo-service-${service.id || getServiceSlug(service)}`} to={getServicePath(service)}>
+                Get instant {getServiceName(service)} advice from trusted professionals
+              </Link>
+            ))}
+          </div>
+        </section>
 
         <TrustStats />
 
@@ -448,6 +739,30 @@ const HomePage = () => {
 
         <WhyChoose />
 
+        <section className="home-section-card home-section-card--trust" aria-labelledby="why-g9experts-heading">
+          <div className="section-topline section-topline--stack">
+            <span className="section-kicker">Why Choose G9Experts</span>
+            <h2 id="why-g9experts-heading">Trusted online consultation built for fast decisions</h2>
+            <p className="section-copy">
+              Compare experts, review pricing, and start secure chat or call consultations across multiple categories.
+            </p>
+          </div>
+          <div className="trust-points-grid">
+            {TRUST_POINTS.map((point) => {
+              const Icon = point.icon;
+
+              return (
+                <article key={point.title} className="trust-point-card">
+                  <span aria-hidden="true">
+                    <Icon />
+                  </span>
+                  <h3>{point.title}</h3>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
         <section className="rating-panel">
           <div>
             <span className="section-kicker section-kicker--gold">{t("home.userRatings")}</span>
@@ -468,7 +783,41 @@ const HomePage = () => {
           </div>
         </section>
 
+        <section className="home-section-card home-section-card--faq" aria-labelledby="home-faq-heading">
+          <div className="section-topline section-topline--stack">
+            <span className="section-kicker">FAQ</span>
+            <h2 id="home-faq-heading">Expert consultation questions</h2>
+            <p className="section-copy">
+              Answers for users comparing online expert consultation, wallet payment, chat, call, and category availability.
+            </p>
+          </div>
+          <div className="home-faq-list">
+            {FAQ_ITEMS.map((item) => (
+              <details key={item.question} className="home-faq-item">
+                <summary>
+                  <h3>{item.question}</h3>
+                </summary>
+                <p>{item.answer}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
         <PopularQuestions onTalkToExpert={() => navigate("/user/call-chat?page=1&mode=chat")} />
+
+        <section className="home-section-card home-section-card--links" aria-labelledby="internal-links-heading">
+          <div className="section-topline section-topline--stack">
+            <span className="section-kicker">Helpful Links</span>
+            <h2 id="internal-links-heading">Find expert consultation pages faster</h2>
+          </div>
+          <nav className="internal-link-grid" aria-label="G9Experts important pages">
+            {INTERNAL_LINKS.map((item) => (
+              <Link key={item.to} to={item.to}>
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        </section>
 
       
 

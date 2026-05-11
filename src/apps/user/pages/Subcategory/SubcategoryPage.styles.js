@@ -165,7 +165,6 @@ export const SearchButton = styled.button`
 export const ExpertsGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr;
-  grid-auto-rows: 1fr;
   align-items: stretch;
   gap: 18px;
   width: 100%;
@@ -335,8 +334,6 @@ export const ActionButtons = styled.div`
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   width: 100%;
-  margin-top: auto;
-  padding-top: 6px;
 `;
 
 export const StartChatButton = styled.button`

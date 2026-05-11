@@ -34,8 +34,18 @@ const manualChunks = (id) => {
   return matchedGroup?.name || "vendor";
 };
 
+const devRobotsPlugin = () => ({
+  name: "g9experts-dev-robots",
+  configureServer(server) {
+    server.middlewares.use("/robots.txt", (_req, res) => {
+      res.setHeader("Content-Type", "text/plain; charset=utf-8");
+      res.end("User-agent: *\nDisallow: /\n");
+    });
+  },
+});
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), devRobotsPlugin()],
   build: {
     rollupOptions: {
       output: {

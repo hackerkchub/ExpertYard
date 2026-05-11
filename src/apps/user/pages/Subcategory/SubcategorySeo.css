@@ -5,6 +5,7 @@
 }
 
 .category-seo-intro {
+  display: grid;
   position: relative;
   margin-bottom: 12px;
   padding: 15px;
@@ -32,6 +33,10 @@
   color: #667085;
   font-size: 14px;
   line-height: 1.6;
+}
+
+.category-seo-card p + p {
+  margin-top: 12px;
 }
 
 .category-seo-intro__eyebrow {

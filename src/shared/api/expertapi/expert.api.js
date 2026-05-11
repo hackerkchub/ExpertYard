@@ -4,6 +4,10 @@ import api from "./axiosInstance";
    👤 EXPERT APIs
 ===================================================== */
 
+export const getMyProfileApi = async () => {
+  const { data } = await api.get("/expert/me");
+  return data;
+};
 /**
  * 🔹 Get all experts
  * GET {{baseURL}}/api/expert/list
@@ -74,7 +78,7 @@ export const getExpertsBySubCategoryApi = async (subCategoryId) => {
 
 /**
  * 🔥 Get Experts (WITH FILTERS)
- * GET /api/expert/list
+ * GET /api/expert/public/list
  */
 export const getExpertsApi = async (params = {}) => {
   const {

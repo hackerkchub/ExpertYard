@@ -6,7 +6,7 @@ export const getAllExpertsApi = () =>
 
 // STATUS UPDATE
 export const updateExpertStatusApi = (id, data) =>
-  adminApi.put(`/admin/expert/status/${id}`, data);
+  adminApi.put(`/expert/status/${id}`, data);
 // GET FULL EXPERT DETAILS
 export const getFullExpertApi = (id) =>
   adminApi.get(`/expert/full/${id}`);

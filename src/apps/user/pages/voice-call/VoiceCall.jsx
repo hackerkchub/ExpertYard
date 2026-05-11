@@ -1,4 +1,3 @@
-// VoiceCall.jsx
 import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -42,6 +41,8 @@ import {
   handleSocketReconnect,
   getStats,
   attachRemoteAudio,
+  createAndSendOffer,
+  getLocalStream,
 } from "../../../../shared/webrtc/voicePeer";
 
 import { CALL_EVENTS } from "../../../../shared/constants/call.constants";
@@ -58,7 +59,6 @@ export default function VoiceCall() {
   const userId = user?.id;
   const socket = useSocket(userId, "user");
   const audioRef = useRef(null);
-  const hasRemoteSetRef = useRef(false);
   const location = useLocation();
 
   const validModes = ["per_minute", "session", "subscription"];
@@ -73,6 +73,13 @@ export default function VoiceCall() {
   const callStateRef = useRef("idle");
   const makingOfferRef = useRef(false);
   const isCleaningUpRef = useRef(false);
+  const cleanupExecutedRef = useRef(false);
+  const localStreamRef = useRef(null);
+  const lastVisibilityResumeRef = useRef(0);
+  const reconnectAttemptsRef = useRef(0);
+  const retryOfferCountRef = useRef(0);
+  const MAX_RECONNECT_ATTEMPTS = 5;
+  const MAX_OFFER_RETRIES = 3;
 
   const expert = useMemo(() => {
     if (!expertId || !experts?.length) return null;
@@ -105,8 +112,21 @@ export default function VoiceCall() {
     callIdRef.current = callId;
   }, [callId]);
 
+  // Attach remote audio ONLY once on mount
   useEffect(() => {
     attachRemoteAudio(audioRef);
+  }, []);
+
+  // Preload microphone once
+  useEffect(() => {
+    if (!localStreamRef.current) {
+      navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then((stream) => {
+          localStreamRef.current = stream;
+        })
+        .catch(console.warn);
+    }
   }, []);
 
   // Sound management
@@ -146,6 +166,35 @@ export default function VoiceCall() {
     return () => clearInterval(interval);
   }, [callState]);
 
+  // Cleanup helpers with execution guard
+  const cleanupHard = useCallback(async () => {
+    if (cleanupExecutedRef.current) return;
+    cleanupExecutedRef.current = true;
+    
+    await closePeer(true);
+    callStartedRef.current = false;
+    reconnectAttemptsRef.current = 0;
+    retryOfferCountRef.current = 0;
+    makingOfferRef.current = false; // Reset making offer flag
+    
+    setTimeout(() => {
+      cleanupExecutedRef.current = false;
+    }, 500);
+  }, []);
+
+  const cleanupSoft = useCallback(async () => {
+    if (cleanupExecutedRef.current) return;
+    cleanupExecutedRef.current = true;
+    
+    await closePeer(false);
+    callStartedRef.current = false;
+    makingOfferRef.current = false; // Reset making offer flag
+    
+    setTimeout(() => {
+      cleanupExecutedRef.current = false;
+    }, 500);
+  }, []);
+
   // Start call
   const startCall = useCallback(async () => {
     if (callStartedRef.current) return;
@@ -171,63 +220,70 @@ export default function VoiceCall() {
     }
   }, [resumeChecked, isResumed, startCall]);
 
-  // WebRTC Offer Handler
-  const handleWebRTCOffer = useCallback(
-    async (currentCallId) => {
-       hasRemoteSetRef.current = false;
-      if (!currentCallId || makingOfferRef.current) return;
-
-      console.log("📡 Creating WebRTC offer for call:", currentCallId);
-      makingOfferRef.current = true;
-
-      try {
-        const pc = await createPeer({
-          socket,
-          callId: currentCallId,
-          audioRef,
-        });
-
-        if (pc.signalingState !== "stable") {
-          console.log("⛔ Skipping offer — not stable");
-          return;
-        }
-
-        const offer = await pc.createOffer({
-          offerToReceiveAudio: true,
-          offerToReceiveVideo: false,
-        });
-
-        await pc.setLocalDescription(offer);
-
-        socket.emit("webrtc:offer", {
-          callId: currentCallId,
-          offer,
-        });
-
-        console.log("✅ Offer sent to expert");
-      } catch (err) {
-        console.error("❌ WebRTC offer failed:", err);
-        setCallState("ended");
-        closePeer();
-      } finally {
-        makingOfferRef.current = false;
-      }
-    },
-    [socket]
-  );
-
-  // Preload audio permissions
-  useEffect(() => {
-    if (!localStorage.getItem("audio_permission_granted")) {
-      navigator.mediaDevices
-        .getUserMedia({ audio: true })
-        .then((stream) => {
-          stream.getTracks().forEach((t) => t.stop());
-          localStorage.setItem("audio_permission_granted", "true");
-        })
-        .catch(console.warn);
+  // WebRTC Offer Handler - FIXED makingOfferRef locking
+  const handleWebRTCOffer = useCallback(async (currentCallId) => {
+    if (
+      callStateRef.current === "ended" ||
+      callStateRef.current === "offline" ||
+      callStateRef.current === "busy"
+    ) {
+      console.log("⛔ Skipping offer - call already ended/offline/busy");
+      return;
     }
-  }, []);
+    
+    if (!currentCallId || makingOfferRef.current) return;
+
+    console.log("📡 Creating WebRTC offer for call:", currentCallId);
+    makingOfferRef.current = true;
+
+    try {
+      const currentStream = getLocalStream() || localStreamRef.current;
+      
+      await createPeer({
+        socket,
+        callId: currentCallId,
+        audioRef,
+        stream: currentStream,
+      });
+
+      const success = await createAndSendOffer();
+      
+      if (!success) {
+        console.error("❌ Failed to create and send offer");
+        
+        if (retryOfferCountRef.current < MAX_OFFER_RETRIES) {
+          retryOfferCountRef.current++;
+          const retryCallId = currentCallId;
+          // Reset makingOfferRef for retry
+          makingOfferRef.current = false;
+          setTimeout(() => {
+            if (
+              callStateRef.current !== "ended" &&
+              callStateRef.current !== "offline" &&
+              callStateRef.current !== "busy" &&
+              callIdRef.current === retryCallId
+            ) {
+              handleWebRTCOffer(retryCallId);
+            }
+          }, 1000);
+        } else {
+          retryOfferCountRef.current = 0;
+          setCallState("ended");
+          await cleanupHard();
+        }
+      } else {
+        console.log("✅ Offer sent to expert");
+        retryOfferCountRef.current = 0;
+      }
+    } catch (err) {
+      console.error("❌ WebRTC offer failed:", err);
+      setCallState("ended");
+      await cleanupHard();
+    } finally {
+      // ALWAYS reset makingOfferRef - FIXED
+      makingOfferRef.current = false;
+    }
+  }, [socket, cleanupHard]);
 
   useEffect(() => {
     const onResume = (data) => {
@@ -235,7 +291,10 @@ export default function VoiceCall() {
       setCallId(data.callId);
       setCallState("connected");
       callStartedRef.current = true;
-      hasRemoteSetRef.current = false;
+      setReconnecting(false);
+      reconnectAttemptsRef.current = 0;
+      retryOfferCountRef.current = 0;
+      makingOfferRef.current = false; // Reset making offer flag
 
       const alreadyElapsed = Math.floor(
         (Date.now() - new Date(data.startedAt)) / 1000
@@ -243,9 +302,11 @@ export default function VoiceCall() {
 
       setSeconds(alreadyElapsed);
 
-      setTimeout(() => {
-        handleWebRTCOffer(data.callId);
-      }, 300);
+      if (!makingOfferRef.current) {
+        setTimeout(() => {
+          handleWebRTCOffer(data.callId);
+        }, 300);
+      }
     };
 
     socket.on("call:resume_data", onResume);
@@ -272,10 +333,12 @@ export default function VoiceCall() {
       soundManager.stopAll();
       console.log("✅ Call connected:", connectedCallId);
       setReconnecting(false);
+      reconnectAttemptsRef.current = 0;
+      retryOfferCountRef.current = 0;
+      makingOfferRef.current = false; // Reset making offer flag
       setCallId(connectedCallId);
       setSeconds(0);
       setCallState("connected");
-      hasRemoteSetRef.current = false;
 
       if (!makingOfferRef.current) {
         setTimeout(() => {
@@ -284,39 +347,37 @@ export default function VoiceCall() {
       }
     };
 
-    const onWebRTCAnswer = async ({ callId: answerCallId, answer }) => {
+    const onWebRTCAnswer = async ({ callId: answerCallId, answer, attemptId }) => {
       if (answerCallId !== callIdRef.current) return;
 
       try {
-        if (hasRemoteSetRef.current) {
-  console.log("⛔ Duplicate answer ignored");
-  return;
-}
-
-const applied = await setRemote(answer);
-hasRemoteSetRef.current = Boolean(applied);
-        console.log("✅ Remote description set");
+        const applied = await setRemote(answer, attemptId);
+        console.log("✅ Remote description set", { applied });
       } catch (err) {
         console.error("❌ Failed to set remote:", err);
       }
     };
 
-    const onWebRTCIce = ({ callId: iceCallId, candidate }) => {
+    const onWebRTCIce = ({ callId: iceCallId, candidate, attemptId }) => {
       if (iceCallId !== callIdRef.current) return;
-      addIce(candidate);
+      addIce(candidate, attemptId);
     };
 
     const onBusy = () => {
       soundManager.stopAll();
       callStartedRef.current = false;
       setCallState("busy");
-      closePeer();
+      setReconnecting(false);
+      makingOfferRef.current = false; // Reset making offer flag
+      cleanupHard();
     };
 
-    const onOffline = ({ message }) => {
+    const onOffline = () => {
       soundManager.stopAll();
       callStartedRef.current = false;
       setCallState("offline");
+      setReconnecting(false);
+      makingOfferRef.current = false; // Reset making offer flag
     };
 
     const onEnded = ({ reason }) => {
@@ -324,7 +385,9 @@ hasRemoteSetRef.current = Boolean(applied);
       console.log("❌ Call ended:", reason);
       callStartedRef.current = false;
       setCallState("ended");
-      closePeer();
+      setReconnecting(false);
+      makingOfferRef.current = false; // Reset making offer flag
+      cleanupHard();
     };
 
     socket.on("call:created", onCallCreated);
@@ -344,9 +407,9 @@ hasRemoteSetRef.current = Boolean(applied);
       socket.off(CALL_EVENTS.BUSY, onBusy);
       socket.off(CALL_EVENTS.OFFLINE, onOffline);
       socket.off(CALL_EVENTS.ENDED, onEnded);
-      closePeer();
+      cleanupHard();
     };
-  }, [socket, handleWebRTCOffer]);
+  }, [socket, handleWebRTCOffer, cleanupHard]);
 
   useEffect(() => {
     const handleExpertOnline = ({ expertId }) => {
@@ -368,18 +431,21 @@ hasRemoteSetRef.current = Boolean(applied);
   useEffect(() => {
     if (!socket) return;
 
-    const onReconnect = () => {
+    const onReconnect = async () => {
       console.log("🔄 Socket reconnected – reinitializing peer");
       setReconnecting(true);
-      socket.emit("call:resume_check");
-      handleSocketReconnect();
-      hasRemoteSetRef.current = false;
-
-      if (callIdRef.current && callStateRef.current === "connected") {
-        setTimeout(() => {
-          handleWebRTCOffer(callIdRef.current);
-        }, 700);
+      reconnectAttemptsRef.current++;
+      
+      if (reconnectAttemptsRef.current > MAX_RECONNECT_ATTEMPTS) {
+        console.error("❌ Max reconnection attempts reached, ending call");
+        setCallState("ended");
+        await cleanupHard();
+        return;
       }
+      
+      makingOfferRef.current = false; // Reset making offer flag on reconnect
+      await handleSocketReconnect();
+      socket.emit("call:resume_check");
     };
 
     socket.io?.on("reconnect", onReconnect);
@@ -387,26 +453,28 @@ hasRemoteSetRef.current = Boolean(applied);
     return () => {
       socket.io?.off("reconnect", onReconnect);
     };
-  }, [socket, handleWebRTCOffer]);
+  }, [socket, cleanupHard]);
 
+  // Visibility change with debounce
   useEffect(() => {
     const onVisibilityChange = () => {
       if (document.visibilityState !== "visible") return;
       if (callStateRef.current !== "connected" || !callIdRef.current) return;
-
-      attachRemoteAudio(audioRef);
+      
+      const now = Date.now();
+      if (now - lastVisibilityResumeRef.current < 3000) {
+        console.log("⏭️ Debouncing visibility resume check");
+        return;
+      }
+      lastVisibilityResumeRef.current = now;
+      
+      console.log("👁️ Tab visible, checking resume");
       socket.emit("call:resume_check");
-
-      setTimeout(() => {
-        if (callIdRef.current) {
-          handleWebRTCOffer(callIdRef.current);
-        }
-      }, 250);
     };
 
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => document.removeEventListener("visibilitychange", onVisibilityChange);
-  }, [socket, handleWebRTCOffer]);
+  }, [socket]);
 
   // Timer
   useEffect(() => {
@@ -446,7 +514,7 @@ hasRemoteSetRef.current = Boolean(applied);
 
   // End call
   const handleEnd = useCallback(() => {
-    if (isCleaningUpRef.current) return;
+    if (isCleaningUpRef.current || cleanupExecutedRef.current) return;
     isCleaningUpRef.current = true;
 
     console.log("🔚 Ending call:", callIdRef.current);
@@ -465,13 +533,12 @@ hasRemoteSetRef.current = Boolean(applied);
       });
     }
 
-    setTimeout(() => {
-      closePeer();
+    setTimeout(async () => {
+      await cleanupHard();
       goBackToProfile();
-      callStartedRef.current = false;
       isCleaningUpRef.current = false;
     }, 200);
-  }, [goBackToProfile, socket, expertId]);
+  }, [goBackToProfile, socket, expertId, cleanupHard]);
 
   // Mute toggle
   const handleMute = useCallback(() => {
@@ -495,27 +562,13 @@ hasRemoteSetRef.current = Boolean(applied);
       callState === "offline"
     ) {
       const timer = setTimeout(() => {
-        closePeer();
+        cleanupHard();
         goBackToProfile();
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [callState, goBackToProfile]);
+  }, [callState, goBackToProfile, cleanupHard]);
 
-  // Add this effect in VoiceCall.jsx after other effects
-useEffect(() => {
-  if (callState !== "connected") return;
-  
-  // Periodic check to ensure audio is still playing
-  const audioCheckInterval = setInterval(async () => {
-    const { ensureAudioPlaying } = await import("../../../../shared/webrtc/voicePeer");
-    await ensureAudioPlaying();
-  }, 5000); // Check every 5 seconds
-  
-  return () => clearInterval(audioCheckInterval);
-}, [callState]);
-
-  // Render wave animation for connected state
   const renderWaveAnimation = () => (
     <WaveContainer>
       {[0, 1, 2, 3, 4].map((_, index) => (
@@ -524,7 +577,6 @@ useEffect(() => {
     </WaveContainer>
   );
 
-  // Render connecting animation
   const renderConnectingAnimation = () => (
     <ConnectingAnimation>
       <ConnectingDots>
@@ -574,7 +626,6 @@ useEffect(() => {
     <PageWrapper>
       <audio ref={audioRef} autoPlay playsInline />
 
-      {/* Network Status */}
       {callState === "connected" && networkQuality !== "good" && (
         <NetworkStatus $quality={networkQuality}>
           <span>{networkQuality === "average" ? "⚠️" : "❌"}</span>
@@ -582,13 +633,11 @@ useEffect(() => {
         </NetworkStatus>
       )}
 
-      {/* Reconnecting Badge */}
       {reconnecting && callState === "connected" && (
         <ReconnectingBadge>Reconnecting...</ReconnectingBadge>
       )}
 
       <CallCard>
-        {/* Header with Timer and Controls */}
         <CallHeader>
           {callState === "connected" && (
             <TimerSection>
@@ -638,7 +687,6 @@ useEffect(() => {
           </HeaderControls>
         </CallHeader>
 
-        {/* Expert Info Section */}
         <ExpertInfo>
           <ExpertAvatarWrapper className={callState === "connected" ? "active" : ""}>
             <ExpertAvatar
@@ -664,14 +712,10 @@ useEffect(() => {
             </StatusBadge>
           )}
 
-          {/* Wave Animation for Active Call */}
           {callState === "connected" && renderWaveAnimation()}
-
-          {/* Connecting Animation */}
           {callState === "calling" && renderConnectingAnimation()}
         </ExpertInfo>
 
-        {/* Bottom Actions */}
         <BottomActions>
           {callState === "connected" && (
             <ActionButton $danger onClick={handleEnd}>

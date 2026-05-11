@@ -9,6 +9,7 @@ import { WalletProvider } from "./shared/context/WalletContext";
 import { soundManager } from "./shared/services/sound/soundManager";
 import GlobalStyles from "./shared/styles/GlobalStyles";
 import { theme } from "./shared/styles/theme";
+import { HelmetProvider } from "react-helmet-async";
 
 soundManager.preload();
 
@@ -32,16 +33,18 @@ if ("serviceWorker" in navigator) {
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <ThemeProvider theme={theme}>
-    <GlobalStyles />
-    <CategoryProvider>
-      <BrowserRouter>
-        <AuthProvider>
-          <WalletProvider>
+  <HelmetProvider>
+    <ThemeProvider theme={theme}>
+      <GlobalStyles />
+      <CategoryProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <WalletProvider>
             <AppRouter />
           </WalletProvider>
         </AuthProvider>
       </BrowserRouter>
     </CategoryProvider>
   </ThemeProvider>
+</HelmetProvider>
 );

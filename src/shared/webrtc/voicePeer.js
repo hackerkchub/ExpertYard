@@ -15,6 +15,7 @@ let pendingIce = [];
 
 let socketRef = null;
 let callIdRef = null;
+let currentAttemptIdGlobal = 0;
 
 let disconnectTimer = null;
 let iceTimeout = null;
@@ -26,34 +27,53 @@ let isRestartingIce = false;
 let isGettingMic = false;
 let networkListenerAttached = false;
 let visibilityListenerAttached = false;
+let audioDeviceListenerAttached = false;
 
 let onNetworkWeakCallback = null;
 let onNetworkErrorCallback = null;
 
-// NEW: Track connection state machine
+// Track connection state machine
 let connectionAttemptId = 0;
 let isClosing = false;
 let remoteTrackAttached = false;
 
+// RTP freeze detection
+let audioPlaybackStarted = false;
+
+// ICE restart debounce
+let lastIceRestartAt = 0;
+
+// Store current peer reference for event handlers
+let currentPeer = null;
+
+// Offer-answer timeout
+let offerAnswerTimeout = null;
+
 // ----------------------------------------------------------------------
 // Logging helpers
 // ----------------------------------------------------------------------
-const LOG_PREFIX = "[voicePeer]";
-function logInfo(...args) { console.log(LOG_PREFIX, ...args); }
-function logWarn(...args) { console.warn(LOG_PREFIX, ...args); }
-function logError(...args) { console.error(LOG_PREFIX, ...args); }
+const DEBUG = true;
 
-function logPeerState(prefix) {
-  if (!pc) {
-    logInfo(prefix, "peer = null");
-    return;
+function log(type, message, data = null) {
+  if (!DEBUG) return;
+
+  const time = new Date().toLocaleTimeString();
+
+  if (data) {
+    console.log(`[${time}] [${type}] ${message}`, data);
+  } else {
+    console.log(`[${time}] [${type}] ${message}`);
   }
-  logInfo(prefix, {
-    connectionState: pc.connectionState,
-    iceConnectionState: pc.iceConnectionState,
-    signalingState: pc.signalingState,
-    hasRemoteTrack: remoteTrackAttached,
-  });
+}
+
+function logError(message, error = null) {
+  const time = new Date().toLocaleTimeString();
+
+  if (error) {
+    console.error(`[${time}] [ERROR] ${message}`, error);
+  } else {
+    console.error(`[${time}] [ERROR] ${message}`);
+  }
 }
 
 // ----------------------------------------------------------------------
@@ -64,7 +84,7 @@ const AUDIO_CONSTRAINTS = {
   noiseSuppression: true,
   autoGainControl: true,
   channelCount: { ideal: 1 },
-  sampleRate: { ideal: 48000 }, // Better quality
+  sampleRate: { ideal: 16000 },
   sampleSize: { ideal: 16 },
   volume: 1.0,
 };
@@ -99,6 +119,7 @@ function clearTimers() {
   if (connectionTimeout) { clearTimeout(connectionTimeout); connectionTimeout = null; }
   if (qualityInterval) { clearInterval(qualityInterval); qualityInterval = null; }
   if (playRetryTimer) { clearTimeout(playRetryTimer); playRetryTimer = null; }
+  if (offerAnswerTimeout) { clearTimeout(offerAnswerTimeout); offerAnswerTimeout = null; }
 }
 
 function hasLiveLocalAudio(stream = localStream) {
@@ -109,47 +130,44 @@ function hasLiveLocalAudio(stream = localStream) {
 function ensureRemoteStream() {
   if (!remoteStream) {
     remoteStream = new MediaStream();
-    logInfo("created new remoteStream");
   }
   return remoteStream;
 }
 
-function logAudioTracks(prefix, stream) {
-  const tracks = stream?.getAudioTracks?.() || [];
-  logInfo(prefix, tracks.map(track => ({
-    id: track.id,
-    enabled: track.enabled,
-    muted: track.muted,
-    readyState: track.readyState,
-    label: track.label,
-  })));
-}
-
 async function safePlayAudio(audioEl, reason = "unknown") {
   if (!audioEl) {
-    logWarn("audio play skipped: no element", { reason });
     return false;
   }
   
-  // Don't try to play if no remote track attached
   if (!remoteTrackAttached) {
-    logWarn("audio play skipped: no remote track attached", { reason });
     return false;
+  }
+  
+  // Avoid interrupting already playing audio
+  if (!audioEl.paused) {
+    return true;
   }
   
   try {
     await audioEl.play();
-    logInfo("audio.play() success", { reason });
+    if (!audioPlaybackStarted) {
+      log("MEDIA", "Remote audio playing");
+      audioPlaybackStarted = true;
+    }
     return true;
   } catch (error) {
-    logWarn("audio.play() failed", { reason, message: error?.message, name: error?.name });
     if (playRetryTimer) clearTimeout(playRetryTimer);
     playRetryTimer = setTimeout(() => {
       if (!audioEl?.srcObject) return;
       if (!remoteTrackAttached) return;
       audioEl.play().then(
-        () => logInfo("audio.play() retry success", { reason }),
-        (retryError) => logWarn("audio.play() retry failed", { reason, message: retryError?.message })
+        () => {
+          if (!audioPlaybackStarted) {
+            log("MEDIA", "Remote audio playing");
+            audioPlaybackStarted = true;
+          }
+        },
+        () => {}
       );
     }, 600);
     return false;
@@ -164,7 +182,6 @@ function bindAudioElement(audioRef) {
     remoteAudioEl.playsInline = true;
     remoteAudioEl.muted = false;
     remoteAudioEl.volume = 1;
-    logInfo("bound remote audio element (provided)");
   } else if (!remoteAudioEl) {
     remoteAudioEl = document.createElement("audio");
     remoteAudioEl.autoplay = true;
@@ -173,14 +190,11 @@ function bindAudioElement(audioRef) {
     remoteAudioEl.volume = 1;
     remoteAudioEl.setAttribute("data-generated-voice-audio", "true");
     document.body.appendChild(remoteAudioEl);
-    logWarn("audioRef missing, using fallback audio element");
   }
 
   if (remoteAudioEl && remoteStream && remoteAudioEl.srcObject !== remoteStream) {
     remoteAudioEl.srcObject = remoteStream;
-    logInfo("rebound srcObject to remote stream", { streamId: remoteStream.id });
     
-    // Only auto-play if we have remote track
     if (remoteTrackAttached) {
       safePlayAudio(remoteAudioEl, "bind-audio-element");
     }
@@ -188,55 +202,48 @@ function bindAudioElement(audioRef) {
   return remoteAudioEl;
 }
 
-function cleanupRemoteAudioElement() {
+function cleanupRemoteAudioElement(fullCleanup = true) {
   if (!remoteAudioEl) return;
   try {
     remoteAudioEl.pause?.();
     remoteAudioEl.srcObject = null;
-    if (remoteAudioEl.dataset?.generatedVoiceAudio === "true") remoteAudioEl.remove();
-  } catch (error) { logWarn("remote audio cleanup issue", error); }
+    if (fullCleanup && remoteAudioEl.dataset?.generatedVoiceAudio === "true") {
+      remoteAudioEl.remove();
+    }
+  } catch (error) {}
   remoteAudioEl = null;
 }
 
 async function acquireMicrophone(providedStream) {
   if (providedStream && hasLiveLocalAudio(providedStream)) {
-    logAudioTracks("using provided local audio tracks", providedStream);
     return providedStream;
   }
   const existingTrack = localStream?.getAudioTracks?.()[0];
   if (existingTrack && existingTrack.readyState === "live") {
-    logAudioTracks("reusing existing local audio tracks", localStream);
     return localStream;
   }
-  logInfo("requesting getUserMedia");
   const newStream = await navigator.mediaDevices.getUserMedia({ audio: AUDIO_CONSTRAINTS });
-  logInfo("getUserMedia success", { streamId: newStream.id });
-  logAudioTracks("local audio tracks", newStream);
   return newStream;
 }
 
 function attachTrackRecovery(stream) {
   stream?.getAudioTracks?.().forEach(track => {
     track.onended = async () => {
-      logWarn("local audio track ended", { trackId: track.id });
       if (isGettingMic) return;
       isGettingMic = true;
       try {
         const newStream = await navigator.mediaDevices.getUserMedia({ audio: AUDIO_CONSTRAINTS });
-        logInfo("reacquired microphone", { streamId: newStream.id });
-        logAudioTracks("reacquired local audio tracks", newStream);
         const newTrack = newStream.getAudioTracks()[0];
         attachTrackRecovery(newStream);
         const sender = pc?.getSenders().find(item => item.track?.kind === "audio");
         if (sender && newTrack) {
           await sender.replaceTrack(newTrack);
-          logInfo("sender.replaceTrack() success");
         }
         localStream?.getTracks().forEach(item => item.stop());
         localStream = newStream;
         setTimeout(() => restartIceWithRenegotiation(), 500);
       } catch (error) {
-        logError("microphone reacquire failed", error);
+        logError("Microphone reacquire failed", error);
         if (onNetworkErrorCallback) onNetworkErrorCallback();
       } finally { isGettingMic = false; }
     };
@@ -253,34 +260,24 @@ async function ensureLocalAudioSender(stream) {
   if (existingSender) {
     if (existingSender.track?.id !== track.id) {
       await existingSender.replaceTrack(track);
-      logInfo("replaceTrack()", { senderTrackId: existingSender.track?.id, nextTrackId: track.id });
-    } else {
-      logInfo("audio sender already up to date", { trackId: track.id });
     }
   } else {
     pc.addTrack(track, localStream);
-    logInfo("addTrack()", { trackId: track.id, enabled: track.enabled });
   }
 
-  try {
-    const audioSender = pc.getSenders().find(sender => sender.track?.kind === "audio");
-    if (audioSender) {
-      const params = audioSender.getParameters();
-      if (!params.encodings) params.encodings = [{}];
-      params.encodings[0].maxBitrate = 32000;
-      params.encodings[0].ptime = 20;
-      await audioSender.setParameters(params);
-      logInfo("audio sender tuned");
-    }
-  } catch (error) { logWarn("audio sender tuning failed", error); }
+  log("MEDIA", "Local microphone attached");
 }
 
 function setupRemoteAudioLifecycle(audioRef) {
   const audioEl = bindAudioElement(audioRef);
   const stream = ensureRemoteStream();
+  
+  // Clear old handlers before reassigning
+  if (audioEl.onloadedmetadata) audioEl.onloadedmetadata = null;
+  if (audioEl.oncanplay) audioEl.oncanplay = null;
+  
   if (audioEl.srcObject !== stream) {
     audioEl.srcObject = stream;
-    logInfo("remote audio srcObject assigned", { streamId: stream.id });
   }
   const replay = () => {
     if (remoteTrackAttached) {
@@ -294,7 +291,6 @@ function setupRemoteAudioLifecycle(audioRef) {
 function setupNetworkListener() {
   if (!navigator.connection || networkListenerAttached) return;
   navigator.connection.addEventListener("change", () => {
-    logInfo("network change detected");
     if (pc && (pc.connectionState === "connected" || pc.connectionState === "disconnected")) {
       restartIceWithRenegotiation();
     }
@@ -305,7 +301,6 @@ function setupNetworkListener() {
 function setupVisibilityListener() {
   if (visibilityListenerAttached) return;
   document.addEventListener("visibilitychange", async () => {
-    logInfo("visibilitychange", document.visibilityState);
     if (document.visibilityState !== "visible" || !pc) return;
     bindAudioElement();
     if (remoteTrackAttached) {
@@ -313,19 +308,94 @@ function setupVisibilityListener() {
     }
     const track = localStream?.getAudioTracks?.()[0];
     if (!track || track.readyState === "ended") {
-      logWarn("local track missing after tab restore");
       try {
         const recoveredStream = await navigator.mediaDevices.getUserMedia({ audio: AUDIO_CONSTRAINTS });
         await ensureLocalAudioSender(recoveredStream);
-      } catch (error) { logError("tab visibility mic recovery failed", error); }
+      } catch (error) { logError("Tab visibility mic recovery failed", error); }
     }
     if (pc.connectionState !== "connected") restartIceWithRenegotiation();
   });
   visibilityListenerAttached = true;
 }
 
+// Setup audio device change listener for Bluetooth/headphones
+function setupAudioDeviceListener() {
+  if (!navigator.mediaDevices?.ondevicechange) return;
+  if (audioDeviceListenerAttached) return;
+  
+  navigator.mediaDevices.addEventListener("devicechange", () => {
+    log("MEDIA", "Audio device changed", { 
+      hasRemoteTrack: remoteTrackAttached,
+      connectionState: pc?.connectionState 
+    });
+    
+    if (remoteTrackAttached && remoteAudioEl) {
+      setTimeout(() => {
+        safePlayAudio(remoteAudioEl, "device-change");
+      }, 200);
+    }
+  });
+  audioDeviceListenerAttached = true;
+}
+
 setupNetworkListener();
 setupVisibilityListener();
+setupAudioDeviceListener();
+
+// ----------------------------------------------------------------------
+// Soft cleanup (does NOT stop microphone)
+// ----------------------------------------------------------------------
+async function cleanupPeerOnly() {
+  clearTimers();
+
+  // Clear stale candidates
+  pendingIce = [];
+  
+  // Reset audio playback flag
+  audioPlaybackStarted = false;
+
+  if (pc) {
+    // Clear track event handlers to prevent memory leaks
+    pc.getReceivers().forEach(receiver => {
+      if (receiver.track) {
+        receiver.track.onmute = null;
+        receiver.track.onunmute = null;
+        receiver.track.onended = null;
+      }
+    });
+    
+    pc.ontrack = null;
+    pc.onicecandidate = null;
+    pc.onconnectionstatechange = null;
+    pc.oniceconnectionstatechange = null;
+    pc.onsignalingstatechange = null;
+    pc.onicegatheringstatechange = null;
+    pc.onnegotiationneeded = null;
+    pc.onicecandidateerror = null;
+
+    try {
+      pc.close();
+    } catch (e) {}
+    pc = null;
+    currentPeer = null;
+  }
+
+  if (remoteAudioEl) {
+    remoteAudioEl.srcObject = null;
+  }
+
+  if (remoteStream) {
+    // Clear tracks but keep the stream reference for reconnection
+    remoteStream.getTracks().forEach(track => {
+      remoteStream.removeTrack(track);
+    });
+    // DON'T set remoteStream = null - allows audio continuity
+  }
+
+  remoteTrackAttached = false;
+
+  log("PEER", "Peer cleaned (soft)");
+}
 
 // ----------------------------------------------------------------------
 // Exported functions
@@ -336,55 +406,64 @@ export function setNetworkCallbacks({ onWeak, onError }) {
 }
 
 export function attachRemoteAudio(audioRef) {
-  logInfo("attachRemoteAudio called");
   setupRemoteAudioLifecycle(audioRef);
 }
 
+export function getLocalStream() {
+  return localStream;
+}
+
 export async function createPeer({ socket, callId, audioRef, stream }) {
-  // Increment connection attempt ID to track stale operations
   const currentAttemptId = ++connectionAttemptId;
-  logInfo("createPeer called", { callId, attemptId: currentAttemptId });
+  currentAttemptIdGlobal = currentAttemptId;
   
-  // CRITICAL: Always close existing peer and create a fresh one
+  log("PEER", "Creating new peer", {
+    callId,
+    attemptId: currentAttemptId
+  });
+  
+  // Use soft cleanup instead of full closePeer
   if (pc && !isClosing) {
-    logInfo("closing existing peer before creating new one", { previousCallId: callIdRef });
-    await closePeer();
+    await cleanupPeerOnly();
   }
   
   isClosing = false;
   socketRef = socket;
   callIdRef = callId;
   remoteTrackAttached = false;
+  audioPlaybackStarted = false;
 
   // Create fresh RTCPeerConnection
-  pc = new RTCPeerConnection(RTC_CONFIG);
+  const peer = new RTCPeerConnection(RTC_CONFIG);
+  pc = peer;
+  currentPeer = peer;
   
-  // Reset remote stream with fresh instance
-  if (remoteStream) {
+  // Reset remote stream - preserve existing if available for continuity
+  if (remoteAudioEl) {
+    remoteAudioEl.srcObject = null;
+  }
+  
+  // Don't recreate remoteStream if it exists - preserve for continuity
+  if (!remoteStream) {
+    remoteStream = new MediaStream();
+  } else {
+    // Clear tracks but keep the stream reference
     remoteStream.getTracks().forEach(track => {
       remoteStream.removeTrack(track);
-      track.stop();
     });
   }
-  remoteStream = new MediaStream();
-  
-  logInfo("created RTCPeerConnection", { callId, attemptId: currentAttemptId });
 
-  // CRITICAL: Setup ontrack BEFORE anything else
-  pc.ontrack = (event) => {
-    // Ignore stale events from previous connections
+  // Setup ontrack
+  peer.ontrack = (event) => {
     if (currentAttemptId !== connectionAttemptId) {
-      logWarn("ignoring stale ontrack from previous connection", { attemptId: currentAttemptId });
       return;
     }
     
-    logInfo("ontrack fired", {
-      kind: event.track?.kind,
-      streamIds: event.streams?.map(s => s.id) || [],
-      trackId: event.track?.id,
-    });
-    
     if (event.track?.kind !== "audio") return;
+
+    log("MEDIA", "Remote audio track received", {
+      trackId: event.track.id
+    });
 
     setupRemoteAudioLifecycle(audioRef);
     const outputStream = ensureRemoteStream();
@@ -393,137 +472,238 @@ export async function createPeer({ socket, callId, audioRef, stream }) {
     if (!alreadyAttached) {
       outputStream.addTrack(event.track);
       remoteTrackAttached = true;
-      logInfo("added remote track to remoteStream", { 
-        trackId: event.track.id, 
-        nowTracks: outputStream.getTracks().length 
-      });
       
-      // Force audio element to play
       if (remoteAudioEl) {
         safePlayAudio(remoteAudioEl, "ontrack-new");
       }
-    } else {
-      logInfo("remote track already in stream");
     }
-    
-    logAudioTracks("remote audio tracks after ontrack", outputStream);
 
     event.track.onunmute = () => {
-      logInfo("remote track unmuted", { trackId: event.track.id });
+      log("MEDIA", "Remote track unmuted");
       remoteTrackAttached = true;
       safePlayAudio(remoteAudioEl, "remote-track-unmute");
     };
     event.track.onmute = () => {
-      logInfo("remote track muted", { trackId: event.track.id });
-      remoteTrackAttached = false;
+      log("MEDIA", "Remote track muted");
     };
     event.track.onended = () => {
-      logWarn("remote track ended", { trackId: event.track.id });
+      log("MEDIA", "Remote track ended");
       remoteTrackAttached = false;
     };
 
     if (event.receiver) {
       try { 
         event.receiver.playoutDelayHint = 0.3; 
-      } catch (e) { 
-        logWarn("playoutDelayHint unsupported", e); 
-      }
+      } catch (e) {}
     }
   };
 
-  pc.onicecandidate = (event) => {
-    if (!event.candidate || !socketRef || !callIdRef) return;
-    socketRef.emit("webrtc:ice", { callId: callIdRef, candidate: event.candidate });
-    logInfo("emitted ice candidate", { callId: callIdRef, sdpMid: event.candidate.sdpMid });
+  peer.onicecandidate = (event) => {
+    if (event.candidate) {
+      if (!socketRef || !callIdRef) return;
+      socketRef.emit("webrtc:ice", { 
+        callId: callIdRef, 
+        candidate: event.candidate,
+        attemptId: currentAttemptId
+      });
+    } else {
+      log("ICE", "ICE gathering complete");
+    }
   };
 
-  pc.onsignalingstatechange = () => {
-    logInfo("signalingState", pc.signalingState);
+  peer.onnegotiationneeded = () => {
+    log("PEER", "Negotiation needed");
   };
   
-  pc.onconnectionstatechange = () => {
-    logInfo("connectionState", pc.connectionState);
-    if (pc.connectionState === "connected") {
+  peer.onicegatheringstatechange = () => {
+    log("ICE", `Gathering -> ${peer.iceGatheringState}`);
+  };
+  
+  peer.onicecandidateerror = (e) => {
+    logError("ICE candidate error", {
+      url: e.url,
+      errorCode: e.errorCode,
+      errorText: e.errorText
+    });
+  };
+  
+  peer.onconnectionstatechange = () => {
+    log("PEER", `Connection -> ${peer.connectionState}`);
+    
+    if (peer.connectionState === "connected") {
       if (disconnectTimer) clearTimeout(disconnectTimer);
       if (connectionTimeout) clearTimeout(connectionTimeout);
       if (remoteTrackAttached) {
         safePlayAudio(remoteAudioEl, "pc-connected");
       }
     }
-    if (pc.connectionState === "disconnected") {
+    if (peer.connectionState === "disconnected") {
+      log("ICE", "Connection lost, waiting for recovery");
+      if (disconnectTimer) clearTimeout(disconnectTimer);
       disconnectTimer = setTimeout(() => {
-        if (pc && pc.connectionState !== "connected") {
-          logWarn("disconnected too long, restarting ICE");
+        if (peer !== currentPeer) return;
+        if (peer.connectionState !== "connected") {
           restartIceWithRenegotiation();
         }
       }, 4000);
     }
-    if (pc.connectionState === "failed") {
-      logError("peer connection failed");
-      if (onNetworkErrorCallback) onNetworkErrorCallback();
+    if (peer.connectionState === "failed" || peer.connectionState === "closed") {
+      log("MEDIA", "Connection failed/closed, resetting track attachment");
+      remoteTrackAttached = false;
+      if (peer.connectionState === "failed" && onNetworkErrorCallback) {
+        onNetworkErrorCallback();
+      }
     }
   };
   
-  pc.oniceconnectionstatechange = () => {
-    logInfo("iceConnectionState", pc.iceConnectionState);
-    if (pc.iceConnectionState === "checking") {
+  peer.oniceconnectionstatechange = () => {
+    log("ICE", `ICE state -> ${peer.iceConnectionState}`);
+    
+    if (peer.iceConnectionState === "checking") {
+      if (iceTimeout) clearTimeout(iceTimeout);
       iceTimeout = setTimeout(() => {
-        if (pc && pc.iceConnectionState !== "connected" && pc.iceConnectionState !== "completed") {
-          logWarn("ICE stuck in checking");
+        if (peer !== currentPeer) return;
+        if (peer.iceConnectionState !== "connected" && peer.iceConnectionState !== "completed") {
           if (onNetworkWeakCallback) onNetworkWeakCallback();
         }
       }, 10000);
     }
-    if (pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") {
+    if (peer.iceConnectionState === "connected" || peer.iceConnectionState === "completed") {
       if (iceTimeout) clearTimeout(iceTimeout);
+      log("ICE", "Connection recovered");
       if (remoteTrackAttached) {
         safePlayAudio(remoteAudioEl, "ice-connected");
       }
     }
-    if (pc.iceConnectionState === "failed") {
+    if (peer.iceConnectionState === "failed") {
       logError("ICE failed");
+      remoteTrackAttached = false;
       if (onNetworkErrorCallback) onNetworkErrorCallback();
     }
   };
 
   setupRemoteAudioLifecycle(audioRef);
 
+  // Abort protection - check if still valid before microphone acquisition
+  if (isClosing || peer !== currentPeer) {
+    log("PEER", "Aborting peer creation - cleanup in progress");
+    return peer;
+  }
+
   try {
     const nextStream = await acquireMicrophone(stream);
+    
+    // Check again after async operation
+    if (isClosing || peer !== currentPeer) {
+      log("PEER", "Aborting peer creation after mic - cleanup happened");
+      return peer;
+    }
+    
     await ensureLocalAudioSender(nextStream);
-    logInfo("local audio sender ready");
+    
+    // Check again after async operation
+    if (isClosing || peer !== currentPeer) {
+      log("PEER", "Aborting peer creation after audio sender - cleanup happened");
+      return peer;
+    }
   } catch (error) {
-    logError("getUserMedia failed", error);
+    logError("Microphone access denied", error);
     throw new Error("Microphone access denied");
   }
 
   clearTimers();
   connectionTimeout = setTimeout(() => {
-    if (pc && pc.connectionState !== "connected") {
-      logError("connection timeout after 15s");
+    if (peer !== currentPeer) return;
+    if (peer.connectionState !== "connected") {
+      logError("Connection timeout after 15s");
       if (onNetworkErrorCallback) onNetworkErrorCallback();
     }
   }, 15000);
 
-  startQualityMonitoring();
-  logPeerState("createPeer finished");
-  return pc;
+  startQualityMonitoring(peer);
+  return peer;
+}
+
+export async function createAndSendOffer() {
+  if (!pc || !socketRef || !callIdRef) {
+    log("PEER", "Cannot create offer: missing pc, socket, or callId");
+    return false;
+  }
+
+  if (pc.signalingState !== "stable") {
+    log("PEER", "Skipping offer - signaling not stable", { signalingState: pc.signalingState });
+    return false;
+  }
+
+  try {
+    log("PEER", "Creating offer");
+    const offer = await pc.createOffer({
+      offerToReceiveAudio: true,
+      offerToReceiveVideo: false,
+    });
+
+    await pc.setLocalDescription(offer);
+
+    // Set timeout for answer
+    if (offerAnswerTimeout) clearTimeout(offerAnswerTimeout);
+    offerAnswerTimeout = setTimeout(() => {
+      if (pc && pc.connectionState !== "connected") {
+        log("PEER", "No answer received within timeout, restarting ICE");
+        restartIceWithRenegotiation();
+      }
+    }, 12000);
+
+    socketRef.emit("webrtc:offer", {
+      callId: callIdRef,
+      offer,
+      attemptId: currentAttemptIdGlobal,
+    });
+
+    log("PEER", "Offer created and sent", { attemptId: currentAttemptIdGlobal });
+    return true;
+  } catch (error) {
+    logError("Failed to create and send offer", error);
+    return false;
+  }
 }
 
 async function restartIceWithRenegotiation() {
-  if (isRestartingIce) { logInfo("ICE restart already in progress"); return; }
-  if (!pc || !socketRef || !callIdRef) { logWarn("ICE restart skipped: missing peer/socket/callId"); return; }
-  if (pc.signalingState !== "stable") {
-    logWarn("ICE restart skipped: signaling not stable", { signalingState: pc.signalingState });
+  if (isRestartingIce) return;
+  
+  const peer = pc;
+  if (!peer || !socketRef || !callIdRef) return;
+  if (peer.signalingState !== "stable") return;
+  
+  const now = Date.now();
+  if (now - lastIceRestartAt < 8000) {
     return;
   }
+  lastIceRestartAt = now;
+  
   isRestartingIce = true;
+  log("ICE", "Restarting ICE");
+  
   try {
-    const offer = await pc.createOffer({ iceRestart: true, offerToReceiveAudio: true, offerToReceiveVideo: false });
-    await pc.setLocalDescription(offer);
-    socketRef.emit("webrtc:offer", { callId: callIdRef, offer });
-    logInfo("ICE restart offer sent", { callId: callIdRef });
-  } catch (error) { logError("ICE restart failed", error); }
+    const offer = await peer.createOffer({ iceRestart: true, offerToReceiveAudio: true, offerToReceiveVideo: false });
+    
+    if (peer !== currentPeer) {
+      log("ICE", "Peer changed during ICE restart, aborting");
+      return;
+    }
+    
+    await peer.setLocalDescription(offer);
+    
+    if (peer !== currentPeer) return;
+    
+    socketRef.emit("webrtc:offer", { 
+      callId: callIdRef, 
+      offer,
+      attemptId: currentAttemptIdGlobal
+    });
+    log("ICE", "ICE restart offer sent", { attemptId: currentAttemptIdGlobal });
+  } catch (error) { 
+    logError("ICE restart failed", error); 
+  }
   finally { isRestartingIce = false; }
 }
 
@@ -531,7 +711,6 @@ export async function createOffer() {
   if (!pc) return null;
   const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
   await pc.setLocalDescription(offer);
-  logInfo("createOffer complete");
   return offer;
 }
 
@@ -539,16 +718,17 @@ export async function createAnswer() {
   if (!pc) return null;
   const answer = await pc.createAnswer();
   await pc.setLocalDescription(answer);
-  logInfo("createAnswer complete");
   return answer;
 }
 
-export async function setRemote(description) {
+export async function setRemote(description, attemptId = null) {
   if (!pc || !description) return false;
   
-  // Prevent duplicate remote descriptions
-  if (pc.remoteDescription && pc.remoteDescription.type === description.type) {
-    logWarn("setRemote skipped: duplicate description", { type: description.type });
+  if (attemptId && attemptId !== currentAttemptIdGlobal) {
+    return false;
+  }
+  
+  if (pc.remoteDescription && pc.remoteDescription.sdp === description.sdp) {
     return false;
   }
   
@@ -558,13 +738,16 @@ export async function setRemote(description) {
   const canApplyAnswer = pc.signalingState === "have-local-offer";
 
   if ((isOffer && !canApplyOffer) || (!isOffer && !canApplyAnswer)) {
-    logWarn("setRemote skipped due to signaling state", { type: rtcDesc.type, signalingState: pc.signalingState });
     return false;
   }
   
   try {
     await pc.setRemoteDescription(rtcDesc);
-    logInfo("setRemote success", { type: rtcDesc.type, signalingState: pc.signalingState });
+    // Clear offer-answer timeout when answer is received
+    if (!isOffer && offerAnswerTimeout) {
+      clearTimeout(offerAnswerTimeout);
+      offerAnswerTimeout = null;
+    }
   } catch (error) {
     logError("setRemote failed", error);
     return false;
@@ -574,54 +757,124 @@ export async function setRemote(description) {
     const candidate = pendingIce.shift();
     try {
       await pc.addIceCandidate(candidate);
-      logInfo("flushed queued ICE candidate");
-    } catch (error) { logWarn("queued ICE flush failed", error); }
+    } catch (error) {}
   }
   return true;
 }
 
-export async function addIce(candidate) {
+export async function addIce(candidate, attemptId = null) {
   if (!candidate) return;
+  
+  if (attemptId && attemptId !== currentAttemptIdGlobal) {
+    return;
+  }
+  
   try {
     if (pc && pc.remoteDescription) {
       await pc.addIceCandidate(candidate);
-      logInfo("addIce success");
     } else {
       pendingIce.push(candidate);
-      logInfo("queued ICE candidate", { pendingCount: pendingIce.length });
     }
-  } catch (error) { logError("addIce failed", error); }
+  } catch (error) { 
+    if (error?.name !== "OperationError") {
+      logError("addIce failed", error);
+    }
+  }
 }
 
 export function toggleMute(muted) {
   if (!localStream) return;
   localStream.getAudioTracks().forEach(track => track.enabled = !muted);
-  logAudioTracks("toggleMute", localStream);
 }
 
 export async function getStats() {
-  if (!pc) return null;
+  const peer = pc;
+  if (!peer) return null;
+  
   try {
-    const stats = await pc.getStats();
+    const stats = await peer.getStats();
+    
+    if (peer !== pc) return null;
+    
     const report = [];
+    const localCandidates = new Map();
+    const remoteCandidates = new Map();
+    let selectedPair = null;
+    
     stats.forEach(stat => {
       if (stat.type === "inbound-rtp" && stat.kind === "audio") {
-        report.push({ type: "inbound", packetsLost: stat.packetsLost, packetsReceived: stat.packetsReceived, jitter: stat.jitter, roundTripTime: stat.roundTripTime });
+        report.push({ 
+          type: "inbound", 
+          packetsLost: stat.packetsLost, 
+          packetsReceived: stat.packetsReceived,
+          bytesReceived: stat.bytesReceived,
+          jitter: stat.jitter, 
+          roundTripTime: stat.roundTripTime,
+          totalAudioEnergy: stat.totalAudioEnergy
+        });
       }
       if (stat.type === "outbound-rtp" && stat.kind === "audio") {
         report.push({ type: "outbound", packetsSent: stat.packetsSent });
       }
+      if (stat.type === "candidate-pair" && stat.selected) {
+        selectedPair = stat;
+      }
+      if (stat.type === "local-candidate") {
+        localCandidates.set(stat.id, stat.candidateType);
+      }
+      if (stat.type === "remote-candidate") {
+        remoteCandidates.set(stat.id, stat.candidateType);
+      }
     });
+    
+    if (selectedPair) {
+      const localType = localCandidates.get(selectedPair.localCandidateId);
+      const remoteType = remoteCandidates.get(selectedPair.remoteCandidateId);
+      log("ICE", `Selected candidate - Local: ${localType}, Remote: ${remoteType}`);
+    }
+    
     return report;
-  } catch (error) { logWarn("getStats failed", error); return null; }
+  } catch (error) { 
+    return null; 
+  }
 }
 
-function startQualityMonitoring() {
+function startQualityMonitoring(peer) {
   if (qualityInterval) clearInterval(qualityInterval);
+  
+  let lastBytesReceived = 0;
+  let freezeCount = 0;
+  
   qualityInterval = setInterval(async () => {
+    if (peer !== currentPeer) {
+      clearInterval(qualityInterval);
+      qualityInterval = null;
+      return;
+    }
+    
     const stats = await getStats();
     const inbound = stats?.find(item => item.type === "inbound");
     if (!inbound) return;
+    
+    if (
+      inbound.bytesReceived === lastBytesReceived &&
+      peer?.connectionState === "connected"
+    ) {
+      freezeCount++;
+      
+      log("RTP", `No data received (${freezeCount})`);
+      
+      if (freezeCount >= 3) {
+        logError("MEDIA FROZEN");
+        restartIceWithRenegotiation();
+        freezeCount = 0;
+      }
+    } else {
+      freezeCount = 0;
+    }
+    
+    lastBytesReceived = inbound.bytesReceived;
+    
     const total = inbound.packetsReceived + inbound.packetsLost;
     if (!total) return;
     const lossPercent = inbound.packetsLost / total;
@@ -629,13 +882,11 @@ function startQualityMonitoring() {
       onNetworkWeakCallback({ lossPercent, jitter: inbound.jitter, rtt: inbound.roundTripTime });
     }
     if (inbound.roundTripTime > 1.5 || lossPercent > 0.25) {
-      logWarn("quality degraded, triggering ICE restart", { lossPercent, roundTripTime: inbound.roundTripTime });
       restartIceWithRenegotiation();
     }
   }, 5000);
 }
 
-// EXPORTED: Force audio playback check
 export function ensureAudioPlaying() {
   if (remoteAudioEl && remoteTrackAttached) {
     return safePlayAudio(remoteAudioEl, "manual-check");
@@ -643,64 +894,87 @@ export function ensureAudioPlaying() {
   return false;
 }
 
-export async function closePeer() {
+export async function closePeer(fullCleanup = true) {
   if (isClosing) {
-    logInfo("closePeer already in progress");
     return;
   }
   
   isClosing = true;
-  logInfo("cleanup start");
+  log("PEER", "Destroying peer connection", { fullCleanup });
   clearTimers();
   
+  if (qualityInterval) {
+    clearInterval(qualityInterval);
+    qualityInterval = null;
+  }
+  
+  audioPlaybackStarted = false;
+  pendingIce = [];
+  
   if (pc) {
-    // Remove all event listeners to prevent stale callbacks
+    pc.getReceivers().forEach(receiver => {
+      if (receiver.track) {
+        receiver.track.onmute = null;
+        receiver.track.onunmute = null;
+        receiver.track.onended = null;
+      }
+    });
+    
     pc.ontrack = null;
     pc.onicecandidate = null;
     pc.onconnectionstatechange = null;
     pc.oniceconnectionstatechange = null;
     pc.onsignalingstatechange = null;
+    pc.onicegatheringstatechange = null;
+    pc.onnegotiationneeded = null;
+    pc.onicecandidateerror = null;
     
     try { 
       pc.getSenders().forEach(sender => sender.replaceTrack(null).catch(() => {})); 
-    } catch(e) { 
-      logWarn("sender cleanup issue", e); 
-    }
+    } catch(e) {}
     
-    pc.close();
+    try {
+      pc.close();
+    } catch (e) {}
     pc = null;
+    currentPeer = null;
   }
   
-  if (localStream) {
+  if (fullCleanup && localStream) {
     localStream.getTracks().forEach(track => { 
-      logInfo("stopping local track", { kind: track.kind, id: track.id }); 
       track.stop(); 
     });
     localStream = null;
   }
   
+  if (remoteAudioEl) {
+    remoteAudioEl.srcObject = null;
+  }
+  
   if (remoteStream) {
     remoteStream.getTracks().forEach(track => {
       remoteStream.removeTrack(track);
-      track.stop();
     });
-    remoteStream = null;
+    if (fullCleanup) {
+      remoteStream = null;
+    }
   }
   
-  cleanupRemoteAudioElement();
-  pendingIce = [];
+  // Only remove audio element on full cleanup
+  cleanupRemoteAudioElement(fullCleanup);
+  
   socketRef = null;
   callIdRef = null;
   isRestartingIce = false;
   remoteTrackAttached = false;
-  onNetworkWeakCallback = null;
-  onNetworkErrorCallback = null;
-  isClosing = false;
-  logInfo("cleanup complete");
+  
+  setTimeout(() => {
+    isClosing = false;
+  }, 100);
 }
 
-export function handleSocketReconnect() {
-  logInfo("socket reconnect: resetting peer state");
-  connectionAttemptId++; // Invalidate all pending operations
-  closePeer();
+export async function handleSocketReconnect() {
+  log("SOCKET", "Socket reconnected");
+  connectionAttemptId++;
+  await cleanupPeerOnly();
 }

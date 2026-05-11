@@ -535,24 +535,52 @@ export default function ExpertApproval() {
     setFilteredRows(filtered);
   };
 
-  const toggleStatus = async (expert_id, currentStatus) => {
-    const newStatus = currentStatus === "DISABLED" ? 1 : 0;
+ const toggleStatus = async (expert_id, currentStatus) => {
 
-    try {
+  try {
+
+    const newStatus =
+      currentStatus === "DISABLED" ? 1 : 0;
+
+    const res = await updateExpertStatusApi(
+      expert_id,
+      { status: newStatus }
+    );
+
+    if (res?.data?.success) {
+
       setRows((prev) =>
         prev.map((r) =>
           r.expert_id === expert_id
-            ? { ...r, status: newStatus === 1 ? "APPROVED" : "DISABLED" }
+            ? {
+                ...r,
+                status:
+                  newStatus === 1
+                    ? "APPROVED"
+                    : "DISABLED"
+              }
             : r
         )
       );
 
-      await updateExpertStatusApi(expert_id, { status: newStatus });
-    } catch (err) {
-      console.error("Status update failed", err);
-      loadExperts();
+    } else {
+
+      alert("Status update failed");
+
     }
-  };
+
+  } catch (err) {
+
+    console.error("Status update failed", err);
+
+    alert(
+      err?.response?.data?.message ||
+      "Failed to update status"
+    );
+
+  }
+
+};
 
   const stats = {
     total: rows.length,

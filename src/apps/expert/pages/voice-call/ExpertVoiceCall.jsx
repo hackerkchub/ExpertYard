@@ -47,6 +47,7 @@ import {
   handleSocketReconnect,
   getStats,
   attachRemoteAudio,
+  ensureAudioPlaying,
 } from "../../../../shared/webrtc/voicePeer";
 import { soundManager } from "../../../../shared/services/sound/soundManager";
 
@@ -75,6 +76,8 @@ export default function ExpertVoiceCall() {
   const makingAnswerRef = useRef(false);
   const isCleaningUpRef = useRef(false);
   const pcRef = useRef(null);
+  const reconnectAttemptsRef = useRef(0);
+  const MAX_RECONNECT_ATTEMPTS = 5;
   
   const [callState, setCallState] = useState("connecting");
   const [seconds, setSeconds] = useState(0);
@@ -84,7 +87,6 @@ export default function ExpertVoiceCall() {
 
   const audioRef = useRef(null);
   const timerRef = useRef(null);
-  // const hasRemoteOfferRef = useRef(false);
 
   const [caller, setCaller] = useState({
     name: "Incoming Caller",
@@ -109,10 +111,16 @@ export default function ExpertVoiceCall() {
     attachRemoteAudio(audioRef);
   }, []);
 
-  // Cleanup media tracks
-  const cleanupMedia = useCallback(() => {
-    console.log("🧹 Expert cleaning up media tracks");
-    if (streamRef.current) {
+  // Cleanup media tracks with full reset
+  const cleanupMedia = useCallback((fullCleanup = true) => {
+    console.log("🧹 Expert cleaning up media tracks", { fullCleanup });
+    
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    
+    if (streamRef.current && fullCleanup) {
       streamRef.current.getTracks().forEach(track => {
         track.stop();
         console.log(`🛑 Stopped expert track: ${track.kind}`);
@@ -124,8 +132,16 @@ export default function ExpertVoiceCall() {
       audioRef.current.srcObject = null;
     }
     
-    closePeer();
+    closePeer(fullCleanup);
     pcRef.current = null;
+    
+    // Reset all refs
+    makingAnswerRef.current = false;
+    callStartedRef.current = false;
+    
+    if (fullCleanup) {
+      reconnectAttemptsRef.current = 0;
+    }
   }, []);
 
   // Auto-start mic on connecting state
@@ -163,12 +179,14 @@ export default function ExpertVoiceCall() {
     const onResume = (data) => {
       if (data.callId !== normalizedCallId) return;
       
-      setCaller(prev => ({
+      setCaller(prev => ({ 
         ...prev, 
         name: data.user_name || prev.name
       }));
       setCallState("connected");
       callStartedRef.current = true;
+      setReconnecting(false);
+      reconnectAttemptsRef.current = 0;
 
       const alreadyElapsed =
         Math.floor((Date.now() - new Date(data.startedAt)) / 1000);
@@ -188,6 +206,7 @@ export default function ExpertVoiceCall() {
       console.log("📞 Incoming call data:", data);
 
       setReconnecting(false);
+      reconnectAttemptsRef.current = 0;
 
       setCaller({
         name: data.user_name || "User",
@@ -242,6 +261,7 @@ export default function ExpertVoiceCall() {
       }));
 
       setReconnecting(false);
+      reconnectAttemptsRef.current = 0;
       setSeconds(0);
       setCallState("connected");
     };
@@ -251,7 +271,7 @@ export default function ExpertVoiceCall() {
       setCallState("ended");
       callStartedRef.current = false;
       
-      cleanupMedia();
+      cleanupMedia(true);
       
       setTimeout(() => navigate("/expert/home", { replace: true }), 1000);
     };
@@ -260,7 +280,7 @@ export default function ExpertVoiceCall() {
       console.log("🚫 Expert: Call rejected/busy");
       setCallState("ended");
       callStartedRef.current = false;
-      cleanupMedia();
+      cleanupMedia(true);
       
       setTimeout(() => {
         navigate("/expert/home", { replace: true });
@@ -278,56 +298,67 @@ export default function ExpertVoiceCall() {
     };
   }, [socket, navigate, cleanupMedia, normalizedCallId]);
 
-  // Socket reconnect handler
+  // Socket reconnect handler with attempt limiter
   useEffect(() => {
     if (!socket) return;
 
-    const onReconnect = () => {
+    const onReconnect = async () => {
       console.log("🔄 Expert socket reconnected");
       setReconnecting(true);
-
+      reconnectAttemptsRef.current++;
+      
+      if (reconnectAttemptsRef.current > MAX_RECONNECT_ATTEMPTS) {
+        console.error("❌ Max reconnection attempts reached, ending call");
+        setCallState("ended");
+        cleanupMedia(true);
+        return;
+      }
+      
+      makingAnswerRef.current = false; // Reset making answer flag
+      
+      await handleSocketReconnect();
       socket.emit("call:resume_check");
-      handleSocketReconnect();
 
+      // Check if still valid before attempting peer recreation
+      if (isCleaningUpRef.current) return;
+      
       if (callIdRef.current && callStateRef.current === "connected") {
         setTimeout(async () => {
+          // Check again before executing
+          if (isCleaningUpRef.current) return;
+          
           console.log("♻ Recreating peer after reconnect");
-if (!streamRef.current || streamRef.current.getAudioTracks()[0]?.readyState !== "live") {
-  console.log("🎤 Re-acquiring mic after reconnect");
-
-  try {
-  streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
-} catch (err) {
-  console.error("❌ Mic failed after reconnect", err);
-  return; // stop further execution
-}
-}
-          const pc = await createPeer({
-            socket,
-            callId: callIdRef.current,
-            audioRef,
-            stream: streamRef.current
-          });
-
-          pcRef.current = pc;
-
-          // hasRemoteOfferRef.current = false;
-
-          // if (pc?.remoteDescription && pc.signalingState === "have-remote-offer") { 
-          //   const answer = await createAnswer();
-          //   socket.emit("webrtc:answer", {
-          //     callId: callIdRef.current,
-          //     answer
-          //   });
-          // }
+          
+          if (!streamRef.current || streamRef.current.getAudioTracks()[0]?.readyState !== "live") {
+            console.log("🎤 Re-acquiring mic after reconnect");
+            try {
+              streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch (err) {
+              console.error("❌ Mic failed after reconnect", err);
+              return;
+            }
+          }
+          
+          // Reuse existing peer if possible
+          let pc = pcRef.current;
+          if (!pc || pc.connectionState === "closed") {
+            pc = await createPeer({
+              socket,
+              callId: callIdRef.current,
+              audioRef,
+              stream: streamRef.current
+            });
+            pcRef.current = pc;
+          }
         }, 400);
       }
     };
 
     socket.io?.on("reconnect", onReconnect);
     return () => socket.io?.off("reconnect", onReconnect);
-  }, [socket]);
+  }, [socket, cleanupMedia]);
 
+  // Visibility change handler
   useEffect(() => {
     const onVisibilityChange = () => {
       if (document.visibilityState !== "visible") return;
@@ -364,62 +395,96 @@ if (!streamRef.current || streamRef.current.getAudioTracks()[0]?.readyState !== 
     return () => clearInterval(interval);
   }, [callState]);
 
-  // WebRTC events
+  // Audio health check
+  useEffect(() => {
+    if (callState !== "connected") return;
+    
+    const audioCheckInterval = setInterval(async () => {
+      await ensureAudioPlaying();
+    }, 5000);
+    
+    return () => clearInterval(audioCheckInterval);
+  }, [callState]);
+
+  // WebRTC events - UPDATED with attemptId and peer reuse
   useEffect(() => {
     if (!normalizedCallId) return;
 
-    const onOffer = async ({ callId: incomingId, offer }) => {
-  if (Number(incomingId) !== callIdRef.current) return;
-  if (callStateRef.current === "ended") return;
-  if (makingAnswerRef.current) return;
+    const onOffer = async ({ callId: incomingId, offer, attemptId }) => {
+      if (Number(incomingId) !== callIdRef.current) return;
+      if (callStateRef.current === "ended") return;
+      if (makingAnswerRef.current) return;
+      
+      // Check if already have a remote offer pending
+      if (pcRef.current?.signalingState === "have-remote-offer") {
+        console.log("⏭️ Existing remote offer already pending");
+        return;
+      }
+      
+      // Duplicate SDP protection
+      if (pcRef.current?.remoteDescription?.sdp === offer.sdp) {
+        console.log("⏭️ Duplicate offer ignored");
+        return;
+      }
 
-  if (!streamRef.current) {
-    streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
-  }
+      if (!streamRef.current) {
+        try {
+          streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (err) {
+          console.error("❌ Failed to get mic for offer", err);
+          return;
+        }
+      }
 
-  makingAnswerRef.current = true;
+      makingAnswerRef.current = true;
 
-  try {
-    const pc = await createPeer({
-      socket,
-      callId: callIdRef.current,
-      audioRef,
-      stream: streamRef.current
-    });
+      try {
+        // Reuse existing peer if possible
+        let pc = pcRef.current;
+        
+        if (!pc || pc.connectionState === "closed") {
+          console.log("📡 Creating new peer for answer");
+          pc = await createPeer({
+            socket,
+            callId: callIdRef.current,
+            audioRef,
+            stream: streamRef.current
+          });
+          pcRef.current = pc;
+        } else {
+          console.log("♻ Reusing existing peer for answer");
+        }
+        
+        if (pc.signalingState !== "stable") {
+          console.log("⛔ Skipping answer — not stable:", pc.signalingState);
+          return;
+        }
 
-    pcRef.current = pc;
-    if (pc.signalingState !== "stable") {
-  console.log("⛔ Skipping offer — not stable:", pc.signalingState);
-  return;
-}
+        const applied = await setRemote(offer, attemptId);
+        if (!applied) {
+          console.log("❌ Failed to set remote description");
+          return;
+        }
 
+        const answer = await createAnswer();
 
-    // 🔥 RESET for new negotiation
-    // hasRemoteOfferRef.current = false;
+        socket.emit("webrtc:answer", {
+          callId: callIdRef.current,
+          answer,
+          attemptId
+        });
 
-    const applied = await setRemote(offer);
-    if (!applied) {
-      return;
-    }
-
-    // hasRemoteOfferRef.current = true;
-
-    const answer = await createAnswer();
-
-    socket.emit("webrtc:answer", {
-      callId: callIdRef.current,
-      answer
-    });
-
-  } catch (err) {
-    console.error("❌ Answer failed", err);
-  } finally {
-    makingAnswerRef.current = false;
-  }
-};
-    const onIce = ({ callId: iceId, candidate }) => {
+        console.log("✅ Answer sent to user");
+      } catch (err) {
+        console.error("❌ Answer failed", err);
+      } finally {
+        makingAnswerRef.current = false;
+      }
+    };
+    
+    const onIce = ({ callId: iceId, candidate, attemptId }) => {
       if (Number(iceId) !== callIdRef.current) return;
-      addIce(candidate);
+      addIce(candidate, attemptId);
     };
 
     socket.on("webrtc:offer", onOffer);
@@ -434,24 +499,10 @@ if (!streamRef.current || streamRef.current.getAudioTracks()[0]?.readyState !== 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      console.log("🧹 Expert cleanup");
-      cleanupMedia();
-      if (timerRef.current) clearInterval(timerRef.current);
+      console.log("🧹 Expert cleanup on unmount");
+      cleanupMedia(true);
     };
   }, [cleanupMedia]);
-
-  // Add this effect in VoiceCall.jsx after other effects
-useEffect(() => {
-  if (callState !== "connected") return;
-  
-  // Periodic check to ensure audio is still playing
-  const audioCheckInterval = setInterval(async () => {
-    const { ensureAudioPlaying } = await import("../../../../shared/webrtc/voicePeer");
-    await ensureAudioPlaying();
-  }, 5000); // Check every 5 seconds
-  
-  return () => clearInterval(audioCheckInterval);
-}, [callState]);
 
   // ACCEPT CALL
   const acceptCall = useCallback(() => {
@@ -459,6 +510,7 @@ useEffect(() => {
 
     callStartedRef.current = true;
     setCallState("connecting");
+    reconnectAttemptsRef.current = 0;
 
     socket.emit(CALL_EVENTS.ACCEPT, { callId: callIdRef.current });
   }, [socket]);
@@ -468,7 +520,7 @@ useEffect(() => {
     console.log("❌ Expert: Rejecting call", callIdRef.current);
     socket.emit(CALL_EVENTS.REJECT, { callId: callIdRef.current });
     
-    cleanupMedia();
+    cleanupMedia(true);
     navigate("/expert/home", { replace: true });
   }, [socket, navigate, cleanupMedia]);
 
@@ -481,7 +533,7 @@ useEffect(() => {
     socket.emit(CALL_EVENTS.END, { callId: callIdRef.current });
 
     setTimeout(() => {
-      cleanupMedia();
+      cleanupMedia(true);
       navigate("/expert/home", { replace: true });
       isCleaningUpRef.current = false;
     }, 200);

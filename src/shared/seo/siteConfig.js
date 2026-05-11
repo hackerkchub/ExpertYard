@@ -3,13 +3,19 @@ const PRODUCTION_HOSTNAME = "g9expert.com";
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
 
 export const SITE_CONFIG = {
+<<<<<<< HEAD
   siteName: "G9Experts",
   baseUrl: PRODUCTION_ORIGIN,
+=======
+  siteName: "G9Expert",
+  siteUrl: "https://g9expert.com",
+>>>>>>> edcb54bf3bb37462374c64fccb2eca73f5252b3b
   defaultOgImage: "/logo-512.webp",
   organizationName: "G9Experts",
   productionHostname: PRODUCTION_HOSTNAME,
 };
 
+<<<<<<< HEAD
 export function toAbsoluteUrl(path = "/") {
   if (/^https?:\/\//i.test(path)) {
     const url = new URL(path);
@@ -47,3 +53,12 @@ export function getEnvironmentRobots(robots = "index, follow", hostname = getCur
 
   return "noindex, nofollow";
 }
+=======
+export const toAbsoluteUrl = (path = "") => {
+  if (!path) return SITE_CONFIG.siteUrl;
+
+  return path.startsWith("http")
+    ? path
+    : `${SITE_CONFIG.siteUrl}${path.startsWith("/") ? "" : "/"}${path}`;
+};
+>>>>>>> edcb54bf3bb37462374c64fccb2eca73f5252b3b

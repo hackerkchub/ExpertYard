@@ -6,7 +6,8 @@ import ReviewsContent from "../../../../shared/components/modal-contents/Reviews
 import {
   updateExpertProfileApi,
   savePriceApi,
-  getExpertFollowersApi
+  getExpertFollowersApi,
+  getMyProfileApi
 } from "../../../../shared/api/expertapi";
 import {
   getReviewsByExpertApi,
@@ -238,6 +239,10 @@ setSessionDuration(Number(session?.duration) || 0);
   useEffect(() => {
     loadExperiences();
   }, [loadExperiences]);
+
+  useEffect(() => {
+    getMyProfileApi()
+  }, []);
 
   // LOAD SUBSCRIPTION PLANS
   const loadSubscriptionPlans = useCallback(async () => {

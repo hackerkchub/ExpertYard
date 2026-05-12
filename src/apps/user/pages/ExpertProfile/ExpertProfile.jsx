@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   FiArrowLeft,
   FiPhoneCall,
@@ -28,6 +29,7 @@ import {
   FiClock as FiTimeIcon,
   FiZap,
   FiInfo,
+  FiVideo,
 } from "react-icons/fi";
 
 import {
@@ -156,6 +158,7 @@ import {
 import { usePublicExpert as useExpert } from "../../context/PublicExpertContext";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
+import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 import { socket } from "../../../../shared/api/socket";
 import { 
   getPlansApi, 
@@ -193,6 +196,7 @@ const formatRelativeTime = (dateString) => {
 const ExpertProfilePage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { isLoggedIn, user } = useAuth();
   const userId = user?.id;
   const { balance, fetchWallet} = useWallet();
@@ -795,6 +799,29 @@ useEffect(() => {
     loadFollowersAndReviews();
   }, [loadFollowersAndReviews]);
 
+  useNetworkReconnect(() => {
+    if (slug) {
+      fetchProfile(slug);
+    }
+
+    if (numericExpertId) {
+      fetchPrice(numericExpertId);
+      fetchExperience();
+      loadFollowersAndReviews();
+
+      if (activeTab === "posts") {
+        fetchPosts();
+      }
+
+      if (isLoggedIn) {
+        fetchPlans();
+        fetchActiveSubscription();
+      }
+    }
+  }, {
+    enabled: Boolean(slug || numericExpertId) && !showWaitingPopup && !requestingChat,
+  });
+
   useEffect(() => {
     setChatRequestId(null);
     requestIdRef.current = null;
@@ -1111,6 +1138,7 @@ useEffect(() => {
   return (
     <>
       <style>{`
+        html { scroll-behavior: smooth; }
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes slideIn {
           from { transform: translateY(-20px); opacity: 0; }
@@ -1129,9 +1157,9 @@ useEffect(() => {
               )}
               <div>
                 {!following ? (
-                  <FollowButton onClick={handleFollowAction}><FiUserPlus /> Follow</FollowButton>
+                  <FollowButton onClick={handleFollowAction}><FiUserPlus /> {t("expertProfile.follow")}</FollowButton>
                 ) : (
-                  <FollowButton $active onClick={handleFollowAction}><FiUserCheck /> Following</FollowButton>
+                  <FollowButton $active onClick={handleFollowAction}><FiUserCheck /> {t("expertProfile.following")}</FollowButton>
                 )}
               </div>
             </div>
@@ -1218,7 +1246,7 @@ useEffect(() => {
                   ) : selectedPricingMode === "per_minute" && displayPrices.hasPerMinute ? (
                     <>
                       <PriceTag>₹{displayPrices.callPrice}/min</PriceTag>
-                      <ActionButton $primary onClick={() => handleStart("call")}><FiPhoneCall /> Start Call</ActionButton>
+                      <ActionButton $primary onClick={() => handleStart("call")}><FiPhoneCall /> {t("expertProfile.startCall")}</ActionButton>
                     </>
                   ) : selectedPricingMode === "session" && displayPrices.hasSession ? (
                     <>
@@ -1241,7 +1269,7 @@ useEffect(() => {
                   ) : selectedPricingMode === "per_minute" && displayPrices.hasPerMinute ? (
                     <>
                       <PriceTag>₹{displayPrices.chatPrice}/min</PriceTag>
-                      <ActionButton onClick={() => handleStart("chat")}><FiMessageSquare /> Start Chat</ActionButton>
+                      <ActionButton onClick={() => handleStart("chat")}><FiMessageSquare /> {t("expertProfile.startChat")}</ActionButton>
                     </>
                   ) : selectedPricingMode === "session" && displayPrices.hasSession ? (
                     <>
@@ -1273,12 +1301,48 @@ useEffect(() => {
           </div>
         </ProfileCard>
 
+        <div className="expert-profile-content-grid">
+          <aside className="expert-profile-sidebar">
+            <Section className="consult-card">
+              <SectionTitle>{t("expertProfile.consultWithMe")}</SectionTitle>
+              <div className="consult-options">
+                <button type="button" className="consult-option consult-call" onClick={() => handleStart("call")}>
+                  <FiPhoneCall />
+                  <span>Call</span>
+                  <strong>
+                    {hasActiveSubscription ? "Free" : selectedPricingMode === "session" && displayPrices.hasSession ? `₹${displayPrices.sessionPrice}` : `₹${displayPrices.callPrice}/min`}
+                  </strong>
+                </button>
+                <button type="button" className="consult-option consult-chat" onClick={() => handleStart("chat")}>
+                  <FiMessageSquare />
+                  <span>Chat</span>
+                  <strong>
+                    {hasActiveSubscription ? "Free" : selectedPricingMode === "session" && displayPrices.hasSession ? `₹${displayPrices.sessionPrice}` : `₹${displayPrices.chatPrice}/min`}
+                  </strong>
+                </button>
+                
+              </div>
+            </Section>
+
+            <Section className="about-me-card">
+              <SectionTitle>{t("expertProfile.aboutMe")}</SectionTitle>
+              <SectionBody>{profile.description || "Experienced professional with proven track record in the field."}</SectionBody>
+              <TagList>
+                {profile.category_name && <Tag><FiTarget />{profile.category_name}</Tag>}
+                {profile.position && <Tag><FiBriefcase />{profile.position}</Tag>}
+                {profile.education && <Tag><FiBookOpen />{profile.education}</Tag>}
+              </TagList>
+            </Section>
+          </aside>
+
+          <main className="expert-profile-main">
+
         {/* Tabs Section */}
-        <Section>
+        <Section className="profile-tabs-card">
           <TabContainer>
-            <TabButton $active={activeTab === "about"} onClick={() => setActiveTab("about")}><FiFileText /> About</TabButton>
-            <TabButton $active={activeTab === "experience"} onClick={() => setActiveTab("experience")}><FiBriefcase /> Experience</TabButton>
-            <TabButton $active={activeTab === "posts"} onClick={() => setActiveTab("posts")}><FiImage /> Posts</TabButton>
+            <TabButton $active={activeTab === "about"} onClick={() => setActiveTab("about")}><FiFileText /> {t("expertProfile.about")}</TabButton>
+            <TabButton $active={activeTab === "experience"} onClick={() => setActiveTab("experience")}><FiBriefcase /> {t("expertProfile.experience")}</TabButton>
+            <TabButton $active={activeTab === "posts"} onClick={() => setActiveTab("posts")}><FiImage /> {t("expertProfile.posts")}</TabButton>
           </TabContainer>
 
           {activeTab === "about" && (
@@ -1415,7 +1479,7 @@ useEffect(() => {
 
         {/* Review Section */}
         <ReviewSection>
-          <ReviewHeader><div><SectionTitle>Rating & Reviews</SectionTitle></div></ReviewHeader>
+          <ReviewHeader><div><SectionTitle>{t("expertProfile.ratingReviews")}</SectionTitle></div></ReviewHeader>
 
           <ReviewForm>
             <ReviewFormTitle><FiStar color="#f59e0b" />{hasUserReview ? 'Update Your Review' : 'Add Your Review'}</ReviewFormTitle>
@@ -1447,6 +1511,14 @@ useEffect(() => {
             ))}
           </ReviewList>
         </ReviewSection>
+
+          </main>
+        </div>
+
+        <div className="mobile-profile-actions">
+          <button type="button" className="mobile-message-btn" onClick={() => handleStart("chat")}><FiMessageSquare /> Message</button>
+          <button type="button" className="mobile-call-btn" onClick={() => handleStart("call")}><FiPhoneCall /> Call Now</button>
+        </div>
 
         {/* Subscription Plans Modal */}
         {showPlansModal && (

@@ -1,117 +1,623 @@
 import styled, { keyframes } from "styled-components";
 
-const fadeIn = keyframes`from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); }`;
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const NAVY = "#000080";
+const YELLOW = "#FFC107";
 
 export const PageWrap = styled.div`
-  width: 100%; min-height: 100vh; background: #f4f7fa;
-  display: flex; justify-content: center; padding: 20px;
-  font-family: 'Inter', sans-serif;
+  width: 100%;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(0, 0, 128, 0.08), transparent 30%),
+    radial-gradient(circle at 92% 8%, rgba(255, 193, 7, 0.14), transparent 28%),
+    #f8fafc;
+  display: flex;
+  justify-content: center;
+  padding: 28px 18px 48px;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #111827;
+
+  @media (max-width: 640px) {
+    padding: 18px 12px 34px;
+  }
 `;
 
 export const WalletBox = styled.div`
-  width: 100%; max-width: 900px; animation: ${fadeIn} 0.5s ease;
+  width: 100%;
+  max-width: 1180px;
+  animation: ${fadeIn} 0.45s ease;
+
+  .wallet-safety-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+    padding: 15px 18px;
+    border-radius: 18px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    color: #374151;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+
+    svg {
+      flex: 0 0 auto;
+      font-size: 22px;
+      color: ${NAVY};
+    }
+  }
 `;
 
 export const HeaderRow = styled.div`
-  display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
-  .page-title { font-size: 20px; font-weight: 700; color: #1a202c; }
-  .user-badge { display: flex; align-items: center; gap: 8px; background: white; padding: 6px 12px; border-radius: 20px; border: 1px solid #e2e8f0; }
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+
+  .page-title {
+    margin: 0;
+    color: #111827;
+    font-size: clamp(1.35rem, 2vw, 2rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
+
+  .user-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    padding: 9px 13px;
+    border-radius: 999px;
+    border: 1px solid #e5e7eb;
+    color: #1f2937;
+    font-size: 0.9rem;
+    font-weight: 750;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+
+    svg {
+      color: ${NAVY};
+    }
+  }
+
+  @media (max-width: 560px) {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 `;
 
 export const BalanceCard = styled.div`
-  background: linear-gradient(135deg, #1a365d 0%, #2a4365 100%);
-  padding: 30px; border-radius: 16px; color: white; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-  margin-bottom: 15px;
-  .balance-header h3 { font-size: 14px; opacity: 0.8; margin-bottom: 10px; }
-  .balance-footer { display: flex; gap: 30px; margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); }
-  .stat-label { font-size: 11px; opacity: 0.7; display: block; }
-  .stat-value { font-weight: 600; font-size: 15px; }
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 90% 10%, rgba(255, 210, 63, 0.28), transparent 28%),
+    linear-gradient(135deg, ${NAVY} 0%, #080866 52%, #020229 100%);
+  padding: clamp(24px, 4vw, 36px);
+  border-radius: 24px;
+  color: #ffffff;
+  box-shadow: 0 24px 54px rgba(0, 0, 128, 0.22);
+  margin-bottom: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px),
+      linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+    background-size: 58px 58px;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent 82%);
+    pointer-events: none;
+  }
+
+  .balance-header,
+  .balance-footer {
+    position: relative;
+    z-index: 1;
+  }
+
+  .balance-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+
+    h3 {
+      margin: 0;
+      font-size: 0.98rem;
+      color: rgba(255, 255, 255, 0.78);
+      font-weight: 750;
+    }
+
+    &::after {
+      content: "Secure Wallet";
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: 999px;
+      color: #111827;
+      background: linear-gradient(135deg, #ffd23f, ${YELLOW});
+      font-size: 0.78rem;
+      font-weight: 900;
+      white-space: nowrap;
+      box-shadow: 0 10px 22px rgba(255, 193, 7, 0.28);
+    }
+  }
+
+  .balance-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255,255,255,0.16);
+  }
+
+  .balance-stat {
+    min-width: 150px;
+    padding: 11px 13px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.14);
+  }
+
+  .stat-label {
+    font-size: 0.76rem;
+    opacity: 0.74;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .stat-value {
+    font-weight: 900;
+    font-size: 1rem;
+  }
 `;
 
 export const BalanceAmount = styled.div`
-  display: flex; align-items: center; gap: 10px;
-  .amount { font-size: 42px; font-weight: 800; }
-  .currency { font-size: 18px; opacity: 0.7; }
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+
+  svg {
+    align-self: center;
+    font-size: clamp(2rem, 4vw, 3.4rem);
+    color: #ffd23f;
+    filter: drop-shadow(0 8px 18px rgba(255, 193, 7, 0.24));
+  }
+
+  .amount {
+    font-size: clamp(2.6rem, 6vw, 4.8rem);
+    line-height: 1;
+    font-weight: 950;
+    letter-spacing: -0.06em;
+  }
+
+  .currency {
+    font-size: clamp(0.95rem, 2vw, 1.2rem);
+    color: rgba(255, 255, 255, 0.72);
+    font-weight: 800;
+  }
 `;
 
 export const TopupSection = styled.div`
-  background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 25px;
-  .action-section { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  background: #ffffff;
+  padding: 22px;
+  border-radius: 22px;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 24px;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.07);
+
+  .action-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+
+  @media (min-width: 940px) {
+    .action-section::before {
+      content: "Recharge Wallet";
+      display: block;
+      width: 100%;
+      color: #111827;
+      font-size: 1.15rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+  }
 `;
 
 export const AddBalanceBtn = styled.button`
-  padding: 12px 24px; background: #3182ce; color: white; border: none; border-radius: 8px;
-  font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px;
-  &:hover { background: #2b6cb0; }
+  min-height: 46px;
+  padding: 0 20px;
+  background: linear-gradient(135deg, #ffd23f, ${YELLOW});
+  color: #111827;
+  border: none;
+  border-radius: 999px;
+  font-weight: 950;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 14px 28px rgba(255, 193, 7, 0.26);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 34px rgba(255, 193, 7, 0.34);
+  }
+
+  @media (max-width: 560px) {
+    width: 100%;
+  }
 `;
 
 export const QuickAddRow = styled.div`
-  display: flex; gap: 8px; align-items: center;
-  .quick-label { font-size: 12px; color: #718096; font-weight: 600; }
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+
+  .quick-label {
+    font-size: 0.82rem;
+    color: #64748b;
+    font-weight: 800;
+  }
+
+  @media (max-width: 560px) {
+    width: 100%;
+    align-items: flex-start;
+
+    .quick-label {
+      width: 100%;
+    }
+  }
 `;
 
 export const QuickAddBtn = styled.button`
-  padding: 6px 14px; border-radius: 6px; border: 1px solid #e2e8f0; background: #f7fafc;
-  font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;
-  &:hover { border-color: #3182ce; color: #3182ce; }
-  &.premium { background: #ebf8ff; border-color: #bee3f8; color: #2b6cb0; }
+  min-height: 38px;
+  padding: 0 15px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 128, 0.12);
+  background: #f8fafc;
+  color: #1f2937;
+  font-size: 0.85rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    border-color: rgba(0, 0, 128, 0.32);
+    background: rgba(0, 0, 128, 0.06);
+    color: ${NAVY};
+  }
+
+  &.premium {
+    background: rgba(255, 193, 7, 0.14);
+    border-color: rgba(255, 193, 7, 0.42);
+    color: #92400e;
+  }
 `;
 
 export const StatsGrid = styled.div`
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px;
-  @media (max-width: 600px) { grid-template-columns: 1fr; }
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+
+  @media (max-width: 980px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 `;
 
 export const StatCard = styled.div`
-  background: white; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0;
-  display: flex; align-items: center; gap: 12px;
-  .stat-icon { font-size: 18px; color: #3182ce; background: #ebf8ff; padding: 10px; border-radius: 10px; }
-  .stat-label { font-size: 12px; color: #718096; }
-  .stat-value { font-size: 14px; font-weight: 700; display: block; }
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.1);
+  }
+
+  .stat-icon {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+    color: #ffd23f;
+    background: linear-gradient(135deg, ${NAVY}, #1515a8);
+    padding: 10px;
+    border-radius: 14px;
+    box-shadow: 0 12px 24px rgba(0, 0, 128, 0.16);
+  }
+
+  .stat-label {
+    font-size: 0.78rem;
+    color: #64748b;
+    font-weight: 800;
+  }
+
+  .stat-value {
+    margin-top: 3px;
+    color: #111827;
+    font-size: 0.95rem;
+    font-weight: 950;
+    display: block;
+    word-break: break-word;
+  }
 `;
 
 export const ExpenseSection = styled.div`
-  background: white; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden;
+  background: #ffffff;
+  border-radius: 22px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.07);
 `;
 
 export const SectionTitle = styled.div`
-  padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;
-  h2 { font-size: 16px; font-weight: 700; margin: 0; }
-  .tab-group { display: flex; gap: 15px; }
-  .tab { cursor: pointer; font-size: 14px; color: #718096; padding-bottom: 4px; border-bottom: 2px solid transparent; }
-  .tab.active { color: #3182ce; border-bottom-color: #3182ce; font-weight: 700; }
+  padding: 20px 22px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+
+  h2 {
+    font-size: 16px;
+    font-weight: 800;
+    margin: 0;
+  }
+
+  .tab-group {
+    display: inline-flex;
+    gap: 5px;
+    padding: 5px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    border: 1px solid #e5e7eb;
+  }
+
+  .tab {
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: #64748b;
+    padding: 9px 15px;
+    border-radius: 999px;
+    font-weight: 850;
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .tab.active {
+    color: #ffffff;
+    background: linear-gradient(135deg, ${NAVY}, #1010a8);
+    box-shadow: 0 10px 22px rgba(0, 0, 128, 0.16);
+  }
+
+  @media (max-width: 560px) {
+    padding: 16px;
+
+    .tab-group,
+    .tab {
+      width: 100%;
+    }
+
+    .tab {
+      text-align: center;
+    }
+  }
 `;
 
 export const ExpertCard = styled.div`
-  display: flex; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #f7fafc;
-  &:hover { background: #fcfcfd; }
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 17px 22px;
+  border-bottom: 1px solid #eef2f7;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: #f8fafc;
+  }
+
+  @media (max-width: 700px) {
+    align-items: flex-start;
+    flex-direction: column;
+    margin: 12px;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+  }
 `;
 
-export const ExpertLeft = styled.div` display: flex; gap: 15px; `;
-export const Avatar = styled.div` width: 40px; height: 40px; border-radius: 8px; background: #edf2f7; display: flex; align-items: center; justify-content: center; font-size: 18px; `;
+export const ExpertLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+`;
+
+export const Avatar = styled.div`
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border-radius: 15px;
+  background: #edf2f7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+`;
+
 export const ExpertInfo = styled.div`
-  strong { font-size: 14px; color: #2d3748; display: block; }
-  .expert-meta { font-size: 11px; color: #a0aec0; margin-top: 2px; }
-  .status { font-size: 10px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-left: 8px; }
-  .status.success { background: #c6f6d5; color: #22543d; }
+  min-width: 0;
+
+  strong {
+    font-size: 0.94rem;
+    color: #111827;
+    display: block;
+    font-weight: 900;
+    line-height: 1.35;
+  }
+
+  .expert-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 7px;
+    font-size: 0.78rem;
+    color: #64748b;
+    margin-top: 6px;
+  }
+
+  .status {
+    font-size: 0.68rem;
+    padding: 3px 8px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    font-weight: 900;
+    background: #eef2ff;
+    color: #3730a3;
+  }
+
+  .status.success,
+  .status.completed,
+  .status.paid {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .status.failed,
+  .status.cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  .status.pending {
+    background: #fef3c7;
+    color: #92400e;
+  }
 `;
 
 export const AmountBox = styled.div`
   text-align: right;
-  .amount-value { font-size: 15px; font-weight: 700; }
-  &.credit { color: #38a169; }
-  &.debit { color: #2d3748; }
+  flex: 0 0 auto;
+
+  .amount-value {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    font-weight: 950;
+    background: #f8fafc;
+  }
+
+  &.credit .amount-value {
+    color: #047857;
+    background: #dcfce7;
+  }
+
+  &.debit .amount-value {
+    color: #b91c1c;
+    background: #fee2e2;
+  }
+
+  @media (max-width: 700px) {
+    width: 100%;
+    text-align: left;
+  }
 `;
 
 export const LoadMoreBtn = styled.button`
-  width: 100%; padding: 15px; border: none; background: transparent; color: #3182ce;
-  font-weight: 600; cursor: pointer; transition: 0.2s;
-  &:hover { background: #f7fafc; }
+  width: 100%;
+  padding: 16px;
+  border: none;
+  background: #ffffff;
+  color: ${NAVY};
+  font-weight: 900;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: rgba(0, 0, 128, 0.06);
+  }
 `;
 
-export const FilterDropdown = styled.div` select { border: 1px solid #e2e8f0; padding: 5px; border-radius: 6px; font-size: 12px; } `;
-export const TransactionBadge = styled.span` font-size: 10px; padding: 2px 6px; background: #edf2f7; border-radius: 4px; margin-left: 5px; `;
-export const ProgressBar = styled.div` height: 3px; background: ${props => props.color}; width: ${props => props.width}%; margin-top: 5px; `;
-export const EmptyState = styled.div` padding: 40px; text-align: center; color: #a0aec0; `;
-export const LoadingState = styled.div` padding: 50px; text-align: center; `;
-export const ErrorState = styled.div` padding: 40px; text-align: center; color: #e53e3e; `;
+export const FilterDropdown = styled.div`
+  select {
+    border: 1px solid #e5e7eb;
+    padding: 8px;
+    border-radius: 10px;
+    font-size: 12px;
+  }
+`;
+
+export const TransactionBadge = styled.span`
+  font-size: 10px;
+  padding: 2px 6px;
+  background: #edf2f7;
+  border-radius: 4px;
+  margin-left: 5px;
+`;
+
+export const ProgressBar = styled.div`
+  height: 3px;
+  background: ${(props) => props.color};
+  width: ${(props) => props.width}%;
+  margin-top: 5px;
+`;
+
+export const EmptyState = styled.div`
+  padding: 52px 20px;
+  text-align: center;
+  color: #64748b;
+  font-weight: 800;
+`;
+
+export const LoadingState = styled.div`
+  width: min(520px, 100%);
+  margin: 12vh auto;
+  padding: 32px;
+  border-radius: 22px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  text-align: center;
+  color: ${NAVY};
+  font-weight: 900;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+`;
+
+export const ErrorState = styled.div`
+  padding: 40px;
+  text-align: center;
+  color: #b91c1c;
+`;

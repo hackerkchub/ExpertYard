@@ -11,43 +11,233 @@ const spin = keyframes`
 `;
 
 export const PageWrap = styled.div`
-  max-width: 1128px; // LinkedIn Standard Container
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 28px 16px 56px;
+  padding: 28px 18px 72px;
+  scroll-behavior: smooth;
+  overscroll-behavior-y: contain;
   background:
-    radial-gradient(circle at top left, rgba(63, 81, 181, 0.08), transparent 24%),
-    #f3f6fb;
+    radial-gradient(circle at 8% 0%, rgba(0, 0, 128, 0.1), transparent 28%),
+    radial-gradient(circle at 92% 8%, rgba(255, 210, 63, 0.16), transparent 24%),
+    linear-gradient(180deg, #f7f8fc 0%, #f8fafc 48%, #ffffff 100%);
   min-height: 100vh;
   font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   animation: ${fadeIn} 0.5s ease-out;
+  color: #111827;
+
+  .expert-profile-content-grid {
+    display: grid;
+    grid-template-columns: minmax(270px, 320px) minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .expert-profile-sidebar {
+    position: sticky;
+    top: 88px;
+    align-self: start;
+    display: grid;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .expert-profile-main {
+    min-width: 0;
+    scroll-behavior: smooth;
+  }
+
+  .consult-card,
+  .about-me-card,
+  .profile-tabs-card,
+  .profile-reviews-card {
+    margin-bottom: 0;
+  }
+
+  .consult-options {
+    display: grid;
+    gap: 10px;
+  }
+
+  .consult-option {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    min-height: 56px;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    background: #ffffff;
+    color: #111827;
+    font: inherit;
+    cursor: pointer;
+    text-align: left;
+    box-shadow: 0 10px 24px rgba(16, 24, 40, 0.06);
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  }
+
+  .consult-option svg {
+    width: 38px;
+    height: 38px;
+    padding: 10px;
+    border-radius: 14px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #000080, #05044f);
+    box-sizing: border-box;
+  }
+
+  .consult-option span {
+    font-size: 14px;
+    font-weight: 900;
+    color: #000080;
+  }
+
+  .consult-option strong {
+    font-size: 12px;
+    color: #475467;
+    white-space: nowrap;
+  }
+
+  .consult-call {
+    border-color: rgba(255, 193, 7, 0.55);
+    background: linear-gradient(135deg, #fff9e6, #ffffff);
+  }
+
+  .consult-call svg {
+    color: #000080;
+    background: linear-gradient(135deg, #ffd23f, #ffc107);
+  }
+
+  .consult-option:hover:not(:disabled) {
+    transform: translateY(-2px);
+    border-color: rgba(0, 0, 128, 0.22);
+    box-shadow: 0 16px 34px rgba(16, 24, 40, 0.11);
+  }
+
+  .consult-option:disabled {
+    cursor: not-allowed;
+    opacity: 0.72;
+  }
+
+  .mobile-profile-actions {
+    display: none;
+  }
 
   @media (max-width: 768px) {
-    padding: 0; // Mobile pe full width cards
+    padding: 10px 10px 84px;
+
+    .expert-profile-content-grid {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .expert-profile-sidebar {
+      position: static;
+      gap: 12px;
+    }
+
+    .mobile-profile-actions {
+      position: fixed;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      z-index: 1100;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 18px 44px rgba(15, 23, 42, 0.18);
+      backdrop-filter: blur(14px);
+      transform: translateZ(0);
+      will-change: transform;
+    }
+
+    .mobile-profile-actions button {
+      min-height: 44px;
+      border: none;
+      border-radius: 999px;
+      font-weight: 900;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .mobile-message-btn {
+      background: #000080;
+      color: #ffffff;
+    }
+
+    .mobile-call-btn {
+      background: linear-gradient(135deg, #ffd23f, #ffc107);
+      color: #000080;
+    }
   }
 `;
 
 
 // --- Main Profile Section ---
 export const ProfileCard = styled.div`
-  background: #fff;
+  position: relative;
+  overflow: hidden;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255, 255, 255, 0.18), transparent 28%),
+    radial-gradient(circle at 88% 18%, rgba(255, 210, 63, 0.26), transparent 24%),
+    linear-gradient(135deg, #000080 0%, #03045e 56%, #020329 100%);
   border-radius: 24px;
-  border: 1px solid #d8e0eb;
+  border: 1px solid rgba(255, 255, 255, 0.14);
   padding: 28px;
-  margin-bottom: 16px;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+  margin-bottom: 18px;
+  box-shadow: 0 24px 62px rgba(0, 0, 128, 0.22);
 
-  @media (max-width: 768px) { border-radius: 18px; padding: 20px 16px; }
+  > div {
+    display: grid !important;
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 26px;
+    align-items: center;
+  }
+
+  > div > div:first-child {
+    flex: initial !important;
+    text-align: center;
+  }
+
+  > div > div:nth-child(2) {
+    min-width: 0;
+  }
+
+  @media (max-width: 768px) {
+    border-radius: 22px;
+    padding: 18px 14px;
+    margin-bottom: 12px;
+
+    > div {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+  }
 `;
 
 export const LeftImage = styled.img`
-  width: 160px;
-  height: 160px;
+  width: 150px;
+  height: 150px;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid #fff;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border: 4px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 18px 42px rgba(0,0,0,0.28);
   
-  @media (max-width: 768px) { width: 120px; height: 120px;  auto; display: block; }
+  @media (max-width: 768px) {
+    width: 112px;
+    height: 112px;
+    display: block;
+    margin: 0 auto;
+  }
 `;
 
 export const AvatarFallback = styled.div`
@@ -55,7 +245,7 @@ export const AvatarFallback = styled.div`
   height: 160px;
   border-radius: 50%;
   background: ${({ bg }) =>
-    bg || "linear-gradient(135deg, #6366f1, #06b6d4)"};
+    bg || "linear-gradient(135deg, #ffd23f, #ffc107)"};
   color: #fff;
   font-size: 42px;
   font-weight: 600;
@@ -66,7 +256,8 @@ export const AvatarFallback = styled.div`
   text-transform: uppercase;
 
   border: 4px solid #fff;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  color: #000080;
+  box-shadow: 0 18px 42px rgba(0,0,0,0.28);
 
   @media (max-width: 768px) {
     width: 120px;
@@ -79,70 +270,108 @@ export const AvatarFallback = styled.div`
 
 // --- Name & Header Info ---
 export const Name = styled.h1`
-  font-size: 24px;
-  font-weight: 600;
-  color: #000000e6;
-  margin-bottom: 2px;
+  font-size: clamp(25px, 3vw, 40px);
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0 0 6px;
   display: flex;
   align-items: center;
-  gap: 8px; /* Badha diya thoda gap */
+  gap: 10px;
+  line-height: 1.08;
+  flex-wrap: wrap;
   
   @media (max-width: 768px) { 
-    font-size: 20px;
-    justify-content: flex-start; /* Left align on mobile */
-    text-align: left; 
+    font-size: 24px;
+    justify-content: center;
+    text-align: center; 
     margin-top: 0; 
   }
 `;
 
 export const VerifiedBadge = styled.span`
-  background: #e7f3ff;
+  background: rgba(255, 255, 255, 0.95);
   color: #000080;
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 12px;
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 999px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-weight: 600;
+  font-weight: 900;
   flex-shrink: 0;
 `;
 
 export const Role = styled.p`
   font-size: 16px;
-  color: #000000bf;
-  margin-bottom: 4px;
-  @media (max-width: 768px) { text-align: left; font-size: 14px; }
+  color: rgba(255, 255, 255, 0.86);
+  margin: 0 0 6px;
+  font-weight: 600;
+  @media (max-width: 768px) { text-align: center; font-size: 14px; }
 `;
 
 export const Status = styled.div`
-  font-size: 14px;
-  font-weight: 600;
-  color: ${props => props.$online ? "#057642" : "#cc1016"};
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: ${props => props.$online ? "rgba(16, 185, 129, 0.16)" : "rgba(248, 113, 113, 0.14)"};
+  border: 1px solid ${props => props.$online ? "rgba(16, 185, 129, 0.28)" : "rgba(248, 113, 113, 0.28)"};
+  font-size: 13px;
+  font-weight: 900;
+  color: ${props => props.$online ? "#bbf7d0" : "#fecaca"};
   margin-bottom: 12px;
-  @media (max-width: 768px) { text-align: left; font-size: 12px; }
+  @media (max-width: 768px) {
+    display: flex;
+    width: fit-content;
+    margin: 0 auto 12px;
+    text-align: center;
+    font-size: 12px;
+  }
 `;
 
 // --- Stats & Tags (No Overflow) ---
 export const QuickStats = styled.div`
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(112px, 1fr));
   gap: 10px;
-  margin: 16px 0;
-  flex-wrap: wrap; /* Screen ke bahar nahi jayega */
-  @media (max-width: 768px) { justify-content: flex-start; }
+  margin: 4px 0 16px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
 `;
 
 export const StatItem = styled.div`
   display: flex;
+  min-height: 58px;
+  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  color: #666;
-  background: #f8fafc;
-  padding: 7px 12px;
-  border-radius: 999px;
-  border: 1px solid #e2e8f0;
-  white-space: nowrap;
+  justify-content: center;
+  gap: 5px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.12);
+  padding: 10px 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  text-align: center;
+  backdrop-filter: blur(12px);
+
+  span {
+    font-weight: 900;
+  }
+
+  @media (max-width: 768px) {
+    min-height: 54px;
+    padding: 9px 6px;
+    font-size: 11px;
+  }
 `;
 
 export const TagList = styled.div`
@@ -154,13 +383,13 @@ export const TagList = styled.div`
 `;
 
 export const Tag = styled.span`
-  background: #eef3f8;
-  color: #334155;
-  padding: 6px 12px;
+  background: #eef2ff;
+  color: #000080;
+  padding: 7px 12px;
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 500;
-  border: 1px solid #d8e0eb;
+  font-weight: 800;
+  border: 1px solid rgba(0, 0, 128, 0.12);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -169,95 +398,108 @@ export const Tag = styled.span`
 
 // --- Buttons & Price ---
 export const CallToAction = styled.div`
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin-top: 15px;
+  max-width: 560px;
   @media (max-width: 768px) { 
-    flex-direction: row; /* Mobile pe bhi side-by-side rakha hai */
     width: 100%;
+    max-width: none;
   }
 `;
 
 export const ActionButton = styled.button`
-  flex: 1; /* Barabar jagah lenge */
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 10px 12px;
+  min-height: 42px;
+  padding: 10px 14px;
   border-radius: 999px;
-  font-weight: 600;
+  font-weight: 900;
   font-size: 14px;
   cursor: pointer;
-  border: 1px solid #000080;
-  background: ${props => props.$primary ? "#000080" : "white"};
-  color: ${props => props.$primary ? "white" : "#000080"};
+  border: 1px solid ${props => props.$primary ? "#ffc107" : "rgba(255, 255, 255, 0.55)"};
+  background: ${props => props.$primary ? "linear-gradient(135deg, #ffd23f, #ffc107)" : "rgba(255, 255, 255, 0.96)"};
+  color: ${props => props.$primary ? "#000080" : "#000080"};
   white-space: nowrap;
+  box-shadow: ${props => props.$primary ? "0 12px 24px rgba(255, 193, 7, 0.22)" : "0 10px 22px rgba(0, 0, 0, 0.12)"};
+  transition: transform 180ms ease, box-shadow 180ms ease;
 
   &:hover {
-    background: ${props => props.$primary ? "#004182" : "#eef3f8"};
     transform: translateY(-1px);
+    box-shadow: ${props => props.$primary ? "0 16px 30px rgba(255, 193, 7, 0.3)" : "0 14px 28px rgba(0, 0, 0, 0.16)"};
   }
 `;
 
 export const PriceTag = styled.div`
-  font-size: 14px;
-  color: #000;
-  font-weight: 700;
-  margin-bottom: 6px;
-  @media (max-width: 768px) { text-align: left; }
+  width: fit-content;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-weight: 900;
+  margin-bottom: 7px;
+  @media (max-width: 768px) { margin-left: auto; margin-right: auto; }
 `;
 
 export const FollowButton = styled.button`
-  border: 1px solid #000080;
-  background: none;
-  color: #000080;
-  border-radius: 20px;
-  padding: 4px 12px;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: ${props => props.$active ? "rgba(255, 255, 255, 0.2)" : "#ffffff"};
+  color: ${props => props.$active ? "#ffffff" : "#000080"};
+  border-radius: 999px;
+  padding: 9px 18px;
+  font-weight: 900;
   cursor: pointer;
   transition: 0.3s;
-
-  // Desktop
   margin-top: 16px;
-  margin-left: 25px;
-  display: block;
 
   &:hover {
-    background-color: rgba(10, 102, 194, 0.1);
+    transform: translateY(-1px);
+    background-color: rgba(255, 255, 255, 0.88);
+    color: #000080;
   }
 
-  // Mobile
   @media (max-width: 768px) {
-        padding-left: 20px;
-        padding-right: 20px;
-        display: inline-block;
-        margin: 10px;
+    margin: 10px auto 0;
   }
 `;
 
 // --- Content Sections ---
 export const Section = styled.div`
   background: #fff;
-  border-radius: 24px;
-  border: 1px solid #d8e0eb;
+  border-radius: 22px;
+  border: 1px solid #e5e7eb;
   padding: 24px;
   margin-bottom: 16px;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+  scroll-margin-top: 96px;
+  box-shadow: 0 14px 34px rgba(16, 24, 40, 0.08);
   @media (max-width: 768px) { border-radius: 18px; padding: 16px; }
 `;
 
 export const SectionTitle = styled.h2`
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 900;
   margin-bottom: 16px;
-  color: #000000e6;
+  color: #000080;
 `;
 
 export const SectionBody = styled.div`
   font-size: 15px;
-  line-height: 1.5;
-  color: #000000bf;
+  line-height: 1.7;
+  color: #344054;
 `;
 
 // --- Reviews ---
@@ -266,14 +508,16 @@ export const ReviewHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 `;
 
 export const ReviewForm = styled.div`
-  background: #f8fafc;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255, 210, 63, 0.12), transparent 28%),
+    #f8fafc;
   padding: 20px;
-  border-radius: 18px;
-  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  border: 1px solid #e5e7eb;
   margin-bottom: 24px;
 `;
 
@@ -283,6 +527,8 @@ export const ReviewFormTitle = styled.h3`
   display: flex;
   align-items: center;
   gap: 8px;
+  color: #000080;
+  font-weight: 900;
 `;
 
 export const RatingInput = styled.div`
@@ -306,15 +552,21 @@ export const Star = styled.button`
 export const TextAreaContainer = styled.div` position: relative; margin-bottom: 12px; `;
 
 export const ReviewTextarea = styled.textarea`
-  width: 100%; padding: 12px; border: 1px solid #dcdcdc; border-radius: 4px;
+  width: 100%; padding: 13px 14px; border: 1px solid #d0d5dd; border-radius: 14px;
   font-family: inherit; font-size: 14px; resize: vertical;
-  &:focus { border-color: #000080; outline: none; box-shadow: 0 0 0 1px #000080; }
+  box-sizing: border-box;
+  &:focus { border-color: #000080; outline: none; box-shadow: 0 0 0 4px rgba(0, 0, 128, 0.08); }
 `;
 
 export const FormActions = styled.div` display: flex; gap: 12px; align-items: center; `;
 
 export const SubmitButton = styled(ActionButton)`
-  padding: 6px 20px; font-size: 14px;
+  width: auto;
+  background: #000080;
+  color: #ffffff;
+  border-color: #000080;
+  box-shadow: 0 12px 24px rgba(0, 0, 128, 0.16);
+  padding: 10px 20px; font-size: 14px;
   ${props => props.$disabled && css` background: #ccc; border-color: #ccc; cursor: not-allowed; `}
 `;
 
@@ -327,20 +579,24 @@ export const DeleteButton = styled.button`
 export const ReviewList = styled.div` display: flex; flex-direction: column; `;
 
 export const ReviewItem = styled.div`
-  padding: 16px 0; border-bottom: 1px solid #e0e0e0;
+  padding: 16px;
+  border: 1px solid #eef2f7;
+  border-radius: 18px;
+  background: #ffffff;
+  margin-bottom: 12px;
   &:last-child { border-bottom: none; }
 `;
 
 export const ReviewUser = styled.div` display: flex; gap: 12px; `;
 
 export const UserAvatar = styled.div`
-  width: 48px; height: 48px; border-radius: 50%; background: #717171;
+  width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #000080, #05044f);
   color: white; display: flex; align-items: center; justify-content: center;
-  font-weight: 600; flex-shrink: 0;
+  font-weight: 900; flex-shrink: 0;
 `;
 
 export const UserInfo = styled.div` flex: 1; `;
-export const UserName = styled.h4` font-size: 14px; font-weight: 600; margin: 0; `;
+export const UserName = styled.h4` font-size: 14px; font-weight: 900; margin: 0; color: #111827; `;
 export const ReviewMeta = styled.div` display: flex; align-items: center; gap: 8px; margin-top: 2px; `;
 export const ReviewDate = styled.span` font-size: 12px; color: #666; `;
 export const ReviewText = styled.p` font-size: 14px; color: #000000e6; margin-top: 8px; line-height: 1.4; `;
@@ -359,9 +615,9 @@ export const LoginButton = styled(ActionButton)` margin: 0 auto; font-size: 14px
 export const CharCount = styled.div` font-size: 12px; color: #666; text-align: right; margin-top: 4px; `;
 export const ExpertiseGrid = styled.div` display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px; `;
 export const ExpertiseCard = styled.div` background: #f9f9f9; padding: 16px; border-radius: 8px; border: 1px solid #eee; `;
-export const RecentReviewsTitle = styled.h3` font-size: 16px; font-weight: 600; margin: 24px 0 16px; display: flex; align-items: center; gap: 8px; `;
-export const LoadingReviews = styled.div` text-align: center; padding: 40px 0; color: #666; `;
-export const NoReviews = styled.div` text-align: center; padding: 40px 0; color: #666; h4 { margin: 12px 0 4px; color: #000; } `;
+export const RecentReviewsTitle = styled.h3` font-size: 16px; font-weight: 900; margin: 24px 0 16px; display: flex; align-items: center; gap: 8px; color: #000080; `;
+export const LoadingReviews = styled.div` text-align: center; padding: 40px 0; color: #667085; `;
+export const NoReviews = styled.div` text-align: center; padding: 40px 0; color: #667085; h4 { margin: 12px 0 4px; color: #111827; } `;
 
 // Fallback for missing styled components in JSX
 export const MiniRating = styled.div` display: flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 600; color: #000; `;
@@ -382,9 +638,20 @@ export const NotificationBadge = styled.span``;
 
 export const TabContainer = styled.div`
   display: flex;
-  gap: 8px;
-  border-bottom: 1px solid #e0e0e0;
+  gap: 4px;
+  border-bottom: 1px solid #e5e7eb;
   margin-bottom: 24px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
   
   @media (max-width: 768px) {
     gap: 4px;
@@ -392,12 +659,17 @@ export const TabContainer = styled.div`
 `;
 
 export const TabButton = styled.button`
-  padding: 12px 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  scroll-snap-align: start;
+  padding: 13px 18px;
   background: none;
   border: none;
   font-size: 15px;
-  font-weight: 600;
-  color: ${props => props.$active ? "#000080" : "#666"};
+  font-weight: 900;
+  color: ${props => props.$active ? "#000080" : "#667085"};
   cursor: pointer;
   position: relative;
   transition: all 0.2s;
@@ -413,7 +685,8 @@ export const TabButton = styled.button`
       bottom: -1px;
       left: 0;
       right: 0;
-      height: 2px;
+      height: 3px;
+      border-radius: 999px 999px 0 0;
       background: #000080;
     }
   `}
@@ -430,8 +703,8 @@ export const TabContent = styled.div`
 
 export const InfoGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
   
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -440,25 +713,27 @@ export const InfoGrid = styled.div`
 `;
 
 export const InfoItem = styled.div`
-  background: #f8f9fa;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(0, 0, 128, 0.05), transparent 28%),
+    #f8fafc;
   padding: 16px;
-  border-radius: 8px;
-  border: 1px solid #eee;
+  border-radius: 18px;
+  border: 1px solid #e5e7eb;
 `;
 
 export const InfoLabel = styled.div`
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 900;
   text-transform: uppercase;
-  color: #666;
+  color: #000080;
   letter-spacing: 0.5px;
   margin-bottom: 8px;
 `;
 
 export const InfoValue = styled.div`
   font-size: 14px;
-  color: #000000e6;
-  line-height: 1.5;
+  color: #344054;
+  line-height: 1.65;
   
   div {
     margin-bottom: 4px;
@@ -471,14 +746,15 @@ export const InfoValue = styled.div`
 
 export const ExperienceCard = styled.div`
   background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
   padding: 20px;
   margin-bottom: 16px;
   transition: all 0.2s;
   
   &:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(16, 24, 40, 0.09);
   }
   
   &:last-child {
@@ -492,20 +768,20 @@ export const ExperienceHeader = styled.div`
 
 export const ExperienceTitle = styled.h3`
   font-size: 16px;
-  font-weight: 600;
-  color: #000000e6;
+  font-weight: 900;
+  color: #000080;
   margin: 0 0 4px 0;
 `;
 
 export const ExperienceCompany = styled.div`
   font-size: 14px;
-  color: #666;
-  font-weight: 500;
+  color: #344054;
+  font-weight: 700;
 `;
 
 export const ExperienceDate = styled.div`
   font-size: 12px;
-  color: #999;
+  color: #667085;
   margin-bottom: 12px;
 `;
 
@@ -517,8 +793,8 @@ export const ExperienceCertificate = styled.a`
   color: #000080;
   text-decoration: none;
   padding: 6px 12px;
-  background: #eef3f8;
-  border-radius: 4px;
+  background: #eef2ff;
+  border-radius: 999px;
   
   &:hover {
     text-decoration: underline;
@@ -530,8 +806,8 @@ export const ExperienceCertificate = styled.a`
 // Add this new styled component for the post grid
 export const PostGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
   
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -542,14 +818,15 @@ export const PostGrid = styled.div`
 // Update PostCard for grid layout
 export const PostCard = styled.div`
   background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
   overflow: hidden;
   transition: all 0.2s;
+  box-shadow: 0 10px 24px rgba(16, 24, 40, 0.06);
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 16px 34px rgba(16, 24, 40, 0.12);
   }
 `;
 
@@ -559,8 +836,8 @@ export const PostHeader = styled.div`
 
 export const PostTitle = styled.h3`
   font-size: 16px;
-  font-weight: 600;
-  color: #000000e6;
+  font-weight: 900;
+  color: #000080;
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -570,7 +847,7 @@ export const PostTitle = styled.h3`
 
 export const PostDescription = styled.p`
   font-size: 14px;
-  color: #000000bf;
+  color: #344054;
   line-height: 1.5;
   margin: 0 16px 12px 16px;
   display: -webkit-box;
@@ -581,9 +858,9 @@ export const PostDescription = styled.p`
 
 export const PostImage = styled.img`
   width: 100%;
-  height: 280px;
+  height: 220px;
   object-fit: cover;
-  background: #f3f2ef;
+  background: #f8fafc;
 `;
 
 export const PostStats = styled.div`
@@ -618,15 +895,15 @@ export const PostActionBtn = styled.button`
   padding: 8px;
   background: none;
   border: none;
-  border-radius: 4px;
+  border-radius: 999px;
   font-size: 13px;
-  font-weight: 500;
-  color: ${props => props.$liked ? "#ef4444" : "#666"};
+  font-weight: 800;
+  color: ${props => props.$liked ? "#ef4444" : "#000080"};
   cursor: pointer;
   transition: all 0.2s;
   
   &:hover {
-    background: #f3f2ef;
+    background: #eef2ff;
     color: ${props => props.$liked ? "#dc2626" : "#000080"};
   }
 `;
@@ -635,8 +912,8 @@ export const PostActionBtn = styled.button`
 
 export const CommentsBox = styled.div`
   padding: 12px;
-  border-top: 1px solid #e0e0e0;
-  background: #f9f9f9;
+  border-top: 1px solid #e5e7eb;
+  background: #f8fafc;
 `;
 
 export const CommentsList = styled.div`
@@ -668,7 +945,7 @@ export const CommentMeta = styled.div`
 export const InlineInput = styled.input`
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #d0d5dd;
   border-radius: 20px;
   font-size: 13px;
   outline: none;
@@ -735,8 +1012,8 @@ export const UserReviewBox = styled.div`
 // Add these to your existing styled components file
 
 export const SubscriptionCard = styled.div`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 16px;
+  background: linear-gradient(135deg, #000080 0%, #05044f 100%);
+  border-radius: 18px;
   padding: 20px;
   margin-top: 20px;
   color: white;
@@ -762,7 +1039,8 @@ export const PlansContainer = styled.div`
 
 export const PlanCard = styled.div`
   background: #f8fafc;
-  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
   padding: 24px;
   transition: transform 0.2s, box-shadow 0.2s;
   
@@ -781,14 +1059,14 @@ export const PlanHeader = styled.div`
 
 export const PlanName = styled.h3`
   margin: 0 0 8px 0;
-  color: #0f172a;
+  color: #000080;
   font-size: 20px;
 `;
 
 export const PlanPrice = styled.div`
   font-size: 32px;
   font-weight: 700;
-  color: #6366f1;
+  color: #000080;
   margin: 8px 0;
 `;
 
@@ -815,7 +1093,7 @@ export const PlanFeature = styled.li`
 export const SubscribeButton = styled.button`
   width: 100%;
   padding: 12px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #000080 0%, #05044f 100%);
   color: white;
   border: none;
   border-radius: 12px;
@@ -977,7 +1255,7 @@ export const PricingOptionButton = styled.button`
 
 export const PricingModeTabs = styled.div`
   display: flex;
-  gap: 12px;
+  gap: 8px;
   margin-bottom: 12px;
   flex-wrap: wrap;
 `;
@@ -985,11 +1263,11 @@ export const PricingModeTabs = styled.div`
 export const PricingModeTab = styled.button`
   padding: 8px 16px;
   border-radius: 999px;
-  border: 1px solid ${props => props.$active ? '#6366f1' : '#e2e8f0'};
-  background: ${props => props.$active ? '#6366f1' : '#fff'};
-  color: ${props => props.$active ? '#fff' : '#475569'};
+  border: 1px solid ${props => props.$active ? '#ffc107' : 'rgba(255, 255, 255, 0.28)'};
+  background: ${props => props.$active ? 'linear-gradient(135deg, #ffd23f, #ffc107)' : 'rgba(255, 255, 255, 0.12)'};
+  color: ${props => props.$active ? '#000080' : '#ffffff'};
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 900;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -997,13 +1275,13 @@ export const PricingModeTab = styled.button`
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: #6366f1;
-    background: ${props => props.$active ? '#6366f1' : '#f8fafc'};
+    border-color: #ffc107;
   }
 `;
 
 export const PricingInfo = styled.div`
   font-size: 13px;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.84);
   padding: 8px 0;
+  font-weight: 700;
 `;

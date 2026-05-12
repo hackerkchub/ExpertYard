@@ -12,6 +12,7 @@ import {
   getCategoriesApi,
   getSubCategoriesApi,
 } from "../api/expertapi/category.api";
+import useNetworkReconnect from "../hooks/useNetworkReconnect";
 
 const CategoryContext = createContext(null);
 
@@ -26,6 +27,7 @@ export const CategoryProvider = ({ children }) => {
   const subCatCache = useRef({});
   const isFetched = useRef(false);
   const activeSubCategoryRequest = useRef(0);
+  const lastSubCategoryId = useRef(null);
 
   const loadCategories = useCallback(async (forceRefresh = false) => {
     if (categories.length > 0 && !forceRefresh) return;
@@ -50,12 +52,13 @@ export const CategoryProvider = ({ children }) => {
     loadCategories();
   }, [loadCategories]);
 
-  const loadSubCategories = useCallback(async (categoryId) => {
+  const loadSubCategories = useCallback(async (categoryId, forceRefresh = false) => {
     if (!categoryId) return;
 
     const normalizedCategoryId = String(categoryId);
+    lastSubCategoryId.current = normalizedCategoryId;
 
-    if (subCatCache.current[normalizedCategoryId]) {
+    if (subCatCache.current[normalizedCategoryId] && !forceRefresh) {
       setSubCategories(subCatCache.current[normalizedCategoryId]);
       setSubCategoriesLoading(false);
       return;
@@ -86,6 +89,13 @@ export const CategoryProvider = ({ children }) => {
   }, []);
 
   const refreshCategories = useCallback(() => loadCategories(true), [loadCategories]);
+
+  useNetworkReconnect(() => {
+    loadCategories(true);
+    if (lastSubCategoryId.current) {
+      loadSubCategories(lastSubCategoryId.current, true);
+    }
+  });
 
   const value = useMemo(
     () => ({

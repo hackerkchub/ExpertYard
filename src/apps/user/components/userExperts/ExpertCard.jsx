@@ -1,6 +1,7 @@
 // src/apps/user/components/userExperts/ExpertCard.jsx - PREMIUM UPGRADED VERSION
 import React, { useCallback, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { 
   FiPhoneCall, FiMessageSquare, FiMapPin, FiZap, FiClock, 
   FiUsers, FiStar, FiAward, FiTrendingUp, FiShield, 
@@ -55,6 +56,7 @@ const MIN_CHAT_MINUTES = 5;
 
 const ExpertCard = ({ data, mode, maxPrice, onStartChat, onStartCall }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { isLoggedIn, user } = useAuth();
   const userId = user?.id;
   const { balance } = useWallet();
@@ -387,17 +389,17 @@ const ExpertCard = ({ data, mode, maxPrice, onStartChat, onStartCall }) => {
             <PricingBadges>
               {hasPerMinute && (
                 <PricingBadge type="per_minute">
-                  <FiZap size={12} /> Flexible Pricing
+                  <FiZap size={12} /> {t("expertCard.flexiblePricing")}
                 </PricingBadge>
               )}
               {hasSession && (
                 <PricingBadge type="session">
-                  <FiClock size={12} /> Session Based
+                  <FiClock size={12} /> {t("expertCard.sessionBased")}
                 </PricingBadge>
               )}
               {hasSubscription && !hasPerMinute && !hasSession && (
                 <PricingBadge type="plans">
-                  <FiShield size={12} /> Subscription Plans
+                  <FiShield size={12} /> {t("expertCard.subscriptionPlans")}
                 </PricingBadge>
               )}
             </PricingBadges>
@@ -409,7 +411,7 @@ const ExpertCard = ({ data, mode, maxPrice, onStartChat, onStartCall }) => {
                   {callPrice > 0 && (
                     <div>
                       <PriceLabel>
-                        <FiPhoneCall size={12} /> Call
+                        <FiPhoneCall size={12} /> {t("expertCard.call")}
                       </PriceLabel>
                       <PriceTag>
                         <PriceValue>₹{callPrice}</PriceValue>
@@ -420,7 +422,7 @@ const ExpertCard = ({ data, mode, maxPrice, onStartChat, onStartCall }) => {
                   {chatPrice > 0 && (
                     <div>
                       <PriceLabel>
-                        <FiMessageSquare size={12} /> Chat
+                        <FiMessageSquare size={12} /> {t("expertCard.chat")}
                       </PriceLabel>
                       <PriceTag>
                         <PriceValue>₹{chatPrice}</PriceValue>
@@ -479,7 +481,7 @@ const ExpertCard = ({ data, mode, maxPrice, onStartChat, onStartCall }) => {
                 {getButtonText()}
               </PrimaryBtn>
               <GhostBtn onClick={handleViewProfile} whileTap={{ scale: 0.97 }}>
-                Profile
+                {t("expertCard.profile")}
               </GhostBtn>
             </ActionRow>
           </CardInner>

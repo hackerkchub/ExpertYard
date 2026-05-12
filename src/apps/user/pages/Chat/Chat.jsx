@@ -1,7 +1,7 @@
 // src/apps/user/pages/chat/Chat.jsx - FIXED VERSION
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiPaperclip, FiImage, FiVideo, FiFile, FiX, FiArrowLeft, FiClock, FiUser } from "react-icons/fi";
+import { FiPaperclip, FiImage, FiVideo, FiFile, FiX, FiClock, FiUser } from "react-icons/fi";
 import { IoMdSend } from "react-icons/io";
 import {
   PageWrap,
@@ -28,11 +28,11 @@ import {
   NoMessages,
   EndChatButton,
   EmptyChatMessage,
-  MobileBackButton,
   TimerDisplay,
   UnlimitedBadge,
   HeaderActions,
 } from "./Chat.styles";
+import BackButton from "../../components/BackButton/BackButton";
 
 import { socket } from "../../../../shared/api/socket";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
@@ -624,11 +624,7 @@ const Chat = () => {
       <ChatGlobalStyle />
       <PageWrap>
         <Header>
-          {isMobile && (
-            <MobileBackButton onClick={handleBack}>
-              <FiArrowLeft size={24} />
-            </MobileBackButton>
-          )}
+          <BackButton onClick={handleBack} iconOnly />
           
           {chatData && expertInfo ? (
             <>

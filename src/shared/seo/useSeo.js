@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { SITE_CONFIG, toAbsoluteUrl } from "./siteConfig";
+import { getCurrentHostname, getEnvironmentRobots, SITE_CONFIG, toAbsoluteUrl } from "./siteConfig";
 
 function ensureMeta(selector, attributes) {
   let node = document.head.querySelector(selector);
@@ -45,7 +45,7 @@ export function useSeo({
   title,
   description,
   canonicalPath,
-  robots = "index,follow",
+  robots = "index, follow",
   keywords,
   og = {},
   twitter = {},
@@ -56,6 +56,7 @@ export function useSeo({
   useEffect(() => {
     const canonicalUrl = toAbsoluteUrl(canonicalPath || window.location.pathname);
     const ogImage = og.image || toAbsoluteUrl(SITE_CONFIG.defaultOgImage);
+    const robotsContent = getEnvironmentRobots(robots, getCurrentHostname());
 
     document.title = title;
 
@@ -63,7 +64,7 @@ export function useSeo({
       name: "description",
       content: description,
     });
-    ensureMeta('meta[name="robots"]', { name: "robots", content: robots });
+    ensureMeta('meta[name="robots"]', { name: "robots", content: robotsContent });
 
     if (keywords) {
       ensureMeta('meta[name="keywords"]', { name: "keywords", content: keywords });
@@ -115,6 +116,10 @@ export function useSeo({
       name: "twitter:image",
       content: twitter.image || ogImage,
     });
+    ensureMeta('meta[name="twitter:url"]', {
+      name: "twitter:url",
+      content: twitter.url ? toAbsoluteUrl(twitter.url) : canonicalUrl,
+    });
 
     document.head
       .querySelectorAll('script[id^="seo-structured-data-"]')
@@ -144,5 +149,6 @@ export function useSeo({
     twitter.description,
     twitter.image,
     twitter.title,
+    twitter.url,
   ]);
 }

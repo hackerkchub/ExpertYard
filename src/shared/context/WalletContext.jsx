@@ -13,6 +13,7 @@ import {
 } from "../api/userApi/walletApi";
 
 import { useAuth } from "./UserAuthContext";
+import useNetworkReconnect from "../hooks/useNetworkReconnect";
 
 const WalletContext = createContext(null);
 export const useWallet = () => useContext(WalletContext);
@@ -50,6 +51,7 @@ export const WalletProvider = ({ children }) => {
   }
 }, [isLoggedIn, fetchWallet]);
 
+useNetworkReconnect(fetchWallet, { enabled: isLoggedIn });
 
   /* ================= ADD MONEY ================= */
 const addMoney = async (amount) => {

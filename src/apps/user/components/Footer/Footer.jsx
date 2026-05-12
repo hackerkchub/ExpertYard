@@ -1,160 +1,128 @@
-// src/components/Footer/Footer.jsx
 import React from "react";
-import { Link } from "react-router-dom";
-import { 
-  Wrapper, 
-  Container, 
-  Section, 
+import { useTranslation } from "react-i18next";
+import {
+  Wrapper,
+  Container,
+  FooterTop,
+  Section,
   BrandSection,
-  SectionTitle, 
-  LinkList, 
-  FooterLink, 
-  SocialLinks, 
-  SocialIcon, 
+  SectionTitle,
+  LinkList,
+  FooterLink,
+  SocialLinks,
+  SocialIcon,
   Copyright,
   Logo,
   LogoContainer,
   LogoImage,
-  LogoText,
   Tagline,
-  BottomLinks,
-  BottomLink
+  BottomBar,
+  BottomMeta,
+  PoweredBy,
+  TrustText,
 } from "./Footer.styles";
 import logoImg from "../../../../assets/logo.webp";
-
-// Icons
 import { FaFacebookF, FaTwitter, FaLinkedinIn, FaYoutube, FaInstagram } from "react-icons/fa";
 
-// Static link data
 const COMPANY_LINKS = [
-  { label: "About Us", path: "/user/about" },
-  // { label: "Investor Relations", path: "/investors" },
-  { label: "Terms & Conditions", path: "/user/terms" },
-  { label: "Privacy Policy", path: "/user/privacy" },
-  // { label: "Anti-discrimination Policy", path: "/anti-discrimination" },
-  { label: "Careers", path: "/user/careers" },
+  { labelKey: "footer.aboutUs", path: "/user/about" },
+  { labelKey: "footer.careers", path: "/user/careers" },
+  { labelKey: "footer.privacyPolicy", path: "/user/privacy" },
+  { labelKey: "footer.terms", path: "/user/terms" },
 ];
 
 const CUSTOMER_LINKS = [
-  { label: "Reviews", path: "/user/reviews" },
-  // { label: "Categories Near You", path: "/categories" },
-  { label: "Contact Us", path: "/user/contact" },
-  { label: "How It Works", path: "/user/how-it-works" },
-  { label: "FAQ", path: "/user/faq" },
+  { labelKey: "footer.findExperts", path: "/user/find-experts" },
+  { labelKey: "footer.reviews", path: "/user/reviews" },
+  { labelKey: "footer.howItWorks", path: "/user/how-it-works" },
+  { labelKey: "footer.faq", path: "/user/faq" },
 ];
 
 const PROFESSIONAL_LINKS = [
-  { label: "Register as an Expert", path: "/expert/register" },
-  // { label: "Expert Dashboard", path: "/expert/login" },
-  // { label: "Expert Resources", path: "/expert/resources" },
-  // { label: "Become a Partner", path: "/partner" },
-   { label: "Expert Guidelines", path: "/user/guidelines" },
+  { labelKey: "footer.becomeExpert", path: "/user/become-expert" },
+  { labelKey: "footer.expertGuidelines", path: "/user/guidelines" },
+  { labelKey: "footer.earningsModel", path: "/user/earnings-model" },
+  { label: "Marketing", path: "/user/marketing" },
+  { labelKey: "common.support", path: "/user/support" },
+];
+
+const SERVICE_LINKS = [
+  { labelKey: "footer.legalAdvice", path: "/user/categories" },
+  { labelKey: "footer.careerGuidance", path: "/user/categories" },
+  { labelKey: "footer.businessConsultation", path: "/user/categories" },
+  { labelKey: "footer.healthWellness", path: "/user/categories" },
 ];
 
 const SOCIAL_LINKS = [
-  { icon: <FaFacebookF />, url: "https://www.facebook.com/", label: "Facebook" },
-  { icon: <FaTwitter />, url: "https://twitter.com/", label: "Twitter" },
-  { icon: <FaLinkedinIn />, url: "https://www.linkedin.com/", label: "LinkedIn" },
-  { icon: <FaYoutube />, url: "https://www.youtube.com/", label: "YouTube" },
-  { icon: <FaInstagram />, url: "https://www.instagram.com/", label: "Instagram" },
+  { icon: <FaFacebookF />, url: "https://www.facebook.com/", labelKey: "footer.social.facebook" },
+  { icon: <FaTwitter />, url: "https://twitter.com/", labelKey: "footer.social.twitter" },
+  { icon: <FaLinkedinIn />, url: "https://www.linkedin.com/", labelKey: "footer.social.linkedin" },
+  { icon: <FaInstagram />, url: "https://www.instagram.com/", labelKey: "footer.social.instagram" },
+  { icon: <FaYoutube />, url: "https://www.youtube.com/", labelKey: "footer.social.youtube" },
 ];
 
-// Component
+const FooterColumn = ({ title, links, t }) => (
+  <Section aria-label={title}>
+    <SectionTitle>{title}</SectionTitle>
+    <LinkList>
+      {links.map((link) => (
+        <li key={`${title}-${link.labelKey || link.label}`}>
+          <FooterLink to={link.path}>{link.label || t(link.labelKey)}</FooterLink>
+        </li>
+      ))}
+    </LinkList>
+  </Section>
+);
+
 const Footer = () => {
+  const { t } = useTranslation();
+
   return (
     <Wrapper>
       <Container>
-        {/* Brand Section */}
-        <BrandSection>
-          <Logo to="/">
-            <LogoContainer>
-              <LogoImage src={logoImg} alt="G9expert" />
-            </LogoContainer>
-          </Logo>
+        <FooterTop>
+          <BrandSection>
+            <Logo to="/user">
+              <LogoContainer>
+                <LogoImage src={logoImg} alt="G9 Experts" />
+              </LogoContainer>
+            </Logo>
 
-          <Tagline>
-            Connect with world-class experts for personalized guidance, consultation, and professional services.
-          </Tagline>
-          
-          {/* Social Links */}
-          <SocialLinks>
-            {SOCIAL_LINKS.map((social, index) => (
-              <SocialIcon
-                key={index}
-                href={social.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={social.label}
-              >
-                {social.icon}
-              </SocialIcon>
-            ))}
-          </SocialLinks>
-        </BrandSection>
+            <Tagline>
+              {t("footer.description")}
+            </Tagline>
 
-        {/* Company Links */}
-        <Section>
-          <SectionTitle>Company</SectionTitle>
-          <LinkList>
-            {COMPANY_LINKS.map((link, index) => (
-              <li key={index}>
-                <FooterLink to={link.path}>
-                  {link.label}
-                </FooterLink>
-              </li>
-            ))}
-          </LinkList>
-        </Section>
+            <SocialLinks>
+              {SOCIAL_LINKS.map((social) => (
+                <SocialIcon
+                  key={social.labelKey}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={t(social.labelKey)}
+                >
+                  {social.icon}
+                </SocialIcon>
+              ))}
+            </SocialLinks>
+          </BrandSection>
 
-        {/* For Customers */}
-        <Section>
-          <SectionTitle>For Customers</SectionTitle>
-          <LinkList>
-            {CUSTOMER_LINKS.map((link, index) => (
-              <li key={index}>
-                <FooterLink to={link.path}>
-                  {link.label}
-                </FooterLink>
-              </li>
-            ))}
-          </LinkList>
-        </Section>
-
-        {/* For Professionals */}
-        <Section>
-          <SectionTitle>For Experts</SectionTitle>
-          <LinkList>
-            {PROFESSIONAL_LINKS.map((link, index) => (
-              <li key={index}>
-                <FooterLink to={link.path}>
-                  {link.label}
-                </FooterLink>
-              </li>
-            ))}
-          </LinkList>
-        </Section>
+          <FooterColumn title={t("footer.company")} links={COMPANY_LINKS} t={t} />
+          <FooterColumn title={t("footer.forCustomers")} links={CUSTOMER_LINKS} t={t} />
+          <FooterColumn title={t("footer.forExperts")} links={PROFESSIONAL_LINKS} t={t} />
+          <FooterColumn title={t("footer.services")} links={SERVICE_LINKS} t={t} />
+        </FooterTop>
       </Container>
 
-      {/* Bottom Section */}
-      <Container style={{ 
-        flexDirection: 'column', 
-        alignItems: 'center',
-        marginTop: '1rem',
-        paddingTop: '2rem'
-      }}>
-        {/* <BottomLinks>
-          <BottomLink to="/sitemap">Sitemap</BottomLink>
-          <BottomLink to="/accessibility">Accessibility</BottomLink>
-          <BottomLink to="/cookies">Cookie Policy</BottomLink>
-          <BottomLink to="/security">Security</BottomLink>
-          <BottomLink to="/blog">Blog</BottomLink>
-          <BottomLink to="/press">Press</BottomLink>
-        </BottomLinks> */}
-        
-        <Copyright>
-          © {new Date().getFullYear()} Guidexa.in All rights reserved. Guidexa is a registered trademark.
-        </Copyright>
-      </Container>
+      <BottomBar>
+        <BottomMeta>
+          <Copyright>© {new Date().getFullYear()} {t("footer.copyright")}</Copyright>
+          <PoweredBy>
+            {t("footer.poweredBy")} <span>Softmaxs Solutions</span>
+          </PoweredBy>
+        </BottomMeta>
+        <TrustText>{t("footer.trustedText")}</TrustText>
+      </BottomBar>
     </Wrapper>
   );
 };

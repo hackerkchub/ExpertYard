@@ -21,20 +21,32 @@ const pulseRing = keyframes`
 // Card Container
 export const Card = styled(motion.div)`
   position: relative;
-  border-radius: 28px;
-  background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%);
-  box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.08);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 100%;
+  min-height: 360px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+  border: 1px solid rgba(0, 0, 128, 0.08);
+  box-shadow: 0 14px 30px rgba(16, 24, 40, 0.08);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
   overflow: hidden;
+
+  &:hover {
+    border-color: rgba(0, 0, 128, 0.18);
+    box-shadow: 0 18px 40px rgba(16, 24, 40, 0.13);
+  }
 `;
 
 export const CardInner = styled.div`
   position: relative;
   z-index: 2;
-  padding: 20px;
+  height: 100%;
+  min-height: inherit;
+  display: flex;
+  flex-direction: column;
+  padding: 13px;
   
   @media (max-width: 480px) {
-    padding: 16px;
+    padding: 13px;
   }
 `;
 
@@ -59,10 +71,10 @@ export const ShineEffect = styled.div`
 export const GradientBorder = styled.div`
   position: absolute;
   inset: 0;
-  border-radius: 28px;
+  border-radius: 20px;
   padding: 1.5px;
   background: ${({ isHovered }) => isHovered 
-    ? 'linear-gradient(135deg, #667eea, #764ba2, #f093fb, #4facfe)' 
+    ? 'linear-gradient(135deg, #000080, #ffd23f)' 
     : 'linear-gradient(135deg, #e2e8f0, #f1f5f9)'};
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
@@ -73,8 +85,9 @@ export const GradientBorder = styled.div`
 // Header Section
 export const CardHeader = styled.div`
   display: flex;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 12px;
+  min-height: 74px;
+  margin-bottom: 10px;
   
   @media (max-width: 640px) {
     gap: 12px;
@@ -88,15 +101,15 @@ export const AvatarSection = styled.div`
 
 export const AvatarWrap = styled.div`
   position: relative;
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
   padding: 2px;
   background: ${({ $isAI, isHovered }) => $isAI
     ? "conic-gradient(from 160deg, #38bdf8, #a855f7, #f97316, #38bdf8)"
     : isHovered
-    ? "linear-gradient(135deg, #667eea, #764ba2)"
-    : "linear-gradient(135deg, #cbd5e1, #94a3b8)"};
+    ? "linear-gradient(135deg, #000080, #ffd23f)"
+    : "linear-gradient(135deg, #eef2ff, #c7d2fe)"};
   transition: all 0.3s ease;
   
   &::before {
@@ -106,8 +119,8 @@ export const AvatarWrap = styled.div`
     left: -2px;
     right: -2px;
     bottom: -2px;
-    border-radius: 50%;
-    background: ${({ isHovered }) => isHovered ? 'radial-gradient(circle at 30% 30%, #667eea, #764ba2)' : 'none'};
+    border-radius: 18px;
+    background: ${({ isHovered }) => isHovered ? 'radial-gradient(circle at 30% 30%, rgba(0,0,128,0.3), rgba(255,210,63,0.3))' : 'none'};
     opacity: 0;
     transition: opacity 0.3s ease;
   }
@@ -117,15 +130,15 @@ export const AvatarWrap = styled.div`
   }
   
   @media (max-width: 640px) {
-    width: 60px;
-    height: 60px;
+    width: 52px;
+    height: 52px;
   }
 `;
 
 export const AvatarImg = styled.img`
   width: 100%;
   height: 100%;
-  border-radius: 50%;
+  border-radius: 16px;
   object-fit: cover;
   background: #f1f5f9;
   border: 2px solid white;
@@ -133,8 +146,8 @@ export const AvatarImg = styled.img`
 
 export const StatusDot = styled.span`
   position: absolute;
-  right: 4px;
-  bottom: 4px;
+  right: 2px;
+  bottom: 2px;
   width: 14px;
   height: 14px;
   border-radius: 50%;
@@ -210,9 +223,9 @@ export const NameRow = styled.div`
 `;
 
 export const Name = styled.h3`
-  font-size: 18px;
-  font-weight: 700;
-  color: #0f172a;
+  font-size: 16px;
+  font-weight: 900;
+  color: #111827;
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -225,8 +238,8 @@ export const Name = styled.h3`
 
 export const VerifiedBadge = styled.span`
   display: inline-flex;
-  color: #3b82f6;
-  background: #eff6ff;
+  color: #000080;
+  background: #eef2ff;
   border-radius: 20px;
   padding: 2px 6px;
   font-size: 10px;
@@ -248,8 +261,9 @@ export const PremiumBadge = styled.span`
 
 export const Role = styled.div`
   font-size: 13px;
-  color: #64748b;
-  margin-bottom: 8px;
+  color: #475467;
+  margin-bottom: 6px;
+  font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -263,7 +277,10 @@ export const MetaRow = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 8px;
+  min-height: 30px;
+  max-height: 34px;
+  overflow: hidden;
+  margin-bottom: 6px;
   
   @media (max-width: 640px) {
     gap: 8px;
@@ -275,7 +292,8 @@ export const MetaItem = styled.span`
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: #64748b;
+  color: #667085;
+  font-weight: 700;
   
   svg {
     flex-shrink: 0;
@@ -291,15 +309,18 @@ export const CategoryTags = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  min-height: 20px;
+  max-height: 22px;
+  overflow: hidden;
   margin-top: 6px;
 `;
 
 export const CategoryChip = styled.span`
   font-size: 11px;
   padding: 3px 8px;
-  background: #f1f5f9;
+  background: #eef2ff;
   border-radius: 12px;
-  color: #475569;
+  color: #000080;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -308,10 +329,11 @@ export const CategoryChip = styled.span`
 // Stats Grid
 export const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 12px;
-  margin: 16px 0;
-  padding: 12px 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  min-height: 50px;
+  margin: 9px 0;
+  padding: 8px 0;
   border-top: 1px solid #e2e8f0;
   border-bottom: 1px solid #e2e8f0;
   
@@ -325,9 +347,10 @@ export const StatCard = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px;
+  padding: 7px;
   background: #f8fafc;
-  border-radius: 12px;
+  border: 1px solid #eef2f7;
+  border-radius: 14px;
   transition: all 0.2s ease;
   
   &:hover {
@@ -336,7 +359,7 @@ export const StatCard = styled.div`
   }
   
   svg {
-    color: #3b82f6;
+    color: #000080;
     flex-shrink: 0;
   }
   
@@ -359,28 +382,32 @@ export const StatCard = styled.div`
 
 // Pricing Section
 export const PricingSection = styled.div`
-  margin: 12px 0;
+  min-height: 48px;
+  margin: 9px 0;
 `;
 
 export const PricingBadges = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin: 12px 0;
+  gap: 6px;
+  min-height: 22px;
+  max-height: 24px;
+  overflow: hidden;
+  margin: 8px 0;
 `;
 
 export const PricingBadge = styled.span`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px;
+  padding: 3px 9px;
   border-radius: 20px;
   font-size: 11px;
   font-weight: 600;
   
   ${props => props.type === 'per_minute' && css`
-    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-    color: #1e40af;
+    background: #eef2ff;
+    color: #000080;
   `}
   
   ${props => props.type === 'session' && css`
@@ -396,7 +423,7 @@ export const PricingBadge = styled.span`
 
 export const PriceRow = styled.div`
   display: flex;
-  gap: 20px;
+  gap: 12px;
   ${props => props.$fullWidth && css`
     width: 100%;
   `}
@@ -420,7 +447,7 @@ export const PriceLabel = styled.div`
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #94a3b8;
+  color: #667085;
   margin-bottom: 4px;
   display: flex;
   align-items: center;
@@ -443,8 +470,8 @@ export const PriceTag = styled.div`
 `;
 
 export const PriceValue = styled.span`
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 17px;
+  font-weight: 950;
   color: #0f172a;
   
   @media (max-width: 640px) {
@@ -456,12 +483,13 @@ export const PricingInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 12px 0;
-  padding: 10px 12px;
-  background: linear-gradient(135deg, #f3e8ff, #fae8ff);
+  margin: 8px 0;
+  padding: 7px 10px;
+  background: linear-gradient(135deg, #fff7d6, #ffffff);
+  border: 1px solid rgba(255, 193, 7, 0.24);
   border-radius: 14px;
   font-size: 12px;
-  color: #6b21a5;
+  color: #000080;
   
   svg {
     flex-shrink: 0;
@@ -470,14 +498,19 @@ export const PricingInfo = styled.div`
   span {
     flex: 1;
     font-weight: 500;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 `;
 
 // Action Buttons
 export const ActionRow = styled.div`
   display: flex;
-  gap: 12px;
-  margin-top: 16px;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 9px;
   
   @media (max-width: 640px) {
     flex-direction: column;
@@ -489,22 +522,23 @@ export const PrimaryBtn = styled(motion.button)`
   flex: 1;
   border: none;
   border-radius: 40px;
-  padding: 12px 20px;
+  min-height: 38px;
+  padding: 9px 12px;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 950;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: white;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #ffd23f, #ffc107);
+  color: #000080;
+  box-shadow: 0 12px 22px rgba(255, 193, 7, 0.22);
+  transition: transform 180ms ease, box-shadow 180ms ease;
   
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 16px 28px rgba(255, 193, 7, 0.3);
   }
   
   &:disabled {
@@ -519,21 +553,21 @@ export const PrimaryBtn = styled(motion.button)`
 `;
 
 export const GhostBtn = styled(motion.button)`
-  min-width: 100px;
-  border: 1.5px solid #e2e8f0;
+  min-width: 86px;
+  border: 1.5px solid rgba(0, 0, 128, 0.18);
   border-radius: 40px;
-  background: transparent;
-  color: #475569;
+  background: #ffffff;
+  color: #000080;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 900;
   cursor: pointer;
-  padding: 10px 20px;
+  padding: 9px 16px;
   transition: all 0.3s ease;
   
   &:hover {
-    background: #f8fafc;
-    border-color: #3b82f6;
-    color: #3b82f6;
+    background: #eef2ff;
+    border-color: #000080;
+    color: #000080;
     transform: translateY(-2px);
   }
   
@@ -570,9 +604,9 @@ export const HoverGlow = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  border-radius: 28px;
+  border-radius: 20px;
   background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), 
-    rgba(59, 130, 246, 0.15) 0%, 
+    rgba(0, 0, 128, 0.12) 0%, 
     transparent 70%);
   opacity: 0;
   transition: opacity 0.3s ease;

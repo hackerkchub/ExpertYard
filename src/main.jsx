@@ -3,6 +3,7 @@ import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "styled-components";
 
 import AppRouter from "./routes";
+import "./i18n";
 import { CategoryProvider } from "./shared/context/CategoryContext";
 import { AuthProvider } from "./shared/context/UserAuthContext";
 import { WalletProvider } from "./shared/context/WalletContext";

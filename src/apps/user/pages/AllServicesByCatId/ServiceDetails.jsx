@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiShield, FiClock, FiStar, FiZap, FiCheck } from "react-icons/fi";
+import { FiShield, FiClock, FiStar, FiZap, FiCheck } from "react-icons/fi";
 import { FaWallet } from "react-icons/fa"; 
 
 
 import { useAuth } from "../../../../shared/context/UserAuthContext"; 
 import { useWallet } from "../../../../shared/context/WalletContext"; 
+import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 import { fireAlert } from "../../../../shared/utils/lazyNotifications";
 import * as S from "./ServiceDetails.style";
 
@@ -60,6 +61,8 @@ const ServiceDetail = () => {
   useEffect(() => {
     if (slug) fetchServiceData();
   }, [slug, fetchServiceData]);
+
+  useNetworkReconnect(fetchServiceData, { enabled: Boolean(slug) });
 
   const handleBooking = async () => {
     if (!isLoggedIn) {
@@ -138,7 +141,6 @@ const ServiceDetail = () => {
     <S.PageWrapper>
       <S.Container>
         <S.TopBar>
-           <S.BackButton onClick={() => navigate(-1)}><FiArrowLeft /> Back</S.BackButton>
            <S.FastTag><FiZap /> Instant Expert Connection</S.FastTag>
         </S.TopBar>
 

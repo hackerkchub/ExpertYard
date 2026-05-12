@@ -1,16 +1,25 @@
 import React, { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useCategory } from "../../../../shared/context/CategoryContext";
 import { useSeo } from "../../../../shared/seo/useSeo";
 import { toAbsoluteUrl } from "../../../../shared/seo/siteConfig";
+import { buildCategoryCanonicalPath } from "../../../../shared/seo/categorySeoData";
 import {
   buildCategorySeoDescription,
-  getCategoryPath,
 } from "../../../../shared/utils/categoryRoutes";
 
 // Icons
-import { FiSearch, FiGrid, FiList, FiChevronRight, FiStar, FiUsers, FiClock, FiAward } from "react-icons/fi";
-import { IoSparkles, IoShieldCheckmark, IoTrendingUp, IoStatsChart } from "react-icons/io5";
+import {
+  FiChevronRight,
+  FiGrid,
+  FiHeadphones,
+  FiList,
+  FiSearch,
+  FiShield,
+  FiUsers,
+} from "react-icons/fi";
+import { IoTrendingUp } from "react-icons/io5";
 
 // Styled Components
 import {
@@ -25,6 +34,7 @@ import {
   MainContent,
   StatsBar,
   StatItem,
+  StatIcon,
   StatValue,
   StatLabel,
   CategoriesHeader,
@@ -39,8 +49,6 @@ import {
   CategoryInfo,
   CategoryName,
   CategoryDescription,
-  CategoryMeta,
-  MetaItem,
   ViewButton,
   PremiumBadge,
   TrendingTag,
@@ -48,15 +56,20 @@ import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbSeparator,
-  PopularSection,
-  PopularGrid,
-  PopularCategory
+  CtaBlock,
+  CtaButton,
+  SeoContent
 } from "./Categories.styles";
 
 const DEFAULT_CATEGORY_IMAGE = "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h-300&fit=crop";
+const CATEGORIES_SEO_TITLE =
+  "Expert Categories Online | Legal, Health, Astrology & Finance Experts - G9Experts";
+const CATEGORIES_SEO_DESCRIPTION =
+  "Explore verified expert categories on G9Experts. Connect online with legal, health, astrology, fitness, finance, property, career, business and education experts by chat or call.";
 
 const Categories = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { categories, loading } = useCategory();
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'list'
@@ -74,18 +87,14 @@ const Categories = () => {
     return (b.popularity || 0) - (a.popularity || 0);
   });
 
-  const popularCategories = [...categories]
-    .sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
-    .slice(0, 3);
   const categoriesStructuredData = useMemo(
     () => [
       {
         "@context": "https://schema.org",
         "@type": "CollectionPage",
-        name: "Expert Categories",
-        url: toAbsoluteUrl("/user/categories"),
-        description:
-          "Browse expert categories and connect with verified professionals on G9Expert.",
+        name: "Expert Categories Online",
+        url: toAbsoluteUrl("/categories"),
+        description: CATEGORIES_SEO_DESCRIPTION,
       },
       {
         "@context": "https://schema.org",
@@ -101,7 +110,7 @@ const Categories = () => {
             "@type": "ListItem",
             position: 2,
             name: "Categories",
-            item: toAbsoluteUrl("/user/categories"),
+            item: toAbsoluteUrl("/categories"),
           },
         ],
       },
@@ -110,14 +119,19 @@ const Categories = () => {
   );
 
   useSeo({
-    title: "Browse Expert Categories | G9Expert",
-    description:
-      "Explore expert categories on G9Expert and connect instantly with verified professionals across legal, health, astrology, fitness, finance, property, and more.",
-    canonicalPath: "/user/categories",
+    title: CATEGORIES_SEO_TITLE,
+    description: CATEGORIES_SEO_DESCRIPTION,
+    canonicalPath: "/categories",
+    robots: "index, follow",
     og: {
-      title: "Browse Expert Categories | G9Expert",
-      description:
-        "Explore expert categories on G9Expert and connect instantly with verified professionals across legal, health, astrology, fitness, finance, property, and more.",
+      title: CATEGORIES_SEO_TITLE,
+      description: CATEGORIES_SEO_DESCRIPTION,
+      url: "/categories",
+    },
+    twitter: {
+      title: CATEGORIES_SEO_TITLE,
+      description: CATEGORIES_SEO_DESCRIPTION,
+      url: "/categories",
     },
     structuredData: categoriesStructuredData,
   });
@@ -128,26 +142,26 @@ const Categories = () => {
     <PageContainer>
       {/* 1. Breadcrumb - Desktop only or subtle on mobile */}
       <Breadcrumb>
-        <BreadcrumbItem onClick={() => navigate('/')}>Home</BreadcrumbItem>
+        <BreadcrumbItem onClick={() => navigate('/')}>{t("common.home")}</BreadcrumbItem>
         <BreadcrumbSeparator><FiChevronRight /></BreadcrumbSeparator>
-        <BreadcrumbItem active>Categories</BreadcrumbItem>
+        <BreadcrumbItem active>{t("common.categories")}</BreadcrumbItem>
       </Breadcrumb>
 
       {/* 2. Hero Section - Professional Dark Theme */}
       <HeroSection>
         <HeroContent>
-          <HeroTitle>Expert Solutions for Every Need</HeroTitle>
-          <HeroSubtitle>Browse top-rated categories and connect with verified professionals.</HeroSubtitle>
+          <HeroTitle>Browse Expert Categories Online</HeroTitle>
+          <HeroSubtitle>{t("categoriesPage.heroSubtitle")}</HeroSubtitle>
           
           <SearchContainer>
             <SearchInput
               type="text"
-              placeholder="Search for skills or services..."
+              placeholder={t("categoriesPage.searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
             <SearchButton>
-              <FiSearch /> <span>Search</span>
+              <FiSearch /> <span>{t("common.search")}</span>
             </SearchButton>
           </SearchContainer>
         </HeroContent>
@@ -156,20 +170,32 @@ const Categories = () => {
       {/* 3. Stats Bar - Floating effect */}
       <StatsBar>
         <StatItem>
-          <StatValue>{categories.length}</StatValue>
-          <StatLabel>Categories</StatLabel>
+          <StatIcon><FiGrid /></StatIcon>
+          <div>
+            <StatValue>13+</StatValue>
+            <StatLabel>{t("common.categories")}</StatLabel>
+          </div>
         </StatItem>
         <StatItem>
-          <StatValue></StatValue>
-          <StatLabel></StatLabel>
+          <StatIcon><FiUsers /></StatIcon>
+          <div>
+            <StatValue>20K+</StatValue>
+            <StatLabel>{t("categoriesPage.experts")}</StatLabel>
+          </div>
         </StatItem>
         <StatItem>
-          <StatValue>24/7</StatValue>
-          <StatLabel>Support</StatLabel>
+          <StatIcon><FiHeadphones /></StatIcon>
+          <div>
+            <StatValue>24/7</StatValue>
+            <StatLabel>{t("categoriesPage.support")}</StatLabel>
+          </div>
         </StatItem>
         <StatItem>
-          <StatValue>100%</StatValue>
-          <StatLabel>Secure</StatLabel>
+          <StatIcon><FiShield /></StatIcon>
+          <div>
+            <StatValue>100%</StatValue>
+            <StatLabel>{t("common.secure")}</StatLabel>
+          </div>
         </StatItem>
       </StatsBar>
 
@@ -178,7 +204,7 @@ const Categories = () => {
         {/* 5. Header Actions - Grid/List Toggle */}
         <CategoriesHeader>
           <HeaderTitle>
-            All Categories <span className="count">{sortedCategories.length}</span>
+            {t("categoriesPage.allCategories")} <span className="count">{sortedCategories.length}</span>
           </HeaderTitle>
           <HeaderActions>
             <ViewToggle>
@@ -190,9 +216,9 @@ const Categories = () => {
               </ToggleButton>
             </ViewToggle>
             <SortSelect value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-              <option value="popular">Most Popular</option>
-              <option value="name">A to Z</option>
-              <option value="newest">Newest</option>
+              <option value="popular">{t("categoriesPage.mostPopular")}</option>
+              <option value="name">{t("categoriesPage.aToZ")}</option>
+              <option value="newest">{t("categoriesPage.newest")}</option>
             </SortSelect>
           </HeaderActions>
         </CategoriesHeader>
@@ -205,7 +231,7 @@ const Categories = () => {
                 as={Link}
                 key={cat.id} 
                 $view={viewMode}
-                to={getCategoryPath(cat)}
+                to={buildCategoryCanonicalPath(cat)}
                 aria-label={`Browse ${cat.name} experts`}
               >
                 <CategoryImage 
@@ -214,9 +240,9 @@ const Categories = () => {
                   $view={viewMode}
                 />
                 
-                <CategoryInfo>
+                <CategoryInfo $view={viewMode}>
                   {cat.is_trending && (
-                    <TrendingTag><IoTrendingUp size={12} /> Trending</TrendingTag>
+                    <TrendingTag><IoTrendingUp size={12} /> {t("categoriesPage.trending")}</TrendingTag>
                   )}
                   
                   <CategoryName>
@@ -231,7 +257,7 @@ const Categories = () => {
                  
 
                   <ViewButton>
-                    View Details <FiChevronRight />
+                    {t("common.viewDetails")} <FiChevronRight />
                   </ViewButton>
                 </CategoryInfo>
               </CategoryCard>
@@ -239,10 +265,31 @@ const Categories = () => {
           </CategoriesGrid>
         ) : (
           <EmptyState>
-            <h3>No results found</h3>
-            <p>Try adjusting your search to find what you're looking for.</p>
+            <h3>{t("categoriesPage.noResultsTitle")}</h3>
+            <p>{t("categoriesPage.noResultsText")}</p>
           </EmptyState>
         )}
+
+        <SeoContent aria-labelledby="categories-seo-heading">
+          <h2 id="categories-seo-heading">Find verified experts by consultation category</h2>
+          <p>
+            G9Experts helps users explore expert categories online and connect with verified professionals by chat or call.
+            Browse legal consultation, health advice, astrology guidance, fitness support, finance planning, property advice,
+            career guidance, business consultation, relationship advice and education experts in one place. Each category is
+            organized to help you compare relevant experts, review consultation options, and start an online discussion when
+            you need quick, practical and trusted guidance.
+          </p>
+        </SeoContent>
+
+        <CtaBlock>
+          <div>
+            <h2>{t("categoriesPage.ctaTitle")}</h2>
+            <p>{t("categoriesPage.ctaText")}</p>
+          </div>
+          <CtaButton type="button" onClick={() => navigate("/user/call-chat?page=1&mode=chat")}>
+            {t("common.talkToExpert")}
+          </CtaButton>
+        </CtaBlock>
       </MainContent>
     </PageContainer>
   );

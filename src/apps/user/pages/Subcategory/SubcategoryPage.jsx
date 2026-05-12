@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { FiFilter, FiSearch, FiCheck, FiX, FiChevronRight, FiZap } from "react-icons/fi";
 import { 
   IoStar, 
@@ -21,13 +22,18 @@ import { getReviewsByExpertApi } from "../../../../shared/api/expertapi/reviews.
 import { getPlansApi } from "../../../../shared/api/userApi/subscription.api";
 import ExpertCard from "../../components/userExperts/ExpertCard";
 import useChatRequest from "../../../../shared/hooks/useChatRequest";
+import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 import { socket } from "../../../../shared/api/socket";
 import { useSeo } from "../../../../shared/seo/useSeo";
 import { toAbsoluteUrl } from "../../../../shared/seo/siteConfig";
 import {
-  buildCategorySeoDescription,
+  buildCategoryCanonicalPath,
+  buildCategoryFaqItems,
+  buildCategoryLongFormContent,
+  getCategorySeoData,
+} from "../../../../shared/seo/categorySeoData";
+import {
   buildCategorySeoHeadline,
-  buildCategorySeoTitle,
   findCategoryById,
   findCategoryBySlug,
   getCategoryPath,
@@ -147,8 +153,8 @@ const horoscopeSigns = [
 const SubcategoryPage = () => {
   const { categoryId, slug } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const latestRequestRef = useRef(0);
-  const socketEmitTimeoutRef = useRef(null);
 
   const {
     categories,
@@ -160,7 +166,7 @@ const SubcategoryPage = () => {
 
   const { startChat, ChatPopups } = useChatRequest();
 
-  const [activeSubCategory, setActiveSubCategory] = useState(null);
+  const [, setActiveSubCategory] = useState(null);
   const [experts, setExperts] = useState([]);
   const [expertsLoading, setExpertsLoading] = useState(false);
   const [categoryName, setCategoryName] = useState("");
@@ -169,7 +175,7 @@ const SubcategoryPage = () => {
   const [prevCategoryId, setPrevCategoryId] = useState(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [expertDetails, setExpertDetails] = useState({});
-  const [expertPlans, setExpertPlans] = useState({});
+  const [, setExpertPlans] = useState({});
 
   const [onlineExperts, setOnlineExperts] = useState({});
 
@@ -183,9 +189,15 @@ const SubcategoryPage = () => {
   }, [categories, categoryId, slug]);
   const resolvedCategoryId = matchedCategory?.id ? String(matchedCategory.id) : null;
   const resolvedCategorySlug = matchedCategory?.slug || slug || "";
-  const canonicalCategoryPath = resolvedCategorySlug
-    ? `/user/categories/${resolvedCategorySlug}`
-    : "/user/categories";
+  const categorySeoData = useMemo(
+    () => getCategorySeoData(matchedCategory || slug || categoryName || "Expert"),
+    [categoryName, matchedCategory, slug]
+  );
+  const canonicalCategoryPath = buildCategoryCanonicalPath({
+    ...matchedCategory,
+    slug: resolvedCategorySlug || categorySeoData.slug,
+    name: matchedCategory?.name || categorySeoData.label || categoryName,
+  });
   const isLegacyIdRoute = Boolean(categoryId && !slug);
   const relatedCategories = useMemo(
     () =>
@@ -195,24 +207,11 @@ const SubcategoryPage = () => {
     [categories, matchedCategory?.id]
   );
 
-  const faqItems = useMemo(() => {
-    const label = (matchedCategory?.name || categoryName || "expert").toLowerCase();
-
-    return [
-      {
-        question: `How quickly can I connect with a verified ${label} expert?`,
-        answer: `Most users can browse available ${label} experts and start a chat or call within minutes, depending on expert availability.`,
-      },
-      {
-        question: `Are the ${label} experts verified on G9Expert?`,
-        answer: `Yes. G9Expert is built around verified experts so users can discover trusted professionals before starting a consultation.`,
-      },
-      {
-        question: `Can I compare different ${label} experts before connecting?`,
-        answer: `Yes. You can review subcategories, pricing signals, ratings, and profiles to choose the right expert for your needs.`,
-      },
-    ];
-  }, [categoryName, matchedCategory?.name]);
+  const faqItems = useMemo(() => buildCategoryFaqItems(categorySeoData), [categorySeoData]);
+  const seoContent = useMemo(
+    () => buildCategoryLongFormContent(categorySeoData),
+    [categorySeoData]
+  );
 
   const selectedSubcategoryName = useMemo(
     () =>
@@ -454,6 +453,15 @@ const SubcategoryPage = () => {
     }
   }, [resolvedCategoryId]);
 
+  useNetworkReconnect(() => {
+    if (!resolvedCategoryId) return;
+
+    loadSubCategories(resolvedCategoryId, true);
+    if (selectedSubcategory) {
+      loadExpertsForSubcategory(selectedSubcategory);
+    }
+  }, { enabled: Boolean(resolvedCategoryId) });
+
   useEffect(() => {
     if (resolvedCategoryId && resolvedCategoryId !== prevCategoryId) {
       resetStateForNewCategory();
@@ -559,8 +567,8 @@ const SubcategoryPage = () => {
     );
   }, [experts, resolvedCategoryId, selectedSubcategory]);
 
-  const seoTitle = matchedCategory?.meta_title?.trim() || buildCategorySeoTitle(matchedCategory?.name || categoryName || "Expert");
-  const seoDescription = buildCategorySeoDescription(matchedCategory || { name: categoryName || "Expert" });
+  const seoTitle = categorySeoData.title;
+  const seoDescription = categorySeoData.description;
   const categoryStructuredData = useMemo(
     () =>
       matchedCategory
@@ -604,13 +612,13 @@ const SubcategoryPage = () => {
             {
               "@context": "https://schema.org",
               "@type": "CollectionPage",
-              name: `${matchedCategory.name} Experts`,
+              name: seoTitle,
               url: toAbsoluteUrl(canonicalCategoryPath),
               description: seoDescription,
             },
           ]
         : [],
-    [canonicalCategoryPath, faqItems, matchedCategory, seoDescription]
+    [canonicalCategoryPath, faqItems, matchedCategory, seoDescription, seoTitle]
   );
 
   useSeo({
@@ -621,7 +629,14 @@ const SubcategoryPage = () => {
     og: {
       title: seoTitle,
       description: seoDescription,
+      url: canonicalCategoryPath,
       type: "website",
+      image: matchedCategory?.image_url || undefined,
+    },
+    twitter: {
+      title: seoTitle,
+      description: seoDescription,
+      url: canonicalCategoryPath,
       image: matchedCategory?.image_url || undefined,
     },
     structuredData: categoryStructuredData,
@@ -927,28 +942,28 @@ const SubcategoryPage = () => {
         <Breadcrumb>
           <BreadcrumbItem onClick={() => navigate('/')}>Home</BreadcrumbItem>
           <BreadcrumbSeparator><FiChevronRight /></BreadcrumbSeparator>
-          <BreadcrumbItem onClick={() => navigate('/user/categories')}>Categories</BreadcrumbItem>
+          <BreadcrumbItem onClick={() => navigate('/user/categories')}>{t("common.categories")}</BreadcrumbItem>
           <BreadcrumbSeparator><FiChevronRight /></BreadcrumbSeparator>
           <BreadcrumbItem $active>{categoryName}</BreadcrumbItem>
         </Breadcrumb>
 
         <PageHeader>
           <HeaderContent>
-            <HeaderTitle>{categoryName} Experts</HeaderTitle>
+            <HeaderTitle>Online {categorySeoData.label} Consultation with Verified Experts</HeaderTitle>
             <HeaderSubtitle>
-              {buildCategorySeoHeadline(categoryName || matchedCategory?.name || "expert")} for personalized insights and guidance.
+              {buildCategorySeoHeadline(categorySeoData.label || categoryName || "expert")} for personalized insights and guidance by chat or call.
             </HeaderSubtitle>
             
             <SearchContainer>
               <SearchInput 
                 type="text" 
-                placeholder="Search experts by name, specialty, or keyword..." 
+                placeholder={t("expertListing.searchPlaceholder")} 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
               <SearchButton>
                 <FiSearch size={18} />
-                Search
+                {t("common.search")}
               </SearchButton>
             </SearchContainer>
           </HeaderContent>
@@ -960,7 +975,7 @@ const SubcategoryPage = () => {
             Filter & Sort
           </FilterToggleButton>
           <MobileResultsInfo>
-            {loading ? "Loading..." : `${filteredAndSortedExperts.length} experts available`}
+            {loading ? t("common.loading") : `${filteredAndSortedExperts.length} ${t("expertListing.expertsAvailable")}`}
           </MobileResultsInfo>
         </MobileFilterToggle>
 
@@ -1030,7 +1045,7 @@ const SubcategoryPage = () => {
                 <IoShieldCheckmark size={20} />
               </BadgeIcon>
               <BadgeText>
-                <strong>Premium Verified</strong>
+                <strong>{t("expertListing.premiumVerified")}</strong>
                 <span>All experts are verified and background checked</span>
               </BadgeText>
             </PremiumBadge>
@@ -1039,8 +1054,8 @@ const SubcategoryPage = () => {
           <MainContent>
             <section className="category-seo-intro" aria-labelledby="category-seo-heading">
               <div className="category-seo-intro__copy">
-                <span className="category-seo-intro__eyebrow">Verified category experts</span>
-                <h2 id="category-seo-heading">{matchedCategory?.name || categoryName} consultations online</h2>
+                <span className="category-seo-intro__eyebrow">{t("expertListing.verifiedExperts")}</span>
+                <h2 id="category-seo-heading">{categorySeoData.label} consultations online</h2>
                 <p>{seoDescription}</p>
               </div>
 
@@ -1179,17 +1194,14 @@ const SubcategoryPage = () => {
 
                 <section className="category-seo-bottom">
                   <div className="category-seo-card">
-                    <h2>Why users choose G9Expert for {matchedCategory?.name || categoryName}</h2>
-                    <p>
-                      Users landing from search can immediately browse relevant subcategories,
-                      compare verified experts, and start a conversation without an extra discovery
-                      step. That keeps the experience lightweight while still exposing indexable,
-                      category-specific content.
-                    </p>
+                    <h2>Online {categorySeoData.label} consultation on G9Experts</h2>
+                    {seoContent.map((paragraph) => (
+                      <p key={paragraph}>{paragraph}</p>
+                    ))}
                   </div>
 
                   <div className="category-seo-card">
-                    <h2>Frequently asked questions</h2>
+                    <h2>{categorySeoData.label} consultation FAQs</h2>
                     <div className="category-seo-faq">
                       {faqItems.map((item) => (
                         <details key={item.question} className="category-seo-faq__item">
@@ -1220,7 +1232,7 @@ const SubcategoryPage = () => {
               </>
             ) : !loading ? (
               <NoResults>
-                <NoResultsTitle>No Experts Found</NoResultsTitle>
+        <NoResultsTitle>{t("common.noExpertsFound")}</NoResultsTitle>
                 <NoResultsText>
                   We couldn't find any experts in {selectedSubcategoryName?.toLowerCase() || categoryName?.toLowerCase()}. 
                   Try selecting a different subcategory or adjusting your search.

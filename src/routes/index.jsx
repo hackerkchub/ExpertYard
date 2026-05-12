@@ -6,6 +6,8 @@ import BottomNavbar from "../shared/components/BottomNavbar/BottomNavbar";
 import NetworkStatus from "../shared/components/NetworkStatus/NetworkStatus";
 import { ExpertProvider } from "../shared/context/ExpertContext";
 import { useSoundInit } from "../shared/services/sound/useSoundInit";
+import MainLayout from "../apps/user/layouts/MainLayout";
+import UserRouteBoundary from "../apps/user/layouts/UserRouteBoundary";
 import LazyRoute from "./LazyRoute";
 import RootRedirect from "./RootRedirect";
 import { shouldShowBottomNavbar } from "./routeShells";
@@ -13,6 +15,8 @@ import { shouldShowBottomNavbar } from "./routeShells";
 const UserAppRoutes = lazy(() => import("../apps/user/routes"));
 const ExpertAppRoutes = lazy(() => import("../apps/expert/routes"));
 const AdminAppRoutes = lazy(() => import("../apps/admin/routes"));
+const PublicCategoriesPage = lazy(() => import("../apps/user/pages/Category/Categories"));
+const PublicCategoryPage = lazy(() => import("../apps/user/pages/Subcategory/SubcategoryPage"));
 
 const APP_SHELL_STYLE = {
   width: "100%",
@@ -52,6 +56,26 @@ export default function AppRouter() {
       <div className="main-content-wrapper" style={CONTENT_WRAPPER_STYLE}>
         <Routes>
           <Route path="/" element={<RootRedirect />} />
+          <Route element={<UserRouteBoundary />}>
+            <Route element={<MainLayout />}>
+              <Route
+                path="/categories"
+                element={
+                  <LazyRoute>
+                    <PublicCategoriesPage />
+                  </LazyRoute>
+                }
+              />
+              <Route
+                path="/category/:slug"
+                element={
+                  <LazyRoute>
+                    <PublicCategoryPage />
+                  </LazyRoute>
+                }
+              />
+            </Route>
+          </Route>
           <Route
             path="/user/*"
             element={

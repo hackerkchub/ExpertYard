@@ -31,6 +31,7 @@ import {
 import { usePublicExpert as useExpert } from "../../context/PublicExpertContext";
 import { useSocket } from "../../../../shared/hooks/useSocket";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
+import BackButton from "../../components/BackButton/BackButton";
 
 import {
   createPeer,
@@ -675,14 +676,12 @@ export default function VoiceCall() {
 
             {callState === "calling" && (
               <HeaderControlBtn $danger onClick={handleEnd} title="Cancel">
-                ✕
+                X
               </HeaderControlBtn>
             )}
 
             {(callState === "busy" || callState === "offline" || callState === "ended") && (
-              <HeaderControlBtn onClick={goBackToProfile} title="Back">
-                ←
-              </HeaderControlBtn>
+              <BackButton onClick={goBackToProfile} iconOnly />
             )}
           </HeaderControls>
         </CallHeader>
@@ -725,19 +724,19 @@ export default function VoiceCall() {
 
           {callState === "calling" && (
             <ActionButton $danger onClick={handleEnd}>
-              ✕ Cancel Call
+              X Cancel Call
             </ActionButton>
           )}
 
           {(callState === "busy" || callState === "offline") && (
             <ActionButton $primary onClick={goBackToProfile}>
-              ← Back to Profile
+              Back to Profile
             </ActionButton>
           )}
 
           {callState === "ended" && (
             <ActionButton $primary onClick={goBackToProfile}>
-              ← Back to Profile
+              Back to Profile
             </ActionButton>
           )}
 

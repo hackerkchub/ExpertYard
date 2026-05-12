@@ -1,0 +1,288 @@
+@keyframes trustStatFade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes trustIconPulse {
+  0%,
+  100% {
+    box-shadow: 0 12px 26px rgba(0, 0, 128, 0.24);
+  }
+  50% {
+    box-shadow:
+      0 14px 30px rgba(0, 0, 128, 0.3),
+      0 0 24px rgba(244, 197, 66, 0.16);
+  }
+}
+
+@keyframes trustStatsMarquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.trust-stats-section {
+  position: relative;
+  overflow: hidden;
+  border-radius: 28px;
+  padding: 18px;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(244, 197, 66, 0.22), transparent 28%),
+    radial-gradient(circle at 94% 12%, rgba(96, 165, 250, 0.22), transparent 30%),
+    linear-gradient(145deg, #000080 0%, #01054f 72%, #010638 100%);
+  box-shadow: var(--home-shadow);
+}
+
+.trust-stats-section::after {
+  content: "";
+  position: absolute;
+  right: -80px;
+  bottom: -110px;
+  width: 260px;
+  height: 260px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(244, 197, 66, 0.16), transparent 68%);
+  filter: blur(18px);
+  pointer-events: none;
+}
+
+.trust-stats-section__header {
+  position: relative;
+  z-index: 1;
+  max-width: 690px;
+  margin-bottom: 14px;
+}
+
+.trust-stats-section__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #ffe27a;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.trust-stats-section h2 {
+  margin: 9px 0 0;
+  color: #ffffff;
+  font-size: clamp(1.35rem, 4.8vw, 1.9rem);
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+}
+
+.trust-stats-section__header p {
+  margin: 7px 0 0;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.5;
+}
+
+.trust-stats-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.trust-stats-scroll {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.trust-stat-card {
+  min-width: 0;
+  min-height: 126px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 20px;
+  padding: 13px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.07)),
+    radial-gradient(circle at top right, rgba(244, 197, 66, 0.12), transparent 46%);
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(14px);
+  opacity: 0;
+  animation: trustStatFade 0.45s ease forwards;
+  animation-delay: var(--stat-delay);
+  transition:
+    transform 0.22s ease,
+    border-color 0.22s ease,
+    background 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.trust-stat-card--clone {
+  display: none;
+}
+
+.trust-stat-card__icon {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  background:
+    radial-gradient(circle at 28% 18%, rgba(244, 197, 66, 0.58), transparent 34%),
+    linear-gradient(145deg, #000080 0%, #1721a2 100%);
+  color: #ffe27a;
+  font-size: 1.18rem;
+  animation: trustIconPulse 3.4s ease-in-out infinite;
+}
+
+.trust-stat-card__accent {
+  position: absolute;
+  right: -5px;
+  top: -5px;
+  width: 18px;
+  height: 18px;
+  padding: 3px;
+  border-radius: 999px;
+  background: #ffe27a;
+  color: #000080;
+  box-shadow: 0 8px 18px rgba(244, 197, 66, 0.24);
+}
+
+.trust-stat-card strong {
+  display: block;
+  color: #ffffff;
+  font-size: clamp(1.08rem, 2.4vw, 1.3rem);
+  line-height: 1.08;
+}
+
+.trust-stat-card > span:last-child {
+  display: block;
+  margin-top: 5px;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .trust-stat-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 226, 122, 0.28);
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.09)),
+      radial-gradient(circle at top right, rgba(244, 197, 66, 0.16), transparent 46%);
+    box-shadow:
+      0 20px 42px rgba(0, 0, 0, 0.2),
+      0 0 24px rgba(244, 197, 66, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  }
+}
+
+@media (min-width: 640px) {
+  .trust-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 639px) {
+  .trust-stats-section {
+    overflow-x: hidden;
+  }
+
+  .trust-stats-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+
+  .trust-stats-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .trust-stats-grid {
+    display: flex;
+    grid-template-columns: none;
+    width: max-content;
+    min-width: max-content;
+    gap: 12px;
+    animation: trustStatsMarquee 24s linear infinite;
+    will-change: transform;
+  }
+
+  .trust-stats-scroll:hover .trust-stats-grid,
+  .trust-stats-scroll:active .trust-stats-grid,
+  .trust-stats-scroll:focus-within .trust-stats-grid {
+    animation-play-state: paused;
+  }
+
+  .trust-stat-card,
+  .trust-stat-card--clone {
+    display: block;
+    flex: 0 0 min(76vw, 260px);
+    width: min(76vw, 260px);
+    max-width: min(76vw, 260px);
+    scroll-snap-align: start;
+  }
+}
+
+@media (min-width: 1024px) {
+  .trust-stats-section {
+    padding: 20px;
+  }
+
+  .trust-stats-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trust-stats-grid,
+  .trust-stat-card,
+  .trust-stat-card__icon {
+    animation: none;
+  }
+
+  .trust-stat-card {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .trust-stats-section {
+    border-radius: 24px;
+    padding: 16px 12px;
+  }
+
+  .trust-stat-card {
+    min-height: 118px;
+    padding: 12px 10px;
+    border-radius: 18px;
+  }
+
+  .trust-stat-card__icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 15px;
+  }
+}

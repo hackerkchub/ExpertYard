@@ -142,28 +142,6 @@ export const Header = styled.div`
   }
 `;
 
-export const MobileBackButton = styled.button`
-  display: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 50%;
-  color: #1e293b;
-  transition: all 0.2s;
-  flex-shrink: 0;
-  
-  &:hover {
-    background: #f1f5f9;
-  }
-  
-  @media (max-width: 768px) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-`;
-
 export const ExpertInfo = styled.div`
   display: flex;
   align-items: center;

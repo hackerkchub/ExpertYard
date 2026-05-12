@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom"; // Navigation ke liye
 import { FiCalendar, FiClock, FiTag, FiChevronRight } from "react-icons/fi";
 import { useAuth } from "../../../../shared/context/UserAuthContext"; 
+import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 import * as S from "./MyBookings.style";
 
 const MyBookings = () => {
@@ -11,8 +12,7 @@ const MyBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchMyBookings = async () => {
+  const fetchMyBookings = useCallback(async () => {
       if (!user?.id) return;
       try {
         setLoading(true);
@@ -25,10 +25,13 @@ const MyBookings = () => {
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchMyBookings();
   }, [user?.id]);
+
+  useEffect(() => {
+    fetchMyBookings();
+  }, [fetchMyBookings]);
+
+  useNetworkReconnect(fetchMyBookings, { enabled: Boolean(user?.id) });
 
   // Click Handler: Service details page par bhejne ke liye
   const handleViewService = (serviceId) => {

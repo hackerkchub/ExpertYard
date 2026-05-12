@@ -19,21 +19,8 @@ export const Container = styled.div`
 
 export const TopBar = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   margin-bottom: 20px;
-`;
-
-export const BackButton = styled.button`
-  background: white;
-  border: 1px solid #dcdcdc;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  &:hover { border-color: #0a66c2; color: #0a66c2; }
 `;
 
 export const FastTag = styled.div`

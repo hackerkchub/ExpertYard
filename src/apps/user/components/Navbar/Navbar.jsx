@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
   Nav,
   Container,
+  HeaderLeft,
   NavbarSpacer,
   BrandBox,
   BrandLogo,
@@ -16,6 +17,8 @@ import {
   WalletBadge,
   AuthButton,
   RightActions,
+  LanguageSwitcher,
+  LanguageOption,
 } from "./Navbar.styles";
 import {
   FiMenu,
@@ -24,24 +27,23 @@ import {
   FiGift,
   FiUser,
   FiLogOut,
-  FiMessageSquare,
-  FiArrowLeft,
   FiChevronDown,
   FiClock,
   FiGrid,
 } from "react-icons/fi";
 import { FaWallet } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import logo from "../../../../assets/logo.webp";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
 import ProfilePopup from "../ProfilePopup";
-
-const HOME_PATHS = ["/", "/user", "/user/", "/user/home", "/user/home/"];
+import BackButton from "../BackButton/BackButton";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t, i18n } = useTranslation();
   const { isLoggedIn, user, logout } = useAuth();
   const { balance } = useWallet();
 
@@ -54,22 +56,12 @@ const Navbar = () => {
   });
 
   const userBtnRef = useRef(null);
-  const isHomePage = HOME_PATHS.includes(location.pathname);
+  const normalizedPath = location.pathname.replace(/\/+$/, "") || "/user";
+  const isHomePage = normalizedPath === "/user";
 
   const handleNav = (path) => {
     navigate(path);
     setOpen(false);
-  };
-
-  const handleSmartBack = () => {
-    const state = location.state;
-
-    if (state?.from === "chat" && state?.expertId) {
-      navigate(`/user/experts/${state.expertId}`, { replace: true });
-      return;
-    }
-
-    navigate(-1);
   };
 
   useEffect(() => {
@@ -116,94 +108,88 @@ const Navbar = () => {
   };
 
   const primaryMenuItems = [
-    { label: "Home", path: "/user", icon: FiHome },
-    { label: "Categories", path: "/user/categories", icon: FiGrid, hasArrow: true },
-    { label: "Offers", path: "/user/all-services", icon: FiGift },
-    { label: "History", path: "/user/chat-history", icon: FiClock },
+    { label: t("common.home"), path: "/user", icon: FiHome },
+    { label: t("common.categories"), path: "/user/categories", icon: FiGrid, hasArrow: true },
+    { label: t("common.offers"), path: "/user/all-services", icon: FiGift },
+    { label: t("common.history"), path: "/user/chat-history", icon: FiClock },
   ];
 
   return (
     <>
       <Nav>
         <Container>
-          <BrandBox
-            to={isHomePage ? "/user" : "#"}
-            onClick={(event) => {
-              if (!isHomePage) {
-                event.preventDefault();
-                handleSmartBack();
-              }
-            }}
-          >
-            {!isHomePage && (
-              <div className="back-btn-mobile" style={{ alignItems: "center" }}>
-                <FiArrowLeft size={22} style={{ color: "#111827" }} />
-              </div>
+          <HeaderLeft $compact={!isHomePage}>
+            {!isHomePage && <BackButton iconOnly />}
+            {isHomePage && (
+              <BrandBox
+                to="/user"
+                onClick={() => setOpen(false)}
+              >
+                <BrandLogo
+                  src={logo}
+                  alt="G9Expert"
+                />
+              </BrandBox>
             )}
+          </HeaderLeft>
 
-            <BrandLogo
-              src={logo}
-              alt="G9Expert"
-              className={!isHomePage ? "hide-logo-on-mobile" : ""}
-            />
-          </BrandBox>
-
-          {isHomePage && (
-            <DesktopNav>
-              <NavList>
-                {primaryMenuItems.map(({ label, path, hasArrow }) => (
-                  <NavItem
-                    key={label}
-                    type="button"
-                    $active={location.pathname === path}
-                    onClick={() => handleNav(path)}
-                  >
-                    {label}
-                    {hasArrow && <FiChevronDown />}
-                  </NavItem>
-                ))}
-              </NavList>
-            </DesktopNav>
-          )}
+          <DesktopNav>
+            <NavList>
+              {primaryMenuItems.map(({ label, path, hasArrow }) => (
+                <NavItem
+                  key={label}
+                  type="button"
+                  $active={location.pathname === path}
+                  onClick={() => handleNav(path)}
+                >
+                  {label}
+                  {hasArrow && <FiChevronDown />}
+                </NavItem>
+              ))}
+            </NavList>
+          </DesktopNav>
 
           <RightActions>
             <IconBox>
-              {!isHomePage && (
-                <>
-                  <button onClick={() => navigate("/user")} title="Home">
-                    <FiHome />
-                  </button>
-                  <button onClick={() => navigate("/user/all-services")} title="Offers">
-                    <FiGift />
-                  </button>
-                  <button onClick={() => navigate("/user/chat-history")} title="History">
-                    <FiMessageSquare />
-                  </button>
-                </>
-              )}
-
               <WalletIconWrap
                 className="wallet-btn essential"
                 onClick={() => navigate("/user/wallet")}
-                title="Wallet"
+                title={t("common.wallet")}
               >
                 <FaWallet />
                 {isLoggedIn && balance > 0 && <WalletBadge>₹{Math.floor(balance)}</WalletBadge>}
               </WalletIconWrap>
+
+              <LanguageSwitcher aria-label={t("common.language")}>
+                <LanguageOption
+                  type="button"
+                  $active={i18n.language === "en"}
+                  onClick={() => i18n.changeLanguage("en")}
+                >
+                  EN
+                </LanguageOption>
+                <LanguageOption
+                  type="button"
+                  $active={i18n.language === "hi"}
+                  onClick={() => i18n.changeLanguage("hi")}
+                >
+                  हिंदी
+                </LanguageOption>
+              </LanguageSwitcher>
 
               {isLoggedIn && (
                 <button
                   ref={userBtnRef}
                   className="essential"
                   onClick={togglePopup}
-                  title="Profile"
+                  title={t("nav.profile")}
                 >
                   <FiUser />
                 </button>
               )}
             </IconBox>
 
-            {!isLoggedIn && <AuthButton onClick={() => navigate("/user/auth")}>Sign In</AuthButton>}
+            {!isLoggedIn && <AuthButton onClick={() => navigate("/user/auth")}>{t("common.signIn")}</AuthButton>}
 
             <MobileIcon onClick={() => setOpen((prev) => !prev)}>
               {open ? <FiX size={20} /> : <FiMenu size={20} />}
@@ -222,7 +208,7 @@ const Navbar = () => {
 
             <MobileItem onClick={() => handleNav("/user/wallet")}>
               <FaWallet />
-              Wallet
+              {t("common.wallet")}
             </MobileItem>
 
             {isLoggedIn ? (
@@ -234,13 +220,13 @@ const Navbar = () => {
                   }}
                 >
                   <FiLogOut color="#dc2626" />
-                  Logout
+                  {t("common.logout")}
                 </MobileItem>
               </>
             ) : (
               <MobileItem onClick={() => handleNav("/user/auth")}>
                 <FiUser />
-                Sign In
+                {t("common.signIn")}
               </MobileItem>
             )}
           </MobileMenu>

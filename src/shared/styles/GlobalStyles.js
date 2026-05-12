@@ -35,7 +35,8 @@ const GlobalStyles = createGlobalStyle`
 
   body {
     font-family:
-      Inter,
+      "Poppins",
+      "Noto Sans Devanagari",
       "Segoe UI",
       Roboto,
       "Helvetica Neue",
@@ -59,6 +60,14 @@ const GlobalStyles = createGlobalStyle`
   textarea,
   select {
     font: inherit;
+    font-family:
+      "Poppins",
+      "Noto Sans Devanagari",
+      "Segoe UI",
+      Roboto,
+      "Helvetica Neue",
+      Arial,
+      sans-serif;
   }
 
   button {

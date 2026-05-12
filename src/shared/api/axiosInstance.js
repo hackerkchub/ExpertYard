@@ -12,7 +12,10 @@ export const injectLoader = (_loader) => {
 
 const api = axios.create({
   baseURL: APP_CONFIG.API_BASE_URL,
-  timeout: APP_CONFIG.REQUEST_TIMEOUT
+  timeout: APP_CONFIG.REQUEST_TIMEOUT,
+  headers: {
+    Accept: "application/json; charset=utf-8",
+  },
 });
 
 /* ===============================

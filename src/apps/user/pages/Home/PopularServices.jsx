@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import styled from "styled-components";
 import {
   FiBriefcase,
@@ -19,33 +20,39 @@ const SCROLL_DISTANCE = 300;
 const fallbackServices = [
   {
     id: "legal",
-    title: "Legal",
-    description: "Get practical legal guidance, documentation direction, and next steps from verified professionals.",
+    slug: "legal",
+    titleKey: "home.popularServices.fallbackServices.legalTitle",
+    descriptionKey: "home.popularServices.fallbackServices.legalDescription",
   },
   {
     id: "health",
-    title: "Health",
-    description: "Connect with trusted health and wellness experts for lifestyle and general guidance.",
+    slug: "health",
+    titleKey: "home.popularServices.fallbackServices.healthTitle",
+    descriptionKey: "home.popularServices.fallbackServices.healthDescription",
   },
   {
     id: "astrology",
-    title: "Astrology",
-    description: "Consult astrologers for personal guidance, compatibility, timing, and life direction.",
+    slug: "astrology",
+    titleKey: "home.popularServices.fallbackServices.astrologyTitle",
+    descriptionKey: "home.popularServices.fallbackServices.astrologyDescription",
   },
   {
     id: "business",
-    title: "Business",
-    description: "Speak with consultants for startup, operations, marketing, and growth decisions.",
+    slug: "business",
+    titleKey: "home.popularServices.fallbackServices.businessTitle",
+    descriptionKey: "home.popularServices.fallbackServices.businessDescription",
   },
   {
     id: "career",
-    title: "Career Guidance",
-    description: "Plan interviews, resumes, job switches, and professional growth with expert support.",
+    slug: "career-guidance",
+    titleKey: "home.popularServices.fallbackServices.careerTitle",
+    descriptionKey: "home.popularServices.fallbackServices.careerDescription",
   },
   {
     id: "finance",
-    title: "Finance",
-    description: "Get money management, budgeting, investment awareness, and planning guidance.",
+    slug: "finance",
+    titleKey: "home.popularServices.fallbackServices.financeTitle",
+    descriptionKey: "home.popularServices.fallbackServices.financeDescription",
   },
 ];
 
@@ -65,31 +72,32 @@ function toSeoSlug(value = "") {
     .replace(/^-+|-+$/g, "");
 }
 
-function getServiceName(service) {
-  return service?.title || service?.name || service?.service_name || "Professional Service";
+function getServiceName(service, t) {
+  return (service?.titleKey ? t(service.titleKey) : "") || service?.title || service?.name || service?.service_name || "Professional Service";
 }
 
-function getServiceSlug(service) {
-  return service?.slug?.trim() || toSeoSlug(getServiceName(service)) || String(service?.id || "");
+function getServiceSlug(service, t) {
+  return service?.slug?.trim() || toSeoSlug(getServiceName(service, t)) || String(service?.id || "");
 }
 
-function getServiceDescription(service) {
-  const description = service?.description?.trim();
+function getServiceDescription(service, t) {
+  const description = (service?.descriptionKey ? t(service.descriptionKey) : service?.description)?.trim();
 
   if (description) {
     return description.length > 104 ? `${description.substring(0, 104)}...` : description;
   }
 
-  return `Get instant ${getServiceName(service)} advice from trusted professionals.`;
+  return t("home.popularServices.fallbackDescription", { service: getServiceName(service, t) });
 }
 
-function getServiceIcon(service) {
-  const haystack = `${getServiceName(service)} ${service?.category_name || ""}`.toLowerCase();
+function getServiceIcon(service, t) {
+  const haystack = `${service?.id || ""} ${getServiceName(service, t)} ${service?.category_name || ""}`.toLowerCase();
   return serviceIconMap.find((item) => item.match.some((keyword) => haystack.includes(keyword)))?.icon || FiMessageCircle;
 }
 
 const PopularServices = ({ services = [], loading = false }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { experts } = usePublicExpert();
   const containerRef = useRef(null);
   const [scrollState, setScrollState] = useState({
@@ -151,14 +159,14 @@ const PopularServices = ({ services = [], loading = false }) => {
     <SectionWrapper aria-labelledby="popular-services-title">
       <div className="section-topline">
         <div>
-          <span className="section-kicker">Popular Services</span>
-          <h2 id="popular-services-title">Popular Expert Services</h2>
+          <span className="section-kicker">{t("home.popularServices.kicker")}</span>
+          <h2 id="popular-services-title">{t("home.popularServices.title")}</h2>
           <p className="services-subtitle">
-            Choose from a wide range of expert services and connect instantly with trusted professionals.
+            {t("home.popularServices.subtitle")}
           </p>
         </div>
         <button type="button" className="section-link" onClick={() => navigate("/user/all-services")}>
-          View All
+          {t("common.viewAll")}
         </button>
       </div>
 
@@ -168,19 +176,19 @@ const PopularServices = ({ services = [], loading = false }) => {
           className="scroll-arrow scroll-arrow--left"
           $hidden={!scrollState.canScrollLeft}
           onClick={scrollLeft}
-          aria-label="Previous popular expert services"
+          aria-label={t("home.popularServices.previousAria")}
           disabled={!scrollState.canScrollLeft}
         >
           <FiChevronLeft aria-hidden="true" />
         </ScrollArrow>
 
-        <CardsTrack ref={containerRef} aria-label="Popular expert services slider">
+        <CardsTrack ref={containerRef} aria-label={t("home.popularServices.sliderAria")}>
           {loading && services.length === 0
             ? Array.from({ length: 6 }).map((_, index) => <ServiceSkeleton key={index} aria-hidden="true" />)
             : visibleServices.map((service, index) => {
-                const Icon = getServiceIcon(service);
-                const serviceName = getServiceName(service);
-                const slug = getServiceSlug(service);
+                const Icon = getServiceIcon(service, t);
+                const serviceName = getServiceName(service, t);
+                const slug = getServiceSlug(service, t);
                 const servicePath = slug ? `/user/service-details/${slug}` : "/user/all-services";
 
                 return (
@@ -189,7 +197,7 @@ const PopularServices = ({ services = [], loading = false }) => {
                       {service.image ? (
                         <img
                           src={service.image || FALLBACK_SERVICE_IMAGE}
-                          alt={`Consult for ${serviceName}`}
+                          alt={t("home.popularServices.imageAlt", { service: serviceName })}
                           loading="lazy"
                           decoding="async"
                           fetchPriority={index < 2 ? "high" : "auto"}
@@ -208,12 +216,12 @@ const PopularServices = ({ services = [], loading = false }) => {
                     <div className="service-card__body">
                       <div>
                         <h3>{serviceName}</h3>
-                        <p>{getServiceDescription(service)}</p>
+                        <p>{getServiceDescription(service, t)}</p>
                       </div>
 
                       <div className="service-card__footer">
-                        <span>{expertMap[service.expert_id] || "Trusted Expert"}</span>
-                        <strong>Consult Now</strong>
+                        <span>{expertMap[service.expert_id] || t("home.popularServices.trustedExpert")}</span>
+                        <strong>{t("home.popularServices.consultNow")}</strong>
                       </div>
                     </div>
                   </ServiceCard>
@@ -226,7 +234,7 @@ const PopularServices = ({ services = [], loading = false }) => {
           className="scroll-arrow scroll-arrow--right"
           $hidden={!scrollState.canScrollRight}
           onClick={scrollRight}
-          aria-label="Next popular expert services"
+          aria-label={t("home.popularServices.nextAria")}
           disabled={!scrollState.canScrollRight}
         >
           <FiChevronRight aria-hidden="true" />
@@ -246,17 +254,17 @@ const SectionWrapper = styled.section`
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.96)),
     radial-gradient(circle at 12% 8%, rgba(244, 197, 66, 0.16), transparent 30%);
-  box-shadow: 0 22px 54px rgba(15, 23, 42, 0.08);
-  padding: 24px 0 26px;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+  padding: 22px 0 18px;
   content-visibility: auto;
-  contain-intrinsic-size: 390px;
+  contain-intrinsic-size: 360px;
 
   .section-topline {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 18px;
-    padding: 0 24px 18px;
+    padding: 0 24px 14px;
   }
 
   .section-kicker {
@@ -274,7 +282,7 @@ const SectionWrapper = styled.section`
   }
 
   h2 {
-    margin: 10px 0 0;
+    margin: 8px 0 0;
     color: #111827;
     font-size: clamp(1.45rem, 2.2vw, 2rem);
     line-height: 1.15;
@@ -284,7 +292,7 @@ const SectionWrapper = styled.section`
 
   .services-subtitle {
     max-width: 680px;
-    margin: 8px 0 0;
+    margin: 7px 0 0;
     color: #5b6678;
     font-size: 0.98rem;
     line-height: 1.6;
@@ -313,17 +321,24 @@ const SectionWrapper = styled.section`
   }
 
   @media (max-width: 640px) {
-    border-radius: 22px;
-    padding: 20px 0 22px;
+    border-radius: 20px;
+    padding: 16px 0 12px;
+    contain-intrinsic-size: 318px;
 
     .section-topline {
-      padding: 0 16px 14px;
+      padding: 0 14px 10px;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
+    }
+
+    h2 {
+      margin-top: 7px;
+      font-size: 1.32rem;
     }
 
     .services-subtitle {
-      font-size: 0.92rem;
+      font-size: 0.9rem;
+      line-height: 1.48;
     }
   }
 `;
@@ -336,28 +351,40 @@ const SliderShell = styled.div`
 const CardsTrack = styled.div`
   display: flex;
   align-items: stretch;
-  gap: 20px;
+  gap: 18px;
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-behavior: smooth;
   scroll-snap-type: x mandatory;
+  scroll-padding-inline: 24px;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  padding: 4px 24px 10px;
+  padding: 4px 24px 8px;
 
   &::-webkit-scrollbar {
     display: none;
   }
 
-  @media (max-width: 640px) {
+  @media (min-width: 1180px) {
+    gap: 20px;
+  }
+
+  @media (min-width: 768px) and (max-width: 1023px) {
     gap: 16px;
-    padding: 4px 16px 8px;
+    scroll-padding-inline: 20px;
+    padding: 4px 20px 8px;
+  }
+
+  @media (max-width: 640px) {
+    gap: 12px;
+    scroll-padding-inline: 14px;
+    padding: 3px 14px 4px;
   }
 `;
 
 const ScrollArrow = styled.button`
   position: absolute;
-  top: 50%;
+  top: calc(50% + 2px);
   z-index: 5;
   display: inline-flex;
   align-items: center;
@@ -368,7 +395,7 @@ const ScrollArrow = styled.button`
   border-radius: 999px;
   background: #000080;
   color: #ffffff;
-  box-shadow: 0 18px 34px rgba(0, 0, 128, 0.22);
+  box-shadow: 0 16px 30px rgba(0, 0, 128, 0.22);
   cursor: pointer;
   transform: translateY(-50%) ${({ $hidden }) => ($hidden ? "scale(0.94)" : "scale(1)")};
   opacity: ${({ $hidden }) => ($hidden ? 0 : 1)};
@@ -391,7 +418,7 @@ const ScrollArrow = styled.button`
 
   &:hover:not(:disabled) {
     transform: translateY(-50%) scale(1.06);
-    box-shadow: 0 22px 42px rgba(0, 0, 128, 0.3);
+    box-shadow: 0 20px 38px rgba(0, 0, 128, 0.3);
   }
 
   &:disabled {
@@ -404,22 +431,23 @@ const ScrollArrow = styled.button`
 `;
 
 const ServiceCard = styled(Link)`
-  flex: 0 0 min(284px, 78vw);
-  min-height: 292px;
+  flex: 0 0 calc((100% - 60px) / 4);
+  min-width: 248px;
+  min-height: 274px;
   scroll-snap-align: start;
   border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 22px;
+  border-radius: 20px;
   background: #ffffff;
   color: inherit;
   text-decoration: none;
   overflow: hidden;
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 
   &:hover {
-    transform: translateY(-4px);
+    transform: translateY(-3px);
     border-color: rgba(0, 0, 128, 0.18);
-    box-shadow: 0 22px 46px rgba(15, 23, 42, 0.13);
+    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.12);
   }
 
   .service-card__media {
@@ -427,7 +455,7 @@ const ServiceCard = styled(Link)`
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 118px;
+    min-height: 108px;
     background:
       radial-gradient(circle at 70% 24%, rgba(244, 197, 66, 0.34), transparent 34%),
       linear-gradient(135deg, #eef4ff, #fff8df);
@@ -436,7 +464,7 @@ const ServiceCard = styled(Link)`
 
   .service-card__media img {
     width: 100%;
-    height: 132px;
+    height: 124px;
     object-fit: cover;
     display: block;
     transition: transform 0.35s ease;
@@ -450,42 +478,42 @@ const ServiceCard = styled(Link)`
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 66px;
-    height: 66px;
-    border-radius: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
     background: #ffffff;
     color: #000080;
     box-shadow: 0 16px 30px rgba(0, 0, 128, 0.12);
   }
 
   .service-card__icon svg {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
   }
 
   .service-card__body {
-    min-height: 174px;
+    min-height: 150px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    gap: 18px;
-    padding: 18px;
+    gap: 14px;
+    padding: 15px;
   }
 
   h3 {
     margin: 0;
     color: #101828;
-    font-size: 1.05rem;
+    font-size: 1rem;
     line-height: 1.3;
     font-weight: 800;
     letter-spacing: 0;
   }
 
   p {
-    margin: 8px 0 0;
+    margin: 7px 0 0;
     color: #5b6678;
-    font-size: 0.9rem;
-    line-height: 1.55;
+    font-size: 0.88rem;
+    line-height: 1.5;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
@@ -496,7 +524,8 @@ const ServiceCard = styled(Link)`
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 10px;
+    min-width: 0;
   }
 
   .service-card__footer span {
@@ -514,42 +543,77 @@ const ServiceCard = styled(Link)`
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 36px;
+    min-height: 34px;
     border-radius: 999px;
     background: #000080;
     color: #ffffff;
-    padding: 0 13px;
-    font-size: 0.82rem;
+    padding: 0 12px;
+    font-size: 0.8rem;
     font-weight: 800;
     box-shadow: 0 12px 22px rgba(0, 0, 128, 0.18);
   }
 
-  @media (min-width: 1180px) {
-    flex-basis: 292px;
+  @media (min-width: 1024px) and (max-width: 1179px) {
+    flex-basis: calc((100% - 36px) / 3);
+    min-width: 250px;
+  }
+
+  @media (min-width: 768px) and (max-width: 1023px) {
+    flex-basis: calc((100% - 16px) / 2);
+    min-width: 0;
   }
 
   @media (max-width: 640px) {
-    flex-basis: 82vw;
-    min-height: 278px;
-    border-radius: 20px;
+    flex-basis: calc(100% - 28px);
+    min-width: 0;
+    min-height: 0;
+    border-radius: 18px;
 
     .service-card__body {
-      min-height: 164px;
-      padding: 16px;
+      min-height: 144px;
+      gap: 12px;
+      padding: 14px;
     }
 
     .service-card__media img {
-      height: 122px;
+      height: 108px;
+    }
+
+    .service-card__media {
+      min-height: 104px;
+    }
+
+    h3 {
+      font-size: 0.98rem;
+      line-height: 1.26;
+    }
+
+    p {
+      margin-top: 6px;
+      font-size: 0.84rem;
+      line-height: 1.42;
+      -webkit-line-clamp: 2;
+    }
+
+    .service-card__footer {
+      align-items: flex-end;
+    }
+
+    .service-card__footer strong {
+      min-height: 32px;
+      padding: 0 11px;
+      font-size: 0.76rem;
     }
   }
 `;
 
 const ServiceSkeleton = styled.div`
-  flex: 0 0 min(284px, 78vw);
-  min-height: 292px;
+  flex: 0 0 calc((100% - 60px) / 4);
+  min-width: 248px;
+  min-height: 274px;
   scroll-snap-align: start;
   border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 22px;
+  border-radius: 20px;
   background: #ffffff;
   box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
   overflow: hidden;
@@ -557,7 +621,7 @@ const ServiceSkeleton = styled.div`
   &::before {
     content: "";
     display: block;
-    height: 132px;
+    height: 124px;
     background: linear-gradient(100deg, #edf2f7 0%, #f8fafc 48%, #edf2f7 100%);
     background-size: 220% 100%;
     animation: shimmer 1.3s ease-in-out infinite;
@@ -566,8 +630,8 @@ const ServiceSkeleton = styled.div`
   &::after {
     content: "";
     display: block;
-    height: 118px;
-    margin: 18px;
+    height: 104px;
+    margin: 15px;
     border-radius: 16px;
     background:
       linear-gradient(#edf2f7, #edf2f7) 0 0 / 78% 18px no-repeat,
@@ -582,12 +646,19 @@ const ServiceSkeleton = styled.div`
     }
   }
 
-  @media (min-width: 1180px) {
-    flex-basis: 292px;
+  @media (min-width: 1024px) and (max-width: 1179px) {
+    flex-basis: calc((100% - 36px) / 3);
+    min-width: 250px;
+  }
+
+  @media (min-width: 768px) and (max-width: 1023px) {
+    flex-basis: calc((100% - 16px) / 2);
+    min-width: 0;
   }
 
   @media (max-width: 640px) {
-    flex-basis: 82vw;
-    min-height: 278px;
+    flex-basis: calc(100% - 28px);
+    min-width: 0;
+    min-height: 252px;
   }
 `;

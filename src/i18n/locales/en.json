@@ -87,7 +87,138 @@
     "haveQuestion": "Have a Question?",
     "helpText": "We are here to help you!",
     "contactSupport": "Contact Support",
-    "finalStatsConsultations": "Consultations"
+    "finalStatsConsultations": "Consultations",
+    "heroTitleLine1": "Talk to Verified Experts Online",
+    "heroTitleLine2": "Get Instant Advice Anytime",
+    "heroSubtitleLong": "G9Experts connects you with trusted professionals across multiple categories like legal, health, astrology, fitness, business, career, finance, property, relationship, education and more.",
+    "heroActionsLabel": "Home page expert consultation actions",
+    "exploreCategories": "Explore Categories",
+    "heroImageAlt": "G9Experts expert panel with lawyer, doctor, astrologer, and business professionals",
+    "heroChips": {
+      "legalHelp": "Legal Help",
+      "healthAdvice": "Health Advice",
+      "businessServices": "Business Services",
+      "careerGuidance": "Career Guidance",
+      "astrology": "Astrology"
+    },
+    "quickActionsLabel": "Quick actions",
+    "categoriesKicker": "Expert Categories",
+    "categoriesTitle": "Explore Expert Categories",
+    "categoriesSubtitle": "Find verified experts across multiple professional categories and get instant consultation by chat or call.",
+    "scrollCategoriesLeft": "Scroll categories left",
+    "scrollCategoriesRight": "Scroll categories right",
+    "categoryImageAlt": "Talk to verified {{category}} experts online",
+    "categoryCardSubtitle": "Talk to verified {{category}} experts online",
+    "seoKicker": "Online Expert Consultation",
+    "seoTitle": "Instant expert advice from trusted professionals",
+    "seoDescription": "G9Experts is an online expert consultation platform where users can instantly connect with verified professionals for personal, professional, business, legal, health, education, relationship, astrology, finance, property and lifestyle advice. Whether you need quick guidance, detailed consultation, or expert support, G9Experts helps you find the right expert anytime.",
+    "popularConsultationSearches": "Popular consultation searches",
+    "categorySeoLink": "Best online consultation for {{category}} services",
+    "serviceSeoLink": "Get instant {{service}} advice from trusted professionals",
+    "trustKicker": "Why Choose G9Experts",
+    "trustTitle": "Trusted online consultation built for fast decisions",
+    "trustSubtitle": "Compare experts, review pricing, and start secure chat or call consultations across multiple categories.",
+    "trustPoints": {
+      "verifiedExperts": "Verified Experts",
+      "instantChatCall": "Instant Chat & Call",
+      "secureWalletPayment": "Secure Wallet Payment",
+      "multipleCategories": "Multiple Categories",
+      "affordableConsultation": "Affordable Per-Minute Consultation",
+      "expertAvailability": "24/7 Expert Availability",
+      "transparentProfiles": "Transparent Expert Profiles",
+      "ratingsReviews": "Ratings & Reviews"
+    },
+    "faqKicker": "FAQ",
+    "faqTitle": "Expert consultation questions",
+    "faqSubtitle": "Answers for users comparing online expert consultation, wallet payment, chat, call, and category availability.",
+    "helpfulLinksKicker": "Helpful Links",
+    "helpfulLinksTitle": "Find expert consultation pages faster",
+    "importantPagesAria": "G9Experts important pages",
+    "internalLinks": {
+      "categories": "Browse verified expert categories",
+      "callChat": "Find online experts for chat or call",
+      "services": "Book popular expert services",
+      "about": "Learn about G9Experts",
+      "contact": "Contact G9Experts support",
+      "privacy": "Read G9Experts privacy policy",
+      "terms": "View G9Experts terms and conditions",
+      "faq": "Read expert consultation FAQs"
+    },
+    "platformStatsAria": "Platform stats",
+    "finalStats": {
+      "categories": "Categories",
+      "experts": "Experts",
+      "consultations": "Consultations",
+      "reviews": "Reviews"
+    },
+    "popularServices": {
+      "kicker": "Popular Services",
+      "title": "Popular Expert Services",
+      "subtitle": "Choose from a wide range of expert services and connect instantly with trusted professionals.",
+      "previousAria": "Previous popular expert services",
+      "nextAria": "Next popular expert services",
+      "sliderAria": "Popular expert services slider",
+      "imageAlt": "Consult for {{service}}",
+      "fallbackDescription": "Get instant {{service}} advice from trusted professionals.",
+      "trustedExpert": "Trusted Expert",
+      "consultNow": "Consult Now",
+      "fallbackServices": {
+        "legalTitle": "Legal",
+        "legalDescription": "Get practical legal guidance, documentation direction, and next steps from verified professionals.",
+        "healthTitle": "Health",
+        "healthDescription": "Connect with trusted health and wellness experts for lifestyle and general guidance.",
+        "astrologyTitle": "Astrology",
+        "astrologyDescription": "Consult astrologers for personal guidance, compatibility, timing, and life direction.",
+        "businessTitle": "Business",
+        "businessDescription": "Speak with consultants for startup, operations, marketing, and growth decisions.",
+        "careerTitle": "Career Guidance",
+        "careerDescription": "Plan interviews, resumes, job switches, and professional growth with expert support.",
+        "financeTitle": "Finance",
+        "financeDescription": "Get money management, budgeting, investment awareness, and planning guidance."
+      }
+    },
+    "homeFaq": {
+      "whatIs": {
+        "question": "What is G9Experts?",
+        "answer": "G9Experts is an online expert consultation platform where users can connect with verified professionals for advice across personal, professional, business, legal, health, education, finance, property, astrology, relationship, and lifestyle topics."
+      },
+      "talkOnline": {
+        "question": "How can I talk to an expert online?",
+        "answer": "Choose a category, browse verified expert profiles, and start an online consultation by chat or call from the G9Experts user app."
+      },
+      "verified": {
+        "question": "Are experts on G9Experts verified?",
+        "answer": "G9Experts highlights verified expert profiles so users can review professional details, ratings, and consultation options before connecting."
+      },
+      "instant": {
+        "question": "Can I chat or call experts instantly?",
+        "answer": "Yes. Available experts can be reached through instant chat or call consultation, depending on their current availability and pricing setup."
+      },
+      "wallet": {
+        "question": "How does wallet payment work?",
+        "answer": "Users can add balance to the secure G9Experts wallet and pay for eligible chat, call, or service consultations through wallet deduction."
+      },
+      "categories": {
+        "question": "Which categories are available on G9Experts?",
+        "answer": "G9Experts supports multiple consultation categories including legal, health, astrology, fitness, business, career, finance, property, relationship, education, parenting, and more as available on the platform."
+      },
+      "availability": {
+        "question": "Is G9Experts available 24/7?",
+        "answer": "Users can browse the platform anytime. Expert availability for chat or call depends on each verified professional's live status and schedule."
+      },
+      "choose": {
+        "question": "How do I choose the right expert?",
+        "answer": "Compare expert profiles, categories, services, ratings, reviews, pricing, and availability to choose the professional who best matches your consultation need."
+      }
+    },
+    "seoMeta": {
+      "title": "G9Experts - Talk to Verified Experts Online | Instant Chat & Call Consultation",
+      "description": "Connect with verified experts online on G9Experts. Get instant chat and call consultation for legal, health, astrology, fitness, business, career, finance, property, relationship, education and more.",
+      "ogTitle": "G9Experts - Talk to Verified Experts Online",
+      "ogDescription": "Get instant chat and call consultation from verified experts across legal, health, astrology, fitness, business, career, finance, property, relationship, education and more.",
+      "twitterTitle": "G9Experts - Talk to Verified Experts Online",
+      "twitterDescription": "Connect with trusted professionals online for instant expert advice by chat or call."
+    }
   },
   "howItWorks": {
     "kicker": "Simple Process",
@@ -119,7 +250,17 @@
     "responseTitle": "Fast Response",
     "responseDesc": "Receive quick support and instant expert availability.",
     "trustedTitle": "Trusted Experience",
-    "trustedDesc": "Designed for users looking for reliable professional guidance online."
+    "trustedDesc": "Designed for users looking for reliable professional guidance online.",
+    "paymentsTitle": "Secure Payments",
+    "paymentsDesc": "Use transparent wallet payments for consultations and online services.",
+    "onlineServicesTitle": "Trusted Online Services",
+    "onlineServicesDesc": "Book professional services and expert solutions from one platform.",
+    "categoriesTitle": "20+ Categories",
+    "categoriesDesc": "Explore help across career, legal, health, business, astrology, and more.",
+    "bookingTitle": "Easy Booking",
+    "bookingDesc": "Choose the right expert or service and book with a simple flow.",
+    "guidanceTitle": "Professional Guidance",
+    "guidanceDesc": "Make confident decisions with support from experienced professionals."
   },
   "faq": {
     "kicker": "Popular Questions",
@@ -229,16 +370,91 @@
       "subtitle": "G9 Experts connects users with verified professionals for instant guidance, online services, and trusted solutions across everyday and specialist needs.",
       "description": "Learn about G9 Experts, a trusted platform for instant expert consultation, secure chat and call support, online services, and verified professional guidance.",
       "keywords": "about G9 Experts, verified experts, online consultation platform, instant expert help",
-      "badges": { "verifiedExperts": "Verified experts", "secureChatCall": "Secure chat and call", "walletPayments": "Wallet-based payments", "multipleCategories": "Multiple categories" },
-      "stats": { "usersGuided": { "value": "20K+", "label": "Users guided" }, "verifiedProfessionals": { "value": "5K+", "label": "Verified professionals" }, "serviceCategories": { "value": "50+", "label": "Service categories" }, "onlineAccess": { "value": "24/7", "label": "Online access" } },
+      "badges": {
+        "verifiedExperts": "Verified experts",
+        "secureChatCall": "Secure chat and call",
+        "walletPayments": "Wallet-based payments",
+        "multipleCategories": "Multiple categories"
+      },
+      "stats": {
+        "usersGuided": {
+          "value": "20K+",
+          "label": "Users guided"
+        },
+        "verifiedProfessionals": {
+          "value": "5K+",
+          "label": "Verified professionals"
+        },
+        "serviceCategories": {
+          "value": "50+",
+          "label": "Service categories"
+        },
+        "onlineAccess": {
+          "value": "24/7",
+          "label": "Online access"
+        }
+      },
       "sections": {
-        "mission": { "title": "Our Mission", "text": "Our mission is to make professional guidance easier to access.", "items": { "instantAccess": { "title": "Instant Access", "text": "Start a secure chat or call with available professionals in minutes." }, "verifiedProfessionals": { "title": "Verified Professionals", "text": "Profiles, ratings, and platform checks help users choose with confidence." }, "oneMarketplace": { "title": "One Marketplace", "text": "Consultation and online services are available across many useful categories." } } },
-        "offer": { "title": "What We Offer", "text": "G9 Experts brings expert discovery, chat, call, payments, reviews, and service booking into one experience.", "items": { "categories": "Career, legal, business, finance, health, astrology, freelancing, and service guidance.", "secureConsultation": "Secure chat and call consultation with transparent pricing.", "trustSignals": "Expert ratings, profile details, followers, and reviews support informed decisions.", "fastResponse": "Fast response options for users who need practical help right away." } },
-        "trust": { "title": "Trust & Security", "text": "Every product decision is built around user trust, payment clarity, and safe communication.", "items": { "privateConsultations": { "title": "Private Consultations", "text": "User conversations are designed to stay within secure platform workflows." }, "transparentWallet": { "title": "Transparent Wallet", "text": "Wallet-based payments make consultation spending easier to track." }, "reviewTrust": { "title": "Review-led Trust", "text": "Ratings and reviews help users identify reliable professionals faster." } } }
+        "mission": {
+          "title": "Our Mission",
+          "text": "Our mission is to make professional guidance easier to access.",
+          "items": {
+            "instantAccess": {
+              "title": "Instant Access",
+              "text": "Start a secure chat or call with available professionals in minutes."
+            },
+            "verifiedProfessionals": {
+              "title": "Verified Professionals",
+              "text": "Profiles, ratings, and platform checks help users choose with confidence."
+            },
+            "oneMarketplace": {
+              "title": "One Marketplace",
+              "text": "Consultation and online services are available across many useful categories."
+            }
+          }
+        },
+        "offer": {
+          "title": "What We Offer",
+          "text": "G9 Experts brings expert discovery, chat, call, payments, reviews, and service booking into one experience.",
+          "items": {
+            "categories": "Career, legal, business, finance, health, astrology, freelancing, and service guidance.",
+            "secureConsultation": "Secure chat and call consultation with transparent pricing.",
+            "trustSignals": "Expert ratings, profile details, followers, and reviews support informed decisions.",
+            "fastResponse": "Fast response options for users who need practical help right away."
+          }
+        },
+        "trust": {
+          "title": "Trust & Security",
+          "text": "Every product decision is built around user trust, payment clarity, and safe communication.",
+          "items": {
+            "privateConsultations": {
+              "title": "Private Consultations",
+              "text": "User conversations are designed to stay within secure platform workflows."
+            },
+            "transparentWallet": {
+              "title": "Transparent Wallet",
+              "text": "Wallet-based payments make consultation spending easier to track."
+            },
+            "reviewTrust": {
+              "title": "Review-led Trust",
+              "text": "Ratings and reviews help users identify reliable professionals faster."
+            }
+          }
+        }
       },
       "linksTitle": "Explore G9 Experts",
-      "links": { "findExperts": "Find verified experts", "howItWorks": "How it works", "reviews": "Read reviews", "careers": "Join our team" },
-      "cta": { "main": { "title": "Need expert guidance today?", "text": "Choose a category and connect with a verified professional through secure chat or call." } }
+      "links": {
+        "findExperts": "Find verified experts",
+        "howItWorks": "How it works",
+        "reviews": "Read reviews",
+        "careers": "Join our team"
+      },
+      "cta": {
+        "main": {
+          "title": "Need expert guidance today?",
+          "text": "Choose a category and connect with a verified professional through secure chat or call."
+        }
+      }
     },
     "careers": {
       "label": "Careers",
@@ -246,15 +462,112 @@
       "subtitle": "Join a growing marketplace team building trusted consultation and online service experiences.",
       "description": "Explore careers at G9 Experts, including remote and onsite opportunities for freshers and experienced professionals.",
       "keywords": "G9 Experts careers, startup jobs, remote jobs, marketplace careers, fresher hiring",
-      "actions": { "viewRoles": "View Open Roles", "contactSupport": "Contact Support" },
-      "badges": { "remoteFriendly": "Remote friendly", "fresherExperienced": "Fresher and experienced roles", "productCulture": "Product-led culture", "growth": "Growth opportunities" },
-      "stats": { "hybrid": { "value": "Hybrid", "label": "Work options" }, "fastHiring": { "value": "Fast", "label": "Hiring cycles" }, "growthCulture": { "value": "Growth", "label": "Learning culture" }, "userImpact": { "value": "Impact", "label": "User-first work" } },
-      "sections": {
-        "whyJoin": { "title": "Why Join G9 Experts", "text": "Work on trust, payments, expert discovery, communication, and user experience.", "items": { "userImpact": { "title": "User Impact", "text": "Help people find trusted professional guidance when they need it most." }, "growthMindset": { "title": "Growth Mindset", "text": "Work in an environment that values ownership, learning, and execution." }, "flexibleWork": { "title": "Flexible Work", "text": "Role-based remote, hybrid, and onsite flexibility for the right candidates." } } },
-        "openRoles": { "title": "Open Roles", "text": "We hire for product, operations, content, marketing, support, and technology roles.", "items": { "supportAssociate": { "title": "Customer Support Associate", "text": "Support users and experts with clear platform guidance." }, "marketingExecutive": { "title": "Digital Marketing Executive", "text": "Drive category discovery, SEO content, and campaign performance." }, "operationsCoordinator": { "title": "Operations Coordinator", "text": "Support expert onboarding, profile quality, and service workflows." }, "frontendDeveloper": { "title": "Frontend Developer", "text": "Build responsive, conversion-focused React experiences." }, "seoWriter": { "title": "Content & SEO Writer", "text": "Create helpful pages for expert discovery, services, FAQs, and guides." }, "bdExecutive": { "title": "Business Development Executive", "text": "Grow category supply and partnerships with professionals." } } },
-        "process": { "title": "Hiring Process", "text": "Our hiring process is structured, respectful, and focused on practical skills.", "items": { "apply": { "title": "Apply", "text": "Share your profile, role interest, and relevant experience." }, "screening": { "title": "Screening", "text": "We review fit, communication, and role expectations." }, "interview": { "title": "Interview", "text": "Discuss practical work, problem solving, and team alignment." }, "offer": { "title": "Offer", "text": "Selected candidates receive role details, compensation, and joining plan." } } }
+      "actions": {
+        "viewRoles": "View Open Roles",
+        "contactSupport": "Contact Support"
       },
-      "cta": { "main": { "title": "Ready to work on a trusted expert marketplace?", "text": "Send your profile and role interest to the G9 Experts team." } }
+      "badges": {
+        "remoteFriendly": "Remote friendly",
+        "fresherExperienced": "Fresher and experienced roles",
+        "productCulture": "Product-led culture",
+        "growth": "Growth opportunities"
+      },
+      "stats": {
+        "hybrid": {
+          "value": "Hybrid",
+          "label": "Work options"
+        },
+        "fastHiring": {
+          "value": "Fast",
+          "label": "Hiring cycles"
+        },
+        "growthCulture": {
+          "value": "Growth",
+          "label": "Learning culture"
+        },
+        "userImpact": {
+          "value": "Impact",
+          "label": "User-first work"
+        }
+      },
+      "sections": {
+        "whyJoin": {
+          "title": "Why Join G9 Experts",
+          "text": "Work on trust, payments, expert discovery, communication, and user experience.",
+          "items": {
+            "userImpact": {
+              "title": "User Impact",
+              "text": "Help people find trusted professional guidance when they need it most."
+            },
+            "growthMindset": {
+              "title": "Growth Mindset",
+              "text": "Work in an environment that values ownership, learning, and execution."
+            },
+            "flexibleWork": {
+              "title": "Flexible Work",
+              "text": "Role-based remote, hybrid, and onsite flexibility for the right candidates."
+            }
+          }
+        },
+        "openRoles": {
+          "title": "Open Roles",
+          "text": "We hire for product, operations, content, marketing, support, and technology roles.",
+          "items": {
+            "supportAssociate": {
+              "title": "Customer Support Associate",
+              "text": "Support users and experts with clear platform guidance."
+            },
+            "marketingExecutive": {
+              "title": "Digital Marketing Executive",
+              "text": "Drive category discovery, SEO content, and campaign performance."
+            },
+            "operationsCoordinator": {
+              "title": "Operations Coordinator",
+              "text": "Support expert onboarding, profile quality, and service workflows."
+            },
+            "frontendDeveloper": {
+              "title": "Frontend Developer",
+              "text": "Build responsive, conversion-focused React experiences."
+            },
+            "seoWriter": {
+              "title": "Content & SEO Writer",
+              "text": "Create helpful pages for expert discovery, services, FAQs, and guides."
+            },
+            "bdExecutive": {
+              "title": "Business Development Executive",
+              "text": "Grow category supply and partnerships with professionals."
+            }
+          }
+        },
+        "process": {
+          "title": "Hiring Process",
+          "text": "Our hiring process is structured, respectful, and focused on practical skills.",
+          "items": {
+            "apply": {
+              "title": "Apply",
+              "text": "Share your profile, role interest, and relevant experience."
+            },
+            "screening": {
+              "title": "Screening",
+              "text": "We review fit, communication, and role expectations."
+            },
+            "interview": {
+              "title": "Interview",
+              "text": "Discuss practical work, problem solving, and team alignment."
+            },
+            "offer": {
+              "title": "Offer",
+              "text": "Selected candidates receive role details, compensation, and joining plan."
+            }
+          }
+        }
+      },
+      "cta": {
+        "main": {
+          "title": "Ready to work on a trusted expert marketplace?",
+          "text": "Send your profile and role interest to the G9 Experts team."
+        }
+      }
     },
     "privacy": {
       "label": "Legal",
@@ -262,13 +575,68 @@
       "subtitle": "A clear overview of how G9 Experts handles user information, consultation data, payments, account activity, and platform security.",
       "description": "Read the G9 Experts Privacy Policy covering personal data, account information, consultation privacy, payments, cookies, and user rights.",
       "keywords": "G9 Experts privacy policy, data protection, consultation privacy, user data",
-      "badges": { "transparentData": "Transparent data use", "securePayments": "Secure payments", "privateWorkflows": "Private consultation workflows" },
+      "badges": {
+        "transparentData": "Transparent data use",
+        "securePayments": "Secure payments",
+        "privateWorkflows": "Private consultation workflows"
+      },
       "linksTitle": "Related Legal Pages",
-      "links": { "terms": "Terms & Conditions", "support": "Support Center", "faq": "FAQ" },
+      "links": {
+        "terms": "Terms & Conditions",
+        "support": "Support Center",
+        "faq": "FAQ"
+      },
       "sections": {
-        "information": { "title": "Information We Collect", "text": "", "items": { "accountDetails": { "title": "Account details", "text": "We may collect name, mobile number, email address, profile details, and login information." }, "consultationActivity": { "title": "Consultation activity", "text": "We process consultation, booking, chat, call, wallet, and transaction information required to deliver services." }, "deviceUsage": { "title": "Device and usage data", "text": "We may collect browser, device, page, and performance information to protect and improve the platform." } } },
-        "use": { "title": "How We Use Information", "text": "", "items": { "serviceDelivery": { "title": "Service delivery", "text": "Information is used to connect users with experts, manage profiles, process wallet activity, and provide support." }, "trustSafety": { "title": "Trust and safety", "text": "We use relevant data to prevent misuse, review support issues, maintain security, and improve reliability." }, "communication": { "title": "Communication", "text": "We may send service updates, support messages, transaction notices, and important account information." } } },
-        "rights": { "title": "Your Choices", "text": "", "items": { "accountUpdates": { "title": "Account updates", "text": "Users can update account information through available profile settings or support." }, "supportRequests": { "title": "Support requests", "text": "For privacy questions or correction requests, contact the support team." } } }
+        "information": {
+          "title": "Information We Collect",
+          "text": "",
+          "items": {
+            "accountDetails": {
+              "title": "Account details",
+              "text": "We may collect name, mobile number, email address, profile details, and login information."
+            },
+            "consultationActivity": {
+              "title": "Consultation activity",
+              "text": "We process consultation, booking, chat, call, wallet, and transaction information required to deliver services."
+            },
+            "deviceUsage": {
+              "title": "Device and usage data",
+              "text": "We may collect browser, device, page, and performance information to protect and improve the platform."
+            }
+          }
+        },
+        "use": {
+          "title": "How We Use Information",
+          "text": "",
+          "items": {
+            "serviceDelivery": {
+              "title": "Service delivery",
+              "text": "Information is used to connect users with experts, manage profiles, process wallet activity, and provide support."
+            },
+            "trustSafety": {
+              "title": "Trust and safety",
+              "text": "We use relevant data to prevent misuse, review support issues, maintain security, and improve reliability."
+            },
+            "communication": {
+              "title": "Communication",
+              "text": "We may send service updates, support messages, transaction notices, and important account information."
+            }
+          }
+        },
+        "rights": {
+          "title": "Your Choices",
+          "text": "",
+          "items": {
+            "accountUpdates": {
+              "title": "Account updates",
+              "text": "Users can update account information through available profile settings or support."
+            },
+            "supportRequests": {
+              "title": "Support requests",
+              "text": "For privacy questions or correction requests, contact the support team."
+            }
+          }
+        }
       }
     },
     "terms": {
@@ -277,13 +645,68 @@
       "subtitle": "These terms explain the basic rules for using G9 Experts, connecting with professionals, paying through wallet flows, and using online services.",
       "description": "Read G9 Experts Terms and Conditions for consultation usage, wallet payments, expert services, account responsibilities, and platform rules.",
       "keywords": "G9 Experts terms, user terms, consultation terms, expert marketplace rules",
-      "badges": { "userResponsibilities": "User responsibilities", "marketplaceRules": "Expert marketplace rules", "paymentClarity": "Payment clarity" },
+      "badges": {
+        "userResponsibilities": "User responsibilities",
+        "marketplaceRules": "Expert marketplace rules",
+        "paymentClarity": "Payment clarity"
+      },
       "linksTitle": "Related Pages",
-      "links": { "privacy": "Privacy Policy", "guidelines": "Expert Guidelines", "support": "Support Center" },
+      "links": {
+        "privacy": "Privacy Policy",
+        "guidelines": "Expert Guidelines",
+        "support": "Support Center"
+      },
       "sections": {
-        "usage": { "title": "Platform Usage", "text": "", "items": { "eligibility": { "title": "Eligibility", "text": "Users must provide accurate information and use G9 Experts only for lawful consultation and service purposes." }, "expertGuidance": { "title": "Expert guidance", "text": "Experts provide professional guidance based on information shared by users. Users remain responsible for final decisions." }, "accountSafety": { "title": "Account safety", "text": "Users are responsible for keeping login details secure and reporting suspicious activity." } } },
-        "payments": { "title": "Payments and Wallet", "text": "", "items": { "walletBilling": { "title": "Wallet billing", "text": "Chat, call, and service payments may use wallet balances, per-minute charges, or displayed prices." }, "rechargeTransactions": { "title": "Recharge and transactions", "text": "Users should review wallet balance, pricing, and transaction details before paid consultations." }, "refundReview": { "title": "Refund review", "text": "Refund or dispute requests are reviewed according to service status, usage, payment records, and policies." } } },
-        "conduct": { "title": "Conduct and Restrictions", "text": "", "items": { "respectfulCommunication": { "title": "Respectful communication", "text": "Users and experts must communicate professionally and avoid abusive, misleading, illegal, or harmful behavior." }, "noMisuse": { "title": "No misuse", "text": "Do not bypass platform payments, misuse chat or call systems, scrape data, or disrupt service availability." } } }
+        "usage": {
+          "title": "Platform Usage",
+          "text": "",
+          "items": {
+            "eligibility": {
+              "title": "Eligibility",
+              "text": "Users must provide accurate information and use G9 Experts only for lawful consultation and service purposes."
+            },
+            "expertGuidance": {
+              "title": "Expert guidance",
+              "text": "Experts provide professional guidance based on information shared by users. Users remain responsible for final decisions."
+            },
+            "accountSafety": {
+              "title": "Account safety",
+              "text": "Users are responsible for keeping login details secure and reporting suspicious activity."
+            }
+          }
+        },
+        "payments": {
+          "title": "Payments and Wallet",
+          "text": "",
+          "items": {
+            "walletBilling": {
+              "title": "Wallet billing",
+              "text": "Chat, call, and service payments may use wallet balances, per-minute charges, or displayed prices."
+            },
+            "rechargeTransactions": {
+              "title": "Recharge and transactions",
+              "text": "Users should review wallet balance, pricing, and transaction details before paid consultations."
+            },
+            "refundReview": {
+              "title": "Refund review",
+              "text": "Refund or dispute requests are reviewed according to service status, usage, payment records, and policies."
+            }
+          }
+        },
+        "conduct": {
+          "title": "Conduct and Restrictions",
+          "text": "",
+          "items": {
+            "respectfulCommunication": {
+              "title": "Respectful communication",
+              "text": "Users and experts must communicate professionally and avoid abusive, misleading, illegal, or harmful behavior."
+            },
+            "noMisuse": {
+              "title": "No misuse",
+              "text": "Do not bypass platform payments, misuse chat or call systems, scrape data, or disrupt service availability."
+            }
+          }
+        }
       }
     },
     "findExperts": {
@@ -293,15 +716,84 @@
       "description": "Find verified experts on G9 Experts for career, legal, business, health, finance, astrology, freelancing, and online services.",
       "keywords": "find experts online, verified experts, instant chat consultation, call consultation, online services",
       "searchPlaceholder": "Search legal, career, finance, astrology, business...",
-      "badges": { "profileRatings": "Profile ratings", "instantChat": "Instant chat", "secureCall": "Secure call", "categoryDiscovery": "Category discovery" },
-      "stats": { "categories": { "value": "50+", "label": "Categories" }, "experts": { "value": "5K+", "label": "Experts" }, "availability": { "value": "24/7", "label": "Availability" }, "secureConsultation": { "value": "Secure", "label": "Consultation" } },
+      "badges": {
+        "profileRatings": "Profile ratings",
+        "instantChat": "Instant chat",
+        "secureCall": "Secure call",
+        "categoryDiscovery": "Category discovery"
+      },
+      "stats": {
+        "categories": {
+          "value": "50+",
+          "label": "Categories"
+        },
+        "experts": {
+          "value": "5K+",
+          "label": "Experts"
+        },
+        "availability": {
+          "value": "24/7",
+          "label": "Availability"
+        },
+        "secureConsultation": {
+          "value": "Secure",
+          "label": "Consultation"
+        }
+      },
       "sections": {
-        "popular": { "title": "Popular Expert Categories", "text": "Browse high-intent categories and connect with professionals based on your need.", "items": { "career": { "title": "Career Guidance", "text": "Interview preparation, career direction, resume advice, and job planning." }, "legal": { "title": "Legal Advice", "text": "General legal guidance, documentation direction, and practical next steps." }, "business": { "title": "Business Consulting", "text": "Startup, growth, operations, marketing, and business decision support." }, "finance": { "title": "Financial Guidance", "text": "Budgeting, planning, investment awareness, and money management basics." }, "astrology": { "title": "Astrology", "text": "Personal guidance, compatibility, timing, and life direction consultations." }, "health": { "title": "Health & Wellness", "text": "Fitness, wellness, lifestyle, and general health guidance from professionals." } } },
-        "why": { "title": "Why Users Choose G9 Experts", "text": "", "items": { "profiles": "Verified expert profiles with ratings and category details.", "secureOptions": "Secure chat and call options for instant consultation.", "walletPayments": "Wallet-based payments that keep spending transparent.", "oneMarketplace": "Online services and professional guidance in one marketplace." } }
+        "popular": {
+          "title": "Popular Expert Categories",
+          "text": "Browse high-intent categories and connect with professionals based on your need.",
+          "items": {
+            "career": {
+              "title": "Career Guidance",
+              "text": "Interview preparation, career direction, resume advice, and job planning."
+            },
+            "legal": {
+              "title": "Legal Advice",
+              "text": "General legal guidance, documentation direction, and practical next steps."
+            },
+            "business": {
+              "title": "Business Consulting",
+              "text": "Startup, growth, operations, marketing, and business decision support."
+            },
+            "finance": {
+              "title": "Financial Guidance",
+              "text": "Budgeting, planning, investment awareness, and money management basics."
+            },
+            "astrology": {
+              "title": "Astrology",
+              "text": "Personal guidance, compatibility, timing, and life direction consultations."
+            },
+            "health": {
+              "title": "Health & Wellness",
+              "text": "Fitness, wellness, lifestyle, and general health guidance from professionals."
+            }
+          }
+        },
+        "why": {
+          "title": "Why Users Choose G9 Experts",
+          "text": "",
+          "items": {
+            "profiles": "Verified expert profiles with ratings and category details.",
+            "secureOptions": "Secure chat and call options for instant consultation.",
+            "walletPayments": "Wallet-based payments that keep spending transparent.",
+            "oneMarketplace": "Online services and professional guidance in one marketplace."
+          }
+        }
       },
       "linksTitle": "Start with a category",
-      "links": { "allCategories": "All categories", "allServices": "All services", "popularQuestions": "Popular questions" },
-      "cta": { "main": { "title": "Find the right expert faster", "text": "Start with a category or connect instantly with available professionals." } }
+      "links": {
+        "allCategories": "All categories",
+        "allServices": "All services",
+        "popularQuestions": "Popular questions"
+      },
+      "cta": {
+        "main": {
+          "title": "Find the right expert faster",
+          "text": "Start with a category or connect instantly with available professionals."
+        }
+      }
     },
     "reviews": {
       "label": "Trust",
@@ -309,13 +801,86 @@
       "subtitle": "Realistic stories from users who needed fast guidance, verified professionals, and convenient online consultation.",
       "description": "Read G9 Experts reviews and testimonials from users who connected with verified experts for chat, call, career, legal, business, and online services.",
       "keywords": "G9 Experts reviews, expert consultation testimonials, verified expert ratings",
-      "badges": { "fiveStar": "5-star experiences", "verifiedUsers": "Verified users", "fastResponse": "Fast response", "trustedServices": "Trusted services" },
-      "stats": { "average": { "value": "4.8/5", "label": "Average experience" }, "usersServed": { "value": "20K+", "label": "Users served" }, "response": { "value": "Fast", "label": "Response times" }, "secure": { "value": "Secure", "label": "Consultations" } },
-      "sections": {
-        "testimonials": { "title": "What Users Say", "text": "Users rely on G9 Experts for practical answers, convenient consultations, and professional support.", "items": { "career": { "title": "Career consultation", "text": "I connected with a career expert within minutes and got clear interview guidance." }, "legal": { "title": "Legal guidance", "text": "The lawyer consultation saved time and explained my next steps clearly." }, "business": { "title": "Business support", "text": "The expert gave practical suggestions I could use immediately." }, "astrology": { "title": "Astrology session", "text": "The consultation was convenient, respectful, and clearly explained." }, "finance": { "title": "Finance help", "text": "The advisor explained budgeting and planning in simple language." }, "service": { "title": "Service booking", "text": "Finding a verified professional online was smooth and clear." } } },
-        "trust": { "title": "Trust Indicators", "text": "Ratings, expert profiles, verified badges, and secure payment flows help users make confident decisions.", "items": { "verified": { "title": "Verified Professionals", "text": "Profile quality and visible trust signals support safer expert selection." }, "secureChat": { "title": "Secure Chat & Call", "text": "Users can get help online without sharing unnecessary personal information." }, "billing": { "title": "Transparent Billing", "text": "Wallet and pricing details make paid consultations easier to understand." } } }
+      "badges": {
+        "fiveStar": "5-star experiences",
+        "verifiedUsers": "Verified users",
+        "fastResponse": "Fast response",
+        "trustedServices": "Trusted services"
       },
-      "cta": { "main": { "title": "Ready to get guidance from a verified expert?", "text": "Choose chat or call and connect with a professional online." } }
+      "stats": {
+        "average": {
+          "value": "4.8/5",
+          "label": "Average experience"
+        },
+        "usersServed": {
+          "value": "20K+",
+          "label": "Users served"
+        },
+        "response": {
+          "value": "Fast",
+          "label": "Response times"
+        },
+        "secure": {
+          "value": "Secure",
+          "label": "Consultations"
+        }
+      },
+      "sections": {
+        "testimonials": {
+          "title": "What Users Say",
+          "text": "Users rely on G9 Experts for practical answers, convenient consultations, and professional support.",
+          "items": {
+            "career": {
+              "title": "Career consultation",
+              "text": "I connected with a career expert within minutes and got clear interview guidance."
+            },
+            "legal": {
+              "title": "Legal guidance",
+              "text": "The lawyer consultation saved time and explained my next steps clearly."
+            },
+            "business": {
+              "title": "Business support",
+              "text": "The expert gave practical suggestions I could use immediately."
+            },
+            "astrology": {
+              "title": "Astrology session",
+              "text": "The consultation was convenient, respectful, and clearly explained."
+            },
+            "finance": {
+              "title": "Finance help",
+              "text": "The advisor explained budgeting and planning in simple language."
+            },
+            "service": {
+              "title": "Service booking",
+              "text": "Finding a verified professional online was smooth and clear."
+            }
+          }
+        },
+        "trust": {
+          "title": "Trust Indicators",
+          "text": "Ratings, expert profiles, verified badges, and secure payment flows help users make confident decisions.",
+          "items": {
+            "verified": {
+              "title": "Verified Professionals",
+              "text": "Profile quality and visible trust signals support safer expert selection."
+            },
+            "secureChat": {
+              "title": "Secure Chat & Call",
+              "text": "Users can get help online without sharing unnecessary personal information."
+            },
+            "billing": {
+              "title": "Transparent Billing",
+              "text": "Wallet and pricing details make paid consultations easier to understand."
+            }
+          }
+        }
+      },
+      "cta": {
+        "main": {
+          "title": "Ready to get guidance from a verified expert?",
+          "text": "Choose chat or call and connect with a professional online."
+        }
+      }
     },
     "howItWorks": {
       "label": "For Customers",
@@ -323,12 +888,60 @@
       "subtitle": "A simple online flow to search your need, choose a verified professional, consult securely, and get practical guidance.",
       "description": "Learn how G9 Experts works: choose a category, select an expert, start chat or call, pay securely, and get professional guidance online.",
       "keywords": "how G9 Experts works, online expert consultation process, chat call consultation",
-      "badges": { "chooseCategory": "Choose category", "selectExpert": "Select expert", "chatCall": "Chat or call", "paySecurely": "Pay securely" },
-      "sections": {
-        "journey": { "title": "Your Expert Consultation Journey", "text": "G9 Experts is designed to help users move from problem to solution without unnecessary complexity.", "items": { "choose": { "title": "Choose a Category", "text": "Search or browse categories like legal, career, business, health, astrology, finance, and more." }, "select": { "title": "Select an Expert", "text": "Review profiles, ratings, pricing, and availability before you connect." }, "connect": { "title": "Chat or Call Instantly", "text": "Start secure online consultation through chat or call based on your preference." }, "pay": { "title": "Pay Securely", "text": "Use wallet-based payments and pay for the consultation or service you use." } } },
-        "benefits": { "title": "Built for Convenience", "text": "", "items": { "fastResponse": { "title": "Fast Response", "text": "Designed for users who need professional help without long appointment delays." }, "trustSignals": { "title": "Trust Signals", "text": "Ratings, verified labels, and expert profiles help users choose better." }, "onlineServices": { "title": "Online Services", "text": "Book online services or get consultation support from one marketplace." } } }
+      "badges": {
+        "chooseCategory": "Choose category",
+        "selectExpert": "Select expert",
+        "chatCall": "Chat or call",
+        "paySecurely": "Pay securely"
       },
-      "cta": { "main": { "title": "Start your first consultation", "text": "Find an expert, check the profile, and begin a secure chat or call." } }
+      "sections": {
+        "journey": {
+          "title": "Your Expert Consultation Journey",
+          "text": "G9 Experts is designed to help users move from problem to solution without unnecessary complexity.",
+          "items": {
+            "choose": {
+              "title": "Choose a Category",
+              "text": "Search or browse categories like legal, career, business, health, astrology, finance, and more."
+            },
+            "select": {
+              "title": "Select an Expert",
+              "text": "Review profiles, ratings, pricing, and availability before you connect."
+            },
+            "connect": {
+              "title": "Chat or Call Instantly",
+              "text": "Start secure online consultation through chat or call based on your preference."
+            },
+            "pay": {
+              "title": "Pay Securely",
+              "text": "Use wallet-based payments and pay for the consultation or service you use."
+            }
+          }
+        },
+        "benefits": {
+          "title": "Built for Convenience",
+          "text": "",
+          "items": {
+            "fastResponse": {
+              "title": "Fast Response",
+              "text": "Designed for users who need professional help without long appointment delays."
+            },
+            "trustSignals": {
+              "title": "Trust Signals",
+              "text": "Ratings, verified labels, and expert profiles help users choose better."
+            },
+            "onlineServices": {
+              "title": "Online Services",
+              "text": "Book online services or get consultation support from one marketplace."
+            }
+          }
+        }
+      },
+      "cta": {
+        "main": {
+          "title": "Start your first consultation",
+          "text": "Find an expert, check the profile, and begin a secure chat or call."
+        }
+      }
     },
     "faq": {
       "label": "Help",
@@ -337,10 +950,59 @@
       "description": "Find answers to common G9 Experts questions about verified experts, chat and call consultation, wallet recharge, payments, refunds, and accounts.",
       "keywords": "G9 Experts FAQ, expert consultation questions, wallet recharge help, chat call support",
       "searchPlaceholder": "Search FAQs about wallet, experts, chat, call, refunds...",
-      "badges": { "userHelp": "User help", "expertHelp": "Expert help", "paymentHelp": "Payment help", "technicalHelp": "Technical help" },
-      "sections": { "faqs": { "title": "Common Questions", "text": "Use these answers to understand the platform before connecting with a verified expert.", "items": { "instantExpert": { "question": "Can I talk to a verified expert instantly?", "answer": "Yes. Available experts can be contacted through secure chat or call depending on their status, pricing, and consultation mode." }, "perMinute": { "question": "How does per-minute chat or call consultation work?", "answer": "The platform shows expert pricing and uses wallet-based billing where applicable." }, "chooseCategory": { "question": "Can I choose an expert by category?", "answer": "Yes. Browse categories, compare expert profiles, and choose the professional who matches your need." }, "privateChat": { "question": "Is my chat with the expert private and secure?", "answer": "Consultations are designed to happen inside secure platform workflows." }, "rechargeWallet": { "question": "How do I recharge my wallet before consultation?", "answer": "Go to the wallet page, enter an amount, and complete payment through the available gateway." }, "lowBalance": { "question": "What happens if my wallet balance is low?", "answer": "You may be prompted to recharge before starting or continuing a paid consultation." }, "expertsJoin": { "question": "Can experts join G9 Experts?", "answer": "Yes. Professionals can register, complete profile details, and follow platform guidelines." }, "contactSupport": { "question": "How can I contact support?", "answer": "Visit the support center for user, expert, payment, and technical help options." } } } },
+      "badges": {
+        "userHelp": "User help",
+        "expertHelp": "Expert help",
+        "paymentHelp": "Payment help",
+        "technicalHelp": "Technical help"
+      },
+      "sections": {
+        "faqs": {
+          "title": "Common Questions",
+          "text": "Use these answers to understand the platform before connecting with a verified expert.",
+          "items": {
+            "instantExpert": {
+              "question": "Can I talk to a verified expert instantly?",
+              "answer": "Yes. Available experts can be contacted through secure chat or call depending on their status, pricing, and consultation mode."
+            },
+            "perMinute": {
+              "question": "How does per-minute chat or call consultation work?",
+              "answer": "The platform shows expert pricing and uses wallet-based billing where applicable."
+            },
+            "chooseCategory": {
+              "question": "Can I choose an expert by category?",
+              "answer": "Yes. Browse categories, compare expert profiles, and choose the professional who matches your need."
+            },
+            "privateChat": {
+              "question": "Is my chat with the expert private and secure?",
+              "answer": "Consultations are designed to happen inside secure platform workflows."
+            },
+            "rechargeWallet": {
+              "question": "How do I recharge my wallet before consultation?",
+              "answer": "Go to the wallet page, enter an amount, and complete payment through the available gateway."
+            },
+            "lowBalance": {
+              "question": "What happens if my wallet balance is low?",
+              "answer": "You may be prompted to recharge before starting or continuing a paid consultation."
+            },
+            "expertsJoin": {
+              "question": "Can experts join G9 Experts?",
+              "answer": "Yes. Professionals can register, complete profile details, and follow platform guidelines."
+            },
+            "contactSupport": {
+              "question": "How can I contact support?",
+              "answer": "Visit the support center for user, expert, payment, and technical help options."
+            }
+          }
+        }
+      },
       "linksTitle": "Helpful Links",
-      "links": { "support": "Support Center", "wallet": "Wallet", "guidelines": "Expert Guidelines", "terms": "Terms & Conditions" }
+      "links": {
+        "support": "Support Center",
+        "wallet": "Wallet",
+        "guidelines": "Expert Guidelines",
+        "terms": "Terms & Conditions"
+      }
     },
     "becomeExpert": {
       "label": "For Experts",
@@ -348,13 +1010,87 @@
       "subtitle": "Share your professional knowledge, offer online consultation, build trust with users, and grow through a modern expert marketplace.",
       "description": "Become an expert on G9 Experts. Offer chat and call consultation, online services, and professional guidance across trusted categories.",
       "keywords": "become an expert, join G9 Experts, expert registration, online consultation earnings",
-      "actions": { "earningsModel": "Earnings Model" },
-      "badges": { "flexibleConsultation": "Flexible consultation", "onlineServices": "Online services", "profileVisibility": "Profile visibility", "securePayouts": "Secure payouts" },
-      "stats": { "online": { "value": "Online", "label": "Consultations" }, "flexible": { "value": "Flexible", "label": "Availability" }, "multiple": { "value": "Multiple", "label": "Categories" }, "growth": { "value": "Growth", "label": "Profile building" } },
-      "sections": { "benefits": { "title": "Why Join G9 Experts", "text": "", "items": { "chatCall": { "title": "Chat & Call Consultation", "text": "Guide users through secure online conversations and real-time calls." }, "earning": { "title": "Earning Opportunities", "text": "Earn through consultations, services, and category demand as your profile grows." }, "reputation": { "title": "Build Your Reputation", "text": "Ratings, reviews, and followers help trusted professionals stand out." } } }, "process": { "title": "Registration Process", "text": "", "items": { "create": { "title": "Create Account", "text": "Register with your basic professional details." }, "profile": { "title": "Complete Profile", "text": "Add category, expertise, experience, education, pricing, and availability." }, "review": { "title": "Review & Verification", "text": "The platform reviews details for quality and trust signals." }, "consulting": { "title": "Start Consulting", "text": "Go live and begin helping users through chat, call, or online services." } } } },
+      "actions": {
+        "earningsModel": "Earnings Model"
+      },
+      "badges": {
+        "flexibleConsultation": "Flexible consultation",
+        "onlineServices": "Online services",
+        "profileVisibility": "Profile visibility",
+        "securePayouts": "Secure payouts"
+      },
+      "stats": {
+        "online": {
+          "value": "Online",
+          "label": "Consultations"
+        },
+        "flexible": {
+          "value": "Flexible",
+          "label": "Availability"
+        },
+        "multiple": {
+          "value": "Multiple",
+          "label": "Categories"
+        },
+        "growth": {
+          "value": "Growth",
+          "label": "Profile building"
+        }
+      },
+      "sections": {
+        "benefits": {
+          "title": "Why Join G9 Experts",
+          "text": "",
+          "items": {
+            "chatCall": {
+              "title": "Chat & Call Consultation",
+              "text": "Guide users through secure online conversations and real-time calls."
+            },
+            "earning": {
+              "title": "Earning Opportunities",
+              "text": "Earn through consultations, services, and category demand as your profile grows."
+            },
+            "reputation": {
+              "title": "Build Your Reputation",
+              "text": "Ratings, reviews, and followers help trusted professionals stand out."
+            }
+          }
+        },
+        "process": {
+          "title": "Registration Process",
+          "text": "",
+          "items": {
+            "create": {
+              "title": "Create Account",
+              "text": "Register with your basic professional details."
+            },
+            "profile": {
+              "title": "Complete Profile",
+              "text": "Add category, expertise, experience, education, pricing, and availability."
+            },
+            "review": {
+              "title": "Review & Verification",
+              "text": "The platform reviews details for quality and trust signals."
+            },
+            "consulting": {
+              "title": "Start Consulting",
+              "text": "Go live and begin helping users through chat, call, or online services."
+            }
+          }
+        }
+      },
       "linksTitle": "Expert Resources",
-      "links": { "guidelines": "Expert Guidelines", "earnings": "Earnings Model", "support": "Support" },
-      "cta": { "main": { "title": "Ready to grow as a verified professional?", "text": "Create your expert profile and start building trust with users online." } }
+      "links": {
+        "guidelines": "Expert Guidelines",
+        "earnings": "Earnings Model",
+        "support": "Support"
+      },
+      "cta": {
+        "main": {
+          "title": "Ready to grow as a verified professional?",
+          "text": "Create your expert profile and start building trust with users online."
+        }
+      }
     },
     "guidelines": {
       "label": "For Experts",
@@ -362,10 +1098,58 @@
       "subtitle": "Professional standards for expert profiles, communication, pricing, user trust, and platform conduct on G9 Experts.",
       "description": "Read G9 Experts expert guidelines covering profile setup, communication standards, pricing guidance, user trust, and platform rules.",
       "keywords": "G9 Experts expert guidelines, expert code of conduct, consultation rules, profile setup",
-      "badges": { "conduct": "Code of conduct", "profileQuality": "Profile quality", "userTrust": "User trust", "clearPricing": "Clear pricing" },
-      "sections": { "conduct": { "title": "Code of Conduct", "text": "Experts should provide clear, respectful, honest, and category-appropriate guidance.", "items": { "respect": "Use respectful language and avoid misleading claims.", "expertise": "Stay within your expertise and explain limitations clearly.", "noOffPlatform": "Do not request off-platform payments or unsafe personal information.", "professional": "Keep consultation communication professional and solution-focused." } }, "profile": { "title": "Profile Setup Checklist", "text": "", "items": { "photo": "Add a clear profile photo, category, expertise, education, and experience.", "summary": "Write a simple professional summary users can understand quickly.", "pricing": "Set transparent chat, call, and service pricing where available.", "availability": "Keep availability and language preferences accurate." } }, "trust": { "title": "User Trust Standards", "text": "", "items": { "accuracy": { "title": "Accuracy", "text": "Keep your profile, pricing, and service details current." }, "communication": { "title": "Communication", "text": "Respond clearly, avoid jargon, and summarize practical next steps." }, "quality": { "title": "Quality", "text": "A consistent user experience improves ratings, reviews, and repeat consultations." } } } },
+      "badges": {
+        "conduct": "Code of conduct",
+        "profileQuality": "Profile quality",
+        "userTrust": "User trust",
+        "clearPricing": "Clear pricing"
+      },
+      "sections": {
+        "conduct": {
+          "title": "Code of Conduct",
+          "text": "Experts should provide clear, respectful, honest, and category-appropriate guidance.",
+          "items": {
+            "respect": "Use respectful language and avoid misleading claims.",
+            "expertise": "Stay within your expertise and explain limitations clearly.",
+            "noOffPlatform": "Do not request off-platform payments or unsafe personal information.",
+            "professional": "Keep consultation communication professional and solution-focused."
+          }
+        },
+        "profile": {
+          "title": "Profile Setup Checklist",
+          "text": "",
+          "items": {
+            "photo": "Add a clear profile photo, category, expertise, education, and experience.",
+            "summary": "Write a simple professional summary users can understand quickly.",
+            "pricing": "Set transparent chat, call, and service pricing where available.",
+            "availability": "Keep availability and language preferences accurate."
+          }
+        },
+        "trust": {
+          "title": "User Trust Standards",
+          "text": "",
+          "items": {
+            "accuracy": {
+              "title": "Accuracy",
+              "text": "Keep your profile, pricing, and service details current."
+            },
+            "communication": {
+              "title": "Communication",
+              "text": "Respond clearly, avoid jargon, and summarize practical next steps."
+            },
+            "quality": {
+              "title": "Quality",
+              "text": "A consistent user experience improves ratings, reviews, and repeat consultations."
+            }
+          }
+        }
+      },
       "linksTitle": "Expert Pages",
-      "links": { "becomeExpert": "Become an Expert", "earnings": "Earnings Model", "support": "Support" }
+      "links": {
+        "becomeExpert": "Become an Expert",
+        "earnings": "Earnings Model",
+        "support": "Support"
+      }
     },
     "earningsModel": {
       "label": "For Experts",
@@ -373,9 +1157,70 @@
       "subtitle": "Understand how experts can earn through chat, call, online services, repeat users, and profile growth opportunities.",
       "description": "Learn how G9 Experts earnings work for professionals, including chat consultation, call consultation, services, wallet flow, and growth opportunities.",
       "keywords": "G9 Experts earnings model, expert income, chat call earnings, online consultation payout",
-      "badges": { "chatEarnings": "Chat earnings", "callEarnings": "Call earnings", "serviceIncome": "Service income", "walletFlow": "Wallet flow" },
-      "sections": { "earn": { "title": "How Experts Earn", "text": "Experts can build income by offering timely, reliable, and valuable consultation experiences.", "items": { "chat": { "title": "Chat Consultation", "text": "Earn from text-based consultation sessions where pricing is shown before starting." }, "call": { "title": "Call Consultation", "text": "Offer real-time voice support for users who need deeper discussion." }, "services": { "title": "Online Services", "text": "Create service-style offerings where users can book defined professional help." }, "growth": { "title": "Growth Opportunities", "text": "Strong ratings, fast responses, and useful guidance can improve profile trust." } } }, "examples": { "title": "Income Example Cards", "text": "Actual earnings depend on availability, demand, pricing, consultation quality, and platform policies.", "items": { "starter": { "title": "Starter Expert", "text": "Focus on fast replies, profile completeness, and helpful short sessions." }, "growing": { "title": "Growing Expert", "text": "Reviews and repeat users can improve visibility and consultation volume." }, "service": { "title": "Service Expert", "text": "Combine consultation with ready-to-book online services." } } }, "payments": { "title": "Wallet and Payment Process", "text": "", "items": { "usersPay": "Users pay through supported wallet or payment flows.", "records": "Consultation and service records help track activity.", "payout": "Payout and settlement details follow platform rules and verification requirements.", "details": "Experts should keep bank, identity, and tax-related information accurate where required." } } },
-      "cta": { "main": { "title": "Start building your expert income online", "text": "Create a complete profile, follow guidelines, and offer professional guidance users can trust." } }
+      "badges": {
+        "chatEarnings": "Chat earnings",
+        "callEarnings": "Call earnings",
+        "serviceIncome": "Service income",
+        "walletFlow": "Wallet flow"
+      },
+      "sections": {
+        "earn": {
+          "title": "How Experts Earn",
+          "text": "Experts can build income by offering timely, reliable, and valuable consultation experiences.",
+          "items": {
+            "chat": {
+              "title": "Chat Consultation",
+              "text": "Earn from text-based consultation sessions where pricing is shown before starting."
+            },
+            "call": {
+              "title": "Call Consultation",
+              "text": "Offer real-time voice support for users who need deeper discussion."
+            },
+            "services": {
+              "title": "Online Services",
+              "text": "Create service-style offerings where users can book defined professional help."
+            },
+            "growth": {
+              "title": "Growth Opportunities",
+              "text": "Strong ratings, fast responses, and useful guidance can improve profile trust."
+            }
+          }
+        },
+        "examples": {
+          "title": "Income Example Cards",
+          "text": "Actual earnings depend on availability, demand, pricing, consultation quality, and platform policies.",
+          "items": {
+            "starter": {
+              "title": "Starter Expert",
+              "text": "Focus on fast replies, profile completeness, and helpful short sessions."
+            },
+            "growing": {
+              "title": "Growing Expert",
+              "text": "Reviews and repeat users can improve visibility and consultation volume."
+            },
+            "service": {
+              "title": "Service Expert",
+              "text": "Combine consultation with ready-to-book online services."
+            }
+          }
+        },
+        "payments": {
+          "title": "Wallet and Payment Process",
+          "text": "",
+          "items": {
+            "usersPay": "Users pay through supported wallet or payment flows.",
+            "records": "Consultation and service records help track activity.",
+            "payout": "Payout and settlement details follow platform rules and verification requirements.",
+            "details": "Experts should keep bank, identity, and tax-related information accurate where required."
+          }
+        }
+      },
+      "cta": {
+        "main": {
+          "title": "Start building your expert income online",
+          "text": "Create a complete profile, follow guidelines, and offer professional guidance users can trust."
+        }
+      }
     },
     "support": {
       "label": "Help Center",
@@ -384,11 +1229,167 @@
       "description": "Contact G9 Experts support for help with users, experts, payments, wallet recharge, chat, call, bookings, refunds, and technical issues.",
       "keywords": "G9 Experts support, help center, wallet help, chat call support, payment support",
       "searchPlaceholder": "Search help topics, wallet, chat, call, payment...",
-      "badges": { "userHelp": "User help", "expertHelp": "Expert help", "paymentHelp": "Payment help", "technicalSupport": "Technical support" },
-      "sections": { "contact": { "title": "Contact Support", "text": "Choose the support area closest to your issue so the team can respond with the right context.", "items": { "user": { "title": "User Help", "text": "Help with finding experts, consultation flow, reviews, accounts, and categories." }, "expert": { "title": "Expert Help", "text": "Help with onboarding, profile setup, availability, pricing, and platform rules." }, "payment": { "title": "Payment Help", "text": "Wallet recharge, transaction status, billing questions, and refund review support." }, "chatCall": { "title": "Chat & Call Help", "text": "Support for connection issues, session flow, and consultation experience." }, "account": { "title": "Account Safety", "text": "Login concerns, suspicious activity, privacy requests, and account updates." }, "technical": { "title": "Technical Help", "text": "Page loading, mobile browser, notifications, and performance-related issues." } } }, "common": { "title": "Common Issues", "text": "", "items": { "walletRecharge": { "question": "My wallet recharge is not visible. What should I do?", "answer": "Check transaction status and wait briefly for confirmation. If it still does not update, contact support with payment details." }, "cannotStart": { "question": "I cannot start chat or call.", "answer": "Confirm login status, wallet balance, internet connectivity, and expert availability." }, "reportIssue": { "question": "How do I report an expert or consultation issue?", "answer": "Share the consultation details, expert profile, and issue summary through support." }, "onboarding": { "question": "Can experts get onboarding help?", "answer": "Yes. Experts can use the guidelines, earnings model page, and support center for onboarding help." } } } },
+      "badges": {
+        "userHelp": "User help",
+        "expertHelp": "Expert help",
+        "paymentHelp": "Payment help",
+        "technicalSupport": "Technical support"
+      },
+      "sections": {
+        "contact": {
+          "title": "Contact Support",
+          "text": "Choose the support area closest to your issue so the team can respond with the right context.",
+          "items": {
+            "user": {
+              "title": "User Help",
+              "text": "Help with finding experts, consultation flow, reviews, accounts, and categories."
+            },
+            "expert": {
+              "title": "Expert Help",
+              "text": "Help with onboarding, profile setup, availability, pricing, and platform rules."
+            },
+            "payment": {
+              "title": "Payment Help",
+              "text": "Wallet recharge, transaction status, billing questions, and refund review support."
+            },
+            "chatCall": {
+              "title": "Chat & Call Help",
+              "text": "Support for connection issues, session flow, and consultation experience."
+            },
+            "account": {
+              "title": "Account Safety",
+              "text": "Login concerns, suspicious activity, privacy requests, and account updates."
+            },
+            "technical": {
+              "title": "Technical Help",
+              "text": "Page loading, mobile browser, notifications, and performance-related issues."
+            }
+          }
+        },
+        "common": {
+          "title": "Common Issues",
+          "text": "",
+          "items": {
+            "walletRecharge": {
+              "question": "My wallet recharge is not visible. What should I do?",
+              "answer": "Check transaction status and wait briefly for confirmation. If it still does not update, contact support with payment details."
+            },
+            "cannotStart": {
+              "question": "I cannot start chat or call.",
+              "answer": "Confirm login status, wallet balance, internet connectivity, and expert availability."
+            },
+            "reportIssue": {
+              "question": "How do I report an expert or consultation issue?",
+              "answer": "Share the consultation details, expert profile, and issue summary through support."
+            },
+            "onboarding": {
+              "question": "Can experts get onboarding help?",
+              "answer": "Yes. Experts can use the guidelines, earnings model page, and support center for onboarding help."
+            }
+          }
+        }
+      },
       "linksTitle": "Quick Help Links",
-      "links": { "faq": "FAQ", "wallet": "Wallet", "privacy": "Privacy Policy", "terms": "Terms & Conditions" },
-      "cta": { "main": { "title": "Still need help?", "text": "Use the support center to get the right assistance for your account, payment, or consultation issue." } }
+      "links": {
+        "faq": "FAQ",
+        "wallet": "Wallet",
+        "privacy": "Privacy Policy",
+        "terms": "Terms & Conditions"
+      },
+      "cta": {
+        "main": {
+          "title": "Still need help?",
+          "text": "Use the support center to get the right assistance for your account, payment, or consultation issue."
+        }
+      }
+    }
+  },
+  "trustStats": {
+    "kicker": "Live Trust Signals",
+    "title": "Trusted by Thousands of Users",
+    "subtitle": "Connect instantly with verified experts and trusted online services across multiple categories.",
+    "stats": {
+      "happyUsersValue": "1000+",
+      "happyUsersLabel": "Happy Users",
+      "verifiedValue": "Verified",
+      "verifiedLabel": "Verified Experts",
+      "secureValue": "Secure",
+      "secureLabel": "Chat & Call",
+      "categoriesValue": "20+",
+      "categoriesLabel": "Categories",
+      "responseValue": "Fast",
+      "responseLabel": "Response",
+      "servicesValue": "Trusted",
+      "servicesLabel": "Online Services"
+    }
+  },
+  "testimonials": {
+    "kicker": "Testimonials",
+    "title": "What Users Say",
+    "subtitle": "Thousands of users trust G9 Experts for instant professional guidance.",
+    "ratingAria": "5 out of 5 star rating",
+    "verifiedUser": "Verified User",
+    "items": {
+      "ritika": {
+        "name": "Ritika Sharma",
+        "profession": "Career Coach",
+        "review": "I connected with a career expert within minutes and got clear guidance for interview prep. The chat felt professional and useful."
+      },
+      "amit": {
+        "name": "Amit Verma",
+        "profession": "Lawyer",
+        "review": "The lawyer consultation saved me a lot of time. I received a fast response and the advice was explained in simple steps."
+      },
+      "neha": {
+        "name": "Neha Kapoor",
+        "profession": "Doctor",
+        "review": "I needed quick health guidance late evening. The verified doctor responded calmly and helped me understand what to do next."
+      },
+      "karan": {
+        "name": "Karan Malhotra",
+        "profession": "Startup Founder",
+        "review": "For a business decision, the expert call was direct and practical. It felt convenient to speak with someone verified so quickly."
+      },
+      "priya": {
+        "name": "Priya Nair",
+        "profession": "Financial Advisor",
+        "review": "The finance expert helped me compare options without pressure. I liked the trust signals and the response was very quick."
+      },
+      "mohit": {
+        "name": "Mohit Bansal",
+        "profession": "Fitness Expert",
+        "review": "I used instant chat for fitness guidance and got a realistic plan. The expert understood my schedule and kept the advice simple."
+      },
+      "ananya": {
+        "name": "Ananya Singh",
+        "profession": "Student",
+        "review": "The career consultation helped me choose a better path after graduation. It was easy to connect and the expert was patient."
+      },
+      "sahil": {
+        "name": "Sahil Mehta",
+        "profession": "Business Consultant",
+        "review": "I booked a quick call for pricing strategy. The consultant gave useful points I could apply the same day."
+      },
+      "farah": {
+        "name": "Farah Khan",
+        "profession": "Freelancer",
+        "review": "I got legal and payment advice for a freelance contract. The verified expert made the process feel safe and convenient."
+      },
+      "dev": {
+        "name": "Dev Patel",
+        "profession": "Astrologer",
+        "review": "The astrologer call started quickly and the guidance was balanced. I liked that everything happened inside one clean platform."
+      },
+      "isha": {
+        "name": "Isha Arora",
+        "profession": "Doctor",
+        "review": "A short call helped me decide the right next step for a family health concern. The experience felt private and reliable."
+      },
+      "rohan": {
+        "name": "Rohan Gupta",
+        "profession": "Startup Founder",
+        "review": "I needed urgent advice before a vendor meeting. The expert joined fast and gave clear, practical guidance without wasting time."
+      }
     }
   }
 }

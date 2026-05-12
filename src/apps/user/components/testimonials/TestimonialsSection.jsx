@@ -1,9 +1,11 @@
 import React, { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { testimonials } from "./testimonialsData";
 import TestimonialCard from "./TestimonialCard";
 import "./TestimonialsSection.css";
 
 const TestimonialsSection = ({ onViewAll }) => {
+  const { t } = useTranslation();
   const rowRef = useRef(null);
   const pausedRef = useRef(false);
 
@@ -35,12 +37,12 @@ const TestimonialsSection = ({ onViewAll }) => {
     <section className="home-section-card premium-testimonials-section">
       <div className="section-topline premium-testimonials-section__header">
         <div>
-          <span className="section-kicker">Testimonials</span>
-          <h2>What Users Say</h2>
-          <p>Thousands of users trust G9 Experts for instant professional guidance.</p>
+          <span className="section-kicker">{t("testimonials.kicker")}</span>
+          <h2>{t("testimonials.title")}</h2>
+          <p>{t("testimonials.subtitle")}</p>
         </div>
         <button type="button" className="section-link" onClick={onViewAll}>
-          View All
+          {t("common.viewAll")}
         </button>
       </div>
 
@@ -63,7 +65,7 @@ const TestimonialsSection = ({ onViewAll }) => {
       >
         {displayTestimonials.map((testimonial, index) => (
           <TestimonialCard
-            key={`${testimonial.name}-${index}`}
+            key={`${testimonial.key}-${index}`}
             testimonial={testimonial}
           />
         ))}

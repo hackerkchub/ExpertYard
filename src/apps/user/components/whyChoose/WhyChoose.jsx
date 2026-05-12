@@ -13,56 +13,64 @@ import "./WhyChoose.css";
 
 const features = [
   {
-    titleKey: "whyChoose.benefits.verifiedTitle",
+    titleKey: "whyChoose.verifiedTitle",
+    descriptionKey: "whyChoose.verifiedDesc",
     title: "Verified Experts",
     description:
       "Connect with trusted professionals reviewed for reliable guidance.",
     icon: FiUserCheck,
   },
   {
-    titleKey: "whyChoose.benefits.chatTitle",
+    titleKey: "whyChoose.chatTitle",
+    descriptionKey: "whyChoose.chatDesc",
     title: "Instant Chat & Call",
     description:
       "Start secure conversations with available experts in just a few taps.",
     icon: FiMessageCircle,
   },
   {
-    titleKey: "whyChoose.benefits.paymentsTitle",
+    titleKey: "whyChoose.paymentsTitle",
+    descriptionKey: "whyChoose.paymentsDesc",
     title: "Secure Payments",
     description:
       "Use transparent wallet payments for consultations and online services.",
     icon: FiCreditCard,
   },
   {
-    titleKey: "whyChoose.benefits.servicesTitle",
+    titleKey: "whyChoose.onlineServicesTitle",
+    descriptionKey: "whyChoose.onlineServicesDesc",
     title: "Trusted Online Services",
     description:
       "Book professional services and expert solutions from one platform.",
     icon: FiLayers,
   },
   {
-    titleKey: "whyChoose.benefits.categoriesTitle",
+    titleKey: "whyChoose.categoriesTitle",
+    descriptionKey: "whyChoose.categoriesDesc",
     title: "20+ Categories",
     description:
       "Explore help across career, legal, health, business, astrology, and more.",
     icon: FiLayers,
   },
   {
-    titleKey: "whyChoose.benefits.responseTitle",
+    titleKey: "whyChoose.responseTitle",
+    descriptionKey: "whyChoose.responseDesc",
     title: "Fast Support",
     description:
       "Get quick responses when you need practical guidance without delays.",
     icon: FiClock,
   },
   {
-    titleKey: "whyChoose.benefits.bookingTitle",
+    titleKey: "whyChoose.bookingTitle",
+    descriptionKey: "whyChoose.bookingDesc",
     title: "Easy Booking",
     description:
       "Choose the right expert or service and book with a simple flow.",
     icon: FiCalendar,
   },
   {
-    titleKey: "whyChoose.benefits.guidanceTitle",
+    titleKey: "whyChoose.guidanceTitle",
+    descriptionKey: "whyChoose.guidanceDesc",
     title: "Professional Guidance",
     description:
       "Make confident decisions with support from experienced professionals.",
@@ -100,7 +108,7 @@ const WhyChoose = () => {
                   <Icon aria-hidden="true" />
                 </span>
                 <h3>{t(item.titleKey, item.title)}</h3>
-                <p>{t(`${item.titleKey}Desc`, item.description)}</p>
+                <p>{t(item.descriptionKey, item.description)}</p>
               </article>
             );
           })}

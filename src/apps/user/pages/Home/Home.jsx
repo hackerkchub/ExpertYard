@@ -83,18 +83,18 @@ const QUICK_ACTIONS = [
 ];
 
 const HERO_CHIPS = [
-  "Legal Help",
-  "Health Advice",
-  "Business Services",
-  "Career Guidance",
-  "Astrology",
+  "home.heroChips.legalHelp",
+  "home.heroChips.healthAdvice",
+  "home.heroChips.businessServices",
+  "home.heroChips.careerGuidance",
+  "home.heroChips.astrology",
 ];
 
 const FINAL_STATS = [
-  { value: "50+", label: "Categories" },
-  { value: "1000+", label: "Experts" },
-  { value: "1L+", label: "Consultations" },
-  { value: "20K+", label: "Reviews" },
+  { value: "50+", labelKey: "home.finalStats.categories" },
+  { value: "1000+", labelKey: "home.finalStats.experts" },
+  { value: "1L+", labelKey: "home.finalStats.consultations" },
+  { value: "20K+", labelKey: "home.finalStats.reviews" },
 ];
 
 const FALLBACK_CATEGORIES = [
@@ -141,67 +141,59 @@ const STATIC_SEO_KEYWORDS = [
 
 const FAQ_ITEMS = [
   {
-    question: "What is G9Experts?",
-    answer:
-      "G9Experts is an online expert consultation platform where users can connect with verified professionals for advice across personal, professional, business, legal, health, education, finance, property, astrology, relationship, and lifestyle topics.",
+    questionKey: "home.homeFaq.whatIs.question",
+    answerKey: "home.homeFaq.whatIs.answer",
   },
   {
-    question: "How can I talk to an expert online?",
-    answer:
-      "Choose a category, browse verified expert profiles, and start an online consultation by chat or call from the G9Experts user app.",
+    questionKey: "home.homeFaq.talkOnline.question",
+    answerKey: "home.homeFaq.talkOnline.answer",
   },
   {
-    question: "Are experts on G9Experts verified?",
-    answer:
-      "G9Experts highlights verified expert profiles so users can review professional details, ratings, and consultation options before connecting.",
+    questionKey: "home.homeFaq.verified.question",
+    answerKey: "home.homeFaq.verified.answer",
   },
   {
-    question: "Can I chat or call experts instantly?",
-    answer:
-      "Yes. Available experts can be reached through instant chat or call consultation, depending on their current availability and pricing setup.",
+    questionKey: "home.homeFaq.instant.question",
+    answerKey: "home.homeFaq.instant.answer",
   },
   {
-    question: "How does wallet payment work?",
-    answer:
-      "Users can add balance to the secure G9Experts wallet and pay for eligible chat, call, or service consultations through wallet deduction.",
+    questionKey: "home.homeFaq.wallet.question",
+    answerKey: "home.homeFaq.wallet.answer",
   },
   {
-    question: "Which categories are available on G9Experts?",
-    answer:
-      "G9Experts supports multiple consultation categories including legal, health, astrology, fitness, business, career, finance, property, relationship, education, parenting, and more as available on the platform.",
+    questionKey: "home.homeFaq.categories.question",
+    answerKey: "home.homeFaq.categories.answer",
   },
   {
-    question: "Is G9Experts available 24/7?",
-    answer:
-      "Users can browse the platform anytime. Expert availability for chat or call depends on each verified professional's live status and schedule.",
+    questionKey: "home.homeFaq.availability.question",
+    answerKey: "home.homeFaq.availability.answer",
   },
   {
-    question: "How do I choose the right expert?",
-    answer:
-      "Compare expert profiles, categories, services, ratings, reviews, pricing, and availability to choose the professional who best matches your consultation need.",
+    questionKey: "home.homeFaq.choose.question",
+    answerKey: "home.homeFaq.choose.answer",
   },
 ];
 
 const TRUST_POINTS = [
-  { title: "Verified Experts", icon: FiShield },
-  { title: "Instant Chat & Call", icon: FiHeadphones },
-  { title: "Secure Wallet Payment", icon: FiLock },
-  { title: "Multiple Categories", icon: FiLayers },
-  { title: "Affordable Per-Minute Consultation", icon: FiCreditCard },
-  { title: "24/7 Expert Availability", icon: FiZap },
-  { title: "Transparent Expert Profiles", icon: FiUsers },
-  { title: "Ratings & Reviews", icon: FiStar },
+  { titleKey: "home.trustPoints.verifiedExperts", icon: FiShield },
+  { titleKey: "home.trustPoints.instantChatCall", icon: FiHeadphones },
+  { titleKey: "home.trustPoints.secureWalletPayment", icon: FiLock },
+  { titleKey: "home.trustPoints.multipleCategories", icon: FiLayers },
+  { titleKey: "home.trustPoints.affordableConsultation", icon: FiCreditCard },
+  { titleKey: "home.trustPoints.expertAvailability", icon: FiZap },
+  { titleKey: "home.trustPoints.transparentProfiles", icon: FiUsers },
+  { titleKey: "home.trustPoints.ratingsReviews", icon: FiStar },
 ];
 
 const INTERNAL_LINKS = [
-  { label: "Browse verified expert categories", to: "/user/categories" },
-  { label: "Find online experts for chat or call", to: "/user/call-chat?page=1" },
-  { label: "Book popular expert services", to: "/user/all-services" },
-  { label: "Learn about G9Experts", to: "/user/about" },
-  { label: "Contact G9Experts support", to: "/user/contact" },
-  { label: "Read G9Experts privacy policy", to: "/user/privacy" },
-  { label: "View G9Experts terms and conditions", to: "/user/terms" },
-  { label: "Read expert consultation FAQs", to: "/user/faq" },
+  { labelKey: "home.internalLinks.categories", to: "/user/categories" },
+  { labelKey: "home.internalLinks.callChat", to: "/user/call-chat?page=1" },
+  { labelKey: "home.internalLinks.services", to: "/user/all-services" },
+  { labelKey: "home.internalLinks.about", to: "/user/about" },
+  { labelKey: "home.internalLinks.contact", to: "/user/contact" },
+  { labelKey: "home.internalLinks.privacy", to: "/user/privacy" },
+  { labelKey: "home.internalLinks.terms", to: "/user/terms" },
+  { labelKey: "home.internalLinks.faq", to: "/user/faq" },
 ];
 
 function toSeoSlug(value = "") {
@@ -367,10 +359,10 @@ const HomePage = () => {
         "@type": "FAQPage",
         mainEntity: FAQ_ITEMS.map((item) => ({
           "@type": "Question",
-          name: item.question,
+          name: t(item.questionKey),
           acceptedAnswer: {
             "@type": "Answer",
-            text: item.answer,
+            text: t(item.answerKey),
           },
         })),
       },
@@ -399,25 +391,22 @@ const HomePage = () => {
         })),
       },
     ],
-    [seoCategories, seoServices]
+    [seoCategories, seoServices, t]
   );
 
   useSeo({
-    title: "G9Experts - Talk to Verified Experts Online | Instant Chat & Call Consultation",
-    description:
-      "Connect with verified experts online on G9Experts. Get instant chat and call consultation for legal, health, astrology, fitness, business, career, finance, property, relationship, education and more.",
+    title: t("home.seoMeta.title"),
+    description: t("home.seoMeta.description"),
     canonicalPath: "/user",
     keywords: dynamicKeywords,
     og: {
-      title: "G9Experts - Talk to Verified Experts Online",
-      description:
-        "Get instant chat and call consultation from verified experts across legal, health, astrology, fitness, business, career, finance, property, relationship, education and more.",
+      title: t("home.seoMeta.ogTitle"),
+      description: t("home.seoMeta.ogDescription"),
       image: toAbsoluteUrl("/logo-512.webp"),
     },
     twitter: {
-      title: "G9Experts - Talk to Verified Experts Online",
-      description:
-        "Connect with trusted professionals online for instant expert advice by chat or call.",
+      title: t("home.seoMeta.twitterTitle"),
+      description: t("home.seoMeta.twitterDescription"),
       image: toAbsoluteUrl("/logo-512.webp"),
     },
     structuredData: homeStructuredData,
@@ -496,30 +485,30 @@ const HomePage = () => {
               <HeroBadge>{t("home.heroBadge")}</HeroBadge>
               <HeroTitle>
                 <HeroTitleLine $delay="0.08s">
-                  Talk to Verified Experts Online
+                  {t("home.heroTitleLine1")}
                 </HeroTitleLine>
                 <HeroTitleLine $delay="0.14s">
-                  <HeroGradientWord $delay="0.14s">Get Instant Advice Anytime</HeroGradientWord>
+                  <HeroGradientWord $delay="0.14s">{t("home.heroTitleLine2")}</HeroGradientWord>
                 </HeroTitleLine>
               </HeroTitle>
               <HeroTitleAccent aria-hidden="true" />
               <HeroSubtitle>
-                G9Experts connects you with trusted professionals across multiple categories like legal, health, astrology, fitness, business, career, finance, property, relationship, education and more.
+                {t("home.heroSubtitleLong")}
               </HeroSubtitle>
               <HeroHighlight>{t("home.heroTrust")}</HeroHighlight>
-              <div className="hero-cta-row" aria-label="Home page expert consultation actions">
+              <div className="hero-cta-row" aria-label={t("home.heroActionsLabel")}>
                 <Link className="hero-primary-cta" to="/user/call-chat?page=1&mode=chat">
-                  Talk to Expert
+                  {t("common.talkToExpert")}
                 </Link>
                 <Link className="hero-secondary-cta" to="/user/categories">
-                  Explore Categories
+                  {t("home.exploreCategories")}
                 </Link>
               </div>
             </HeroCopy>
 
             <HeroVisual>
               <ImageShell>
-                <HeroImage src={heroExpertImage} alt="G9Experts expert panel with lawyer, doctor, astrologer, and business professionals" />
+                <HeroImage src={heroExpertImage} alt={t("home.heroImageAlt")} />
               </ImageShell>
             </HeroVisual>
 
@@ -543,13 +532,13 @@ const HomePage = () => {
 
               <PillRow aria-label={t("home.popularSearches")}>
                 <HeroPopularLabel>{t("home.popularSearches")}</HeroPopularLabel>
-                {HERO_CHIPS.map((chip) => (
+                {HERO_CHIPS.map((chipKey) => (
                   <PillButton
-                    key={chip}
+                    key={chipKey}
                     type="button"
                     onClick={() => navigate("/user/categories")}
                   >
-                    {chip}
+                    {t(chipKey)}
                   </PillButton>
                 ))}
               </PillRow>
@@ -557,7 +546,7 @@ const HomePage = () => {
           </HeroInner>
         </HeroSection>
 
-        <section className="quick-actions" aria-label="Quick actions">
+        <section className="quick-actions" aria-label={t("home.quickActionsLabel")}>
           {QUICK_ACTIONS.map((item) => {
             const Icon = item.icon;
             const title = t(item.titleKey);
@@ -594,10 +583,10 @@ const HomePage = () => {
         <section className="home-section-card home-section-card--categories">
           <div className="section-topline">
             <div>
-              <span className="section-kicker">Expert Categories</span>
-              <h2>Explore Expert Categories</h2>
+              <span className="section-kicker">{t("home.categoriesKicker")}</span>
+              <h2>{t("home.categoriesTitle")}</h2>
               <p className="section-copy">
-                Find verified experts across multiple professional categories and get instant consultation by chat or call.
+                {t("home.categoriesSubtitle")}
               </p>
             </div>
             <button type="button" className="section-link" onClick={() => navigate("/user/categories")}>
@@ -610,7 +599,7 @@ const HomePage = () => {
               type="button"
               className={`top-categories-arrow top-categories-arrow--left${categoryScrollState.canScrollLeft ? "" : " top-categories-arrow--hidden"}`}
               onClick={() => scrollTopCategories("left")}
-              aria-label="Scroll categories left"
+              aria-label={t("home.scrollCategoriesLeft")}
               disabled={!categoryScrollState.canScrollLeft}
             >
               <FiChevronLeft aria-hidden="true" />
@@ -630,7 +619,7 @@ const HomePage = () => {
                         {category.image_url ? (
                           <img
                             src={category.image_url}
-                            alt={`Talk to verified ${category.name} experts online`}
+                            alt={t("home.categoryImageAlt", { category: category.name })}
                             loading="lazy"
                             decoding="async"
                           />
@@ -640,7 +629,7 @@ const HomePage = () => {
                       </div>
                       <div className="category-card__copy">
                         <strong>{category.name}</strong>
-                        <small>Talk to verified {category.name} experts online</small>
+                        <small>{t("home.categoryCardSubtitle", { category: category.name })}</small>
                       </div>
                     </Link>
                   ))}
@@ -650,7 +639,7 @@ const HomePage = () => {
               type="button"
               className={`top-categories-arrow top-categories-arrow--right${categoryScrollState.canScrollRight ? "" : " top-categories-arrow--hidden"}`}
               onClick={() => scrollTopCategories("right")}
-              aria-label="Scroll categories right"
+              aria-label={t("home.scrollCategoriesRight")}
               disabled={!categoryScrollState.canScrollRight}
             >
               <FiChevronRight aria-hidden="true" />
@@ -661,20 +650,20 @@ const HomePage = () => {
         <PopularServices services={services} loading={servicesLoading} />
 
         <section className="home-section-card home-section-card--seo-text" aria-labelledby="home-seo-heading">
-          <span className="section-kicker">Online Expert Consultation</span>
-          <h2 id="home-seo-heading">Instant expert advice from trusted professionals</h2>
+          <span className="section-kicker">{t("home.seoKicker")}</span>
+          <h2 id="home-seo-heading">{t("home.seoTitle")}</h2>
           <p>
-            G9Experts is an online expert consultation platform where users can instantly connect with verified professionals for personal, professional, business, legal, health, education, relationship, astrology, finance, property and lifestyle advice. Whether you need quick guidance, detailed consultation, or expert support, G9Experts helps you find the right expert anytime.
+            {t("home.seoDescription")}
           </p>
-          <div className="seo-keyword-grid" aria-label="Popular consultation searches">
+          <div className="seo-keyword-grid" aria-label={t("home.popularConsultationSearches")}>
             {topCategories.slice(0, 8).map((category) => (
               <Link key={`seo-category-${category.id}`} to={getCategoryPath(category)}>
-                Best online consultation for {category.name} services
+                {t("home.categorySeoLink", { category: category.name })}
               </Link>
             ))}
             {topServices.slice(0, 8).map((service) => (
               <Link key={`seo-service-${service.id || getServiceSlug(service)}`} to={getServicePath(service)}>
-                Get instant {getServiceName(service)} advice from trusted professionals
+                {t("home.serviceSeoLink", { service: getServiceName(service) })}
               </Link>
             ))}
           </div>
@@ -741,10 +730,10 @@ const HomePage = () => {
 
         <section className="home-section-card home-section-card--trust" aria-labelledby="why-g9experts-heading">
           <div className="section-topline section-topline--stack">
-            <span className="section-kicker">Why Choose G9Experts</span>
-            <h2 id="why-g9experts-heading">Trusted online consultation built for fast decisions</h2>
+            <span className="section-kicker">{t("home.trustKicker")}</span>
+            <h2 id="why-g9experts-heading">{t("home.trustTitle")}</h2>
             <p className="section-copy">
-              Compare experts, review pricing, and start secure chat or call consultations across multiple categories.
+              {t("home.trustSubtitle")}
             </p>
           </div>
           <div className="trust-points-grid">
@@ -752,11 +741,11 @@ const HomePage = () => {
               const Icon = point.icon;
 
               return (
-                <article key={point.title} className="trust-point-card">
+                <article key={point.titleKey} className="trust-point-card">
                   <span aria-hidden="true">
                     <Icon />
                   </span>
-                  <h3>{point.title}</h3>
+                  <h3>{t(point.titleKey)}</h3>
                 </article>
               );
             })}
@@ -785,19 +774,19 @@ const HomePage = () => {
 
         <section className="home-section-card home-section-card--faq" aria-labelledby="home-faq-heading">
           <div className="section-topline section-topline--stack">
-            <span className="section-kicker">FAQ</span>
-            <h2 id="home-faq-heading">Expert consultation questions</h2>
+            <span className="section-kicker">{t("home.faqKicker")}</span>
+            <h2 id="home-faq-heading">{t("home.faqTitle")}</h2>
             <p className="section-copy">
-              Answers for users comparing online expert consultation, wallet payment, chat, call, and category availability.
+              {t("home.faqSubtitle")}
             </p>
           </div>
           <div className="home-faq-list">
             {FAQ_ITEMS.map((item) => (
-              <details key={item.question} className="home-faq-item">
+              <details key={item.questionKey} className="home-faq-item">
                 <summary>
-                  <h3>{item.question}</h3>
+                  <h3>{t(item.questionKey)}</h3>
                 </summary>
-                <p>{item.answer}</p>
+                <p>{t(item.answerKey)}</p>
               </details>
             ))}
           </div>
@@ -807,13 +796,13 @@ const HomePage = () => {
 
         <section className="home-section-card home-section-card--links" aria-labelledby="internal-links-heading">
           <div className="section-topline section-topline--stack">
-            <span className="section-kicker">Helpful Links</span>
-            <h2 id="internal-links-heading">Find expert consultation pages faster</h2>
+            <span className="section-kicker">{t("home.helpfulLinksKicker")}</span>
+            <h2 id="internal-links-heading">{t("home.helpfulLinksTitle")}</h2>
           </div>
-          <nav className="internal-link-grid" aria-label="G9Experts important pages">
+          <nav className="internal-link-grid" aria-label={t("home.importantPagesAria")}>
             {INTERNAL_LINKS.map((item) => (
               <Link key={item.to} to={item.to}>
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             ))}
           </nav>
@@ -834,11 +823,11 @@ const HomePage = () => {
           </button>
         </section>
 
-        <section className="stats-row-app" aria-label="Platform stats">
+        <section className="stats-row-app" aria-label={t("home.platformStatsAria")}>
           {FINAL_STATS.map((item) => (
-            <article key={item.label} className="stats-row-app__item">
+            <article key={item.labelKey} className="stats-row-app__item">
               <strong>{item.value}</strong>
-              <span>{item.label}</span>
+              <span>{t(item.labelKey)}</span>
             </article>
           ))}
         </section>

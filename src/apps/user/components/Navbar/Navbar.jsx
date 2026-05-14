@@ -30,6 +30,7 @@ import {
   FiChevronDown,
   FiClock,
   FiGrid,
+  FiShare2,
 } from "react-icons/fi";
 import { FaWallet } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -64,6 +65,34 @@ const Navbar = () => {
     setOpen(false);
   };
 
+  // Share referral link function
+  const shareReferral = async () => {
+  if (!isLoggedIn || !user?.referral_code) {
+    console.error("No referral code found");
+    return;
+  }
+
+  const referralLink =
+    `${window.location.origin}/expert/register?ref=${user.referral_code}`;
+
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: "G9Expert Refer & Earn",
+        text: "Join G9Expert as an expert using my referral link and earn rewards!",
+        url: referralLink,
+      });
+    } else {
+      await navigator.clipboard.writeText(referralLink);
+      alert("Referral link copied!");
+    }
+  } catch (err) {
+    if (err.name !== "AbortError") {
+      console.error(err);
+      alert("Failed to share referral link");
+    }
+  }
+};
   useEffect(() => {
     const closePopup = () => setPopupOpen(false);
     const closeMenus = () => setOpen(false);
@@ -178,14 +207,23 @@ const Navbar = () => {
               </LanguageSwitcher>
 
               {isLoggedIn && (
-                <button
-                  ref={userBtnRef}
-                  className="essential"
-                  onClick={togglePopup}
-                  title={t("nav.profile")}
-                >
-                  <FiUser />
-                </button>
+                <>
+                  <button
+                    className="essential"
+                    onClick={shareReferral}
+                    title={t("common.shareReferral")}
+                  >
+                    <FiShare2 />
+                  </button>
+                  <button
+                    ref={userBtnRef}
+                    className="essential"
+                    onClick={togglePopup}
+                    title={t("nav.profile")}
+                  >
+                    <FiUser />
+                  </button>
+                </>
               )}
             </IconBox>
 
@@ -213,6 +251,10 @@ const Navbar = () => {
 
             {isLoggedIn ? (
               <>
+                <MobileItem onClick={shareReferral}>
+                  <FiShare2 />
+                  {t("common.shareReferral")}
+                </MobileItem>
                 <MobileItem
                   onClick={() => {
                     logout();

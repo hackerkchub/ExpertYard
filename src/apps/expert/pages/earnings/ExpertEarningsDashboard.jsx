@@ -31,6 +31,7 @@ import {
   FiPlus,
   FiStar,
   FiTrash2,
+  FiBriefcase,
 } from "react-icons/fi";
 import { HiOutlineCurrencyRupee } from "react-icons/hi";
 import { MdAttachMoney, MdVerified, MdWarning, MdInfo } from "react-icons/md";
@@ -138,7 +139,7 @@ import {
 
 import {
   getEarningSummaryApi,
-  getEarningHistoryApi
+  getWalletHistoryApi
 } from "../../../../shared/api/expertapi/earning.api";
 
 import {
@@ -193,6 +194,9 @@ const ExpertEarningsDashboard = () => {
   // Expanded view state
   const [expandedWithdrawals, setExpandedWithdrawals] = useState(false);
   const [expandedTransactions, setExpandedTransactions] = useState(false);
+  
+  // Transaction pagination state
+  const [transactionLimit, setTransactionLimit] = useState(10);
 
   // New payout method form state
   const [newPayoutMethod, setNewPayoutMethod] = useState({
@@ -235,9 +239,9 @@ const ExpertEarningsDashboard = () => {
     try {
       setLoading(true);
 
-      const [summaryRes, historyRes, withdrawalRes, allWithdrawalsRes] = await Promise.all([
+      const [summaryRes, walletRes, withdrawalRes, allWithdrawalsRes] = await Promise.all([
         getEarningSummaryApi(),
-        getEarningHistoryApi(),
+        getWalletHistoryApi(),
         getWithdrawalHistoryApi(),
         getExpertAllWithdrawalsApi(),
       ]);
@@ -257,24 +261,64 @@ const ExpertEarningsDashboard = () => {
         totalWithdrawn: Number(summary.totalWithdrawn || 0),
         availableBalance: Number(summary.availableBalance || 0),
 
-        completedSessions: historyRes.data.total_records || 0,
+        completedSessions:
+          walletRes.data.data?.filter(
+            x => x.reference_type === "session_earning"
+          ).length || 0,
       });
       
-      // Process Transaction History
-      const history = historyRes?.data?.data || [];
-      if (Array.isArray(history)) {
-        const formattedTransactions = history.map((item, index) => ({
-          id: index + 1,
-          type: item.session_type,
-          amount: parseFloat(item.expert_earning || 0),
-          totalAmount: parseFloat(item.total_amount || 0),
-          commission: parseFloat(item.commission_amount || 0),
-          minutes: parseInt(item.total_minutes || 0),
-          rate: parseFloat(item.rate_per_minute || 0),
-          date: item.created_at,
-          status: "completed",
-          description: `${item.session_type} session • ${item.total_minutes} min • ₹${item.rate_per_minute}/min`,
-        }));
+      // Process Transaction History from wallet
+      const walletHistory = walletRes?.data?.data || [];
+
+      if (Array.isArray(walletHistory)) {
+        const formattedTransactions = walletHistory.map((item, index) => {
+          let txnType = "other";
+          let description = item.description || "Wallet Transaction";
+          let minutes = 0;
+          let rate = 0;
+          let commission = 0;
+
+          if (item.reference_type === "session_earning") {
+            txnType = item.session_type || "session";
+            minutes = parseInt(item.total_minutes || 0);
+            rate = parseFloat(item.rate_per_minute || 0);
+            commission = parseFloat(item.commission_amount || 0);
+
+            description =
+              item.session_type === "chat"
+                ? `Chat session • ${minutes} min`
+                : `Call session • ${minutes} min`;
+          }
+
+          else if (item.reference_type === "referral_reward") {
+            txnType = "referral";
+            description = "Referral Reward";
+          }
+
+          else if (item.reference_type === "service_booking_earning") {
+            txnType = "service";
+            description = "Service Booking Earning";
+          }
+
+          else if (item.reference_type === "withdrawal") {
+            txnType = "withdrawal";
+            description = "Withdrawal";
+          }
+
+          return {
+            id: item.id || index + 1,
+            type: txnType,
+            amount: parseFloat(item.amount || 0),
+            totalAmount: parseFloat(item.total_amount || 0),
+            commission,
+            minutes,
+            rate,
+            date: item.created_at,
+            status: "completed",
+            description,
+          };
+        });
+
         setTransactions(formattedTransactions);
       }
 
@@ -740,11 +784,22 @@ const ExpertEarningsDashboard = () => {
   };
 
   const getTransactionTypeIcon = (type) => {
-    switch(type?.toLowerCase()) {
-      case 'chat':
+    switch (type?.toLowerCase()) {
+      case "chat":
         return <FiMail size={16} />;
-      case 'call':
+
+      case "call":
         return <FiPhone size={16} />;
+
+      case "referral":
+        return <FiShare2 size={16} />;
+
+      case "service":
+        return <FiBriefcase size={16} />;
+
+      case "withdrawal":
+        return <FiCreditCard size={16} />;
+
       default:
         return <FiDollarSign size={16} />;
     }
@@ -1380,39 +1435,62 @@ const ExpertEarningsDashboard = () => {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {filteredTransactions.length > 0 ? (
-                  filteredTransactions.map((transaction) => (
-                    <TransactionItem key={transaction.id}>
-                      <div className="transaction-icon">
-                        {getTransactionTypeIcon(transaction.type)}
-                      </div>
-                      
-                      <div className="transaction-details">
-                        <div className="transaction-title">
-                          {transaction.description}
-                        </div>
-                        <div className="transaction-date">
-                          {formatDate(transaction.date)}
-                        </div>
-                        <TransactionMeta>
-                          <span>Rate: ₹{transaction.rate}/min</span>
-                          <span>Commission: {formatCurrency(transaction.commission)}</span>
-                        </TransactionMeta>
-                      </div>
-                      
-                      <div className="transaction-amount">
-                        <div className="amount">
-                          +{formatCurrency(transaction.amount)}
-                        </div>
-                        <div className="status" style={{ color: getStatusColor(transaction.status) }}>
-                          {transaction.status}
-                        </div>
-                      </div>
-                      
-                      <button className="transaction-action">
-                        <FiChevronRight />
+                  <>
+                    {filteredTransactions
+                      .slice(0, transactionLimit)
+                      .map((transaction) => (
+                        <TransactionItem key={transaction.id}>
+                          <div className="transaction-icon">
+                            {getTransactionTypeIcon(transaction.type)}
+                          </div>
+                          
+                          <div className="transaction-details">
+                            <div className="transaction-title">
+                              {transaction.description}
+                            </div>
+                            <div className="transaction-date">
+                              {formatDate(transaction.date)}
+                            </div>
+                            <TransactionMeta>
+                              <span>Rate: ₹{transaction.rate}/min</span>
+                              {/* <span>Commission: {formatCurrency(transaction.commission)}</span> */}
+                            </TransactionMeta>
+                          </div>
+                          
+                          <div className="transaction-amount">
+                            <div className="amount">
+                              +{formatCurrency(transaction.amount)}
+                            </div>
+                            <div className="status" style={{ color: getStatusColor(transaction.status) }}>
+                              {transaction.status}
+                            </div>
+                          </div>
+                          
+                          {/* <button className="transaction-action">
+                            <FiChevronRight />
+                          </button> */}
+                        </TransactionItem>
+                      ))}
+                    
+                    {filteredTransactions.length > transactionLimit && (
+                      <button
+                        onClick={() => setTransactionLimit(prev => prev + 10)}
+                        style={{
+                          marginTop: "16px",
+                          width: "100%",
+                          padding: "12px",
+                          borderRadius: "12px",
+                          border: "1px solid #e2e8f0",
+                          background: "#f8fafc",
+                          cursor: "pointer",
+                          fontWeight: 600,
+                          color: "#8b5cf6"
+                        }}
+                      >
+                        View More
                       </button>
-                    </TransactionItem>
-                  ))
+                    )}
+                  </>
                 ) : (
                   <EmptyState>
                     <FiRefreshCw size={32} />
@@ -2110,7 +2188,7 @@ const ExpertEarningsDashboard = () => {
 
             {/* Desktop Table View */}
             <WithdrawalsTable>
-              <table>
+              <td>
                 <thead>
                   <tr>
                     <TableHeaderCell>ID</TableHeaderCell>
@@ -2124,6 +2202,7 @@ const ExpertEarningsDashboard = () => {
                     <TableHeaderCell>Actions</TableHeaderCell>
                   </tr>
                 </thead>
+                </td>
                 <tbody>
                   {paginatedWithdrawals.length > 0 ? (
                     paginatedWithdrawals.map((withdrawal) => (
@@ -2186,7 +2265,8 @@ const ExpertEarningsDashboard = () => {
                     </tr>
                   )}
                 </tbody>
-              </table>
+              {/* </table> */}
+
             </WithdrawalsTable>
 
             {/* Pagination */}

@@ -459,7 +459,7 @@ const ExpertChat = () => {
                           
                           <span className="time">
                             {msg.time}
-                            {msg.isTemp && " (sending...)"}
+                            {msg.isTemp }
                           </span>
                         </Bubble>
                       </Message>

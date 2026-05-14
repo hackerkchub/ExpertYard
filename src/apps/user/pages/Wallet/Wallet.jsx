@@ -21,7 +21,7 @@ const formatCurrency = (amount) => new Intl.NumberFormat('en-IN', { style: 'curr
 
 const formatDate = (dateString) => new Date(dateString).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-// Service type icons mapping
+// Service type icons mapping for expenses
 const getServiceIcon = (serviceType) => {
   switch(serviceType?.toLowerCase()) {
     case 'call':
@@ -37,7 +37,7 @@ const getServiceIcon = (serviceType) => {
   }
 };
 
-// Get service display name
+// Get service display name for expenses
 const getServiceDisplayName = (serviceType) => {
   switch(serviceType?.toLowerCase()) {
     case 'call':
@@ -50,6 +50,34 @@ const getServiceDisplayName = (serviceType) => {
       return 'Service Booking';
     default:
       return serviceType || 'Other Service';
+  }
+};
+
+// Fix 1: Get credit icon based on source
+const getCreditIcon = (source) => {
+  switch (source?.toLowerCase()) {
+    case "referral":
+      return "🎁";
+    case "topup":
+    case "wallet_topup":
+    case "razorpay":
+      return "💰";
+    default:
+      return "💳";
+  }
+};
+
+// Fix 2: Get credit display name based on source
+const getCreditDisplayName = (item) => {
+  switch (item.source?.toLowerCase()) {
+    case "referral":
+      return "Referral Reward";
+    case "topup":
+    case "wallet_topup":
+    case "razorpay":
+      return "Wallet Top-up";
+    default:
+      return "Wallet Credit";
   }
 };
 
@@ -340,10 +368,17 @@ const WalletPage = () => {
           ) : (
             <>
               {filteredTransactions.slice(0, visibleCount).map((item) => {
+                // Fix 3: Updated rendering logic
                 const serviceType = item.service_type || item.source;
-                const isExpense = activeTab === 'expenses';
-                const displayName = isExpense ? getServiceDisplayName(serviceType) : 'Wallet Top-up';
-                const icon = isExpense ? getServiceIcon(serviceType) : "💰";
+                const isExpense = activeTab === "expenses";
+
+                const displayName = isExpense
+                  ? getServiceDisplayName(serviceType)
+                  : getCreditDisplayName(item);
+
+                const icon = isExpense
+                  ? getServiceIcon(serviceType)
+                  : getCreditIcon(item.source);
                 
                 return (
                   <ExpertCard key={item.id}>
@@ -357,6 +392,19 @@ const WalletPage = () => {
                         </strong>
                         <div className="expert-meta">
                           {formatDate(item.created_at)}
+                          {/* Fix 4: Optional better subtitle for referral bonus */}
+                          {!isExpense && item.source === "referral" && (
+                            <span style={{
+                              marginLeft: "8px",
+                              fontSize: "11px",
+                              padding: "2px 6px",
+                              background: "#ecfdf5",
+                              borderRadius: "4px",
+                              color: "#059669"
+                            }}>
+                              Referral Bonus
+                            </span>
+                          )}
                           <span className={`status ${item.status}`}>{item.status}</span>
                           {isExpense && serviceType && (
                             <span style={{ 
@@ -371,11 +419,6 @@ const WalletPage = () => {
                             </span>
                           )}
                         </div>
-                        {/* {isExpense && item.reference_id && (
-                          <div style={{ fontSize: '11px', color: '#718096', marginTop: '2px' }}>
-                            ID: {item.reference_id}
-                          </div>
-                        )} */}
                       </ExpertInfo>
                     </ExpertLeft>
                     <AmountBox className={item.type}>

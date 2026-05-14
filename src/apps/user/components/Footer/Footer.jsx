@@ -36,6 +36,7 @@ const CUSTOMER_LINKS = [
   { labelKey: "footer.reviews", path: "/user/reviews" },
   { labelKey: "footer.howItWorks", path: "/user/how-it-works" },
   { labelKey: "footer.faq", path: "/user/faq" },
+  { labelKey: "Contact Us", path: "/user/contact" },
 ];
 
 const PROFESSIONAL_LINKS = [

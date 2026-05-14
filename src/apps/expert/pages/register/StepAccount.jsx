@@ -34,9 +34,13 @@ export default function Auth() {
   const params = new URLSearchParams(location.search);
   const setupCompleted = params.get("completed");
   const prefillEmail = params.get("email");
+  
+  // ✅ Read referral code from URL
+  const referralFromLink = params.get("ref");
 
   // 📂 Views State (login, register)
-  const [mode, setMode] = useState("login");
+  // ✅ If referral link exists, open Register tab by default
+  const [mode, setMode] = useState(referralFromLink ? "register" : "login");
   const [isForgotMode, setIsForgotMode] = useState(false);
 
   // ⏱️ Loaders & Messages
@@ -50,9 +54,9 @@ export default function Auth() {
   const [verified, setVerified] = useState({ email: false, phone: false });
 
   const [showLoginPassword, setShowLoginPassword] = useState(false);
-const [showRegisterPassword, setShowRegisterPassword] = useState(false);
-const [showNewPassword, setShowNewPassword] = useState(false);
-const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // 📋 Password Strength
   const [passwordStrength, setPasswordStrength] = useState(0);
@@ -60,11 +64,14 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   // 📋 Normal Auth Forms
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  
+  // ✅ Add referral_code to registerForm
   const [registerForm, setRegisterForm] = useState({
     name: "",
     email: "",
     phone: "",
-    password: ""
+    password: "",
+    referral_code: referralFromLink || "" // Auto-fill from URL
   });
 
   // 🗃️ Forgot Password State Machine
@@ -91,11 +98,20 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     setApiMessage({ text, isError });
   };
 
+  // ✅ Updated resetAllViews to preserve referral behavior
   const resetAllViews = (selectedMode) => {
-    setMode(selectedMode);
+    setMode(referralFromLink ? "register" : selectedMode);
     setIsForgotMode(false);
     setForgotStep(1);
-    setForgotData({ type: "email", email: "", mobile: "", otp: "", resetToken: "", newPassword: "", confirmPassword: "" });
+    setForgotData({
+      type: "email",
+      email: "",
+      mobile: "",
+      otp: "",
+      resetToken: "",
+      newPassword: "",
+      confirmPassword: ""
+    });
     setVerified({ email: false, phone: false });
     showMessage("");
   };
@@ -104,17 +120,30 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     logoutExpert(); // 🚀 Clean session on mount
   }, [logoutExpert]);
 
+  // ✅ Updated effect to handle both setupCompleted and referralFromLink
   useEffect(() => {
     if (setupCompleted) {
       setMode("login");
+    } else if (referralFromLink) {
+      setMode("register");
     }
-  }, [setupCompleted]);
+  }, [setupCompleted, referralFromLink]);
 
   useEffect(() => {
     if (prefillEmail) {
       setLoginEmail(prefillEmail);
     }
   }, [prefillEmail]);
+
+  // ✅ Sync referral code from URL if it changes
+  useEffect(() => {
+    if (referralFromLink) {
+      setRegisterForm((prev) => ({
+        ...prev,
+        referral_code: referralFromLink
+      }));
+    }
+  }, [referralFromLink]);
 
   // ✅ Password Strength Checker
   useEffect(() => {
@@ -176,32 +205,33 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
       localStorage.setItem("last_panel", "expert");
 
       updateExpertData({
-  expertId: res.expert.id,
-  name: res.expert.name,
-  email: res.expert.email,
-  phone: res.expert.phone,
-  isSubscribed: res.expert.is_subscribed, // ✅ IMPORTANT
-  categoryId: res.expert.category_id || null,
-  subCategoryIds: res.expert.subcategory_id ? [res.expert.subcategory_id] : [],
-  profileId: res.expert.profile_id || null,
-});
+        expertId: res.expert.id,
+        name: res.expert.name,
+        email: res.expert.email,
+        phone: res.expert.phone,
+        isSubscribed: res.expert.is_subscribed,
+        categoryId: res.expert.category_id || null,
+        subCategoryIds: res.expert.subcategory_id ? [res.expert.subcategory_id] : [],
+        profileId: res.expert.profile_id || null,
+        referral_code: res.expert.referral_code || null,
+      });
 
       const expert = res.expert;
 
       // ✅ Step Based Navigation
-     if (!expert.is_subscribed) {
-  navigate("/expert/register/subscription");
-} else if (!expert.category_id) {
-  navigate("/expert/register/category");
-} else if (!expert.subcategory_id) {
-  navigate("/expert/register/subcategory");
-} else if (!expert.profile_id) {
-  navigate("/expert/register/profile");
-} else if (!expert.price_id) {   // ✅ ADD THIS
-  navigate("/expert/register/pricing");
-} else {
-  navigate("/expert/home");
-}
+      if (!expert.is_subscribed) {
+        navigate("/expert/register/subscription");
+      } else if (!expert.category_id) {
+        navigate("/expert/register/category");
+      } else if (!expert.subcategory_id) {
+        navigate("/expert/register/subcategory");
+      } else if (!expert.profile_id) {
+        navigate("/expert/register/profile");
+      } else if (!expert.price_id) {
+        navigate("/expert/register/pricing");
+      } else {
+        navigate("/expert/home");
+      }
 
     } catch (err) {
       showMessage(`❌ ${err.message || "Login failed. Try again."}`, true);
@@ -269,11 +299,13 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
       setSubmitting(true);
       showMessage("");
 
+      // ✅ Include referral_code in API payload
       const cleanForm = {
         name: registerForm.name.trim(),
         email: registerForm.email.trim(),
         phone: registerForm.phone.trim(),
-        password: registerForm.password
+        password: registerForm.password,
+        referral_code: registerForm.referral_code || null // Send null if empty
       };
 
       const res = await register(cleanForm);
@@ -288,7 +320,8 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
         expertId: res.expert_id,
         name: registerForm.name,
         email: registerForm.email,
-        phone: registerForm.phone
+        phone: registerForm.phone,
+        referral_code: registerForm.referral_code || null,
       });
 
       navigate("/expert/register/subscription");
@@ -299,7 +332,6 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
       setSubmitting(false);
     }
   };
-
 
   /* ================= 🔑 FORGOT PASSWORD FLOW 🔑 ================= */
 
@@ -420,7 +452,6 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     }
   };
 
-
   const isLoginValid = loginEmail && loginPassword;
   const isRegisterValid = 
     registerForm.name && 
@@ -477,28 +508,27 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
             <Field>
               <Label>Password</Label>
               <div style={{ position: "relative" }}>
-  <Input
-    type={showLoginPassword ? "text" : "password"}
-    placeholder="Enter your password"
-    value={loginPassword}
-    onChange={(e) => setLoginPassword(e.target.value)}
-    disabled={submitting || loading}
-  />
-
-  <span
-    onClick={() => setShowLoginPassword(!showLoginPassword)}
-    style={{
-      position: "absolute",
-      right: "12px",
-      top: "50%",
-      transform: "translateY(-50%)",
-      cursor: "pointer",
-      color: "#666"
-    }}
-  >
-    {showLoginPassword ? <FiEyeOff /> : <FiEye />}
-  </span>
-</div>
+                <Input
+                  type={showLoginPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  disabled={submitting || loading}
+                />
+                <span
+                  onClick={() => setShowLoginPassword(!showLoginPassword)}
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    cursor: "pointer",
+                    color: "#666"
+                  }}
+                >
+                  {showLoginPassword ? <FiEyeOff /> : <FiEye />}
+                </span>
+              </div>
             </Field>
 
             <div style={{ textAlign: "right", marginTop: "-10px" }}>
@@ -560,30 +590,55 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
               </SecondaryButton>
             </Field>
 
+            {/* ✅ REFERRAL CODE FIELD - LOCKED IF FROM LINK */}
+            <Field>
+              <Label>Referral Code {referralFromLink && <span style={{ color: "#10b981", fontSize: "12px" }}>(Applied from link)</span>}</Label>
+              <Input
+                type="text"
+                placeholder="Enter referral code (optional)"
+                value={registerForm.referral_code}
+                disabled={!!referralFromLink || submitting || loading}
+                onChange={(e) => setRegisterForm({ 
+                  ...registerForm, 
+                  referral_code: e.target.value.toUpperCase() 
+                })}
+              />
+              {referralFromLink && (
+                <small style={{ color: "#10b981", display: "block", marginTop: "4px" }}>
+                  ✨ Referral code automatically applied from your invite link!
+                </small>
+              )}
+              {!referralFromLink && (
+                <small style={{ color: "#666", display: "block", marginTop: "4px" }}>
+                  Get rewards by entering a referral code!
+                </small>
+              )}
+            </Field>
+
             <Field>
               <Label>Password</Label>
               <div style={{ position: "relative" }}>
-  <Input
-    type={showRegisterPassword ? "text" : "password"}
-    placeholder="Create strong password"
-    disabled={submitting || loading}
-    onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
-  />
-
-  <span
-    onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-    style={{
-      position: "absolute",
-      right: "12px",
-      top: "50%",
-      transform: "translateY(-50%)",
-      cursor: "pointer",
-      color: "#666"
-    }}
-  >
-    {showRegisterPassword ? <FiEyeOff /> : <FiEye />}
-  </span>
-</div>
+                <Input
+                  type={showRegisterPassword ? "text" : "password"}
+                  placeholder="Create strong password"
+                  value={registerForm.password}
+                  disabled={submitting || loading}
+                  onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
+                />
+                <span
+                  onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    cursor: "pointer",
+                    color: "#666"
+                  }}
+                >
+                  {showRegisterPassword ? <FiEyeOff /> : <FiEye />}
+                </span>
+              </div>
               {registerForm.password && (
                 <PasswordStrength>
                   <div style={{ width: `${(passwordStrength / 5) * 100}%`, backgroundColor: getStrengthColor(passwordStrength) }} />
@@ -652,52 +707,50 @@ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
                 <Field>
                   <Label>New Password</Label>
                   <div style={{ position: "relative" }}>
-  <Input
-    type={showNewPassword ? "text" : "password"}
-    placeholder="Enter New Password"
-    value={forgotData.newPassword}
-    onChange={(e) => setForgotData({...forgotData, newPassword: e.target.value})}
-    disabled={submitting || loading}
-  />
-
-  <span
-    onClick={() => setShowNewPassword(!showNewPassword)}
-    style={{
-      position: "absolute",
-      right: "12px",
-      top: "50%",
-      transform: "translateY(-50%)",
-      cursor: "pointer"
-    }}
-  >
-    {showNewPassword ? <FiEyeOff /> : <FiEye />}
-  </span>
-</div>
+                    <Input
+                      type={showNewPassword ? "text" : "password"}
+                      placeholder="Enter New Password"
+                      value={forgotData.newPassword}
+                      onChange={(e) => setForgotData({...forgotData, newPassword: e.target.value})}
+                      disabled={submitting || loading}
+                    />
+                    <span
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      style={{
+                        position: "absolute",
+                        right: "12px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        cursor: "pointer"
+                      }}
+                    >
+                      {showNewPassword ? <FiEyeOff /> : <FiEye />}
+                    </span>
+                  </div>
                 </Field>
                 <Field>
                   <Label>Confirm New Password</Label>
                   <div style={{ position: "relative" }}>
-  <Input
-    type={showConfirmPassword ? "text" : "password"}
-    placeholder="Confirm Password"
-    value={forgotData.confirmPassword}
-    onChange={(e) => setForgotData({...forgotData, confirmPassword: e.target.value})}
-    disabled={submitting || loading}
-  />
-
-  <span
-    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-    style={{
-      position: "absolute",
-      right: "12px",
-      top: "50%",
-      transform: "translateY(-50%)",
-      cursor: "pointer"
-    }}
-  >
-    {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
-  </span>
-</div>
+                    <Input
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Confirm Password"
+                      value={forgotData.confirmPassword}
+                      onChange={(e) => setForgotData({...forgotData, confirmPassword: e.target.value})}
+                      disabled={submitting || loading}
+                    />
+                    <span
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      style={{
+                        position: "absolute",
+                        right: "12px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        cursor: "pointer"
+                      }}
+                    >
+                      {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
+                    </span>
+                  </div>
                 </Field>
                 <PrimaryButton type="button" onClick={handleForgotResetPassword} disabled={submitting || loading}>
                   {submitting || loading ? "Updating Password..." : "Update Password"}

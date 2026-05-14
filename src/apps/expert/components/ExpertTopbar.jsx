@@ -23,7 +23,23 @@ import {
   ProfileDropdownContainer 
 } from "../styles/Topbar.styles";
 
-import { FiBell, FiMessageSquare, FiMenu, FiPlus, FiHome, FiFileText, FiCalendar, FiBarChart2, FiSettings, FiX, FiClock, FiDollarSign, FiLogOut, FiUser } from "react-icons/fi";
+import { 
+  FiBell, 
+  FiMessageSquare, 
+  FiMenu, 
+  FiPlus, 
+  FiHome, 
+  FiFileText, 
+  FiCalendar, 
+  FiBarChart2, 
+  FiSettings, 
+  FiX, 
+  FiClock, 
+  FiDollarSign, 
+  FiLogOut, 
+  FiUser, 
+  FiShare2  // ✅ Added FiShare2
+} from "react-icons/fi";
 import Logo from "../../../assets/logo.webp";
 import NotificationPopover from "./NotificationPopover";
 import ProfileDropdown from "./ProfileDropdown";
@@ -58,33 +74,62 @@ export default function ExpertTopbar() {
   const searchRef = useRef(null);
 
   // NOTIFICATIONS HOOK
- const {
-  notifications,
-  unreadCount,
-  acceptNotification,
-  rejectNotification,
-  removeById,
-} = useExpertNotifications();
+  const {
+    notifications,
+    unreadCount,
+    acceptNotification,
+    rejectNotification,
+    removeById,
+  } = useExpertNotifications();
+
+  // ✅ SHARE REFERRAL FUNCTION
+  const handleShareReferral = async () => {
+    if (!expertData?.referral_code) {
+      alert("Referral code not found");
+      return;
+    }
+
+    const referralLink = `${window.location.origin}/expert/register?ref=${expertData.referral_code}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Join G9Expert as Expert",
+          text: "Join G9Expert using my referral link and start earning.",
+          url: referralLink
+        });
+      } else {
+        await navigator.clipboard.writeText(referralLink);
+        alert("Referral link copied!");
+      }
+    } catch (err) {
+      if (err.name !== "AbortError") {
+        console.error("Error sharing referral:", err);
+        alert("Failed to share. Please try again.");
+      }
+    }
+  };
 
   // LOGOUT
-const handleLogout = async () => {
-  try {
-    // 🔌 socket disconnect (UI level)
-    disconnectSocket();
+  const handleLogout = async () => {
+    try {
+      // 🔌 socket disconnect (UI level)
+      disconnectSocket();
 
-    // ✅ optional UI memory
-    localStorage.setItem("last_panel", "expert");
+      // ✅ optional UI memory
+      localStorage.setItem("last_panel", "expert");
 
-    // 🔥 MAIN LOGIC → context handle karega
-    await logoutExpert();
+      // 🔥 MAIN LOGIC → context handle karega
+      await logoutExpert();
 
-    // ✅ redirect
-    navigate("/expert/register", { replace: true });
+      // ✅ redirect
+      navigate("/expert/register", { replace: true });
 
-  } catch (err) {
-    console.error("Logout error:", err);
-  }
-};
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+  };
+
   // CHAT REDIRECT
   useEffect(() => {
     const onChatStarted = ({ room_id }) => {
@@ -110,37 +155,36 @@ const handleLogout = async () => {
     return () => document.removeEventListener("click", handleClick);
   }, []);
 
-useEffect(() => {
-  const handleConnected = ({ callId }) => {
-    setShowNotif(false);
+  useEffect(() => {
+    const handleConnected = ({ callId }) => {
+      setShowNotif(false);
 
-    if (!location.pathname.includes("/expert/voice-call/")) {
-      navigate(`/expert/voice-call/${callId}`);
-    }
-  };
+      if (!location.pathname.includes("/expert/voice-call/")) {
+        navigate(`/expert/voice-call/${callId}`);
+      }
+    };
 
-  const handleEnded = () => {
-    setShowNotif(false);
-  };
+    const handleEnded = () => {
+      setShowNotif(false);
+    };
 
-  socket.on("call:connected", handleConnected);
-  socket.on("call:ended", handleEnded);
+    socket.on("call:connected", handleConnected);
+    socket.on("call:ended", handleEnded);
 
-  return () => {
-    socket.off("call:connected", handleConnected);
-    socket.off("call:ended", handleEnded);
-  };
-}, [navigate, location.pathname]);
+    return () => {
+      socket.off("call:connected", handleConnected);
+      socket.off("call:ended", handleEnded);
+    };
+  }, [navigate, location.pathname]);
 
-useEffect(() => {
-  const handler = (e) => {
-    navigate(`/expert/voice-call/${e.detail}`);
-  };
+  useEffect(() => {
+    const handler = (e) => {
+      navigate(`/expert/voice-call/${e.detail}`);
+    };
 
-  window.addEventListener("go_to_call_page", handler);
-  return () => window.removeEventListener("go_to_call_page", handler);
-}, [navigate]);
-
+    window.addEventListener("go_to_call_page", handler);
+    return () => window.removeEventListener("go_to_call_page", handler);
+  }, [navigate]);
 
   // MOBILE MENU CLOSE ON ROUTE CHANGE
   useEffect(() => {
@@ -167,13 +211,13 @@ useEffect(() => {
     return location.pathname.startsWith(path);
   };
 
-const hasUnreadChat = notifications.some(
-  n => n.type === "chat_request" && n.unread && !FINAL_STATES.includes(n.status)
-);
+  const hasUnreadChat = notifications.some(
+    n => n.type === "chat_request" && n.unread && !FINAL_STATES.includes(n.status)
+  );
 
-const hasRingingCall = notifications.some(
-  n => n.type === "voice_call" && n.status === "ringing"
-);
+  const hasRingingCall = notifications.some(
+    n => n.type === "voice_call" && n.status === "ringing"
+  );
 
   return (
     <>
@@ -209,26 +253,25 @@ const hasRingingCall = notifications.some(
           {/* NOTIFICATIONS */}
           <div ref={notifRef} style={{ position: "relative" }}>
             <IconBtn onClick={() => setShowNotif(p => !p)} title="Notifications">
-  <FiBell />
-  {(hasUnreadChat || hasRingingCall) && <UnreadDot />}
-</IconBtn>
+              <FiBell />
+              {(hasUnreadChat || hasRingingCall) && <UnreadDot />}
+            </IconBtn>
 
-           {showNotif && (
- <NotificationPopover
-  notifications={notifications}
-  unreadCount={unreadCount}
-  acceptNotification={(n) => {
-    acceptNotification(n);
-    setShowNotif(false);
-  }}
-  rejectNotification={(n) => {
-    rejectNotification(n);
-    setShowNotif(false);
-  }}
-  removeById={removeById}
-/>
-)}
-
+            {showNotif && (
+              <NotificationPopover
+                notifications={notifications}
+                unreadCount={unreadCount}
+                acceptNotification={(n) => {
+                  acceptNotification(n);
+                  setShowNotif(false);
+                }}
+                rejectNotification={(n) => {
+                  rejectNotification(n);
+                  setShowNotif(false);
+                }}
+                removeById={removeById}
+              />
+            )}
           </div>
 
           {/* CHATS */}
@@ -240,6 +283,14 @@ const hasRingingCall = notifications.some(
           <CreateBtn onClick={() => navigate("/expert/my-content?mode=create")}>
             <FiPlus /> Create
           </CreateBtn>
+
+          {/* ✅ SHARE REFERRAL BUTTON */}
+          <IconBtn
+            onClick={handleShareReferral}
+            title="Refer Expert"
+          >
+            <FiShare2 />
+          </IconBtn>
 
           {/* PROFILE */}
           <div ref={profileRef} style={{ position: "relative" }}>
@@ -292,6 +343,19 @@ const hasRingingCall = notifications.some(
         <MobileSectionTitle>Account</MobileSectionTitle>
         
         <MobileNavList style={{ paddingBottom: '24px' }}>
+          {/* ✅ REFERRAL EXPERT IN MOBILE MENU */}
+          <MobileNavItem
+            onClick={() => {
+              handleShareReferral();
+              setMobileMenuOpen(false);
+            }}
+          >
+            <MobileNavIcon>
+              <FiShare2 />
+            </MobileNavIcon>
+            Refer Expert
+          </MobileNavItem>
+
           <MobileNavItem
             onClick={() => {
               navigate("/expert/profile");

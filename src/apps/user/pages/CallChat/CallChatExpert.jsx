@@ -1,5 +1,5 @@
-// src/apps/user/pages/UserExpertsPage.jsx - PREMIUM UPGRADED WITH WORKING FILTERS
-import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
+// src/apps/user/pages/UserExpertsPage.jsx - PREMIUM UPGRADED WITH WORKING FILTERS (TAB FLICKER FIXED)
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { 
@@ -23,9 +23,6 @@ import {
   FilterGroup,
   FilterLabel,
   FilterSelect,
-  FilterCheckboxRow,
-  FilterCheckbox,
-  FilterText,
   ResetFilterBtn,
   ExpertsWrap,
   Grid,
@@ -36,7 +33,6 @@ import {
   PageInfo,
   StatsBar,
   StatItem,
-  SearchBar,
   SearchInput,
   SearchIcon,
   ClearSearchBtn,
@@ -99,13 +95,23 @@ export default function UserExpertsPage() {
   const searchQueryFromUrl = searchParams.get("q");
   const pageFromUrl = parseInt(searchParams.get("page")) || 1;
 
-  const [tab, setTab] = useState("call");
+  // FIX 1: Initialize tab from URL directly - prevents initial flicker
+  const [tab, setTab] = useState(() => {
+    if (modeFromUrl === "chat") return "chat";
+    return "call";
+  });
+  
   const [currentPage, setCurrentPage] = useState(pageFromUrl);
   const [totalPages, setTotalPages] = useState(1);
   const [totalExperts, setTotalExperts] = useState(0);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
-  const { categories, subCategories } = useCategory();
+  const { 
+    categories, 
+    subCategories, 
+    subCategoriesLoading, 
+    loadSubCategories 
+  } = useCategory();
   const { isLoggedIn, user } = useAuth();
   const userId = user?.id;
   const { balance } = useWallet();
@@ -135,55 +141,41 @@ export default function UserExpertsPage() {
   // Online/Offline state
   const [onlineExperts, setOnlineExperts] = useState({});
 
-  // Debounce timer
-  const searchTimeoutRef = useRef(null);
-  const filterTimeoutRef = useRef(null);
-
-  // URL → TAB sync
+  // FIX 2: Replace URL sync effect - only sync when URL mode differs from state
   useEffect(() => {
-    if (modeFromUrl === "call" || modeFromUrl === "chat") {
+    if (!modeFromUrl) return;
+
+    if (
+      (modeFromUrl === "call" || modeFromUrl === "chat") &&
+      modeFromUrl !== tab
+    ) {
       setTab(modeFromUrl);
-    }
-  }, [modeFromUrl]);
-
-  // Handle search with debounce
-  useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    
-    searchTimeoutRef.current = setTimeout(() => {
-      setDebouncedSearch(searchInput);
       setCurrentPage(1);
-      
-      // Update URL
-      const newParams = new URLSearchParams(searchParams);
-      if (searchInput) {
-        newParams.set("q", searchInput);
-      } else {
-        newParams.delete("q");
-      }
-      setSearchParams(newParams, { replace: true });
-    }, 500);
-    
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [searchInput, searchParams, setSearchParams]);
+    }
+  }, [modeFromUrl, tab]);
+
+  // SIMPLIFIED SEARCH DEBOUNCE - NO extra refs
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchInput.trim());
+      setCurrentPage(1);
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   // Build API params
   const buildApiParams = useCallback(() => {
     const params = {
       page: currentPage,
       limit: 20,
+      priceMode: tab
     };
 
     if (selectedCategoryId) {
       params.category = selectedCategoryId;
     }
-    
+
     if (selectedSubcategoryId) {
       params.subcategory = selectedSubcategoryId;
     }
@@ -192,13 +184,12 @@ export default function UserExpertsPage() {
       params.search = debouncedSearch;
     }
 
-    if (minRating && parseFloat(minRating) > 0) {
-      params.minRating = parseFloat(minRating);
+    if (minRating) {
+      params.minRating = minRating;
     }
 
-    if (maxPrice && parseFloat(maxPrice) > 0) {
-      params.maxPrice = parseFloat(maxPrice);
-      params.priceMode = tab;
+    if (maxPrice) {
+      params.maxPrice = maxPrice;
     }
 
     if (sortBy) {
@@ -206,96 +197,77 @@ export default function UserExpertsPage() {
       params.order = sortOrder;
     }
 
-    // Top experts only when no filters applied
-    const hasFilters = selectedCategoryId || selectedSubcategoryId || debouncedSearch || minRating || maxPrice || sortBy;
+    const hasFilters =
+      selectedCategoryId ||
+      selectedSubcategoryId ||
+      debouncedSearch ||
+      minRating ||
+      maxPrice ||
+      sortBy;
+
     if (!hasFilters) {
       params.top = "true";
     }
 
     return params;
-  }, [currentPage, selectedCategoryId, selectedSubcategoryId, debouncedSearch, 
-      minRating, maxPrice, sortBy, sortOrder, tab]);
+  }, [
+    currentPage,
+    selectedCategoryId,
+    selectedSubcategoryId,
+    debouncedSearch,
+    minRating,
+    maxPrice,
+    sortBy,
+    sortOrder,
+    tab
+  ]);
 
-  // Fetch experts
-  const fetchExperts = useCallback(async () => {
-    const params = buildApiParams();
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await getExpertsApi(params);
-      const data = response?.data || response;
-      
-      let expertsList = [];
-      let total = 0;
-      
-      if (Array.isArray(data)) {
-        expertsList = data;
-        total = data.length;
-        setTotalPages(Math.ceil(total / 20));
-      } else if (data?.data && Array.isArray(data.data)) {
-        expertsList = data.data;
-        total = data.total || data.data.length;
-        setTotalPages(Math.ceil(total / 20));
-      } else if (data?.experts && Array.isArray(data.experts)) {
-        expertsList = data.experts;
-        total = data.total || data.experts.length;
-        setTotalPages(Math.ceil(total / 20));
-      } else {
-        expertsList = [];
-        total = 0;
-      }
-      
-      setExperts(expertsList);
-      setTotalExperts(total);
-      
-      // Update URL with current page
-      const newParams = new URLSearchParams(searchParams);
-      newParams.set("page", currentPage);
-      newParams.set("mode", tab);
-      setSearchParams(newParams, { replace: true });
-      
-    } catch (error) {
-      console.error("Failed to fetch experts:", error);
-      setError("Failed to load experts. Please try again.");
-      setExperts([]);
-    } finally {
-      setLoading(false);
+  // FIX 3: Fetch experts with conditional URL update - prevents unnecessary URL rewrites
+ const fetchExperts = useCallback(async () => {
+  const params = buildApiParams();
+
+  setLoading(true);
+  setError(null);
+
+  try {
+    const response = await getExpertsApi(params);
+
+    console.log("EXPERT RESPONSE:", response);
+
+    setExperts(response.data || []);
+    setTotalExperts(response.total || 0);
+    setTotalPages(response.totalPages || 1);
+
+    const newParams = new URLSearchParams();
+    newParams.set("mode", tab);
+    newParams.set("page", currentPage);
+
+    if (debouncedSearch) {
+      newParams.set("q", debouncedSearch);
     }
-  }, [buildApiParams, currentPage, tab, searchParams, setSearchParams]);
 
-  // Trigger fetch when filters change (with debounce)
-  useEffect(() => {
-    if (filterTimeoutRef.current) {
-      clearTimeout(filterTimeoutRef.current);
-    }
-    
-    filterTimeoutRef.current = setTimeout(() => {
-      if (currentPage === 1) {
-        fetchExperts();
-      } else {
-        setCurrentPage(1);
-      }
-    }, 300);
-    
-    return () => {
-      if (filterTimeoutRef.current) {
-        clearTimeout(filterTimeoutRef.current);
-      }
-    };
-  }, [selectedCategoryId, selectedSubcategoryId, debouncedSearch, minRating, maxPrice, sortBy, sortOrder, tab]);
+    setSearchParams(newParams, { replace: true });
 
-  // Fetch when page changes
+  } catch (error) {
+    console.error("Failed to fetch experts:", error);
+    setError("Failed to load experts. Please try again.");
+    setExperts([]);
+    setTotalExperts(0);
+    setTotalPages(1);
+  } finally {
+    setLoading(false);
+  }
+}, [buildApiParams, currentPage, tab, debouncedSearch, setSearchParams]);
+  // SINGLE EFFECT for fetching - NO duplicates
   useEffect(() => {
     fetchExperts();
-  }, [currentPage]);
+  }, [fetchExperts]);
 
   useNetworkReconnect(fetchExperts, {
     enabled: !showWaitingPopup && !chatRequestId,
   });
 
-  // Reset subcategory when category changes
+  // Reset subcategory when category changes AND load subcategories
   useEffect(() => {
     setSelectedSubcategoryId("");
   }, [selectedCategoryId]);
@@ -522,12 +494,20 @@ export default function UserExpertsPage() {
         </div>
       </FilterGroup>
 
-      {/* Category Filter */}
+      {/* Category Filter - with loadSubCategories */}
       <FilterGroup>
         <FilterLabel>{t("common.categories")}</FilterLabel>
         <FilterSelect
           value={selectedCategoryId}
-          onChange={(e) => setSelectedCategoryId(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            setSelectedCategoryId(value);
+            setSelectedSubcategoryId("");
+            setCurrentPage(1);
+            if (value) {
+              loadSubCategories(value);
+            }
+          }}
         >
           <option value="">{t("callChat.allCategories")}</option>
           {categories.map(cat => (
@@ -536,43 +516,50 @@ export default function UserExpertsPage() {
         </FilterSelect>
       </FilterGroup>
 
-      {/* Subcategory Filter - Only show when category selected */}
+      {/* Subcategory Filter - FIXED rendering */}
       {selectedCategoryId && (
         <FilterGroup>
           <FilterLabel>{t("callChat.subcategory", "Subcategory")}</FilterLabel>
           <FilterSelect
             value={selectedSubcategoryId}
-            onChange={(e) => setSelectedSubcategoryId(e.target.value)}
+            onChange={(e) => {
+              setSelectedSubcategoryId(e.target.value);
+              setCurrentPage(1);
+            }}
           >
             <option value="">{t("callChat.allSubcategories")}</option>
-            {subCategories
-              .filter(sub => sub.category_id == selectedCategoryId)
-              .map(sub => (
-                <option key={sub.id} value={sub.id}>{sub.name}</option>
-              ))}
+            {subCategories.map(sub => (
+              <option key={sub.id} value={sub.id}>{sub.name}</option>
+            ))}
           </FilterSelect>
         </FilterGroup>
       )}
 
       {/* Rating Filter */}
-      <FilterGroup>
+      {/* <FilterGroup>
         <FilterLabel>Rating</FilterLabel>
         <FilterSelect
           value={minRating}
-          onChange={(e) => setMinRating(e.target.value)}
+          onChange={(e) => {
+            setMinRating(e.target.value);
+            setCurrentPage(1);
+          }}
         >
           {ratingOptions.map(opt => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </FilterSelect>
-      </FilterGroup>
+      </FilterGroup> */}
 
       {/* Price Filter */}
       <FilterGroup>
         <FilterLabel>Max Price ({tab === "call" ? "₹/min Call" : "₹/min Chat"})</FilterLabel>
         <FilterSelect
           value={maxPrice}
-          onChange={(e) => setMaxPrice(e.target.value)}
+          onChange={(e) => {
+            setMaxPrice(e.target.value);
+            setCurrentPage(1);
+          }}
         >
           {getPriceOptions(tab).map(opt => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -589,6 +576,7 @@ export default function UserExpertsPage() {
             const [newSortBy, newOrder] = e.target.value.split("_");
             setSortBy(newSortBy);
             setSortOrder(newOrder);
+            setCurrentPage(1);
           }}
         >
           {sortOptions.map(opt => (
@@ -654,7 +642,12 @@ export default function UserExpertsPage() {
               onClick={() => {
                 setTab(tabItem.id);
                 setCurrentPage(1);
-                setSearchParams({ mode: tabItem.id, ...(debouncedSearch && { q: debouncedSearch }) });
+                // Update URL immediately on tab click
+                setSearchParams({ 
+                  mode: tabItem.id, 
+                  ...(debouncedSearch && { q: debouncedSearch }),
+                  page: "1"
+                });
               }}
             >
               <span>{tabItem.icon}</span> {t(tabItem.labelKey)}
@@ -860,7 +853,6 @@ export default function UserExpertsPage() {
                             avg_response_time: exp.avg_response_time,
                             total_consultations: exp.total_consultations,
                           }}
-                          maxPrice={maxPrice}
                           onStartChat={tab === "chat" ? handleStartChat : undefined}
                           onStartCall={tab === "call" ? handleStartCall : undefined}
                         />

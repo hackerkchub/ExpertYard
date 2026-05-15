@@ -425,6 +425,30 @@ const CardsTrack = styled.div`
     scroll-padding-inline: 14px;
     padding: 3px 14px 4px;
   }
+
+  @media (max-width: 768px) {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+    padding: 2px 14px 10px;
+  }
+
+  @media (max-width: 768px) {
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
 `;
 
 const ScrollArrow = styled.button`
@@ -470,12 +494,14 @@ const ScrollArrow = styled.button`
     cursor: default;
   }
 
-  @media (max-width: 767px) {
+  @media (max-width: 768px) {
     display: none;
   }
 `;
 
 const ServiceCard = styled(Link)`
+  display: flex;
+  flex-direction: column;
   flex: 0 0 calc((100% - 60px) / 4);
   min-width: 248px;
   min-height: 274px;
@@ -537,6 +563,7 @@ const ServiceCard = styled(Link)`
   }
 
   .service-card__body {
+    flex: 1;
     min-height: 150px;
     display: flex;
     flex-direction: column;
@@ -545,18 +572,29 @@ const ServiceCard = styled(Link)`
     padding: 15px;
   }
 
+  .service-card__body > div:first-child {
+    display: flex;
+    flex-direction: column;
+  }
+
   h3 {
     margin: 0;
     color: #101828;
+    min-height: 2.6em;
     font-size: 1rem;
     line-height: 1.3;
     font-weight: 800;
     letter-spacing: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   p {
     margin: 7px 0 0;
     color: #5b6678;
+    min-height: 4.5em;
     font-size: 0.88rem;
     line-height: 1.5;
     display: -webkit-box;
@@ -571,6 +609,7 @@ const ServiceCard = styled(Link)`
     justify-content: space-between;
     gap: 10px;
     min-width: 0;
+    margin-top: auto;
   }
 
   .service-card__footer span {
@@ -629,12 +668,14 @@ const ServiceCard = styled(Link)`
     }
 
     h3 {
+      min-height: 2.52em;
       font-size: 0.98rem;
       line-height: 1.26;
     }
 
     p {
       margin-top: 6px;
+      min-height: 2.84em;
       font-size: 0.84rem;
       line-height: 1.42;
       -webkit-line-clamp: 2;
@@ -648,6 +689,79 @@ const ServiceCard = styled(Link)`
       min-height: 32px;
       padding: 0 11px;
       font-size: 0.76rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    display: flex;
+    flex: 0 0 calc((100% - 12px) / 2);
+    flex-direction: column;
+    width: calc((100% - 12px) / 2);
+    min-width: 0;
+    max-width: calc((100% - 12px) / 2);
+    height: 100%;
+    min-height: 0;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    border-radius: 18px;
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+
+    .service-card__media {
+      min-height: 92px;
+    }
+
+    .service-card__media img {
+      height: 96px;
+    }
+
+    .service-card__icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 15px;
+    }
+
+    .service-card__icon svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .service-card__body {
+      flex: 1;
+      min-height: 0;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    h3 {
+      min-height: 2.5em;
+      font-size: 0.88rem;
+      line-height: 1.25;
+    }
+
+    p {
+      margin-top: 5px;
+      min-height: 2.8em;
+      font-size: 0.78rem;
+      line-height: 1.4;
+      -webkit-line-clamp: 2;
+    }
+
+    .service-card__footer {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .service-card__footer span {
+      width: 100%;
+      max-width: 100%;
+      font-size: 0.72rem;
+    }
+
+    .service-card__footer strong {
+      min-height: 30px;
+      padding: 0 10px;
+      font-size: 0.72rem;
     }
   }
 `;
@@ -705,5 +819,14 @@ const ServiceSkeleton = styled.div`
     flex-basis: calc(100% - 28px);
     min-width: 0;
     min-height: 252px;
+  }
+
+  @media (max-width: 768px) {
+    flex: 0 0 calc((100% - 12px) / 2);
+    width: calc((100% - 12px) / 2);
+    min-width: 0;
+    max-width: calc((100% - 12px) / 2);
+    min-height: 220px;
+    scroll-snap-align: start;
   }
 `;

@@ -260,11 +260,8 @@ export const HeroSearchArea = styled.div`
     max-width: 520px;
   }
 
-  @media (max-width: 767px) {
-    width: 100%;
-    max-width: 100%;
-    margin-left: 0;
-    margin-top: 12px;
+  @media (max-width: 768px) {
+    display: none;
   }
 `;
 

@@ -34,7 +34,6 @@ const HowItWorks = () => {
       <div className="how-it-works-section__header">
         <span className="section-kicker">{t("howItWorks.kicker")}</span>
         <h2>{t("howItWorks.title")}</h2>
-        <p>{t("howItWorks.subtitle")}</p>
       </div>
 
       <div className="how-it-works-grid">

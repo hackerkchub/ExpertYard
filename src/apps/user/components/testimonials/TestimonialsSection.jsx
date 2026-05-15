@@ -12,23 +12,66 @@ const TestimonialsSection = ({ onViewAll }) => {
   useEffect(() => {
     const row = rowRef.current;
 
-    if (!row || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (!row) {
       return undefined;
     }
 
-    const interval = window.setInterval(() => {
-      if (pausedRef.current || !row.scrollWidth) return;
+    const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const mobileQuery = window.matchMedia("(max-width: 767px)");
+    let interval;
 
-      const resetPoint = row.scrollWidth / 2;
-      if (row.scrollLeft >= resetPoint) {
-        row.scrollLeft = 0;
+    const stopAutoScroll = () => {
+      if (interval) {
+        window.clearInterval(interval);
+        interval = undefined;
+      }
+    };
+
+    const startAutoScroll = () => {
+      stopAutoScroll();
+
+      if (reducedMotionQuery.matches || mobileQuery.matches) {
         return;
       }
 
-      row.scrollLeft += 1;
-    }, 28);
+      interval = window.setInterval(() => {
+        if (pausedRef.current || !row.scrollWidth) return;
 
-    return () => window.clearInterval(interval);
+        const resetPoint = row.scrollWidth / 2;
+        if (row.scrollLeft >= resetPoint) {
+          row.scrollLeft = 0;
+          return;
+        }
+
+        row.scrollLeft += 1;
+      }, 28);
+    };
+
+    const addQueryListener = (query) => {
+      if (query.addEventListener) {
+        query.addEventListener("change", startAutoScroll);
+      } else {
+        query.addListener(startAutoScroll);
+      }
+    };
+
+    const removeQueryListener = (query) => {
+      if (query.removeEventListener) {
+        query.removeEventListener("change", startAutoScroll);
+      } else {
+        query.removeListener(startAutoScroll);
+      }
+    };
+
+    startAutoScroll();
+    addQueryListener(reducedMotionQuery);
+    addQueryListener(mobileQuery);
+
+    return () => {
+      stopAutoScroll();
+      removeQueryListener(reducedMotionQuery);
+      removeQueryListener(mobileQuery);
+    };
   }, []);
 
   const displayTestimonials = [...testimonials, ...testimonials];
@@ -39,7 +82,6 @@ const TestimonialsSection = ({ onViewAll }) => {
         <div>
           <span className="section-kicker">{t("testimonials.kicker")}</span>
           <h2>{t("testimonials.title")}</h2>
-          <p>{t("testimonials.subtitle")}</p>
         </div>
         <button type="button" className="section-link" onClick={onViewAll}>
           {t("common.viewAll")}
@@ -67,6 +109,7 @@ const TestimonialsSection = ({ onViewAll }) => {
           <TestimonialCard
             key={`${testimonial.key}-${index}`}
             testimonial={testimonial}
+            isDuplicate={index >= testimonials.length}
           />
         ))}
       </div>

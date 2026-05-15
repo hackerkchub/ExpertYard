@@ -2,12 +2,12 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { FiCheckCircle, FiStar } from "react-icons/fi";
 
-const TestimonialCard = ({ testimonial }) => {
+const TestimonialCard = ({ testimonial, isDuplicate = false }) => {
   const { t } = useTranslation();
   const itemKey = `testimonials.items.${testimonial.key}`;
 
   return (
-    <article className="premium-testimonial-card">
+    <article className={`premium-testimonial-card${isDuplicate ? " premium-testimonial-card--duplicate" : ""}`}>
       <div className="premium-testimonial-card__top">
         <div className="premium-testimonial-card__avatar" aria-hidden="true">
           {testimonial.avatar}

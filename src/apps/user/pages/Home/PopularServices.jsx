@@ -161,9 +161,6 @@ const PopularServices = ({ services = [], loading = false }) => {
         <div>
           <span className="section-kicker">{t("home.popularServices.kicker")}</span>
           <h2 id="popular-services-title">{t("home.popularServices.title")}</h2>
-          <p className="services-subtitle">
-            {t("home.popularServices.subtitle")}
-          </p>
         </div>
         <button type="button" className="section-link" onClick={() => navigate("/user/all-services")}>
           {t("common.viewAll")}
@@ -339,6 +336,54 @@ const SectionWrapper = styled.section`
     .services-subtitle {
       font-size: 0.9rem;
       line-height: 1.48;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .section-topline {
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .section-link {
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      max-width: 100%;
+      min-height: 42px;
+      padding: 0 clamp(14px, 4vw, 18px);
+      border: 1px solid rgba(0, 0, 128, 0.1);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.72);
+      color: #000080;
+      font-size: 0.86rem;
+      font-weight: 800;
+      line-height: 1;
+      white-space: nowrap;
+      text-align: center;
+      box-shadow: 0 8px 18px rgba(0, 0, 128, 0.04);
+    }
+
+    .section-link:hover,
+    .section-link:focus-visible {
+      color: #1b2ba6;
+      border-color: rgba(0, 0, 128, 0.1);
+      box-shadow: 0 8px 18px rgba(0, 0, 128, 0.04);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .section-topline {
+      gap: 12px;
+      padding-bottom: 14px;
+    }
+
+  }
+
+  @media (max-width: 360px) {
+    .section-link {
+      min-width: 0;
     }
   }
 `;

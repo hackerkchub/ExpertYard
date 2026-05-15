@@ -8,6 +8,12 @@
   border-color: rgba(0, 0, 128, 0.1);
 }
 
+@media (max-width: 768px) {
+  .popular-questions-section__header {
+    display: none !important;
+  }
+}
+
 .popular-questions-section::after {
   content: "";
   position: absolute;
@@ -24,22 +30,23 @@
 .popular-questions-section__header {
   position: relative;
   z-index: 1;
-  max-width: 620px;
-  margin-bottom: 18px;
+  max-width: 680px;
+  margin-bottom: 22px;
 }
 
 .popular-questions-section__header h2 {
   margin: 0;
-  color: var(--home-text);
+  color: var(--home-navy-deep);
   font-size: clamp(1.35rem, 4.8vw, 1.9rem);
   line-height: 1.12;
   letter-spacing: -0.03em;
 }
 
 .popular-questions-section__header p {
-  margin: 8px 0 0;
+  max-width: 620px;
+  margin: 10px 0 0;
   color: var(--home-muted);
-  line-height: 1.58;
+  line-height: 1.65;
 }
 
 .popular-questions-grid {
@@ -195,6 +202,12 @@
 @media (min-width: 768px) {
   .popular-questions-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .popular-questions-section {
+    display: none;
   }
 }
 

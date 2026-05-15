@@ -74,7 +74,6 @@ const PopularQuestions = ({ onTalkToExpert }) => {
   return (
     <section className="home-section-card popular-questions-section">
       <div className="popular-questions-section__header">
-        <span className="section-kicker">{t("faq.kicker")}</span>
         <h2>{t("faq.title")}</h2>
         <p>{t("faq.subtitle")}</p>
       </div>

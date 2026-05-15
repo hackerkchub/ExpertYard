@@ -88,7 +88,6 @@ const WhyChoose = () => {
       <div className="why-choose-section__header">
         <span className="section-kicker">{t("whyChoose.kicker")}</span>
         <h2>{t("whyChoose.title")}</h2>
-        <p>{t("whyChoose.subtitle")}</p>
       </div>
 
       <div className="why-choose-scroll">

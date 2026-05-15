@@ -585,9 +585,7 @@ const HomePage = () => {
             <div>
               <span className="section-kicker">{t("home.categoriesKicker")}</span>
               <h2>{t("home.categoriesTitle")}</h2>
-              <p className="section-copy">
-                {t("home.categoriesSubtitle")}
-              </p>
+            
             </div>
             <button type="button" className="section-link" onClick={() => navigate("/user/categories")}>
               {t("common.viewAll")}
@@ -629,7 +627,6 @@ const HomePage = () => {
                       </div>
                       <div className="category-card__copy">
                         <strong>{category.name}</strong>
-                        <small>{t("home.categoryCardSubtitle", { category: category.name })}</small>
                       </div>
                     </Link>
                   ))}
@@ -652,9 +649,6 @@ const HomePage = () => {
         <section className="home-section-card home-section-card--seo-text" aria-labelledby="home-seo-heading">
           <span className="section-kicker">{t("home.seoKicker")}</span>
           <h2 id="home-seo-heading">{t("home.seoTitle")}</h2>
-          <p>
-            {t("home.seoDescription")}
-          </p>
           <div className="seo-keyword-grid" aria-label={t("home.popularConsultationSearches")}>
             {topCategories.slice(0, 8).map((category) => (
               <Link key={`seo-category-${category.id}`} to={getCategoryPath(category)}>
@@ -727,71 +721,7 @@ const HomePage = () => {
         </section>
 
         <WhyChoose />
-
-        <section className="home-section-card home-section-card--trust" aria-labelledby="why-g9experts-heading">
-          <div className="section-topline section-topline--stack">
-            <span className="section-kicker">{t("home.trustKicker")}</span>
-            <h2 id="why-g9experts-heading">{t("home.trustTitle")}</h2>
-            <p className="section-copy">
-              {t("home.trustSubtitle")}
-            </p>
-          </div>
-          <div className="trust-points-grid">
-            {TRUST_POINTS.map((point) => {
-              const Icon = point.icon;
-
-              return (
-                <article key={point.titleKey} className="trust-point-card">
-                  <span aria-hidden="true">
-                    <Icon />
-                  </span>
-                  <h3>{t(point.titleKey)}</h3>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="rating-panel">
-          <div>
-            <span className="section-kicker section-kicker--gold">{t("home.userRatings")}</span>
-            <h2  style={{ color: "#ffffff" }} >{t("home.ratedByUsers")}</h2>
-            <div className="rating-panel__stars">{renderStars(5)}</div>
-            <p>{t("home.happyUsers")}</p>
-          </div>
-          <div className="rating-panel__aside">
-            <div className="avatar-stack">
-              {avatarExperts.length > 0
-                ? avatarExperts.map((expert) => (
-                    <span key={expert.id}>{getInitials(expert.name)}</span>
-                  ))
-                : ["A", "B", "C"].map((item) => <span key={item}>{item}</span>)}
-            </div>
-            <strong>{t("home.positiveFeedback")}</strong>
-            <small>{t("home.trustedTopics")}</small>
-          </div>
-        </section>
-
-        <section className="home-section-card home-section-card--faq" aria-labelledby="home-faq-heading">
-          <div className="section-topline section-topline--stack">
-            <span className="section-kicker">{t("home.faqKicker")}</span>
-            <h2 id="home-faq-heading">{t("home.faqTitle")}</h2>
-            <p className="section-copy">
-              {t("home.faqSubtitle")}
-            </p>
-          </div>
-          <div className="home-faq-list">
-            {FAQ_ITEMS.map((item) => (
-              <details key={item.questionKey} className="home-faq-item">
-                <summary>
-                  <h3>{t(item.questionKey)}</h3>
-                </summary>
-                <p>{t(item.answerKey)}</p>
-              </details>
-            ))}
-          </div>
-        </section>
-
+        
         <PopularQuestions onTalkToExpert={() => navigate("/user/call-chat?page=1&mode=chat")} />
 
         <section className="home-section-card home-section-card--links" aria-labelledby="internal-links-heading">

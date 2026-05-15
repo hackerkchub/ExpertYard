@@ -1,3 +1,4 @@
+// src/apps/user/pages/CallChatExpert.styles.js - UPDATED WITH RESPONSIVE FIXES
 import styled, { keyframes } from "styled-components";
 
 const navy = "#000080";
@@ -395,6 +396,10 @@ export const PaginationWrap = styled.div`
   gap: 10px;
   margin-top: 20px;
   flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    gap: 8px;
+  }
 `;
 
 export const PageButton = styled.button`
@@ -413,6 +418,11 @@ export const PageButton = styled.button`
     opacity: 0.45;
     cursor: not-allowed;
   }
+
+  @media (max-width: 640px) {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
 `;
 
 export const PageInfo = styled.div`
@@ -427,6 +437,19 @@ export const StatsBar = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  overflow-x: auto;
+  white-space: nowrap;
+
+  @media (max-width: 640px) {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
 `;
 
 export const StatItem = styled.div`
@@ -441,6 +464,7 @@ export const StatItem = styled.div`
   background: #ffffff;
   border: 1px solid rgba(0, 0, 128, 0.1);
   box-shadow: 0 8px 18px rgba(16, 24, 40, 0.05);
+  flex-shrink: 0;
 
   svg {
     color: ${yellow};
@@ -492,14 +516,19 @@ export const MobileFilterDrawer = styled.div`
   position: fixed;
   top: 0;
   right: 0;
-  width: 88%;
-  max-width: 390px;
+  width: 100vw;
+  max-width: 100%;
   height: 100vh;
   background: white;
   z-index: 1001;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   box-shadow: -12px 0 32px rgba(15, 23, 42, 0.18);
+
+  @media (min-width: 641px) {
+    width: 88%;
+    max-width: 390px;
+  }
 `;
 
 export const Overlay = styled.div`

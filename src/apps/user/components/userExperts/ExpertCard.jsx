@@ -1,11 +1,11 @@
-// src/apps/user/components/userExperts/ExpertCard.jsx - PREMIUM UPGRADED VERSION
+// src/apps/user/components/userExperts/ExpertCard.jsx - PREMIUM UPGRADED VERSION (NO FRONTEND FILTERING)
 import React, { useCallback, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { 
   FiPhoneCall, FiMessageSquare, FiMapPin, FiZap, FiClock, 
   FiUsers, FiStar, FiAward, FiTrendingUp, FiShield, 
-  FiCheckCircle, FiMoreHorizontal, FiHeart, FiShare2
+  FiCheckCircle, FiHeart, FiShare2
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -54,7 +54,8 @@ import {
 const DEFAULT_AVATAR = "https://i.pravatar.cc/150?img=12";
 const MIN_CHAT_MINUTES = 5;
 
-const ExpertCard = ({ data, mode, maxPrice, onStartChat, onStartCall }) => {
+// REMOVED maxPrice prop - backend handles filtering
+const ExpertCard = ({ data, mode, onStartChat, onStartCall }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { isLoggedIn, user } = useAuth();
@@ -95,23 +96,7 @@ const ExpertCard = ({ data, mode, maxPrice, onStartChat, onStartCall }) => {
   const hasPerMinute = callPrice > 0 || chatPrice > 0;
   const hasSession = sessionPrice > 0;
 
-  // Max price filter
-  const isHiddenByPrice = useMemo(() => {
-    if (!maxPrice) return false;
-    const mp = Number(maxPrice);
-    if (!mp) return false;
-    
-    if (hasPerMinute) {
-      if (mode === "call") return callPrice > mp;
-      if (mode === "chat") return chatPrice > mp;
-    }
-    if (hasSession) {
-      return sessionPrice > mp;
-    }
-    return false;
-  }, [maxPrice, mode, hasPerMinute, hasSession, callPrice, chatPrice, sessionPrice]);
-
-  if (isHiddenByPrice) return null;
+  // REMOVED isHiddenByPrice - NO FRONTEND FILTERING
 
   // Get lowest price for display
   const lowestPrice = useMemo(() => {
@@ -273,15 +258,6 @@ const ExpertCard = ({ data, mode, maxPrice, onStartChat, onStartCall }) => {
                   <AvatarImg src={data.profile_photo || DEFAULT_AVATAR} alt={data.name} />
                   <StatusDot $online={data.isOnline === true} />
                 </AvatarWrap>
-                
-                {/* <QuickActions>
-                  <ActionIcon onClick={() => setIsLiked(!isLiked)} isActive={isLiked}>
-                    <FiHeart size={14} />
-                  </ActionIcon>
-                  <ActionIcon>
-                    <FiShare2 size={14} />
-                  </ActionIcon>
-                </QuickActions> */}
               </AvatarSection>
 
               <ExpertInfo>
@@ -331,11 +307,6 @@ const ExpertCard = ({ data, mode, maxPrice, onStartChat, onStartCall }) => {
                 </MetaRow>
 
                 <CategoryTags>
-                  {/* {responseTime && (
-                    <CategoryChip>
-                      <FiClock size={10} /> Response: {responseTime}
-                    </CategoryChip>
-                  )} */}
                   {consultationCount > 0 && (
                     <CategoryChip>
                       <FiTrendingUp size={10} /> {consultationCount}+ consultations
@@ -466,14 +437,14 @@ const ExpertCard = ({ data, mode, maxPrice, onStartChat, onStartCall }) => {
             {hasSubscription && hasPerMinute && (
               <PricingInfo>
                 <FiZap size={14} />
-                <span>✨ Subscribe & save  on consultations!</span>
+                <span>✨ Subscribe & save on consultations!</span>
               </PricingInfo>
             )}
 
             {/* Action Buttons */}
             <ActionRow>
               <PrimaryBtn
-                disabled={isButtonDisabled() }
+                disabled={isButtonDisabled()}
                 onClick={mode === "chat" ? handleStartChatLocal : handleStartCallLocal}
                 whileTap={{ scale: 0.97 }}
               >

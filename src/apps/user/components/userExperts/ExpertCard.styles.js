@@ -21,18 +21,29 @@ const pulseRing = keyframes`
 // Card Container
 export const Card = styled(motion.div)`
   position: relative;
+  width: ${({ $callChat }) => ($callChat ? "100%" : "auto")};
   height: 100%;
-  min-height: 360px;
+  min-height: ${({ $callChat }) => ($callChat ? "356px" : "360px")};
+  max-height: ${({ $callChat }) => ($callChat ? "380px" : "none")};
   border-radius: 20px;
   background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
   border: 1px solid rgba(0, 0, 128, 0.08);
   box-shadow: 0 14px 30px rgba(16, 24, 40, 0.08);
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
   overflow: hidden;
+  ${({ $callChat }) => $callChat && css`
+    display: flex;
+  `}
 
   &:hover {
     border-color: rgba(0, 0, 128, 0.18);
     box-shadow: 0 18px 40px rgba(16, 24, 40, 0.13);
+  }
+
+  @media (max-width: 640px) {
+    min-height: ${({ $callChat }) => ($callChat ? "342px" : "360px")};
+    max-height: ${({ $callChat }) => ($callChat ? "none" : "none")};
+    border-radius: ${({ $callChat }) => ($callChat ? "18px" : "20px")};
   }
 `;
 
@@ -43,10 +54,11 @@ export const CardInner = styled.div`
   min-height: inherit;
   display: flex;
   flex-direction: column;
-  padding: 13px;
+  padding: ${({ $callChat }) => ($callChat ? "11px" : "13px")};
+  width: ${({ $callChat }) => ($callChat ? "100%" : "auto")};
   
   @media (max-width: 480px) {
-    padding: 13px;
+    padding: ${({ $callChat }) => ($callChat ? "10px" : "13px")};
   }
 `;
 
@@ -85,12 +97,13 @@ export const GradientBorder = styled.div`
 // Header Section
 export const CardHeader = styled.div`
   display: flex;
-  gap: 12px;
-  min-height: 74px;
-  margin-bottom: 10px;
+  gap: ${({ $callChat }) => ($callChat ? "10px" : "12px")};
+  min-height: ${({ $callChat }) => ($callChat ? "80px" : "74px")};
+  margin-bottom: ${({ $callChat }) => ($callChat ? "7px" : "10px")};
   
   @media (max-width: 640px) {
-    gap: 12px;
+    gap: ${({ $callChat }) => ($callChat ? "9px" : "12px")};
+    min-height: ${({ $callChat }) => ($callChat ? "76px" : "74px")};
   }
 `;
 
@@ -130,8 +143,9 @@ export const AvatarWrap = styled.div`
   }
   
   @media (max-width: 640px) {
-    width: 52px;
-    height: 52px;
+    width: ${({ $callChat }) => ($callChat ? "46px" : "52px")};
+    height: ${({ $callChat }) => ($callChat ? "46px" : "52px")};
+    border-radius: ${({ $callChat }) => ($callChat ? "15px" : "18px")};
   }
 `;
 
@@ -220,9 +234,16 @@ export const NameRow = styled.div`
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 4px;
+  min-height: ${({ $callChat }) => ($callChat ? "36px" : "0")};
+
+  @media (max-width: 640px) {
+    min-height: ${({ $callChat }) => ($callChat ? "22px" : "0")};
+    gap: ${({ $callChat }) => ($callChat ? "6px" : "8px")};
+  }
 `;
 
 export const Name = styled.h3`
+  min-width: 0;
   font-size: 16px;
   font-weight: 900;
   color: #111827;
@@ -230,9 +251,21 @@ export const Name = styled.h3`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  ${({ $callChat }) => $callChat && css`
+    flex: 1 1 120px;
+    line-height: 1.22;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  `}
   
   @media (max-width: 640px) {
-    font-size: 16px;
+    font-size: ${({ $callChat }) => ($callChat ? "14px" : "16px")};
+    ${({ $callChat }) => $callChat && css`
+      -webkit-line-clamp: 2;
+    `}
   }
 `;
 
@@ -267,9 +300,22 @@ export const Role = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  ${({ $callChat }) => $callChat && css`
+    min-height: 34px;
+    line-height: 17px;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  `}
   
   @media (max-width: 640px) {
     font-size: 12px;
+    ${({ $callChat }) => $callChat && css`
+      min-height: 30px;
+      line-height: 15px;
+    `}
   }
 `;
 
@@ -277,13 +323,15 @@ export const MetaRow = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  min-height: 30px;
+  min-height: ${({ $callChat }) => ($callChat ? "32px" : "30px")};
   max-height: 34px;
   overflow: hidden;
   margin-bottom: 6px;
   
   @media (max-width: 640px) {
-    gap: 8px;
+    gap: ${({ $callChat }) => ($callChat ? "6px" : "8px")};
+    min-height: ${({ $callChat }) => ($callChat ? "22px" : "30px")};
+    max-height: ${({ $callChat }) => ($callChat ? "24px" : "34px")};
   }
 `;
 
@@ -294,6 +342,14 @@ export const MetaItem = styled.span`
   font-size: 12px;
   color: #667085;
   font-weight: 700;
+
+  ${({ $callChat }) => $callChat && css`
+    min-width: 0;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  `}
   
   svg {
     flex-shrink: 0;
@@ -313,6 +369,14 @@ export const CategoryTags = styled.div`
   max-height: 22px;
   overflow: hidden;
   margin-top: 6px;
+
+  @media (max-width: 640px) {
+    display: ${({ $callChat }) => ($callChat ? "none" : "flex")};
+  }
+
+  &:empty {
+    display: none;
+  }
 `;
 
 export const CategoryChip = styled.span`
@@ -331,23 +395,28 @@ export const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  min-height: 50px;
-  margin: 9px 0;
-  padding: 8px 0;
+  min-height: ${({ $callChat }) => ($callChat ? "54px" : "50px")};
+  margin: ${({ $callChat }) => ($callChat ? "6px 0" : "9px 0")};
+  padding: ${({ $callChat }) => ($callChat ? "6px 0" : "8px 0")};
   border-top: 1px solid #e2e8f0;
   border-bottom: 1px solid #e2e8f0;
+
+  &:empty {
+    display: none;
+  }
   
   @media (max-width: 480px) {
     grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    gap: ${({ $callChat }) => ($callChat ? "6px" : "8px")};
+    min-height: ${({ $callChat }) => ($callChat ? "44px" : "50px")};
   }
 `;
 
 export const StatCard = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 7px;
+  gap: ${({ $callChat }) => ($callChat ? "6px" : "8px")};
+  padding: ${({ $callChat }) => ($callChat ? "6px" : "7px")};
   background: #f8fafc;
   border: 1px solid #eef2f7;
   border-radius: 14px;
@@ -366,9 +435,12 @@ export const StatCard = styled.div`
   div {
     display: flex;
     flex-direction: column;
+    ${({ $callChat }) => $callChat && css`
+      min-width: 0;
+    `}
     
     strong {
-      font-size: 14px;
+      font-size: ${({ $callChat }) => ($callChat ? "13px" : "14px")};
       font-weight: 700;
       color: #0f172a;
     }
@@ -376,14 +448,23 @@ export const StatCard = styled.div`
     span {
       font-size: 10px;
       color: #64748b;
+      ${({ $callChat }) => $callChat && css`
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      `}
     }
   }
 `;
 
 // Pricing Section
 export const PricingSection = styled.div`
-  min-height: 48px;
-  margin: 9px 0;
+  min-height: ${({ $callChat }) => ($callChat ? "46px" : "48px")};
+  margin: ${({ $callChat }) => ($callChat ? "6px 0" : "9px 0")};
+
+  @media (max-width: 640px) {
+    min-height: ${({ $callChat }) => ($callChat ? "38px" : "48px")};
+  }
 `;
 
 export const PricingBadges = styled.div`
@@ -394,6 +475,16 @@ export const PricingBadges = styled.div`
   max-height: 24px;
   overflow: hidden;
   margin: 8px 0;
+
+  @media (max-width: 640px) {
+    margin: ${({ $callChat }) => ($callChat ? "5px 0" : "8px 0")};
+    min-height: ${({ $callChat }) => ($callChat ? "18px" : "22px")};
+    max-height: ${({ $callChat }) => ($callChat ? "20px" : "24px")};
+  }
+
+  &:empty {
+    display: none;
+  }
 `;
 
 export const PricingBadge = styled.span`
@@ -423,12 +514,14 @@ export const PricingBadge = styled.span`
 
 export const PriceRow = styled.div`
   display: flex;
+  align-items: flex-start;
   gap: 12px;
   ${props => props.$fullWidth && css`
     width: 100%;
   `}
   
   > div {
+    min-width: 0;
     flex: ${props => props.$fullWidth ? 1 : 'auto'};
     
     &:first-child {
@@ -437,8 +530,8 @@ export const PriceRow = styled.div`
   }
   
   @media (max-width: 480px) {
-    flex-direction: column;
-    gap: 12px;
+    flex-direction: ${({ $callChat }) => ($callChat ? "row" : "column")};
+    gap: ${({ $callChat }) => ($callChat ? "8px" : "12px")};
   }
 `;
 
@@ -452,6 +545,12 @@ export const PriceLabel = styled.div`
   display: flex;
   align-items: center;
   gap: 4px;
+
+  ${({ $callChat }) => $callChat && css`
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  `}
 `;
 
 export const PriceTag = styled.div`
@@ -459,6 +558,7 @@ export const PriceTag = styled.div`
   align-items: baseline;
   gap: 4px;
   flex-wrap: wrap;
+  min-width: 0;
   
   ${props => props.$premium && css`
     background: linear-gradient(135deg, #8b5cf6, #6d28d9);
@@ -475,7 +575,7 @@ export const PriceValue = styled.span`
   color: #0f172a;
   
   @media (max-width: 640px) {
-    font-size: 18px;
+    font-size: ${({ $callChat }) => ($callChat ? "15px" : "18px")};
   }
 `;
 
@@ -510,11 +610,18 @@ export const ActionRow = styled.div`
   display: flex;
   gap: 8px;
   margin-top: auto;
-  padding-top: 9px;
+  padding-top: ${({ $callChat }) => ($callChat ? "7px" : "9px")};
+  ${({ $callChat }) => $callChat && css`
+    align-items: stretch;
+  `}
   
   @media (max-width: 640px) {
+    flex-direction: ${({ $callChat }) => ($callChat ? "row" : "column")};
+    gap: ${({ $callChat }) => ($callChat ? "8px" : "10px")};
+  }
+
+  @media (max-width: 380px) {
     flex-direction: column;
-    gap: 10px;
   }
 `;
 
@@ -535,6 +642,17 @@ export const PrimaryBtn = styled(motion.button)`
   color: #000080;
   box-shadow: 0 12px 22px rgba(255, 193, 7, 0.22);
   transition: transform 180ms ease, box-shadow 180ms ease;
+
+  ${({ $callChat }) => $callChat && css`
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    svg {
+      flex-shrink: 0;
+    }
+  `}
   
   &:hover:not(:disabled) {
     transform: translateY(-2px);
@@ -547,8 +665,9 @@ export const PrimaryBtn = styled(motion.button)`
   }
   
   @media (max-width: 640px) {
-    padding: 10px 16px;
-    font-size: 12px;
+    min-height: ${({ $callChat }) => ($callChat ? "38px" : "38px")};
+    padding: ${({ $callChat }) => ($callChat ? "8px 10px" : "10px 16px")};
+    font-size: ${({ $callChat }) => ($callChat ? "11px" : "12px")};
   }
 `;
 
@@ -563,6 +682,9 @@ export const GhostBtn = styled(motion.button)`
   cursor: pointer;
   padding: 9px 16px;
   transition: all 0.3s ease;
+  ${({ $callChat }) => $callChat && css`
+    white-space: nowrap;
+  `}
   
   &:hover {
     background: #eef2ff;
@@ -572,8 +694,13 @@ export const GhostBtn = styled(motion.button)`
   }
   
   @media (max-width: 640px) {
-    padding: 8px 16px;
-    font-size: 12px;
+    min-height: ${({ $callChat }) => ($callChat ? "38px" : "auto")};
+    padding: ${({ $callChat }) => ($callChat ? "8px 12px" : "8px 16px")};
+    font-size: ${({ $callChat }) => ($callChat ? "11px" : "12px")};
+  }
+
+  @media (max-width: 380px) {
+    width: ${({ $callChat }) => ($callChat ? "100%" : "auto")};
   }
 `;
 

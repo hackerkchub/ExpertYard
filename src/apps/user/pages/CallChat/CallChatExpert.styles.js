@@ -16,7 +16,9 @@ const shimmer = keyframes`
 
 export const PageWrap = styled.div`
   min-height: 100vh;
-  max-width: 1440px;
+  width: 100%;
+  max-width: 1320px;
+  box-sizing: border-box;
   margin: 0 auto;
   padding: 86px 18px 64px;
   color: ${text};
@@ -67,17 +69,15 @@ export const PageWrap = styled.div`
     gap: 14px;
 
     .trust-badges {
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      scroll-behavior: smooth;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      padding-bottom: 2px;
+      flex-wrap: wrap;
+      overflow: visible;
+      padding-bottom: 0;
     }
+  }
 
-    .trust-badges::-webkit-scrollbar {
-      display: none;
-    }
+  @media (max-width: 430px) {
+    padding-left: 10px;
+    padding-right: 10px;
   }
 `;
 
@@ -97,20 +97,36 @@ export const HeaderSection = styled.header`
   box-shadow: 0 24px 58px rgba(0, 0, 128, 0.2);
 
   @media (max-width: 768px) {
-    padding: 22px 16px;
+    padding: 20px 16px;
     border-radius: 22px;
     align-items: flex-start;
     flex-direction: column;
+    gap: 14px;
+  }
+
+  @media (max-width: 430px) {
+    padding: 18px 14px;
+    border-radius: 20px;
   }
 `;
 
 export const Title = styled.h1`
   margin: 0;
-  font-size: clamp(27px, 4vw, 46px);
+  max-width: 840px;
+  font-size: clamp(28px, 5vw, 56px);
   font-weight: 950;
-  line-height: 1.06;
+  line-height: 1.05;
   letter-spacing: 0;
   color: #ffffff;
+  overflow-wrap: anywhere;
+
+  @media (max-width: 768px) {
+    line-height: 1.1;
+  }
+
+  @media (max-width: 430px) {
+    font-size: clamp(25px, 8vw, 31px);
+  }
 `;
 
 export const SubTitle = styled.p`
@@ -120,6 +136,18 @@ export const SubTitle = styled.p`
   line-height: 1.6;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.86);
+
+  @media (max-width: 768px) {
+    max-width: 58ch;
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 430px) {
+    font-size: 13px;
+    line-height: 1.45;
+  }
 `;
 
 export const TabsRow = styled.div`
@@ -131,6 +159,12 @@ export const TabsRow = styled.div`
   background: #ffffff;
   border: 1px solid ${border};
   box-shadow: 0 12px 28px rgba(16, 24, 40, 0.08);
+
+  @media (max-width: 640px) {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 `;
 
 export const TabButton = styled.button`
@@ -152,6 +186,12 @@ export const TabButton = styled.button`
     transform: translateY(-1px);
     background: ${({ $active }) => ($active ? `linear-gradient(135deg, ${yellowLight}, ${yellow})` : "#eef2ff")};
   }
+
+  @media (max-width: 640px) {
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 12px;
+  }
 `;
 
 export const Layout = styled.div`
@@ -162,6 +202,7 @@ export const Layout = styled.div`
 
   @media (max-width: 1024px) {
     grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
   }
 `;
 
@@ -333,8 +374,12 @@ export const ExpertsWrap = styled.section`
   box-shadow: 0 16px 36px rgba(16, 24, 40, 0.08);
 
   @media (max-width: 768px) {
-    padding: 13px;
+    padding: 12px;
     border-radius: 20px;
+  }
+
+  @media (max-width: 430px) {
+    padding: 10px;
   }
 `;
 
@@ -343,20 +388,28 @@ export const Grid = styled.div`
   grid-template-columns: repeat(3, minmax(0, 1fr));
   grid-auto-rows: 1fr;
   align-items: stretch;
-  gap: 22px;
+  gap: 18px;
 
   > div {
+    min-width: 0;
+    height: 100%;
+    display: flex;
+  }
+
+  > div > div {
+    width: 100%;
+    min-width: 0;
     height: 100%;
   }
 
-  @media (max-width: 1100px) {
+  @media (max-width: 1023px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
+    gap: 16px;
   }
 
   @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-    gap: 18px;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 14px;
   }
 `;
 
@@ -371,21 +424,48 @@ export const EmptyState = styled.div`
 `;
 
 export const LoaderRow = styled.div`
-  padding: 42px 12px;
+  padding: 0;
   text-align: center;
   font-size: 14px;
   color: #344054;
   position: relative;
   overflow: hidden;
   border-radius: 20px;
-  background: #f8fafc;
+  background: transparent;
 
   &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(120deg, transparent, rgba(203, 213, 225, 0.46), transparent);
-    animation: ${shimmer} 1.4s infinite;
+    display: none;
+  }
+`;
+
+export const SkeletonGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+
+  @media (max-width: 1023px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 14px;
+  }
+`;
+
+export const SkeletonCard = styled.div`
+  min-height: 360px;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 128, 0.08);
+  background:
+    linear-gradient(90deg, transparent, rgba(255,255,255,0.72), transparent),
+    linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  background-size: 180% 100%, 100% 100%;
+  box-shadow: 0 14px 30px rgba(16, 24, 40, 0.08);
+  animation: ${shimmer} 1.35s infinite;
+
+  @media (max-width: 640px) {
+    min-height: 326px;
   }
 `;
 
@@ -510,6 +590,12 @@ export const MobileFilterToggle = styled.button`
   @media (max-width: 1024px) {
     display: flex;
   }
+
+  @media (max-width: 640px) {
+    width: 100%;
+    min-height: 44px;
+    margin-bottom: 12px;
+  }
 `;
 
 export const MobileFilterDrawer = styled.div`
@@ -542,6 +628,18 @@ export const ActiveFilters = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 9px;
+
+  @media (max-width: 640px) {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
 `;
 
 export const ActiveFilterChip = styled.button`

@@ -1,5 +1,5 @@
 // src/apps/user/pages/UserExpertsPage.jsx - PREMIUM UPGRADED WITH WORKING FILTERS (TAB FLICKER FIXED)
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { 
@@ -28,6 +28,8 @@ import {
   Grid,
   EmptyState,
   LoaderRow,
+  SkeletonCard,
+  SkeletonGrid,
   PaginationWrap,
   PageButton,
   PageInfo,
@@ -94,6 +96,7 @@ export default function UserExpertsPage() {
   const modeFromUrl = searchParams.get("mode");
   const searchQueryFromUrl = searchParams.get("q");
   const pageFromUrl = parseInt(searchParams.get("page")) || 1;
+  const queryString = searchParams.toString();
 
   // FIX 1: Initialize tab from URL directly - prevents initial flicker
   const [tab, setTab] = useState(() => {
@@ -140,6 +143,7 @@ export default function UserExpertsPage() {
 
   // Online/Offline state
   const [onlineExperts, setOnlineExperts] = useState({});
+  const latestRequestRef = useRef(0);
 
   // FIX 2: Replace URL sync effect - only sync when URL mode differs from state
   useEffect(() => {
@@ -154,18 +158,20 @@ export default function UserExpertsPage() {
     }
   }, [modeFromUrl, tab]);
 
-  // SIMPLIFIED SEARCH DEBOUNCE - NO extra refs
+  // Debounce search and avoid resetting pagination when the value is unchanged.
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearch(searchInput.trim());
-      setCurrentPage(1);
+      const nextSearch = searchInput.trim();
+      if (nextSearch !== debouncedSearch) {
+        setDebouncedSearch(nextSearch);
+        setCurrentPage(1);
+      }
     }, 600);
 
     return () => clearTimeout(timer);
-  }, [searchInput]);
+  }, [searchInput, debouncedSearch]);
 
-  // Build API params
-  const buildApiParams = useCallback(() => {
+  const apiParams = useMemo(() => {
     const params = {
       page: currentPage,
       limit: 20,
@@ -222,42 +228,49 @@ export default function UserExpertsPage() {
     tab
   ]);
 
-  // FIX 3: Fetch experts with conditional URL update - prevents unnecessary URL rewrites
- const fetchExperts = useCallback(async () => {
-  const params = buildApiParams();
-
-  setLoading(true);
-  setError(null);
-
-  try {
-    const response = await getExpertsApi(params);
-
-    console.log("EXPERT RESPONSE:", response);
-
-    setExperts(response.data || []);
-    setTotalExperts(response.total || 0);
-    setTotalPages(response.totalPages || 1);
-
-    const newParams = new URLSearchParams();
-    newParams.set("mode", tab);
-    newParams.set("page", currentPage);
+  useEffect(() => {
+    const nextParams = new URLSearchParams();
+    nextParams.set("mode", tab);
+    nextParams.set("page", String(currentPage));
 
     if (debouncedSearch) {
-      newParams.set("q", debouncedSearch);
+      nextParams.set("q", debouncedSearch);
     }
 
-    setSearchParams(newParams, { replace: true });
+    if (nextParams.toString() !== queryString) {
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [tab, currentPage, debouncedSearch, queryString, setSearchParams]);
 
-  } catch (error) {
-    console.error("Failed to fetch experts:", error);
-    setError("Failed to load experts. Please try again.");
-    setExperts([]);
-    setTotalExperts(0);
-    setTotalPages(1);
-  } finally {
-    setLoading(false);
-  }
-}, [buildApiParams, currentPage, tab, debouncedSearch, setSearchParams]);
+  const fetchExperts = useCallback(async () => {
+    const requestId = latestRequestRef.current + 1;
+    latestRequestRef.current = requestId;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await getExpertsApi(apiParams);
+
+      if (latestRequestRef.current !== requestId) return;
+
+      setExperts(response.data || []);
+      setTotalExperts(response.total || 0);
+      setTotalPages(response.totalPages || 1);
+    } catch (error) {
+      if (latestRequestRef.current !== requestId) return;
+
+      console.error("Failed to fetch experts:", error);
+      setError("Failed to load experts. Please try again.");
+      setExperts([]);
+      setTotalExperts(0);
+      setTotalPages(1);
+    } finally {
+      if (latestRequestRef.current === requestId) {
+        setLoading(false);
+      }
+    }
+  }, [apiParams]);
   // SINGLE EFFECT for fetching - NO duplicates
   useEffect(() => {
     fetchExperts();
@@ -423,6 +436,37 @@ export default function UserExpertsPage() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
+
+  const cardExperts = useMemo(() => {
+    return experts.map((exp) => ({
+      id: exp.id,
+      slug: exp.slug || exp.id,
+      name: exp.name,
+      profile_photo: exp.profile_photo,
+      position: exp.category_name,
+      speciality: exp.subcategory_name,
+      location: exp.location,
+      isOnline: onlineExperts[String(exp.id)],
+      call_per_minute: exp.call_per_minute || 0,
+      chat_per_minute: exp.chat_per_minute || 0,
+      session_price: exp.session_price || 0,
+      session_duration: exp.session_duration || 30,
+      avg_rating: exp.avg_rating || 0,
+      total_reviews: exp.total_reviews || 0,
+      total_followers: exp.total_followers || 0,
+      total_experience: exp.total_experience || 0,
+      total_time: exp.total_time || 0,
+      chat_time: exp.chat_time || 0,
+      call_time: exp.call_time || 0,
+      has_subscription: exp.has_subscription || false,
+      category_name: exp.category_name,
+      subcategory_name: exp.subcategory_name,
+      is_verified: exp.is_verified !== false,
+      languages: exp.languages || [],
+      avg_response_time: exp.avg_response_time,
+      total_consultations: exp.total_consultations,
+    }));
+  }, [experts, onlineExperts]);
 
   // Get active filters count
   const activeFiltersCount = useMemo(() => {
@@ -642,12 +686,6 @@ export default function UserExpertsPage() {
               onClick={() => {
                 setTab(tabItem.id);
                 setCurrentPage(1);
-                // Update URL immediately on tab click
-                setSearchParams({ 
-                  mode: tabItem.id, 
-                  ...(debouncedSearch && { q: debouncedSearch }),
-                  page: "1"
-                });
               }}
             >
               <span>{tabItem.icon}</span> {t(tabItem.labelKey)}
@@ -656,7 +694,7 @@ export default function UserExpertsPage() {
         </TabsRow>
 
         {/* Stats Bar */}
-        {!loading && experts.length > 0 && (
+        {experts.length > 0 && (
           <StatsBar>
             <StatItem>
               <FiUsers size={16} />
@@ -771,10 +809,13 @@ export default function UserExpertsPage() {
           </AnimatePresence>
 
           <ExpertsWrap>
-            {loading ? (
+            {loading && experts.length === 0 ? (
               <LoaderRow>
-                <Spinner />
-                <div style={{ marginTop: 16, color: '#64748b' }}>Loading experts...</div>
+                <SkeletonGrid>
+                  {Array.from({ length: 8 }).map((_, index) => (
+                    <SkeletonCard key={index} />
+                  ))}
+                </SkeletonGrid>
               </LoaderRow>
             ) : error ? (
               <EmptyState>
@@ -813,46 +854,18 @@ export default function UserExpertsPage() {
                 </div>
                 
                 <Grid>
-                  {experts.map((exp, index) => {
-                    const isOnline = onlineExperts[String(exp.id)];
-                    
+                  {cardExperts.map((exp, index) => {
                     return (
                       <motion.div
                         key={exp.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
+                        transition={{ delay: Math.min(index, 6) * 0.025 }}
                       >
                         <ExpertCard
+                          variant="callChat"
                           mode={tab}
-                          data={{
-                            id: exp.id,
-                            slug: exp.slug || exp.id,
-                            name: exp.name,
-                            profile_photo: exp.profile_photo,
-                            position: exp.category_name,
-                            speciality: exp.subcategory_name,
-                            location: exp.location,
-                            isOnline: isOnline,
-                            call_per_minute: exp.call_per_minute || 0,
-                            chat_per_minute: exp.chat_per_minute || 0,
-                            session_price: exp.session_price || 0,
-                            session_duration: exp.session_duration || 30,
-                            avg_rating: exp.avg_rating || 0,
-                            total_reviews: exp.total_reviews || 0,
-                            total_followers: exp.total_followers || 0,
-                            total_experience: exp.total_experience || 0,
-                            total_time: exp.total_time || 0,
-                            chat_time: exp.chat_time || 0,
-                            call_time: exp.call_time || 0,
-                            has_subscription: exp.has_subscription || false,
-                            category_name: exp.category_name,
-                            subcategory_name: exp.subcategory_name,
-                            is_verified: exp.is_verified !== false,
-                            languages: exp.languages || [],
-                            avg_response_time: exp.avg_response_time,
-                            total_consultations: exp.total_consultations,
-                          }}
+                          data={exp}
                           onStartChat={tab === "chat" ? handleStartChat : undefined}
                           onStartCall={tab === "call" ? handleStartCall : undefined}
                         />

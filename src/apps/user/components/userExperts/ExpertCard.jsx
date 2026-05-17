@@ -55,7 +55,7 @@ const DEFAULT_AVATAR = "https://i.pravatar.cc/150?img=12";
 const MIN_CHAT_MINUTES = 5;
 
 // REMOVED maxPrice prop - backend handles filtering
-const ExpertCard = ({ data, mode, onStartChat, onStartCall }) => {
+const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { isLoggedIn, user } = useAuth();
@@ -91,6 +91,7 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall }) => {
   const isPremium = data.is_premium || false;
   const responseTime = data.avg_response_time || "< 1 min";
   const consultationCount = data.total_consultations || 0;
+  const isCallChatCard = variant === "callChat";
 
   // PRICING LOGIC
   const hasPerMinute = callPrice > 0 || chatPrice > 0;
@@ -211,9 +212,9 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall }) => {
       if (hasSubscription) return "View Membership Plans";
       return "Contact Expert";
     } else {
-      if (hasPerMinute) return `Start Call • ₹${callPrice}/min`;
-      if (hasSession) return `Book Session • ₹${sessionPrice}`;
-      if (hasSubscription) return "View Membership Plans";
+      if (hasPerMinute) return `Call • ₹${callPrice}/min`;
+      if (hasSession) return `Session • ₹${sessionPrice}`;
+      if (hasSubscription) return "View Plans";
       return "Contact Expert";
     }
   };
@@ -246,23 +247,24 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall }) => {
         whileHover="hover"
         onHoverStart={() => setIsHovered(true)}
         onHoverEnd={() => setIsHovered(false)}
+        style={isCallChatCard ? { width: "100%", height: "100%" } : undefined}
       >
-        <Card>
+        <Card $callChat={isCallChatCard}>
           <ShineEffect isHovered={isHovered} />
           <GradientBorder isHovered={isHovered} />
           
-          <CardInner>
-            <CardHeader>
+          <CardInner $callChat={isCallChatCard}>
+            <CardHeader $callChat={isCallChatCard}>
               <AvatarSection>
-                <AvatarWrap $isAI={false} isHovered={isHovered}>
+                <AvatarWrap $isAI={false} $callChat={isCallChatCard} isHovered={isHovered}>
                   <AvatarImg src={data.profile_photo || DEFAULT_AVATAR} alt={data.name} />
                   <StatusDot $online={data.isOnline === true} />
                 </AvatarWrap>
               </AvatarSection>
 
               <ExpertInfo>
-                <NameRow>
-                  <Name>{data.name}</Name>
+                <NameRow $callChat={isCallChatCard}>
+                  <Name $callChat={isCallChatCard}>{data.name}</Name>
                   {data.is_verified && (
                     <VerifiedBadge>
                       <FiCheckCircle size={14} />
@@ -277,7 +279,7 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall }) => {
                 </NameRow>
                 
                 {(categoryName || subcategoryName) && (
-                  <Role>
+                  <Role $callChat={isCallChatCard}>
                     {categoryName}
                     {subcategoryName && (
                       <>
@@ -288,25 +290,25 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall }) => {
                   </Role>
                 )}
 
-                <MetaRow>
+                <MetaRow $callChat={isCallChatCard}>
                   {location && (
-                    <MetaItem>
+                    <MetaItem $callChat={isCallChatCard}>
                       <FiMapPin size={12} />
                       {location}
                     </MetaItem>
                   )}
-                  <MetaItem>
+                  <MetaItem $callChat={isCallChatCard}>
                     <RatingStar>★</RatingStar>
                     {avgRating ? avgRating.toFixed(1) : "New"} 
                     <span style={{ color: '#94a3b8' }}>({totalReviews})</span>
                   </MetaItem>
-                  <MetaItem>
+                  <MetaItem $callChat={isCallChatCard}>
                     <FiUsers size={12} />
                     {followersCount.toLocaleString()} followers
                   </MetaItem>
                 </MetaRow>
 
-                <CategoryTags>
+                <CategoryTags $callChat={isCallChatCard}>
                   {consultationCount > 0 && (
                     <CategoryChip>
                       <FiTrendingUp size={10} /> {consultationCount}+ consultations
@@ -317,9 +319,9 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall }) => {
             </CardHeader>
 
             {/* Stats Grid */}
-            <StatsGrid>
+            <StatsGrid $callChat={isCallChatCard}>
               {totalExperience > 0 && (
-                <StatCard>
+                <StatCard $callChat={isCallChatCard}>
                   <FiClock size={16} />
                   <div>
                     <strong>{totalExperience}+</strong>
@@ -328,7 +330,7 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall }) => {
                 </StatCard>
               )}
               {totalTime > 0 && (
-                <StatCard>
+                <StatCard $callChat={isCallChatCard}>
                   <FiZap size={16} />
                   <div>
                     <strong>{totalTime}</strong>
@@ -337,7 +339,7 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall }) => {
                 </StatCard>
               )}
               {chatTime > 0 && (
-                <StatCard>
+                <StatCard $callChat={isCallChatCard}>
                   <FiMessageSquare size={16} />
                   <div>
                     <strong>{chatTime}</strong>
@@ -346,7 +348,7 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall }) => {
                 </StatCard>
               )}
               {callTime > 0 && (
-                <StatCard>
+                <StatCard $callChat={isCallChatCard}>
                   <FiPhoneCall size={16} />
                   <div>
                     <strong>{callTime}</strong>
@@ -357,7 +359,7 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall }) => {
             </StatsGrid>
 
             {/* Pricing Badges */}
-            <PricingBadges>
+            <PricingBadges $callChat={isCallChatCard}>
               {hasPerMinute && (
                 <PricingBadge type="per_minute">
                   <FiZap size={12} /> {t("expertCard.flexiblePricing")}
@@ -375,63 +377,7 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall }) => {
               )}
             </PricingBadges>
 
-            {/* Price Display */}
-            <PricingSection>
-              {hasPerMinute ? (
-                <PriceRow>
-                  {callPrice > 0 && (
-                    <div>
-                      <PriceLabel>
-                        <FiPhoneCall size={12} /> {t("expertCard.call")}
-                      </PriceLabel>
-                      <PriceTag>
-                        <PriceValue>₹{callPrice}</PriceValue>
-                        <span>/min</span>
-                      </PriceTag>
-                    </div>
-                  )}
-                  {chatPrice > 0 && (
-                    <div>
-                      <PriceLabel>
-                        <FiMessageSquare size={12} /> {t("expertCard.chat")}
-                      </PriceLabel>
-                      <PriceTag>
-                        <PriceValue>₹{chatPrice}</PriceValue>
-                        <span>/min</span>
-                      </PriceTag>
-                    </div>
-                  )}
-                </PriceRow>
-              ) : hasSession ? (
-                <PriceRow $fullWidth>
-                  <div>
-                    <PriceLabel>
-                      <FiClock size={12} /> Session Package
-                    </PriceLabel>
-                    <PriceTag>
-                      <PriceValue>₹{sessionPrice}</PriceValue>
-                      <span>/{sessionDuration}min session</span>
-                    </PriceTag>
-                  </div>
-                </PriceRow>
-              ) : hasSubscription ? (
-                <PriceRow $fullWidth>
-                  <div>
-                    <PriceLabel>Membership Plans Available</PriceLabel>
-                    <PriceTag $premium>
-                      <FiZap size={14} /> Starting from ₹499/month
-                    </PriceTag>
-                  </div>
-                </PriceRow>
-              ) : (
-                <PriceRow $fullWidth>
-                  <div>
-                    <PriceLabel>Custom Pricing</PriceLabel>
-                    <PriceTag>Contact for quote</PriceTag>
-                  </div>
-                </PriceRow>
-              )}
-            </PricingSection>
+           
 
             {/* Subscription Hint */}
             {hasSubscription && hasPerMinute && (
@@ -442,8 +388,9 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall }) => {
             )}
 
             {/* Action Buttons */}
-            <ActionRow>
+            <ActionRow $callChat={isCallChatCard}>
               <PrimaryBtn
+                $callChat={isCallChatCard}
                 disabled={isButtonDisabled()}
                 onClick={mode === "chat" ? handleStartChatLocal : handleStartCallLocal}
                 whileTap={{ scale: 0.97 }}
@@ -451,7 +398,7 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall }) => {
                 {mode === "chat" ? <FiMessageSquare size={16} /> : <FiPhoneCall size={16} />}
                 {getButtonText()}
               </PrimaryBtn>
-              <GhostBtn onClick={handleViewProfile} whileTap={{ scale: 0.97 }}>
+              <GhostBtn $callChat={isCallChatCard} onClick={handleViewProfile} whileTap={{ scale: 0.97 }}>
                 {t("expertCard.profile")}
               </GhostBtn>
             </ActionRow>
@@ -529,4 +476,27 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall }) => {
   );
 };
 
-export default ExpertCard;
+const areExpertCardPropsEqual = (prev, next) => {
+  const prevData = prev.data || {};
+  const nextData = next.data || {};
+
+  return (
+    prev.mode === next.mode &&
+    prev.variant === next.variant &&
+    prev.onStartChat === next.onStartChat &&
+    prev.onStartCall === next.onStartCall &&
+    prevData.id === nextData.id &&
+    prevData.name === nextData.name &&
+    prevData.profile_photo === nextData.profile_photo &&
+    prevData.isOnline === nextData.isOnline &&
+    prevData.call_per_minute === nextData.call_per_minute &&
+    prevData.chat_per_minute === nextData.chat_per_minute &&
+    prevData.session_price === nextData.session_price &&
+    prevData.avg_rating === nextData.avg_rating &&
+    prevData.total_reviews === nextData.total_reviews &&
+    prevData.category_name === nextData.category_name &&
+    prevData.subcategory_name === nextData.subcategory_name
+  );
+};
+
+export default React.memo(ExpertCard, areExpertCardPropsEqual);

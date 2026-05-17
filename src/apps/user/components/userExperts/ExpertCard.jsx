@@ -96,6 +96,8 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
   // PRICING LOGIC
   const hasPerMinute = callPrice > 0 || chatPrice > 0;
   const hasSession = sessionPrice > 0;
+  const hasSubscriptionOffer = Boolean(hasSubscription && hasPerMinute);
+  const hasPricingBadge = Boolean(hasPerMinute || hasSession || hasSubscription);
 
   // REMOVED isHiddenByPrice - NO FRONTEND FILTERING
 
@@ -359,29 +361,31 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
             </StatsGrid>
 
             {/* Pricing Badges */}
-            <PricingBadges $callChat={isCallChatCard}>
-              {hasPerMinute && (
-                <PricingBadge type="per_minute">
-                  <FiZap size={12} /> {t("expertCard.flexiblePricing")}
-                </PricingBadge>
-              )}
-              {hasSession && (
-                <PricingBadge type="session">
-                  <FiClock size={12} /> {t("expertCard.sessionBased")}
-                </PricingBadge>
-              )}
-              {hasSubscription && !hasPerMinute && !hasSession && (
-                <PricingBadge type="plans">
-                  <FiShield size={12} /> {t("expertCard.subscriptionPlans")}
-                </PricingBadge>
-              )}
-            </PricingBadges>
+            {hasPricingBadge && (
+              <PricingBadges $callChat={isCallChatCard}>
+                {hasPerMinute && (
+                  <PricingBadge type="per_minute">
+                    <FiZap size={12} /> {t("expertCard.flexiblePricing")}
+                  </PricingBadge>
+                )}
+                {hasSession && (
+                  <PricingBadge type="session">
+                    <FiClock size={12} /> {t("expertCard.sessionBased")}
+                  </PricingBadge>
+                )}
+                {hasSubscription && !hasPerMinute && !hasSession && (
+                  <PricingBadge type="plans">
+                    <FiShield size={12} /> {t("expertCard.subscriptionPlans")}
+                  </PricingBadge>
+                )}
+              </PricingBadges>
+            )}
 
            
 
             {/* Subscription Hint */}
-            {hasSubscription && hasPerMinute && (
-              <PricingInfo>
+            {hasSubscriptionOffer && (
+              <PricingInfo $callChat={isCallChatCard}>
                 <FiZap size={14} />
                 <span>✨ Subscribe & save on consultations!</span>
               </PricingInfo>

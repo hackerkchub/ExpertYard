@@ -20,7 +20,7 @@ export const PageWrap = styled.div`
   max-width: 1320px;
   box-sizing: border-box;
   margin: 0 auto;
-  padding: 86px 18px 64px;
+  padding: 10px;
   color: ${text};
   background:
     radial-gradient(circle at 8% 0%, rgba(0, 0, 128, 0.09), transparent 28%),
@@ -65,7 +65,7 @@ export const PageWrap = styled.div`
   }
 
   @media (max-width: 768px) {
-    padding: 78px 12px 42px;
+    padding: 10px;
     gap: 14px;
 
     .trust-badges {

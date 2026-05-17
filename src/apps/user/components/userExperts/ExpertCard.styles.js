@@ -41,7 +41,8 @@ export const Card = styled(motion.div)`
   }
 
   @media (max-width: 640px) {
-    min-height: ${({ $callChat }) => ($callChat ? "342px" : "360px")};
+    height: ${({ $callChat }) => ($callChat ? "auto" : "100%")};
+    min-height: ${({ $callChat }) => ($callChat ? "0" : "360px")};
     max-height: ${({ $callChat }) => ($callChat ? "none" : "none")};
     border-radius: ${({ $callChat }) => ($callChat ? "18px" : "20px")};
   }
@@ -59,6 +60,11 @@ export const CardInner = styled.div`
   
   @media (max-width: 480px) {
     padding: ${({ $callChat }) => ($callChat ? "10px" : "13px")};
+  }
+
+  @media (max-width: 640px) {
+    height: ${({ $callChat }) => ($callChat ? "auto" : "100%")};
+    min-height: ${({ $callChat }) => ($callChat ? "0" : "inherit")};
   }
 `;
 
@@ -459,31 +465,31 @@ export const StatCard = styled.div`
 
 // Pricing Section
 export const PricingSection = styled.div`
-  min-height: ${({ $callChat }) => ($callChat ? "46px" : "48px")};
+  min-height: ${({ $callChat }) => ($callChat ? "0" : "48px")};
   margin: ${({ $callChat }) => ($callChat ? "6px 0" : "9px 0")};
 
   @media (max-width: 640px) {
-    min-height: ${({ $callChat }) => ($callChat ? "38px" : "48px")};
+    min-height: ${({ $callChat }) => ($callChat ? "0" : "48px")};
+    margin: ${({ $callChat }) => ($callChat ? "4px 0" : "9px 0")};
   }
 `;
 
 export const PricingBadges = styled.div`
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
-  min-height: 22px;
-  max-height: 24px;
+  min-height: 0;
   overflow: hidden;
-  margin: 8px 0;
+  margin: ${({ $callChat }) => ($callChat ? "6px 0" : "8px 0")};
 
   @media (max-width: 640px) {
-    margin: ${({ $callChat }) => ($callChat ? "5px 0" : "8px 0")};
-    min-height: ${({ $callChat }) => ($callChat ? "18px" : "22px")};
-    max-height: ${({ $callChat }) => ($callChat ? "20px" : "24px")};
+    margin: ${({ $callChat }) => ($callChat ? "4px 0" : "8px 0")};
   }
 
   &:empty {
     display: none;
+    margin: 0;
   }
 `;
 
@@ -583,13 +589,22 @@ export const PricingInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 8px 0;
+  margin: ${({ $callChat }) => ($callChat ? "6px 0" : "8px 0")};
   padding: 7px 10px;
   background: linear-gradient(135deg, #fff7d6, #ffffff);
   border: 1px solid rgba(255, 193, 7, 0.24);
   border-radius: 14px;
   font-size: 12px;
+  line-height: 1.2;
   color: #000080;
+  min-height: 0;
+
+  &:empty {
+    display: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
   
   svg {
     flex-shrink: 0;
@@ -598,10 +613,15 @@ export const PricingInfo = styled.div`
   span {
     flex: 1;
     font-weight: 500;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
+    white-space: nowrap;
     overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @media (max-width: 480px) {
+    margin: ${({ $callChat }) => ($callChat ? "4px 0" : "8px 0")};
+    padding: ${({ $callChat }) => ($callChat ? "6px 8px" : "7px 10px")};
+    font-size: ${({ $callChat }) => ($callChat ? "11px" : "12px")};
   }
 `;
 

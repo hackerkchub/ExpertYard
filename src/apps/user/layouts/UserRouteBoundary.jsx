@@ -7,6 +7,7 @@ import { useAuth } from "../../../shared/context/UserAuthContext";
 import { generateToken } from "../../../firebase/generateToken";
 import useFCM from "../../../hooks/useFCM";
 import { PublicExpertProvider } from "../context/PublicExpertContext";
+import ChatLauncher from "../components/ai-chat/ChatLauncher";
 
 export default function UserRouteBoundary() {
   const { user } = useAuth();
@@ -57,12 +58,13 @@ export default function UserRouteBoundary() {
     return () => socket.off("call:resume_data", handleResume);
   }, []);
 
-  return (
-    <>
-      <UserSocketListener />
-      <PublicExpertProvider>
-        <Outlet />
-      </PublicExpertProvider>
-    </>
-  );
+ return (
+  <>
+    <UserSocketListener />
+    <PublicExpertProvider>
+      <Outlet />
+      <ChatLauncher />
+    </PublicExpertProvider>
+  </>
+);
 }

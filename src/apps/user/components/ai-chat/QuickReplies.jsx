@@ -1,4 +1,3 @@
-// components/ai-chat/QuickReplies.jsx
 import React from 'react';
 import {
   QuickRepliesContainer,
@@ -6,22 +5,15 @@ import {
   QuickReplyButton,
 } from './chat.styles';
 
-const QUICK_REPLIES = [
-  { text: '🔮 Find astrologers', value: 'Find astrologers for consultation' },
-  { text: '💰 Wallet help', value: 'How to add money to wallet?' },
-  { text: '📖 How to book?', value: 'How to book a consultation?' },
-  { text: '🌟 Popular experts', value: 'Show me popular experts' },
-  { text: '🔄 Refund help', value: 'How to get a refund?' },
-];
-
-const QuickReplies = ({ onQuickReply }) => {
+const QuickReplies = ({ replies = [], onQuickReply }) => {
   return (
     <QuickRepliesContainer>
       <RepliesWrapper>
-        {QUICK_REPLIES.map((reply, index) => (
+        {replies.map((reply) => (
           <QuickReplyButton
-            key={index}
-            onClick={() => onQuickReply(reply.value)}
+            key={reply.key}
+            type="button"
+            onClick={() => onQuickReply(reply)}
           >
             {reply.text}
           </QuickReplyButton>

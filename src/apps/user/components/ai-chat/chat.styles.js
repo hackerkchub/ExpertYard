@@ -1,5 +1,5 @@
 // components/ai-chat/chat.styles.js
-import styled, { keyframes, css } from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 
 // Animations
 const slideIn = keyframes`
@@ -57,7 +57,7 @@ export const LauncherButton = styled.button`
   position: fixed;
   bottom: 1.5rem;
   right: 1.5rem;
-  background: linear-gradient(135deg, #9333ea 0%, #db2777 100%);
+  background: #000080;
   color: white;
   border-radius: 9999px;
   padding: 1rem;
@@ -117,8 +117,8 @@ export const ChatWindowDesktop = styled.div`
   bottom: 6rem;
   right: 1.5rem;
   z-index: 99999;
-  width: 380px;
-  height: 650px;
+  width: min(420px, calc(100vw - 2rem));
+  height: min(650px, calc(100vh - 7rem));
   background: white;
   border-radius: 1rem;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
@@ -135,11 +135,17 @@ export const ChatWindowDesktop = styled.div`
 
 export const ChatWindowMobile = styled.div`
   position: fixed;
-  inset: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: auto;
   z-index: 99999;
   background: white;
   display: flex;
   flex-direction: column;
+  height: min(88vh, 720px);
+  border-radius: 1rem 1rem 0 0;
+  box-shadow: 0 -18px 45px rgba(15, 23, 42, 0.18);
   animation: ${slideUp} 0.3s ease-out;
 
   @media (min-width: 768px) {
@@ -149,9 +155,9 @@ export const ChatWindowMobile = styled.div`
 
 // Header Styles
 export const Header = styled.div`
-  background: linear-gradient(135deg, #9333ea 0%, #db2777 100%);
+  background: #000080;
   color: white;
-  padding: 1rem;
+  padding: 0.875rem 1rem;
 `;
 
 export const HeaderContent = styled.div`
@@ -164,31 +170,39 @@ export const HeaderLeft = styled.div`
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  min-width: 0;
 `;
 
 export const Avatar = styled.div`
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.25rem;
+  height: 2.25rem;
   background: white;
+  color: #000080;
   border-radius: 9999px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
 `;
 
-export const HeaderInfo = styled.div``;
+export const HeaderInfo = styled.div`
+  min-width: 0;
+`;
 
 export const HeaderTitle = styled.h2`
   font-weight: 600;
   font-size: 1rem;
   margin: 0;
+  line-height: 1.2;
+  color:#ffffff;
 `;
 
 export const HeaderStatus = styled.p`
   font-size: 0.75rem;
   opacity: 0.9;
   margin: 0;
+  line-height: 1.3;
 `;
 
 export const HeaderActions = styled.div`
@@ -204,7 +218,8 @@ export const IconButton = styled.button`
   padding: 0.5rem;
   border-radius: 9999px;
   transition: all 0.2s;
-  font-size: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
 
   &:hover {
     background: rgba(255, 255, 255, 0.2);
@@ -249,7 +264,16 @@ export const EmptyStateContent = styled.div`
 `;
 
 export const EmptyStateEmoji = styled.div`
-  font-size: 3rem;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  background: #000080;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
   margin-bottom: 1rem;
 `;
 
@@ -274,7 +298,7 @@ export const Bubble = styled.div`
   max-width: 80%;
   border-radius: 1rem;
   padding: 0.5rem 1rem;
-  background: ${props => props.isUser ? '#9333ea' : '#f3f4f6'};
+  background: ${props => props.isUser ? '#000080' : '#f3f4f6'};
   color: ${props => props.isUser ? 'white' : '#1f2937'};
   border-bottom-${props => props.isUser ? 'right' : 'left'}-radius: 0;
 `;
@@ -284,6 +308,14 @@ export const MessageText = styled.p`
   white-space: pre-wrap;
   margin: 0;
   line-height: 1.5;
+`;
+
+export const MessageLink = styled.a`
+  color: #000080;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.15rem;
+  overflow-wrap: anywhere;
 `;
 
 export const Timestamp = styled.span`
@@ -339,6 +371,7 @@ export const ExpertsContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  width: 100%;
 `;
 
 export const ExpertsTitle = styled.p`
@@ -355,6 +388,7 @@ export const ExpertCardContainer = styled.div`
   padding: 0.75rem;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   transition: box-shadow 0.2s;
+  max-width: 100%;
 
   &:hover {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -364,6 +398,7 @@ export const ExpertCardContainer = styled.div`
 export const ExpertCardInner = styled.div`
   display: flex;
   gap: 0.75rem;
+  min-width: 0;
 `;
 
 export const ExpertAvatar = styled.img`
@@ -375,6 +410,7 @@ export const ExpertAvatar = styled.img`
 
 export const ExpertInfo = styled.div`
   flex: 1;
+  min-width: 0;
 `;
 
 export const ExpertName = styled.h4`
@@ -382,12 +418,18 @@ export const ExpertName = styled.h4`
   color: #1f2937;
   margin: 0 0 0.25rem 0;
   font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 export const ExpertExpertise = styled.p`
   font-size: 0.75rem;
   color: #6b7280;
   margin: 0 0 0.25rem 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 export const ExpertMeta = styled.div`
@@ -395,6 +437,7 @@ export const ExpertMeta = styled.div`
   align-items: center;
   gap: 0.5rem;
   margin-top: 0.25rem;
+  flex-wrap: wrap;
 `;
 
 export const ExpertRating = styled.span`
@@ -405,6 +448,17 @@ export const ExpertRating = styled.span`
 export const ExpertPrice = styled.span`
   font-size: 0.75rem;
   color: #10b981;
+`;
+
+export const OnlineStatus = styled.span`
+  display: inline-flex;
+  margin-top: 0.35rem;
+  color: #047857;
+  background: #ecfdf5;
+  border-radius: 9999px;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
 `;
 
 export const CardButtons = styled.div`
@@ -418,15 +472,35 @@ export const ViewProfileButton = styled.button`
   padding: 0.375rem 0.75rem;
   font-size: 0.75rem;
   font-weight: 500;
-  color: #9333ea;
+  color: #000080;
   background: transparent;
-  border: 1px solid #9333ea;
+  border: 1px solid #000080;
   border-radius: 9999px;
   cursor: pointer;
   transition: all 0.2s;
 
   &:hover {
-    background: #f3e8ff;
+    background: #eef2ff;
+  }
+`;
+
+export const CtaButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid #000080;
+  color: #000080;
+  background: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: #eef2ff;
   }
 `;
 
@@ -434,41 +508,32 @@ export const ViewProfileButton = styled.button`
 export const QuickRepliesContainer = styled.div`
   padding: 0.75rem 1rem;
   border-top: 1px solid #f3f4f6;
-  overflow-x: auto;
-  
-  &::-webkit-scrollbar {
-    height: 4px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: #f1f1f1;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: #c4b5fd;
-    border-radius: 2px;
-  }
+  overflow: hidden;
 `;
 
 export const RepliesWrapper = styled.div`
   display: flex;
   gap: 0.5rem;
+  flex-wrap: wrap;
 `;
 
 export const QuickReplyButton = styled.button`
-  flex-shrink: 0;
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
-  color: #9333ea;
-  background: #f3e8ff;
-  border: none;
+  flex: 0 1 auto;
+  min-height: 2.25rem;
+  max-width: 100%;
+  padding: 0.425rem 0.75rem;
+  font-size: 0.8125rem;
+  color: #000080;
+  background: #f5f7ff;
+  border: 1px solid #dbe3ff;
   border-radius: 9999px;
   cursor: pointer;
   transition: all 0.2s;
-  white-space: nowrap;
+  white-space: normal;
+  text-align: left;
 
   &:hover {
-    background: #e9d5ff;
+    background: #eef2ff;
   }
 `;
 
@@ -486,6 +551,7 @@ export const InputContainer = styled.div`
 
 export const ChatInput = styled.input`
   flex: 1;
+  min-width: 0;
   padding: 0.5rem 1rem;
   border: 1px solid #d1d5db;
   border-radius: 9999px;
@@ -494,8 +560,8 @@ export const ChatInput = styled.input`
   transition: all 0.2s;
 
   &:focus {
-    border-color: #9333ea;
-    box-shadow: 0 0 0 2px rgba(147, 51, 234, 0.1);
+    border-color: #000080;
+    box-shadow: 0 0 0 2px rgba(0, 0, 128, 0.1);
   }
 
   &:disabled {
@@ -506,7 +572,7 @@ export const ChatInput = styled.input`
 
 export const SendButton = styled.button`
   padding: 0.5rem 1rem;
-  background: #9333ea;
+  background: #000080;
   color: white;
   border: none;
   border-radius: 9999px;
@@ -515,11 +581,40 @@ export const SendButton = styled.button`
   font-size: 0.875rem;
 
   &:hover:not(:disabled) {
-    background: #7e22ce;
+    background: #000066;
   }
 
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
+`;
+
+export const SkeletonCard = styled.div`
+  display: grid;
+  grid-template-columns: 3rem 1fr;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background: #ffffff;
+`;
+
+export const SkeletonAvatar = styled.div`
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #eef2f7 25%, #f8fafc 50%, #eef2f7 75%);
+  background-size: 200% 100%;
+  animation: ${pulse} 1.2s ease-in-out infinite;
+`;
+
+export const SkeletonLine = styled.div`
+  width: ${(props) => props.$width || '100%'};
+  height: 0.75rem;
+  margin: 0.25rem 0;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #eef2f7 25%, #f8fafc 50%, #eef2f7 75%);
+  background-size: 200% 100%;
+  animation: ${pulse} 1.2s ease-in-out infinite;
 `;

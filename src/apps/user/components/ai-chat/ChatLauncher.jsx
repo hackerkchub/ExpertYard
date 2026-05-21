@@ -1,4 +1,3 @@
-// components/ai-chat/ChatLauncher.jsx
 import React, { useState, useEffect } from 'react';
 import useChatStore from '../../stores/chatStore';
 import ChatWindow from './ChatWindow';
@@ -18,8 +17,8 @@ const ChatLauncher = () => {
   useEffect(() => {
     if (!isOpen && messages.length > lastMessageCount) {
       const newMessages = messages.slice(lastMessageCount);
-      const assistantMessages = newMessages.filter(m => m.role === 'assistant');
-      setUnreadCount(prev => prev + assistantMessages.length);
+      const assistantMessages = newMessages.filter((message) => message.role === 'assistant');
+      setUnreadCount((prev) => prev + assistantMessages.length);
     }
     setLastMessageCount(messages.length);
   }, [messages, isOpen, lastMessageCount]);
@@ -32,13 +31,11 @@ const ChatLauncher = () => {
 
   return (
     <>
-      <LauncherButton onClick={toggleChat}>
+      <LauncherButton type="button" onClick={toggleChat} aria-label="Open G9 Experts assistant">
         <ButtonContent>
-          <ButtonText>💬</ButtonText>
-          <AskText>Ask Gia</AskText>
-          {unreadCount > 0 && (
-            <UnreadBadge>{unreadCount}</UnreadBadge>
-          )}
+          <ButtonText>G9</ButtonText>
+          <AskText>Ask</AskText>
+          {unreadCount > 0 && <UnreadBadge>{unreadCount}</UnreadBadge>}
         </ButtonContent>
       </LauncherButton>
       {isOpen && <ChatWindow />}

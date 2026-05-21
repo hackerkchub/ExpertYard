@@ -1,8 +1,8 @@
-// components/ai-chat/MessageList.jsx
 import React from 'react';
 import useChatStore from '../../stores/chatStore';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
+import { ExpertCardsSkeleton } from './ExpertRecommendationCards';
 import {
   MessageListContainer,
   EmptyState,
@@ -13,17 +13,15 @@ import {
 } from './chat.styles';
 
 const MessageList = ({ messagesEndRef }) => {
-  const { messages, isTyping } = useChatStore();
+  const { messages, isTyping, isLoading } = useChatStore();
 
   if (messages.length === 0) {
     return (
       <EmptyState>
         <EmptyStateContent>
-          <EmptyStateEmoji>✨</EmptyStateEmoji>
-          <EmptyStateTitle>Hello! I'm Gia</EmptyStateTitle>
-          <EmptyStateText>
-            Ask me anything about astrology, consultations, or help with your account.
-          </EmptyStateText>
+          <EmptyStateEmoji>G9</EmptyStateEmoji>
+          <EmptyStateTitle>Hi, I'm your G9 Experts assistant.</EmptyStateTitle>
+          <EmptyStateText>What do you need help with today?</EmptyStateText>
         </EmptyStateContent>
       </EmptyState>
     );
@@ -34,7 +32,12 @@ const MessageList = ({ messagesEndRef }) => {
       {messages.map((message) => (
         <MessageBubble key={message.id} message={message} />
       ))}
-      {isTyping && <TypingIndicator />}
+      {isTyping && (
+        <>
+          <TypingIndicator />
+          {isLoading && <ExpertCardsSkeleton />}
+        </>
+      )}
       <div ref={messagesEndRef} />
     </MessageListContainer>
   );

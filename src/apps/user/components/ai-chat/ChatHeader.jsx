@@ -1,4 +1,3 @@
-// components/ai-chat/ChatHeader.jsx
 import React from 'react';
 import useChatStore from '../../stores/chatStore';
 import {
@@ -21,19 +20,19 @@ const ChatHeader = ({ onClose }) => {
       <HeaderContent>
         <HeaderLeft>
           <Avatar>
-            <span>✨</span>
+            <span>G9</span>
           </Avatar>
           <HeaderInfo>
-            <HeaderTitle>Ask Gia</HeaderTitle>
-            <HeaderStatus>Online • Usually replies instantly</HeaderStatus>
+            <HeaderTitle>G9 AI Assistant</HeaderTitle>
+            <HeaderStatus>Find the right expert instantly</HeaderStatus>
           </HeaderInfo>
         </HeaderLeft>
         <HeaderActions>
-          <IconButton onClick={clearChat} aria-label="Clear chat">
-            🗑️
+          <IconButton type="button" onClick={clearChat} aria-label="Clear chat">
+            Clear
           </IconButton>
-          <IconButton onClick={onClose} aria-label="Close chat">
-            ✕
+          <IconButton type="button" onClick={onClose} aria-label="Minimize chat">
+            X
           </IconButton>
         </HeaderActions>
       </HeaderContent>

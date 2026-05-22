@@ -347,7 +347,7 @@ const Navbar = () => {
                   <>
                     <MobileItem onClick={shareReferral}>
                       <FiShare2 />
-                      {t("common.shareReferral")}
+                      {t("Share")}
                     </MobileItem>
                     <MobileItem ref={userBtnRef} onClick={togglePopup}>
                       <FiUser />

@@ -5,13 +5,11 @@ import {
   FiClock,
   FiChevronLeft,
   FiChevronRight,
-  FiMic,
   FiPhoneCall,
   FiCreditCard,
   FiHeadphones,
   FiLayers,
   FiLock,
-  FiSearch,
   FiShield,
   FiStar,
   FiUsers,
@@ -33,8 +31,6 @@ import {
   HeroHighlight,
   HeroImage,
   HeroInner,
-  HeroPopularLabel,
-  HeroSearchArea,
   HeroSection,
   HeroSubtitle,
   HeroTitle,
@@ -42,13 +38,6 @@ import {
   HeroTitleLine,
   HeroVisual,
   ImageShell,
-  PillButton,
-  PillRow,
-  SearchButton,
-  SearchButtonText,
-  SearchForm,
-  SearchIconWrap,
-  SearchInput,
 } from "./Home.styles";
 
 import heroExpertImage from "../../../../assets/hero.webp";
@@ -80,14 +69,6 @@ const QUICK_ACTIONS = [
     icon: FiClock,
     to: "/user/all-services",
   },
-];
-
-const HERO_CHIPS = [
-  "home.heroChips.legalHelp",
-  "home.heroChips.healthAdvice",
-  "home.heroChips.businessServices",
-  "home.heroChips.careerGuidance",
-  "home.heroChips.astrology",
 ];
 
 const FINAL_STATS = [
@@ -223,7 +204,6 @@ const HomePage = () => {
   const { user } = useAuth();
   const { categories, loading: categoriesLoading } = useCategory();
   const { experts, expertsLoading } = usePublicExpert();
-  const [searchTerm, setSearchTerm] = useState("");
   const [services, setServices] = useState(() => {
     try {
       const saved = localStorage.getItem("popular_services_cache");
@@ -415,16 +395,6 @@ const HomePage = () => {
   const topCategories = seoCategories.slice(0, 15);
   const topServices = seoServices.slice(0, 16);
   const visibleExperts = experts.slice(0, 5);
-  const avatarExperts = visibleExperts.slice(0, 3);
-
-  const handleSearch = (event) => {
-    event.preventDefault();
-    const query = searchTerm.trim();
-    const target = query
-      ? `/user/call-chat?page=1&mode=chat&q=${encodeURIComponent(query)}`
-      : "/user/call-chat?page=1&mode=chat";
-    navigate(target);
-  };
 
   const renderStars = (count = 5) =>
     Array.from({ length: count }).map((_, index) => (
@@ -512,37 +482,6 @@ const HomePage = () => {
               </ImageShell>
             </HeroVisual>
 
-            <HeroSearchArea>
-              <SearchForm onSubmit={handleSearch}>
-                <SearchIconWrap aria-hidden="true">
-                  <FiSearch />
-                </SearchIconWrap>
-                <SearchInput
-                  type="text"
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder={t("home.searchPlaceholder")}
-                  aria-label={t("home.searchAria")}
-                />
-                <SearchButton type="submit" aria-label={t("home.searchAria")}>
-                  <FiMic />
-                  <SearchButtonText>{t("common.search")}</SearchButtonText>
-                </SearchButton>
-              </SearchForm>
-
-              <PillRow aria-label={t("home.popularSearches")}>
-                <HeroPopularLabel>{t("home.popularSearches")}</HeroPopularLabel>
-                {HERO_CHIPS.map((chipKey) => (
-                  <PillButton
-                    key={chipKey}
-                    type="button"
-                    onClick={() => navigate("/user/categories")}
-                  >
-                    {t(chipKey)}
-                  </PillButton>
-                ))}
-              </PillRow>
-            </HeroSearchArea>
           </HeroInner>
         </HeroSection>
 

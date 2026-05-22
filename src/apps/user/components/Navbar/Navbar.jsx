@@ -2,21 +2,35 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
   Nav,
   Container,
-  HeaderLeft,
   NavbarSpacer,
   BrandBox,
   BrandLogo,
-  DesktopNav,
-  NavList,
-  NavItem,
-  IconBox,
+  HeaderBrandGroup,
+  HeaderCategoryButton,
+  HeaderCategoryMenu,
+  HeaderCategoryMenuCard,
+  HeaderCategoryMenuGrid,
+  HeaderCategoryMenuItem,
+  HeaderCategoryMenuShell,
+  HeaderCategoryMenuState,
+  HeaderMenuButton,
+  HeaderActions,
+  HeaderProfileButton,
+  HeaderSearch,
+  AuthButton,
+  LanguageIcon,
+  MobileLanguageButton,
+  MobileLanguageDropdown,
+  MobileLanguageMenu,
   MobileIcon,
   MobileMenu,
   MobileItem,
-  WalletIconWrap,
-  WalletBadge,
-  AuthButton,
-  RightActions,
+  MobileMenuOverlay,
+  MobileMenuHeader,
+  MobileMenuSection,
+  MobileMenuTitle,
+  MobileMenuFooter,
+  MenuWalletValue,
   LanguageSwitcher,
   LanguageOption,
 } from "./Navbar.styles";
@@ -30,25 +44,33 @@ import {
   FiChevronDown,
   FiClock,
   FiGrid,
+  FiGlobe,
+  FiLogIn,
   FiShare2,
+  FiSearch,
 } from "react-icons/fi";
 import { FaWallet } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import logo from "../../../../assets/logo.webp";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
+import { useCategory } from "../../../../shared/context/CategoryContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
+import { getCategoryPath } from "../../../../shared/utils/categoryRoutes";
 import ProfilePopup from "../ProfilePopup";
-import BackButton from "../BackButton/BackButton";
+import GlobalSearchBar from "../search/GlobalSearchBar";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation();
   const { isLoggedIn, user, logout } = useAuth();
+  const { categories, loading: categoriesLoading } = useCategory();
   const { balance } = useWallet();
 
   const [open, setOpen] = useState(false);
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
+  const [languageOpen, setLanguageOpen] = useState(false);
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupPos, setPopupPos] = useState({
     top: 0,
@@ -57,42 +79,46 @@ const Navbar = () => {
   });
 
   const userBtnRef = useRef(null);
-  const normalizedPath = location.pathname.replace(/\/+$/, "") || "/user";
-  const isHomePage = normalizedPath === "/user";
 
   const handleNav = (path) => {
     navigate(path);
     setOpen(false);
+    setCategoryMenuOpen(false);
+    setLanguageOpen(false);
   };
 
-  // Share referral link function
+  const changeLanguage = (language) => {
+    i18n.changeLanguage(language);
+    setLanguageOpen(false);
+  };
+
   const shareReferral = async () => {
-  if (!isLoggedIn || !user?.referral_code) {
-    console.error("No referral code found");
-    return;
-  }
-
-  const referralLink =
-    `${window.location.origin}/expert/register?ref=${user.referral_code}`;
-
-  try {
-    if (navigator.share) {
-      await navigator.share({
-        title: "G9Expert Refer & Earn",
-        text: "Join G9Expert as an expert using my referral link and earn rewards!",
-        url: referralLink,
-      });
-    } else {
-      await navigator.clipboard.writeText(referralLink);
-      alert("Referral link copied!");
+    if (!isLoggedIn || !user?.referral_code) {
+      console.error("No referral code found");
+      return;
     }
-  } catch (err) {
-    if (err.name !== "AbortError") {
-      console.error(err);
-      alert("Failed to share referral link");
+
+    const referralLink = `${window.location.origin}/expert/register?ref=${user.referral_code}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "G9Expert Refer & Earn",
+          text: "Join G9Expert as an expert using my referral link and earn rewards!",
+          url: referralLink,
+        });
+      } else {
+        await navigator.clipboard.writeText(referralLink);
+        alert("Referral link copied!");
+      }
+    } catch (err) {
+      if (err.name !== "AbortError") {
+        console.error(err);
+        alert("Failed to share referral link");
+      }
     }
-  }
-};
+  };
+
   useEffect(() => {
     const closePopup = () => setPopupOpen(false);
     const closeMenus = () => setOpen(false);
@@ -110,8 +136,13 @@ const Navbar = () => {
   }, [popupOpen]);
 
   useEffect(() => {
-    setOpen(false);
-    setPopupOpen(false);
+    const timer = window.setTimeout(() => {
+      setOpen(false);
+      setPopupOpen(false);
+      setLanguageOpen(false);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [location.pathname]);
 
   const calculatePopupPosition = useCallback(() => {
@@ -138,7 +169,6 @@ const Navbar = () => {
 
   const primaryMenuItems = [
     { label: t("common.home"), path: "/user", icon: FiHome },
-    { label: t("common.categories"), path: "/user/categories", icon: FiGrid, hasArrow: true },
     { label: t("common.offers"), path: "/user/all-services", icon: FiGift },
     { label: t("common.history"), path: "/user/chat-history", icon: FiClock },
   ];
@@ -147,131 +177,227 @@ const Navbar = () => {
     <>
       <Nav>
         <Container>
-          <HeaderLeft $compact={!isHomePage}>
-            {!isHomePage && <BackButton iconOnly />}
-            {isHomePage && (
-              <BrandBox
-                to="/user"
-                onClick={() => setOpen(false)}
-              >
-                <BrandLogo
-                  src={logo}
-                  alt="G9Expert"
-                />
-              </BrandBox>
-            )}
-          </HeaderLeft>
-
-          <DesktopNav>
-            <NavList>
-              {primaryMenuItems.map(({ label, path, hasArrow }) => (
-                <NavItem
-                  key={label}
-                  type="button"
-                  $active={location.pathname === path}
-                  onClick={() => handleNav(path)}
-                >
-                  {label}
-                  {hasArrow && <FiChevronDown />}
-                </NavItem>
-              ))}
-            </NavList>
-          </DesktopNav>
-
-          <RightActions>
-            <IconBox>
-              <WalletIconWrap
-                className="wallet-btn essential"
-                onClick={() => navigate("/user/wallet")}
-                title={t("common.wallet")}
-              >
-                <FaWallet />
-                {isLoggedIn && balance > 0 && <WalletBadge>₹{Math.floor(balance)}</WalletBadge>}
-              </WalletIconWrap>
-
-              <LanguageSwitcher aria-label={t("common.language")}>
-                <LanguageOption
-                  type="button"
-                  $active={i18n.language === "en"}
-                  onClick={() => i18n.changeLanguage("en")}
-                >
-                  EN
-                </LanguageOption>
-                <LanguageOption
-                  type="button"
-                  $active={i18n.language === "hi"}
-                  onClick={() => i18n.changeLanguage("hi")}
-                >
-                  हिंदी
-                </LanguageOption>
-              </LanguageSwitcher>
-
-              {isLoggedIn && (
-                <>
-                  <button
-                    className="essential"
-                    onClick={shareReferral}
-                    title={t("common.shareReferral")}
-                  >
-                    <FiShare2 />
-                  </button>
-                  <button
-                    ref={userBtnRef}
-                    className="essential"
-                    onClick={togglePopup}
-                    title={t("nav.profile")}
-                  >
-                    <FiUser />
-                  </button>
-                </>
-              )}
-            </IconBox>
-
-            {!isLoggedIn && <AuthButton onClick={() => navigate("/user/auth")}>{t("common.signIn")}</AuthButton>}
-
-            <MobileIcon onClick={() => setOpen((prev) => !prev)}>
+          <HeaderBrandGroup>
+            <HeaderMenuButton
+              type="button"
+              onClick={() => setOpen((prev) => !prev)}
+              aria-label={open ? "Close navigation menu" : "Open navigation menu"}
+            >
               {open ? <FiX size={20} /> : <FiMenu size={20} />}
-            </MobileIcon>
-          </RightActions>
+            </HeaderMenuButton>
+
+            <BrandBox to="/user" onClick={() => setOpen(false)}>
+              <BrandLogo src={logo} alt="G9Expert" />
+            </BrandBox>
+          </HeaderBrandGroup>
+
+          <HeaderCategoryMenuShell
+            onMouseEnter={() => setCategoryMenuOpen(true)}
+            onMouseLeave={() => setCategoryMenuOpen(false)}
+            onFocus={() => setCategoryMenuOpen(true)}
+            onBlur={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget)) {
+                setCategoryMenuOpen(false);
+              }
+            }}
+          >
+            <HeaderCategoryButton
+              type="button"
+              $active={location.pathname === "/user/categories"}
+              onClick={() => handleNav("/user/categories")}
+              aria-haspopup="true"
+              aria-expanded={categoryMenuOpen}
+            >
+              <FiGrid />
+              <span>{t("common.categories")}</span>
+              <FiChevronDown />
+            </HeaderCategoryButton>
+
+            {categoryMenuOpen && (
+              <HeaderCategoryMenu>
+                <HeaderCategoryMenuCard>
+                  <h3>{t("common.categories")}</h3>
+                  {categoriesLoading ? (
+                    <HeaderCategoryMenuState>{t("common.loading")}</HeaderCategoryMenuState>
+                  ) : categories.length > 0 ? (
+                    <HeaderCategoryMenuGrid>
+                      {categories.slice(0, 12).map((category) => (
+                        <HeaderCategoryMenuItem
+                          key={category.id || category.slug || category.name}
+                          type="button"
+                          onClick={() => handleNav(getCategoryPath(category))}
+                        >
+                          <span>
+                            {category.image_url ? (
+                              <img src={category.image_url} alt="" loading="lazy" />
+                            ) : (
+                              category.name?.charAt(0)
+                            )}
+                          </span>
+                          <strong>{category.name}</strong>
+                        </HeaderCategoryMenuItem>
+                      ))}
+                    </HeaderCategoryMenuGrid>
+                  ) : (
+                    <HeaderCategoryMenuState>No categories available</HeaderCategoryMenuState>
+                  )}
+                </HeaderCategoryMenuCard>
+              </HeaderCategoryMenu>
+            )}
+          </HeaderCategoryMenuShell>
+
+          <HeaderSearch>
+            <GlobalSearchBar className="navbar-global-search" />
+          </HeaderSearch>
+
+          <MobileIcon onClick={() => navigate("/user/search")} aria-label="Open search page">
+            <FiSearch size={20} />
+          </MobileIcon>
+
+          <HeaderActions>
+            <LanguageSwitcher aria-label={t("common.language")}>
+              <LanguageIcon aria-hidden="true">
+                <FiGlobe />
+              </LanguageIcon>
+              <LanguageOption
+                type="button"
+                $active={i18n.language === "en"}
+                onClick={() => changeLanguage("en")}
+              >
+                EN
+              </LanguageOption>
+              <LanguageOption
+                type="button"
+                $active={i18n.language === "hi"}
+                onClick={() => changeLanguage("hi")}
+              >
+                Hindi
+              </LanguageOption>
+            </LanguageSwitcher>
+
+            <MobileLanguageMenu>
+              <MobileLanguageButton
+                type="button"
+                onClick={() => setLanguageOpen((prev) => !prev)}
+                aria-label={t("common.language")}
+                aria-expanded={languageOpen}
+              >
+                <FiGlobe />
+              </MobileLanguageButton>
+              {languageOpen && (
+                <MobileLanguageDropdown>
+                  <button type="button" onClick={() => changeLanguage("en")} className={i18n.language === "en" ? "active" : ""}>
+                    EN
+                  </button>
+                  <button type="button" onClick={() => changeLanguage("hi")} className={i18n.language === "hi" ? "active" : ""}>
+                    Hindi
+                  </button>
+                </MobileLanguageDropdown>
+              )}
+            </MobileLanguageMenu>
+
+            {isLoggedIn ? (
+              <HeaderProfileButton
+                ref={userBtnRef}
+                type="button"
+                onClick={togglePopup}
+                title={t("nav.profile")}
+                aria-label={t("nav.profile")}
+              >
+                <FiUser />
+              </HeaderProfileButton>
+            ) : (
+              <AuthButton type="button" onClick={() => navigate("/user/auth")} aria-label={t("common.signIn")} title={t("common.signIn")}>
+                <FiLogIn />
+              </AuthButton>
+            )}
+          </HeaderActions>
         </Container>
 
         {open && (
-          <MobileMenu>
-            {primaryMenuItems.map(({ label, path, icon: Icon }) => (
-              <MobileItem key={label} onClick={() => handleNav(path)}>
-                <Icon />
-                {label}
-              </MobileItem>
-            ))}
+          <>
+            <MobileMenuOverlay onClick={() => setOpen(false)} />
+            <MobileMenu>
+              <MobileMenuHeader>
+                <BrandLogo src={logo} alt="G9Expert" />
+                <button type="button" onClick={() => setOpen(false)} aria-label="Close navigation menu">
+                  <FiX />
+                </button>
+              </MobileMenuHeader>
 
-            <MobileItem onClick={() => handleNav("/user/wallet")}>
-              <FaWallet />
-              {t("common.wallet")}
-            </MobileItem>
+              <MobileMenuSection>
+                <MobileMenuTitle>Navigation</MobileMenuTitle>
+                {primaryMenuItems.map((item) => (
+                  <MobileItem key={item.label} onClick={() => handleNav(item.path)}>
+                    {React.createElement(item.icon)}
+                    {item.label}
+                  </MobileItem>
+                ))}
+              </MobileMenuSection>
 
-            {isLoggedIn ? (
-              <>
-                <MobileItem onClick={shareReferral}>
-                  <FiShare2 />
-                  {t("common.shareReferral")}
+              <MobileMenuSection>
+                <MobileMenuTitle>Account</MobileMenuTitle>
+                <MobileItem onClick={() => handleNav("/user/wallet")}>
+                  <FaWallet />
+                  {t("common.wallet")}
+                  {isLoggedIn && balance > 0 && <MenuWalletValue>Rs {Math.floor(balance)}</MenuWalletValue>}
                 </MobileItem>
-                <MobileItem
-                  onClick={() => {
-                    logout();
-                    setOpen(false);
-                  }}
-                >
-                  <FiLogOut color="#dc2626" />
-                  {t("common.logout")}
-                </MobileItem>
-              </>
-            ) : (
-              <MobileItem onClick={() => handleNav("/user/auth")}>
-                <FiUser />
-                {t("common.signIn")}
-              </MobileItem>
-            )}
-          </MobileMenu>
+
+                {isLoggedIn ? (
+                  <>
+                    <MobileItem onClick={shareReferral}>
+                      <FiShare2 />
+                      {t("common.shareReferral")}
+                    </MobileItem>
+                    <MobileItem ref={userBtnRef} onClick={togglePopup}>
+                      <FiUser />
+                      {t("nav.profile")}
+                    </MobileItem>
+                  </>
+                ) : (
+                  <MobileItem onClick={() => handleNav("/user/auth")}>
+                    <FiUser />
+                    {t("common.signIn")}
+                  </MobileItem>
+                )}
+              </MobileMenuSection>
+
+              <MobileMenuFooter>
+                <MobileMenuTitle>{t("common.language")}</MobileMenuTitle>
+                <LanguageSwitcher aria-label={t("common.language")}>
+                  <LanguageIcon aria-hidden="true">
+                    <FiGlobe />
+                  </LanguageIcon>
+                  <LanguageOption
+                    type="button"
+                    $active={i18n.language === "en"}
+                    onClick={() => i18n.changeLanguage("en")}
+                  >
+                    EN
+                  </LanguageOption>
+                  <LanguageOption
+                    type="button"
+                    $active={i18n.language === "hi"}
+                    onClick={() => i18n.changeLanguage("hi")}
+                  >
+                    Hindi
+                  </LanguageOption>
+                </LanguageSwitcher>
+
+                {isLoggedIn && (
+                  <MobileItem
+                    onClick={() => {
+                      logout();
+                      setOpen(false);
+                    }}
+                  >
+                    <FiLogOut color="#dc2626" />
+                    {t("common.logout")}
+                  </MobileItem>
+                )}
+              </MobileMenuFooter>
+            </MobileMenu>
+          </>
         )}
       </Nav>
 

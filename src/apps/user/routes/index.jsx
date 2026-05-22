@@ -10,6 +10,7 @@ import ScrollToTop from "../components/ScrollToTop";
 import ProtectedRoute from "./ProtectedRoute";
 
 const HomePage = lazy(() => import("../pages/Home/Home"));
+const SearchResultsPage = lazy(() => import("../pages/Search/SearchResultsPage"));
 const ExpertList = lazy(() => import("../pages/ExpertList/ExpertList"));
 const ExpertProfile = lazy(() => import("../pages/ExpertProfile/ExpertProfile"));
 const CallChatExpert = lazy(() => import("../pages/CallChat/CallChatExpert"));
@@ -49,6 +50,7 @@ export default function UserAppRoutes() {
         <Route element={<UserRouteBoundary />}>
           <Route element={<MainLayout />}>
             <Route index element={withLazyRoute(<HomePage />)} />
+            <Route path="search" element={withLazyRoute(<SearchResultsPage />)} />
             <Route path="experts" element={withLazyRoute(<ExpertList />)} />
             <Route path="experts/:slug" element={withLazyRoute(<ExpertProfile />)} />
             <Route path="call-chat" element={withLazyRoute(<CallChatExpert />)} />

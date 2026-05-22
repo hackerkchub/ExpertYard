@@ -87,12 +87,18 @@ export const HeroBackdrop = styled.div`
 export const HeroInner = styled.div`
   position: relative;
   z-index: 1;
-  min-height: 320px;
-  padding: 26px 55px 18px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.8fr);
+  align-items: center;
+  gap: 28px;
+  min-height: 350px;
+  padding: 28px 48px 0 64px;
 
   @media (max-width: 1180px) {
-    min-height: 318px;
-    padding: 24px 34px 18px 0;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.78fr);
+    min-height: 330px;
+    gap: 22px;
+    padding: 24px 34px 0 42px;
   }
 
   @media (max-width: 767px) {
@@ -111,10 +117,10 @@ export const HeroCopy = styled.div`
   align-items: flex-start;
   justify-content: flex-start;
   min-width: 0;
-  width: 56%;
-  max-width: 720px;
-  padding-left: 70px;
-  padding-top: 2px;
+  width: 100%;
+  max-width: 620px;
+  padding-left: 0;
+  padding-top: 0;
 
   @media (max-width: 767px) {
     width: 100%;
@@ -166,9 +172,9 @@ export const HeroTitle = styled.h1`
   gap: 0;
   font-size: clamp(34px, 2.55vw, 40px);
   line-height: 1.06;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.01em;
   font-weight: 800;
-  white-space: nowrap;
+  white-space: normal;
   position: relative;
 
   @media (max-width: 767px) {
@@ -428,12 +434,13 @@ export const PillButton = styled.button`
 `;
 
 export const HeroVisual = styled.div`
-  position: absolute;
-  right: 50px;
-  bottom: -4px;
+  position: relative;
+  right: auto;
+  bottom: auto;
   z-index: 1;
-  width: 54%;
-  max-width: 650px;
+  width: 100%;
+  max-width: none;
+  min-height: 320px;
   height: 100%;
   display: flex;
   align-items: flex-end;
@@ -442,18 +449,14 @@ export const HeroVisual = styled.div`
   isolation: isolate;
 
   @media (max-width: 1180px) {
-    right: 36px;
-    width: 48%;
-    max-width: 500px;
+    min-height: 300px;
   }
 
   @media (max-width: 767px) {
-    position: relative;
-    right: auto;
-    bottom: auto;
     z-index: 1;
     width: 100%;
     max-width: 340px;
+    min-height: auto;
     height: auto;
     margin: 18px auto 0;
     pointer-events: auto;
@@ -509,6 +512,7 @@ export const ImageShell = styled.div`
   z-index: 1;
   width: 100%;
   height: 100%;
+  min-height: 320px;
   background: transparent;
 
   &::before {
@@ -526,6 +530,7 @@ export const ImageShell = styled.div`
 
   @media (max-width: 767px) {
     height: auto;
+    min-height: auto;
 
     &::before {
       right: 50%;
@@ -538,13 +543,13 @@ export const ImageShell = styled.div`
 `;
 
 export const HeroImage = styled.img`
-  position: absolute;
-  right: 0;
-  bottom: 0;
+  position: relative;
+  right: auto;
+  bottom: auto;
   z-index: 1;
   display: block;
   width: 100%;
-  max-width: 620px;
+  max-width: 520px;
   height: auto;
   border-radius: 0;
   object-fit: contain;
@@ -552,7 +557,7 @@ export const HeroImage = styled.img`
   filter:
     drop-shadow(0 18px 35px rgba(0, 0, 0, 0.35))
     saturate(1.02);
-  transform: translateY(-18px);
+  transform: translateY(8px);
   background: transparent;
   mask-image: radial-gradient(circle at 50% 62%, #000 58%, transparent 88%);
   -webkit-mask-image: radial-gradient(circle at 50% 62%, #000 58%, transparent 88%);
@@ -561,7 +566,6 @@ export const HeroImage = styled.img`
   animation-delay: 0.18s;
 
   @media (max-width: 767px) {
-    position: relative;
     width: 100%;
     height: auto;
     max-width: 340px;

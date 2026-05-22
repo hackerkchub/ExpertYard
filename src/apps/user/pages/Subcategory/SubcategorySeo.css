@@ -153,6 +153,7 @@
   .category-seo-intro,
   .category-seo-card {
     padding: 15px;
+    display: none;
     border-radius: 18px;
   }
 

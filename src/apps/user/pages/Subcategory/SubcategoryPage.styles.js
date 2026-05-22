@@ -63,8 +63,8 @@ export const MainContent = styled.div`
 
 export const PageHeader = styled.header`
   width: min(calc(100% - 28px), 1440px);
-  margin: 10px auto 0;
-  padding: 22px 0 24px;
+  visibility: hidden;
+  padding: 14px;
   color: ${colors.white};
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 0 0 24px 24px;
@@ -77,6 +77,7 @@ export const PageHeader = styled.header`
   @media (max-width: 767px) {
     width: calc(100% - 20px);
     padding: 18px 0 20px;
+    display:none;
     border-radius: 0 0 22px 22px;
   }
 `;

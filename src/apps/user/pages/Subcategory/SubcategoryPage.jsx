@@ -949,23 +949,7 @@ const SubcategoryPage = () => {
 
         <PageHeader>
           <HeaderContent>
-            <HeaderTitle>Online {categorySeoData.label} Consultation with Verified Experts</HeaderTitle>
-            <HeaderSubtitle>
-              {buildCategorySeoHeadline(categorySeoData.label || categoryName || "expert")} for personalized insights and guidance by chat or call.
-            </HeaderSubtitle>
-            
-            <SearchContainer>
-              <SearchInput 
-                type="text" 
-                placeholder={t("expertListing.searchPlaceholder")} 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <SearchButton>
-                <FiSearch size={18} />
-                {t("common.search")}
-              </SearchButton>
-            </SearchContainer>
+           
           </HeaderContent>
         </PageHeader>
 
@@ -1059,19 +1043,7 @@ const SubcategoryPage = () => {
                 <p>{seoDescription}</p>
               </div>
 
-              {relatedCategories.length > 0 ? (
-                <div className="category-seo-intro__links" aria-label="Related expert categories">
-                  {relatedCategories.map((category) => (
-                    <Link
-                      key={category.id}
-                      to={getCategoryPath(category)}
-                      className="category-seo-chip"
-                    >
-                      {category.name}
-                    </Link>
-                  ))}
-                </div>
-              ) : null}
+            
             </section>
 
             <FilterChipsContainer>

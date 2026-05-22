@@ -172,6 +172,21 @@
   cursor: pointer;
 }
 
+.hero-chip-row--services {
+  margin-top: 12px;
+  gap: 7px;
+}
+
+.hero-chip--static {
+  min-height: 32px;
+  padding: 0 12px;
+  padding-top: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.94);
+  cursor: default;
+  backdrop-filter: blur(8px);
+}
+
 .home-hero-media {
   position: relative;
   min-height: 240px;
@@ -237,6 +252,7 @@
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 16px;
+  margin-bottom: 10px;
 }
 
 .hero-primary-cta,
@@ -1256,7 +1272,7 @@
 .category-card:hover,
 .expert-card-app:hover,
 .question-item:hover,
-.hero-chip:hover,
+.hero-chip:not(.hero-chip--static):hover,
 .support-banner__button:hover,
 .primary-cta:hover,
 .home-search button:hover {

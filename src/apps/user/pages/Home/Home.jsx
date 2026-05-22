@@ -166,6 +166,8 @@ const TRUST_POINTS = [
   { titleKey: "home.trustPoints.ratingsReviews", icon: FiStar },
 ];
 
+const HERO_SERVICE_CHIPS = ["Legal", "Health", "Astrology", "Business", "Finance", "Education", "More"];
+
 const INTERNAL_LINKS = [
   { labelKey: "home.internalLinks.categories", to: "/user/categories" },
   { labelKey: "home.internalLinks.callChat", to: "/user/call-chat?page=1" },
@@ -466,12 +468,19 @@ const HomePage = () => {
                 {t("home.heroSubtitleLong")}
               </HeroSubtitle>
               <HeroHighlight>{t("home.heroTrust")}</HeroHighlight>
+              <div className="hero-chip-row hero-chip-row--services" aria-label="Popular service categories">
+                {HERO_SERVICE_CHIPS.map((chip) => (
+                  <span key={chip} className="hero-chip hero-chip--static">
+                    {chip}
+                  </span>
+                ))}
+              </div>
               <div className="hero-cta-row" aria-label={t("home.heroActionsLabel")}>
                 <Link className="hero-primary-cta" to="/user/call-chat?page=1&mode=chat">
                   {t("common.talkToExpert")}
                 </Link>
-                <Link className="hero-secondary-cta" to="/user/categories">
-                  {t("home.exploreCategories")}
+                <Link className="hero-secondary-cta" to="/user/all-services">
+                  Explore Services
                 </Link>
               </div>
             </HeroCopy>

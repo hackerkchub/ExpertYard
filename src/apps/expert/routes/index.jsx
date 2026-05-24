@@ -61,7 +61,7 @@ export default function ExpertAppRoutes() {
           }
         />
         <Route
-          path="guidexa-plan"
+          path="g9-plan"
           element={
             <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
               <LazyRoute>

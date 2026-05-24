@@ -1,7 +1,7 @@
-// src/apps/user/pages/chat/Chat.jsx - FIXED VERSION
+// src/apps/user/pages/chat/Chat.jsx - COMPLETE FIXED VERSION WITH UNIFIED ARCHITECTURE
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { FiPaperclip, FiImage, FiVideo, FiFile, FiX, FiClock, FiUser } from "react-icons/fi";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { FiPaperclip, FiImage, FiVideo, FiFile, FiX, FiClock } from "react-icons/fi";
 import { IoMdSend } from "react-icons/io";
 import {
   PageWrap,
@@ -10,8 +10,6 @@ import {
   Avatar,
   AvatarPlaceholder,
   AvatarWrapper,
-  CallButton,
-  StatusDot,
   MessagesArea,
   MessageRow,
   MessageBubble,
@@ -25,19 +23,18 @@ import {
   ChatGlobalStyle,
   LoadingSpinner,
   ErrorMessage,
-  NoMessages,
   EndChatButton,
   EmptyChatMessage,
   TimerDisplay,
   UnlimitedBadge,
   HeaderActions,
+  PricingBadge,
 } from "./Chat.styles";
 import BackButton from "../../components/BackButton/BackButton";
 
 import { socket } from "../../../../shared/api/socket";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { usePublicExpert as useExpert } from "../../context/PublicExpertContext";
-import { useWallet } from "../../../../shared/context/WalletContext";
 import useChatTimer from "../../../../shared/hooks/useChatTimer";
 
 // Helper function to get initials
@@ -54,8 +51,8 @@ const getInitials = (name) => {
 const Chat = () => {
   const { room_id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [input, setInput] = useState("");
-  const [showFileMenu, setShowFileMenu] = useState(false);
   const [messages, setMessages] = useState([]);
   const [chatData, setChatData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -66,9 +63,11 @@ const Chat = () => {
   const [endTime, setEndTime] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  const [aiTyping, setAiTyping] = useState(false);
   
   // IMAGE UPLOAD STATES
   const [selectedImage, setSelectedImage] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
   
   const scrollRef = useRef(null);
@@ -77,8 +76,14 @@ const Chat = () => {
   const fileInputRef = useRef(null);
   
   const { user } = useAuth();
-  const { experts, expertData, expertPrice } = useExpert();
-  const { balance: walletBalance } = useWallet();
+  const { experts, expertData } = useExpert();
+
+  // 7) FIX: Clean up preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   // Check if mobile
   useEffect(() => {
@@ -90,13 +95,47 @@ const Chat = () => {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Detect if subscription is unlimited
-  const isUnlimited = useMemo(() => !endTime, [endTime]);
+  // 5) FIX: Detect unlimited subscription correctly with fallback fields
+  const getRemainingMinutes = useCallback(() => {
+    return chatData?.remainingMinutes ?? chatData?.remaining_minutes;
+  }, [chatData]);
 
-  // Fetch chat details
+  const isUnlimited = useMemo(() => {
+    const remaining = getRemainingMinutes();
+    return (
+      chatData?.pricing_mode === "subscription" &&
+      remaining == null
+    );
+  }, [chatData, getRemainingMinutes]);
+
+  // 4) FIX: Pricing label for header with fallback fields
+  const pricingLabel = useMemo(() => {
+    if (!chatData) return "";
+
+    if (chatData.pricing_mode === "per_minute") {
+      const price = chatData.pricePerMinute || chatData.price_per_minute;
+      return `₹${price}/min`;
+    }
+
+    if (chatData.pricing_mode === "session") {
+      const duration = chatData.sessionDuration || chatData.session_duration;
+      return `${duration} min session`;
+    }
+
+    if (chatData.pricing_mode === "subscription") {
+      const remaining = getRemainingMinutes();
+      return remaining == null
+        ? "Unlimited"
+        : `${remaining} min left`;
+    }
+
+    return "";
+  }, [chatData, getRemainingMinutes]);
+
+  // B) FETCH CHAT DETAILS - REMOVED AI room detection
   const fetchChatDetails = useCallback(async () => {
     if (!room_id) return;
-    
+  
     try {
       setLoading(true);
       setError("");
@@ -140,8 +179,11 @@ const Chat = () => {
       
       setSessionActive(Number(session.is_active) === 1);
 
+      // C) FIX: endTime from session or location state
       if (session?.end_time) {
         setEndTime(session.end_time);
+      } else if (location.state?.endTime) {
+        setEndTime(location.state.endTime);
       } else {
         setEndTime(null);
       }
@@ -158,9 +200,9 @@ const Chat = () => {
       setLoading(false);
       setIsInitialized(true);
     }
-  }, [room_id]);
+  }, [room_id, location.state?.endTime]);
 
-  // Auto end chat
+  // D) FIX: Auto end chat - unified
   const handleAutoEndChat = useCallback(() => {
     if (isUnlimited) {
       console.log("♾️ Unlimited subscription - no auto-end");
@@ -170,10 +212,11 @@ const Chat = () => {
     console.log("⏰ Timer expired - Auto ending chat");
     setSessionActive(false);
 
-    socket.emit("end_chat", {
-      room_id,
-      reason: "time_up"
-    });
+    if (socket.connected) {
+      socket.emit("end_chat", {
+        room_id
+      });
+    }
 
     navigate("/user/chat-history", {
       replace: true,
@@ -184,7 +227,7 @@ const Chat = () => {
     });
   }, [room_id, navigate, isUnlimited, chatData?.expert_id]);
 
-  // Manual end chat
+  // D) FIX: Manual end chat - unified
   const handleEndChat = useCallback(() => {
     if (!room_id) return;
 
@@ -192,10 +235,11 @@ const Chat = () => {
 
     if (!ok) return;
 
-    socket.emit("end_chat", {
-      room_id,
-      reason: "user_ended"
-    });
+    if (socket.connected) {
+      socket.emit("end_chat", {
+        room_id
+      });
+    }
 
     setSessionActive(false);
     navigate("/user/chat-history", {
@@ -207,12 +251,14 @@ const Chat = () => {
     });
   }, [room_id, navigate, chatData?.expert_id]);
 
-  // Handle back button
+  // D) FIX: Handle back button - unified
   const handleBack = () => {
     if (sessionActive) {
       const ok = window.confirm("Are you sure you want to leave and end this chat?");
       if (ok) {
-        socket.emit("end_chat", { room_id, reason: "user_left" });
+        if (socket.connected) {
+          socket.emit("end_chat", { room_id });
+        }
         navigate("/user/chat-history", {
           replace: true,
           state: {
@@ -232,7 +278,7 @@ const Chat = () => {
     }
   };
 
-  // Popstate handler
+  // D) FIX: Popstate handler - unified
   useEffect(() => {
     if (!sessionActive) return;
 
@@ -240,7 +286,9 @@ const Chat = () => {
       const ok = window.confirm("Are you sure you want to leave and end this chat?");
       
       if (ok) {
-        socket.emit("end_chat", { room_id, reason: "user_left" });
+        if (socket.connected) {
+          socket.emit("end_chat", { room_id });
+        }
         navigate("/user/chat-history", {
           replace: true,
           state: {
@@ -288,10 +336,12 @@ const Chat = () => {
     return secondsLeft <= 60 ? "#ef4444" : "#10b981";
   }, [isUnlimited, secondsLeft]);
 
-  // Handle go home
+  // D) FIX: Handle go home - unified
   const handleGoHome = () => {
     setShowEndPopup(false);
-    socket.emit("end_chat", { room_id, reason: "user_ended" });
+    if (socket.connected) {
+      socket.emit("end_chat", { room_id });
+    }
     navigate("/user");
   };
 
@@ -313,7 +363,7 @@ const Chat = () => {
     return `https://softmaxs.com${data.imageUrl}`;
   };
 
-  // IMAGE SELECT HANDLER
+  // 7) FIX: IMAGE SELECT HANDLER with preview URL
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -324,12 +374,24 @@ const Chat = () => {
     }
     
     setSelectedImage(file);
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
   };
 
-  // SEND MESSAGE (with immediate UI update)
-  const sendMessage = async () => {
+  // 10) FIX: Ensure socket connected before sending
+  const ensureSocketConnected = useCallback(() => {
+    if (!socket.connected) {
+      socket.connect();
+    }
+  }, []);
+
+  // G) FIX: sendMessage with unified payload
+  const sendMessage = useCallback(async () => {
     if (!room_id || !sessionActive) return;
     if (uploading) return;
+
+    // Ensure socket is connected
+    ensureSocketConnected();
 
     // TEXT MESSAGE ONLY
     if (!selectedImage && input.trim()) {
@@ -346,32 +408,35 @@ const Chat = () => {
           hour: '2-digit',
           minute: '2-digit',
         }),
+        isTemp: true
       };
       
       // Add to UI immediately
       setMessages(prev => [...prev, messageData]);
       
-      // Send to socket
-      socket.emit("sendMessage", {
-        room_id,
+      // G) FIX: Unified payload - no AI-specific fields
+      const payload = {
+        room_id: String(room_id),
+        client_id: tempId,
         message: input.trim(),
-        type: "text",
-        message_type: "text"
-      });
+        type: "text"
+      };
+
+      socket.emit("sendMessage", payload);
 
       setInput("");
       setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }), 100);
       return;
     }
 
-    // IMAGE MESSAGE (with optional caption)
+    // 2) FIX: IMAGE MESSAGE with correct image_url key
     if (selectedImage) {
       try {
         setUploading(true);
         
-        // Create temporary preview
         const tempId = Date.now();
-        const tempImageUrl = URL.createObjectURL(selectedImage);
+        
+        // Add to UI immediately with preview
         const messageData = {
           id: tempId,
           client_id: tempId,
@@ -379,15 +444,14 @@ const Chat = () => {
           sender_id: user?.id,
           message: input.trim() || "",
           message_type: "image",
-          image_url: tempImageUrl,
+          image_url: previewUrl,
           time: new Date().toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit',
           }),
-          isTemp: true // Mark as temporary
+          isTemp: true
         };
         
-        // Add to UI immediately with preview
         setMessages(prev => [...prev, messageData]);
         setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }), 100);
         
@@ -396,34 +460,36 @@ const Chat = () => {
         
         // Update the temporary message with real URL
         setMessages(prev => prev.map(msg => 
-          msg.id === tempId 
+          msg.client_id === tempId 
             ? { ...msg, image_url: imageUrl, isTemp: false }
             : msg
         ));
         
-        // Send to socket
-        socket.emit("sendMessage", {
-          room_id,
+        // 2) FIX: Use image_url (not imageUrl)
+        const payload = {
+          room_id: String(room_id),
+          client_id: tempId,
           message: input.trim() || "",
           type: "image",
-          message_type: "image",
-          imageUrl: imageUrl
-        });
+          image_url: imageUrl
+        };
+
+        socket.emit("sendMessage", payload);
 
         // Clear states
         setSelectedImage(null);
+        setPreviewUrl(null);
         setInput("");
         
       } catch (err) {
         console.error("Upload failed:", err);
         alert("Failed to upload image. Please try again.");
-        // Remove the temporary message on error
         setMessages(prev => prev.filter(msg => !msg.isTemp));
       } finally {
         setUploading(false);
       }
     }
-  };
+  }, [room_id, sessionActive, uploading, selectedImage, previewUrl, input, user?.id, ensureSocketConnected]);
 
   const handleKeyPress = useCallback((e) => {
     if (e.key === "Enter" && !e.shiftKey && !uploading) {
@@ -433,8 +499,15 @@ const Chat = () => {
   }, [sendMessage, uploading]);
 
   const isChatDisabled = sessionActive === false;
+  
+  // 3) FIX: Detect AI chat with fallback values
+  const isAIChat = useMemo(() => {
+    return chatData?.is_ai_chat === true ||
+      chatData?.is_ai_chat === 1 ||
+      chatData?.is_ai_chat === "1";
+  }, [chatData?.is_ai_chat]);
 
-  // Socket events
+  // Socket events - UNIFIED (removed AI-specific listeners)
   useEffect(() => {
     if (!room_id || !socket) return;
 
@@ -443,24 +516,32 @@ const Chat = () => {
     }
 
     console.log(`🔌 User joining room: ${room_id}`);
-    socket.emit("join_room", { 
-      room_id,
-      user_id: user?.id 
+    
+    // E) FIX: Unified join payload
+    socket.emit("join_room", {
+      room_id
     });
 
     const handleNewMessage = (msgData) => {
-      if (msgData.room_id !== room_id) return;
+      setAiTyping(false);
+      
+      // Check room match
+      const incomingRoomId = msgData.room_id || msgData.roomId;
+      if (String(incomingRoomId) !== String(room_id)) {
+        return;
+      }
 
       setMessages(prev => {
-        // Check if message already exists (by id or client_id)
+        // Check if message already exists (by id OR client_id)
         const exists = prev.some(
-          m => m.id === msgData.id || (msgData.client_id && m.client_id === msgData.client_id)
+          m => m.id === msgData.id || 
+          (msgData.client_id && m.client_id === msgData.client_id)
         );
         
         if (exists) {
           // Update existing temporary message with real data
           return prev.map(m => {
-            if ((msgData.client_id && m.client_id === msgData.client_id) || m.id === msgData.id) {
+            if (m.id === msgData.id || (msgData.client_id && m.client_id === msgData.client_id)) {
               return {
                 ...m,
                 id: msgData.id,
@@ -473,7 +554,7 @@ const Chat = () => {
           });
         }
 
-        // Add new message
+        // Add new message with safe time parsing
         return [...prev, {
           id: msgData.id,
           client_id: msgData.client_id,
@@ -482,7 +563,9 @@ const Chat = () => {
           message: msgData.message,
           message_type: msgData.message_type || "text",
           image_url: msgData.image_url || null,
-          time: new Date(msgData.time).toLocaleTimeString('en-US', {
+          time: new Date(
+            msgData.time || msgData.created_at || Date.now()
+          ).toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit',
           }),
@@ -494,6 +577,7 @@ const Chat = () => {
       }, 100);
     };
 
+    
     const handleChatAccepted = (data) => {
       if (data.room_id === room_id) {
         if (data.endTime) {
@@ -511,34 +595,53 @@ const Chat = () => {
       }
     };
 
-    const handleChatEnded = ({ room_id: endedRoomId }) => {
-      if (endedRoomId === room_id) {
+    const handleChatEnded = (data = {}) => {
+      if (String(data.room_id) === String(room_id) || !data.room_id) {
         setSessionActive(false);
         setShowEndPopup(true);
       }
     };
 
+    // 9) FIX: Safe AI typing handler
+    const handleAITyping = (data = {}) => {
+      setAiTyping(!!data.isTyping);
+    };
+
+    // Listen to unified events
     socket.on("message", handleNewMessage);
+    socket.on("message_sent", handleNewMessage);
     socket.on("chat_accepted", handleChatAccepted);
     socket.on("chat_updated", handleChatUpdate);
     socket.on("chat_ended", handleChatEnded);
+    socket.on("ai_typing", handleAITyping);
 
     return () => {
       socket.off("message", handleNewMessage);
+      socket.off("message_sent", handleNewMessage);
       socket.off("chat_accepted", handleChatAccepted);
       socket.off("chat_updated", handleChatUpdate);
       socket.off("chat_ended", handleChatEnded);
+      socket.off("ai_typing", handleAITyping);
       
       if (socket.connected) {
+        // F) FIX: Unified leave payload
         socket.emit("leave_room", { room_id });
       }
     };
   }, [room_id, user?.id, fetchChatDetails]);
 
-  // Expert info
+  // 6) FIX: Expert info from chatData using isAIChat
   const expertInfo = useMemo(() => {
+    if (isAIChat) {
+      return {
+        name: "AI Expert",
+        position: "Instant AI Consultation",
+        avatar: null,
+      };
+    }
+
     if (!chatData?.expert_id) return null;
-    
+
     if (expertData?.expertId === chatData.expert_id) {
       return {
         name: expertData.name || `Expert #${chatData.expert_id}`,
@@ -546,8 +649,9 @@ const Chat = () => {
         avatar: expertData.profile_photo || null,
       };
     }
-    
+
     const expert = experts.find(e => e.id == chatData.expert_id);
+
     if (expert) {
       return {
         name: expert.name,
@@ -555,13 +659,13 @@ const Chat = () => {
         avatar: expert.profile_photo || null,
       };
     }
-    
+
     return {
       name: `Expert #${chatData.expert_id}`,
       position: '',
       avatar: null,
     };
-  }, [chatData?.expert_id, experts, expertData]);
+  }, [chatData?.expert_id, isAIChat, experts, expertData]);
 
   // Scroll to bottom
   useLayoutEffect(() => {
@@ -652,7 +756,14 @@ const Chat = () => {
               </ExpertInfo>
               
               <HeaderActions>
-                {!isUnlimited && sessionActive === true && (
+                {/* O) FIX: Show pricing label
+                {pricingLabel && sessionActive === true && (
+                  <PricingBadge>
+                    <span>{pricingLabel}</span>
+                  </PricingBadge>
+                )} */}
+
+                {!isUnlimited && sessionActive === true && endTime && (
                   <TimerDisplay $color={getTimerColor()}>
                     <FiClock size={14} />
                     <span>{formatted}</span>
@@ -691,49 +802,63 @@ const Chat = () => {
               💬 Chat connected! Start typing to chat with {expertInfo?.name || 'expert'}.
             </EmptyChatMessage>
           ) : (
-            messages.map((msg, index) => (
-              <MessageRow key={msg.id || index} $senderType={msg.sender_type}>
-                <MessageBubble $senderType={msg.sender_type}>
-                  {/* IMAGE MESSAGE UI */}
-                  {msg.message_type === "image" && msg.image_url && (
-                    <img
-                      src={msg.image_url}
-                      alt="chat-img"
-                      style={{
-                        maxWidth: "200px",
-                        maxHeight: "200px",
-                        borderRadius: "10px",
-                        marginBottom: msg.message ? "6px" : "0",
-                        objectFit: "cover"
-                      }}
-                      onError={(e) => {
-                        if (msg.isTemp) {
-                          e.target.style.opacity = "0.5";
-                        } else {
-                          e.target.style.display = "none";
-                        }
-                      }}
-                    />
-                  )}
-                  
-                  {/* TEXT/CAPTION MESSAGE */}
-                  {msg.message && (
-                    <div className="message-text">{msg.message}</div>
-                  )}
-                  
-                  <MessageTime>
-                    {msg.time}
-                    {msg.isTemp && " (sending...)"}
-                  </MessageTime>
-                </MessageBubble>
-              </MessageRow>
-            ))
+            messages.map((msg, index) => {
+              // J) FIX: Proper message alignment
+              const isMine = msg.sender_type === "user";
+              const isRight = isMine;
+              
+              return (
+                <MessageRow key={msg.id || index} $senderType={isRight ? "user" : "expert"}>
+                  <MessageBubble $senderType={isRight ? "user" : "expert"}>
+                    {/* IMAGE MESSAGE UI */}
+                    {msg.message_type === "image" && msg.image_url && (
+                      <img
+                        src={msg.image_url}
+                        alt="chat-img"
+                        style={{
+                          maxWidth: "200px",
+                          maxHeight: "200px",
+                          borderRadius: "10px",
+                          marginBottom: msg.message ? "6px" : "0",
+                          objectFit: "cover"
+                        }}
+                        onError={(e) => {
+                          if (msg.isTemp) {
+                            e.target.style.opacity = "0.5";
+                          } else {
+                            e.target.style.display = "none";
+                          }
+                        }}
+                      />
+                    )}
+                    
+                    {/* TEXT/CAPTION MESSAGE */}
+                    {msg.message && (
+                      <div className="message-text">{msg.message}</div>
+                    )}
+                    
+                    <MessageTime>
+                      {msg.time}
+                      {msg.isTemp && " (sending...)"}
+                    </MessageTime>
+                  </MessageBubble>
+                </MessageRow>
+              );
+            })
           )}
+          
+          {/* AI typing indicator */}
+          {aiTyping && (
+            <TypingIndicator>
+              AI Expert is typing...
+            </TypingIndicator>
+          )}
+          
           <div ref={scrollRef} />
         </MessagesArea>
 
-        {/* IMAGE PREVIEW BEFORE SEND */}
-        {selectedImage && (
+        {/* 7) FIX: Use previewUrl for image preview */}
+        {!isAIChat && previewUrl && (
           <div style={{ 
             padding: "10px", 
             backgroundColor: "#f1f5f9",
@@ -744,7 +869,7 @@ const Chat = () => {
             borderRadius: "12px"
           }}>
             <img
-              src={URL.createObjectURL(selectedImage)}
+              src={previewUrl}
               alt="preview"
               style={{ 
                 width: "50px", 
@@ -754,10 +879,13 @@ const Chat = () => {
               }}
             />
             <span style={{ fontSize: "12px", color: "#64748b", flex: 1 }}>
-              {selectedImage.name}
+              {selectedImage?.name}
             </span>
             <button 
-              onClick={() => setSelectedImage(null)}
+              onClick={() => {
+                setSelectedImage(null);
+                setPreviewUrl(null);
+              }}
               style={{
                 background: "none",
                 border: "none",
@@ -771,46 +899,27 @@ const Chat = () => {
         )}
 
         <InputBar $isKeyboardOpen={isKeyboardOpen}>
-          {/* HIDDEN FILE INPUT */}
-          <input
-            type="file"
-            accept="image/*"
-            style={{ display: "none" }}
-            ref={fileInputRef}
-            onChange={handleImageSelect}
-          />
+          {/* HIDDEN FILE INPUT - only for non-AI chats */}
+          {!isAIChat && (
+            <input
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              ref={fileInputRef}
+              onChange={handleImageSelect}
+            />
+          )}
 
-          <UploadButton 
-            onClick={() => {
-              fileInputRef.current?.click();
-              setShowFileMenu(false);
-            }} 
-            disabled={isChatDisabled || uploading}
-          >
-            <FiPaperclip size={20} />
-          </UploadButton>
-
-          {showFileMenu && (
-            <FileUploadMenu>
-              <div className="menu-item" onClick={() => {
+          {/* L) FIX: Hide upload button for AI chats */}
+          {!isAIChat && (
+            <UploadButton 
+              onClick={() => {
                 fileInputRef.current?.click();
-                setShowFileMenu(false);
-              }}>
-                <FiImage size={18} /><span>Photos</span>
-              </div>
-              <div className="menu-item" onClick={() => {
-                console.log('📎 Uploading video');
-                setShowFileMenu(false);
-              }}>
-                <FiVideo size={18} /><span>Videos</span>
-              </div>
-              <div className="menu-item" onClick={() => {
-                console.log('📎 Uploading file');
-                setShowFileMenu(false);
-              }}>
-                <FiFile size={18} /><span>Documents</span>
-              </div>
-            </FileUploadMenu>
+              }} 
+              disabled={isChatDisabled || uploading}
+            >
+              <FiPaperclip size={20} />
+            </UploadButton>
           )}
 
           <InputBox
@@ -818,7 +927,7 @@ const Chat = () => {
             placeholder={isChatDisabled ? "Chat session ended" : (uploading ? "Uploading image..." : "Type your message...")}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyPress}
             disabled={isChatDisabled || uploading}
             maxLength={1000}
           />

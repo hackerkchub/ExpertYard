@@ -38,7 +38,7 @@ import {
   FiDollarSign, 
   FiLogOut, 
   FiUser, 
-  FiShare2  // ✅ Added FiShare2
+  FiShare2
 } from "react-icons/fi";
 import Logo from "../../../assets/logo.webp";
 import NotificationPopover from "./NotificationPopover";
@@ -82,7 +82,7 @@ export default function ExpertTopbar() {
     removeById,
   } = useExpertNotifications();
 
-  // ✅ SHARE REFERRAL FUNCTION
+  // SHARE REFERRAL FUNCTION
   const handleShareReferral = async () => {
     if (!expertData?.referral_code) {
       alert("Referral code not found");
@@ -113,18 +113,10 @@ export default function ExpertTopbar() {
   // LOGOUT
   const handleLogout = async () => {
     try {
-      // 🔌 socket disconnect (UI level)
       disconnectSocket();
-
-      // ✅ optional UI memory
       localStorage.setItem("last_panel", "expert");
-
-      // 🔥 MAIN LOGIC → context handle karega
       await logoutExpert();
-
-      // ✅ redirect
       navigate("/expert/register", { replace: true });
-
     } catch (err) {
       console.error("Logout error:", err);
     }
@@ -158,7 +150,6 @@ export default function ExpertTopbar() {
   useEffect(() => {
     const handleConnected = ({ callId }) => {
       setShowNotif(false);
-
       if (!location.pathname.includes("/expert/voice-call/")) {
         navigate(`/expert/voice-call/${callId}`);
       }
@@ -201,7 +192,7 @@ export default function ExpertTopbar() {
     { icon: FiMessageSquare, label: "Chat History", path: "/expert/chat-history" },
     { icon: FiBarChart2, label: "Earnings", path: "/expert/earnings" },
     { icon: FiBell, label: "My Service", path: "/expert/myservices" },
-    { icon: FiClock, label: "Guidexa Plan", path: "/expert/guidexa-plan" },
+    { icon: FiClock, label: "G9-Plan", path: "/expert/g9-plan" },
   ];
 
   const isActivePath = (path) => {
@@ -232,21 +223,10 @@ export default function ExpertTopbar() {
             <FiMenu />
           </IconBtn>
 
+          {/* BRAND - ONLY LOGO, NO TEXT */}
           <Brand onClick={() => navigate("/expert")}>
-            <img src={Logo} alt="G9expert" />
-            Guidexa
+            <img src={Logo} alt="G9Expert" />
           </Brand>
-
-          {/* DESKTOP SEARCH - SIMPLIFIED */}
-          {/* <SearchWrap ref={searchRef}>
-            <SearchRow>
-              <SearchBox
-                placeholder="Search clients..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </SearchRow>
-          </SearchWrap> */}
         </LeftBlock>
 
         <RightActions>
@@ -284,7 +264,7 @@ export default function ExpertTopbar() {
             <FiPlus /> Create
           </CreateBtn>
 
-          {/* ✅ SHARE REFERRAL BUTTON */}
+          {/* SHARE REFERRAL BUTTON */}
           <IconBtn
             onClick={handleShareReferral}
             title="Refer Expert"
@@ -343,7 +323,7 @@ export default function ExpertTopbar() {
         <MobileSectionTitle>Account</MobileSectionTitle>
         
         <MobileNavList style={{ paddingBottom: '24px' }}>
-          {/* ✅ REFERRAL EXPERT IN MOBILE MENU */}
+          {/* REFERRAL EXPERT IN MOBILE MENU */}
           <MobileNavItem
             onClick={() => {
               handleShareReferral();

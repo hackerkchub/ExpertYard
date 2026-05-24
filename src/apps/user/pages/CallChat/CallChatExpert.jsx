@@ -50,10 +50,11 @@ import {
 import ExpertCard from "../../components/userExperts/ExpertCard";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
-import { socket } from "../../../../shared/api/socket";
+import { socket } from "../../../../shared/api/socket"; // Only for online/offline status
 import { useCategory } from "../../../../shared/context/CategoryContext";
 import { getExpertsApi } from "../../../../shared/api/expertapi/expert.api";
 import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
+import useChatRequest from "../../../../shared/hooks/useChatRequest"; // NEW IMPORT
 
 const TABS = [
   { id: "call", labelKey: "callChat.callTab", icon: "📞" },
@@ -98,11 +99,9 @@ export default function UserExpertsPage() {
   const pageFromUrl = parseInt(searchParams.get("page")) || 1;
   const queryString = searchParams.toString();
 
-  // FIX 1: Initialize tab from URL directly - prevents initial flicker
-  const [tab, setTab] = useState(() => {
-    if (modeFromUrl === "chat") return "chat";
-    return "call";
-  });
+  // FIX 1: Initialize tab with ref to prevent re-renders
+  const initialTabRef = useRef(modeFromUrl === "chat" ? "chat" : "call");
+  const [tab, setTab] = useState(initialTabRef.current);
   
   const [currentPage, setCurrentPage] = useState(pageFromUrl);
   const [totalPages, setTotalPages] = useState(1);
@@ -134,18 +133,18 @@ export default function UserExpertsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Chat states
-  const [showWaitingPopup, setShowWaitingPopup] = useState(false);
-  const [waitingText, setWaitingText] = useState("Waiting for expert to accept...");
-  const [chatRequestId, setChatRequestId] = useState(null);
-  const [chatRejectedMessage, setChatRejectedMessage] = useState("");
-  const [showChatCancelled, setShowChatCancelled] = useState(false);
-
   // Online/Offline state
   const [onlineExperts, setOnlineExperts] = useState({});
   const latestRequestRef = useRef(0);
 
-  // FIX 2: Replace URL sync effect - only sync when URL mode differs from state
+  // Use Chat Request Hook
+  const {
+    startChat,
+    ChatPopups,
+    isWaiting,
+  } = useChatRequest();
+
+  // FIX 2: Mode sync effect - only sync when URL mode differs from state
   useEffect(() => {
     if (!modeFromUrl) return;
 
@@ -154,9 +153,8 @@ export default function UserExpertsPage() {
       modeFromUrl !== tab
     ) {
       setTab(modeFromUrl);
-      setCurrentPage(1);
     }
-  }, [modeFromUrl, tab]);
+  }, [modeFromUrl]); // Removed tab dependency to prevent loop
 
   // Debounce search and avoid resetting pagination when the value is unchanged.
   useEffect(() => {
@@ -228,19 +226,24 @@ export default function UserExpertsPage() {
     tab
   ]);
 
+  // FIX 3: URL sync effect - prevents loop
   useEffect(() => {
-    const nextParams = new URLSearchParams();
+    const currentMode = searchParams.get("mode");
+
+    if (currentMode === tab) return;
+
+    const nextParams = new URLSearchParams(searchParams);
     nextParams.set("mode", tab);
     nextParams.set("page", String(currentPage));
 
     if (debouncedSearch) {
       nextParams.set("q", debouncedSearch);
+    } else {
+      nextParams.delete("q");
     }
 
-    if (nextParams.toString() !== queryString) {
-      setSearchParams(nextParams, { replace: true });
-    }
-  }, [tab, currentPage, debouncedSearch, queryString, setSearchParams]);
+    setSearchParams(nextParams, { replace: true });
+  }, [tab, currentPage, debouncedSearch, searchParams, setSearchParams]);
 
   const fetchExperts = useCallback(async () => {
     const requestId = latestRequestRef.current + 1;
@@ -271,13 +274,15 @@ export default function UserExpertsPage() {
       }
     }
   }, [apiParams]);
+  
   // SINGLE EFFECT for fetching - NO duplicates
   useEffect(() => {
     fetchExperts();
   }, [fetchExperts]);
 
+  // FIX 4: Network reconnect - always enabled
   useNetworkReconnect(fetchExperts, {
-    enabled: !showWaitingPopup && !chatRequestId,
+    enabled: true,
   });
 
   // Reset subcategory when category changes AND load subcategories
@@ -285,49 +290,7 @@ export default function UserExpertsPage() {
     setSelectedSubcategoryId("");
   }, [selectedCategoryId]);
 
-  // Socket events for chat
-  useEffect(() => {
-    const handleRequestPending = ({ request_id }) => {
-      setChatRequestId(request_id);
-      setShowWaitingPopup(true);
-      setWaitingText("Waiting for expert to accept...");
-    };
-
-    const handleChatAccepted = ({ user_id, room_id }) => {
-      if (Number(user_id) !== Number(userId)) return;
-      setShowWaitingPopup(false);
-      setChatRequestId(null);
-      navigate(`/user/chat/${room_id}`, { replace: true });
-    };
-
-    const handleChatRejected = ({ user_id, message }) => {
-      if (Number(user_id) !== Number(userId)) return;
-      setShowWaitingPopup(false);
-      setChatRequestId(null);
-      setChatRejectedMessage(message || "Expert has rejected your chat request.");
-    };
-
-    const handleChatCancelled = ({ user_id, message }) => {
-      if (Number(user_id) !== Number(userId)) return;
-      setShowWaitingPopup(false);
-      setChatRequestId(null);
-      setShowChatCancelled(true);
-    };
-
-    socket.on("request_pending", handleRequestPending);
-    socket.on("chat_accepted", handleChatAccepted);
-    socket.on("chat_rejected", handleChatRejected);
-    socket.on("chat_cancelled", handleChatCancelled);
-
-    return () => {
-      socket.off("request_pending", handleRequestPending);
-      socket.off("chat_accepted", handleChatAccepted);
-      socket.off("chat_rejected", handleChatRejected);
-      socket.off("chat_cancelled", handleChatCancelled);
-    };
-  }, [navigate, userId]);
-
-  // Socket listeners for online/offline status
+  // Socket listeners for online/offline status ONLY
   useEffect(() => {
     if (!socket) return;
 
@@ -388,28 +351,21 @@ export default function UserExpertsPage() {
     setCurrentPage(1);
   };
 
+  // UPDATED: Use hook's startChat instead of direct socket emit
   const handleStartChat = useCallback((expertId) => {
     if (!isLoggedIn) {
       navigate("/user/auth");
       return;
     }
 
-    const expert = experts.find(e => e.id === expertId);
-    const chatPrice = expert?.chat_per_minute || 0;
-    const minRequired = chatPrice * 5;
-    const userBalance = Number(balance || 0);
-
-    if (userBalance >= minRequired) {
-      socket.emit("request_chat", { 
-        user_id: userId, 
-        expert_id: Number(expertId) 
-      });
-    } else {
-      const needed = Math.max(0, minRequired - userBalance);
-      alert(`Low balance! Need ₹${needed.toFixed(0)} more. Minimum ₹${minRequired} required for 5 minutes.`);
-      navigate("/user/wallet");
-    }
-  }, [isLoggedIn, userId, balance, experts, navigate]);
+    const expert = experts.find(e => Number(e.id) === Number(expertId));
+    
+    startChat({
+      expertId,
+      chatPrice: expert?.chat_per_minute || 0,
+      pricingMode: "per_minute",
+    });
+  }, [isLoggedIn, experts, startChat, navigate]);
 
   const handleStartCall = useCallback((expertId) => {
     if (!isLoggedIn) {
@@ -418,17 +374,6 @@ export default function UserExpertsPage() {
     }
     navigate(`/user/voice-call/${expertId}`);
   }, [isLoggedIn, navigate]);
-
-  const handleCancelRequest = useCallback(() => {
-    if (chatRequestId && userId) {
-      socket.emit("cancel_chat_request", { 
-        request_id: chatRequestId, 
-        user_id: userId 
-      });
-    }
-    setShowWaitingPopup(false);
-    setChatRequestId(null);
-  }, [chatRequestId, userId]);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -517,27 +462,6 @@ export default function UserExpertsPage() {
         )}
       </FilterHeader>
 
-      {/* Search Bar */}
-      <FilterGroup>
-        <FilterLabel>{t("callChat.searchByName")}</FilterLabel>
-        <div style={{ position: 'relative' }}>
-          <SearchInput
-            type="text"
-            placeholder={t("callChat.searchPlaceholder")}
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-          />
-          <SearchIcon>
-            <FiSearch size={16} />
-          </SearchIcon>
-          {searchInput && (
-            <ClearSearchBtn onClick={() => setSearchInput("")}>
-              <FiX size={14} />
-            </ClearSearchBtn>
-          )}
-        </div>
-      </FilterGroup>
-
       {/* Category Filter - with loadSubCategories */}
       <FilterGroup>
         <FilterLabel>{t("common.categories")}</FilterLabel>
@@ -578,22 +502,6 @@ export default function UserExpertsPage() {
           </FilterSelect>
         </FilterGroup>
       )}
-
-      {/* Rating Filter */}
-      {/* <FilterGroup>
-        <FilterLabel>Rating</FilterLabel>
-        <FilterSelect
-          value={minRating}
-          onChange={(e) => {
-            setMinRating(e.target.value);
-            setCurrentPage(1);
-          }}
-        >
-          {ratingOptions.map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </FilterSelect>
-      </FilterGroup> */}
 
       {/* Price Filter */}
       <FilterGroup>
@@ -899,133 +807,8 @@ export default function UserExpertsPage() {
           </ExpertsWrap>
         </Layout>
 
-        {/* Waiting Popup */}
-        <AnimatePresence>
-          {showWaitingPopup && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              style={{ 
-                position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", 
-                display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 
-              }}
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                style={{ 
-                  background: "#fff", padding: 32, borderRadius: 24, 
-                  width: "min(90vw, 420px)", textAlign: "center", 
-                  boxShadow: "0 25px 60px rgba(0,0,0,0.2)" 
-                }}
-              >
-                <div style={{ 
-                  width: 60, height: 60, borderRadius: 60, 
-                  background: "#eff6ff", display: "flex", 
-                  alignItems: "center", justifyContent: "center",
-                  margin: "0 auto 20px"
-                }}>
-                  <FiUserCheck size={28} color="#3b82f6" />
-                </div>
-                <h3 style={{ margin: 0, color: "#0f172a" }}>Request Sent</h3>
-                <p style={{ marginTop: 12, color: "#475569" }}>{waitingText}</p>
-                <div style={{ marginTop: 20 }}><Spinner /></div>
-                <button
-                  onClick={handleCancelRequest}
-                  style={{
-                    marginTop: 24, padding: "12px 24px", borderRadius: 40,
-                    border: "1px solid #e2e8f0", background: "#f8fafc",
-                    color: "#ef4444", fontWeight: 600, cursor: "pointer",
-                  }}
-                >
-                  Cancel Request
-                </button>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Chat Rejected Popup */}
-        <AnimatePresence>
-          {chatRejectedMessage && !showWaitingPopup && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              style={{ 
-                position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", 
-                display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 
-              }}
-            >
-              <motion.div
-                initial={{ scale: 0.9 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0.9 }}
-                style={{ 
-                  background: "#fff", padding: 28, borderRadius: 24, 
-                  width: "min(90vw, 400px)", textAlign: "center" 
-                }}
-              >
-                <div style={{ 
-                  width: 56, height: 56, borderRadius: 56, 
-                  background: "#fef2f2", display: "flex",
-                  alignItems: "center", justifyContent: "center",
-                  margin: "0 auto 16px"
-                }}>
-                  <FiX size={28} color="#ef4444" />
-                </div>
-                <h3 style={{ margin: 0, marginBottom: 8, color: "#dc2626" }}>Request Declined</h3>
-                <p style={{ margin: 0, marginBottom: 24, color: "#475569" }}>{chatRejectedMessage}</p>
-                <button onClick={() => setChatRejectedMessage("")} style={{
-                  padding: "12px 28px", borderRadius: 40, background: "#3b82f6",
-                  color: "white", border: "none", fontWeight: 600, cursor: "pointer",
-                }}>Got it</button>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Chat Cancelled Popup */}
-        <AnimatePresence>
-          {showChatCancelled && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              style={{ 
-                position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", 
-                display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 
-              }}
-            >
-              <motion.div
-                initial={{ scale: 0.9 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0.9 }}
-                style={{ 
-                  background: "#fff", padding: 28, borderRadius: 24, 
-                  width: "min(90vw, 400px)", textAlign: "center" 
-                }}
-              >
-                <div style={{ 
-                  width: 56, height: 56, borderRadius: 56, 
-                  background: "#f1f5f9", display: "flex",
-                  alignItems: "center", justifyContent: "center",
-                  margin: "0 auto 16px"
-                }}>
-                  <FiX size={28} color="#64748b" />
-                </div>
-                <h3 style={{ margin: 0, marginBottom: 8, color: "#475569" }}>Request Cancelled</h3>
-                <p style={{ margin: 0, marginBottom: 24 }}>Your chat request has been cancelled.</p>
-                <button onClick={() => setShowChatCancelled(false)} style={{
-                  padding: "12px 28px", borderRadius: 40, background: "#3b82f6",
-                  color: "white", border: "none", fontWeight: 600, cursor: "pointer",
-                }}>OK</button>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Chat Popups from hook */}
+        <ChatPopups />
       </PageWrap>
     </>
   );

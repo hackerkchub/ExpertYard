@@ -149,7 +149,7 @@ import {
 
 import { getExpertExperienceApi } from "../../../../shared/api/expertapi/experience.api";
 import { 
-  getExpertFeedApi,   // 🔥 add this
+  getExpertFeedApi,
   likePostApi, 
   unlikePostApi,
   getCommentsApi,
@@ -165,6 +165,7 @@ import {
   buySubscriptionApi, 
   getMySubscriptionApi 
 } from "../../../../shared/api/userApi/subscription.api";
+import useChatRequest from "../../../../shared/hooks/useChatRequest";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/300?img=12";
 const MIN_CHAT_MINUTES = 5;
@@ -210,11 +211,12 @@ const ExpertProfilePage = () => {
   } = useExpert();
 
   const profile = expertData?.profile;
-const price = expertPrice || {};
+  const price = expertPrice || {};
+  const numericExpertId = expertData?.expertId || null;
 
- const numericExpertId = expertData?.expertId || null;
+  // REMOVED: chatRequestId, showWaitingPopup, waitingText, showChatCancelled, chatRejectedMessage, requestingChat, requestIdRef
 
-  // All states
+  // Tab states
   const [following, setFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [reviews, setReviews] = useState([]);
@@ -227,15 +229,8 @@ const price = expertPrice || {};
   const [showUnfollowModal, setShowUnfollowModal] = useState(false);
   const [avgRating, setAvgRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState(0);
-  const [chatRequestId, setChatRequestId] = useState(null);
-  const [showWaitingPopup, setShowWaitingPopup] = useState(false);
-  const [waitingText, setWaitingText] = useState("Waiting for expert to accept...");
   const [isExpertOnline, setIsExpertOnline] = useState(false);
-  const [showChatCancelled, setShowChatCancelled] = useState(false);
-  const [chatRejectedMessage, setChatRejectedMessage] = useState("");
   const [calling, setCalling] = useState(false);
-  const [requestingChat, setRequestingChat] = useState(false);
-  const requestIdRef = useRef(null);
   const successTimeoutRef = useRef(null);
 
   // Tab states
@@ -267,6 +262,12 @@ const price = expertPrice || {};
   const [commentText, setCommentText] = useState({});
   const [expertReviewStats, setExpertReviewStats] = useState({});
 
+  // Use chat request hook
+  const {
+    startChat,
+    ChatPopups,
+  } = useChatRequest();
+
   // Memoized computed values
   const hasUserReview = useMemo(() => 
     Boolean(userId && reviews.some((r) => Number(r.user_id) === Number(userId))),
@@ -280,24 +281,24 @@ const price = expertPrice || {};
 
   // Get pricing modes from expert price data
   const pricingModes = useMemo(() => {
-  if (!expertPrice?.pricing_modes) return [];
+    if (!expertPrice?.pricing_modes) return [];
 
-  if (Array.isArray(expertPrice.pricing_modes)) {
-    return expertPrice.pricing_modes;
-  }
-
-  if (typeof expertPrice.pricing_modes === 'string') {
-    try {
-      return JSON.parse(expertPrice.pricing_modes);
-    } catch {
-      return expertPrice.pricing_modes
-        .split(",")
-        .map(mode => mode.trim());
+    if (Array.isArray(expertPrice.pricing_modes)) {
+      return expertPrice.pricing_modes;
     }
-  }
 
-  return [];
-}, [expertPrice]);
+    if (typeof expertPrice.pricing_modes === 'string') {
+      try {
+        return JSON.parse(expertPrice.pricing_modes);
+      } catch {
+        return expertPrice.pricing_modes
+          .split(",")
+          .map(mode => mode.trim());
+      }
+    }
+
+    return [];
+  }, [expertPrice]);
 
   // Get display prices based on pricing modes
   const displayPrices = useMemo(() => {
@@ -518,100 +519,55 @@ const price = expertPrice || {};
 
   // Fetch posts
   const fetchPosts = useCallback(async () => {
-  if (!numericExpertId) return;
+    if (!numericExpertId) return;
 
-  setLoadingPosts(true);
+    setLoadingPosts(true);
 
-  try {
-    const response = await getExpertFeedApi(numericExpertId, userId);
+    try {
+      const response = await getExpertFeedApi(numericExpertId, userId);
 
-    if (response.data?.success) {
-      const postsData = response.data.data || [];
-      setPosts(postsData);
+      if (response.data?.success) {
+        const postsData = response.data.data || [];
+        setPosts(postsData);
 
-      // ✅ liked map from backend
-      const likedMap = {};
-      postsData.forEach(post => {
-        const postId = getPostId(post);
-        likedMap[postId] = !!post.is_liked;
-      });
-      setLiked(likedMap);
-
-      // review stats (same)
-      try {
-        const reviewRes = await getReviewsByExpertApi(numericExpertId);
-        const reviewData = reviewRes.data.data || {};
-        setExpertReviewStats({
-          avg: Number(reviewData.avg_rating || 0),
-          total: reviewData.total_reviews || 0
+        // liked map from backend
+        const likedMap = {};
+        postsData.forEach(post => {
+          const postId = getPostId(post);
+          likedMap[postId] = !!post.is_liked;
         });
-      } catch (error) {
-        console.error("Failed to fetch review stats:", error);
-      }
-    }
+        setLiked(likedMap);
 
-  } catch (error) {
-    console.error("Failed to fetch posts:", error);
-  } finally {
-    setLoadingPosts(false);
-  }
-}, [numericExpertId, userId]);
+        // review stats (same)
+        try {
+          const reviewRes = await getReviewsByExpertApi(numericExpertId);
+          const reviewData = reviewRes.data.data || {};
+          setExpertReviewStats({
+            avg: Number(reviewData.avg_rating || 0),
+            total: reviewData.total_reviews || 0
+          });
+        } catch (error) {
+          console.error("Failed to fetch review stats:", error);
+        }
+      }
+
+    } catch (error) {
+      console.error("Failed to fetch posts:", error);
+    } finally {
+      setLoadingPosts(false);
+    }
+  }, [numericExpertId, userId]);
 
   const toggleLike = async (post) => {
-  if (!isLoggedIn || !userId) return;
+    if (!isLoggedIn || !userId) return;
 
-  const postId = getPostId(post);
-  const isLiked = liked[postId];
+    const postId = getPostId(post);
+    const isLiked = liked[postId];
 
-  // ✅ Optimistic update
-  setLiked(prev => ({
-    ...prev,
-    [postId]: !isLiked
-  }));
-
-  setPosts(prev =>
-    prev.map(p => {
-      const pId = getPostId(p);
-      if (pId === postId) {
-        return {
-          ...p,
-          likes: p.likes + (isLiked ? -1 : 1)
-        };
-      }
-      return p;
-    })
-  );
-
-  try {
-    let res;
-
-    if (isLiked) {
-      res = await unlikePostApi({ post_id: postId, user_id: userId });
-    } else {
-      res = await likePostApi({ post_id: postId, user_id: userId });
-    }
-
-    // ✅ Sync with backend (IMPORTANT)
-    setPosts(prev =>
-      prev.map(p => {
-        const pId = getPostId(p);
-        if (pId === postId) {
-          return {
-            ...p,
-            likes: res.data.likes // 🔥 exact backend value
-          };
-        }
-        return p;
-      })
-    );
-
-  } catch (err) {
-    console.error("Like error:", err);
-
-    // ❌ rollback
+    // Optimistic update
     setLiked(prev => ({
       ...prev,
-      [postId]: isLiked
+      [postId]: !isLiked
     }));
 
     setPosts(prev =>
@@ -620,14 +576,59 @@ const price = expertPrice || {};
         if (pId === postId) {
           return {
             ...p,
-            likes: p.likes + (isLiked ? 1 : -1)
+            likes: p.likes + (isLiked ? -1 : 1)
           };
         }
         return p;
       })
     );
-  }
-};
+
+    try {
+      let res;
+
+      if (isLiked) {
+        res = await unlikePostApi({ post_id: postId, user_id: userId });
+      } else {
+        res = await likePostApi({ post_id: postId, user_id: userId });
+      }
+
+      // Sync with backend
+      setPosts(prev =>
+        prev.map(p => {
+          const pId = getPostId(p);
+          if (pId === postId) {
+            return {
+              ...p,
+              likes: res.data.likes
+            };
+          }
+          return p;
+        })
+      );
+
+    } catch (err) {
+      console.error("Like error:", err);
+
+      // rollback
+      setLiked(prev => ({
+        ...prev,
+        [postId]: isLiked
+      }));
+
+      setPosts(prev =>
+        prev.map(p => {
+          const pId = getPostId(p);
+          if (pId === postId) {
+            return {
+              ...p,
+              likes: p.likes + (isLiked ? 1 : -1)
+            };
+          }
+          return p;
+        })
+      );
+    }
+  };
 
   const toggleSection = async (section, postId) => {
     const key = `${section}-${postId}`;
@@ -649,48 +650,47 @@ const price = expertPrice || {};
   };
 
   const submitComment = async (post) => {
-  const postId = getPostId(post);
-  const text = commentText[postId]?.trim();
-  if (!text) return;
+    const postId = getPostId(post);
+    const text = commentText[postId]?.trim();
+    if (!text) return;
 
-  try {
-    const res = await addCommentApi({
-      post_id: postId,
-      expert_id: numericExpertId,
-      comment: text
-    });
+    try {
+      const res = await addCommentApi({
+        post_id: postId,
+        expert_id: numericExpertId,
+        comment: text
+      });
 
-    // ✅ NEW COMMENT OBJECT (IMPORTANT)
-    const newComment = {
-      id: res.data.data?.id || Date.now(),
-      comment: text,
-      user_id: userId,
-      created_at: new Date().toISOString()
-    };
+      const newComment = {
+        id: res.data.data?.id || Date.now(),
+        comment: text,
+        user_id: userId,
+        created_at: new Date().toISOString()
+      };
 
-    // ✅ Update posts count
-    setPosts(prev =>
-      prev.map(p => {
-        const pId = getPostId(p);
-        if (pId === postId) {
-          return { ...p, comments_count: (p.comments_count || 0) + 1 };
-        }
-        return p;
-      })
-    );
+      // Update posts count
+      setPosts(prev =>
+        prev.map(p => {
+          const pId = getPostId(p);
+          if (pId === postId) {
+            return { ...p, comments_count: (p.comments_count || 0) + 1 };
+          }
+          return p;
+        })
+      );
 
-    // ✅ Instant UI update
-    setComments(prev => ({
-      ...prev,
-      [postId]: [...(prev[postId] || []), newComment]
-    }));
+      // Instant UI update
+      setComments(prev => ({
+        ...prev,
+        [postId]: [...(prev[postId] || []), newComment]
+      }));
 
-    setCommentText(prev => ({ ...prev, [postId]: "" }));
+      setCommentText(prev => ({ ...prev, [postId]: "" }));
 
-  } catch (err) {
-    console.error("Add comment error:", err);
-  }
-};
+    } catch (err) {
+      console.error("Add comment error:", err);
+    }
+  };
 
   // Followers & reviews loader
   const loadFollowersAndReviews = useCallback(() => {
@@ -731,7 +731,7 @@ const price = expertPrice || {};
       .finally(() => setLoadingReviews(false));
   }, [numericExpertId, userId]);
 
-  // Expert status listener
+  // Expert status listener (PRESERVED)
   useEffect(() => {
     if (!socket.connected) socket.connect();
     const handleExpertOnline = ({ expert_id }) => {
@@ -766,19 +766,18 @@ const price = expertPrice || {};
   }, [numericExpertId]);
 
   // Profile data fetch
-  // 🔹 Profile load
-useEffect(() => {
-  if (slug) {
-    fetchProfile(slug);
-  }
-}, [slug, fetchProfile]);
+  useEffect(() => {
+    if (slug) {
+      fetchProfile(slug);
+    }
+  }, [slug, fetchProfile]);
 
-// 🔹 Price load AFTER expertId mile
-useEffect(() => {
-  if (numericExpertId) {
-    fetchPrice(numericExpertId);
-  }
-}, [numericExpertId, fetchPrice]);
+  // Price load AFTER expertId mile
+  useEffect(() => {
+    if (numericExpertId) {
+      fetchPrice(numericExpertId);
+    }
+  }, [numericExpertId, fetchPrice]);
 
   useEffect(() => {
     if (numericExpertId) fetchExperience();
@@ -799,6 +798,7 @@ useEffect(() => {
     loadFollowersAndReviews();
   }, [loadFollowersAndReviews]);
 
+  // Network reconnect - REMOVED showWaitingPopup && requestingChat dependency
   useNetworkReconnect(() => {
     if (slug) {
       fetchProfile(slug);
@@ -819,15 +819,8 @@ useEffect(() => {
       }
     }
   }, {
-    enabled: Boolean(slug || numericExpertId) && !showWaitingPopup && !requestingChat,
+    enabled: Boolean(slug || numericExpertId),
   });
-
-  useEffect(() => {
-    setChatRequestId(null);
-    requestIdRef.current = null;
-    setRequestingChat(false);
-    setShowWaitingPopup(false);
-  }, [numericExpertId]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -835,72 +828,6 @@ useEffect(() => {
       if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
     };
   }, []);
-
-  // Socket events for chat
-  useEffect(() => {
-    const handleRequestPending = ({ request_id }) => {
-      setRequestingChat(false);
-      setChatRequestId(request_id);
-      requestIdRef.current = request_id;
-      setShowWaitingPopup(true);
-      setWaitingText("Waiting for expert to accept...");
-    };
-
-    const handleChatAccepted = ({ room_id }) => {
-      if (!room_id) return;
-      setRequestingChat(false);
-      setShowWaitingPopup(false);
-      setChatRequestId(null);
-      requestIdRef.current = null;
-      navigate(`/user/chat/${room_id}`, {
-        replace: true,
-        state: { fromRequest: true }
-      });
-    };
-
-    const handleChatRejected = ({ request_id, reason }) => {
-      if (reason === "offline") {
-        setRequestingChat(false);
-        setChatRejectedMessage("Expert is currently offline");
-        return;
-      }
-      if (request_id !== requestIdRef.current) return;
-      setRequestingChat(false);
-      setShowWaitingPopup(false);
-      setChatRequestId(null);
-      requestIdRef.current = null;
-      if (reason === "busy") {
-        setChatRejectedMessage("Expert is busy on another chat");
-      } else {
-        setChatRejectedMessage("Expert rejected your request");
-      }
-    };
-
-    const handleChatCancelled = ({ request_id, reason }) => {
-      if (request_id !== requestIdRef.current) return;
-      setRequestingChat(false);
-      setShowWaitingPopup(false);
-      setChatRequestId(null);
-      requestIdRef.current = null;
-      if (reason === "timeout") {
-        setChatRejectedMessage("Expert did not respond");
-        return;
-      }
-      if (reason === "user_cancelled") setShowChatCancelled(true);
-    };
-
-    socket.on("request_pending", handleRequestPending);
-    socket.on("chat_accepted", handleChatAccepted);
-    socket.on("chat_rejected", handleChatRejected);
-    socket.on("chat_cancelled", handleChatCancelled);
-
-    return () => {
-      socket.off("request_pending", handleRequestPending);
-      socket.off("chat_accepted", handleChatAccepted);
-      socket.off("chat_rejected", handleChatRejected);
-      socket.off("chat_cancelled", handleChatCancelled);
-    };
-  }, [navigate]);
 
   // Handle start call/chat with selected pricing mode
   const handleStart = useCallback((type) => {
@@ -912,11 +839,10 @@ useEffect(() => {
     // If has active subscription, use subscription mode
     if (hasActiveSubscription) {
       if (type === "chat" && numericExpertId) {
-        socket.emit("request_chat", {
-          user_id: userId,
-          expert_id: numericExpertId,
-          user_name: user?.name || user?.first_name || "User",
-          pricing_mode: "subscription"
+        startChat({
+          expertId: numericExpertId,
+          chatPrice: 0,
+          pricingMode: "subscription",
         });
       } else if (type === "call" && numericExpertId) {
         navigate(`/user/voice-call/${numericExpertId}`, {
@@ -941,25 +867,18 @@ useEffect(() => {
     }
 
     if (pricingMode === "session") {
-      // Handle session booking - similar to per minute but with one-time payment
+      // Handle session booking
       const sessionPrice = currentPricingInfo.price;
       const userBalance = Number(balance || 0);
 
       if (userBalance >= sessionPrice) {
-        if (requestingChat) return;
-        setRequestingChat(true);
-        setWaitingText("Waiting for expert to accept session...");
-
         if (type === "chat" && numericExpertId) {
-          // Send chat request with session mode
-          socket.emit("request_chat", {
-            user_id: userId,
-            expert_id: numericExpertId,
-            user_name: user?.name || user?.first_name || "User",
-            pricing_mode: "session"
+          startChat({
+            expertId: numericExpertId,
+            chatPrice: sessionPrice,
+            pricingMode: "session",
           });
         } else if (type === "call" && numericExpertId) {
-          // For session call, redirect to call page with session mode
           navigate(`/user/voice-call/${numericExpertId}`, {
             state: { 
               fromProfile: true, 
@@ -984,16 +903,11 @@ useEffect(() => {
       const userBalance = Number(balance || 0);
 
       if (userBalance >= minRequired) {
-        if (requestingChat) return;
-        setRequestingChat(true);
-        setWaitingText("Waiting for expert to accept...");
-
         if (type === "chat" && numericExpertId) {
-          socket.emit("request_chat", {
-            user_id: userId,
-            expert_id: numericExpertId,
-            user_name: user?.name || user?.first_name || "User",
-            pricing_mode: "per_minute"
+          startChat({
+            expertId: numericExpertId,
+            chatPrice: perMinutePrice,
+            pricingMode: "per_minute",
           });
         } else if (type === "call" && numericExpertId) {
           navigate(`/user/voice-call/${numericExpertId}`, {
@@ -1011,7 +925,7 @@ useEffect(() => {
         setShowRecharge(true);
       }
     }
-  }, [isLoggedIn, navigate, displayPrices, balance, userId, numericExpertId, requestingChat, hasActiveSubscription, currentPricingInfo, profile]);
+  }, [isLoggedIn, navigate, displayPrices, balance, userId, numericExpertId, hasActiveSubscription, currentPricingInfo, profile, startChat]);
 
   const handleFollowAction = useCallback(async () => {
     if (!isLoggedIn || !userId || !numericExpertId) {
@@ -1086,26 +1000,12 @@ useEffect(() => {
 
   const handleStarClick = useCallback((rating) => setUserRating(rating), []);
   
-  const handleCancelRequest = useCallback(() => {
-    if (!chatRequestId) return;
-    socket.emit("cancel_chat_request", { request_id: chatRequestId });
-    setRequestingChat(false);
-    setShowWaitingPopup(false);
-    setChatRequestId(null);
-    requestIdRef.current = null;
-  }, [chatRequestId]);
-
   const handleRechargeClose = useCallback(() => {
     setShowRecharge(false);
     setRequiredAmount(0);
   }, []);
 
   const handleUnfollowClose = useCallback(() => setShowUnfollowModal(false), []);
-  const handleChatRejectedClose = useCallback(() => {
-    setChatRejectedMessage("");
-    setRequestingChat(false);
-  }, []);
-  const handleChatCancelledClose = useCallback(() => setShowChatCancelled(false), []);
 
   // Close success modal on click anywhere
   const handleSuccessModalClick = useCallback(() => {
@@ -1184,7 +1084,7 @@ useEffect(() => {
                 <Tag><FiTarget /> Category: {profile.category_name || "Business"}</Tag>
               </TagList>
 
-              {/* NEW: Pricing Mode Selection Tabs */}
+              {/* Pricing Mode Selection Tabs */}
               {availablePricingModes.length > 0 && !hasActiveSubscription && (
                 <div style={{ marginBottom: 20 }}>
                   <PricingModeTabs>
@@ -1337,180 +1237,176 @@ useEffect(() => {
 
           <main className="expert-profile-main">
 
-        {/* Tabs Section */}
-        <Section className="profile-tabs-card">
-          <TabContainer>
-            <TabButton $active={activeTab === "about"} onClick={() => setActiveTab("about")}><FiFileText /> {t("expertProfile.about")}</TabButton>
-            <TabButton $active={activeTab === "experience"} onClick={() => setActiveTab("experience")}><FiBriefcase /> {t("expertProfile.experience")}</TabButton>
-            <TabButton $active={activeTab === "posts"} onClick={() => setActiveTab("posts")}><FiImage /> {t("expertProfile.posts")}</TabButton>
-          </TabContainer>
+            {/* Tabs Section */}
+            <Section className="profile-tabs-card">
+              <TabContainer>
+                <TabButton $active={activeTab === "about"} onClick={() => setActiveTab("about")}><FiFileText /> {t("expertProfile.about")}</TabButton>
+                <TabButton $active={activeTab === "experience"} onClick={() => setActiveTab("experience")}><FiBriefcase /> {t("expertProfile.experience")}</TabButton>
+                <TabButton $active={activeTab === "posts"} onClick={() => setActiveTab("posts")}><FiImage /> {t("expertProfile.posts")}</TabButton>
+              </TabContainer>
 
-          {activeTab === "about" && (
-            <TabContent>
-              <InfoGrid>
-                <InfoItem><InfoLabel>Professional Summary</InfoLabel><InfoValue>{profile.description || "Experienced professional with proven track record in the field."}</InfoValue></InfoItem>
-                <InfoItem>
-                  <InfoLabel>Price Details</InfoLabel>
-                  <InfoValue>
-                    {displayPrices.hasPerMinute && <div><strong>Call:</strong> ₹{displayPrices.callPrice}/min | <strong>Chat:</strong> ₹{displayPrices.chatPrice}/min</div>}
-                    {displayPrices.hasSession && <div><strong>Session:</strong> ₹{displayPrices.sessionPrice} for {displayPrices.sessionDuration} min</div>}
-                    {displayPrices.hasSubscription && <div><strong>Subscriptions:</strong> Available (click View Plans)</div>}
-                    {price.reason_for_price && <div><strong>Reason:</strong> {price.reason_for_price}</div>}
-                  </InfoValue>
-                </InfoItem>
-                <InfoItem><InfoLabel>Strengths</InfoLabel><InfoValue>{price.strength || "Expertise in field, Strong communication"}</InfoValue></InfoItem>
-                <InfoItem><InfoLabel>Customer Handling</InfoLabel><InfoValue>{price.handle_customer || "Professional approach, Quick response"}</InfoValue></InfoItem>
-              </InfoGrid>
-            </TabContent>
-          )}
-
-          {activeTab === "experience" && (
-            <TabContent>
-              {loadingExperience ? (
-                <LoadingReviews><Spinner /><p>Loading experience...</p></LoadingReviews>
-              ) : experienceList.length === 0 ? (
-                <NoReviews><FiBriefcase size={48} color="#d1d5db" /><h4>No experience records</h4></NoReviews>
-              ) : (
-                experienceList.map((exp) => (
-                  <ExperienceCard key={exp.id}>
-                    <ExperienceHeader><ExperienceTitle>{exp.title}</ExperienceTitle><ExperienceCompany>{exp.company}</ExperienceCompany></ExperienceHeader>
-                    <ExperienceDate>{formatDate(exp.start_date)} - {exp.end_date ? formatDate(exp.end_date) : "Present"}</ExperienceDate>
-                    {exp.certificate && <ExperienceCertificate href={exp.certificate} target="_blank"><FiAward /> View Certificate</ExperienceCertificate>}
-                  </ExperienceCard>
-                ))
+              {activeTab === "about" && (
+                <TabContent>
+                  <InfoGrid>
+                    <InfoItem><InfoLabel>Professional Summary</InfoLabel><InfoValue>{profile.description || "Experienced professional with proven track record in the field."}</InfoValue></InfoItem>
+                    <InfoItem>
+                      <InfoLabel>Price Details</InfoLabel>
+                      <InfoValue>
+                        {displayPrices.hasPerMinute && <div><strong>Call:</strong> ₹{displayPrices.callPrice}/min | <strong>Chat:</strong> ₹{displayPrices.chatPrice}/min</div>}
+                        {displayPrices.hasSession && <div><strong>Session:</strong> ₹{displayPrices.sessionPrice} for {displayPrices.sessionDuration} min</div>}
+                        {displayPrices.hasSubscription && <div><strong>Subscriptions:</strong> Available (click View Plans)</div>}
+                        {price.reason_for_price && <div><strong>Reason:</strong> {price.reason_for_price}</div>}
+                      </InfoValue>
+                    </InfoItem>
+                    <InfoItem><InfoLabel>Strengths</InfoLabel><InfoValue>{price.strength || "Expertise in field, Strong communication"}</InfoValue></InfoItem>
+                    <InfoItem><InfoLabel>Customer Handling</InfoLabel><InfoValue>{price.handle_customer || "Professional approach, Quick response"}</InfoValue></InfoItem>
+                  </InfoGrid>
+                </TabContent>
               )}
-            </TabContent>
-          )}
 
-          {activeTab === "posts" && (
-            <TabContent>
-              {loadingPosts ? (
-                <LoadingReviews><Spinner /><p>Loading posts...</p></LoadingReviews>
-              ) : posts.length === 0 ? (
-                <NoReviews><FiImage size={48} color="#d1d5db" /><h4>No posts yet</h4></NoReviews>
-              ) : (
-                <PostGrid>
-                  {posts.map((post) => {
-                    // ✅ FIX: Consistent postId extraction
-                    const postId = getPostId(post);
-                    const isLiked = liked[postId];
-                    
-                    return (
-                      <PostCard key={postId}>
-                        {post.image_url && <PostImage src={post.image_url} alt={post.title} />}
-                        <PostHeader><PostTitle>{post.title}</PostTitle></PostHeader>
-                        {post.description && <PostDescription>{post.description}</PostDescription>}
+              {activeTab === "experience" && (
+                <TabContent>
+                  {loadingExperience ? (
+                    <LoadingReviews><Spinner /><p>Loading experience...</p></LoadingReviews>
+                  ) : experienceList.length === 0 ? (
+                    <NoReviews><FiBriefcase size={48} color="#d1d5db" /><h4>No experience records</h4></NoReviews>
+                  ) : (
+                    experienceList.map((exp) => (
+                      <ExperienceCard key={exp.id}>
+                        <ExperienceHeader><ExperienceTitle>{exp.title}</ExperienceTitle><ExperienceCompany>{exp.company}</ExperienceCompany></ExperienceHeader>
+                        <ExperienceDate>{formatDate(exp.start_date)} - {exp.end_date ? formatDate(exp.end_date) : "Present"}</ExperienceDate>
+                        {exp.certificate && <ExperienceCertificate href={exp.certificate} target="_blank"><FiAward /> View Certificate</ExperienceCertificate>}
+                      </ExperienceCard>
+                    ))
+                  )}
+                </TabContent>
+              )}
+
+              {activeTab === "posts" && (
+                <TabContent>
+                  {loadingPosts ? (
+                    <LoadingReviews><Spinner /><p>Loading posts...</p></LoadingReviews>
+                  ) : posts.length === 0 ? (
+                    <NoReviews><FiImage size={48} color="#d1d5db" /><h4>No posts yet</h4></NoReviews>
+                  ) : (
+                    <PostGrid>
+                      {posts.map((post) => {
+                        const postId = getPostId(post);
+                        const isLiked = liked[postId];
                         
-                        <PostActions>
-                          {/* LIKE BUTTON */}
-                          <PostActionBtn
-                            $liked={!!isLiked}
-                            onClick={() => toggleLike(post)}
-                          >
-                            <FiHeart
-                              fill={isLiked ? "#ef4444" : "none"}
-                              stroke={isLiked ? "#ef4444" : "#374151"}
-                              style={{
-                                strokeWidth: isLiked ? 0 : 2,
-                                transition: "all 0.2s ease"
-                              }}
-                            />
-                           {post.likes}
-                          </PostActionBtn>
+                        return (
+                          <PostCard key={postId}>
+                            {post.image_url && <PostImage src={post.image_url} alt={post.title} />}
+                            <PostHeader><PostTitle>{post.title}</PostTitle></PostHeader>
+                            {post.description && <PostDescription>{post.description}</PostDescription>}
+                            
+                            <PostActions>
+                              <PostActionBtn
+                                $liked={!!isLiked}
+                                onClick={() => toggleLike(post)}
+                              >
+                                <FiHeart
+                                  fill={isLiked ? "#ef4444" : "none"}
+                                  stroke={isLiked ? "#ef4444" : "#374151"}
+                                  style={{
+                                    strokeWidth: isLiked ? 0 : 2,
+                                    transition: "all 0.2s ease"
+                                  }}
+                                />
+                                {post.likes}
+                              </PostActionBtn>
 
-                          {/* COMMENT BUTTON */}
-                          <PostActionBtn
-                            onClick={() => toggleSection("comments", postId)}
-                          >
-                            <FiMessageCircle />
-                            {post.comments_count}
-                          </PostActionBtn>
-                        </PostActions>
+                              <PostActionBtn
+                                onClick={() => toggleSection("comments", postId)}
+                              >
+                                <FiMessageCircle />
+                                {post.comments_count}
+                              </PostActionBtn>
+                            </PostActions>
 
-                        {/* COMMENTS SECTION */}
-                        {activeSection === `comments-${postId}` && (
-                          <CommentsBox>
-                            <CommentsList>
-                              {(comments[postId] || [])
-                                .filter(c => c && typeof c.comment === "string")
-                                .map((c) => (
-                                  <CommentItem key={c.id}>
-                                    <CommentText>
-                                      {c.comment}
-                                      {c.user_id === userId && (
-                                        <span style={{ marginLeft: 6, fontSize: 11, color: "#9ca3af" }}>
-                                          You
-                                        </span>
-                                      )}
-                                    </CommentText>
-                                    <CommentMeta>
-                                      {formatRelativeTime(c.created_at)}
-                                    </CommentMeta>
-                                  </CommentItem>
-                                ))}
-                            </CommentsList>
+                            {activeSection === `comments-${postId}` && (
+                              <CommentsBox>
+                                <CommentsList>
+                                  {(comments[postId] || [])
+                                    .filter(c => c && typeof c.comment === "string")
+                                    .map((c) => (
+                                      <CommentItem key={c.id}>
+                                        <CommentText>
+                                          {c.comment}
+                                          {c.user_id === userId && (
+                                            <span style={{ marginLeft: 6, fontSize: 11, color: "#9ca3af" }}>
+                                              You
+                                            </span>
+                                          )}
+                                        </CommentText>
+                                        <CommentMeta>
+                                          {formatRelativeTime(c.created_at)}
+                                        </CommentMeta>
+                                      </CommentItem>
+                                    ))}
+                                </CommentsList>
 
-                            <div style={{ display: "flex", gap: 8 }}>
-                              <InlineInput
-                                placeholder="Write a comment…"
-                                value={commentText[postId] || ""}
-                                onChange={(e) =>
-                                  setCommentText((p) => ({
-                                    ...p,
-                                    [postId]: e.target.value
-                                  }))
-                                }
-                                onKeyDown={(e) => e.key === "Enter" && submitComment(post)}
-                              />
-                              <SendBtn onClick={() => submitComment(post)}>
-                                <FiSend />
-                              </SendBtn>
-                            </div>
-                          </CommentsBox>
-                        )}
-                      </PostCard>
-                    );
-                  })}
-                </PostGrid>
+                                <div style={{ display: "flex", gap: 8 }}>
+                                  <InlineInput
+                                    placeholder="Write a comment…"
+                                    value={commentText[postId] || ""}
+                                    onChange={(e) =>
+                                      setCommentText((p) => ({
+                                        ...p,
+                                        [postId]: e.target.value
+                                      }))
+                                    }
+                                    onKeyDown={(e) => e.key === "Enter" && submitComment(post)}
+                                  />
+                                  <SendBtn onClick={() => submitComment(post)}>
+                                    <FiSend />
+                                  </SendBtn>
+                                </div>
+                              </CommentsBox>
+                            )}
+                          </PostCard>
+                        );
+                      })}
+                    </PostGrid>
+                  )}
+                </TabContent>
               )}
-            </TabContent>
-          )}
-        </Section>
+            </Section>
 
-        {/* Review Section */}
-        <ReviewSection>
-          <ReviewHeader><div><SectionTitle>{t("expertProfile.ratingReviews")}</SectionTitle></div></ReviewHeader>
+            {/* Review Section */}
+            <ReviewSection>
+              <ReviewHeader><div><SectionTitle>{t("expertProfile.ratingReviews")}</SectionTitle></div></ReviewHeader>
 
-          <ReviewForm>
-            <ReviewFormTitle><FiStar color="#f59e0b" />{hasUserReview ? 'Update Your Review' : 'Add Your Review'}</ReviewFormTitle>
-            <form onSubmit={handleSubmitReview}>
-              <RatingInput><RatingLabel>Your Rating:</RatingLabel><StarRating>{[1, 2, 3, 4, 5].map((star) => (<Star key={star} $filled={star <= userRating} onClick={() => handleStarClick(star)} type="button"><FiStar /></Star>))}</StarRating></RatingInput>
-              <TextAreaContainer><ReviewTextarea placeholder="share your experience" value={userReviewText} onChange={(e) => setUserReviewText(e.target.value)} disabled={submittingReview} maxLength={500} rows={4} /></TextAreaContainer>
-              <FormActions>
-                {isLoggedIn ? (
-                  <>
-                    <SubmitButton type="submit" disabled={!userRating || submittingReview} $disabled={!userRating}>
-                      {submittingReview ? <><Spinner />{hasUserReview ? 'Updating...' : 'Adding...'}</> : <><FiStar />{hasUserReview ? 'Update Review' : 'Submit Review'}</>}
-                    </SubmitButton>
-                    {hasUserReview && <DeleteButton type="button" onClick={handleDeleteReview}><FiX />Delete Review</DeleteButton>}
-                  </>
-                ) : (
-                  <LoginPrompt><p>Please login to leave a review</p><LoginButton onClick={() => navigate('/user/auth')}><FiUserCheck />Login to Review</LoginButton></LoginPrompt>
-                )}
-              </FormActions>
-            </form>
-          </ReviewForm>
+              <ReviewForm>
+                <ReviewFormTitle><FiStar color="#f59e0b" />{hasUserReview ? 'Update Your Review' : 'Add Your Review'}</ReviewFormTitle>
+                <form onSubmit={handleSubmitReview}>
+                  <RatingInput><RatingLabel>Your Rating:</RatingLabel><StarRating>{[1, 2, 3, 4, 5].map((star) => (<Star key={star} $filled={star <= userRating} onClick={() => handleStarClick(star)} type="button"><FiStar /></Star>))}</StarRating></RatingInput>
+                  <TextAreaContainer><ReviewTextarea placeholder="share your experience" value={userReviewText} onChange={(e) => setUserReviewText(e.target.value)} disabled={submittingReview} maxLength={500} rows={4} /></TextAreaContainer>
+                  <FormActions>
+                    {isLoggedIn ? (
+                      <>
+                        <SubmitButton type="submit" disabled={!userRating || submittingReview} $disabled={!userRating}>
+                          {submittingReview ? <><Spinner />{hasUserReview ? 'Updating...' : 'Adding...'}</> : <><FiStar />{hasUserReview ? 'Update Review' : 'Submit Review'}</>}
+                        </SubmitButton>
+                        {hasUserReview && <DeleteButton type="button" onClick={handleDeleteReview}><FiX />Delete Review</DeleteButton>}
+                      </>
+                    ) : (
+                      <LoginPrompt><p>Please login to leave a review</p><LoginButton onClick={() => navigate('/user/auth')}><FiUserCheck />Login to Review</LoginButton></LoginPrompt>
+                    )}
+                  </FormActions>
+                </form>
+              </ReviewForm>
 
-          <RecentReviewsTitle><FiMessageSquare />All Reviews ({reviews.length})</RecentReviewsTitle>
-          <ReviewList>
-            {loadingReviews ? <LoadingReviews><Spinner /><p>Loading reviews...</p></LoadingReviews> : reviews.length === 0 ? <NoReviews><FiStar size={48} color="#d1d5db" /><h4>No reviews yet</h4><p>Be the first to review this expert!</p></NoReviews> : reviews.map((r) => (
-              <ReviewItem key={r.id}>
-                <ReviewUser><UserAvatar>{r.first_name?.charAt(0) || r.last_name?.charAt(0) || 'U'}</UserAvatar><UserInfo><UserName>{`${r.first_name || ""} ${r.last_name || ""}`.trim() || "Anonymous User"}</UserName><ReviewMeta><div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>{[...Array(5)].map((_, i) => (<FiStar key={i} size={14} color={i < (r.rating_number || 0) ? "#facc15" : "#d1d5db"} />))}<span style={{ marginLeft: '6px', fontWeight: '600' }}>{r.rating_number}/5</span></div><ReviewDate>{r.created_at ? new Date(r.created_at).toLocaleDateString() : 'Recently'}</ReviewDate></ReviewMeta></UserInfo></ReviewUser>
-                <ReviewText>{r.review_text || "The expert provided excellent service and valuable insights."}</ReviewText>
-              </ReviewItem>
-            ))}
-          </ReviewList>
-        </ReviewSection>
+              <RecentReviewsTitle><FiMessageSquare />All Reviews ({reviews.length})</RecentReviewsTitle>
+              <ReviewList>
+                {loadingReviews ? <LoadingReviews><Spinner /><p>Loading reviews...</p></LoadingReviews> : reviews.length === 0 ? <NoReviews><FiStar size={48} color="#d1d5db" /><h4>No reviews yet</h4><p>Be the first to review this expert!</p></NoReviews> : reviews.map((r) => (
+                  <ReviewItem key={r.id}>
+                    <ReviewUser><UserAvatar>{r.first_name?.charAt(0) || r.last_name?.charAt(0) || 'U'}</UserAvatar><UserInfo><UserName>{`${r.first_name || ""} ${r.last_name || ""}`.trim() || "Anonymous User"}</UserName><ReviewMeta><div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>{[...Array(5)].map((_, i) => (<FiStar key={i} size={14} color={i < (r.rating_number || 0) ? "#facc15" : "#d1d5db"} />))}<span style={{ marginLeft: '6px', fontWeight: '600' }}>{r.rating_number}/5</span></div><ReviewDate>{r.created_at ? new Date(r.created_at).toLocaleDateString() : 'Recently'}</ReviewDate></ReviewMeta></UserInfo></ReviewUser>
+                    <ReviewText>{r.review_text || "The expert provided excellent service and valuable insights."}</ReviewText>
+                  </ReviewItem>
+                ))}
+              </ReviewList>
+            </ReviewSection>
 
           </main>
         </div>
@@ -1624,39 +1520,8 @@ useEffect(() => {
           </div>
         )}
 
-        {/* Chat Request Popups */}
-        {showWaitingPopup && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 }}>
-            <div style={{ background: "#fff", padding: 28, borderRadius: 18, width: "min(90vw, 420px)", textAlign: "center" }}>
-              <h3 style={{ margin: 0, color: "#0f172a" }}>Request Sent</h3>
-              <p style={{ marginTop: 12, color: "#475569" }}>{waitingText}</p>
-              <div style={{ marginTop: 18 }}><Spinner /></div>
-              <button onClick={handleCancelRequest} style={{ marginTop: 22, padding: "10px 18px", borderRadius: 999, border: "1px solid #e2e8f0", background: "#f8fafc", color: "#334155", fontWeight: 500, cursor: "pointer" }}>Cancel Request</button>
-            </div>
-          </div>
-        )}
-
-        {chatRejectedMessage && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 }}>
-            <div style={{ background: "#fff", padding: 24, borderRadius: 16, width: "min(90vw, 400px)", textAlign: "center" }}>
-              <FiX size={24} color="#ef4444" style={{ marginBottom: 12 }} />
-              <h3 style={{ margin: 0, marginBottom: 8, color: "#dc2626" }}>Request Declined</h3>
-              <p style={{ margin: 0, marginBottom: 20, color: "#475569" }}>{chatRejectedMessage}</p>
-              <ActionButton onClick={handleChatRejectedClose} $primary>OK</ActionButton>
-            </div>
-          </div>
-        )}
-
-        {showChatCancelled && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 }}>
-            <div style={{ background: "#fff", padding: 24, borderRadius: 16, width: "min(90vw, 400px)", textAlign: "center" }}>
-              <FiX size={24} color="#6b7280" style={{ marginBottom: 12 }} />
-              <h3 style={{ margin: 0, marginBottom: 8, color: "#475569" }}>Request Cancelled</h3>
-              <p style={{ margin: 0, marginBottom: 20, color: "#475569" }}>Your chat request has been cancelled.</p>
-              <ActionButton onClick={handleChatCancelledClose} $primary>OK</ActionButton>
-            </div>
-          </div>
-        )}
+        {/* Chat Popups from hook */}
+        <ChatPopups />
       </PageWrap>
     </>
   );

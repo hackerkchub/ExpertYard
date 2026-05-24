@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 
 import { connectSocket, disconnectSocket, socket } from "../../../shared/api/socket";
 import UserSocketListener from "../../../shared/socket/UserSocketListener";
@@ -11,6 +11,11 @@ import ChatLauncher from "../components/ai-chat/ChatLauncher";
 
 export default function UserRouteBoundary() {
   const { user } = useAuth();
+  const location = useLocation();
+
+  const hideChatLauncher =
+    location.pathname.startsWith("/user/chat") ||
+    location.pathname.startsWith("/user/voice-call");
 
   useEffect(() => {
     if (!user?.id) return;
@@ -58,13 +63,13 @@ export default function UserRouteBoundary() {
     return () => socket.off("call:resume_data", handleResume);
   }, []);
 
- return (
-  <>
-    <UserSocketListener />
-    <PublicExpertProvider>
-      <Outlet />
-      <ChatLauncher />
-    </PublicExpertProvider>
-  </>
-);
+  return (
+    <>
+      <UserSocketListener />
+      <PublicExpertProvider>
+        <Outlet />
+        {!hideChatLauncher && <ChatLauncher />}
+      </PublicExpertProvider>
+    </>
+  );
 }

@@ -70,6 +70,7 @@ const GuidexaExpertPlan = () => {
         .plan-header h2 {
           margin: 0;
           font-size: 22px;
+          color: white;
           font-weight: 600;
           letter-spacing: -0.5px;
         }

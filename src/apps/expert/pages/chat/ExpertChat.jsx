@@ -151,7 +151,7 @@ const ExpertChat = () => {
     }
 
     const data = await response.json();
-   return `https://softmaxs.com${data.imageUrl}`;
+    return `https://softmaxs.com${data.imageUrl}`;
   };
 
   /* ------------------ IMAGE SELECT ------------------ */
@@ -167,87 +167,106 @@ const ExpertChat = () => {
     setSelectedImage(file);
   };
 
-  /* ------------------ SEND MESSAGE (with immediate UI update) ------------------ */
+  /* ------------------ SEND MESSAGE (with optimistic UI + client_id) ------------------ */
   const handleSendMessage = async () => {
     if (!room_id || !sessionActive) return;
     if (uploading) return;
 
-    // TEXT MESSAGE ONLY
+    // TEXT MESSAGE ONLY - with optimistic UI
     if (!selectedImage && message.trim()) {
       const tempId = Date.now();
-      const messageData = {
-        id: tempId,
-        sender_type: "expert",
-        message: message.trim(),
-        message_type: "text",
-        image_url: null,
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        isTemp: true
-      };
       
       // Add to UI immediately
-      setMessages(prev => [...prev, messageData]);
+      setMessages(prev => [
+        ...prev,
+        {
+          id: tempId,
+          client_id: tempId,
+          sender_type: "expert",
+          sender_id: expertId,
+          message: message.trim(),
+          message_type: "text",
+          time: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          isTemp: true
+        }
+      ]);
       
-      // Send to socket
-      socket.emit("sendMessage", { 
-        room_id, 
-        message: message.trim(),
-        type: "text",
-        message_type: "text"
-      });
-      
+      // Emit with client_id to prevent duplicates
+      socket.emit("sendMessage", {
+  room_id,
+  client_id: tempId,
+  message: message.trim(),
+  type: "text"
+});
+
       setMessage("");
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }), 100);
+
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "end"
+        });
+      }, 100);
+
       setTimeout(() => inputRef.current?.focus(), 0);
       return;
     }
 
-    // IMAGE MESSAGE WITH CAPTION
+    // IMAGE MESSAGE WITH CAPTION - with optimistic UI
     if (selectedImage) {
       try {
         setUploading(true);
         
         const tempId = Date.now();
         const tempImageUrl = URL.createObjectURL(selectedImage);
-        const messageData = {
-          id: tempId,
-          sender_type: "expert",
-          message: message.trim() || "",
-          message_type: "image",
-          image_url: tempImageUrl,
-          time: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          isTemp: true
-        };
         
         // Add to UI immediately with preview
-        setMessages(prev => [...prev, messageData]);
-        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }), 100);
+        setMessages(prev => [
+          ...prev,
+          {
+            id: tempId,
+            client_id: tempId,
+            sender_type: "expert",
+            sender_id: expertId,
+            message: message.trim() || "",
+            message_type: "image",
+            image_url: tempImageUrl,
+            time: new Date().toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            isTemp: true
+          }
+        ]);
+        
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "end"
+          });
+        }, 100);
         
         // Upload image
         const imageUrl = await uploadImage(selectedImage);
         
         // Update the temporary message with real URL
         setMessages(prev => prev.map(msg => 
-          msg.id === tempId 
+          msg.client_id === tempId 
             ? { ...msg, image_url: imageUrl, isTemp: false }
             : msg
         ));
         
-        // Send to socket
-        socket.emit("sendMessage", {
-          room_id,
-          message: message.trim() || "",
-          type: "image",
-          message_type: "image",
-          imageUrl: imageUrl
-        });
-
+        // Emit with client_id to prevent duplicates
+       socket.emit("sendMessage", {
+  room_id,
+  client_id: tempId,
+  message: message.trim() || "",
+  type: "image",
+  imageUrl
+});
         setSelectedImage(null);
         setMessage("");
         
@@ -270,41 +289,54 @@ const ExpertChat = () => {
     }
   };
 
-  /* ------------------ SOCKET ------------------ */
+  /* ------------------ SOCKET (UPDATED with client_id deduplication) ------------------ */
   useEffect(() => {
     if (!room_id) return;
 
     socket.emit("join_room", { room_id });
 
-    const handleNewMessage = (msg) => {
-      if (msg.room_id !== room_id) return;
+    const handleNewMessage = (msgData) => {
+      // UNIVERSAL ROOM ID CHECK
+      const incomingRoomId = msgData.room_id || msgData.roomId || msgData.chat_room_id || msgData.chatRoomId;
+      
+      if (String(incomingRoomId) !== String(room_id)) {
+        return;
+      }
       
       setMessages((prev) => {
-        // Check if message already exists (by id)
-        const exists = prev.some(m => m.id === msg.id);
+        // Check if message already exists (by id OR client_id)
+        const exists = prev.some(
+          m => m.id === msgData.id || 
+          (msgData.client_id && m.client_id === msgData.client_id)
+        );
         
         if (exists) {
-          // Update existing temporary message
-          return prev.map(m => 
-            m.id === msg.id 
-              ? { 
-                  ...m, 
-                  message_type: msg.message_type || "text",
-                  image_url: msg.image_url || m.image_url,
-                  isTemp: false 
-                }
-              : m
-          );
+          // Update existing temporary message with real data
+          return prev.map(m => {
+            if (m.id === msgData.id || (msgData.client_id && m.client_id === msgData.client_id)) {
+              return {
+                ...m,
+                id: msgData.id,
+                message_type: msgData.message_type || "text",
+                image_url: msgData.image_url || m.image_url,
+                isTemp: false
+              };
+            }
+            return m;
+          });
         }
         
-        // Add new message
+        // Add new message with safe time parsing
         return [...prev, {
-          id: msg.id,
-          message: msg.message,
-          message_type: msg.message_type || "text",
-          image_url: msg.image_url || null,
-          sender_type: msg.sender_type,
-          time: new Date(msg.time).toLocaleTimeString([], {
+          id: msgData.id,
+          client_id: msgData.client_id,
+          message: msgData.message,
+          message_type: msgData.message_type || "text",
+          image_url: msgData.image_url || null,
+          sender_type: msgData.sender_type,
+          time: new Date(
+            msgData.time || msgData.created_at || Date.now()
+          ).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
           }),
@@ -316,17 +348,22 @@ const ExpertChat = () => {
       }, 100);
     };
 
+    // Listen to BOTH events
     socket.on("message", handleNewMessage);
+    socket.on("message_sent", handleNewMessage);
 
-    socket.on("chat_ended", () => {
-      setSessionActive(false);
-      hotToast("success", "Chat Ended");
-      navigate("/expert/chat-history");
-    });
+    socket.on("chat_ended", ({ room_id: endedRoomId }) => {
+  if (String(endedRoomId) !== String(room_id)) return;
+
+  setSessionActive(false);
+  hotToast("success", "Chat Ended");
+  navigate("/expert/chat-history");
+});
 
     return () => {
       socket.emit("leave_room", { room_id });
       socket.off("message", handleNewMessage);
+      socket.off("message_sent", handleNewMessage);
       socket.off("chat_ended");
     };
   }, [room_id, navigate]);
@@ -424,46 +461,48 @@ const ExpertChat = () => {
                       💬 Start conversation
                     </EmptyChatMessage>
                   ) : (
-                    messages.map((msg) => (
-                      <Message
-                        key={msg.id}
-                        $expert={msg.sender_type === "expert"}
-                      >
-                        <Bubble $expert={msg.sender_type === "expert"}>
-                          {/* IMAGE MESSAGE UI */}
-                          {msg.message_type === "image" && msg.image_url && (
-                            <img
-                              src={msg.image_url}
-                              alt="chat-img"
-                              style={{
-                                maxWidth: "200px",
-                                maxHeight: "200px",
-                                borderRadius: "10px",
-                                marginBottom: msg.message ? "6px" : "0",
-                                objectFit: "cover"
-                              }}
-                              onError={(e) => {
-                                if (msg.isTemp) {
-                                  e.target.style.opacity = "0.5";
-                                } else {
-                                  e.target.style.display = "none";
-                                }
-                              }}
-                            />
-                          )}
-                          
-                          {/* TEXT/CAPTION MESSAGE */}
-                          {msg.message && (
-                            <div>{msg.message}</div>
-                          )}
-                          
-                          <span className="time">
-                            {msg.time}
-                            {msg.isTemp }
-                          </span>
-                        </Bubble>
-                      </Message>
-                    ))
+                    messages.map((msg) => {
+                      // AI compatibility - treat AI messages as expert for styling
+                      const isExpert = msg.sender_type === "expert" || msg.sender_type === "ai";
+                      
+                      return (
+                        <Message key={msg.id} $expert={isExpert}>
+                          <Bubble $expert={isExpert}>
+                            {/* IMAGE MESSAGE UI */}
+                            {msg.message_type === "image" && msg.image_url && (
+                              <img
+                                src={msg.image_url}
+                                alt="chat-img"
+                                style={{
+                                  maxWidth: "200px",
+                                  maxHeight: "200px",
+                                  borderRadius: "10px",
+                                  marginBottom: msg.message ? "6px" : "0",
+                                  objectFit: "cover"
+                                }}
+                                onError={(e) => {
+                                  if (msg.isTemp) {
+                                    e.target.style.opacity = "0.5";
+                                  } else {
+                                    e.target.style.display = "none";
+                                  }
+                                }}
+                              />
+                            )}
+                            
+                            {/* TEXT/CAPTION MESSAGE */}
+                            {msg.message && (
+                              <div>{msg.message}</div>
+                            )}
+                            
+                            <span className="time">
+                              {msg.time}
+                              {msg.isTemp && " (sending...)"}
+                            </span>
+                          </Bubble>
+                        </Message>
+                      );
+                    })
                   )}
 
                   <div ref={messagesEndRef} />

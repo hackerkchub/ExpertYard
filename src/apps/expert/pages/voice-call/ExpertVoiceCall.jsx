@@ -753,7 +753,7 @@ export default function ExpertVoiceCall() {
           )}
         </BottomActions>
 
-        <Brand>EXPERT YARD — Expert Panel</Brand>
+        <Brand>G9EXPERT — Expert Panel</Brand>
       </CallCard>
     </PageWrapper>
   );

@@ -32,26 +32,26 @@ export const LeftBlock = styled.div`
 `;
 
 /* BRAND */
-export const Brand = styled.div`
-  font-size: 24px;
-  font-weight: 800;
-  background:#000080;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin: 0;
-  span { color: #3b82f6; -webkit-text-fill-color: #3b82f6; }
-  @media (max-width: 480px) { font-size: 20px; }
+// export const Brand = styled.div`
+//   font-size: 24px;
+//   font-weight: 800;
+//   background:#000080;
+//   -webkit-background-clip: text;
+//   -webkit-text-fill-color: transparent;
+//   margin: 0;
+//   span { color: #3b82f6; -webkit-text-fill-color: #3b82f6; }
+//   @media (max-width: 480px) { font-size: 20px; }
 
-  img {
-    width: 34px;
-    height: 34px;
-    object-fit: contain;
-  }
+//   img {
+//     width: 34px;
+//     height: 34px;
+//     object-fit: contain;
+//   }
 
-  @media (max-width: 580px) {
-    font-size: 0; /* Hide text on very small screens */
-  }
-`;
+//   @media (max-width: 580px) {
+//     font-size: 0; /* Hide text on very small screens */
+//   }
+// `;
 
 /* SEARCH BOX */
 export const SearchWrap = styled.div`
@@ -279,4 +279,56 @@ export const PopoverContainer = styled.div`
 
 export const ProfileDropdownContainer = styled(PopoverContainer)`
   width: 240px;
+`;
+
+
+/* BRAND - Logo only, no text */
+export const Brand = styled.div`
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+
+  img {
+    width: 150px;
+    max-width: 32vw;
+    height: 42px;
+    object-fit: contain;
+    object-position: left center;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: transparent;
+    mix-blend-mode: multiply;
+    filter: drop-shadow(0 7px 14px rgba(0, 0, 128, 0.1));
+
+    @media (min-width: 1025px) {
+      width: 176px;
+      max-width: 176px;
+      height: 44px;
+    }
+
+    @media (max-width: 768px) {
+      width: 128px;
+      max-width: 34vw;
+      height: 38px;
+    }
+
+    @media (max-width: 480px) {
+      width: 104px;
+      max-width: 104px;
+      height: 36px;
+    }
+
+    @media (max-width: 420px) {
+      width: 92px;
+      max-width: 92px;
+      height: 34px;
+    }
+
+    @media (max-width: 350px) {
+      width: 78px;
+      max-width: 78px;
+    }
+  }
 `;

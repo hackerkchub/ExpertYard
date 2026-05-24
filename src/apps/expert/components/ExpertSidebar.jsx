@@ -77,7 +77,7 @@ export default function ExpertSidebar() {
     { path: "/expert/chat-history", icon: FiMessageSquare, label: "Chat History" },
     { path: "/expert/earnings", icon: FiBarChart2, label: "Earnings" },
     { path: "/expert/myservices", icon: FiBell, label: "My Service" },
-    { path: "/expert/guidexa-plan", icon: FiBell, label: "Guidexa Plan" },
+    { path: "/expert/g9-plan", icon: FiBell, label: "G9-Plan" },
   ];
 
   return (

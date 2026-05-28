@@ -23,15 +23,6 @@ export function isKnownAppRoute(pathname) {
 export function shouldShowBottomNavbar(pathname) {
   if (pathname.startsWith("/admin")) return false;
 
-  const hiddenPrefixes = [
-    ...USER_IMMERSIVE_PREFIXES,
-    ...EXPERT_IMMERSIVE_PREFIXES,
-  ];
-
-  if (hiddenPrefixes.some((prefix) => pathname.startsWith(prefix))) {
-    return false;
-  }
-
   return pathname.startsWith("/category") || pathname.startsWith("/user") || pathname.startsWith("/expert");
 }
 

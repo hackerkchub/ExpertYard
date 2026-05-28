@@ -6,6 +6,7 @@ import {
   BrandBox,
   BrandLogo,
   HeaderBrandGroup,
+  HeaderBackButton,
   HeaderCategoryButton,
   HeaderCategoryMenu,
   HeaderCategoryMenuCard,
@@ -48,6 +49,7 @@ import {
   FiLogIn,
   FiShare2,
   FiSearch,
+  FiArrowLeft,
 } from "react-icons/fi";
 import { FaWallet } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -79,6 +81,7 @@ const Navbar = () => {
   });
 
   const userBtnRef = useRef(null);
+  const showMobileBack = location.pathname !== "/user";
 
   const handleNav = (path) => {
     navigate(path);
@@ -177,7 +180,13 @@ const Navbar = () => {
     <>
       <Nav>
         <Container>
-          <HeaderBrandGroup>
+          {showMobileBack && (
+            <HeaderBackButton type="button" onClick={() => navigate(-1)} aria-label="Go back">
+              <FiArrowLeft />
+            </HeaderBackButton>
+          )}
+
+          <HeaderBrandGroup className={showMobileBack ? "mobile-hidden" : undefined}>
             <HeaderMenuButton
               type="button"
               onClick={() => setOpen((prev) => !prev)}

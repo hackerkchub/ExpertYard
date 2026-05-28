@@ -62,8 +62,44 @@ export const HeaderBrandGroup = styled.div`
   min-width: 0;
   flex-shrink: 0;
 
+  @media (max-width: 768px) {
+    &.mobile-hidden {
+      display: none;
+    }
+  }
+
   @media (max-width: 480px) {
     gap: 5px;
+  }
+`;
+
+export const HeaderBackButton = styled.button`
+  display: none;
+
+  @media (max-width: 768px) {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(0, 0, 128, 0.12);
+    border-radius: 13px;
+    background: #ffffff;
+    color: ${NAVY};
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+
+    svg {
+      width: 19px;
+      height: 19px;
+    }
+  }
+
+  @media (max-width: 420px) {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
   }
 `;
 

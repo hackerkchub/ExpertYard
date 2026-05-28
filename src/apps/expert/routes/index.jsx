@@ -1,5 +1,6 @@
 import { lazy } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { FiArrowLeft } from "react-icons/fi";
 
 import AppNotFound from "../../../routes/AppNotFound";
 import { useExpert } from "../../../shared/context/ExpertContext";
@@ -29,6 +30,21 @@ const SubscriptionPlan = lazy(() => import("../pages/register/SubscriptionPlan")
 const GuidexaExpertPlan = lazy(() => import("../pages/GuidexaExpertPlan/GuidexaExpertPlan"));
 
 const withLazyRoute = (node) => <LazyRoute>{node}</LazyRoute>;
+
+const MobileBackShell = ({ children }) => {
+  const navigate = useNavigate();
+
+  return (
+    <>
+      <header className="mobile-route-back-header">
+        <button type="button" onClick={() => navigate(-1)} aria-label="Go back">
+          <FiArrowLeft />
+        </button>
+      </header>
+      {children}
+    </>
+  );
+};
 
 export default function ExpertAppRoutes() {
   const { expertData } = useExpert();
@@ -213,56 +229,64 @@ export default function ExpertAppRoutes() {
         }
       />
 
-      <Route path="register" element={withLazyRoute(<StepAccount />)} />
-      <Route path="register/subscription" element={withLazyRoute(<SubscriptionPlan />)} />
+      <Route path="register" element={<MobileBackShell>{withLazyRoute(<StepAccount />)}</MobileBackShell>} />
+      <Route path="register/subscription" element={<MobileBackShell>{withLazyRoute(<SubscriptionPlan />)}</MobileBackShell>} />
       <Route
         path="register/category"
         element={
-          <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
-            <LazyRoute>
-              <StepCategory />
-            </LazyRoute>
-          </ProtectedExpertRoute>
+          <MobileBackShell>
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <LazyRoute>
+                <StepCategory />
+              </LazyRoute>
+            </ProtectedExpertRoute>
+          </MobileBackShell>
         }
       />
       <Route
         path="register/subcategory"
         element={
-          <ProtectedExpertRoute
-            condition={expertData.expertId && expertData.categoryId}
-            redirectTo="/expert/register/category"
-          >
-            <LazyRoute>
-              <StepSubcategory />
-            </LazyRoute>
-          </ProtectedExpertRoute>
+          <MobileBackShell>
+            <ProtectedExpertRoute
+              condition={expertData.expertId && expertData.categoryId}
+              redirectTo="/expert/register/category"
+            >
+              <LazyRoute>
+                <StepSubcategory />
+              </LazyRoute>
+            </ProtectedExpertRoute>
+          </MobileBackShell>
         }
       />
       <Route
         path="register/profile"
         element={
-          <ProtectedExpertRoute
-            condition={
-              expertData.expertId &&
-              expertData.categoryId &&
-              expertData.subCategoryIds.length > 0
-            }
-            redirectTo="/expert/register/subcategory"
-          >
-            <LazyRoute>
-              <StepProfile />
-            </LazyRoute>
-          </ProtectedExpertRoute>
+          <MobileBackShell>
+            <ProtectedExpertRoute
+              condition={
+                expertData.expertId &&
+                expertData.categoryId &&
+                expertData.subCategoryIds.length > 0
+              }
+              redirectTo="/expert/register/subcategory"
+            >
+              <LazyRoute>
+                <StepProfile />
+              </LazyRoute>
+            </ProtectedExpertRoute>
+          </MobileBackShell>
         }
       />
       <Route
         path="register/pricing"
         element={
-          <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/register/profile">
-            <LazyRoute>
-              <StepPricing />
-            </LazyRoute>
-          </ProtectedExpertRoute>
+          <MobileBackShell>
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/register/profile">
+              <LazyRoute>
+                <StepPricing />
+              </LazyRoute>
+            </ProtectedExpertRoute>
+          </MobileBackShell>
         }
       />
       <Route

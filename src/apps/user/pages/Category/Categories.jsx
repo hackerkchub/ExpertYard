@@ -147,58 +147,6 @@ const Categories = () => {
         <BreadcrumbItem active>{t("common.categories")}</BreadcrumbItem>
       </Breadcrumb>
 
-      {/* 2. Hero Section - Professional Dark Theme */}
-      <HeroSection>
-        <HeroContent>
-          <HeroTitle>Browse Expert Categories Online</HeroTitle>
-          <HeroSubtitle>{t("categoriesPage.heroSubtitle")}</HeroSubtitle>
-          
-          <SearchContainer>
-            <SearchInput
-              type="text"
-              placeholder={t("categoriesPage.searchPlaceholder")}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <SearchButton>
-              <FiSearch /> <span>{t("common.search")}</span>
-            </SearchButton>
-          </SearchContainer>
-        </HeroContent>
-      </HeroSection>
-
-      {/* 3. Stats Bar - Floating effect */}
-      <StatsBar>
-        <StatItem>
-          <StatIcon><FiGrid /></StatIcon>
-          <div>
-            <StatValue>13+</StatValue>
-            <StatLabel>{t("common.categories")}</StatLabel>
-          </div>
-        </StatItem>
-        <StatItem>
-          <StatIcon><FiUsers /></StatIcon>
-          <div>
-            <StatValue>20K+</StatValue>
-            <StatLabel>{t("categoriesPage.experts")}</StatLabel>
-          </div>
-        </StatItem>
-        <StatItem>
-          <StatIcon><FiHeadphones /></StatIcon>
-          <div>
-            <StatValue>24/7</StatValue>
-            <StatLabel>{t("categoriesPage.support")}</StatLabel>
-          </div>
-        </StatItem>
-        <StatItem>
-          <StatIcon><FiShield /></StatIcon>
-          <div>
-            <StatValue>100%</StatValue>
-            <StatLabel>{t("common.secure")}</StatLabel>
-          </div>
-        </StatItem>
-      </StatsBar>
-
       <MainContent>
        
         {/* 5. Header Actions - Grid/List Toggle */}
@@ -245,18 +193,16 @@ const Categories = () => {
                     <TrendingTag><IoTrendingUp size={12} /> {t("categoriesPage.trending")}</TrendingTag>
                   )}
                   
-                  <CategoryName>
+                  <CategoryName $view={viewMode}>
                     {cat.name}
                     {cat.is_premium && <PremiumBadge>PRO</PremiumBadge>}
                   </CategoryName>
                   
-                  <CategoryDescription>
+                  <CategoryDescription $view={viewMode}>
                     {cat.meta_desc?.trim() || buildCategorySeoDescription(cat)}
                   </CategoryDescription>
-                  
-                 
 
-                  <ViewButton>
+                  <ViewButton $view={viewMode}>
                     {t("common.viewDetails")} <FiChevronRight />
                   </ViewButton>
                 </CategoryInfo>

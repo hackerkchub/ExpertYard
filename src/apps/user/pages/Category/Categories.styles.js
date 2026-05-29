@@ -365,8 +365,9 @@ export const CategoriesGrid = styled.div`
   }
 
   ${media.sm} {
-    grid-template-columns: 1fr;
-    gap: 10px;
+    grid-template-columns: ${(props) =>
+      props.$view === "grid" ? "repeat(3, minmax(0, 1fr))" : "1fr"};
+    gap: ${(props) => (props.$view === "grid" ? "10px 8px" : "10px")};
   }
 `;
 
@@ -393,11 +394,12 @@ export const CategoryCard = styled.div`
   }
 
   ${media.sm} {
-    min-height: 90px;
+    min-height: ${(props) => (props.$view === "grid" ? "116px" : "90px")};
     border-radius: 18px;
-    flex-direction: row;
-    align-items: center;
-    padding: 10px;
+    flex-direction: ${(props) => (props.$view === "grid" ? "column" : "row")};
+    align-items: ${(props) => (props.$view === "grid" ? "center" : "center")};
+    justify-content: ${(props) => (props.$view === "grid" ? "flex-start" : "center")};
+    padding: ${(props) => (props.$view === "grid" ? "9px 6px" : "10px")};
   }
 `;
 
@@ -418,10 +420,10 @@ export const CategoryImage = styled.img`
   }
 
   ${media.sm} {
-    width: 68px;
-    height: 68px;
-    padding: 8px;
-    border-radius: 16px;
+    width: ${(props) => (props.$view === "grid" ? "56px" : "68px")};
+    height: ${(props) => (props.$view === "grid" ? "56px" : "68px")};
+    padding: ${(props) => (props.$view === "grid" ? "7px" : "8px")};
+    border-radius: ${(props) => (props.$view === "grid" ? "15px" : "16px")};
   }
 `;
 
@@ -433,7 +435,10 @@ export const CategoryInfo = styled.div`
   flex-direction: column;
 
   ${media.sm} {
-    padding: 0 8px 0 12px;
+    padding: ${(props) => (props.$view === "grid" ? "8px 0 0" : "0 8px 0 12px")};
+    align-items: ${(props) => (props.$view === "grid" ? "center" : "stretch")};
+    text-align: ${(props) => (props.$view === "grid" ? "center" : "left")};
+    width: 100%;
   }
 `;
 
@@ -468,8 +473,9 @@ export const CategoryName = styled.h3`
   -webkit-line-clamp: 2;
 
   ${media.sm} {
-    font-size: 0.92rem;
-    -webkit-line-clamp: 1;
+    font-size: ${(props) => (props.$view === "grid" ? "0.74rem" : "0.92rem")};
+    line-height: ${(props) => (props.$view === "grid" ? "1.2" : "1.25")};
+    -webkit-line-clamp: ${(props) => (props.$view === "grid" ? "2" : "1")};
   }
 `;
 
@@ -498,6 +504,7 @@ export const CategoryDescription = styled.p`
   overflow: hidden;
 
   ${media.sm} {
+    display: ${(props) => (props.$view === "grid" ? "none" : "-webkit-box")};
     margin: 4px 0 0;
     font-size: 0.76rem;
     line-height: 1.35;
@@ -527,6 +534,7 @@ export const ViewButton = styled.div`
   }
 
   ${media.sm} {
+    display: ${(props) => (props.$view === "grid" ? "none" : "inline-flex")};
     width: 32px;
     min-width: 32px;
     height: 32px;

@@ -1739,8 +1739,8 @@
   }
 
   .mobile-category-media {
-    width: 42px;
-    height: 42px;
+    width: 65px;
+    height: 65px;
     border-radius: 15px;
     display: inline-flex;
     align-items: center;
@@ -1827,8 +1827,8 @@
   }
 
   .mobile-service-icon {
-    width: 42px;
-    height: 42px;
+    width: 140px;
+    height: 100px;
     border-radius: 15px;
     background: rgba(0, 0, 128, 0.08);
     color: var(--mobile-navy);

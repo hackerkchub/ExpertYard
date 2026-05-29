@@ -4,9 +4,9 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { 
   FiX, FiChevronLeft, FiChevronRight, FiSearch, FiFilter, 
-  FiSliders, FiXCircle, FiTrendingUp, FiAward, FiClock,
-  FiStar, FiDollarSign, FiUserCheck, FiUsers, FiZap,
-  FiMessageSquare, FiPhoneCall
+  FiSliders, FiXCircle, FiTrendingUp, FiClock,
+  FiStar, FiUserCheck, FiZap,
+  FiMessageSquare, FiPhoneCall, FiGlobe
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -226,12 +226,8 @@ export default function UserExpertsPage() {
     tab
   ]);
 
-  // FIX 3: URL sync effect - prevents loop
+  // FIX 3: URL sync effect - prevents loop while keeping page/mode query in sync
   useEffect(() => {
-    const currentMode = searchParams.get("mode");
-
-    if (currentMode === tab) return;
-
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set("mode", tab);
     nextParams.set("page", String(currentPage));
@@ -242,7 +238,9 @@ export default function UserExpertsPage() {
       nextParams.delete("q");
     }
 
-    setSearchParams(nextParams, { replace: true });
+    if (nextParams.toString() !== searchParams.toString()) {
+      setSearchParams(nextParams, { replace: true });
+    }
   }, [tab, currentPage, debouncedSearch, searchParams, setSearchParams]);
 
   const fetchExperts = useCallback(async () => {
@@ -410,6 +408,9 @@ export default function UserExpertsPage() {
       languages: exp.languages || [],
       avg_response_time: exp.avg_response_time,
       total_consultations: exp.total_consultations,
+      discounted_call_per_minute: exp.discounted_call_per_minute || exp.call_discount_price || exp.discounted_call_price,
+      discounted_chat_per_minute: exp.discounted_chat_per_minute || exp.chat_discount_price || exp.discounted_chat_price,
+      orders: exp.orders || exp.total_orders || exp.total_bookings || 0,
     }));
   }, [experts, onlineExperts]);
 
@@ -449,6 +450,43 @@ export default function UserExpertsPage() {
       default:
         break;
     }
+  };
+
+  const getLanguageText = (languages) => {
+    if (Array.isArray(languages)) {
+      return languages.filter(Boolean).join(", ");
+    }
+
+    return languages || "";
+  };
+
+  const handleMobileCategorySelect = (categoryId) => {
+    setSelectedCategoryId(categoryId);
+    setSelectedSubcategoryId("");
+    setCurrentPage(1);
+
+    if (categoryId) {
+      loadSubCategories(categoryId);
+    }
+  };
+
+  const renderStars = (rating) => {
+    const numericRating = Number(rating) || 0;
+    const filledStars = Math.max(0, Math.min(5, Math.round(numericRating)));
+
+    return Array.from({ length: 5 }).map((_, index) => (
+      <FiStar key={index} className={index < filledStars ? "filled" : ""} aria-hidden="true" />
+    ));
+  };
+
+  const getModePrice = (expert) => {
+    const basePrice = tab === "chat" ? expert.chat_per_minute : expert.call_per_minute;
+    const discountedPrice = tab === "chat" ? expert.discounted_chat_per_minute : expert.discounted_call_per_minute;
+
+    return {
+      basePrice: Number(basePrice || 0),
+      discountedPrice: Number(discountedPrice || 0),
+    };
   };
 
   const FilterContent = () => (
@@ -567,24 +605,7 @@ export default function UserExpertsPage() {
       `}</style>
       
       <PageWrap>
-        <HeaderSection>
-          <div>
-            <Title>{t("callChat.title")}</Title>
-            <SubTitle>
-              {t("callChat.subtitle")}
-            </SubTitle>
-            <div className="trust-badges">
-              <span><FiUserCheck /> {t("callChat.verifiedExperts")}</span>
-              <span><FiDollarSign /> {t("callChat.secureWallet")}</span>
-              <span><FiZap /> {t("callChat.instantConnect")}</span>
-              <span><FiClock /> {t("callChat.support247")}</span>
-            </div>
-          </div>
-          <div className="mode-indicator">
-            {tab === "chat" ? <FiMessageSquare /> : <FiPhoneCall />}
-            {tab === "chat" ? "Chat Mode" : "Call Mode"}
-          </div>
-        </HeaderSection>
+        
 
         <TabsRow>
           {TABS.map((tabItem) => (
@@ -602,22 +623,6 @@ export default function UserExpertsPage() {
         </TabsRow>
 
         {/* Stats Bar */}
-        {experts.length > 0 && (
-          <StatsBar>
-            <StatItem>
-              <FiUsers size={16} />
-              <span>{totalExperts} {t("callChat.expertsAvailable")}</span>
-            </StatItem>
-            <StatItem>
-              <FiStar size={16} />
-              <span>Top Rated Professionals</span>
-            </StatItem>
-            <StatItem>
-              <FiClock size={16} />
-              <span>24/7 Availability</span>
-            </StatItem>
-          </StatsBar>
-        )}
 
         {/* Active Filters */}
         {activeFiltersCount > 0 && (
@@ -660,6 +665,26 @@ export default function UserExpertsPage() {
             )}
           </ActiveFilters>
         )}
+
+        <div className="mobile-category-strip" aria-label="Expert category filters">
+          <button
+            type="button"
+            className={!selectedCategoryId ? "active" : ""}
+            onClick={() => handleMobileCategorySelect("")}
+          >
+            All
+          </button>
+          {categories.map((category) => (
+            <button
+              type="button"
+              key={category.id}
+              className={String(selectedCategoryId) === String(category.id) ? "active" : ""}
+              onClick={() => handleMobileCategorySelect(category.id)}
+            >
+              {category.name}
+            </button>
+          ))}
+        </div>
 
         <Layout>
           {/* Desktop Filters */}
@@ -757,8 +782,86 @@ export default function UserExpertsPage() {
               </EmptyState>
             ) : (
               <>
-                <div style={{ marginBottom: 16, fontSize: 14, color: "#64748b" }}>
+                <div className="experts-result-count" style={{ marginBottom: 16, fontSize: 14, color: "#64748b" }}>
                   Showing {experts.length} of {totalExperts} experts
+                </div>
+
+                <div className="mobile-expert-list">
+                  {cardExperts.map((exp) => {
+                    const { basePrice, discountedPrice } = getModePrice(exp);
+                    const shownPrice = discountedPrice > 0 ? discountedPrice : basePrice;
+                    const languageText = getLanguageText(exp.languages);
+
+                    return (
+                      <article className="mobile-callchat-card" key={`mobile-${exp.id}`}>
+                        <button
+                          type="button"
+                          className="mobile-callchat-card__main"
+                          onClick={() => navigate(`/user/experts/${exp.slug || exp.id}`)}
+                        >
+                          <span className="mobile-callchat-card__avatar">
+                            <img src={exp.profile_photo || "https://i.pravatar.cc/150?img=12"} alt={exp.name} loading="lazy" />
+                            <i className={exp.isOnline === true ? "online" : ""} />
+                          </span>
+                          <span className="mobile-callchat-card__info">
+                            <span className="mobile-callchat-card__name-row">
+                              <strong>{exp.name}</strong>
+                              {exp.is_verified && (
+                                <em>
+                                  <FiUserCheck aria-hidden="true" />
+                                </em>
+                              )}
+                            </span>
+                            {(exp.category_name || exp.subcategory_name) && (
+                              <small>{exp.subcategory_name || exp.category_name}</small>
+                            )}
+                            {languageText && (
+                              <span className="mobile-callchat-card__line">
+                                <FiGlobe aria-hidden="true" />
+                                {languageText}
+                              </span>
+                            )}
+                            {exp.total_experience > 0 && (
+                              <span className="mobile-callchat-card__line">
+                                <FiClock aria-hidden="true" />
+                                {exp.total_experience}+ years experience
+                              </span>
+                            )}
+                          </span>
+                        </button>
+
+                        <div className="mobile-callchat-card__meta">
+                          <span className="mobile-callchat-card__rating">
+                            {renderStars(exp.avg_rating)}
+                            <b>{exp.avg_rating ? Number(exp.avg_rating).toFixed(1) : "New"}</b>
+                            {exp.total_reviews > 0 && <small>({exp.total_reviews})</small>}
+                          </span>
+                          {exp.orders > 0 && <span>{exp.orders}+ orders</span>}
+                        </div>
+
+                        <div className="mobile-callchat-card__footer">
+                          <div className="mobile-callchat-card__price">
+                            {shownPrice > 0 ? (
+                              <>
+                                <strong>Rs {shownPrice}/min</strong>
+                                {discountedPrice > 0 && basePrice > discountedPrice && <del>Rs {basePrice}</del>}
+                              </>
+                            ) : (
+                              <strong>View price</strong>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            className="mobile-callchat-card__cta"
+                            onClick={() => (tab === "chat" ? handleStartChat(exp.id) : handleStartCall(exp.id))}
+                          >
+                            {tab === "chat" ? <FiMessageSquare aria-hidden="true" /> : <FiPhoneCall aria-hidden="true" />}
+                            {tab === "chat" ? "Chat" : "Call"}
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
                 
                 <Grid>

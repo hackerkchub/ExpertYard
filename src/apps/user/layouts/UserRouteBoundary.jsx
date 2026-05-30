@@ -17,6 +17,15 @@ export default function UserRouteBoundary() {
     location.pathname.startsWith("/user/chat") ||
     location.pathname.startsWith("/user/voice-call");
 
+    useEffect(() => {
+  let sessionToken = localStorage.getItem("chat_session");
+
+  if (!sessionToken) {
+    sessionToken = crypto.randomUUID();
+    localStorage.setItem("chat_session", sessionToken);
+  }
+}, []);
+
   useEffect(() => {
     if (!user?.id) return;
 

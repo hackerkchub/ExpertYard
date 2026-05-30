@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "172378612980",
+    "project_id": "expert-yard-f2d19",
+    "storage_bucket": "expert-yard-f2d19.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:172378612980:android:5fe97960792941d076aaa1",
+        "android_client_info": {
+          "package_name": "com.g9expert.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "172378612980-7hacv3vmaig371pfgacadclkmhmpath1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAY58Q98PcLhJ_0WYepAauXdmTqJRw5IPA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "172378612980-7hacv3vmaig371pfgacadclkmhmpath1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

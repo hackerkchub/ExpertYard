@@ -649,24 +649,12 @@ export const ChatHeader = styled.div`
   }
 `;
 
-export const Avatar = styled.div`
+export const Avatar = styled.img`
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: ${props => props.premium ? '#000080' : '#d8d1c7'};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 600;
-  overflow: hidden;
+  object-fit: cover;
   flex-shrink: 0;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
 
   @media (max-width: 768px) {
     width: 48px;
@@ -676,11 +664,6 @@ export const Avatar = styled.div`
   @media (max-width: 480px) {
     width: 40px;
     height: 40px;
-    
-    svg {
-      width: 20px;
-      height: 20px;
-    }
   }
 `;
 

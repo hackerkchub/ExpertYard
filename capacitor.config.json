@@ -1,0 +1,13 @@
+{
+  "appId": "com.g9expert.app",
+  "appName": "G9Expert",
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "launchAutoHide": true,
+      "backgroundColor": "#ffffff",
+      "showSpinner": false
+    }
+  }
+}

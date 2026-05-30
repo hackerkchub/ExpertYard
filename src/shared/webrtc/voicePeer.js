@@ -83,10 +83,10 @@ const AUDIO_CONSTRAINTS = {
   echoCancellation: true,
   noiseSuppression: true,
   autoGainControl: true,
-  channelCount: { ideal: 1 },
-  sampleRate: { ideal: 16000 },
-  sampleSize: { ideal: 16 },
-  volume: 1.0,
+  // channelCount: { ideal: 1 },
+  // sampleRate: { ideal: 16000 },
+  // sampleSize: { ideal: 16 },
+  // volume: 1.0,
 };
 
 const RTC_CONFIG = {
@@ -253,17 +253,49 @@ function attachTrackRecovery(stream) {
 async function ensureLocalAudioSender(stream) {
   localStream = stream;
   attachTrackRecovery(localStream);
-  const track = localStream.getAudioTracks()[0];
-  if (!track) throw new Error("No local audio track available");
 
-  const existingSender = pc?.getSenders().find(sender => sender.track?.kind === "audio");
+  const track = localStream.getAudioTracks()[0];
+
+  if (!track) {
+    throw new Error("No local audio track available");
+  }
+
+  track.enabled = true;
+
+  console.log("MIC TRACK DEBUG:", {
+    enabled: track.enabled,
+    muted: track.muted,
+    readyState: track.readyState,
+    label: track.label,
+    id: track.id
+  });
+
+  const senders = pc?.getSenders() || [];
+
+  const existingSender = senders.find(
+    sender => sender.track?.kind === "audio"
+  );
+
   if (existingSender) {
-    if (existingSender.track?.id !== track.id) {
-      await existingSender.replaceTrack(track);
-    }
+    try {
+      await existingSender.replaceTrack(null);
+    } catch (e) {}
+
+    await existingSender.replaceTrack(track);
   } else {
     pc.addTrack(track, localStream);
   }
+
+  const finalSender = pc?.getSenders()?.find(
+    sender => sender.track?.kind === "audio"
+  );
+
+  console.log("AUDIO SENDER DEBUG:", {
+    senderExists: !!finalSender,
+    senderTrackEnabled: finalSender?.track?.enabled,
+    senderTrackMuted: finalSender?.track?.muted,
+    senderTrackReadyState: finalSender?.track?.readyState
+  });
 
   log("MEDIA", "Local microphone attached");
 }
@@ -639,7 +671,7 @@ export async function createAndSendOffer() {
     log("PEER", "Creating offer");
     const offer = await pc.createOffer({
       offerToReceiveAudio: true,
-      offerToReceiveVideo: false,
+      // offerToReceiveVideo: false,
     });
 
     await pc.setLocalDescription(offer);

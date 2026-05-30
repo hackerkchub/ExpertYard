@@ -42,6 +42,16 @@ import logo from "../../../../assets/logo.webp";
 import { registerUserApi } from "../../../../shared/api/userApi";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 
+// Helper function to get error message from backend
+const getErrorMessage = (error, fallback = "Something went wrong") => {
+  return (
+    error?.response?.data?.message ||
+    error?.response?.data?.error ||
+    error?.message ||
+    fallback
+  );
+};
+
 const UserAuth = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -90,10 +100,23 @@ const UserAuth = () => {
     setForgotData((prev) => ({ ...prev, [key]: e.target.value }));
   };
 
-  const showMessage = (text, isError = false) => {
-    setApiMessage({ text, isError });
+  // Fixed showMessage function with default parameter
+  const showMessage = (text = "", isError = false) => {
+    setApiMessage({
+      text,
+      isError
+    });
   };
 
+  // Helper to clear message
+  const clearMessage = () => {
+    setApiMessage({
+      text: "",
+      isError: false
+    });
+  };
+
+  // Reset all views with form reset
   const resetAllViews = (tab) => {
     setActiveTab(tab);
     setIsForgotMode(false);
@@ -107,34 +130,55 @@ const UserAuth = () => {
       newPassword: "",
       confirmPassword: "",
     });
-    showMessage("");
+    // Reset form fields
+    setForm({
+      first_name: "",
+      last_name: "",
+      email: "",
+      phone: "",
+      password: "",
+    });
+    // Reset verified status
+    setVerified({
+      email: false,
+      phone: false
+    });
+    clearMessage();
   };
 
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
-    if (!form.email || !form.password) {
+    
+    const email = form.email.trim().toLowerCase();
+    const password = form.password;
+
+    if (!email || !password) {
       return showMessage("Please enter email and password.", true);
     }
 
     try {
       setLoading(true);
-      showMessage("");
+      clearMessage();
 
       const res = await login({
-        email: form.email,
-        password: form.password,
+        email: email,
+        password: password,
       });
 
       if (res?.success) {
         showMessage("Login successful. Redirecting...", false);
         setTimeout(() => {
+          clearMessage();
           navigate(redirectTo, { replace: true });
         }, 1200);
       } else {
-        showMessage("Invalid email or password. Please try again.", true);
+        // Use backend message directly
+        showMessage(res?.message || "Login failed", true);
       }
     } catch (err) {
-      showMessage(err.message || "Login failed. Try again.", true);
+      // Get real backend error message
+      const backendMessage = getErrorMessage(err, "Login failed. Please try again.");
+      showMessage(backendMessage, true);
     } finally {
       setLoading(false);
     }
@@ -142,10 +186,24 @@ const UserAuth = () => {
 
   const handleRegister = async (e) => {
     if (e) e.preventDefault();
-    const { first_name, last_name, email, phone, password } = form;
+    
+    let { first_name, last_name, email, phone, password } = form;
 
-    if (!first_name || !last_name || !email || !phone || !password) {
-      return showMessage("All fields are required.", true);
+    // Trim and sanitize
+    first_name = first_name?.trim();
+    last_name = last_name?.trim();
+    email = email?.trim().toLowerCase();
+    phone = phone?.trim();
+    password = password;
+
+    // Validation - backend only requires: first_name, email, phone, password
+    if (!first_name || !email || !phone || !password) {
+      return showMessage("First name, email, phone number and password are required.", true);
+    }
+
+    // Password length validation
+    if (password.length < 6) {
+      return showMessage("Password must be at least 6 characters long.", true);
     }
 
     if (!verified.email || !verified.phone) {
@@ -154,30 +212,46 @@ const UserAuth = () => {
 
     try {
       setLoading(true);
-      showMessage("");
+      clearMessage();
 
-      const res = await registerUserApi(form);
+      const payload = {
+        first_name,
+        last_name: last_name || "",
+        email,
+        phone,
+        password
+      };
+
+      const res = await registerUserApi(payload);
 
       if (res?.success) {
         showMessage("Registration successful. Please login to continue.", false);
         setTimeout(() => {
+          clearMessage();
           resetAllViews("login");
         }, 2500);
       } else {
-        showMessage(`Registration failed: ${res?.message || "Please try again."}`, true);
+        showMessage(res?.message || "Registration failed. Please try again.", true);
       }
     } catch (err) {
-      showMessage(err.message || "Something went wrong on the server.", true);
+      // Get real backend error message
+      const backendMessage = getErrorMessage(err, "Registration failed. Please try again.");
+      showMessage(backendMessage, true);
     } finally {
       setLoading(false);
     }
   };
 
   const openOtp = async (type) => {
-    showMessage("");
+    clearMessage();
 
-    if (type === "email" && !form.email) return showMessage("Please enter an email address.", true);
-    if (type === "phone" && !form.phone) return showMessage("Please enter a phone number.", true);
+    if (type === "email" && !form.email) {
+      return showMessage("Please enter an email address.", true);
+    }
+    
+    if (type === "phone" && !form.phone) {
+      return showMessage("Please enter a phone number.", true);
+    }
 
     try {
       setLoadingType(type);
@@ -185,11 +259,13 @@ const UserAuth = () => {
       let payload = {};
 
       if (type === "email") {
-        apiUrl = "http://softmaxs.com/api/otp/email/send";
-        payload = { email: form.email };
+        apiUrl = "https://softmaxs.com/api/otp/email/send";
+        payload = { email: form.email.trim().toLowerCase() };
       } else {
-        apiUrl = "http://softmaxs.com/api/otp/sms/send";
-        payload = { countryCode: "91", mobile: form.phone };
+        apiUrl = "https://softmaxs.com/api/otp/sms/send";
+        // Sanitize phone number - remove non-digits
+        const sanitizedPhone = form.phone.replace(/\D/g, "");
+        payload = { countryCode: "91", mobile: sanitizedPhone };
       }
 
       const response = await fetch(apiUrl, {
@@ -204,10 +280,11 @@ const UserAuth = () => {
         setVerifyType(type);
         setShowOtp(true);
       } else {
-        showMessage(`Failed to send OTP: ${data.message}`, true);
+        // Better error message
+        showMessage(data?.message || "Failed to send OTP", true);
       }
     } catch (error) {
-      showMessage("Server error while sending OTP.", true);
+      showMessage(getErrorMessage(error, "Server error while sending OTP."), true);
     } finally {
       setLoadingType(null);
     }
@@ -217,24 +294,37 @@ const UserAuth = () => {
     setVerified((prev) => ({ ...prev, [verifyType]: true }));
     setShowOtp(false);
     showMessage(`${verifyType === "email" ? "Email" : "Phone"} verified successfully.`, false);
+    
+    // Clear message after 3 seconds
+    setTimeout(() => {
+      if (apiMessage.text === `${verifyType === "email" ? "Email" : "Phone"} verified successfully.`) {
+        clearMessage();
+      }
+    }, 3000);
   };
 
   const handleForgotSendOtp = async () => {
-    showMessage("");
+    clearMessage();
     const { type, email, mobile } = forgotData;
 
-    if (type === "email" && !email) return showMessage("Please enter email address.", true);
-    if (type === "mobile" && !mobile) return showMessage("Please enter mobile number.", true);
+    if (type === "email" && !email) {
+      return showMessage("Please enter email address.", true);
+    }
+    
+    if (type === "mobile" && !mobile) {
+      return showMessage("Please enter mobile number.", true);
+    }
 
     try {
       setLoading(true);
       let payload = { userType: "user", type };
 
       if (type === "email") {
-        payload.email = email;
+        payload.email = email.trim().toLowerCase();
       } else {
+        const sanitizedMobile = mobile.replace(/\D/g, "");
         payload.countryCode = "91";
-        payload.mobile = mobile;
+        payload.mobile = sanitizedMobile;
       }
 
       const response = await fetch("https://softmaxs.com/api/forgot-password/send-otp", {
@@ -246,33 +336,36 @@ const UserAuth = () => {
       const data = await response.json();
 
       if (data.success) {
-        showMessage(`OTP sent to your ${type === "email" ? "email" : "mobile"}. Check inbox.`, false);
+        showMessage(data?.message || `OTP sent to your ${type === "email" ? "email" : "mobile"}. Check inbox.`, false);
         setForgotStep(1.5);
       } else {
-        showMessage(`Error: ${data.message}`, true);
+        showMessage(data?.message || "Failed to send OTP", true);
       }
     } catch (error) {
-      showMessage("Server error. Please try again later.", true);
+      showMessage(getErrorMessage(error, "Server error. Please try again later."), true);
     } finally {
       setLoading(false);
     }
   };
 
   const handleForgotVerifyOtp = async () => {
-    showMessage("");
+    clearMessage();
     const { type, email, mobile, otp } = forgotData;
 
-    if (!otp) return showMessage("Please enter the 4-digit OTP.", true);
+    if (!otp) {
+      return showMessage("Please enter the 4-digit OTP.", true);
+    }
 
     try {
       setLoading(true);
       let payload = { userType: "user", type, otp };
 
       if (type === "email") {
-        payload.email = email;
+        payload.email = email.trim().toLowerCase();
       } else {
+        const sanitizedMobile = mobile.replace(/\D/g, "");
         payload.countryCode = "91";
-        payload.mobile = mobile;
+        payload.mobile = sanitizedMobile;
       }
 
       const response = await fetch("https://softmaxs.com/api/forgot-password/verify-otp", {
@@ -285,20 +378,20 @@ const UserAuth = () => {
 
       if (data.success && data.resetToken) {
         setForgotData((prev) => ({ ...prev, resetToken: data.resetToken }));
-        showMessage("OTP verified. You can now set your new password.", false);
+        showMessage(data?.message || "OTP verified. You can now set your new password.", false);
         setForgotStep(2);
       } else {
-        showMessage(`OTP verification failed: ${data.message || "Invalid OTP."}`, true);
+        showMessage(data?.message || "Invalid OTP", true);
       }
     } catch (error) {
-      showMessage("Server error during verification.", true);
+      showMessage(getErrorMessage(error, "Server error during verification."), true);
     } finally {
       setLoading(false);
     }
   };
 
   const handleForgotResetPassword = async () => {
-    showMessage("");
+    clearMessage();
     const { type, email, mobile, resetToken, newPassword, confirmPassword } = forgotData;
 
     if (!newPassword || !confirmPassword) {
@@ -318,7 +411,7 @@ const UserAuth = () => {
       let payload = { userType: "user", type, resetToken, newPassword };
 
       if (type === "email") {
-        payload.email = email;
+        payload.email = email.trim().toLowerCase();
       } else {
         payload.mobile = mobile;
       }
@@ -332,15 +425,16 @@ const UserAuth = () => {
       const data = await response.json();
 
       if (data.success) {
-        showMessage("Password reset successful. Redirecting to login...", false);
+        showMessage(data?.message || "Password reset successful. Redirecting to login...", false);
         setTimeout(() => {
+          clearMessage();
           resetAllViews("login");
         }, 2000);
       } else {
-        showMessage(`Reset failed: ${data.message || "Try again."}`, true);
+        showMessage(data?.message || "Password reset failed", true);
       }
     } catch (error) {
-      showMessage("Server error resetting password.", true);
+      showMessage(getErrorMessage(error, "Server error resetting password."), true);
     } finally {
       setLoading(false);
     }
@@ -383,7 +477,12 @@ const UserAuth = () => {
               <InputIconCircle>
                 <FiMail />
               </InputIconCircle>
-              <Input placeholder="Email Address" value={form.email} onChange={handleChange("email")} />
+              <Input 
+                placeholder="Email Address" 
+                value={form.email} 
+                onChange={handleChange("email")}
+                autoComplete="email"
+              />
             </InputWrap>
 
             <InputWrap>
@@ -395,6 +494,7 @@ const UserAuth = () => {
                 placeholder="Password"
                 value={form.password}
                 onChange={handleChange("password")}
+                autoComplete="current-password"
               />
               <PasswordToggle type="button" onClick={() => setShowPassword(!showPassword)} aria-label="Toggle password visibility">
                 {showPassword ? <FiEyeOff /> : <FiEye />}
@@ -410,7 +510,7 @@ const UserAuth = () => {
                 />
                 <span>Remember Me</span>
               </CheckboxLabel>
-              <TextLink onClick={() => { setIsForgotMode(true); showMessage(""); }}>
+              <TextLink onClick={() => { setIsForgotMode(true); clearMessage(); }}>
                 Forgot Password?
               </TextLink>
             </UtilityRow>
@@ -432,13 +532,23 @@ const UserAuth = () => {
                 <InputIconCircle>
                   <FiUser />
                 </InputIconCircle>
-                <Input placeholder="First Name" value={form.first_name} onChange={handleChange("first_name")} />
+                <Input 
+                  placeholder="First Name *" 
+                  value={form.first_name} 
+                  onChange={handleChange("first_name")}
+                  autoComplete="given-name"
+                />
               </InputWrap>
               <InputWrap>
                 <InputIconCircle>
                   <FiUser />
                 </InputIconCircle>
-                <Input placeholder="Last Name" value={form.last_name} onChange={handleChange("last_name")} />
+                <Input 
+                  placeholder="Last Name" 
+                  value={form.last_name} 
+                  onChange={handleChange("last_name")}
+                  autoComplete="family-name"
+                />
               </InputWrap>
             </InputGroup>
 
@@ -447,7 +557,13 @@ const UserAuth = () => {
                 <InputIconCircle>
                   <FiPhone />
                 </InputIconCircle>
-                <Input placeholder="Phone Number" value={form.phone} onChange={handleChange("phone")} disabled={verified.phone} />
+                <Input 
+                  placeholder="Phone Number *" 
+                  value={form.phone} 
+                  onChange={handleChange("phone")} 
+                  disabled={verified.phone}
+                  autoComplete="tel"
+                />
               </InputWrap>
               <VerifyBtn type="button" onClick={() => openOtp("phone")} disabled={verified.phone || loadingType === "phone"}>
                 {verified.phone ? <><FiCheckCircle /> Verified</> : loadingType === "phone" ? "Sending..." : "Verify"}
@@ -459,7 +575,13 @@ const UserAuth = () => {
                 <InputIconCircle>
                   <FiMail />
                 </InputIconCircle>
-                <Input placeholder="Email Address" value={form.email} onChange={handleChange("email")} disabled={verified.email} />
+                <Input 
+                  placeholder="Email Address *" 
+                  value={form.email} 
+                  onChange={handleChange("email")} 
+                  disabled={verified.email}
+                  autoComplete="email"
+                />
               </InputWrap>
               <VerifyBtn type="button" onClick={() => openOtp("email")} disabled={verified.email || loadingType === "email"}>
                 {verified.email ? <><FiCheckCircle /> Verified</> : loadingType === "email" ? "Sending..." : "Verify"}
@@ -472,9 +594,10 @@ const UserAuth = () => {
               </InputIconCircle>
               <Input
                 type={showPassword ? "text" : "password"}
-                placeholder="Create Password"
+                placeholder="Create Password * (min. 6 characters)"
                 value={form.password}
                 onChange={handleChange("password")}
+                autoComplete="new-password"
               />
               <PasswordToggle type="button" onClick={() => setShowPassword(!showPassword)} aria-label="Toggle password visibility">
                 {showPassword ? <FiEyeOff /> : <FiEye />}
@@ -502,6 +625,7 @@ const UserAuth = () => {
                     onClick={() => {
                       setForgotData((prev) => ({ ...prev, type: "email" }));
                       setForgotStep(1);
+                      clearMessage();
                     }}
                     disabled={forgotStep > 1.4}
                   >
@@ -513,6 +637,7 @@ const UserAuth = () => {
                     onClick={() => {
                       setForgotData((prev) => ({ ...prev, type: "mobile" }));
                       setForgotStep(1);
+                      clearMessage();
                     }}
                     disabled={forgotStep > 1.4}
                   >
@@ -525,14 +650,26 @@ const UserAuth = () => {
                     <InputIconCircle>
                       <FiMail />
                     </InputIconCircle>
-                    <Input placeholder="Enter Email to Reset" value={forgotData.email} onChange={handleForgotChange("email")} disabled={forgotStep > 1.4} />
+                    <Input 
+                      placeholder="Enter Email to Reset" 
+                      value={forgotData.email} 
+                      onChange={handleForgotChange("email")} 
+                      disabled={forgotStep > 1.4}
+                      autoComplete="email"
+                    />
                   </InputWrap>
                 ) : (
                   <InputWrap style={{ opacity: forgotStep > 1.4 ? 0.7 : 1 }}>
                     <InputIconCircle>
                       <FiPhone />
                     </InputIconCircle>
-                    <Input placeholder="Enter Mobile Number" value={forgotData.mobile} onChange={handleForgotChange("mobile")} disabled={forgotStep > 1.4} />
+                    <Input 
+                      placeholder="Enter Mobile Number" 
+                      value={forgotData.mobile} 
+                      onChange={handleForgotChange("mobile")} 
+                      disabled={forgotStep > 1.4}
+                      autoComplete="tel"
+                    />
                   </InputWrap>
                 )}
 
@@ -550,7 +687,13 @@ const UserAuth = () => {
                   <InputIconCircle>
                     <FiCheckCircle />
                   </InputIconCircle>
-                  <Input placeholder="Enter 4-digit OTP" value={forgotData.otp} onChange={handleForgotChange("otp")} maxLength={4} />
+                  <Input 
+                    placeholder="Enter 4-digit OTP" 
+                    value={forgotData.otp} 
+                    onChange={handleForgotChange("otp")} 
+                    maxLength={4}
+                    autoComplete="one-time-code"
+                  />
                 </InputWrap>
                 <PrimaryBtn type="button" onClick={handleForgotVerifyOtp} disabled={loading}>
                   {loading ? "Verifying..." : "Verify OTP & Continue"}
@@ -566,9 +709,10 @@ const UserAuth = () => {
                   </InputIconCircle>
                   <Input
                     type="password"
-                    placeholder="Enter New Password"
+                    placeholder="Enter New Password (min. 6 characters)"
                     value={forgotData.newPassword}
                     onChange={handleForgotChange("newPassword")}
+                    autoComplete="new-password"
                   />
                 </InputWrap>
                 <InputWrap>
@@ -580,6 +724,7 @@ const UserAuth = () => {
                     placeholder="Confirm New Password"
                     value={forgotData.confirmPassword}
                     onChange={handleForgotChange("confirmPassword")}
+                    autoComplete="new-password"
                   />
                 </InputWrap>
                 <PrimaryBtn type="button" onClick={handleForgotResetPassword} disabled={loading}>

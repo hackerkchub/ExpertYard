@@ -36,3 +36,12 @@ export const updateUserProfileApi = async (payload) => {
   const { data } = await api.put("/user/profile", payload);
   return data;
 };
+
+/* ========================= */
+/* ❌ DELETE PROFILE */
+/* ========================= */
+
+export const deleteUserProfileApi = async () => {
+  const { data } = await api.delete("/user/profile");
+  return data;
+};

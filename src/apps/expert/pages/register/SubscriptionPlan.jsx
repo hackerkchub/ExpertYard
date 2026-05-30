@@ -104,6 +104,7 @@ export default function SubscriptionPlan() {
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;
     script.onload = () => setIsSdkReady(true);
+    webview_intent: true,
     document.body.appendChild(script);
   }, []);
 

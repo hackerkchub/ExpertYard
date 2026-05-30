@@ -56,7 +56,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://softmaxs.com",
+        target: "https://softmaxs.com",
         changeOrigin: true,
         secure: false,
       },

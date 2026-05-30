@@ -61,6 +61,7 @@ export default function VoiceCall() {
   const socket = useSocket(userId, "user");
   const audioRef = useRef(null);
   const location = useLocation();
+  const profileSlugRef = useRef(location.state?.slug || null);
 
   const validModes = ["per_minute", "session", "subscription"];
 
@@ -117,18 +118,29 @@ export default function VoiceCall() {
   useEffect(() => {
     attachRemoteAudio(audioRef);
   }, []);
-
+  
+useEffect(() => {
+  console.log("Expert Data:", expert);
+}, [expert]);
   // Preload microphone once
   useEffect(() => {
-    if (!localStreamRef.current) {
-      navigator.mediaDevices
-        .getUserMedia({ audio: true })
-        .then((stream) => {
-          localStreamRef.current = stream;
-        })
-        .catch(console.warn);
+  const requestMic = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+
+      localStreamRef.current = stream;
+      console.log("🎤 Microphone ready");
+    } catch (err) {
+      console.error("🎤 Microphone permission denied:", err);
     }
-  }, []);
+  };
+
+  if (!localStreamRef.current) {
+    requestMic();
+  }
+}, []);
 
   // Sound management
   useEffect(() => {
@@ -197,21 +209,36 @@ export default function VoiceCall() {
   }, []);
 
   // Start call
-  const startCall = useCallback(async () => {
-    if (callStartedRef.current) return;
+ const startCall = useCallback(async () => {
+  if (callStartedRef.current) return;
 
-    callStartedRef.current = true;
-    setCallState("calling");
-
-    try {
-      socket.emit(CALL_EVENTS.START, {
-        expertId: Number(expertId),
-        pricing_mode: pricingMode,
+  try {
+    if (!localStreamRef.current) {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
       });
-    } catch (error) {
-      callStartedRef.current = false;
+
+      localStreamRef.current = stream;
     }
-  }, [expertId, socket, pricingMode]);
+  } catch (err) {
+    alert("Microphone permission required for voice calls");
+    console.error("Mic permission failed:", err);
+    return;
+  }
+
+  callStartedRef.current = true;
+  setCallState("calling");
+
+  try {
+    socket.emit(CALL_EVENTS.START, {
+      expertId: Number(expertId),
+      pricing_mode: pricingMode,
+    });
+  } catch (error) {
+    callStartedRef.current = false;
+    setCallState("idle");
+  }
+}, [expertId, socket, pricingMode]);
 
   // Auto-start on mount
   useEffect(() => {
@@ -238,8 +265,15 @@ export default function VoiceCall() {
     makingOfferRef.current = true;
 
     try {
-      const currentStream = getLocalStream() || localStreamRef.current;
-      
+     let currentStream = getLocalStream() || localStreamRef.current;
+
+if (!currentStream) {
+  currentStream = await navigator.mediaDevices.getUserMedia({
+    audio: true,
+  });
+
+  localStreamRef.current = currentStream;
+}
       await createPeer({
         socket,
         callId: currentCallId,

@@ -21,8 +21,23 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Download Sitemap
+        run: |
+          mkdir -p public
+          curl -L http://softmaxs.com/sitemap.xml -o public/sitemap.xml
+
+      - name: Verify Sitemap
+        run: |
+          ls -la public
+          head -20 public/sitemap.xml
+
       - name: Build project
         run: npm run build
+
+      - name: Verify Dist Sitemap
+        run: |
+          ls -la dist
+          head -20 dist/sitemap.xml
 
       - name: Deploy to FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4

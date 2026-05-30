@@ -39,6 +39,7 @@ const MarketingPage = lazy(() => import("../pages/Marketing"));
 const AllServices = lazy(() => import("../pages/AllServicesByCatId/AllServices"));
 const ServiceDetails = lazy(() => import("../pages/AllServicesByCatId/ServiceDetails"));
 const MyBookings = lazy(() => import("../pages/AllServicesByCatId/MyBookings"));
+const UserProfile = lazy(() => import("../pages/user-profile/UserProfile"))
 
 const withLazyRoute = (node) => <LazyRoute>{node}</LazyRoute>;
 
@@ -81,6 +82,17 @@ export default function UserAppRoutes() {
                 <ProtectedRoute>
                   <LazyRoute>
                     <WalletPage />
+                  </LazyRoute>
+                </ProtectedRoute>
+              }
+            />
+
+             <Route 
+              path="user-profile"
+              element={
+                <ProtectedRoute>
+                  <LazyRoute>
+                    <UserProfile />
                   </LazyRoute>
                 </ProtectedRoute>
               }
@@ -129,6 +141,7 @@ export default function UserAppRoutes() {
                 </ProtectedRoute>
               }
             />
+            
             <Route
               path="chat/:room_id"
               element={

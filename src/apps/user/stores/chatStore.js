@@ -327,16 +327,18 @@ const useChatStore = create((set, get) => ({
     }
   },
 
-  clearChat: () => {
-    set({
-      messages: [],
-      conversationId: null,
-      isOpen: false,
-      isTyping: false,
-      isLoading: false,
-      intentResultCache: {},
-    });
-  },
+ clearChat: () => {
+  localStorage.removeItem("chat_conversation_id");
+
+  set({
+    messages: [],
+    conversationId: null,
+    isOpen: false,
+    isTyping: false,
+    isLoading: false,
+    intentResultCache: {},
+  });
+},
 
   toggleChat: () => set((state) => ({ isOpen: !state.isOpen })),
   openChat: () => set({ isOpen: true }),

@@ -1,4 +1,4 @@
-const USER_CATEGORY_BASE_PATH = "/user/categories";
+const USER_CATEGORY_BASE_PATH = "/user/category";
 const USER_LEGACY_CATEGORY_BASE_PATH = "/user/subcategories";
 
 export function toCategorySlug(category) {
@@ -18,6 +18,24 @@ export function toCategorySlug(category) {
 export function getCategoryPath(category) {
   const slug = toCategorySlug(category);
   return slug ? `${USER_CATEGORY_BASE_PATH}/${slug}` : USER_CATEGORY_BASE_PATH;
+}
+
+export function getCategoryExpertsPath(category) {
+  const slug = toCategorySlug(category);
+  return slug ? `${USER_CATEGORY_BASE_PATH}/${slug}/experts` : USER_CATEGORY_BASE_PATH;
+}
+
+export function getCategorySubcategoriesPath(category) {
+  const categoryId = category?.id || category?.category_id || toCategorySlug(category);
+  return categoryId ? `${USER_CATEGORY_BASE_PATH}/${categoryId}/subcategories` : USER_CATEGORY_BASE_PATH;
+}
+
+export function getSubcategoryExpertsPath(categoryId, subcategoryId, params = {}) {
+  const query = new URLSearchParams(params);
+  const queryString = query.toString();
+  const path = `${USER_CATEGORY_BASE_PATH}/${categoryId}/subcategory/${subcategoryId}/experts`;
+
+  return queryString ? `${path}?${queryString}` : path;
 }
 
 export function getLegacyCategoryPath(categoryId) {

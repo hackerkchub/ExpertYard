@@ -297,6 +297,40 @@ export const PageWrap = styled.div`
     box-shadow: 0 12px 24px rgba(255, 193, 7, 0.24);
   }
 
+  .mobile-filter-actions {
+    position: sticky;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 10px;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid #eef2f7;
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 -12px 24px rgba(15, 23, 42, 0.08);
+  }
+
+  .mobile-filter-actions button {
+    min-width: 0;
+    min-height: 44px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 950;
+    cursor: pointer;
+  }
+
+  .mobile-filter-actions .clear {
+    border: 1px solid rgba(0, 0, 128, 0.16);
+    background: #ffffff;
+    color: ${navy};
+  }
+
+  .mobile-filter-actions .apply {
+    border: 0;
+    background: linear-gradient(135deg, ${navy}, #20209c);
+    color: #ffffff;
+    box-shadow: 0 12px 24px rgba(0, 0, 128, 0.2);
+  }
+
   .mode-indicator {
     color: ${navy};
     background: linear-gradient(135deg, ${yellowLight}, ${yellow});
@@ -305,7 +339,6 @@ export const PageWrap = styled.div`
 
   @media (max-width: 768px) {
     max-width: 100%;
-    padding: 10px 10px calc(96px + env(safe-area-inset-bottom));
     gap: 12px;
     background: #ffffff;
 
@@ -541,6 +574,12 @@ export const FilterSelect = styled.select`
   &:focus {
     border-color: ${navy};
     box-shadow: 0 0 0 4px rgba(0, 0, 128, 0.08);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    color: #667085;
+    background: #f1f5f9;
   }
 `;
 
@@ -912,6 +951,10 @@ export const MobileFilterDrawer = styled.div`
     select,
     button {
       max-width: 100%;
+    }
+
+    > div:nth-child(2) {
+      padding-bottom: 92px !important;
     }
   }
 `;

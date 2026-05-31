@@ -14,6 +14,7 @@ import {
   HeaderCategoryMenuItem,
   HeaderCategoryMenuShell,
   HeaderCategoryMenuState,
+  HeaderWalletButton,
   HeaderMenuButton,
   HeaderActions,
   HeaderProfileButton,
@@ -254,6 +255,15 @@ const Navbar = () => {
               </HeaderCategoryMenu>
             )}
           </HeaderCategoryMenuShell>
+
+          <HeaderWalletButton
+            type="button"
+            onClick={() => handleNav("/user/wallet")}
+            aria-label={t("common.wallet")}
+            title={t("common.wallet")}
+          >
+            <FaWallet />
+          </HeaderWalletButton>
 
           <HeaderSearch>
             <GlobalSearchBar className="navbar-global-search" />

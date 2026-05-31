@@ -4,9 +4,9 @@ import { useTranslation } from "react-i18next";
 import { useCategory } from "../../../../shared/context/CategoryContext";
 import { useSeo } from "../../../../shared/seo/useSeo";
 import { toAbsoluteUrl } from "../../../../shared/seo/siteConfig";
-import { buildCategoryCanonicalPath } from "../../../../shared/seo/categorySeoData";
 import {
   buildCategorySeoDescription,
+  getCategorySubcategoriesPath,
 } from "../../../../shared/utils/categoryRoutes";
 
 // Icons
@@ -179,7 +179,7 @@ const Categories = () => {
                 as={Link}
                 key={cat.id} 
                 $view={viewMode}
-                to={buildCategoryCanonicalPath(cat)}
+                to={getCategorySubcategoriesPath(cat)}
                 aria-label={`Browse ${cat.name} experts`}
               >
                 <CategoryImage 

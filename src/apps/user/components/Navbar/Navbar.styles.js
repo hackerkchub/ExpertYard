@@ -195,6 +195,35 @@ export const HeaderCategoryButton = styled.button`
 export const HeaderCategoryMenuShell = styled.div`
   position: relative;
   flex: 0 0 auto;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+export const HeaderWalletButton = styled.button`
+  display: none;
+
+  @media (max-width: 768px) {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 193, 7, 0.42);
+    border-radius: 15px;
+    background: linear-gradient(180deg, #fff7d1, rgba(255, 255, 255, 0.94));
+    color: ${NAVY};
+    cursor: pointer;
+    box-shadow: 0 10px 22px rgba(255, 193, 7, 0.14);
+    -webkit-tap-highlight-color: transparent;
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
 `;
 
 export const HeaderCategoryMenu = styled.div`

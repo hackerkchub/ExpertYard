@@ -18,7 +18,7 @@ export const PageContainer = styled.div`
   color: #111827;
 
   @media (max-width: 640px) {
-    padding: 14px 0 86px;
+    
   }
 `;
 

@@ -1533,7 +1533,7 @@
   .mobile-home-menu-layer {
     position: fixed;
     inset: 0;
-    z-index: 80;
+    z-index: 10040;
   }
 
   .mobile-home-menu-backdrop {
@@ -1546,17 +1546,21 @@
 
   .mobile-home-menu {
     position: relative;
-    width: min(318px, calc(100vw - 28px));
-    min-height: 100%;
+    width: min(86vw, 340px);
+    max-width: calc(100vw - 20px);
+    height: 100dvh;
+    max-height: 100dvh;
     display: grid;
     align-content: start;
     gap: 9px;
-    padding: 16px;
+    padding: 16px 16px calc(18px + env(safe-area-inset-bottom, 0px));
     border-radius: 0 24px 24px 0;
     background:
       radial-gradient(circle at 0% 0%, rgba(255, 201, 71, 0.18), transparent 34%),
       linear-gradient(180deg, #ffffff, #f7f9ff);
     box-shadow: 0 28px 58px rgba(0, 0, 128, 0.2);
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .mobile-home-menu__brand {
@@ -1585,17 +1589,37 @@
   }
 
   .mobile-home-menu__brand button {
-    width: 38px;
-    height: 38px;
+    min-width: 44px;
+    width: 44px;
+    height: 44px;
     border-radius: 13px;
     color: var(--mobile-navy);
   }
 
-  .mobile-home-menu > button {
-    min-height: 46px;
+  .mobile-home-menu > button,
+  .mobile-home-menu__item {
+    min-height: 48px;
     border-radius: 16px;
     padding: 0 14px;
     text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+
+  .mobile-home-menu__item svg {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    color: var(--mobile-navy);
+  }
+
+  .mobile-home-menu__item span {
+    margin-left: auto;
+    color: var(--mobile-navy);
+    font-size: 0.82rem;
+    font-weight: 900;
+    white-space: nowrap;
   }
 
   .mobile-search-bar {

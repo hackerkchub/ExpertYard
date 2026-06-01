@@ -124,10 +124,18 @@ export const HeaderMenuButton = styled.button`
     transform: translateY(-1px);
   }
 
+  &.mobile-menu-trigger {
+    display: none;
+  }
+
   @media (max-width: 768px) {
     width: 38px;
     height: 38px;
     border-radius: 13px;
+
+    &.mobile-menu-trigger {
+      display: inline-flex;
+    }
   }
 
   @media (max-width: 420px) {
@@ -755,13 +763,14 @@ export const AuthButton = styled.button`
   border-radius: 15px;
   background: linear-gradient(135deg, ${NAVY}, #1212a6);
   color: #ffffff;
-  width: 42px;
+  min-width: 92px;
   height: 42px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 7px;
   flex: 0 0 auto;
-  padding: 0;
+  padding: 0 16px;
   font-size: 14px;
   font-weight: 850;
   cursor: pointer;
@@ -779,14 +788,25 @@ export const AuthButton = styled.button`
     height: 18px;
   }
 
+  span {
+    line-height: 1;
+  }
+
   @media (max-width: 768px) {
     width: 38px;
+    min-width: 38px;
     height: 38px;
+    padding: 0;
     border-radius: 13px;
+
+    span {
+      display: none;
+    }
   }
 
   @media (max-width: 420px) {
     width: 34px;
+    min-width: 34px;
     height: 34px;
     border-radius: 12px;
   }
@@ -992,12 +1012,23 @@ export const MobileMenu = styled.div`
   overflow-y: auto;
 
   @media (max-width: 768px) {
-    width: min(330px, calc(100vw - 24px));
+    width: min(86vw, 340px);
+    max-width: calc(100vw - 20px);
+    height: 100dvh;
+    max-height: 100dvh;
+    padding: 14px 14px calc(18px + env(safe-area-inset-bottom, 0px));
+    border-radius: 0 22px 22px 0;
+    overscroll-behavior: contain;
   }
 
   @media (max-width: 480px) {
-    width: min(310px, calc(100vw - 20px));
+    width: min(88vw, 318px);
     border-radius: 0 20px 20px 0;
+  }
+
+  @media (max-width: 340px) {
+    width: calc(100vw - 16px);
+    padding: 12px 12px calc(16px + env(safe-area-inset-bottom, 0px));
   }
 `;
 
@@ -1025,6 +1056,18 @@ export const MobileMenuHeader = styled.div`
     background: rgba(255, 255, 255, 0.9);
     color: ${NAVY};
     cursor: pointer;
+  }
+
+  @media (max-width: 768px) {
+    button {
+      min-width: 44px;
+      width: 44px;
+      height: 44px;
+    }
+  }
+
+  @media (max-width: 420px) {
+    gap: 8px;
   }
 `;
 
@@ -1083,5 +1126,22 @@ export const MobileItem = styled.div`
     border-color: rgba(0, 0, 128, 0.16);
     color: ${NAVY};
     transform: translateX(2px);
+  }
+
+  @media (min-width: 769px) {
+    &.mobile-only-menu-item {
+      display: none;
+    }
+  }
+
+  @media (max-width: 768px) {
+    min-height: 48px;
+  }
+
+  @media (max-width: 360px) {
+    gap: 9px;
+    min-height: 46px;
+    padding: 11px 12px;
+    font-size: 13px;
   }
 `;

@@ -1,6 +1,6 @@
 // src/apps/user/pages/UserExpertsPage.jsx - PREMIUM UPGRADED WITH WORKING FILTERS (TAB FLICKER FIXED)
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { useSearchParams, useNavigate, useParams } from "react-router-dom";
+import { useSearchParams, useNavigate, useParams, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { 
   FiX, FiChevronLeft, FiChevronRight, FiSearch, FiFilter, 
@@ -123,6 +123,7 @@ const normalizeTextList = (value) => {
 export default function UserExpertsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { categorySlug, categoryId: routeCategoryParam, subcategoryId: routeSubcategoryParam } = useParams();
   const { t } = useTranslation();
   const modeFromUrl = searchParams.get("mode");
@@ -442,7 +443,11 @@ export default function UserExpertsPage() {
     }
 
     if (nextParams.toString() !== searchParams.toString()) {
-      setSearchParams(nextParams);
+      const isDefaultNormalization =
+        !searchParams.has("mode") ||
+        !searchParams.has("page");
+
+      setSearchParams(nextParams, { replace: isDefaultNormalization });
     }
   }, [
     tab,
@@ -594,7 +599,7 @@ export default function UserExpertsPage() {
   // UPDATED: Use hook's startChat instead of direct socket emit
   const handleStartChat = useCallback((expertId) => {
     if (!isLoggedIn) {
-      navigate("/user/auth");
+      navigate("/user/auth", { state: { from: location } });
       return;
     }
 
@@ -605,15 +610,15 @@ export default function UserExpertsPage() {
       chatPrice: expert?.chat_per_minute || 0,
       pricingMode: "per_minute",
     });
-  }, [isLoggedIn, experts, startChat, navigate]);
+  }, [isLoggedIn, experts, startChat, navigate, location]);
 
   const handleStartCall = useCallback((expertId) => {
     if (!isLoggedIn) {
-      navigate("/user/auth");
+      navigate("/user/auth", { state: { from: location } });
       return;
     }
     navigate(`/user/voice-call/${expertId}`);
-  }, [isLoggedIn, navigate]);
+  }, [isLoggedIn, navigate, location]);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {

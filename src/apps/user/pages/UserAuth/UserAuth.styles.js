@@ -15,7 +15,13 @@ export const PageWrap = styled.div`
   overflow-x: hidden;
 
   @media (max-width: 768px) {
-    padding: 24px 16px;
+    min-height: 100dvh;
+    width: 100%;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 20px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 `;
 
@@ -28,6 +34,10 @@ export const AuthBackWrap = styled.div`
   @media (max-width: 480px) {
     top: 12px;
     left: 12px;
+  }
+
+  @media (max-width: 768px) {
+    display: none;
   }
 `;
 
@@ -42,13 +52,19 @@ export const Card = styled.div`
   backdrop-filter: blur(10px);
 
   @media (max-width: 768px) {
+    max-width: 440px;
+    margin: auto;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    backdrop-filter: none;
     padding: 34px 24px 28px;
-    border-radius: 24px;
+    border-radius: 0;
   }
 
   @media (max-width: 480px) {
+    max-width: 100%;
     padding: 28px 18px 24px;
-    border-radius: 22px;
   }
 `;
 
@@ -61,7 +77,7 @@ export const BrandMark = styled.img`
  
 
   @media (max-width: 480px) {
-    width: 300px;
+    width: min(300px, 82vw);
     height: 80px;
     margin-bottom: 14px;
   }

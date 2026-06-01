@@ -107,7 +107,7 @@ code {
 
 @media (max-width: 768px) {
   body {
-    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+    padding-bottom: 0;
   }
 
   body footer:not(.bottom-nav) {

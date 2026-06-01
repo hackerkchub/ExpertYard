@@ -1,6 +1,6 @@
 // useChatRequest.js
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiUserCheck, FiX } from "react-icons/fi";
@@ -200,6 +200,7 @@ const ensureSocketConnected = () => {
 
 export default function useChatRequest() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isLoggedIn, user } = useAuth();
   const { balance } = useWallet();
 
@@ -252,7 +253,7 @@ export default function useChatRequest() {
       if (isRequesting) return;
       
       if (!isLoggedIn) {
-        navigate("/user/auth");
+        navigate("/user/auth", { state: { from: location } });
         return;
       }
 
@@ -302,7 +303,7 @@ export default function useChatRequest() {
         console.log("SERVER ACK:", ack);
       });
     },
-    [isLoggedIn, balance, navigate, isRequesting]
+    [isLoggedIn, balance, navigate, isRequesting, location]
   );
 
   /* ================= CANCEL REQUEST ================= */

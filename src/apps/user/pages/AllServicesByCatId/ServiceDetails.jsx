@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { FiShield, FiClock, FiStar, FiZap, FiCheck } from "react-icons/fi";
 import { FaWallet } from "react-icons/fa"; 
 
@@ -14,6 +14,7 @@ import * as S from "./ServiceDetails.style";
 const ServiceDetail = () => {
   const { slug } = useParams(); 
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoggedIn } = useAuth(); 
   const { balance, fetchWalletHistory } = useWallet(); 
   
@@ -67,7 +68,7 @@ const ServiceDetail = () => {
   const handleBooking = async () => {
     if (!isLoggedIn) {
       fireAlert({ title: "Login Required", icon: "info", confirmButtonColor: "#0a66c2" });
-      return navigate("/user/auth");
+      return navigate("/user/auth", { state: { from: location } });
     }
 
     const servicePrice = parseFloat(service.price);

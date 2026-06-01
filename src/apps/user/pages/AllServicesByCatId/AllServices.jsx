@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   FiArrowRight,
   FiLayers,
@@ -21,6 +21,7 @@ import * as S from "./AllServices.style";
 
 const AllServices = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoggedIn } = useAuth();
   const { experts, expertsLoading } = usePublicExpert();
 
@@ -70,7 +71,9 @@ const AllServices = () => {
   }, [experts]);
 
   const handleGoToMyBookings = () => {
-    isLoggedIn && user?.id ? navigate(`/user/my-booking/${user.id}`) : navigate("/user/auth");
+    isLoggedIn && user?.id
+      ? navigate(`/user/my-booking/${user.id}`)
+      : navigate("/user/auth", { state: { from: location } });
   };
 
   const getServiceDetailsPath = (service) =>

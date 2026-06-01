@@ -4,7 +4,7 @@ import { FiArrowLeft } from "react-icons/fi";
 export default function MinimalLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const showMobileBack = location.pathname !== "/user";
+  const showMobileBack = location.pathname !== "/user" && location.pathname !== "/user/auth";
 
   return (
     <>

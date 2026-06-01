@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   FiClock,
@@ -11,13 +11,18 @@ import {
   FiGlobe,
   FiGrid,
   FiHeadphones,
+  FiHome,
   FiLayers,
+  FiLogIn,
+  FiLogOut,
   FiLock,
   FiMenu,
   FiMessageCircle,
   FiSearch,
+  FiShare2,
   FiShield,
   FiStar,
+  FiUser,
   FiUsers,
   FiZap,
 } from "react-icons/fi";
@@ -233,8 +238,9 @@ function getServiceImage(service) {
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t, i18n } = useTranslation();
-  const { user } = useAuth();
+  const { isLoggedIn, user, logout } = useAuth();
   const { balance } = useWallet();
   const { categories, loading: categoriesLoading } = useCategory();
   const { experts, expertsLoading } = usePublicExpert();
@@ -442,6 +448,30 @@ const HomePage = () => {
   const visibleExperts = experts.slice(0, 5);
   const mobileCategories = topCategories.slice(0, 5);
   const mobileServices = topServices.slice(0, 8);
+  const mobileMenuItems = [
+    { label: t("common.home"), to: "/user", icon: FiHome },
+    { label: t("common.offers"), to: "/user/all-services", icon: FiGrid },
+    { label: t("common.categories"), to: "/user/categories", icon: FiLayers },
+    { label: t("common.history"), to: "/user/chat-history", icon: FiClock },
+  ];
+
+  const navigateFromMobileMenu = (path) => {
+    setMobileMenuOpen(false);
+    navigate(path);
+  };
+
+  const openLoginFromMobileMenu = () => {
+    const redirectPath = `${location.pathname}${location.search}${location.hash}`;
+    setMobileMenuOpen(false);
+    navigate(`/user/auth?redirect=${encodeURIComponent(redirectPath)}`, {
+      state: { from: location },
+    });
+  };
+
+  const handleMobileLogout = () => {
+    logout();
+    setMobileMenuOpen(false);
+  };
 
   const renderStars = (count = 5) =>
     Array.from({ length: count }).map((_, index) => (
@@ -469,6 +499,17 @@ const HomePage = () => {
       window.removeEventListener("resize", updateScrollState);
     };
   }, [categoriesLoading, topCategories.length]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileMenuOpen]);
 
   const scrollTopCategories = (direction) => {
     const row = topCategoriesRowRef.current;
@@ -564,24 +605,50 @@ const HomePage = () => {
                   x
                 </button>
               </div>
-              {[
-                { label: "Home", to: "/user" },
-                { label: "Services", to: "/user/all-services" },
-                { label: "Categories", to: "/user/categories" },
-                { label: "History", to: "/user/chat-history" },
-                { label: "Wallet", to: "/user/wallet" },
-              ].map((item) => (
+              {mobileMenuItems.map((item) => {
+                const Icon = item.icon;
+                return (
                 <button
                   key={item.to}
                   type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    navigate(item.to);
-                  }}
+                  className="mobile-home-menu__item"
+                  onClick={() => navigateFromMobileMenu(item.to)}
                 >
+                  <Icon />
                   {item.label}
                 </button>
-              ))}
+                );
+              })}
+              <button
+                type="button"
+                className="mobile-home-menu__item"
+                onClick={() => navigateFromMobileMenu("/user/wallet")}
+              >
+                <FaWallet />
+                {t("common.wallet")}
+                {isLoggedIn && balance > 0 && <span>Rs {Math.floor(balance)}</span>}
+              </button>
+              {isLoggedIn ? (
+                <>
+                  <button type="button" className="mobile-home-menu__item" onClick={() => navigateFromMobileMenu("/user")}>
+                    <FiShare2 />
+                    {t("Share")}
+                  </button>
+                  <button type="button" className="mobile-home-menu__item" onClick={() => navigateFromMobileMenu("/user")}>
+                    <FiUser />
+                    {t("nav.profile")}
+                  </button>
+                  <button type="button" className="mobile-home-menu__item" onClick={handleMobileLogout}>
+                    <FiLogOut />
+                    {t("common.logout")}
+                  </button>
+                </>
+              ) : (
+                <button type="button" className="mobile-home-menu__item" onClick={openLoginFromMobileMenu}>
+                  <FiLogIn />
+                  Login
+                </button>
+              )}
             </aside>
           </div>
         )}

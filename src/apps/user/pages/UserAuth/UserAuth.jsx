@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   PageWrap,
@@ -42,11 +42,31 @@ import logo from "../../../../assets/logo.webp";
 import { registerUserApi } from "../../../../shared/api/userApi";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 
+const normalizeRedirectPath = (from) => {
+  if (!from) return "/user";
+
+  const rawPath =
+    typeof from === "string"
+      ? from
+      : `${from.pathname || ""}${from.search || ""}${from.hash || ""}`;
+
+  if (!rawPath || rawPath === "/user/auth") return "/user";
+  if (rawPath.startsWith("/user/") || rawPath === "/user") return rawPath;
+  if (rawPath.startsWith("/experts/")) return `/user${rawPath}`;
+  if (rawPath.startsWith("/category/")) return `/user${rawPath}`;
+  if (rawPath.startsWith("/")) return rawPath;
+
+  return "/user";
+};
+
 const UserAuth = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
-  const redirectTo = location.state?.from?.pathname || "/";
+  const redirectTo = useMemo(() => {
+    const redirectParam = new URLSearchParams(location.search).get("redirect");
+    return normalizeRedirectPath(location.state?.from || redirectParam);
+  }, [location.search, location.state]);
 
   const [activeTab, setActiveTab] = useState("login");
   const [isForgotMode, setIsForgotMode] = useState(false);

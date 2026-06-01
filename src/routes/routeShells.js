@@ -22,6 +22,7 @@ export function isKnownAppRoute(pathname) {
 
 export function shouldShowBottomNavbar(pathname) {
   if (pathname.startsWith("/admin")) return false;
+  if (isImmersiveUserRoute(pathname) || isImmersiveExpertRoute(pathname)) return false;
 
   return pathname.startsWith("/category") || pathname.startsWith("/user") || pathname.startsWith("/expert");
 }

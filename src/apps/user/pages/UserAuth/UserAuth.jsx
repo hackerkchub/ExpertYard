@@ -42,7 +42,6 @@ import logo from "../../../../assets/logo.webp";
 import { registerUserApi } from "../../../../shared/api/userApi";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 
-<<<<<<< HEAD
 const normalizeRedirectPath = (from) => {
   if (!from) return "/user";
 
@@ -58,7 +57,8 @@ const normalizeRedirectPath = (from) => {
   if (rawPath.startsWith("/")) return rawPath;
 
   return "/user";
-=======
+};
+
 // Helper function to get error message from backend
 const getErrorMessage = (error, fallback = "Something went wrong") => {
   return (
@@ -67,7 +67,6 @@ const getErrorMessage = (error, fallback = "Something went wrong") => {
     error?.message ||
     fallback
   );
->>>>>>> 67c617f160cd9f63306bc44fdd9faf2b7ac8f50e
 };
 
 const UserAuth = () => {

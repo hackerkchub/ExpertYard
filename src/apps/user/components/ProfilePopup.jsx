@@ -1,34 +1,66 @@
 import React, { useEffect, useRef, useState } from "react";
-import { FiMail, FiPhone, FiLogOut } from "react-icons/fi";
+import {
+  FiMail,
+  FiPhone,
+  FiLogOut,
+  FiUser
+} from "react-icons/fi";
+
+import { useNavigate } from "react-router-dom";
+
 import { getUserProfileApi } from "../../../shared/api/userApi/auth.api";
 
-const ProfilePopup = ({ popupOpen, popupPos, user, onClose, onLogout }) => {
+const ProfilePopup = ({
+  popupOpen,
+  popupPos,
+  user,
+  onClose,
+  onLogout
+}) => {
+
+  const navigate = useNavigate();
+
   const popupRef = useRef(null);
 
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Fetch profile
+  /* ================= FETCH PROFILE ================= */
+
   useEffect(() => {
+
     if (!popupOpen || !user?.id) return;
 
     setLoading(true);
 
     getUserProfileApi(user.id)
       .then((res) => {
-        if (res?.success) setProfile(res.data);
-        else setProfile(null);
+
+        if (res?.success) {
+          setProfile(res.data);
+        } else {
+          setProfile(null);
+        }
+
       })
       .catch(() => setProfile(null))
       .finally(() => setLoading(false));
+
   }, [popupOpen, user?.id]);
 
-  // ✅ Close outside click
+  /* ================= CLOSE OUTSIDE ================= */
+
   useEffect(() => {
+
     const handleClickOutside = (e) => {
-      if (popupRef.current && !popupRef.current.contains(e.target)) {
+
+      if (
+        popupRef.current &&
+        !popupRef.current.contains(e.target)
+      ) {
         onClose();
       }
+
     };
 
     if (popupOpen) {
@@ -38,7 +70,28 @@ const ProfilePopup = ({ popupOpen, popupPos, user, onClose, onLogout }) => {
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
+
   }, [popupOpen, onClose]);
+
+  /* ================= VIEW PROFILE ================= */
+
+  const handleViewProfile = () => {
+
+    onClose?.();
+
+    navigate("/user/user-profile");
+
+  };
+
+  /* ================= SIGN OUT ================= */
+
+  const handleLogout = async () => {
+
+    onClose?.();
+
+    await onLogout?.();
+
+  };
 
   if (!popupOpen) return null;
 
@@ -61,13 +114,23 @@ const ProfilePopup = ({ popupOpen, popupPos, user, onClose, onLogout }) => {
         fontSize: 14
       }}
     >
+
       {loading ? (
-        <div style={{ textAlign: "center", padding: "20px 0" }}>
+
+        <div
+          style={{
+            textAlign: "center",
+            padding: "20px 0"
+          }}
+        >
           Loading...
         </div>
+
       ) : (
+
         <>
-          {/* 🔹 Header */}
+          {/* ================= HEADER ================= */}
+
           <div
             style={{
               display: "flex",
@@ -76,12 +139,14 @@ const ProfilePopup = ({ popupOpen, popupPos, user, onClose, onLogout }) => {
               marginBottom: 18
             }}
           >
+
             <div
               style={{
                 width: 46,
                 height: 46,
                 borderRadius: "50%",
-                background: "linear-gradient(135deg,#667eea,#764ba2)",
+                background:
+                  "linear-gradient(135deg,#667eea,#764ba2)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -94,6 +159,7 @@ const ProfilePopup = ({ popupOpen, popupPos, user, onClose, onLogout }) => {
             </div>
 
             <div style={{ flex: 1 }}>
+
               <div
                 style={{
                   fontWeight: 700,
@@ -104,20 +170,14 @@ const ProfilePopup = ({ popupOpen, popupPos, user, onClose, onLogout }) => {
                 {profile?.full_name || "User"}
               </div>
 
-              {/* <div
-                style={{
-                  fontSize: 12,
-                  color: "#64748b",
-                  marginTop: 2
-                }}
-              >
-                ID: #{user?.id || "--"}
-              </div> */}
             </div>
+
           </div>
 
-          {/* 🔹 Contact */}
+          {/* ================= CONTACT ================= */}
+
           <div style={{ marginBottom: 18 }}>
+
             <div
               style={{
                 fontSize: 12,
@@ -138,6 +198,7 @@ const ProfilePopup = ({ popupOpen, popupPos, user, onClose, onLogout }) => {
               }}
             >
               <FiMail style={{ color: "#0284c7" }} />
+
               <span style={{ color: "#334155" }}>
                 {profile?.email || "--"}
               </span>
@@ -151,13 +212,16 @@ const ProfilePopup = ({ popupOpen, popupPos, user, onClose, onLogout }) => {
               }}
             >
               <FiPhone style={{ color: "#16a34a" }} />
+
               <span style={{ color: "#334155" }}>
                 {profile?.phone || "--"}
               </span>
             </div>
+
           </div>
 
-          {/* 🔹 Divider */}
+          {/* ================= DIVIDER ================= */}
+
           <div
             style={{
               height: 1,
@@ -167,12 +231,51 @@ const ProfilePopup = ({ popupOpen, popupPos, user, onClose, onLogout }) => {
             }}
           />
 
-          {/* 🔹 Logout Button */}
+          {/* ================= VIEW PROFILE BUTTON ================= */}
+
           <button
-            onClick={onLogout}
+            onClick={handleViewProfile}
             style={{
               width: "100%",
-              background: "linear-gradient(135deg,#fee2e2,#fecaca)",
+              background:
+                "linear-gradient(135deg,#eff6ff,#dbeafe)",
+              color: "#2563eb",
+              border: "1px solid #bfdbfe",
+              borderRadius: 12,
+              padding: "12px 16px",
+              fontWeight: 600,
+              fontSize: 14,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              cursor: "pointer",
+              marginBottom: 12,
+              transition: "all 0.2s ease"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform =
+                "translateY(-1px)";
+              e.currentTarget.style.boxShadow =
+                "0 8px 20px rgba(37,99,235,0.20)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "none";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          >
+            <FiUser />
+            View Profile
+          </button>
+
+          {/* ================= LOGOUT BUTTON ================= */}
+
+          <button
+            onClick={handleLogout}
+            style={{
+              width: "100%",
+              background:
+                "linear-gradient(135deg,#fee2e2,#fecaca)",
               color: "#dc2626",
               border: "1px solid #fecaca",
               borderRadius: 12,
@@ -187,7 +290,8 @@ const ProfilePopup = ({ popupOpen, popupPos, user, onClose, onLogout }) => {
               transition: "all 0.2s ease"
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.transform =
+                "translateY(-1px)";
               e.currentTarget.style.boxShadow =
                 "0 8px 20px rgba(220,38,38,0.25)";
             }}
@@ -196,7 +300,8 @@ const ProfilePopup = ({ popupOpen, popupPos, user, onClose, onLogout }) => {
               e.currentTarget.style.boxShadow = "none";
             }}
           >
-            <FiLogOut /> Sign Out
+            <FiLogOut />
+            Sign Out
           </button>
         </>
       )}

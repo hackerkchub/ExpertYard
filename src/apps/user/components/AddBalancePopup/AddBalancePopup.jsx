@@ -86,6 +86,7 @@ const AddBalancePopup = ({ amountPreset, onClose, onConfirm }) => {
       currency: "INR",
       name: "Wallet Recharge",
       description: "Add balance to wallet",
+      webview_intent: true,
 
       handler: async function (response) {
         console.log("Payment Success:", response);

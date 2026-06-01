@@ -1,3 +1,6 @@
+import { Capacitor } from "@capacitor/core";
+import { PushNotifications } from "@capacitor/push-notifications";
+
 import expertApi from "../shared/api/expertapi/axiosInstance";
 import userApi from "../shared/api/userApi/axiosInstance";
 import { getMessagingClient } from "../shared/utils/lazyFirebase";
@@ -7,6 +10,67 @@ const VAPID_KEY =
 
 export const generateToken = async (role) => {
   try {
+    const api = role === "expert" ? expertApi : userApi;
+    const storageKey = role === "expert" ? "expertFcmToken" : "userFcmToken";
+
+    /* ================= ANDROID / NATIVE ================= */
+    if (Capacitor.isNativePlatform()) {
+      await PushNotifications.createChannel({
+        id: "default",
+        name: "Default Notifications",
+        importance: 5,
+        visibility: 1,
+      });
+
+      let perm = await PushNotifications.checkPermissions();
+
+      if (perm.receive !== "granted") {
+        perm = await PushNotifications.requestPermissions();
+      }
+
+      if (perm.receive !== "granted") {
+        console.log("Notification permission denied");
+        return;
+      }
+
+      return new Promise((resolve) => {
+        PushNotifications.addListener("registration", async (token) => {
+          try {
+            console.log("ANDROID FCM:", token.value);
+
+            const existingToken = localStorage.getItem(storageKey);
+
+            if (existingToken === token.value) {
+              resolve();
+              return;
+            }
+
+            await api.post(`/fcm/${role}/save-token`, {
+              token: token.value,
+              deviceType: "android",
+              deviceId: "android-device",
+            });
+
+            localStorage.setItem(storageKey, token.value);
+
+            console.log("Android FCM token saved");
+            resolve();
+          } catch (err) {
+            console.error("Android FCM save failed:", err);
+            resolve();
+          }
+        });
+
+        PushNotifications.addListener("registrationError", (err) => {
+          console.error("Push registration error:", err);
+          resolve();
+        });
+
+        PushNotifications.register();
+      });
+    }
+
+    /* ================= WEB ================= */
     if (!("Notification" in window)) return;
     if (Notification.permission === "denied") return;
 
@@ -21,6 +85,7 @@ export const generateToken = async (role) => {
     if (!firebase?.messaging) return;
 
     const registration = await navigator.serviceWorker.ready;
+
     const token = await firebase.getToken(firebase.messaging, {
       vapidKey: VAPID_KEY,
       serviceWorkerRegistration: registration,
@@ -28,17 +93,18 @@ export const generateToken = async (role) => {
 
     if (!token) return;
 
-    const storageKey = role === "expert" ? "expertFcmToken" : "userFcmToken";
     const existingToken = localStorage.getItem(storageKey);
+
     if (existingToken === token) return;
 
-    const api = role === "expert" ? expertApi : userApi;
     await api.post(`/fcm/${role}/save-token`, {
       token,
       deviceType: "web",
     });
 
     localStorage.setItem(storageKey, token);
+
+    console.log("Web FCM token saved");
   } catch (error) {
     console.error(`${role} FCM error:`, error);
   }

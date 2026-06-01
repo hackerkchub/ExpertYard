@@ -54,6 +54,7 @@ export const PublicExpertProvider = ({ children }) => {
         const mapped = raw.map((p) => ({
           id: p.expert_id,
           profileId: p.id,
+          slug: p.expert_slug,
           name: p.name || p.expert_name,
           position: p.position,
           profile_photo: p.profile_photo,

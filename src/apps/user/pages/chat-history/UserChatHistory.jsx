@@ -418,8 +418,14 @@ export const UserChatHistory = () => {
       const userBalance = Number(balance || 0);
 
       if (userBalance >= minRequired) {
+        const expert = expertById[Number(expertId)];
+        
         navigate(`/user/voice-call/${expertId}`, {
-          state: { fromHistory: true, callType },
+          state: {
+            fromHistory: true,
+            callType,
+            slug: expert?.slug,
+          },
         });
       } else {
         alert(`Insufficient balance. Need ₹${minRequired} for 5 minutes of call. Please recharge.`);
@@ -585,6 +591,15 @@ export const UserChatHistory = () => {
     };
   }, [groupedCallExperts]);
 
+  // ✅ UPDATED: Avatar click handler with slug
+  const handleAvatarClick = (expertId, e) => {
+    e.stopPropagation();
+    const expert = expertById[Number(expertId)];
+    if (expert?.slug) {
+      navigate(`/user/experts/${expert.slug}`);
+    }
+  };
+
   // Fetch chat history
   const fetchChatHistory = useCallback(async () => {
     try {
@@ -600,6 +615,7 @@ export const UserChatHistory = () => {
 
       const grouped = groupChatByExpert(rows);
 
+      // ✅ UPDATED: Added slug and improved avatar handling
       const merged = await Promise.all(grouped.map(async (c) => {
         const expertId = Number(c.expert_id);
         const ctxExpert = expertById[expertId];
@@ -611,9 +627,10 @@ export const UserChatHistory = () => {
 
         return {
           ...c,
+          slug: ctxExpert?.slug,
           expert_name: ctxExpert?.name || c.expert_name || "Expert",
           expert_position: ctxExpert?.position || c.expert_position || "Professional Advisor",
-          expert_avatar: ctxExpert?.profile_photo || null,
+          expert_avatar: ctxExpert?.profile_photo || c.profile_photo || c.expert_avatar || null,
           chat_per_minute: pricing.chatPrice || 0,
           call_per_minute: pricing.callPrice || 0,
           hasPerMinute: pricing.hasPerMinute,
@@ -650,6 +667,7 @@ export const UserChatHistory = () => {
       
       const grouped = groupCallsByExpert(filteredCallsData);
       
+      // ✅ UPDATED: Added slug and improved avatar handling
       const merged = await Promise.all(grouped.map(async (g) => {
         const ctxExpert = expertById[Number(g.expert_id)];
         const pricing = await fetchExpertPricing(Number(g.expert_id));
@@ -660,9 +678,10 @@ export const UserChatHistory = () => {
 
         return {
           ...g,
+          slug: ctxExpert?.slug,
           expert_name: ctxExpert?.name || g.expert_name || "Expert",
           expert_position: ctxExpert?.position || g.expert_position || "Professional Advisor",
-          expert_avatar: ctxExpert?.profile_photo || null,
+          expert_avatar: ctxExpert?.profile_photo || g.profile_photo || g.expert_avatar || null,
           expert_rating: ctxExpert?.rating || g.expert_rating || 0,
           hasPerMinute: pricing.hasPerMinute,
           hasSession: pricing.hasSession,
@@ -756,11 +775,6 @@ export const UserChatHistory = () => {
       .map((n) => n[0])
       .join("")
       .toUpperCase();
-  };
-
-  const handleAvatarClick = (expertId, e) => {
-    e.stopPropagation();
-    navigate(`/user/experts/${expertId}`);
   };
 
   const Spinner = () => (
@@ -914,10 +928,6 @@ export const UserChatHistory = () => {
                         <span className="stat-value">{formatTime(chatSummary.totalMinutes)}</span>
                         <span className="stat-label">Time</span>
                       </div>
-                      {/* <div className="summary-stat">
-                        <span className="stat-value">₹{chatSummary.totalSpent}</span>
-                        <span className="stat-label">Spent</span>
-                      </div> */}
                     </>
                   ) : (
                     <>
@@ -929,10 +939,6 @@ export const UserChatHistory = () => {
                         <span className="stat-value">{formatDuration(callSummary.totalDuration)}</span>
                         <span className="stat-label">Time</span>
                       </div>
-                      {/* <div className="summary-stat">
-                        <span className="stat-value">₹{callSummary.totalSpent}</span>
-                        <span className="stat-label">Spent</span>
-                      </div> */}
                     </>
                   )}
                 </div>
@@ -992,16 +998,6 @@ export const UserChatHistory = () => {
                 </div>
               </StatCard>
               
-              {/* <StatCard primary>
-                <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
-                  <FiDollarSign color="#8b5cf6" />
-                </div>
-                <div className="stat-content">
-                  <span className="stat-value">₹{chatSummary.totalSpent}</span>
-                  <span className="stat-label">Total Spent</span>
-                </div>
-              </StatCard> */}
-              
               <StatCard>
                 <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)' }}>
                   <FiStar color="#f59e0b" />
@@ -1036,16 +1032,6 @@ export const UserChatHistory = () => {
                 </div>
               </StatCard>
               
-              {/* <StatCard primary>
-                <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
-                  <FiDollarSign color="#8b5cf6" />
-                </div>
-                <div className="stat-content">
-                  <span className="stat-value">₹{callSummary.totalSpent}</span>
-                  <span className="stat-label">Total Spent</span>
-                </div>
-              </StatCard>
-               */}
               <StatCard>
                 <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)' }}>
                   <FiCheckCircle color="#f59e0b" />
@@ -1216,9 +1202,6 @@ export const UserChatHistory = () => {
                             <span className="meta-item">
                               <FiMessageSquare size={12} /> {c.sessions_count} sessions
                             </span>
-                            {/* <span className="meta-item">
-                              ₹{c.total_spent.toFixed(0)} spent
-                            </span> */}
                           </div>
                         </div>
                         
@@ -1482,7 +1465,13 @@ export const UserChatHistory = () => {
                                 </div>
                                 
                                 <ActionButtons>
-                                  <ViewChatButton onClick={() => navigate(`/user/experts/${call.expert_id}`)}>
+                                  {/* ✅ UPDATED: View Profile button with slug */}
+                                  <ViewChatButton onClick={() => {
+                                    const expert = expertById[Number(call.expert_id)];
+                                    if (expert?.slug) {
+                                      navigate(`/user/experts/${expert.slug}`);
+                                    }
+                                  }}>
                                     <FiEye size={14} />
                                     <span className="hide-on-mobile">Profile</span>
                                   </ViewChatButton>
@@ -1515,14 +1504,29 @@ export const UserChatHistory = () => {
                     <Avatar
                       premium
                       src={selectedSession.expert_avatar}
-                      onClick={() => navigate(`/user/experts/${selectedSession.expert_id}`)}
+                      // ✅ UPDATED: Modal Avatar click with slug
+                      onClick={() => {
+                        const expert = expertById[Number(selectedSession.expert_id)];
+                        if (expert?.slug) {
+                          navigate(`/user/experts/${expert.slug}`);
+                        }
+                      }}
                       style={{ cursor: "pointer" }}
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
                       }}
                     />
                   ) : (
-                    <AvatarFallback style={{ cursor: "pointer" }} onClick={() => navigate(`/user/experts/${selectedSession.expert_id}`)}>
+                    // ✅ UPDATED: AvatarFallback click with slug
+                    <AvatarFallback 
+                      style={{ cursor: "pointer" }} 
+                      onClick={() => {
+                        const expert = expertById[Number(selectedSession.expert_id)];
+                        if (expert?.slug) {
+                          navigate(`/user/experts/${expert.slug}`);
+                        }
+                      }}
+                    >
                       {getInitials(selectedSession.expert_name)}
                     </AvatarFallback>
                   )}

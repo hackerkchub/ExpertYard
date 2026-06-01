@@ -36,6 +36,8 @@ import { socket } from "../../../../shared/api/socket";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { usePublicExpert as useExpert } from "../../context/PublicExpertContext";
 import useChatTimer from "../../../../shared/hooks/useChatTimer";
+import { Capacitor } from "@capacitor/core";
+import { App } from "@capacitor/app";
 
 // Helper function to get initials
 const getInitials = (name) => {
@@ -94,6 +96,42 @@ const Chat = () => {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+ useEffect(() => {
+  if (!Capacitor.isNativePlatform()) return;
+
+  let listener;
+
+  const setupBackHandler = async () => {
+    listener = await App.addListener("backButton", () => {
+      if (sessionActive) {
+        const ok = window.confirm(
+          "End Chat?\n\nGoing back will end this active chat session."
+        );
+
+        if (!ok) return;
+
+        if (socket.connected) {
+          socket.emit("end_chat", { room_id });
+        }
+      }
+
+      navigate("/user/chat-history", {
+        replace: true,
+        state: {
+          from: "chat",
+          expertId: chatData?.expert_id,
+        },
+      });
+    });
+  };
+
+  setupBackHandler();
+
+  return () => {
+    listener?.remove();
+  };
+}, [sessionActive, room_id, navigate, chatData?.expert_id]);
 
   // 5) FIX: Detect unlimited subscription correctly with fallback fields
   const getRemainingMinutes = useCallback(() => {
@@ -281,6 +319,7 @@ const Chat = () => {
   // D) FIX: Popstate handler - unified
   useEffect(() => {
     if (!sessionActive) return;
+     if (Capacitor.isNativePlatform()) return;
 
     const handlePopState = () => {
       const ok = window.confirm("Are you sure you want to leave and end this chat?");

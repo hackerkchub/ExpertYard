@@ -20,7 +20,7 @@ const getAuthToken = (role) => {
 ------------------------------------------------------- */
 export const socket = io("https://softmaxs.com", {
   path: "/socket.io",
-  transports: ["websocket"],
+ transports: ["websocket", "polling"],
   autoConnect: false,
   reconnection: true,
   reconnectionAttempts: Infinity,
@@ -71,14 +71,20 @@ export const disconnectSocket = () => {
    👁️ TAB VISIBILITY RECONNECT FIX
 ------------------------------------------------------- */
 if (typeof window !== "undefined") {
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && socket.auth?.token) {
-      if (!socket.connected) {
-        console.log("👁️ Reconnecting socket on tab focus...");
-        socket.connect();
+  const isNativeApp =
+    window.location.origin.includes("localhost") &&
+    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  if (!isNativeApp) {
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && socket.auth?.token) {
+        if (!socket.connected) {
+          console.log("👁️ Reconnecting socket on tab focus...");
+          socket.connect();
+        }
       }
-    }
-  });
+    });
+  }
 
   window.__socket = socket;
 }

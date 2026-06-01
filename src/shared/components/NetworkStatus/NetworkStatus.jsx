@@ -1,25 +1,82 @@
-// src/shared/components/NetworkStatus/NetworkStatus.jsx
 import React, { useEffect, useState } from "react";
-import { useOnlineStatus } from "../../hooks/useOnlineStatus";
+import { Capacitor } from "@capacitor/core";
+import { Network } from "@capacitor/network";
 import { FiWifi, FiWifiOff } from "react-icons/fi";
 import styled from "styled-components";
 
 const NetworkStatus = () => {
-  const isOnline = useOnlineStatus();
+  const [isOnline, setIsOnline] = useState(true);
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    // Jab offline ho jaye tab dikhao, ya jab wapas online aaye tab thodi der ke liye dikhao
+    let networkListener = null;
+    let onlineHandler = null;
+    let offlineHandler = null;
+
+    const initNetwork = async () => {
+      // Native Android/iOS
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const status = await Network.getStatus();
+          setIsOnline(status.connected);
+
+          networkListener = await Network.addListener(
+            "networkStatusChange",
+            (status) => {
+              setIsOnline(status.connected);
+            }
+          );
+        } catch (err) {
+          console.error("Native network listener error:", err);
+        }
+      } 
+      // Web/PWA
+      else {
+        setIsOnline(navigator.onLine);
+
+        onlineHandler = () => setIsOnline(true);
+        offlineHandler = () => setIsOnline(false);
+
+        window.addEventListener("online", onlineHandler);
+        window.addEventListener("offline", offlineHandler);
+      }
+    };
+
+    initNetwork();
+
+    return () => {
+      if (networkListener) {
+        networkListener.remove();
+      }
+
+      if (onlineHandler) {
+        window.removeEventListener("online", onlineHandler);
+      }
+
+      if (offlineHandler) {
+        window.removeEventListener("offline", offlineHandler);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    let timer;
+
     if (!isOnline) {
       setShow(true);
     } else {
-      // Wapas online aane par 3 second baad hide kar do
-      const timer = setTimeout(() => setShow(false), 3000);
-      return () => clearTimeout(timer);
+      setShow(true);
+      timer = setTimeout(() => {
+        setShow(false);
+      }, 3000);
     }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [isOnline]);
 
-  if (!show && isOnline) return null;
+  if (!show) return null;
 
   return (
     <ToastContainer isOnline={isOnline}>
@@ -29,10 +86,9 @@ const NetworkStatus = () => {
   );
 };
 
-// LinkedIn style subtle toast
 const ToastContainer = styled.div`
   position: fixed;
-  bottom: 80px; /* Mobile bottom nav ke upar */
+  bottom: 80px;
   left: 50%;
   transform: translateX(-50%);
   background: ${(props) => (props.isOnline ? "#057642" : "#191919")};
@@ -49,8 +105,14 @@ const ToastContainer = styled.div`
   animation: slideUp 0.3s ease;
 
   @keyframes slideUp {
-    from { bottom: -50px; opacity: 0; }
-    to { bottom: 80px; opacity: 1; }
+    from {
+      bottom: -50px;
+      opacity: 0;
+    }
+    to {
+      bottom: 80px;
+      opacity: 1;
+    }
   }
 `;
 

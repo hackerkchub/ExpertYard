@@ -49,18 +49,15 @@ api.interceptors.response.use(
 
     return response;
   },
+
   (error) => {
 
     if (!error.config?.skipLoader) {
       loader?.hideLoader();
     }
 
-    const message =
-      error?.response?.data?.message ||
-      "Server error";
-
-    return Promise.reject(message);
+    // 🔥 Full axios error preserve karo
+    return Promise.reject(error);
   }
 );
-
 export default api;

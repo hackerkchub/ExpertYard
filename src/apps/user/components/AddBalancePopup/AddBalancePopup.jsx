@@ -11,7 +11,7 @@ import {
   CloseBtn
 } from "./AddBalancePopup.styles";
 
-const AddBalancePopup = ({ amountPreset, onClose, onConfirm }) => {
+const AddBalancePopup = ({ amountPreset, onClose, onConfirm, createOrder }) => {
   const [amount, setAmount] = useState(amountPreset || "");
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -50,80 +50,109 @@ const AddBalancePopup = ({ amountPreset, onClose, onConfirm }) => {
      PAY NOW HANDLER
   ============================== */
   const handlePayNow = async () => {
-    if (loading) return;
+if (!razorpayLoaded || !window.Razorpay) {
+  alert("Razorpay not loaded");
+  return;
+}
 
-    // 🔴 Critical validations
-    if (!razorpayLoaded || !window.Razorpay) {
-      alert("Razorpay not loaded yet");
-      return;
-    }
-
-    if (!baseAmount || baseAmount < 1 || isNaN(baseAmount)) {
-      alert("Please enter valid amount (₹1 minimum)");
-      return;
-    }
-
-    const userData = JSON.parse(localStorage.getItem("user"));
-    const userId = userData?.id;
-
-    if (!userId) {
-      alert("User not logged in");
-      return;
-    }
-
+if (!baseAmount || baseAmount < 1 || isNaN(baseAmount)) {
+  alert("Please enter valid amount");
+  return;
+}
+  try {
     setLoading(true);
 
-    console.log("DEBUG PAYMENT DATA", {
-      baseAmount,
-      gst,
-      total,
-      paise: Math.round(total * 100)
-    });
+    const orderResponse =
+      await createOrder(baseAmount);
+
+    if (!orderResponse?.success) {
+      throw new Error("Order creation failed");
+    }
 
     const options = {
-      key: "rzp_test_RZ9SA1VOWXjQBJ",
-      amount: Math.round(total * 100), // paise (MUST be > 0)
-      currency: "INR",
+      key: orderResponse.key_id,
+
+      amount:
+        Math.round(orderResponse.amount * 100),
+
+      currency:
+        orderResponse.currency,
+
+      order_id:
+        orderResponse.order_id,
+
       name: "Wallet Recharge",
-      description: "Add balance to wallet",
-      webview_intent: true,
+
+      description: "Add balance",
+
+       web_intent: true,
+
+   method: {
+    upi: true,
+    card: true,
+    netbanking: true,
+    wallet: true,
+    emi: true
+  },
+  config: {
+    display: {
+      preferences: {
+        show_default_blocks: true
+      }
+    }
+  },
+
 
       handler: async function (response) {
-        console.log("Payment Success:", response);
 
         try {
-           await onConfirm(baseAmount);
-          alert("Balance added successfully");
-          onClose();
-        } catch (err) {
+
+          const result = await onConfirm({
+  razorpay_payment_id: response.razorpay_payment_id,
+  razorpay_order_id: response.razorpay_order_id,
+  razorpay_signature: response.razorpay_signature
+});
+
+if (!result?.success) {
+  throw new Error(result?.message || "Wallet update failed");
+}
+
+alert("Balance added successfully");
+onClose();
+} catch (err) {
+
           console.error(err);
-          alert("Payment done but wallet update failed");
+
+          alert(
+            "Payment completed but wallet credit failed"
+          );
         } finally {
+
           setLoading(false);
         }
       },
 
       modal: {
-        ondismiss: function () {
+        ondismiss() {
           setLoading(false);
-          console.log("Payment cancelled");
         }
-      },
-
-      theme: {
-        color: "#3399cc"
       }
     };
 
-    try {
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
-    } catch (err) {
-      console.error("Razorpay Error:", err);
-      alert("Something went wrong while opening payment");
-      setLoading(false);
-    }
-  };
+    const rzp =
+      new window.Razorpay(options);
+
+    rzp.open();
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert(err.message);
+
+    setLoading(false);
+  }
+};
 
   return (
     <Overlay>

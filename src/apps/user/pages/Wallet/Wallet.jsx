@@ -82,7 +82,7 @@ const getCreditDisplayName = (item) => {
 };
 
 const WalletPage = () => {
-  const { balance, addMoney } = useWallet();
+  const { balance, addMoney, createOrder } = useWallet();
   const { user } = useAuth();
   
   const [transactions, setTransactions] = useState([]);
@@ -190,11 +190,17 @@ const WalletPage = () => {
     applyFilters();
   }, [applyFilters]);
 
-  const handleAddMoney = async (amount) => {
-    await addMoney(amount);
+ const handleAddMoney = async (paymentData) => {
+
+  const res = await addMoney(paymentData);
+
+  if (res?.success) {
     setPopupOpen(false);
     fetchWalletHistory();
-  };
+  }
+
+  return res;
+};
 
   const resetFilters = () => {
     setServiceFilter("all");
@@ -436,7 +442,12 @@ const WalletPage = () => {
       </WalletBox>
 
       {popupOpen && (
-        <AddBalancePopup amountPreset={popupAmount} onClose={() => setPopupOpen(false)} onConfirm={handleAddMoney} />
+        <AddBalancePopup
+  amountPreset={popupAmount}
+  onClose={() => setPopupOpen(false)}
+  onConfirm={handleAddMoney}
+  createOrder={createOrder}
+/>
       )}
     </PageWrap>
   );

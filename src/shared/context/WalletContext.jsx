@@ -9,7 +9,7 @@ import React, {
 import {
   getWalletApi,
   addMoneyApi,
-  
+    createWalletOrderApi
 } from "../api/userApi/walletApi";
 
 import { useAuth } from "./UserAuthContext";
@@ -53,9 +53,15 @@ export const WalletProvider = ({ children }) => {
 
 useNetworkReconnect(fetchWallet, { enabled: isLoggedIn });
 
+const createOrder = async (amount) => {
+  return await createWalletOrderApi(amount);
+};
+
   /* ================= ADD MONEY ================= */
-const addMoney = async (amount) => {
-  const res = await addMoneyApi(amount);
+const addMoney = async (paymentData) => {
+
+  const res =
+    await addMoneyApi(paymentData);
 
   if (res?.success) {
     await fetchWallet();
@@ -76,6 +82,7 @@ const addMoney = async (amount) => {
         loading,
         fetchWallet,
         addMoney,
+        createOrder,
         resetWallet
       }}
     >

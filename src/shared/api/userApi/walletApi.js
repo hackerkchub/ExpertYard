@@ -11,13 +11,28 @@ export const getWalletApi = async () => {
 };
 
 // ➕ ADD MONEY
-export const addMoneyApi = async (amount) => {
-  const { data } = await api.post("/wallet/add", { amount });
+export const addMoneyApi = async (
+  paymentData
+) => {
+
+  const { data } =
+    await api.post(
+      "/wallet/add",
+      paymentData
+    );
+
   return data;
 };
-
 // 📜 WALLET HISTORY (NEW)
 export const getWalletHistoryApi = async () => {
   const { data } = await api.get("/wallet/history");
   return data;
 }; 
+
+export const createWalletOrderApi = async (amount) => {
+  const { data } = await api.post("/wallet/create-order", {
+    amount,
+  });
+
+  return data;
+};

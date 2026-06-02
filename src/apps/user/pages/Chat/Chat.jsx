@@ -172,12 +172,23 @@ const Chat = () => {
 
   // B) FETCH CHAT DETAILS - REMOVED AI room detection
   const fetchChatDetails = useCallback(async () => {
-    if (!room_id) return;
+    if (!room_id) {
+      setError("Unable to load chat: missing room ID.");
+      setChatData(null);
+      setMessages([]);
+      setSessionActive(false);
+      setLoading(false);
+      setIsInitialized(true);
+      return;
+    }
   
     try {
       setLoading(true);
       setError("");
       const token = localStorage.getItem('user_token');
+      if (!token) {
+        throw new Error("Login required to open this chat.");
+      }
       
       const response = await fetch(`https://softmaxs.com/api/chat/details/${room_id}`, {
         headers: {
@@ -834,7 +845,12 @@ const Chat = () => {
             <ErrorMessage>
               <FiX size={48} />
               <h3>{error}</h3>
-              <button onClick={() => navigate("/user/dashboard")}>Back to Dashboard</button>
+              <div className="chat-error-actions">
+                <button onClick={fetchChatDetails}>Retry</button>
+                <button className="secondary" onClick={() => navigate("/user/chat-history")}>
+                  Chat History
+                </button>
+              </div>
             </ErrorMessage>
           ) : messages.length === 0 ? (
             <EmptyChatMessage>

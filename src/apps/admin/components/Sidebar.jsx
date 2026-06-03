@@ -10,6 +10,8 @@ import {
   FiLogOut,
   FiSettings,
   FiHelpCircle,
+  FiCreditCard,
+  FiBarChart2
 } from "react-icons/fi";
 import {
   Side,
@@ -88,17 +90,26 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
         },
       ]
     },
+   {
+  section: "Finance",
+  items: [
     {
-      section: "Finance",
-      items: [
-        { 
-          path: "/admin/payout-management", 
-          icon: FiDollarSign, 
-          label: "Payouts",
-         
-        },
-      ]
+      path: "/admin/finance",
+      icon: FiBarChart2,
+      label: "Finance Dashboard",
     },
+    {
+      path: "/admin/payout-management",
+      icon: FiDollarSign,
+      label: "Payouts",
+    },
+    {
+      path: "/admin/membership-plan",
+      icon: FiCreditCard,
+      label: "Membership Plans",
+    },
+  ]
+},
     {
       section: "System",
       items: [

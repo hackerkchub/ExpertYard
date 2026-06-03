@@ -36,3 +36,21 @@ export const createWalletOrderApi = async (amount) => {
 
   return data;
 };
+
+// 💸 DEDUCT MONEY FOR SERVICE
+export const deductWalletApi = async ({
+  amount,
+  expert_id,
+  service_type
+}) => {
+  const { data } = await api.post(
+    "/wallet/deduct",
+    {
+      amount,
+      expert_id,
+      service_type
+    }
+  );
+
+  return data;
+};

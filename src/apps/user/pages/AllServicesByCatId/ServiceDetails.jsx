@@ -9,6 +9,9 @@ import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext"; 
 import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 import { fireAlert } from "../../../../shared/utils/lazyNotifications";
+import {
+  deductWalletApi
+} from "../../../../shared/api/userApi/walletApi";
 import * as S from "./ServiceDetails.style";
 
 const ServiceDetail = () => {
@@ -97,18 +100,21 @@ const ServiceDetail = () => {
 
     try {
       setBookingLoading(true);
-      const walletPayload = { user_id: user.id, amount: servicePrice, expert_id: service.expert_id, service_type: "service_booking" };
-      const deductRes = await axios.post("https://softmaxs.com/api/wallet/deduct", walletPayload);
+     const deductRes = await deductWalletApi({
+  amount: servicePrice,
+  expert_id: service.expert_id,
+  service_type: "service_booking"
+});
 
-      if (deductRes.data.success) {
-        const bookingPayload = {
-          service_id: parseInt(service.id),
-          expert_id: service.expert_id,
-          user_id: user.id,
-          amount: servicePrice,
-          payment_mode: "wallet",
-          transaction_id: deductRes.data.transaction_id 
-        };
+      if (deductRes.success) {
+       const bookingPayload = {
+  service_id: parseInt(service.id),
+  expert_id: service.expert_id,
+  user_id: user.id,
+  amount: servicePrice,
+  payment_mode: "wallet",
+  transaction_id: deductRes.transaction_id
+};
 
         const bookRes = await axios.post("https://softmaxs.com/api/bookings/book", bookingPayload);
 

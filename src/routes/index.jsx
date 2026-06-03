@@ -53,7 +53,10 @@ export default function AppRouter() {
     <div className="app-main-layout" style={APP_SHELL_STYLE}>
       <NetworkStatus />
 
-      <div className="main-content-wrapper" style={CONTENT_WRAPPER_STYLE}>
+      <div
+        className={`main-content-wrapper${showNavbar ? " has-mobile-bottom-nav" : ""}`}
+        style={CONTENT_WRAPPER_STYLE}
+      >
         <Routes>
           <Route path="/" element={<RootRedirect />} />
           <Route element={<UserRouteBoundary />}>
@@ -68,6 +71,22 @@ export default function AppRouter() {
               />
               <Route
                 path="/category/:slug"
+                element={
+                  <LazyRoute>
+                    <PublicCategoryPage />
+                  </LazyRoute>
+                }
+              />
+              <Route
+                path="/category/:categoryId/subcategories"
+                element={
+                  <LazyRoute>
+                    <PublicCategoryPage />
+                  </LazyRoute>
+                }
+              />
+              <Route
+                path="/category/:slug/subcategory/:subcategoryId"
                 element={
                   <LazyRoute>
                     <PublicCategoryPage />

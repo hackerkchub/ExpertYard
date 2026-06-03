@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   FiArrowRight,
   FiLayers,
@@ -21,6 +21,7 @@ import * as S from "./AllServices.style";
 
 const AllServices = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoggedIn } = useAuth();
   const { experts, expertsLoading } = usePublicExpert();
 
@@ -70,7 +71,9 @@ const AllServices = () => {
   }, [experts]);
 
   const handleGoToMyBookings = () => {
-    isLoggedIn && user?.id ? navigate(`/user/my-booking/${user.id}`) : navigate("/user/auth");
+    isLoggedIn && user?.id
+      ? navigate(`/user/my-booking/${user.id}`)
+      : navigate("/user/auth", { state: { from: location } });
   };
 
   const getServiceDetailsPath = (service) =>
@@ -128,49 +131,11 @@ const AllServices = () => {
     <S.PageContainer>
       <S.ContentWrapper>
         
-        <S.HeaderSection>
-          <div className="title-area">
-            <span className="eyebrow">G9 Experts Marketplace</span>
-            <h2>Explore Professional Services</h2>
-            <p>Discover verified experts and trusted online services across multiple categories.</p>
-            <S.HeroSearch>
-              <FiSearch aria-hidden="true" />
-              <input
-                type="search"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Search services, experts, or categories"
-              />
-            </S.HeroSearch>
-            <S.BadgeRow>
-              <span><FiShield /> Verified Services</span>
-              <span><FiHeadphones /> Instant Support</span>
-              <span><FiCreditCard /> Secure Payments</span>
-              <span><FiClock /> 24/7 Availability</span>
-            </S.BadgeRow>
-          </div>
+      
           <S.TopActionButton onClick={handleGoToMyBookings}>
             <FiBriefcase /> <span>My Bookings</span>
           </S.TopActionButton>
-        </S.HeaderSection>
-
-        <S.CategoryStrip aria-label="Service categories">
-          {serviceCategories.map((category) => (
-            <S.CategoryChip
-              key={category}
-              type="button"
-              $active={activeCategory === category}
-              onClick={() => setActiveCategory(category)}
-            >
-              {category}
-            </S.CategoryChip>
-          ))}
-        </S.CategoryStrip>
-
-        <S.ServicesToolbar>
-          <div><span>{visibleServices.length}</span> services available</div>
-          <p>Ready-to-book services from verified professionals</p>
-        </S.ServicesToolbar>
+       
 
         <S.ServiceGrid>
           {visibleServices.map((service) => {

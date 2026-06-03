@@ -10,8 +10,8 @@ export const getCategoriesApi = async () => {
 /* ===========================
    GET SUBCATEGORIES
 =========================== */
-export const getSubCategoriesApi = (categoryId) =>
-  api.get(`/subcategory?category_id=${categoryId}`);
+export const getSubCategoriesApi = (categoryId, options = {}) =>
+  api.get(`/subcategory?category_id=${categoryId}`, options);
 
 /* ===========================
    CREATE CATEGORY

@@ -1,12 +1,12 @@
 // src/apps/user/pages/UserExpertsPage.jsx - PREMIUM UPGRADED WITH WORKING FILTERS (TAB FLICKER FIXED)
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, useParams, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { 
   FiX, FiChevronLeft, FiChevronRight, FiSearch, FiFilter, 
-  FiSliders, FiXCircle, FiTrendingUp, FiAward, FiClock,
-  FiStar, FiDollarSign, FiUserCheck, FiUsers, FiZap,
-  FiMessageSquare, FiPhoneCall
+  FiSliders, FiXCircle, FiTrendingUp, FiClock,
+  FiStar, FiUserCheck, FiZap,
+  FiMessageSquare, FiPhoneCall, FiGlobe
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -55,6 +55,10 @@ import { useCategory } from "../../../../shared/context/CategoryContext";
 import { getExpertsApi } from "../../../../shared/api/expertapi/expert.api";
 import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 import useChatRequest from "../../../../shared/hooks/useChatRequest"; // NEW IMPORT
+import {
+  findCategoryById,
+  findCategoryBySlug,
+} from "../../../../shared/utils/categoryRoutes";
 
 const TABS = [
   { id: "call", labelKey: "callChat.callTab", icon: "📞" },
@@ -90,14 +94,50 @@ const sortOptions = [
   { value: "rating_asc", label: "Rating: Low to High" },
 ];
 
+const getParam = (params, ...keys) => {
+  for (const key of keys) {
+    const value = params.get(key);
+    if (value != null && value !== "") return value;
+  }
+  return "";
+};
+
+const splitSortValue = (value) => {
+  if (!value) return ["", "desc"];
+  const index = value.lastIndexOf("_");
+  if (index <= 0) return [value, "desc"];
+  return [value.slice(0, index), value.slice(index + 1) || "desc"];
+};
+
+const normalizeTextList = (value) => {
+  if (Array.isArray(value)) return value.filter(Boolean).map(String);
+  if (typeof value === "string") {
+    return value
+      .split(/[,|]/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  return [];
+};
+
 export default function UserExpertsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { categorySlug, categoryId: routeCategoryParam, subcategoryId: routeSubcategoryParam } = useParams();
   const { t } = useTranslation();
   const modeFromUrl = searchParams.get("mode");
   const searchQueryFromUrl = searchParams.get("q");
   const pageFromUrl = parseInt(searchParams.get("page")) || 1;
-  const queryString = searchParams.toString();
+  const minRatingFromUrl = getParam(searchParams, "rating", "minRating");
+  const minPriceFromUrl = getParam(searchParams, "minPrice");
+  const maxPriceFromUrl = getParam(searchParams, "maxPrice");
+  const minExperienceFromUrl = getParam(searchParams, "experience", "minExperience");
+  const languageFromUrl = getParam(searchParams, "language");
+  const statusFromUrl = getParam(searchParams, "status");
+  const genderFromUrl = getParam(searchParams, "gender");
+  const sortByFromUrl = getParam(searchParams, "sortBy");
+  const sortOrderFromUrl = getParam(searchParams, "order") || "desc";
 
   // FIX 1: Initialize tab with ref to prevent re-renders
   const initialTabRef = useRef(modeFromUrl === "chat" ? "chat" : "call");
@@ -114,6 +154,19 @@ export default function UserExpertsPage() {
     subCategoriesLoading, 
     loadSubCategories 
   } = useCategory();
+  const routeCategoryKey = routeCategoryParam || categorySlug;
+  const routeCategory = useMemo(() => {
+    if (!routeCategoryKey) return null;
+    return findCategoryById(categories, routeCategoryKey) || findCategoryBySlug(categories, routeCategoryKey);
+  }, [categories, routeCategoryKey]);
+  const routeCategoryId = routeCategory?.id
+    ? String(routeCategory.id)
+    : routeCategoryParam
+      ? String(routeCategoryParam)
+      : "";
+  const routeSubcategoryId = routeSubcategoryParam ? String(routeSubcategoryParam) : "";
+  const isCategoryRoute = Boolean(routeCategoryKey);
+  const isSubcategoryExpertRoute = Boolean(routeCategoryId && routeSubcategoryId);
   const { isLoggedIn, user } = useAuth();
   const userId = user?.id;
   const { balance } = useWallet();
@@ -123,10 +176,15 @@ export default function UserExpertsPage() {
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState("");
   const [searchInput, setSearchInput] = useState(searchQueryFromUrl || "");
   const [debouncedSearch, setDebouncedSearch] = useState(searchQueryFromUrl || "");
-  const [minRating, setMinRating] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [sortBy, setSortBy] = useState("");
-  const [sortOrder, setSortOrder] = useState("desc");
+  const [minRating, setMinRating] = useState(minRatingFromUrl);
+  const [minPrice, setMinPrice] = useState(minPriceFromUrl);
+  const [maxPrice, setMaxPrice] = useState(maxPriceFromUrl);
+  const [minExperience, setMinExperience] = useState(minExperienceFromUrl);
+  const [language, setLanguage] = useState(languageFromUrl);
+  const [statusFilter, setStatusFilter] = useState(statusFromUrl);
+  const [gender, setGender] = useState(genderFromUrl);
+  const [sortBy, setSortBy] = useState(sortByFromUrl);
+  const [sortOrder, setSortOrder] = useState(sortOrderFromUrl);
 
   // Experts data
   const [experts, setExperts] = useState([]);
@@ -136,6 +194,7 @@ export default function UserExpertsPage() {
   // Online/Offline state
   const [onlineExperts, setOnlineExperts] = useState({});
   const latestRequestRef = useRef(0);
+  const abortRef = useRef(null);
 
   // Use Chat Request Hook
   const {
@@ -156,6 +215,59 @@ export default function UserExpertsPage() {
     }
   }, [modeFromUrl]); // Removed tab dependency to prevent loop
 
+  useEffect(() => {
+    if (!isCategoryRoute || !routeCategoryId) return;
+
+    setSelectedCategoryId((current) => (
+      String(current) === String(routeCategoryId) ? current : routeCategoryId
+    ));
+    if (routeSubcategoryId) {
+      setSelectedSubcategoryId((current) => (
+        String(current) === String(routeSubcategoryId) ? current : routeSubcategoryId
+      ));
+    }
+    loadSubCategories(routeCategoryId);
+  }, [isCategoryRoute, loadSubCategories, routeCategoryId, routeSubcategoryId]);
+
+  useEffect(() => {
+    if (!isCategoryRoute || routeCategoryId || categories.length === 0) return;
+    navigate("/user/categories", { replace: true });
+  }, [categories.length, isCategoryRoute, navigate, routeCategoryId]);
+
+  useEffect(() => {
+    const nextPage = parseInt(searchParams.get("page")) || 1;
+    if (nextPage !== currentPage) setCurrentPage(nextPage);
+
+    const nextMode = searchParams.get("mode");
+    if ((nextMode === "chat" || nextMode === "call") && nextMode !== tab) {
+      setTab(nextMode);
+    }
+
+    const nextSearch = searchParams.get("q") || "";
+    if (nextSearch !== searchInput) setSearchInput(nextSearch);
+    if (nextSearch !== debouncedSearch) setDebouncedSearch(nextSearch);
+
+    const nextMinRating = getParam(searchParams, "rating", "minRating");
+    const nextMinPrice = getParam(searchParams, "minPrice");
+    const nextMaxPrice = getParam(searchParams, "maxPrice");
+    const nextMinExperience = getParam(searchParams, "experience", "minExperience");
+    const nextLanguage = getParam(searchParams, "language");
+    const nextStatus = getParam(searchParams, "status");
+    const nextGender = getParam(searchParams, "gender");
+    const nextSortBy = getParam(searchParams, "sortBy");
+    const nextSortOrder = getParam(searchParams, "order") || "desc";
+
+    if (nextMinRating !== minRating) setMinRating(nextMinRating);
+    if (nextMinPrice !== minPrice) setMinPrice(nextMinPrice);
+    if (nextMaxPrice !== maxPrice) setMaxPrice(nextMaxPrice);
+    if (nextMinExperience !== minExperience) setMinExperience(nextMinExperience);
+    if (nextLanguage !== language) setLanguage(nextLanguage);
+    if (nextStatus !== statusFilter) setStatusFilter(nextStatus);
+    if (nextGender !== gender) setGender(nextGender);
+    if (nextSortBy !== sortBy) setSortBy(nextSortBy);
+    if (nextSortOrder !== sortOrder) setSortOrder(nextSortOrder);
+  }, [searchParams]);
+
   // Debounce search and avoid resetting pagination when the value is unchanged.
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -170,18 +282,25 @@ export default function UserExpertsPage() {
   }, [searchInput, debouncedSearch]);
 
   const apiParams = useMemo(() => {
+    if (isCategoryRoute && !routeCategoryId) {
+      return null;
+    }
+
+    const effectiveCategoryId = routeCategoryId || selectedCategoryId;
+    const effectiveSubcategoryId = routeSubcategoryId || selectedSubcategoryId;
+
     const params = {
       page: currentPage,
       limit: 20,
       priceMode: tab
     };
 
-    if (selectedCategoryId) {
-      params.category = selectedCategoryId;
+    if (effectiveCategoryId) {
+      params.category = effectiveCategoryId;
     }
 
-    if (selectedSubcategoryId) {
-      params.subcategory = selectedSubcategoryId;
+    if (effectiveSubcategoryId) {
+      params.subcategory = effectiveSubcategoryId;
     }
 
     if (debouncedSearch) {
@@ -192,8 +311,28 @@ export default function UserExpertsPage() {
       params.minRating = minRating;
     }
 
+    if (minPrice) {
+      params.minPrice = minPrice;
+    }
+
     if (maxPrice) {
       params.maxPrice = maxPrice;
+    }
+
+    if (minExperience) {
+      params.minExperience = minExperience;
+    }
+
+    if (language.trim()) {
+      params.language = language.trim();
+    }
+
+    if (statusFilter) {
+      params.status = statusFilter;
+    }
+
+    if (gender) {
+      params.gender = gender;
     }
 
     if (sortBy) {
@@ -202,11 +341,16 @@ export default function UserExpertsPage() {
     }
 
     const hasFilters =
-      selectedCategoryId ||
-      selectedSubcategoryId ||
+      effectiveCategoryId ||
+      effectiveSubcategoryId ||
       debouncedSearch ||
       minRating ||
+      minPrice ||
       maxPrice ||
+      minExperience ||
+      language.trim() ||
+      statusFilter ||
+      gender ||
       sortBy;
 
     if (!hasFilters) {
@@ -216,22 +360,26 @@ export default function UserExpertsPage() {
     return params;
   }, [
     currentPage,
+    isCategoryRoute,
+    routeCategoryId,
+    routeSubcategoryId,
     selectedCategoryId,
     selectedSubcategoryId,
     debouncedSearch,
     minRating,
+    minPrice,
     maxPrice,
+    minExperience,
+    language,
+    statusFilter,
+    gender,
     sortBy,
     sortOrder,
     tab
   ]);
 
-  // FIX 3: URL sync effect - prevents loop
+  // FIX 3: URL sync effect - prevents loop while keeping page/mode query in sync
   useEffect(() => {
-    const currentMode = searchParams.get("mode");
-
-    if (currentMode === tab) return;
-
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set("mode", tab);
     nextParams.set("page", String(currentPage));
@@ -242,18 +390,104 @@ export default function UserExpertsPage() {
       nextParams.delete("q");
     }
 
-    setSearchParams(nextParams, { replace: true });
-  }, [tab, currentPage, debouncedSearch, searchParams, setSearchParams]);
+    if (minRating) {
+      nextParams.set("rating", minRating);
+    } else {
+      nextParams.delete("rating");
+      nextParams.delete("minRating");
+    }
+
+    if (minPrice) {
+      nextParams.set("minPrice", minPrice);
+    } else {
+      nextParams.delete("minPrice");
+    }
+
+    if (maxPrice) {
+      nextParams.set("maxPrice", maxPrice);
+    } else {
+      nextParams.delete("maxPrice");
+    }
+
+    if (minExperience) {
+      nextParams.set("experience", minExperience);
+    } else {
+      nextParams.delete("experience");
+      nextParams.delete("minExperience");
+    }
+
+    if (language.trim()) {
+      nextParams.set("language", language.trim());
+    } else {
+      nextParams.delete("language");
+    }
+
+    if (statusFilter) {
+      nextParams.set("status", statusFilter);
+    } else {
+      nextParams.delete("status");
+    }
+
+    if (gender) {
+      nextParams.set("gender", gender);
+    } else {
+      nextParams.delete("gender");
+    }
+
+    if (sortBy) {
+      nextParams.set("sortBy", sortBy);
+      nextParams.set("order", sortOrder || "desc");
+    } else {
+      nextParams.delete("sortBy");
+      nextParams.delete("order");
+    }
+
+    if (nextParams.toString() !== searchParams.toString()) {
+      const isDefaultNormalization =
+        !searchParams.has("mode") ||
+        !searchParams.has("page");
+
+      setSearchParams(nextParams, { replace: isDefaultNormalization });
+    }
+  }, [
+    tab,
+    currentPage,
+    debouncedSearch,
+    minRating,
+    minPrice,
+    maxPrice,
+    minExperience,
+    language,
+    statusFilter,
+    gender,
+    sortBy,
+    sortOrder,
+    searchParams,
+    setSearchParams
+  ]);
 
   const fetchExperts = useCallback(async () => {
+    if (!apiParams) {
+      setExperts([]);
+      setTotalExperts(0);
+      setTotalPages(1);
+      return;
+    }
+
     const requestId = latestRequestRef.current + 1;
     latestRequestRef.current = requestId;
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     setLoading(true);
     setError(null);
 
     try {
-      const response = await getExpertsApi(apiParams);
+      const response = await getExpertsApi({
+        ...apiParams,
+        signal: controller.signal,
+      });
 
       if (latestRequestRef.current !== requestId) return;
 
@@ -261,6 +495,7 @@ export default function UserExpertsPage() {
       setTotalExperts(response.total || 0);
       setTotalPages(response.totalPages || 1);
     } catch (error) {
+      if (controller.signal.aborted || error?.code === "ERR_CANCELED") return;
       if (latestRequestRef.current !== requestId) return;
 
       console.error("Failed to fetch experts:", error);
@@ -278,6 +513,7 @@ export default function UserExpertsPage() {
   // SINGLE EFFECT for fetching - NO duplicates
   useEffect(() => {
     fetchExperts();
+    return () => abortRef.current?.abort();
   }, [fetchExperts]);
 
   // FIX 4: Network reconnect - always enabled
@@ -287,8 +523,9 @@ export default function UserExpertsPage() {
 
   // Reset subcategory when category changes AND load subcategories
   useEffect(() => {
+    if (routeSubcategoryId) return;
     setSelectedSubcategoryId("");
-  }, [selectedCategoryId]);
+  }, [routeSubcategoryId, selectedCategoryId]);
 
   // Socket listeners for online/offline status ONLY
   useEffect(() => {
@@ -340,21 +577,29 @@ export default function UserExpertsPage() {
   }, [experts]);
 
   const resetFilters = () => {
-    setSelectedCategoryId("");
-    setSelectedSubcategoryId("");
+    setSelectedCategoryId(routeCategoryId || "");
+    setSelectedSubcategoryId(routeSubcategoryId || "");
     setSearchInput("");
     setDebouncedSearch("");
     setMinRating("");
+    setMinPrice("");
     setMaxPrice("");
+    setMinExperience("");
+    setLanguage("");
+    setStatusFilter("");
+    setGender("");
     setSortBy("");
     setSortOrder("desc");
     setCurrentPage(1);
+    if (routeCategoryId) {
+      loadSubCategories(routeCategoryId);
+    }
   };
 
   // UPDATED: Use hook's startChat instead of direct socket emit
   const handleStartChat = useCallback((expertId) => {
     if (!isLoggedIn) {
-      navigate("/user/auth");
+      navigate("/user/auth", { state: { from: location } });
       return;
     }
 
@@ -365,15 +610,15 @@ export default function UserExpertsPage() {
       chatPrice: expert?.chat_per_minute || 0,
       pricingMode: "per_minute",
     });
-  }, [isLoggedIn, experts, startChat, navigate]);
+  }, [isLoggedIn, experts, startChat, navigate, location]);
 
   const handleStartCall = useCallback((expertId) => {
     if (!isLoggedIn) {
-      navigate("/user/auth");
+      navigate("/user/auth", { state: { from: location } });
       return;
     }
     navigate(`/user/voice-call/${expertId}`);
-  }, [isLoggedIn, navigate]);
+  }, [isLoggedIn, navigate, location]);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -410,8 +655,111 @@ export default function UserExpertsPage() {
       languages: exp.languages || [],
       avg_response_time: exp.avg_response_time,
       total_consultations: exp.total_consultations,
+      discounted_call_per_minute: exp.discounted_call_per_minute || exp.call_discount_price || exp.discounted_call_price,
+      discounted_chat_per_minute: exp.discounted_chat_per_minute || exp.chat_discount_price || exp.discounted_chat_price,
+      orders: exp.orders || exp.total_orders || exp.total_bookings || 0,
+      gender: exp.gender || exp.expert_gender || "",
+      status: exp.status || exp.availability || exp.available_status || "",
+      is_available: exp.is_available,
     }));
   }, [experts, onlineExperts]);
+
+  const languageOptions = useMemo(() => {
+    const values = new Set();
+    if (language) values.add(language);
+    cardExperts.forEach((expert) => {
+      normalizeTextList(expert.languages).forEach((item) => values.add(item));
+    });
+    return Array.from(values).sort((a, b) => a.localeCompare(b));
+  }, [cardExperts, language]);
+
+  const genderOptions = useMemo(() => {
+    const values = new Set();
+    if (gender) values.add(gender);
+    cardExperts.forEach((expert) => {
+      if (expert.gender) values.add(String(expert.gender));
+    });
+    return Array.from(values).sort((a, b) => a.localeCompare(b));
+  }, [cardExperts, gender]);
+
+  const filteredCardExperts = useMemo(() => {
+    const minPriceNumber = Number(minPrice || 0);
+    const maxPriceNumber = Number(maxPrice || 0);
+    const minRatingNumber = Number(minRating || 0);
+    const minExperienceNumber = Number(minExperience || 0);
+    const languageQuery = language.trim().toLowerCase();
+    const genderQuery = gender.trim().toLowerCase();
+
+    const filtered = cardExperts.filter((expert) => {
+      const modePrice = tab === "chat" ? expert.chat_per_minute : expert.call_per_minute;
+      const price = Number(modePrice || 0);
+      const rating = Number(expert.avg_rating || 0);
+      const experience = Number(expert.total_experience || 0);
+      const expertLanguages = normalizeTextList(expert.languages)
+        .join(" ")
+        .toLowerCase();
+      const expertGender = String(expert.gender || "").toLowerCase();
+      const expertStatus = String(expert.status || "").toLowerCase();
+
+      if (minPriceNumber > 0 && price > 0 && price < minPriceNumber) return false;
+      if (maxPriceNumber > 0 && price > maxPriceNumber) return false;
+      if (minRatingNumber > 0 && rating < minRatingNumber) return false;
+      if (minExperienceNumber > 0 && experience < minExperienceNumber) return false;
+      if (languageQuery && !expertLanguages.includes(languageQuery)) return false;
+      if (genderQuery && expertGender !== genderQuery) return false;
+
+      if (statusFilter === "online" && expert.isOnline !== true) return false;
+      if (
+        statusFilter === "available" &&
+        !(
+          expert.isOnline === true ||
+          expert.is_available === true ||
+          expertStatus === "available" ||
+          expertStatus === "online"
+        )
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+
+    if (!sortBy) return filtered;
+
+    return [...filtered].sort((a, b) => {
+      if (sortBy === "experience") {
+        return sortOrder === "asc"
+          ? Number(a.total_experience || 0) - Number(b.total_experience || 0)
+          : Number(b.total_experience || 0) - Number(a.total_experience || 0);
+      }
+
+      if (sortBy === "price") {
+        const aPrice = Number((tab === "chat" ? a.chat_per_minute : a.call_per_minute) || 0);
+        const bPrice = Number((tab === "chat" ? b.chat_per_minute : b.call_per_minute) || 0);
+        return sortOrder === "asc" ? aPrice - bPrice : bPrice - aPrice;
+      }
+
+      if (sortBy === "rating") {
+        return sortOrder === "asc"
+          ? Number(a.avg_rating || 0) - Number(b.avg_rating || 0)
+          : Number(b.avg_rating || 0) - Number(a.avg_rating || 0);
+      }
+
+      return 0;
+    });
+  }, [
+    cardExperts,
+    gender,
+    language,
+    maxPrice,
+    minExperience,
+    minPrice,
+    minRating,
+    sortBy,
+    sortOrder,
+    statusFilter,
+    tab
+  ]);
 
   // Get active filters count
   const activeFiltersCount = useMemo(() => {
@@ -420,18 +768,39 @@ export default function UserExpertsPage() {
     if (selectedSubcategoryId) count++;
     if (debouncedSearch) count++;
     if (minRating) count++;
+    if (minPrice) count++;
     if (maxPrice) count++;
+    if (minExperience) count++;
+    if (language) count++;
+    if (statusFilter) count++;
+    if (gender) count++;
     if (sortBy) count++;
     return count;
-  }, [selectedCategoryId, selectedSubcategoryId, debouncedSearch, minRating, maxPrice, sortBy]);
+  }, [
+    selectedCategoryId,
+    selectedSubcategoryId,
+    debouncedSearch,
+    minRating,
+    minPrice,
+    maxPrice,
+    minExperience,
+    language,
+    statusFilter,
+    gender,
+    sortBy
+  ]);
 
   const removeFilter = (filterName) => {
     switch(filterName) {
       case 'category':
-        setSelectedCategoryId("");
+        if (!isCategoryRoute) {
+          setSelectedCategoryId("");
+        }
         break;
       case 'subcategory':
-        setSelectedSubcategoryId("");
+        if (!routeSubcategoryId) {
+          setSelectedSubcategoryId("");
+        }
         break;
       case 'search':
         setSearchInput("");
@@ -443,12 +812,69 @@ export default function UserExpertsPage() {
       case 'price':
         setMaxPrice("");
         break;
+      case 'minPrice':
+        setMinPrice("");
+        break;
+      case 'maxPrice':
+        setMaxPrice("");
+        break;
+      case 'experience':
+        setMinExperience("");
+        break;
+      case 'language':
+        setLanguage("");
+        break;
+      case 'status':
+        setStatusFilter("");
+        break;
+      case 'gender':
+        setGender("");
+        break;
       case 'sort':
         setSortBy("");
         break;
       default:
         break;
     }
+    setCurrentPage(1);
+  };
+
+  const getLanguageText = (languages) => {
+    if (Array.isArray(languages)) {
+      return languages.filter(Boolean).join(", ");
+    }
+
+    return languages || "";
+  };
+
+  const handleMobileCategorySelect = (categoryId) => {
+    if (isCategoryRoute) return;
+    setSelectedCategoryId(categoryId);
+    setSelectedSubcategoryId("");
+    setCurrentPage(1);
+
+    if (categoryId) {
+      loadSubCategories(categoryId);
+    }
+  };
+
+  const renderStars = (rating) => {
+    const numericRating = Number(rating) || 0;
+    const filledStars = Math.max(0, Math.min(5, Math.round(numericRating)));
+
+    return Array.from({ length: 5 }).map((_, index) => (
+      <FiStar key={index} className={index < filledStars ? "filled" : ""} aria-hidden="true" />
+    ));
+  };
+
+  const getModePrice = (expert) => {
+    const basePrice = tab === "chat" ? expert.chat_per_minute : expert.call_per_minute;
+    const discountedPrice = tab === "chat" ? expert.discounted_chat_per_minute : expert.discounted_call_per_minute;
+
+    return {
+      basePrice: Number(basePrice || 0),
+      discountedPrice: Number(discountedPrice || 0),
+    };
   };
 
   const FilterContent = () => (
@@ -462,12 +888,31 @@ export default function UserExpertsPage() {
         )}
       </FilterHeader>
 
+      <FilterGroup>
+        <FilterLabel>Search</FilterLabel>
+        <div style={{ position: "relative" }}>
+          <SearchIcon><FiSearch size={16} /></SearchIcon>
+          <SearchInput
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search expert name or skill"
+          />
+          {searchInput && (
+            <ClearSearchBtn type="button" onClick={() => setSearchInput("")}>
+              <FiX size={14} />
+            </ClearSearchBtn>
+          )}
+        </div>
+      </FilterGroup>
+
       {/* Category Filter - with loadSubCategories */}
       <FilterGroup>
         <FilterLabel>{t("common.categories")}</FilterLabel>
         <FilterSelect
           value={selectedCategoryId}
+          disabled={isCategoryRoute}
           onChange={(e) => {
+            if (isCategoryRoute) return;
             const value = e.target.value;
             setSelectedCategoryId(value);
             setSelectedSubcategoryId("");
@@ -490,7 +935,9 @@ export default function UserExpertsPage() {
           <FilterLabel>{t("callChat.subcategory", "Subcategory")}</FilterLabel>
           <FilterSelect
             value={selectedSubcategoryId}
+            disabled={Boolean(routeSubcategoryId)}
             onChange={(e) => {
+              if (routeSubcategoryId) return;
               setSelectedSubcategoryId(e.target.value);
               setCurrentPage(1);
             }}
@@ -519,13 +966,111 @@ export default function UserExpertsPage() {
         </FilterSelect>
       </FilterGroup>
 
+      <FilterGroup>
+        <FilterLabel>Min Price ({tab === "call" ? "Call" : "Chat"} / min)</FilterLabel>
+        <FilterSelect
+          value={minPrice}
+          onChange={(e) => {
+            setMinPrice(e.target.value);
+            setCurrentPage(1);
+          }}
+        >
+          <option value="">No minimum</option>
+          <option value="10">From Rs 10</option>
+          <option value="30">From Rs 30</option>
+          <option value="50">From Rs 50</option>
+          <option value="100">From Rs 100</option>
+        </FilterSelect>
+      </FilterGroup>
+
+      <FilterGroup>
+        <FilterLabel>Rating</FilterLabel>
+        <FilterSelect
+          value={minRating}
+          onChange={(e) => {
+            setMinRating(e.target.value);
+            setCurrentPage(1);
+          }}
+        >
+          {ratingOptions.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </FilterSelect>
+      </FilterGroup>
+
+      <FilterGroup>
+        <FilterLabel>Experience</FilterLabel>
+        <FilterSelect
+          value={minExperience}
+          onChange={(e) => {
+            setMinExperience(e.target.value);
+            setCurrentPage(1);
+          }}
+        >
+          <option value="">Any experience</option>
+          <option value="1">1+ years</option>
+          <option value="3">3+ years</option>
+          <option value="5">5+ years</option>
+          <option value="10">10+ years</option>
+        </FilterSelect>
+      </FilterGroup>
+
+      <FilterGroup>
+        <FilterLabel>Language</FilterLabel>
+        <FilterSelect
+          value={language}
+          onChange={(e) => {
+            setLanguage(e.target.value);
+            setCurrentPage(1);
+          }}
+        >
+          <option value="">Any language</option>
+          {languageOptions.map((item) => (
+            <option key={item} value={item}>{item}</option>
+          ))}
+        </FilterSelect>
+      </FilterGroup>
+
+      <FilterGroup>
+        <FilterLabel>Availability</FilterLabel>
+        <FilterSelect
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setCurrentPage(1);
+          }}
+        >
+          <option value="">Any status</option>
+          <option value="online">Online now</option>
+          <option value="available">Available</option>
+        </FilterSelect>
+      </FilterGroup>
+
+      {genderOptions.length > 0 && (
+        <FilterGroup>
+          <FilterLabel>Gender</FilterLabel>
+          <FilterSelect
+            value={gender}
+            onChange={(e) => {
+              setGender(e.target.value);
+              setCurrentPage(1);
+            }}
+          >
+            <option value="">Any gender</option>
+            {genderOptions.map((item) => (
+              <option key={item} value={item}>{item}</option>
+            ))}
+          </FilterSelect>
+        </FilterGroup>
+      )}
+
       {/* Sort By */}
       <FilterGroup>
         <FilterLabel>Sort By</FilterLabel>
         <FilterSelect
-          value={`${sortBy}_${sortOrder}`}
+          value={sortBy ? `${sortBy}_${sortOrder}` : ""}
           onChange={(e) => {
-            const [newSortBy, newOrder] = e.target.value.split("_");
+            const [newSortBy, newOrder] = splitSortValue(e.target.value);
             setSortBy(newSortBy);
             setSortOrder(newOrder);
             setCurrentPage(1);
@@ -567,24 +1112,7 @@ export default function UserExpertsPage() {
       `}</style>
       
       <PageWrap>
-        <HeaderSection>
-          <div>
-            <Title>{t("callChat.title")}</Title>
-            <SubTitle>
-              {t("callChat.subtitle")}
-            </SubTitle>
-            <div className="trust-badges">
-              <span><FiUserCheck /> {t("callChat.verifiedExperts")}</span>
-              <span><FiDollarSign /> {t("callChat.secureWallet")}</span>
-              <span><FiZap /> {t("callChat.instantConnect")}</span>
-              <span><FiClock /> {t("callChat.support247")}</span>
-            </div>
-          </div>
-          <div className="mode-indicator">
-            {tab === "chat" ? <FiMessageSquare /> : <FiPhoneCall />}
-            {tab === "chat" ? "Chat Mode" : "Call Mode"}
-          </div>
-        </HeaderSection>
+        
 
         <TabsRow>
           {TABS.map((tabItem) => (
@@ -602,22 +1130,6 @@ export default function UserExpertsPage() {
         </TabsRow>
 
         {/* Stats Bar */}
-        {experts.length > 0 && (
-          <StatsBar>
-            <StatItem>
-              <FiUsers size={16} />
-              <span>{totalExperts} {t("callChat.expertsAvailable")}</span>
-            </StatItem>
-            <StatItem>
-              <FiStar size={16} />
-              <span>Top Rated Professionals</span>
-            </StatItem>
-            <StatItem>
-              <FiClock size={16} />
-              <span>24/7 Availability</span>
-            </StatItem>
-          </StatsBar>
-        )}
 
         {/* Active Filters */}
         {activeFiltersCount > 0 && (
@@ -625,13 +1137,13 @@ export default function UserExpertsPage() {
             {selectedCategoryId && (
               <ActiveFilterChip onClick={() => removeFilter('category')}>
                 Category: {categories.find(c => c.id == selectedCategoryId)?.name}
-                <FiX size={12} />
+                {!isCategoryRoute && <FiX size={12} />}
               </ActiveFilterChip>
             )}
             {selectedSubcategoryId && (
               <ActiveFilterChip onClick={() => removeFilter('subcategory')}>
                 Subcategory: {subCategories.find(s => s.id == selectedSubcategoryId)?.name}
-                <FiX size={12} />
+                {!routeSubcategoryId && <FiX size={12} />}
               </ActiveFilterChip>
             )}
             {debouncedSearch && (
@@ -652,6 +1164,36 @@ export default function UserExpertsPage() {
                 <FiX size={12} />
               </ActiveFilterChip>
             )}
+            {minPrice && (
+              <ActiveFilterChip onClick={() => removeFilter('minPrice')}>
+                Min Price: Rs {minPrice}/{tab === "call" ? "min" : "min"}
+                <FiX size={12} />
+              </ActiveFilterChip>
+            )}
+            {minExperience && (
+              <ActiveFilterChip onClick={() => removeFilter('experience')}>
+                Experience: {minExperience}+ yrs
+                <FiX size={12} />
+              </ActiveFilterChip>
+            )}
+            {language && (
+              <ActiveFilterChip onClick={() => removeFilter('language')}>
+                Language: {language}
+                <FiX size={12} />
+              </ActiveFilterChip>
+            )}
+            {statusFilter && (
+              <ActiveFilterChip onClick={() => removeFilter('status')}>
+                Status: {statusFilter}
+                <FiX size={12} />
+              </ActiveFilterChip>
+            )}
+            {gender && (
+              <ActiveFilterChip onClick={() => removeFilter('gender')}>
+                Gender: {gender}
+                <FiX size={12} />
+              </ActiveFilterChip>
+            )}
             {sortBy && (
               <ActiveFilterChip onClick={() => removeFilter('sort')}>
                 Sort: {sortOptions.find(opt => opt.value === `${sortBy}_${sortOrder}`)?.label}
@@ -660,6 +1202,34 @@ export default function UserExpertsPage() {
             )}
           </ActiveFilters>
         )}
+
+        <div className="mobile-category-strip" aria-label="Expert category filters">
+          {isCategoryRoute ? (
+            <button type="button" className="active">
+              {routeCategory?.name || t("common.categories")}
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                className={!selectedCategoryId ? "active" : ""}
+                onClick={() => handleMobileCategorySelect("")}
+              >
+                All
+              </button>
+              {categories.map((category) => (
+                <button
+                  type="button"
+                  key={category.id}
+                  className={String(selectedCategoryId) === String(category.id) ? "active" : ""}
+                  onClick={() => handleMobileCategorySelect(category.id)}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </>
+          )}
+        </div>
 
         <Layout>
           {/* Desktop Filters */}
@@ -711,6 +1281,14 @@ export default function UserExpertsPage() {
                   <div style={{ padding: '20px' }}>
                     <FilterContent />
                   </div>
+                  <div className="mobile-filter-actions">
+                    <button type="button" className="clear" onClick={resetFilters}>
+                      Clear
+                    </button>
+                    <button type="button" className="apply" onClick={() => setIsMobileFilterOpen(false)}>
+                      Apply Filters
+                    </button>
+                  </div>
                 </MobileFilterDrawer>
               </>
             )}
@@ -739,11 +1317,11 @@ export default function UserExpertsPage() {
                   cursor: 'pointer'
                 }}>Try Again</button>
               </EmptyState>
-            ) : experts.length === 0 ? (
+            ) : filteredCardExperts.length === 0 ? (
               <EmptyState>
                 <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
                 {t("callChat.noExpertsFound")}
-                {(selectedCategoryId || minRating || maxPrice) && (
+                {activeFiltersCount > 0 && (
                   <button onClick={resetFilters} style={{
                     marginTop: 16,
                     padding: '10px 20px',
@@ -757,12 +1335,90 @@ export default function UserExpertsPage() {
               </EmptyState>
             ) : (
               <>
-                <div style={{ marginBottom: 16, fontSize: 14, color: "#64748b" }}>
-                  Showing {experts.length} of {totalExperts} experts
+                <div className="experts-result-count" style={{ marginBottom: 16, fontSize: 14, color: "#64748b" }}>
+                  Showing {filteredCardExperts.length} of {totalExperts || filteredCardExperts.length} experts
+                </div>
+
+                <div className="mobile-expert-list">
+                  {filteredCardExperts.map((exp) => {
+                    const { basePrice, discountedPrice } = getModePrice(exp);
+                    const shownPrice = discountedPrice > 0 ? discountedPrice : basePrice;
+                    const languageText = getLanguageText(exp.languages);
+
+                    return (
+                      <article className="mobile-callchat-card" key={`mobile-${exp.id}`}>
+                        <button
+                          type="button"
+                          className="mobile-callchat-card__main"
+                          onClick={() => navigate(`/user/experts/${exp.slug || exp.id}`)}
+                        >
+                          <span className="mobile-callchat-card__avatar">
+                            <img src={exp.profile_photo || "https://i.pravatar.cc/150?img=12"} alt={exp.name} loading="lazy" />
+                            <i className={exp.isOnline === true ? "online" : ""} />
+                          </span>
+                          <span className="mobile-callchat-card__info">
+                            <span className="mobile-callchat-card__name-row">
+                              <strong>{exp.name}</strong>
+                              {exp.is_verified && (
+                                <em>
+                                  <FiUserCheck aria-hidden="true" />
+                                </em>
+                              )}
+                            </span>
+                            {(exp.category_name || exp.subcategory_name) && (
+                              <small>{exp.subcategory_name || exp.category_name}</small>
+                            )}
+                            {languageText && (
+                              <span className="mobile-callchat-card__line">
+                                <FiGlobe aria-hidden="true" />
+                                {languageText}
+                              </span>
+                            )}
+                            {exp.total_experience > 0 && (
+                              <span className="mobile-callchat-card__line">
+                                <FiClock aria-hidden="true" />
+                                {exp.total_experience}+ years experience
+                              </span>
+                            )}
+                          </span>
+                        </button>
+
+                        <div className="mobile-callchat-card__meta">
+                          <span className="mobile-callchat-card__rating">
+                            {renderStars(exp.avg_rating)}
+                            <b>{exp.avg_rating ? Number(exp.avg_rating).toFixed(1) : "New"}</b>
+                            {exp.total_reviews > 0 && <small>({exp.total_reviews})</small>}
+                          </span>
+                          {exp.orders > 0 && <span>{exp.orders}+ orders</span>}
+                        </div>
+
+                        <div className="mobile-callchat-card__footer">
+                          <div className="mobile-callchat-card__price">
+                            {shownPrice > 0 ? (
+                              <>
+                                <strong>Rs {shownPrice}/min</strong>
+                                {discountedPrice > 0 && basePrice > discountedPrice && <del>Rs {basePrice}</del>}
+                              </>
+                            ) : (
+                              <strong>View price</strong>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            className="mobile-callchat-card__cta"
+                            onClick={() => (tab === "chat" ? handleStartChat(exp.id) : handleStartCall(exp.id))}
+                          >
+                            {tab === "chat" ? <FiMessageSquare aria-hidden="true" /> : <FiPhoneCall aria-hidden="true" />}
+                            {tab === "chat" ? "Chat" : "Call"}
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
                 
                 <Grid>
-                  {cardExperts.map((exp, index) => {
+                  {filteredCardExperts.map((exp, index) => {
                     return (
                       <motion.div
                         key={exp.id}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   FiArrowLeft,
@@ -197,6 +197,7 @@ const formatRelativeTime = (dateString) => {
 const ExpertProfilePage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const { isLoggedIn, user } = useAuth();
   const userId = user?.id;
@@ -453,7 +454,7 @@ const ExpertProfilePage = () => {
     setPurchaseError(null);
     
     if (!isLoggedIn) {
-      navigate("/user/auth", { state: { from: `/experts/${slug}` } });
+      navigate("/user/auth", { state: { from: location } });
       return;
     }
 
@@ -493,7 +494,7 @@ const ExpertProfilePage = () => {
     } finally {
       setPurchasingPlan(null);
     }
-  }, [isLoggedIn, navigate, balance, hasActiveSubscription, fetchActiveSubscription, fetchWallet]);
+  }, [isLoggedIn, navigate, location, balance, hasActiveSubscription, fetchActiveSubscription, fetchWallet]);
 
   // Fetch experience data
   const fetchExperience = useCallback(async () => {
@@ -832,7 +833,7 @@ const ExpertProfilePage = () => {
   // Handle start call/chat with selected pricing mode
   const handleStart = useCallback((type) => {
     if (!isLoggedIn) {
-      navigate("/user/auth", { state: { from: `/experts/${slug}` } });
+      navigate("/user/auth", { state: { from: location } });
       return;
     }
 
@@ -925,11 +926,11 @@ const ExpertProfilePage = () => {
         setShowRecharge(true);
       }
     }
-  }, [isLoggedIn, navigate, displayPrices, balance, userId, numericExpertId, hasActiveSubscription, currentPricingInfo, profile, startChat]);
+  }, [isLoggedIn, navigate, location, displayPrices, balance, userId, numericExpertId, hasActiveSubscription, currentPricingInfo, profile, startChat]);
 
   const handleFollowAction = useCallback(async () => {
     if (!isLoggedIn || !userId || !numericExpertId) {
-      navigate("/user/auth", { state: { from: `/experts/${slug}` } });
+      navigate("/user/auth", { state: { from: location } });
       return;
     }
 
@@ -958,7 +959,7 @@ const ExpertProfilePage = () => {
     } finally {
       setShowUnfollowModal(false);
     }
-  }, [userId, numericExpertId]);
+  }, [isLoggedIn, userId, numericExpertId, navigate, location, following]);
 
   const handleSubmitReview = useCallback(async (e) => {
     e.preventDefault();
@@ -1391,7 +1392,7 @@ const ExpertProfilePage = () => {
                         {hasUserReview && <DeleteButton type="button" onClick={handleDeleteReview}><FiX />Delete Review</DeleteButton>}
                       </>
                     ) : (
-                      <LoginPrompt><p>Please login to leave a review</p><LoginButton onClick={() => navigate('/user/auth')}><FiUserCheck />Login to Review</LoginButton></LoginPrompt>
+                      <LoginPrompt><p>Please login to leave a review</p><LoginButton onClick={() => navigate('/user/auth', { state: { from: location } })}><FiUserCheck />Login to Review</LoginButton></LoginPrompt>
                     )}
                   </FormActions>
                 </form>

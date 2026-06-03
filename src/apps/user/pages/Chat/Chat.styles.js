@@ -20,13 +20,12 @@ export const ChatGlobalStyle = createGlobalStyle`
     background-color: #eef3f8;
   }
 
-  /* Hide navbar and spacer */
+  /* Hide layout chrome without hiding the routed chat page content. */
   nav, 
-  header, 
   .main-layout footer, 
   .footer,
   [class*="NavbarSpacer"],
-  header + div { 
+  .mobile-route-back-header { 
     display: none !important;
   }
 
@@ -546,8 +545,15 @@ export const ErrorMessage = styled.div`
     font-size: 18px;
   }
   
-  button {
+  .chat-error-actions {
     margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  
+  button {
     padding: 10px 24px;
     background: #000080;
     color: white;
@@ -559,6 +565,15 @@ export const ErrorMessage = styled.div`
     
     &:hover {
       background: #000066;
+    }
+  }
+  
+  button.secondary {
+    background: #eef2ff;
+    color: #000080;
+    
+    &:hover {
+      background: #dbe4ff;
     }
   }
 `;

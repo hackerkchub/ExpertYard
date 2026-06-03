@@ -1081,3 +1081,386 @@ export const PriceUnit = styled.span`
   font-size: 10.5px;
   font-weight: 700;
 `;
+
+export const CategoryDetailHero = styled.section`
+  width: min(calc(100% - 28px), 1440px);
+  margin: 14px auto 0;
+  padding: clamp(22px, 4vw, 34px);
+  border-radius: 24px;
+  color: ${colors.white};
+  background:
+    radial-gradient(circle at 88% 8%, rgba(244, 197, 66, 0.26), transparent 26%),
+    linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark});
+  box-shadow: 0 18px 42px rgba(0, 0, 128, 0.18);
+  box-sizing: border-box;
+
+  @media (max-width: 767px) {
+    width: calc(100% - 20px);
+    margin-top: 10px;
+    padding: 18px;
+    border-radius: 20px;
+  }
+`;
+
+export const CategoryHeroCopy = styled.div`
+  max-width: 820px;
+`;
+
+export const CategoryKicker = styled.span`
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  color: #ffd95a;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 12px;
+  font-weight: 900;
+`;
+
+export const CategoryTitle = styled.h1`
+  margin: 12px 0 0;
+  color: ${colors.white};
+  font-size: clamp(26px, 4vw, 46px);
+  line-height: 1.05;
+  font-weight: 950;
+`;
+
+export const CategoryDescription = styled.p`
+  max-width: 760px;
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 15px;
+  line-height: 1.65;
+
+  @media (max-width: 767px) {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+`;
+
+export const CategoryMetaRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+`;
+
+export const CategoryMetaPill = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 11px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  font-weight: 850;
+`;
+
+export const SectionCard = styled.section`
+  width: min(calc(100% - 28px), 1440px);
+  margin: 16px auto 0;
+  padding: 16px;
+  border: 1px solid rgba(0, 0, 128, 0.08);
+  border-radius: 20px;
+  background: ${colors.white};
+  box-shadow: 0 12px 30px rgba(16, 24, 40, 0.07);
+  box-sizing: border-box;
+
+  @media (max-width: 767px) {
+    width: calc(100% - 20px);
+    padding: 12px;
+    border-radius: 18px;
+  }
+`;
+
+export const SectionHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+`;
+
+export const SectionTitle = styled.h2`
+  margin: 0;
+  color: ${colors.textMain};
+  font-size: 20px;
+  font-weight: 950;
+
+  @media (max-width: 767px) {
+    font-size: 16px;
+  }
+`;
+
+export const SectionSubtitle = styled.p`
+  margin: 4px 0 0;
+  color: ${colors.textSecondary};
+  font-size: 13px;
+  font-weight: 650;
+`;
+
+export const SubcategoryGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+
+  @media (max-width: 767px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+`;
+
+export const SubcategoryCard = styled.button`
+  min-width: 0;
+  min-height: 138px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 10px;
+  border: 1px solid ${props => props.$active ? colors.primary : '#e8edf5'};
+  border-radius: 18px;
+  background: ${props => props.$active ? colors.primaryLight : '#ffffff'};
+  color: ${colors.textMain};
+  cursor: pointer;
+  box-shadow: ${props => props.$active
+    ? '0 14px 28px rgba(0, 0, 128, 0.14)'
+    : '0 8px 18px rgba(16, 24, 40, 0.05)'};
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: rgba(0, 0, 128, 0.28);
+  }
+
+  @media (max-width: 767px) {
+    min-height: 108px;
+    gap: 7px;
+    padding: 9px 6px;
+    border-radius: 15px;
+  }
+`;
+
+export const SubcategoryImage = styled.img`
+  width: 62px;
+  height: 62px;
+  object-fit: contain;
+  padding: 8px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, ${colors.primaryLight}, #ffffff);
+  box-sizing: border-box;
+
+  @media (max-width: 767px) {
+    width: 48px;
+    height: 48px;
+    padding: 6px;
+    border-radius: 14px;
+  }
+`;
+
+export const SubcategoryName = styled.span`
+  width: 100%;
+  color: ${colors.textMain};
+  text-align: center;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+
+  @media (max-width: 767px) {
+    font-size: 11px;
+    line-height: 1.2;
+  }
+`;
+
+export const ExpertArea = styled.section`
+  width: min(calc(100% - 28px), 1440px);
+  margin: 16px auto 0;
+
+  @media (max-width: 767px) {
+    width: calc(100% - 20px);
+    padding-bottom: 72px;
+  }
+`;
+
+export const ExpertLayout = styled.div`
+  display: grid;
+  grid-template-columns: 270px minmax(0, 1fr);
+  gap: 16px;
+
+  @media (max-width: 991px) {
+    display: block;
+  }
+`;
+
+export const FilterControl = styled.label`
+  display: block;
+  margin-top: 10px;
+`;
+
+export const FilterLabel = styled.span`
+  display: block;
+  margin-bottom: 6px;
+  color: ${colors.textSecondary};
+  font-size: 12px;
+  font-weight: 850;
+`;
+
+export const FilterInput = styled.input`
+  width: 100%;
+  min-height: 40px;
+  padding: 0 11px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: ${colors.white};
+  color: ${colors.textMain};
+  font-size: 13px;
+  font-weight: 750;
+  outline: none;
+  box-sizing: border-box;
+
+  &:focus {
+    border-color: ${colors.primary};
+    box-shadow: 0 0 0 4px rgba(0, 0, 128, 0.08);
+  }
+`;
+
+export const FilterSelect = styled.select`
+  width: 100%;
+  min-height: 40px;
+  padding: 0 11px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: ${colors.white};
+  color: ${colors.textMain};
+  font-size: 13px;
+  font-weight: 750;
+  outline: none;
+  box-sizing: border-box;
+
+  &:focus {
+    border-color: ${colors.primary};
+    box-shadow: 0 0 0 4px rgba(0, 0, 128, 0.08);
+  }
+`;
+
+export const FilterActions = styled.div`
+  margin-top: 12px;
+`;
+
+export const ActiveChips = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 12px;
+`;
+
+export const ActiveChip = styled.span`
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: ${colors.primaryLight};
+  color: ${colors.primary};
+  font-size: 12px;
+  font-weight: 900;
+`;
+
+export const ExpertsHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 14px;
+  border: 1px solid rgba(0, 0, 128, 0.08);
+  border-radius: 18px;
+  background: ${colors.white};
+  box-shadow: 0 12px 30px rgba(16, 24, 40, 0.07);
+  box-sizing: border-box;
+
+  @media (max-width: 767px) {
+    align-items: flex-start;
+    padding: 12px;
+  }
+`;
+
+export const ExpertsTitle = styled.h2`
+  margin: 0;
+  color: ${colors.textMain};
+  font-size: 19px;
+  font-weight: 950;
+
+  @media (max-width: 767px) {
+    font-size: 16px;
+  }
+`;
+
+export const ExpertsCount = styled.p`
+  margin: 4px 0 0;
+  color: ${colors.textSecondary};
+  font-size: 13px;
+  font-weight: 750;
+`;
+
+export const EmptyStateBox = styled.div`
+  width: 100%;
+  padding: 42px 18px;
+  text-align: center;
+  border: 1px solid ${colors.border};
+  border-radius: 18px;
+  background: ${colors.white};
+  box-sizing: border-box;
+`;
+
+export const EmptyStateTitle = styled.h2`
+  margin: 0;
+  color: ${colors.textMain};
+  font-size: 20px;
+  font-weight: 950;
+`;
+
+export const EmptyStateText = styled.p`
+  max-width: 520px;
+  margin: 8px auto 0;
+  color: ${colors.textSecondary};
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.55;
+`;
+
+export const PaginationBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding-bottom: 8px;
+`;
+
+export const PaginationButton = styled.button`
+  min-height: 38px;
+  padding: 0 15px;
+  border: 1px solid rgba(0, 0, 128, 0.16);
+  border-radius: 999px;
+  background: ${props => props.disabled ? '#f1f5f9' : colors.white};
+  color: ${props => props.disabled ? '#94a3b8' : colors.primary};
+  font-size: 13px;
+  font-weight: 900;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+`;
+
+export const PaginationInfo = styled.span`
+  color: ${colors.textSecondary};
+  font-size: 13px;
+  font-weight: 850;
+`;

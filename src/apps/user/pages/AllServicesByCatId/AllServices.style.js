@@ -18,7 +18,7 @@ export const PageContainer = styled.div`
   color: #111827;
 
   @media (max-width: 640px) {
-    padding: 18px 0 36px;
+    
   }
 `;
 
@@ -28,7 +28,8 @@ export const ContentWrapper = styled.div`
   animation: ${fadeIn} 0.45s ease;
 
   @media (max-width: 640px) {
-    width: min(100% - 24px, 560px);
+    width: calc(100% - 20px);
+    max-width: 560px;
   }
 `;
 
@@ -187,6 +188,7 @@ export const TopActionButton = styled.button`
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: linear-gradient(135deg, #ffd23f, ${YELLOW});
   color: #111827;
+  margin-bottom:10px;
   font-weight: 950;
   cursor: pointer;
   box-shadow: 0 16px 32px rgba(255, 193, 7, 0.24);
@@ -271,6 +273,13 @@ export const ServicesToolbar = styled.div`
   @media (max-width: 680px) {
     align-items: flex-start;
     flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+
+    p {
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }
   }
 `;
 
@@ -284,8 +293,10 @@ export const ServiceGrid = styled.div`
   }
 
   @media (max-width: 680px) {
-    grid-template-columns: 1fr;
-    gap: 18px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    width: 100%;
+    overflow: hidden;
   }
 `;
 
@@ -305,6 +316,13 @@ export const ServiceCard = styled.article`
     transform: translateY(-5px);
     border-color: rgba(0, 0, 128, 0.14);
     box-shadow: 0 24px 48px rgba(15, 23, 42, 0.12);
+  }
+
+  @media (max-width: 680px) {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 18px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
   }
 `;
 
@@ -350,6 +368,26 @@ export const ExpertIdentitySection = styled.div`
     font-size: 0.76rem;
     font-weight: 800;
   }
+
+  @media (max-width: 680px) {
+    padding: 12px;
+    gap: 9px;
+
+    .expert-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+    }
+
+    .expert-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .expert-info h4 {
+      font-size: 0.86rem;
+    }
+  }
 `;
 
 export const ImageWrapper = styled.div`
@@ -372,7 +410,7 @@ export const ImageWrapper = styled.div`
   }
 
   @media (max-width: 680px) {
-    height: 170px;
+    height: clamp(132px, 42vw, 166px);
   }
 `;
 
@@ -387,6 +425,13 @@ export const PriceBadge = styled.div`
   font-weight: 950;
   font-size: 0.9rem;
   box-shadow: 0 12px 24px rgba(255, 193, 7, 0.24);
+
+  @media (max-width: 680px) {
+    top: 10px;
+    right: 10px;
+    padding: 6px 9px;
+    font-size: 0.78rem;
+  }
 `;
 
 export const CardContent = styled.div`
@@ -418,6 +463,23 @@ export const CardContent = styled.div`
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+
+  @media (max-width: 680px) {
+    padding: 12px;
+
+    h3 {
+      margin: 8px 0 7px;
+      font-size: 0.98rem;
+      line-height: 1.32;
+    }
+
+    .description {
+      min-height: 0;
+      margin-bottom: 12px;
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+  }
 `;
 
 export const CategoryTag = styled.div`
@@ -434,6 +496,15 @@ export const CategoryTag = styled.div`
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.02em;
+
+  @media (max-width: 680px) {
+    max-width: 100%;
+    padding: 5px 8px;
+    font-size: 0.66rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 `;
 
 export const RatingLine = styled.div`
@@ -456,6 +527,12 @@ export const RatingLine = styled.div`
     color: #f59e0b;
     fill: currentColor;
   }
+
+  @media (max-width: 680px) {
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 0.74rem;
+  }
 `;
 
 export const DeliverablesContainer = styled.div`
@@ -473,6 +550,19 @@ export const DeliverablesContainer = styled.div`
     border-radius: 999px;
     border: 1px solid #e5e7eb;
   }
+
+  @media (max-width: 680px) {
+    gap: 5px;
+
+    .skill-pill {
+      max-width: 100%;
+      padding: 4px 7px;
+      font-size: 0.68rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
 `;
 
 export const CardFooter = styled.div`
@@ -484,7 +574,9 @@ export const CardFooter = styled.div`
   margin-top: auto;
 
   @media (max-width: 420px) {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 12px;
   }
 `;
 
@@ -509,6 +601,19 @@ export const PrimaryButton = styled.button`
     transform: translateY(-1px);
     box-shadow: 0 16px 28px rgba(0, 0, 128, 0.22);
   }
+
+  @media (max-width: 680px) {
+    min-width: 0;
+    min-height: 40px;
+    padding: 0 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+
+    svg {
+      flex: 0 0 auto;
+    }
+  }
 `;
 
 export const SecondaryButton = styled.button`
@@ -531,6 +636,19 @@ export const SecondaryButton = styled.button`
     transform: translateY(-1px);
     background: rgba(0, 0, 128, 0.06);
     border-color: rgba(0, 0, 128, 0.34);
+  }
+
+  @media (max-width: 680px) {
+    min-width: 0;
+    min-height: 40px;
+    padding: 0 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+
+    svg {
+      flex: 0 0 auto;
+    }
   }
 `;
 

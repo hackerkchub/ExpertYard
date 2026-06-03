@@ -6,6 +6,7 @@ import {
   BrandBox,
   BrandLogo,
   HeaderBrandGroup,
+  HeaderBackButton,
   HeaderCategoryButton,
   HeaderCategoryMenu,
   HeaderCategoryMenuCard,
@@ -13,6 +14,7 @@ import {
   HeaderCategoryMenuItem,
   HeaderCategoryMenuShell,
   HeaderCategoryMenuState,
+  HeaderWalletButton,
   HeaderMenuButton,
   HeaderActions,
   HeaderProfileButton,
@@ -48,6 +50,7 @@ import {
   FiLogIn,
   FiShare2,
   FiSearch,
+  FiArrowLeft,
 } from "react-icons/fi";
 import { FaWallet } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -79,9 +82,20 @@ const Navbar = () => {
   });
 
   const userBtnRef = useRef(null);
+  const showMobileBack = location.pathname !== "/user";
 
   const handleNav = (path) => {
     navigate(path);
+    setOpen(false);
+    setCategoryMenuOpen(false);
+    setLanguageOpen(false);
+  };
+
+  const openLogin = () => {
+    const redirectPath = `${location.pathname}${location.search}${location.hash}`;
+    navigate(`/user/auth?redirect=${encodeURIComponent(redirectPath)}`, {
+      state: { from: location },
+    });
     setOpen(false);
     setCategoryMenuOpen(false);
     setLanguageOpen(false);
@@ -145,6 +159,17 @@ const Navbar = () => {
     return () => window.clearTimeout(timer);
   }, [location.pathname]);
 
+  useEffect(() => {
+    if (!open || !window.matchMedia("(max-width: 768px)").matches) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
+
   const calculatePopupPosition = useCallback(() => {
     if (!userBtnRef.current) return;
 
@@ -170,6 +195,7 @@ const Navbar = () => {
   const primaryMenuItems = [
     { label: t("common.home"), path: "/user", icon: FiHome },
     { label: t("common.offers"), path: "/user/all-services", icon: FiGift },
+    { label: t("common.categories"), path: "/user/categories", icon: FiGrid, mobileOnly: true },
     { label: t("common.history"), path: "/user/chat-history", icon: FiClock },
   ];
 
@@ -177,7 +203,24 @@ const Navbar = () => {
     <>
       <Nav>
         <Container>
-          <HeaderBrandGroup>
+          {showMobileBack && (
+            <HeaderBackButton type="button" onClick={() => navigate(-1)} aria-label="Go back">
+              <FiArrowLeft />
+            </HeaderBackButton>
+          )}
+
+          {showMobileBack && (
+            <HeaderMenuButton
+              type="button"
+              className="mobile-menu-trigger"
+              onClick={() => setOpen((prev) => !prev)}
+              aria-label={open ? "Close navigation menu" : "Open navigation menu"}
+            >
+              {open ? <FiX size={20} /> : <FiMenu size={20} />}
+            </HeaderMenuButton>
+          )}
+
+          <HeaderBrandGroup className={showMobileBack ? "mobile-hidden" : undefined}>
             <HeaderMenuButton
               type="button"
               onClick={() => setOpen((prev) => !prev)}
@@ -246,6 +289,15 @@ const Navbar = () => {
             )}
           </HeaderCategoryMenuShell>
 
+          <HeaderWalletButton
+            type="button"
+            onClick={() => handleNav("/user/wallet")}
+            aria-label={t("common.wallet")}
+            title={t("common.wallet")}
+          >
+            <FaWallet />
+          </HeaderWalletButton>
+
           <HeaderSearch>
             <GlobalSearchBar className="navbar-global-search" />
           </HeaderSearch>
@@ -307,8 +359,14 @@ const Navbar = () => {
                 <FiUser />
               </HeaderProfileButton>
             ) : (
-              <AuthButton type="button" onClick={() => navigate("/user/auth")} aria-label={t("common.signIn")} title={t("common.signIn")}>
+              <AuthButton
+                type="button"
+                onClick={openLogin}
+                aria-label="Login"
+                title="Login"
+              >
                 <FiLogIn />
+                <span>Login</span>
               </AuthButton>
             )}
           </HeaderActions>
@@ -328,7 +386,11 @@ const Navbar = () => {
               <MobileMenuSection>
                 <MobileMenuTitle>Navigation</MobileMenuTitle>
                 {primaryMenuItems.map((item) => (
-                  <MobileItem key={item.label} onClick={() => handleNav(item.path)}>
+                  <MobileItem
+                    key={item.label}
+                    className={item.mobileOnly ? "mobile-only-menu-item" : undefined}
+                    onClick={() => handleNav(item.path)}
+                  >
                     {React.createElement(item.icon)}
                     {item.label}
                   </MobileItem>
@@ -355,9 +417,9 @@ const Navbar = () => {
                     </MobileItem>
                   </>
                 ) : (
-                  <MobileItem onClick={() => handleNav("/user/auth")}>
-                    <FiUser />
-                    {t("common.signIn")}
+                  <MobileItem onClick={openLogin}>
+                    <FiLogIn />
+                    Login
                   </MobileItem>
                 )}
               </MobileMenuSection>

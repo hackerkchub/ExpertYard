@@ -32,7 +32,7 @@ export const Wrapper = styled.footer`
   }
 
   @media (max-width: ${breakpoints.md}) {
-    padding: 44px 0 22px;
+    display: none;
   }
 `;
 

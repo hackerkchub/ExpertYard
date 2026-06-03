@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   FiClock,
@@ -7,14 +7,26 @@ import {
   FiChevronRight,
   FiPhoneCall,
   FiCreditCard,
+  FiFilter,
+  FiGlobe,
+  FiGrid,
   FiHeadphones,
+  FiHome,
   FiLayers,
+  FiLogIn,
+  FiLogOut,
   FiLock,
+  FiMenu,
+  FiMessageCircle,
+  FiSearch,
+  FiShare2,
   FiShield,
   FiStar,
+  FiUser,
   FiUsers,
   FiZap,
 } from "react-icons/fi";
+import { FaWallet } from "react-icons/fa";
 
 import "./Home.css";
 import HowItWorks from "../../components/howItWorks/HowItWorks";
@@ -41,7 +53,9 @@ import {
 } from "./Home.styles";
 
 import heroExpertImage from "../../../../assets/hero.webp";
+import logo from "../../../../assets/logo.webp";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
+import { useWallet } from "../../../../shared/context/WalletContext";
 import { useWebPush } from "../../../../shared/hooks/useWebPush";
 import { useCategory } from "../../../../shared/context/CategoryContext";
 import { usePublicExpert } from "../../context/PublicExpertContext";
@@ -67,6 +81,24 @@ const QUICK_ACTIONS = [
     titleKey: "home.consultAgain",
     subtitleKey: "home.continue",
     icon: FiClock,
+    to: "/user/all-services",
+  },
+];
+
+const MOBILE_QUICK_ACTIONS = [
+  {
+    label: "Call",
+    icon: FiPhoneCall,
+    to: "/user/call-chat?page=1&mode=call",
+  },
+  {
+    label: "Chat",
+    icon: FiMessageCircle,
+    to: "/user/call-chat?page=1&mode=chat",
+  },
+  {
+    label: "Services",
+    icon: FiGrid,
     to: "/user/all-services",
   },
 ];
@@ -200,12 +232,21 @@ function getServicePath(service) {
   return slug ? `/user/service-details/${slug}` : "/user/all-services";
 }
 
+function getServiceImage(service) {
+  return service?.image || service?.image_url || service?.service_image || service?.thumbnail || "";
+}
+
 const HomePage = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
-  const { user } = useAuth();
+  const location = useLocation();
+  const { t, i18n } = useTranslation();
+  const { isLoggedIn, user, logout } = useAuth();
+  const { balance } = useWallet();
   const { categories, loading: categoriesLoading } = useCategory();
   const { experts, expertsLoading } = usePublicExpert();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileLanguageOpen, setMobileLanguageOpen] = useState(false);
+  const [mobileSearch, setMobileSearch] = useState("");
   const [services, setServices] = useState(() => {
     try {
       const saved = localStorage.getItem("popular_services_cache");
@@ -225,6 +266,14 @@ const HomePage = () => {
     panel: "user",
     userId: user?.id,
   });
+
+  useEffect(() => {
+    document.body.classList.add("g9-home-route");
+
+    return () => {
+      document.body.classList.remove("g9-home-route");
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -397,6 +446,32 @@ const HomePage = () => {
   const topCategories = seoCategories.slice(0, 15);
   const topServices = seoServices.slice(0, 16);
   const visibleExperts = experts.slice(0, 5);
+  const mobileCategories = topCategories.slice(0, 5);
+  const mobileServices = topServices.slice(0, 8);
+  const mobileMenuItems = [
+    { label: t("common.home"), to: "/user", icon: FiHome },
+    { label: t("common.offers"), to: "/user/all-services", icon: FiGrid },
+    { label: t("common.categories"), to: "/user/categories", icon: FiLayers },
+    { label: t("common.history"), to: "/user/chat-history", icon: FiClock },
+  ];
+
+  const navigateFromMobileMenu = (path) => {
+    setMobileMenuOpen(false);
+    navigate(path);
+  };
+
+  const openLoginFromMobileMenu = () => {
+    const redirectPath = `${location.pathname}${location.search}${location.hash}`;
+    setMobileMenuOpen(false);
+    navigate(`/user/auth?redirect=${encodeURIComponent(redirectPath)}`, {
+      state: { from: location },
+    });
+  };
+
+  const handleMobileLogout = () => {
+    logout();
+    setMobileMenuOpen(false);
+  };
 
   const renderStars = (count = 5) =>
     Array.from({ length: count }).map((_, index) => (
@@ -425,6 +500,17 @@ const HomePage = () => {
     };
   }, [categoriesLoading, topCategories.length]);
 
+  useEffect(() => {
+    if (!mobileMenuOpen) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileMenuOpen]);
+
   const scrollTopCategories = (direction) => {
     const row = topCategoriesRowRef.current;
     if (!row) return;
@@ -447,8 +533,249 @@ const HomePage = () => {
       .map((part) => part[0]?.toUpperCase() || "")
       .join("") || "GE";
 
+  const submitMobileSearch = (event) => {
+    event.preventDefault();
+    const query = mobileSearch.trim();
+    navigate(query ? `/user/search?q=${encodeURIComponent(query)}` : "/user/search");
+  };
+
+  const changeMobileLanguage = (language) => {
+    i18n.changeLanguage(language);
+    setMobileLanguageOpen(false);
+  };
+
   return (
     <div className="home-page">
+      <div className="mobile-home-app">
+        <header className="mobile-home-header">
+          <button
+            type="button"
+            className="mobile-icon-button"
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="Open menu"
+          >
+            <FiMenu />
+          </button>
+          <Link className="mobile-home-logo" to="/user" aria-label="G9Expert home">
+            <img src={logo} alt="G9Expert" />
+          </Link>
+          <button type="button" className="mobile-wallet-card" onClick={() => navigate("/user/wallet")}>
+            <FaWallet />
+            <span>Rs {Math.floor(Number(balance || 0))}</span>
+          </button>
+          <button type="button" className="mobile-icon-button" onClick={() => navigate("/user/search")} aria-label="Search">
+            <FiSearch />
+          </button>
+          <div className="mobile-language-wrap">
+            <button
+              type="button"
+              className="mobile-language-button"
+              onClick={() => setMobileLanguageOpen((prev) => !prev)}
+              aria-label={t("common.language")}
+              aria-expanded={mobileLanguageOpen}
+            >
+              <FiGlobe />
+              <span>{i18n.language === "hi" ? "HI" : "EN"}</span>
+            </button>
+            {mobileLanguageOpen && (
+              <div className="mobile-language-popover">
+                <button type="button" onClick={() => changeMobileLanguage("en")} className={i18n.language === "en" ? "active" : ""}>
+                  EN
+                </button>
+                <button type="button" onClick={() => changeMobileLanguage("hi")} className={i18n.language === "hi" ? "active" : ""}>
+                  Hindi
+                </button>
+              </div>
+            )}
+          </div>
+        </header>
+
+        {mobileMenuOpen && (
+          <div className="mobile-home-menu-layer">
+            <button
+              type="button"
+              className="mobile-home-menu-backdrop"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close menu"
+            />
+            <aside className="mobile-home-menu" aria-label="Mobile menu">
+              <div className="mobile-home-menu__brand">
+                <img src={logo} alt="G9Expert" />
+                <button type="button" onClick={() => setMobileMenuOpen(false)} aria-label="Close menu">
+                  x
+                </button>
+              </div>
+              {mobileMenuItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                <button
+                  key={item.to}
+                  type="button"
+                  className="mobile-home-menu__item"
+                  onClick={() => navigateFromMobileMenu(item.to)}
+                >
+                  <Icon />
+                  {item.label}
+                </button>
+                );
+              })}
+              <button
+                type="button"
+                className="mobile-home-menu__item"
+                onClick={() => navigateFromMobileMenu("/user/wallet")}
+              >
+                <FaWallet />
+                {t("common.wallet")}
+                {isLoggedIn && balance > 0 && <span>Rs {Math.floor(balance)}</span>}
+              </button>
+              {isLoggedIn ? (
+                <>
+                  <button type="button" className="mobile-home-menu__item" onClick={() => navigateFromMobileMenu("/user")}>
+                    <FiShare2 />
+                    {t("Share")}
+                  </button>
+                  <button type="button" className="mobile-home-menu__item" onClick={() => navigateFromMobileMenu("/user")}>
+                    <FiUser />
+                    {t("nav.profile")}
+                  </button>
+                  <button type="button" className="mobile-home-menu__item" onClick={handleMobileLogout}>
+                    <FiLogOut />
+                    {t("common.logout")}
+                  </button>
+                </>
+              ) : (
+                <button type="button" className="mobile-home-menu__item" onClick={openLoginFromMobileMenu}>
+                  <FiLogIn />
+                  Login
+                </button>
+              )}
+            </aside>
+          </div>
+        )}
+
+        <form className="mobile-search-bar" onSubmit={submitMobileSearch}>
+          <FiSearch aria-hidden="true" />
+          <input
+            type="search"
+            value={mobileSearch}
+            onChange={(event) => setMobileSearch(event.target.value)}
+            placeholder="Search experts, services"
+            aria-label="Search experts and services"
+          />
+          <button type="submit" aria-label="Search filters">
+            <FiFilter />
+          </button>
+        </form>
+
+        <section className="mobile-quick-actions" aria-label={t("home.quickActionsLabel")}>
+          {MOBILE_QUICK_ACTIONS.map((action) => {
+            const Icon = action.icon;
+            return (
+              <Link key={action.label} to={action.to} className="mobile-quick-action">
+                <span>
+                  <Icon />
+                </span>
+                <strong>{action.label}</strong>
+              </Link>
+            );
+          })}
+        </section>
+
+        <section className="mobile-home-section">
+          <div className="mobile-section-title">
+            <h2>Categories</h2>
+          </div>
+          <div className="mobile-category-grid">
+            {categoriesLoading && mobileCategories.length === 0
+              ? Array.from({ length: 8 }).map((_, index) => (
+                  <div className="mobile-category-card mobile-category-card--loading" key={index} />
+                ))
+              : (
+                  <>
+                    {mobileCategories.map((category) => (
+                      <Link key={category.id} to={getCategoryPath(category)} className="mobile-category-card">
+                        <span className="mobile-category-media">
+                          {category.image_url ? (
+                            <img src={category.image_url} alt={category.name} loading="lazy" decoding="async" />
+                          ) : (
+                            category.name?.charAt(0)
+                          )}
+                        </span>
+                        <strong>{category.name}</strong>
+                      </Link>
+                    ))}
+                    <button type="button" className="mobile-category-card mobile-category-card--more" onClick={() => navigate("/user/categories")}>
+                      <span className="mobile-category-media">+</span>
+                      <strong>View More</strong>
+                    </button>
+                  </>
+                )}
+          </div>
+        </section>
+
+        <section className="mobile-home-section">
+          <div className="mobile-section-title">
+            <h2>Services</h2>
+            <button type="button" onClick={() => navigate("/user/all-services")}>View all</button>
+          </div>
+          <div className="mobile-services-row">
+            {(servicesLoading && mobileServices.length === 0 ? FALLBACK_SERVICES.slice(0, 4) : mobileServices).map((service) => {
+              const serviceName = getServiceName(service);
+              const serviceImage = getServiceImage(service);
+
+              return (
+                <Link key={service.id || getServiceSlug(service)} to={getServicePath(service)} className="mobile-service-card">
+                  <div className="mobile-service-icon">
+                    {serviceImage ? (
+                      <img src={serviceImage} alt={serviceName} loading="lazy" decoding="async" />
+                    ) : (
+                      <FiHeadphones />
+                    )}
+                  </div>
+                  <strong>{serviceName}</strong>
+                  <span>Book now</span>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="mobile-home-section">
+          <div className="mobile-section-title">
+            <h2>Experts</h2>
+            <button type="button" onClick={() => navigate("/user/call-chat?page=1")}>View all</button>
+          </div>
+          <div className="mobile-experts-row">
+            {expertsLoading && visibleExperts.length === 0
+              ? Array.from({ length: 4 }).map((_, index) => <div className="mobile-expert-card mobile-expert-card--loading" key={index} />)
+              : visibleExperts.map((expert) => (
+                  <article key={expert.id} className="mobile-expert-card">
+                    <button type="button" className="mobile-expert-main" onClick={() => navigate(`/user/experts/${expert.id}`)}>
+                      <span className="mobile-expert-avatar">
+                        {expert.profile_photo ? (
+                          <img src={expert.profile_photo} alt={expert.name} loading="lazy" />
+                        ) : (
+                          getInitials(expert.name)
+                        )}
+                      </span>
+                      <span className="mobile-expert-copy">
+                        <strong>{expert.name}</strong>
+                        <small>{expert.position || "Verified Expert"}</small>
+                        <em><FiStar /> 4.8</em>
+                      </span>
+                    </button>
+                    <div className="mobile-expert-actions">
+                      <Link to={`/user/call-chat?page=1&mode=call&expert=${expert.id}`}>Call</Link>
+                      <Link to={`/user/call-chat?page=1&mode=chat&expert=${expert.id}`}>Chat</Link>
+                    </div>
+                  </article>
+                ))}
+          </div>
+        </section>
+
+        <TestimonialsSection onViewAll={() => navigate("/user/reviews")} />
+      </div>
+
       <div className="home-page__container">
         <HeroSection>
           <HeroBackdrop />

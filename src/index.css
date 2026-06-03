@@ -101,6 +101,49 @@ code {
   color:#4ade80;
 }
 
+.mobile-route-back-header {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  body {
+    padding-bottom: 0;
+  }
+
+  body footer:not(.bottom-nav) {
+    display: none !important;
+  }
+
+  .mobile-route-back-header {
+    position: sticky;
+    top: 0;
+    z-index: 10000;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: #ffffff;
+    border-bottom: 1px solid rgba(0, 0, 128, 0.08);
+  }
+
+  .mobile-route-back-header button {
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(0, 0, 128, 0.12);
+    border-radius: 14px;
+    background: #ffffff;
+    color: #000080;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+  }
+
+  .mobile-route-back-header svg {
+    width: 20px;
+    height: 20px;
+  }
+}
 
 
 

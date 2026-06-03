@@ -89,7 +89,16 @@ export const getExpertsApi = async (params = {}) => {
     search,
     sortBy,
     order,
-    top
+    top,
+    priceMode,
+    minRating,
+    minPrice,
+    maxPrice,
+    minExperience,
+    language,
+    status,
+    gender,
+    signal,
   } = params;
 
   const query = new URLSearchParams();
@@ -103,8 +112,16 @@ export const getExpertsApi = async (params = {}) => {
   if (sortBy) query.append("sortBy", sortBy);
   if (order) query.append("order", order);
   if (top) query.append("top", "true");
+  if (priceMode) query.append("priceMode", priceMode);
+  if (minRating) query.append("minRating", minRating);
+  if (minPrice) query.append("minPrice", minPrice);
+  if (maxPrice) query.append("maxPrice", maxPrice);
+  if (minExperience) query.append("minExperience", minExperience);
+  if (language) query.append("language", language);
+  if (status) query.append("status", status);
+  if (gender) query.append("gender", gender);
 
-  const { data } = await api.get(`/expert/public/list?${query.toString()}`);
+  const { data } = await api.get(`/expert/public/list?${query.toString()}`, { signal });
 
   return data;
 };

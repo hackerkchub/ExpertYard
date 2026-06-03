@@ -76,6 +76,7 @@ export const LauncherButton = styled.button`
     bottom: 1rem;
     right: 1rem;
     padding: 0.875rem;
+    margin-bottom:60px;
   }
 `;
 

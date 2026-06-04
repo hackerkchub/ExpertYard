@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
 
 import { connectSocket, disconnectSocket, socket } from "../../../shared/api/socket";
 import UserSocketListener from "../../../shared/socket/UserSocketListener";
@@ -9,6 +10,17 @@ import useFCM from "../../../hooks/useFCM";
 import { PublicExpertProvider } from "../context/PublicExpertContext";
 import ChatLauncher from "../components/ai-chat/ChatLauncher";
 
+const generateId = () => {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return crypto.randomUUID();
+  }
+
+  return uuidv4();
+};
+
 export default function UserRouteBoundary() {
   const { user } = useAuth();
   const location = useLocation();
@@ -17,14 +29,14 @@ export default function UserRouteBoundary() {
     location.pathname.startsWith("/user/chat") ||
     location.pathname.startsWith("/user/voice-call");
 
-    useEffect(() => {
-  let sessionToken = localStorage.getItem("chat_session");
+  useEffect(() => {
+    let sessionToken = localStorage.getItem("chat_session");
 
-  if (!sessionToken) {
-    sessionToken = crypto.randomUUID();
-    localStorage.setItem("chat_session", sessionToken);
-  }
-}, []);
+    if (!sessionToken) {
+      sessionToken = generateId();
+      localStorage.setItem("chat_session", sessionToken);
+    }
+  }, []);
 
   useEffect(() => {
     if (!user?.id) return;

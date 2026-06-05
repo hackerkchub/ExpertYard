@@ -118,7 +118,7 @@ const AllServices = () => {
   // Professional Skeleton Loader
   if (loading && services.length === 0) {
     return (
-      <S.PageContainer>
+      <S.PageContainer className="all-services-page">
         <S.LoaderContainer>
           <div className="spinner"></div>
           <p>Fetching Professional Services...</p>
@@ -128,7 +128,7 @@ const AllServices = () => {
   }
 
   return (
-    <S.PageContainer>
+    <S.PageContainer className="all-services-page">
       <S.ContentWrapper>
         
       
@@ -199,7 +199,7 @@ const AllServices = () => {
                   <S.PrimaryButton onClick={() => navigate(getServiceDetailsPath(service))}>
                     View Details <FiArrowRight />
                   </S.PrimaryButton>
-                  <S.SecondaryButton onClick={() => navigate("/user/call-chat?page=1&mode=chat")}>
+                  <S.SecondaryButton onClick={() => navigate(getExpertDetailsPath(service))}>
                     <FiMessageCircle /> Talk to Expert
                   </S.SecondaryButton>
                 </S.CardFooter>

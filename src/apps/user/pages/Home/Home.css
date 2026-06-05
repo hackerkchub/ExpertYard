@@ -3164,9 +3164,8 @@
   }
 
   .premium-mobile-service-card__button {
-    min-height: 31px;
-    border-radius: 11px;
-    padding: 0 8px;
+    min-height: 25px;
+    border-radius: 6px;
     display: inline-flex;
     align-items: center;
     justify-content: center;

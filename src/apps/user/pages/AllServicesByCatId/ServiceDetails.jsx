@@ -14,6 +14,8 @@ import {
 } from "../../../../shared/api/userApi/walletApi";
 import * as S from "./ServiceDetails.style";
 
+const DEFAULT_SERVICE_IMAGE = "https://via.placeholder.com/800x450?text=Service+Image";
+
 const ServiceDetail = () => {
   const { slug } = useParams(); 
   const navigate = useNavigate();
@@ -154,7 +156,13 @@ const ServiceDetail = () => {
         <S.HorizontalLayout>
           {/* LEFT: Image Only */}
           <S.ImageSide>
-            <S.HeroImage src={service.image} alt={service.title} />
+            <S.HeroImage
+              src={service.image || DEFAULT_SERVICE_IMAGE}
+              alt={service.title}
+              onError={(event) => {
+                event.currentTarget.src = DEFAULT_SERVICE_IMAGE;
+              }}
+            />
             <S.Badge><FiShield /> Verified Service</S.Badge>
           </S.ImageSide>
 

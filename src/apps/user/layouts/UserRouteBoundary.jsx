@@ -25,9 +25,8 @@ export default function UserRouteBoundary() {
   const { user } = useAuth();
   const location = useLocation();
 
-  const hideChatLauncher =
-    location.pathname.startsWith("/user/chat") ||
-    location.pathname.startsWith("/user/voice-call");
+  const showChatLauncher =
+    location.pathname === "/user" || location.pathname === "/user/";
 
   useEffect(() => {
     let sessionToken = localStorage.getItem("chat_session");
@@ -89,7 +88,7 @@ export default function UserRouteBoundary() {
       <UserSocketListener />
       <PublicExpertProvider>
         <Outlet />
-        {!hideChatLauncher && <ChatLauncher />}
+        {showChatLauncher && <ChatLauncher />}
       </PublicExpertProvider>
     </>
   );

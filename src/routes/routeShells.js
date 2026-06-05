@@ -28,7 +28,13 @@ export function shouldShowBottomNavbar(pathname) {
 }
 
 export function isImmersiveUserRoute(pathname) {
-  return USER_IMMERSIVE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  return USER_IMMERSIVE_PREFIXES.some((prefix) => {
+    if (prefix === "/user/chat") {
+      return pathname === "/user/chat" || pathname.startsWith("/user/chat/");
+    }
+
+    return pathname.startsWith(prefix);
+  });
 }
 
 export function isImmersiveExpertRoute(pathname) {

@@ -14,6 +14,12 @@ export const PremiumContainer = styled.div`
   background: #F4F2EE;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   color: #191919;
+
+  @media (max-width: 768px) {
+    min-height: auto;
+    background: #f8fafc;
+    overflow-x: hidden;
+  }
 `;
 
 export const PageContainer = styled.div`
@@ -22,11 +28,13 @@ export const PageContainer = styled.div`
   padding: 25px 20px;
 
   @media (max-width: 768px) {
-    padding: 30px 16px;
+    padding: 18px 16px 4px;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   @media (max-width: 480px) {
-    padding: 25px 12px;
+    padding: 16px 12px 4px;
   }
 `;
 
@@ -1204,6 +1212,129 @@ export const ModalContent = styled.div`
         font-size: 11px;
       }
     }
+  }
+`;
+
+export const MobileDetailPage = styled.div`
+  width: 100%;
+  max-width: 100%;
+  min-height: calc(100svh - var(--mobile-bottom-nav-reserved-space, 78px));
+  padding: 12px 12px 4px;
+  background: #f8fafc;
+  overflow-x: hidden;
+
+  .mobile-detail-messages {
+    min-height: calc(100svh - 156px - var(--mobile-bottom-nav-reserved-space, 78px));
+    max-height: none;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+  }
+
+  .messages-scroll {
+    gap: 10px;
+  }
+
+  @media (min-width: 769px) {
+    display: none;
+  }
+
+  @media (max-width: 390px) {
+    padding-inline: 10px;
+  }
+`;
+
+export const MobileDetailHeader = styled.header`
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 12px;
+  border: 1px solid rgba(0, 0, 128, 0.08);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+
+  .detail-title-block {
+    min-width: 0;
+  }
+
+  h1 {
+    margin: 0;
+    color: #000080;
+    font-size: clamp(18px, 5vw, 22px);
+    line-height: 1.2;
+    font-weight: 750;
+  }
+`;
+
+export const MobileBackButton = styled.button`
+  width: 40px;
+  height: 40px;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  background: #eff6ff;
+  color: #000080;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    transform: rotate(180deg);
+  }
+`;
+
+export const MobileDetailMeta = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.35;
+
+  span {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  span + span::before {
+    content: "•";
+    margin-right: 6px;
+    color: #94a3b8;
+  }
+`;
+
+export const MobileDetailEmpty = styled.div`
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px 12px;
+  text-align: center;
+  color: #64748b;
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .spinner {
+    width: 34px;
+    height: 34px;
+    border: 3px solid #dbeafe;
+    border-top-color: #000080;
+    border-radius: 50%;
+    animation: ${spin} 0.8s linear infinite;
   }
 `;
 

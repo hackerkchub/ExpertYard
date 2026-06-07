@@ -125,30 +125,67 @@ export const PageWrap = styled.div`
   }
 
   @media (max-width: 768px) {
-    padding: 10px 10px 84px;
+    min-height: auto;
+    width: 100%;
+    max-width: 100%;
+    padding: 10px 10px 8px;
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    margin-bottom: 0;
+    overflow-x: hidden;
+    overflow-y: visible;
+    overscroll-behavior-y: auto;
+    -webkit-overflow-scrolling: touch;
+    animation: none;
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
 
     .expert-profile-content-grid {
       grid-template-columns: 1fr;
       gap: 12px;
+      width: 100%;
+      max-width: 100%;
+      margin-bottom: 0;
+      overflow: visible;
     }
 
     .expert-profile-sidebar {
       position: static;
       gap: 12px;
+      width: 100%;
+      max-width: 100%;
+      margin-bottom: 0;
+      overflow: visible;
+    }
+
+    .expert-profile-main {
+      width: 100%;
+      max-width: 100%;
+      margin-bottom: 0;
+      padding-bottom: 0;
+      overflow: visible;
+    }
+
+    .expert-profile-main > *:last-child,
+    .expert-profile-sidebar > *:last-child {
+      margin-bottom: 0;
     }
 
     .mobile-profile-actions {
       position: fixed;
       left: 10px;
       right: 10px;
-      bottom: 10px;
-      z-index: 1100;
+      bottom: calc(var(--mobile-bottom-nav-reserved-space, 80px) + 6px);
+      z-index: 10005;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
       padding: 10px;
       border: 1px solid rgba(255, 255, 255, 0.55);
-      border-radius: 20px;
+      border-radius: 18px;
       background: rgba(255, 255, 255, 0.94);
       box-shadow: 0 18px 44px rgba(15, 23, 42, 0.18);
       backdrop-filter: blur(14px);
@@ -157,15 +194,20 @@ export const PageWrap = styled.div`
     }
 
     .mobile-profile-actions button {
-      min-height: 44px;
+      min-width: 0;
+      min-height: 46px;
       border: none;
       border-radius: 999px;
-      font-weight: 900;
+      font-size: 14px;
+      line-height: 1.2;
+      font-weight: 800;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
       cursor: pointer;
+      white-space: nowrap;
+      touch-action: manipulation;
     }
 
     .mobile-message-btn {
@@ -176,6 +218,25 @@ export const PageWrap = styled.div`
     .mobile-call-btn {
       background: linear-gradient(135deg, #ffd23f, #ffc107);
       color: #000080;
+    }
+  }
+
+  @media (max-width: 380px) {
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+
+    .mobile-profile-actions {
+      left: 8px;
+      right: 8px;
+      gap: 8px;
+      padding: 8px;
+      border-radius: 16px;
+    }
+
+    .mobile-profile-actions button {
+      min-height: 44px;
+      font-size: 13px;
     }
   }
 `;
@@ -213,13 +274,18 @@ export const ProfileCard = styled.div`
   }
 
   @media (max-width: 768px) {
-    border-radius: 22px;
-    padding: 18px 14px;
-    margin-bottom: 12px;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 18px;
+    padding: 16px 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 14px 34px rgba(0, 0, 128, 0.16);
 
     > div {
       grid-template-columns: 1fr;
-      gap: 16px;
+      gap: 14px;
+      width: 100%;
+      max-width: 100%;
     }
   }
 `;
@@ -233,8 +299,8 @@ export const LeftImage = styled.img`
   box-shadow: 0 18px 42px rgba(0,0,0,0.28);
   
   @media (max-width: 768px) {
-    width: 112px;
-    height: 112px;
+    width: 96px;
+    height: 96px;
     display: block;
     margin: 0 auto;
   }
@@ -260,9 +326,9 @@ export const AvatarFallback = styled.div`
   box-shadow: 0 18px 42px rgba(0,0,0,0.28);
 
   @media (max-width: 768px) {
-    width: 120px;
-    height: 120px;
-    font-size: 32px;
+    width: 100px;
+    height: 100px;
+    font-size: 30px;
     margin: 0 auto;
     display: flex;
   }
@@ -281,7 +347,8 @@ export const Name = styled.h1`
   flex-wrap: wrap;
   
   @media (max-width: 768px) { 
-    font-size: 24px;
+    font-size: clamp(18px, 6vw, 22px);
+    line-height: 1.22;
     justify-content: center;
     text-align: center; 
     margin-top: 0; 
@@ -306,7 +373,11 @@ export const Role = styled.p`
   color: rgba(255, 255, 255, 0.86);
   margin: 0 0 6px;
   font-weight: 600;
-  @media (max-width: 768px) { text-align: center; font-size: 14px; }
+  @media (max-width: 768px) {
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.4;
+  }
 `;
 
 export const Status = styled.div`
@@ -343,7 +414,8 @@ export const QuickStats = styled.div`
 
   @media (max-width: 768px) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
+    gap: 7px;
+    margin: 2px 0 12px;
   }
 `;
 
@@ -368,9 +440,11 @@ export const StatItem = styled.div`
   }
 
   @media (max-width: 768px) {
-    min-height: 54px;
-    padding: 9px 6px;
-    font-size: 11px;
+    min-height: 50px;
+    padding: 8px 5px;
+    font-size: 10.5px;
+    line-height: 1.3;
+    border-radius: 14px;
   }
 `;
 
@@ -379,7 +453,11 @@ export const TagList = styled.div`
   flex-wrap: wrap; 
   gap: 8px;
   margin: 12px 0;
-  @media (max-width: 768px) { justify-content: flex-start; }
+  @media (max-width: 768px) {
+    justify-content: center;
+    gap: 6px;
+    margin: 10px 0;
+  }
 `;
 
 export const Tag = styled.span`
@@ -394,6 +472,15 @@ export const Tag = styled.span`
   align-items: center;
   gap: 6px;
   white-space: nowrap;
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    padding: 6px 10px;
+    font-size: 11px;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 `;
 
 // --- Buttons & Price ---
@@ -406,6 +493,8 @@ export const CallToAction = styled.div`
   @media (max-width: 768px) { 
     width: 100%;
     max-width: none;
+    gap: 8px;
+    margin-top: 12px;
   }
 `;
 
@@ -431,6 +520,13 @@ export const ActionButton = styled.button`
   &:hover {
     transform: translateY(-1px);
     box-shadow: ${props => props.$primary ? "0 16px 30px rgba(255, 193, 7, 0.3)" : "0 14px 28px rgba(0, 0, 0, 0.16)"};
+  }
+
+  @media (max-width: 768px) {
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 14px;
+    line-height: 1.2;
   }
 `;
 
@@ -486,7 +582,15 @@ export const Section = styled.div`
   margin-bottom: 16px;
   scroll-margin-top: 96px;
   box-shadow: 0 14px 34px rgba(16, 24, 40, 0.08);
-  @media (max-width: 768px) { border-radius: 18px; padding: 16px; }
+  @media (max-width: 768px) {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 10px;
+    scroll-margin-top: 12px;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+  }
 `;
 
 export const SectionTitle = styled.h2`
@@ -494,12 +598,23 @@ export const SectionTitle = styled.h2`
   font-weight: 900;
   margin-bottom: 16px;
   color: #000080;
+
+  @media (max-width: 768px) {
+    margin-bottom: 10px;
+    font-size: 17px;
+    line-height: 1.25;
+  }
 `;
 
 export const SectionBody = styled.div`
   font-size: 15px;
   line-height: 1.7;
   color: #344054;
+
+  @media (max-width: 768px) {
+    font-size: 14px;
+    line-height: 1.55;
+  }
 `;
 
 // --- Reviews ---
@@ -509,6 +624,10 @@ export const ReviewHeader = styled.div`
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 18px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 12px;
+  }
 `;
 
 export const ReviewForm = styled.div`
@@ -519,6 +638,12 @@ export const ReviewForm = styled.div`
   border-radius: 20px;
   border: 1px solid #e5e7eb;
   margin-bottom: 24px;
+
+  @media (max-width: 768px) {
+    padding: 14px;
+    border-radius: 16px;
+    margin-bottom: 16px;
+  }
 `;
 
 export const ReviewFormTitle = styled.h3`
@@ -529,6 +654,12 @@ export const ReviewFormTitle = styled.h3`
   gap: 8px;
   color: #000080;
   font-weight: 900;
+
+  @media (max-width: 768px) {
+    margin-bottom: 12px;
+    font-size: 15px;
+    line-height: 1.3;
+  }
 `;
 
 export const RatingInput = styled.div`
@@ -536,9 +667,22 @@ export const RatingInput = styled.div`
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
+
+  @media (max-width: 768px) {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
 `;
 
-export const RatingLabel = styled.span` font-size: 14px; font-weight: 600; `;
+export const RatingLabel = styled.span`
+  font-size: 14px;
+  font-weight: 600;
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+  }
+`;
 
 export const StarRating = styled.div` display: flex; gap: 4px; `;
 
@@ -558,7 +702,17 @@ export const ReviewTextarea = styled.textarea`
   &:focus { border-color: #000080; outline: none; box-shadow: 0 0 0 4px rgba(0, 0, 128, 0.08); }
 `;
 
-export const FormActions = styled.div` display: flex; gap: 12px; align-items: center; `;
+export const FormActions = styled.div`
+  display: flex;
+  gap: 12px;
+  align-items: center;
+
+  @media (max-width: 768px) {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+`;
 
 export const SubmitButton = styled(ActionButton)`
   width: auto;
@@ -568,12 +722,26 @@ export const SubmitButton = styled(ActionButton)`
   box-shadow: 0 12px 24px rgba(0, 0, 128, 0.16);
   padding: 10px 20px; font-size: 14px;
   ${props => props.$disabled && css` background: #ccc; border-color: #ccc; cursor: not-allowed; `}
+
+  @media (max-width: 768px) {
+    width: 100%;
+    min-height: 44px;
+    font-size: 14px;
+  }
 `;
 
 export const DeleteButton = styled.button`
   background: transparent; border: none; color: #cc1016; font-size: 14px;
   font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;
   &:hover { text-decoration: underline; }
+
+  @media (max-width: 768px) {
+    min-height: 42px;
+    justify-content: center;
+    border: 1px solid rgba(204, 16, 22, 0.18);
+    border-radius: 999px;
+    background: #fff5f5;
+  }
 `;
 
 export const ReviewList = styled.div` display: flex; flex-direction: column; `;
@@ -585,21 +753,78 @@ export const ReviewItem = styled.div`
   background: #ffffff;
   margin-bottom: 12px;
   &:last-child { border-bottom: none; }
+
+  @media (max-width: 768px) {
+    padding: 12px;
+    border-radius: 14px;
+    margin-bottom: 10px;
+  }
 `;
 
-export const ReviewUser = styled.div` display: flex; gap: 12px; `;
+export const ReviewUser = styled.div`
+  display: flex;
+  gap: 12px;
+
+  @media (max-width: 768px) {
+    gap: 10px;
+  }
+`;
 
 export const UserAvatar = styled.div`
   width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #000080, #05044f);
   color: white; display: flex; align-items: center; justify-content: center;
   font-weight: 900; flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
 `;
 
-export const UserInfo = styled.div` flex: 1; `;
-export const UserName = styled.h4` font-size: 14px; font-weight: 900; margin: 0; color: #111827; `;
-export const ReviewMeta = styled.div` display: flex; align-items: center; gap: 8px; margin-top: 2px; `;
-export const ReviewDate = styled.span` font-size: 12px; color: #666; `;
-export const ReviewText = styled.p` font-size: 14px; color: #000000e6; margin-top: 8px; line-height: 1.4; `;
+export const UserInfo = styled.div`
+  min-width: 0;
+  flex: 1;
+`;
+export const UserName = styled.h4`
+  font-size: 14px;
+  font-weight: 900;
+  margin: 0;
+  color: #111827;
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+    line-height: 1.3;
+  }
+`;
+export const ReviewMeta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+
+  @media (max-width: 768px) {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+`;
+export const ReviewDate = styled.span`
+  font-size: 12px;
+  color: #666;
+`;
+export const ReviewText = styled.p`
+  font-size: 14px;
+  color: #000000e6;
+  margin-top: 8px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+`;
 
 export const ViewAllButton = styled.button`
   width: 100%; padding: 12px; background: transparent; border: none;
@@ -654,7 +879,10 @@ export const TabContainer = styled.div`
   }
   
   @media (max-width: 768px) {
+    width: 100%;
+    max-width: 100%;
     gap: 4px;
+    margin-bottom: 14px;
   }
 `;
 
@@ -692,13 +920,22 @@ export const TabButton = styled.button`
   `}
   
   @media (max-width: 768px) {
-    padding: 8px 16px;
+    flex: 0 0 auto;
+    min-height: 40px;
+    padding: 8px 14px;
     font-size: 13px;
+    font-weight: 800;
   }
 `;
 
 export const TabContent = styled.div`
   animation: ${fadeIn} 0.3s ease-out;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+  }
 `;
 
 export const InfoGrid = styled.div`
@@ -708,7 +945,7 @@ export const InfoGrid = styled.div`
   
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 10px;
   }
 `;
 
@@ -719,6 +956,11 @@ export const InfoItem = styled.div`
   padding: 16px;
   border-radius: 18px;
   border: 1px solid #e5e7eb;
+
+  @media (max-width: 768px) {
+    padding: 12px;
+    border-radius: 14px;
+  }
 `;
 
 export const InfoLabel = styled.div`
@@ -728,12 +970,19 @@ export const InfoLabel = styled.div`
   color: #000080;
   letter-spacing: 0.5px;
   margin-bottom: 8px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 6px;
+    font-size: 11px;
+    line-height: 1.3;
+  }
 `;
 
 export const InfoValue = styled.div`
   font-size: 14px;
   color: #344054;
   line-height: 1.65;
+  overflow-wrap: anywhere;
   
   div {
     margin-bottom: 4px;
@@ -741,6 +990,11 @@ export const InfoValue = styled.div`
     &:last-child {
       margin-bottom: 0;
     }
+  }
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+    line-height: 1.5;
   }
 `;
 
@@ -760,6 +1014,12 @@ export const ExperienceCard = styled.div`
   &:last-child {
     margin-bottom: 0;
   }
+
+  @media (max-width: 768px) {
+    padding: 14px;
+    border-radius: 14px;
+    margin-bottom: 10px;
+  }
 `;
 
 export const ExperienceHeader = styled.div`
@@ -771,12 +1031,22 @@ export const ExperienceTitle = styled.h3`
   font-weight: 900;
   color: #000080;
   margin: 0 0 4px 0;
+
+  @media (max-width: 768px) {
+    font-size: 15px;
+    line-height: 1.3;
+  }
 `;
 
 export const ExperienceCompany = styled.div`
   font-size: 14px;
   color: #344054;
   font-weight: 700;
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+    line-height: 1.4;
+  }
 `;
 
 export const ExperienceDate = styled.div`
@@ -811,7 +1081,7 @@ export const PostGrid = styled.div`
   
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 12px;
   }
 `;
 
@@ -828,10 +1098,19 @@ export const PostCard = styled.div`
     transform: translateY(-2px);
     box-shadow: 0 16px 34px rgba(16, 24, 40, 0.12);
   }
+
+  @media (max-width: 768px) {
+    border-radius: 14px;
+    box-shadow: 0 8px 18px rgba(16, 24, 40, 0.05);
+  }
 `;
 
 export const PostHeader = styled.div`
   padding: 16px 16px 8px 16px;
+
+  @media (max-width: 768px) {
+    padding: 12px 12px 6px;
+  }
 `;
 
 export const PostTitle = styled.h3`
@@ -843,6 +1122,11 @@ export const PostTitle = styled.h3`
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+
+  @media (max-width: 768px) {
+    font-size: 15px;
+    line-height: 1.3;
+  }
 `;
 
 export const PostDescription = styled.p`
@@ -854,6 +1138,12 @@ export const PostDescription = styled.p`
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+
+  @media (max-width: 768px) {
+    margin: 0 12px 10px;
+    font-size: 13px;
+    line-height: 1.45;
+  }
 `;
 
 export const PostImage = styled.img`
@@ -861,6 +1151,10 @@ export const PostImage = styled.img`
   height: 220px;
   object-fit: cover;
   background: #f8fafc;
+
+  @media (max-width: 768px) {
+    height: 190px;
+  }
 `;
 
 export const PostStats = styled.div`
@@ -884,6 +1178,10 @@ export const PostActions = styled.div`
   display: flex;
   gap: 8px;
   padding: 12px 16px;
+
+  @media (max-width: 768px) {
+    padding: 10px 12px;
+  }
 `;
 
 export const PostActionBtn = styled.button`
@@ -952,6 +1250,11 @@ export const InlineInput = styled.input`
   
   &:focus {
     border-color: #000080;
+  }
+
+  @media (max-width: 768px) {
+    min-width: 0;
+    font-size: 13px;
   }
 `;
 
@@ -1035,6 +1338,12 @@ export const PlansContainer = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
   margin-top: 20px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 14px;
+  }
 `;
 
 export const PlanCard = styled.div`
@@ -1047,6 +1356,15 @@ export const PlanCard = styled.div`
   &:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    border-radius: 14px;
+
+    &:hover {
+      transform: none;
+    }
   }
 `;
 
@@ -1061,6 +1379,10 @@ export const PlanName = styled.h3`
   margin: 0 0 8px 0;
   color: #000080;
   font-size: 20px;
+
+  @media (max-width: 768px) {
+    font-size: 17px;
+  }
 `;
 
 export const PlanPrice = styled.div`
@@ -1068,6 +1390,10 @@ export const PlanPrice = styled.div`
   font-weight: 700;
   color: #000080;
   margin: 8px 0;
+
+  @media (max-width: 768px) {
+    font-size: 24px;
+  }
 `;
 
 export const PlanDuration = styled.div`
@@ -1088,6 +1414,11 @@ export const PlanFeature = styled.li`
   padding: 8px 0;
   color: #334155;
   font-size: 14px;
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+    line-height: 1.4;
+  }
 `;
 
 export const SubscribeButton = styled.button`
@@ -1112,6 +1443,11 @@ export const SubscribeButton = styled.button`
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+  }
+
+  @media (max-width: 768px) {
+    min-height: 44px;
+    font-size: 14px;
   }
 `;
 
@@ -1258,6 +1594,12 @@ export const PricingModeTabs = styled.div`
   gap: 8px;
   margin-bottom: 12px;
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
 `;
 
 export const PricingModeTab = styled.button`
@@ -1277,6 +1619,12 @@ export const PricingModeTab = styled.button`
   &:hover {
     border-color: #ffc107;
   }
+
+  @media (max-width: 768px) {
+    min-height: 36px;
+    padding: 7px 11px;
+    font-size: 12px;
+  }
 `;
 
 export const PricingInfo = styled.div`
@@ -1284,4 +1632,10 @@ export const PricingInfo = styled.div`
   color: rgba(255, 255, 255, 0.84);
   padding: 8px 0;
   font-weight: 700;
+
+  @media (max-width: 768px) {
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.4;
+  }
 `;

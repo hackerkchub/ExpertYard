@@ -449,7 +449,7 @@ const UserProfile = () => {
                     {userData.referral_code && (
                       <ReferralBadge>
                         <Typography variant="body2" color="textSecondary">
-                          🔗 Referral Code: {userData.referral_code}
+                          Referral Code: {userData.referral_code}
                         </Typography>
                       </ReferralBadge>
                     )}
@@ -552,14 +552,14 @@ const UserProfile = () => {
                         $verified={!needsVerification.email}
                         fullWidth
                       >
-                        {!needsVerification.email ? "✓ Verified" : 
+                        {!needsVerification.email ? "Verified" : 
                          loadingType === "email" ? "Sending..." : "Verify Email"}
                       </VerifyButton>
                     </Grid>
                   </Grid>
                   {needsVerification.email && editForm.email !== originalForm.email && (
                     <Typography variant="caption" color="warning.main" sx={{ mt: 1, display: 'block' }}>
-                      ⚠️ You need to verify this new email address before saving
+                      Verify this new email address before saving
                     </Typography>
                   )}
                 </Grid>
@@ -592,14 +592,14 @@ const UserProfile = () => {
                         $verified={!needsVerification.phone}
                         fullWidth
                       >
-                        {!needsVerification.phone ? "✓ Verified" : 
+                        {!needsVerification.phone ? "Verified" : 
                          loadingType === "phone" ? "Sending..." : "Verify Phone"}
                       </VerifyButton>
                     </Grid>
                   </Grid>
                   {needsVerification.phone && editForm.phone !== originalForm.phone && (
                     <Typography variant="caption" color="warning.main" sx={{ mt: 1, display: 'block' }}>
-                      ⚠️ You need to verify this new phone number before saving
+                      Verify this new phone number before saving
                     </Typography>
                   )}
                 </Grid>
@@ -634,7 +634,7 @@ const UserProfile = () => {
           aria-labelledby="delete-dialog-title"
         >
           <DialogTitleStyled id="delete-dialog-title">
-            ⚠️ Delete Account?
+            Delete Account?
           </DialogTitleStyled>
           <DialogContentStyled>
             <DialogContentText>
@@ -666,7 +666,7 @@ const UserProfile = () => {
           aria-labelledby="signout-dialog-title"
         >
           <DialogTitleStyled id="signout-dialog-title" sx={{ color: '#ed6c02 !important' }}>
-            🔓 Sign Out?
+            Sign Out?
           </DialogTitleStyled>
           <DialogContentStyled>
             <DialogContentText>

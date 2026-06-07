@@ -237,14 +237,14 @@ const SearchResultsPage = () => {
   return (
     <main className="search-page">
       <section className="search-page-hero">
-        <span>G9 Experts Search</span>
-        <h1>Find verified experts, categories, and services</h1>
+        <span>Search</span>
+        <h1>Search G9 Experts</h1>
         <form className="search-page-form" onSubmit={handleSubmit}>
           <FiSearch aria-hidden="true" />
           <input
             value={queryInput}
             onChange={(event) => setQueryInput(event.target.value)}
-            placeholder="Search doctor, lawyer, career, loan..."
+            placeholder="Search experts, services, categories..."
             aria-label="Search G9 Experts"
           />
           <button type="submit">Search</button>

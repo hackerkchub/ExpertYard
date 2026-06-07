@@ -1,25 +1,25 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
-  Grid2X2,
+  BriefcaseBusiness,
   History,
   Home,
-  MessageCircle,
-  Tag
+  Sparkles,
+  UserRound
 } from 'lucide-react';
 import "./BottomNavbar.css";
 
 const BottomNavbar = () => {
   const menuItems = [
     { name: 'Home', path: '/user', icon: <Home size={21} />, end: true },
-    { name: 'Category', path: '/user/categories', icon: <Grid2X2 size={21} /> },
-    { name: 'Services', path: '/user/all-services', icon: <Tag size={21} /> },
+    { name: 'Services', path: '/user/all-services', icon: <BriefcaseBusiness size={21} /> },
+    { name: 'Categories', path: '/user/categories', icon: <Sparkles size={24} />, featured: true },
     { name: 'History', path: '/user/chat-history', icon: <History size={21} /> },
-    { name: 'Chat', path: '/user/chat', icon: <MessageCircle size={21} /> },
+    { name: 'Profile', path: '/user/user-profile', icon: <UserRound size={21} /> },
   ];
 
   return (
-    <nav className="bottom-nav">
+    <nav className="bottom-nav" aria-label="Primary mobile navigation">
       {menuItems.map((item) => (
         <NavLink 
           key={item.name} 
@@ -27,10 +27,12 @@ const BottomNavbar = () => {
           className={({ isActive }) =>
             [
               'nav-item',
+              item.featured ? 'nav-item--featured' : '',
               isActive ? 'active' : '',
             ].filter(Boolean).join(' ')
           }
           end={item.end}
+          aria-label={item.name}
         >
           <div className="icon-wrapper">{item.icon}</div>
           <span className="nav-label">{item.name}</span>

@@ -183,9 +183,9 @@ export const PageWrap = styled.div`
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
-      padding: 10px;
+      padding: 8px;
       border: 1px solid rgba(255, 255, 255, 0.55);
-      border-radius: 18px;
+      border-radius: 16px;
       background: rgba(255, 255, 255, 0.94);
       box-shadow: 0 18px 44px rgba(15, 23, 42, 0.18);
       backdrop-filter: blur(14px);
@@ -195,7 +195,7 @@ export const PageWrap = styled.div`
 
     .mobile-profile-actions button {
       min-width: 0;
-      min-height: 46px;
+      min-height: 48px;
       border: none;
       border-radius: 999px;
       font-size: 14px;
@@ -235,7 +235,7 @@ export const PageWrap = styled.div`
     }
 
     .mobile-profile-actions button {
-      min-height: 44px;
+      min-height: 46px;
       font-size: 13px;
     }
   }
@@ -277,15 +277,74 @@ export const ProfileCard = styled.div`
     width: 100%;
     max-width: 100%;
     border-radius: 18px;
-    padding: 16px 12px;
+    padding: 12px;
     margin-bottom: 10px;
     box-shadow: 0 14px 34px rgba(0, 0, 128, 0.16);
 
-    > div {
-      grid-template-columns: 1fr;
-      gap: 14px;
+    > div,
+    .expert-profile-hero-inner {
+      display: grid !important;
+      grid-template-columns: 94px minmax(0, 1fr);
+      align-items: start;
+      gap: 12px;
       width: 100%;
       max-width: 100%;
+    }
+
+    .expert-profile-hero-media {
+      flex: initial !important;
+      width: 94px;
+      min-width: 0;
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+      text-align: center;
+    }
+
+    .expert-profile-follow-wrap {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .expert-profile-hero-info {
+      flex: initial !important;
+      min-width: 0;
+      width: 100%;
+      display: grid;
+      gap: 8px;
+    }
+
+    .expert-profile-hero-top {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .expert-profile-identity {
+      min-width: 0;
+      display: grid;
+      justify-items: start;
+      gap: 4px;
+    }
+
+    .expert-profile-pricing-summary {
+      grid-column: 1 / -1;
+      margin: 4px 0 0 !important;
+    }
+  }
+
+  @media (max-width: 360px) {
+    > div,
+    .expert-profile-hero-inner {
+      grid-template-columns: 86px minmax(0, 1fr);
+      gap: 10px;
+    }
+
+    .expert-profile-hero-media {
+      width: 86px;
     }
   }
 `;
@@ -299,10 +358,16 @@ export const LeftImage = styled.img`
   box-shadow: 0 18px 42px rgba(0,0,0,0.28);
   
   @media (max-width: 768px) {
-    width: 96px;
-    height: 96px;
+    width: 88px;
+    height: 88px;
     display: block;
     margin: 0 auto;
+    border-width: 3px;
+  }
+
+  @media (max-width: 360px) {
+    width: 82px;
+    height: 82px;
   }
 `;
 
@@ -326,11 +391,18 @@ export const AvatarFallback = styled.div`
   box-shadow: 0 18px 42px rgba(0,0,0,0.28);
 
   @media (max-width: 768px) {
-    width: 100px;
-    height: 100px;
-    font-size: 30px;
+    width: 88px;
+    height: 88px;
+    font-size: 28px;
     margin: 0 auto;
     display: flex;
+    border-width: 3px;
+  }
+
+  @media (max-width: 360px) {
+    width: 82px;
+    height: 82px;
+    font-size: 26px;
   }
 `;
 
@@ -349,9 +421,11 @@ export const Name = styled.h1`
   @media (max-width: 768px) { 
     font-size: clamp(18px, 6vw, 22px);
     line-height: 1.22;
-    justify-content: center;
-    text-align: center; 
+    justify-content: flex-start;
+    text-align: left; 
     margin-top: 0; 
+    margin-bottom: 0;
+    gap: 6px;
   }
 `;
 
@@ -374,9 +448,11 @@ export const Role = styled.p`
   margin: 0 0 6px;
   font-weight: 600;
   @media (max-width: 768px) {
-    text-align: center;
-    font-size: 13px;
+    text-align: left;
+    font-size: 13.5px;
     line-height: 1.4;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.82);
   }
 `;
 
@@ -395,9 +471,11 @@ export const Status = styled.div`
   @media (max-width: 768px) {
     display: flex;
     width: fit-content;
-    margin: 0 auto 12px;
-    text-align: center;
+    margin: 0;
+    text-align: left;
     font-size: 12px;
+    min-height: 26px;
+    padding: 4px 9px;
   }
 `;
 
@@ -413,9 +491,10 @@ export const QuickStats = styled.div`
   }
 
   @media (max-width: 768px) {
+    grid-column: 1 / -1;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 7px;
-    margin: 2px 0 12px;
+    gap: 6px;
+    margin: 2px 0 4px;
   }
 `;
 
@@ -440,11 +519,11 @@ export const StatItem = styled.div`
   }
 
   @media (max-width: 768px) {
-    min-height: 50px;
-    padding: 8px 5px;
-    font-size: 10.5px;
+    min-height: 42px;
+    padding: 7px 5px;
+    font-size: 10px;
     line-height: 1.3;
-    border-radius: 14px;
+    border-radius: 12px;
   }
 `;
 
@@ -454,9 +533,10 @@ export const TagList = styled.div`
   gap: 8px;
   margin: 12px 0;
   @media (max-width: 768px) {
-    justify-content: center;
+    grid-column: 1 / -1;
+    justify-content: flex-start;
     gap: 6px;
-    margin: 10px 0;
+    margin: 4px 0 0;
   }
 `;
 
@@ -491,10 +571,7 @@ export const CallToAction = styled.div`
   margin-top: 15px;
   max-width: 560px;
   @media (max-width: 768px) { 
-    width: 100%;
-    max-width: none;
-    gap: 8px;
-    margin-top: 12px;
+    display: none;
   }
 `;
 
@@ -570,6 +647,12 @@ export const FollowButton = styled.button`
 
   @media (max-width: 768px) {
     margin: 10px auto 0;
+    width: 100%;
+    min-height: 34px;
+    padding: 7px 8px;
+    font-size: 12px;
+    line-height: 1.1;
+    font-weight: 800;
   }
 `;
 
@@ -1320,6 +1403,13 @@ export const SubscriptionCard = styled.div`
   padding: 20px;
   margin-top: 20px;
   color: white;
+
+  @media (max-width: 768px) {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+    padding: 12px;
+    border-radius: 14px;
+  }
 `;
 
 export const SubscriptionBadge = styled.div`
@@ -1457,6 +1547,13 @@ export const ActiveSubscriptionCard = styled.div`
   border-radius: 12px;
   padding: 16px;
   margin-top: 16px;
+
+  @media (max-width: 768px) {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+    padding: 12px;
+    border-radius: 12px;
+  }
 `;
 
 export const SubscriptionInfo = styled.div`
@@ -1596,9 +1693,9 @@ export const PricingModeTabs = styled.div`
   flex-wrap: wrap;
 
   @media (max-width: 768px) {
-    justify-content: center;
+    justify-content: flex-start;
     gap: 6px;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
   }
 `;
 
@@ -1624,6 +1721,7 @@ export const PricingModeTab = styled.button`
     min-height: 36px;
     padding: 7px 11px;
     font-size: 12px;
+    font-weight: 800;
   }
 `;
 
@@ -1634,8 +1732,9 @@ export const PricingInfo = styled.div`
   font-weight: 700;
 
   @media (max-width: 768px) {
-    text-align: center;
+    text-align: left;
     font-size: 12px;
     line-height: 1.4;
+    padding: 4px 0;
   }
 `;

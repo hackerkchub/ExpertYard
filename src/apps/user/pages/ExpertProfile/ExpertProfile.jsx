@@ -1049,14 +1049,14 @@ const ExpertProfilePage = () => {
       
       <PageWrap>
         <ProfileCard>
-          <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-            <div style={{ flex: '0 0 200px' }}>
+          <div className="expert-profile-hero-inner" style={{ display: 'flex', flexWrap: 'wrap' }}>
+            <div className="expert-profile-hero-media" style={{ flex: '0 0 200px' }}>
               {profile.profile_photo ? (
                 <LeftImage src={profile.profile_photo} alt="Profile" />
               ) : (
                 <AvatarFallback>{getInitials(profile.name)}</AvatarFallback>
               )}
-              <div>
+              <div className="expert-profile-follow-wrap">
                 {!following ? (
                   <FollowButton onClick={handleFollowAction}><FiUserPlus /> {t("expertProfile.follow")}</FollowButton>
                 ) : (
@@ -1065,9 +1065,9 @@ const ExpertProfilePage = () => {
               </div>
             </div>
 
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-                <div>
+            <div className="expert-profile-hero-info" style={{ flex: 1 }}>
+              <div className="expert-profile-hero-top" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                <div className="expert-profile-identity">
                   <Name>{profile.name} <VerifiedBadge><FiUserCheck size={14} /> Verified</VerifiedBadge></Name>
                   <Role>{profile.position || "Expert"}</Role>
                   <Status $online={isExpertOnline}>{isExpertOnline ? "🟢 Available Now" : "🔴 Offline"}</Status>
@@ -1087,7 +1087,7 @@ const ExpertProfilePage = () => {
 
               {/* Pricing Mode Selection Tabs */}
               {availablePricingModes.length > 0 && !hasActiveSubscription && (
-                <div style={{ marginBottom: 20 }}>
+                <div className="expert-profile-pricing-summary" style={{ marginBottom: 20 }}>
                   <PricingModeTabs>
                     {availablePricingModes.map((mode) => (
                       <PricingModeTab

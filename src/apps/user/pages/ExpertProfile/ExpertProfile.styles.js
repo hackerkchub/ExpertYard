@@ -129,7 +129,7 @@ export const PageWrap = styled.div`
     width: 100%;
     max-width: 100%;
     padding: 10px 10px 8px;
-    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
     margin-bottom: 0;
     overflow-x: hidden;
     overflow-y: visible;
@@ -161,6 +161,10 @@ export const PageWrap = styled.div`
       overflow: visible;
     }
 
+    .consult-card {
+      display: none;
+    }
+
     .expert-profile-main {
       width: 100%;
       max-width: 100%;
@@ -183,19 +187,20 @@ export const PageWrap = styled.div`
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
-      padding: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.55);
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.94);
-      box-shadow: 0 18px 44px rgba(15, 23, 42, 0.18);
-      backdrop-filter: blur(14px);
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
       transform: translateZ(0);
       will-change: transform;
+      pointer-events: none;
     }
 
     .mobile-profile-actions button {
       min-width: 0;
-      min-height: 48px;
+      min-height: 50px;
       border: none;
       border-radius: 999px;
       font-size: 14px;
@@ -204,39 +209,53 @@ export const PageWrap = styled.div`
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
       cursor: pointer;
       white-space: nowrap;
       touch-action: manipulation;
+      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.18);
+      pointer-events: auto;
+    }
+
+    .mobile-profile-actions button strong {
+      font-size: 12px;
+      font-weight: 900;
+      opacity: 0.94;
     }
 
     .mobile-message-btn {
-      background: #000080;
+      background: linear-gradient(135deg, #000080, #2563eb);
       color: #ffffff;
     }
 
     .mobile-call-btn {
       background: linear-gradient(135deg, #ffd23f, #ffc107);
       color: #000080;
+      box-shadow: 0 12px 24px rgba(255, 193, 7, 0.24);
     }
   }
 
   @media (max-width: 380px) {
     padding-left: 8px;
     padding-right: 8px;
-    padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px));
 
     .mobile-profile-actions {
       left: 8px;
       right: 8px;
       gap: 8px;
-      padding: 8px;
+      padding: 0;
       border-radius: 16px;
     }
 
     .mobile-profile-actions button {
-      min-height: 46px;
+      min-height: 48px;
       font-size: 13px;
+      gap: 5px;
+    }
+
+    .mobile-profile-actions button strong {
+      font-size: 11px;
     }
   }
 `;
@@ -701,7 +720,11 @@ export const SectionBody = styled.div`
 `;
 
 // --- Reviews ---
-export const ReviewSection = styled(Section)``;
+export const ReviewSection = styled(Section)`
+  @media (max-width: 768px) {
+    padding: 12px;
+  }
+`;
 export const ReviewHeader = styled.div`
   display: flex;
   justify-content: space-between;
@@ -709,7 +732,7 @@ export const ReviewHeader = styled.div`
   margin-bottom: 18px;
 
   @media (max-width: 768px) {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
 `;
 
@@ -723,9 +746,9 @@ export const ReviewForm = styled.div`
   margin-bottom: 24px;
 
   @media (max-width: 768px) {
-    padding: 14px;
-    border-radius: 16px;
-    margin-bottom: 16px;
+    padding: 10px;
+    border-radius: 14px;
+    margin-bottom: 12px;
   }
 `;
 
@@ -739,8 +762,8 @@ export const ReviewFormTitle = styled.h3`
   font-weight: 900;
 
   @media (max-width: 768px) {
-    margin-bottom: 12px;
-    font-size: 15px;
+    margin-bottom: 8px;
+    font-size: 14px;
     line-height: 1.3;
   }
 `;
@@ -752,9 +775,10 @@ export const RatingInput = styled.div`
   margin-bottom: 12px;
 
   @media (max-width: 768px) {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
     gap: 8px;
+    margin-bottom: 8px;
   }
 `;
 
@@ -763,26 +787,56 @@ export const RatingLabel = styled.span`
   font-weight: 600;
 
   @media (max-width: 768px) {
-    font-size: 13px;
+    font-size: 12px;
+    font-weight: 700;
   }
 `;
 
-export const StarRating = styled.div` display: flex; gap: 4px; `;
+export const StarRating = styled.div`
+  display: flex;
+  gap: 4px;
+
+  @media (max-width: 768px) {
+    gap: 2px;
+  }
+`;
 
 export const Star = styled.button`
   background: none; border: none; cursor: pointer; font-size: 22px;
   color: ${props => props.$filled ? "#f59e0b" : "#d1d5db"};
   transition: transform 0.1s;
   &:hover { transform: scale(1.1); }
+
+  @media (max-width: 768px) {
+    font-size: 19px;
+    padding: 2px;
+  }
 `;
 
-export const TextAreaContainer = styled.div` position: relative; margin-bottom: 12px; `;
+export const TextAreaContainer = styled.div`
+  position: relative;
+  margin-bottom: 12px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 8px;
+  }
+`;
 
 export const ReviewTextarea = styled.textarea`
   width: 100%; padding: 13px 14px; border: 1px solid #d0d5dd; border-radius: 14px;
   font-family: inherit; font-size: 14px; resize: vertical;
   box-sizing: border-box;
   &:focus { border-color: #000080; outline: none; box-shadow: 0 0 0 4px rgba(0, 0, 128, 0.08); }
+
+  @media (max-width: 768px) {
+    min-height: 74px;
+    max-height: 104px;
+    padding: 10px 11px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.4;
+    resize: none;
+  }
 `;
 
 export const FormActions = styled.div`
@@ -792,8 +846,9 @@ export const FormActions = styled.div`
 
   @media (max-width: 768px) {
     align-items: stretch;
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: 8px;
   }
 `;
 
@@ -807,9 +862,10 @@ export const SubmitButton = styled(ActionButton)`
   ${props => props.$disabled && css` background: #ccc; border-color: #ccc; cursor: not-allowed; `}
 
   @media (max-width: 768px) {
-    width: 100%;
-    min-height: 44px;
-    font-size: 14px;
+    width: auto;
+    min-height: 38px;
+    padding: 8px 14px;
+    font-size: 13px;
   }
 `;
 
@@ -819,11 +875,13 @@ export const DeleteButton = styled.button`
   &:hover { text-decoration: underline; }
 
   @media (max-width: 768px) {
-    min-height: 42px;
+    min-height: 38px;
+    padding: 8px 12px;
     justify-content: center;
     border: 1px solid rgba(204, 16, 22, 0.18);
     border-radius: 999px;
     background: #fff5f5;
+    font-size: 13px;
   }
 `;
 
@@ -923,7 +981,21 @@ export const LoginButton = styled(ActionButton)` margin: 0 auto; font-size: 14px
 export const CharCount = styled.div` font-size: 12px; color: #666; text-align: right; margin-top: 4px; `;
 export const ExpertiseGrid = styled.div` display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px; `;
 export const ExpertiseCard = styled.div` background: #f9f9f9; padding: 16px; border-radius: 8px; border: 1px solid #eee; `;
-export const RecentReviewsTitle = styled.h3` font-size: 16px; font-weight: 900; margin: 24px 0 16px; display: flex; align-items: center; gap: 8px; color: #000080; `;
+export const RecentReviewsTitle = styled.h3`
+  font-size: 16px;
+  font-weight: 900;
+  margin: 24px 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #000080;
+
+  @media (max-width: 768px) {
+    margin: 14px 0 10px;
+    font-size: 15px;
+    line-height: 1.25;
+  }
+`;
 export const LoadingReviews = styled.div` text-align: center; padding: 40px 0; color: #667085; `;
 export const NoReviews = styled.div` text-align: center; padding: 40px 0; color: #667085; h4 { margin: 12px 0 4px; color: #111827; } `;
 

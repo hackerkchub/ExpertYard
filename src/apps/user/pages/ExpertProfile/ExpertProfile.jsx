@@ -1413,8 +1413,16 @@ const ExpertProfilePage = () => {
         </div>
 
         <div className="mobile-profile-actions">
-          <button type="button" className="mobile-message-btn" onClick={() => handleStart("chat")}><FiMessageSquare /> Message</button>
-          <button type="button" className="mobile-call-btn" onClick={() => handleStart("call")}><FiPhoneCall /> Call Now</button>
+          <button type="button" className="mobile-message-btn" onClick={() => handleStart("chat")}>
+            <FiMessageSquare />
+            <span>Chat</span>
+            <strong>{hasActiveSubscription ? "Free" : `₹${currentPricingInfo.price}/min`}</strong>
+          </button>
+          <button type="button" className="mobile-call-btn" onClick={() => handleStart("call")}>
+            <FiPhoneCall />
+            <span>Call</span>
+            <strong>{hasActiveSubscription ? "Free" : `₹${currentPricingInfo.callPrice}/min`}</strong>
+          </button>
         </div>
 
         {/* Subscription Plans Modal */}

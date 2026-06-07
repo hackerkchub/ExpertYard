@@ -6,6 +6,7 @@ import {
   Card,
   BrandMark,
   Caption,
+  LoginTrustLine,
   SubCaption,
   BadgeRow,
   Badge,
@@ -33,6 +34,7 @@ import {
   FiUser,
   FiPhone,
   FiCheckCircle,
+  FiShield,
   FiEye,
   FiEyeOff,
 } from "react-icons/fi";
@@ -468,6 +470,12 @@ const UserAuth = () => {
       <Card>
         <BrandMark src={logo} alt="G9 Expert logo" />
         <Caption>{isForgotMode ? "Forgot Password" : "Welcome Back"}</Caption>
+        {!isForgotMode && activeTab === "login" && (
+          <LoginTrustLine>
+            <FiShield aria-hidden="true" />
+            Trusted by 1L+ users and 10K+ verified experts
+          </LoginTrustLine>
+        )}
         <SubCaption>
           {isForgotMode
             ? "Securely reset your account access and get back in."

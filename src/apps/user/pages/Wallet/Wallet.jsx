@@ -12,6 +12,7 @@ import {
 } from "./Wallet.styles";
 
 import AddBalancePopup from "../../components/AddBalancePopup/AddBalancePopup";
+import MobileSelect from "../../components/MobileSelect/MobileSelect";
 import { useWallet } from "../../../../shared/context/WalletContext";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { getWalletHistoryApi } from "../../../../shared/api/userApi/walletApi";
@@ -20,6 +21,13 @@ import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 const formatCurrency = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(amount);
 
 const formatDate = (dateString) => new Date(dateString).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+const DATE_FILTER_OPTIONS = [
+  { value: "all", label: "All Time" },
+  { value: "today", label: "Today" },
+  { value: "week", label: "Last 7 Days" },
+  { value: "month", label: "Last 30 Days" },
+  { value: "custom", label: "Custom Range" },
+];
 
 // Service type icons mapping for expenses
 const getServiceIcon = (serviceType) => {
@@ -223,6 +231,14 @@ const WalletPage = () => {
     });
     return Array.from(services);
   };
+  const serviceTypes = getServiceTypes();
+  const serviceFilterOptions = [
+    { value: "all", label: "All Services" },
+    ...(serviceTypes.includes('call') ? [{ value: "call", label: "Call" }] : []),
+    ...(serviceTypes.includes('chat') ? [{ value: "chat", label: "Chat" }] : []),
+    ...(serviceTypes.includes('service_booking') ? [{ value: "service_booking", label: "Service Booking" }] : []),
+    ...(serviceTypes.includes('other') ? [{ value: "other", label: "Other" }] : []),
+  ];
 
   if (loading) return <PageWrap><LoadingState>Loading...</LoadingState></PageWrap>;
 
@@ -294,36 +310,28 @@ const WalletPage = () => {
               {/* Service Type Filter */}
               <div style={{ flex: 1, minWidth: '150px' }}>
                 <label style={{ fontSize: '12px', color: '#718096', display: 'block', marginBottom: '5px' }}>Service Type</label>
-                <select 
-                  value={serviceFilter} 
+                <MobileSelect
+                  title="Select Service Type"
+                  value={serviceFilter}
                   onChange={(e) => setServiceFilter(e.target.value)}
+                  options={serviceFilterOptions}
                   style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
-                >
-                  <option value="all">All Services</option>
-                  {getServiceTypes().includes('call') && <option value="call">📞 Call</option>}
-                  {getServiceTypes().includes('chat') && <option value="chat">💬 Chat</option>}
-                  {getServiceTypes().includes('service_booking') && <option value="service_booking">🛎️ Service Booking</option>}
-                  {getServiceTypes().includes('other') && <option value="other">❓ Other</option>}
-                </select>
+                />
               </div>
 
               {/* Date Filter */}
               <div style={{ flex: 1, minWidth: '150px' }}>
                 <label style={{ fontSize: '12px', color: '#718096', display: 'block', marginBottom: '5px' }}>Date Range</label>
-                <select 
-                  value={dateFilter} 
+                <MobileSelect
+                  title="Select Date Range"
+                  value={dateFilter}
                   onChange={(e) => {
                     setDateFilter(e.target.value);
                     setShowCustomDatePicker(e.target.value === 'custom');
                   }}
+                  options={DATE_FILTER_OPTIONS}
                   style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
-                >
-                  <option value="all">All Time</option>
-                  <option value="today">Today</option>
-                  <option value="week">Last 7 Days</option>
-                  <option value="month">Last 30 Days</option>
-                  <option value="custom">Custom Range</option>
-                </select>
+                />
               </div>
 
               {/* Custom Date Picker */}

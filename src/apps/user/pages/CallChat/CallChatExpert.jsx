@@ -48,6 +48,7 @@ import {
 } from "./CallChatExpert.styles";
 
 import ExpertCard from "../../components/userExperts/ExpertCard";
+import MobileSelect from "../../components/MobileSelect/MobileSelect";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
 import { socket } from "../../../../shared/api/socket"; // Only for online/offline status
@@ -92,6 +93,25 @@ const sortOptions = [
   { value: "price_desc", label: "Price: High to Low" },
   { value: "rating_desc", label: "Rating: High to Low" },
   { value: "rating_asc", label: "Rating: Low to High" },
+];
+const minPriceOptions = [
+  { value: "", label: "No minimum" },
+  { value: "10", label: "From Rs 10" },
+  { value: "30", label: "From Rs 30" },
+  { value: "50", label: "From Rs 50" },
+  { value: "100", label: "From Rs 100" },
+];
+const experienceOptions = [
+  { value: "", label: "Any experience" },
+  { value: "1", label: "1+ years" },
+  { value: "3", label: "3+ years" },
+  { value: "5", label: "5+ years" },
+  { value: "10", label: "10+ years" },
+];
+const statusOptions = [
+  { value: "", label: "Any status" },
+  { value: "online", label: "Online now" },
+  { value: "available", label: "Available" },
 ];
 
 const getParam = (params, ...keys) => {
@@ -908,9 +928,15 @@ export default function UserExpertsPage() {
       {/* Category Filter - with loadSubCategories */}
       <FilterGroup>
         <FilterLabel>{t("common.categories")}</FilterLabel>
-        <FilterSelect
+        <MobileSelect
+          title="Select Category"
           value={selectedCategoryId}
           disabled={isCategoryRoute}
+          DesktopSelectComponent={FilterSelect}
+          options={[
+            { value: "", label: t("callChat.allCategories") },
+            ...categories.map((cat) => ({ value: cat.id, label: cat.name })),
+          ]}
           onChange={(e) => {
             if (isCategoryRoute) return;
             const value = e.target.value;
@@ -921,165 +947,153 @@ export default function UserExpertsPage() {
               loadSubCategories(value);
             }
           }}
-        >
-          <option value="">{t("callChat.allCategories")}</option>
-          {categories.map(cat => (
-            <option key={cat.id} value={cat.id}>{cat.name}</option>
-          ))}
-        </FilterSelect>
+        />
       </FilterGroup>
 
       {/* Subcategory Filter - FIXED rendering */}
       {selectedCategoryId && (
         <FilterGroup>
           <FilterLabel>{t("callChat.subcategory", "Subcategory")}</FilterLabel>
-          <FilterSelect
+          <MobileSelect
+            title="Select Subcategory"
             value={selectedSubcategoryId}
             disabled={Boolean(routeSubcategoryId)}
+            DesktopSelectComponent={FilterSelect}
+            options={[
+              { value: "", label: t("callChat.allSubcategories") },
+              ...subCategories.map((sub) => ({ value: sub.id, label: sub.name })),
+            ]}
             onChange={(e) => {
               if (routeSubcategoryId) return;
               setSelectedSubcategoryId(e.target.value);
               setCurrentPage(1);
             }}
-          >
-            <option value="">{t("callChat.allSubcategories")}</option>
-            {subCategories.map(sub => (
-              <option key={sub.id} value={sub.id}>{sub.name}</option>
-            ))}
-          </FilterSelect>
+          />
         </FilterGroup>
       )}
 
       {/* Price Filter */}
       <FilterGroup>
         <FilterLabel>Max Price ({tab === "call" ? "₹/min Call" : "₹/min Chat"})</FilterLabel>
-        <FilterSelect
+        <MobileSelect
+          title="Select Max Price"
           value={maxPrice}
+          DesktopSelectComponent={FilterSelect}
+          options={getPriceOptions(tab)}
           onChange={(e) => {
             setMaxPrice(e.target.value);
             setCurrentPage(1);
           }}
-        >
-          {getPriceOptions(tab).map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </FilterSelect>
+        />
       </FilterGroup>
 
       <FilterGroup>
         <FilterLabel>Min Price ({tab === "call" ? "Call" : "Chat"} / min)</FilterLabel>
-        <FilterSelect
+        <MobileSelect
+          title="Select Min Price"
           value={minPrice}
+          DesktopSelectComponent={FilterSelect}
+          options={minPriceOptions}
           onChange={(e) => {
             setMinPrice(e.target.value);
             setCurrentPage(1);
           }}
-        >
-          <option value="">No minimum</option>
-          <option value="10">From Rs 10</option>
-          <option value="30">From Rs 30</option>
-          <option value="50">From Rs 50</option>
-          <option value="100">From Rs 100</option>
-        </FilterSelect>
+        />
       </FilterGroup>
 
       <FilterGroup>
         <FilterLabel>Rating</FilterLabel>
-        <FilterSelect
+        <MobileSelect
+          title="Select Rating"
           value={minRating}
+          DesktopSelectComponent={FilterSelect}
+          options={ratingOptions}
           onChange={(e) => {
             setMinRating(e.target.value);
             setCurrentPage(1);
           }}
-        >
-          {ratingOptions.map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </FilterSelect>
+        />
       </FilterGroup>
 
       <FilterGroup>
         <FilterLabel>Experience</FilterLabel>
-        <FilterSelect
+        <MobileSelect
+          title="Select Experience"
           value={minExperience}
+          DesktopSelectComponent={FilterSelect}
+          options={experienceOptions}
           onChange={(e) => {
             setMinExperience(e.target.value);
             setCurrentPage(1);
           }}
-        >
-          <option value="">Any experience</option>
-          <option value="1">1+ years</option>
-          <option value="3">3+ years</option>
-          <option value="5">5+ years</option>
-          <option value="10">10+ years</option>
-        </FilterSelect>
+        />
       </FilterGroup>
 
       <FilterGroup>
         <FilterLabel>Language</FilterLabel>
-        <FilterSelect
+        <MobileSelect
+          title="Select Language"
           value={language}
+          DesktopSelectComponent={FilterSelect}
+          options={[
+            { value: "", label: "Any language" },
+            ...languageOptions.map((item) => ({ value: item, label: item })),
+          ]}
           onChange={(e) => {
             setLanguage(e.target.value);
             setCurrentPage(1);
           }}
-        >
-          <option value="">Any language</option>
-          {languageOptions.map((item) => (
-            <option key={item} value={item}>{item}</option>
-          ))}
-        </FilterSelect>
+        />
       </FilterGroup>
 
       <FilterGroup>
         <FilterLabel>Availability</FilterLabel>
-        <FilterSelect
+        <MobileSelect
+          title="Select Availability"
           value={statusFilter}
+          DesktopSelectComponent={FilterSelect}
+          options={statusOptions}
           onChange={(e) => {
             setStatusFilter(e.target.value);
             setCurrentPage(1);
           }}
-        >
-          <option value="">Any status</option>
-          <option value="online">Online now</option>
-          <option value="available">Available</option>
-        </FilterSelect>
+        />
       </FilterGroup>
 
       {genderOptions.length > 0 && (
         <FilterGroup>
           <FilterLabel>Gender</FilterLabel>
-          <FilterSelect
+          <MobileSelect
+            title="Select Gender"
             value={gender}
+            DesktopSelectComponent={FilterSelect}
+            options={[
+              { value: "", label: "Any gender" },
+              ...genderOptions.map((item) => ({ value: item, label: item })),
+            ]}
             onChange={(e) => {
               setGender(e.target.value);
               setCurrentPage(1);
             }}
-          >
-            <option value="">Any gender</option>
-            {genderOptions.map((item) => (
-              <option key={item} value={item}>{item}</option>
-            ))}
-          </FilterSelect>
+          />
         </FilterGroup>
       )}
 
       {/* Sort By */}
       <FilterGroup>
         <FilterLabel>Sort By</FilterLabel>
-        <FilterSelect
+        <MobileSelect
+          title="Sort Experts"
           value={sortBy ? `${sortBy}_${sortOrder}` : ""}
+          DesktopSelectComponent={FilterSelect}
+          options={sortOptions}
           onChange={(e) => {
             const [newSortBy, newOrder] = splitSortValue(e.target.value);
             setSortBy(newSortBy);
             setSortOrder(newOrder);
             setCurrentPage(1);
           }}
-        >
-          {sortOptions.map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </FilterSelect>
+        />
       </FilterGroup>
 
       <ResetFilterBtn onClick={resetFilters}>

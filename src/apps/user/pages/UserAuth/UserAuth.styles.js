@@ -19,9 +19,17 @@ export const PageWrap = styled.div`
     width: 100%;
     align-items: stretch;
     justify-content: flex-start;
-    padding: 20px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+    padding: calc(8px + env(safe-area-inset-top, 0px)) 14px calc(16px + env(safe-area-inset-bottom, 0px));
     overflow-y: auto;
     overflow-x: hidden;
+    background: #ffffff;
+    -webkit-overflow-scrolling: touch;
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
   }
 `;
 
@@ -53,18 +61,18 @@ export const Card = styled.div`
 
   @media (max-width: 768px) {
     max-width: 440px;
-    margin: auto;
+    margin: 0 auto;
     background: transparent;
     border: 0;
     box-shadow: none;
     backdrop-filter: none;
-    padding: 34px 24px 28px;
+    padding: 8px 10px 18px;
     border-radius: 0;
   }
 
   @media (max-width: 480px) {
     max-width: 100%;
-    padding: 28px 18px 24px;
+    padding: 6px 2px 14px;
   }
 `;
 
@@ -76,10 +84,16 @@ export const BrandMark = styled.img`
   margin: 0 auto 18px;
  
 
+  @media (max-width: 768px) {
+    width: min(245px, 72vw);
+    height: 58px;
+    margin: 0 auto 8px;
+  }
+
   @media (max-width: 480px) {
-    width: min(300px, 82vw);
-    height: 80px;
-    margin-bottom: 14px;
+    width: min(220px, 70vw);
+    height: 54px;
+    margin-bottom: 6px;
   }
 `;
 
@@ -92,8 +106,40 @@ export const Caption = styled.h1`
   letter-spacing: -0.03em;
   line-height: 1.1;
 
+  @media (max-width: 768px) {
+    margin: 0 0 6px;
+    font-size: clamp(22px, 6.2vw, 26px);
+    letter-spacing: -0.02em;
+  }
+
   @media (max-width: 480px) {
-    font-size: 1.7rem;
+    font-size: clamp(21px, 6.2vw, 24px);
+  }
+`;
+
+export const LoginTrustLine = styled.p`
+  display: none;
+  margin: 0;
+
+  @media (max-width: 768px) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    margin: -1px 0 7px;
+    color: #64748b;
+    font-size: clamp(12px, 3.5vw, 13.5px);
+    line-height: 1.3;
+    font-weight: 650;
+    text-align: center;
+
+    svg {
+      width: 14px;
+      height: 14px;
+      flex: 0 0 auto;
+      color: #000080;
+    }
   }
 `;
 
@@ -105,9 +151,16 @@ export const SubCaption = styled.p`
   line-height: 1.6;
   max-width: 380px;
 
+  @media (max-width: 768px) {
+    max-width: 310px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
   @media (max-width: 480px) {
-    font-size: 0.93rem;
-    margin-bottom: 18px;
+    font-size: 12.5px;
+    margin-bottom: 10px;
   }
 `;
 
@@ -117,6 +170,11 @@ export const BadgeRow = styled.div`
   justify-content: center;
   gap: 10px;
   margin-bottom: 26px;
+
+  @media (max-width: 768px) {
+    display: none;
+    margin: 0;
+  }
 `;
 
 export const Badge = styled.div`
@@ -146,6 +204,13 @@ export const Tabs = styled.div`
   padding: 5px;
   margin-bottom: 22px;
   border: 1px solid rgba(0, 0, 128, 0.08);
+
+  @media (max-width: 768px) {
+    margin-bottom: 14px;
+    padding: 4px;
+    border-radius: 13px;
+    background: #f3f4f6;
+  }
 `;
 
 export const Tab = styled.div`
@@ -165,12 +230,25 @@ export const Tab = styled.div`
   &:hover {
     color: ${({ active }) => (active ? "#ffffff" : "#081a51")};
   }
+
+  @media (max-width: 768px) {
+    min-height: 40px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: ${({ active }) => (active ? "0 8px 18px rgba(0, 0, 128, 0.16)" : "none")};
+  }
 `;
 
 export const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 16px;
+
+  @media (max-width: 768px) {
+    gap: 10px;
+  }
 `;
 
 export const InputGroup = styled.div`
@@ -187,6 +265,8 @@ export const InputGroup = styled.div`
 
   @media (max-width: 640px) {
     flex-direction: column;
+    gap: 10px;
+
     & > div {
       flex: 1 1 100%;
       min-width: 100%;
@@ -218,9 +298,27 @@ export const InputWrap = styled.div`
     box-shadow: 0 0 0 4px rgba(0, 0, 128, 0.08);
   }
 
+  @media (max-width: 768px) {
+    min-height: 46px;
+    gap: 9px;
+    padding: 7px 12px 7px 10px;
+    border-radius: 12px;
+    border-color: #d1d5db;
+    background: #f3f4f6;
+
+    svg {
+      font-size: 16px;
+    }
+
+    &:focus-within {
+      background: #ffffff;
+      border-color: rgba(37, 99, 235, 0.5);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+  }
+
   @media (max-width: 480px) {
-    min-height: 56px;
-    border-radius: 16px;
+    min-height: 45px;
   }
 `;
 
@@ -237,6 +335,17 @@ export const Input = styled.input`
   &::placeholder {
     color: #7d89a6;
   }
+
+  @media (max-width: 768px) {
+    font-size: 14px;
+    line-height: 1.35;
+    font-weight: 500;
+
+    &::placeholder {
+      color: #8b95a5;
+      font-weight: 400;
+    }
+  }
 `;
 
 export const InputIconCircle = styled.div`
@@ -249,6 +358,13 @@ export const InputIconCircle = styled.div`
   background: linear-gradient(180deg, #fff7d7 0%, #ffeaa0 100%);
   border: 1px solid rgba(244, 180, 0, 0.25);
   flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: 0;
+  }
 `;
 
 export const PasswordToggle = styled.button`
@@ -261,6 +377,13 @@ export const PasswordToggle = styled.button`
   cursor: pointer;
   padding: 4px;
   flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    min-width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: 999px;
+  }
 `;
 
 export const UtilityRow = styled.div`
@@ -270,6 +393,11 @@ export const UtilityRow = styled.div`
   gap: 12px;
   margin-top: -2px;
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    margin-top: -1px;
+    gap: 8px;
+  }
 `;
 
 export const CheckboxLabel = styled.label`
@@ -286,6 +414,11 @@ export const CheckboxLabel = styled.label`
     accent-color: #000080;
     cursor: pointer;
   }
+
+  @media (max-width: 768px) {
+    gap: 8px;
+    font-size: 13px;
+  }
 `;
 
 export const TextLink = styled.span`
@@ -296,6 +429,10 @@ export const TextLink = styled.span`
 
   &:hover {
     text-decoration: underline;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 13px;
   }
 `;
 
@@ -312,6 +449,14 @@ export const MessageBar = styled.div`
   text-align: center;
   font-size: 0.9rem;
   font-weight: 600;
+
+  @media (max-width: 768px) {
+    margin: 0 0 8px;
+    padding: 9px 11px;
+    border-radius: 12px;
+    font-size: 12.5px;
+    line-height: 1.35;
+  }
 `;
 
 export const VerifyBtn = styled.button`
@@ -334,7 +479,10 @@ export const VerifyBtn = styled.button`
 
   @media (max-width: 640px) {
     width: 100%;
-    min-height: 52px;
+    min-height: 44px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 750;
   }
 `;
 
@@ -369,6 +517,18 @@ export const PrimaryBtn = styled.button`
   @media (max-width: 480px) {
     padding: 15px 18px;
   }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    min-height: 46px;
+    margin-top: 2px;
+    padding: 0 16px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #000080 0%, #2563eb 100%);
+    font-size: 14px;
+    font-weight: 800;
+    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.2);
+  }
 `;
 
 export const SwitchText = styled.div`
@@ -387,6 +547,12 @@ export const SwitchText = styled.div`
       text-decoration: underline;
     }
   }
+
+  @media (max-width: 768px) {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 1.45;
+  }
 `;
 
 export const BottomTrustText = styled.p`
@@ -396,4 +562,11 @@ export const BottomTrustText = styled.p`
   font-size: 0.86rem;
   font-weight: 700;
   letter-spacing: 0.02em;
+
+  @media (max-width: 768px) {
+    margin-top: 10px;
+    font-size: 11.5px;
+    color: #94a3b8;
+    font-weight: 650;
+  }
 `;

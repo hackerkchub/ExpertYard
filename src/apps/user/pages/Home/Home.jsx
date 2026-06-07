@@ -9,7 +9,6 @@ import {
   FiChevronRight,
   FiPhoneCall,
   FiCreditCard,
-  FiFilter,
   FiGrid,
   FiHeadphones,
   FiHome,
@@ -421,21 +420,18 @@ function HeroBanner({ onExplore }) {
   );
 }
 
-function SearchBar({ value, onChange, onSubmit }) {
+function SearchBar({ onOpen }) {
   return (
-    <form className="premium-mobile-search" onSubmit={onSubmit}>
+    <button
+      type="button"
+      className="premium-mobile-search premium-mobile-search--trigger"
+      onClick={onOpen}
+      aria-label="Open search"
+    >
       <FiSearch aria-hidden="true" />
-      <input
-        type="search"
-        value={value}
-        onChange={onChange}
-        placeholder="Search experts, services, categories..."
-        aria-label="Search experts, services, categories"
-      />
-      <button type="submit" aria-label="Filter search">
-        <FiFilter />
-      </button>
-    </form>
+      <span>Search experts, services, categories</span>
+      <span className="premium-mobile-search__chip">Search</span>
+    </button>
   );
 }
 
@@ -598,7 +594,6 @@ const HomePage = () => {
   } = useCategory();
   const { experts, expertsLoading } = usePublicExpert();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mobileSearch, setMobileSearch] = useState("");
   const [services, setServices] = useState(() => {
     try {
       const saved = localStorage.getItem("popular_services_cache");
@@ -889,12 +884,6 @@ const HomePage = () => {
       .map((part) => part[0]?.toUpperCase() || "")
       .join("") || "GE";
 
-  const submitMobileSearch = (event) => {
-    event.preventDefault();
-    const query = mobileSearch.trim();
-    navigate(query ? `/user/search?q=${encodeURIComponent(query)}` : "/user/search");
-  };
-
   return (
     <div className="home-page">
       <div className="mobile-home-app">
@@ -978,12 +967,10 @@ const HomePage = () => {
           onLogin={() => navigate("/user/auth")}
           user={user}
         />
-        <HeroBanner onExplore={() => navigate("/user/call-chat?page=1")} />
         <SearchBar
-          value={mobileSearch}
-          onChange={(event) => setMobileSearch(event.target.value)}
-          onSubmit={submitMobileSearch}
+          onOpen={() => navigate("/user/search")}
         />
+        <HeroBanner onExplore={() => navigate("/user/call-chat?page=1")} />
         <QuickActions actions={MOBILE_QUICK_ACTIONS} />
         <CategorySection
           categories={mobileCategories}

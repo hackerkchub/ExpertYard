@@ -18,6 +18,10 @@
   padding: 8px 0 0;
 }
 
+.search-page-mobile-top {
+  display: none;
+}
+
 .search-page-hero > span {
   display: none;
 }
@@ -70,7 +74,7 @@
   color: #64748b;
 }
 
-.search-page-form button,
+.search-page-form .search-page-submit,
 .search-page-pagination button {
   border: 0;
   border-radius: 14px;
@@ -81,15 +85,29 @@
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
-.search-page-form button {
+.search-page-form .search-page-submit {
   height: 42px;
   padding: 0 18px;
   white-space: nowrap;
 }
 
-.search-page-form button:hover,
+.search-page-form .search-page-submit:hover,
 .search-page-pagination button:hover:not(:disabled) {
   transform: translateY(-1px);
+}
+
+.search-page-clear {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
 .search-page-tabs {
@@ -156,6 +174,57 @@
   background: #ffffff;
   box-shadow: none;
   overflow: hidden;
+}
+
+.search-page-recommendations {
+  width: min(100%, 860px);
+  margin: 12px auto 0;
+  display: grid;
+  gap: 12px;
+}
+
+.search-page-recommendation-section,
+.search-page-chip-section {
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.search-page-recommendation-list {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.search-page-chip-row {
+  display: flex;
+  gap: 9px;
+  overflow-x: auto;
+  padding: 12px 14px 14px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.search-page-chip-row::-webkit-scrollbar {
+  display: none;
+}
+
+.search-page-chip-row button {
+  flex: 0 0 auto;
+  min-height: 38px;
+  max-width: 190px;
+  border: 1px solid rgba(0, 0, 128, 0.11);
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #000080;
+  padding: 0 14px;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 750;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
 }
 
 .search-page-section__top {
@@ -358,36 +427,114 @@
 }
 
 @media (max-width: 767px) {
+  body.g9-search-route {
+    overflow-x: hidden;
+  }
+
+  body.g9-search-route .bottom-nav {
+    display: none;
+  }
+
+  body.g9-search-route .main-content-wrapper.has-mobile-bottom-nav {
+    padding-bottom: 0 !important;
+  }
+
   .search-page {
     width: 100%;
     max-width: 100%;
-    padding: 10px 12px calc(90px + env(safe-area-inset-bottom, 0px));
+    min-height: 100dvh;
+    padding: 0 12px calc(18px + env(safe-area-inset-bottom, 0px));
+    background: #ffffff;
   }
 
   .search-page-hero {
-    padding-top: 2px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    width: calc(100% + 24px);
+    max-width: none;
+    margin: 0 -12px;
+    padding: calc(8px + env(safe-area-inset-top, 0px)) 12px 10px;
+    background: rgba(255, 255, 255, 0.96);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .search-page-mobile-top {
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+
+  .search-page-mobile-top button {
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f4f6;
+    color: #000080;
+  }
+
+  .search-page-mobile-top span {
+    color: #111827;
+    font-size: 17px;
+    line-height: 1.2;
+    font-weight: 800;
   }
 
   .search-page-hero h1 {
-    margin-bottom: 10px;
-    font-size: clamp(20px, 6vw, 24px);
+    display: none;
   }
 
   .search-page-form {
     min-height: 48px;
     gap: 8px;
     padding: 5px 5px 5px 13px;
-    border-radius: 16px;
+    border-radius: 999px;
+    background: #f3f4f6;
+    box-shadow: none;
   }
 
   .search-page-form input {
     font-size: 14px;
   }
 
-  .search-page-form button {
-    height: 38px;
+  .search-page-form .search-page-submit {
+    display: none;
+  }
+
+  .search-page-clear {
+    width: 34px;
+    height: 34px;
+    background: #ffffff;
+  }
+
+  .search-page-recommendations {
+    margin-top: 12px;
+    gap: 10px;
+  }
+
+  .search-page-recommendation-section,
+  .search-page-chip-section {
+    border-radius: 16px;
+    box-shadow: none;
+  }
+
+  .search-page-chip-row {
+    gap: 8px;
+    padding: 10px 12px 12px;
+  }
+
+  .search-page-chip-row button {
+    min-height: 36px;
+    max-width: 170px;
     padding: 0 12px;
-    border-radius: 12px;
     font-size: 13px;
   }
 

@@ -158,6 +158,7 @@ import {
 import { usePublicExpert as useExpert } from "../../context/PublicExpertContext";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
+import AddBalancePopup from "../../components/AddBalancePopup/AddBalancePopup";
 import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 import { socket } from "../../../../shared/api/socket";
 import { 
@@ -201,7 +202,7 @@ const ExpertProfilePage = () => {
   const { t } = useTranslation();
   const { isLoggedIn, user } = useAuth();
   const userId = user?.id;
-  const { balance, fetchWallet} = useWallet();
+  const { balance, fetchWallet, addMoney, createOrder } = useWallet();
   const {
     expertData,
     expertPrice,
@@ -1062,6 +1063,18 @@ const ExpertProfilePage = () => {
     setRequiredAmount(0);
   }, []);
 
+  const handleProfileRechargeConfirm = useCallback(async (paymentData) => {
+    const result = await addMoney(paymentData);
+
+    if (result?.success) {
+      setShowRecharge(false);
+      setRequiredAmount(0);
+      await fetchWallet();
+    }
+
+    return result;
+  }, [addMoney, fetchWallet]);
+
   const handleUnfollowClose = useCallback(() => setShowUnfollowModal(false), []);
 
   // Close success modal on click anywhere
@@ -1558,6 +1571,15 @@ const ExpertProfilePage = () => {
 
         {/* Recharge Modal */}
         {showRecharge && (
+          <AddBalancePopup
+            amountPreset={requiredAmount}
+            onClose={handleRechargeClose}
+            onConfirm={handleProfileRechargeConfirm}
+            createOrder={createOrder}
+          />
+        )}
+
+        {false && showRecharge && (
           <div className="expert-profile-recharge-modal" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 20060 }}>
             <div className="expert-profile-recharge-modal__sheet" style={{ background: "#fff", padding: 28, borderRadius: 16, width: "min(90vw, 380px)", textAlign: "center" }}>
               <h3 style={{ margin: 0, marginBottom: 12, color: "#0f172a" }}>Low Balance</h3>

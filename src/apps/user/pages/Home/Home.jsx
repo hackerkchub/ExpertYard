@@ -18,6 +18,7 @@ import {
   FiLock,
   FiMenu,
   FiMessageCircle,
+  FiMonitor,
   FiSearch,
   FiShare2,
   FiShield,
@@ -376,10 +377,10 @@ function WelcomeSection({ isLoggedIn, loading, onLogin, user }) {
   return (
     <section className="premium-mobile-welcome" aria-label="Welcome">
       {isLoggedIn ? (
-        <>
-          <span>Welcome Back,</span>
-          <h1>{getUserDisplayName(user)}</h1>
-        </>
+        <h1 className="premium-mobile-welcome-line">
+          <span>Welcome back,</span>
+          <strong>{getUserDisplayName(user)}</strong>
+        </h1>
       ) : (
         <>
           <h1>Welcome to G9 Expert</h1>
@@ -501,12 +502,15 @@ function ConsultationCard({ onBook }) {
   return (
     <section className="premium-mobile-consultation-card">
       <div className="premium-mobile-consultation-card__icon">
-        <FiHeadphones />
+        <FiMonitor />
       </div>
       <div>
-        <span>Need Expert Help?</span>
-        <h2>Book a Consultation</h2>
-        <p>Get professional advice from verified experts.</p>
+        <span>Need Digital Help?</span>
+        <h2>Book Digital Services</h2>
+       <p>
+Explore verified services from Lawyers, Astrologers, Doctors, Business Experts, and more.
+Book the service you need and connect with trusted professionals instantly.
+</p>
         <button type="button" onClick={onBook}>
           Book Now <FiArrowRight />
         </button>
@@ -966,7 +970,7 @@ const HomePage = () => {
           loading={categoriesLoading}
           onViewAll={() => navigate("/user/categories")}
         />
-        <ConsultationCard onBook={() => navigate("/user/call-chat?page=1")} />
+        <ConsultationCard onBook={() => navigate("/user/all-services")} />
         <ServicesSection
           error={servicesError}
           loading={servicesLoading}

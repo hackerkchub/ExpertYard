@@ -4,8 +4,9 @@ import {
   BriefcaseBusiness,
   History,
   Home,
+  MessageCircle,
+  PhoneCall,
   Sparkles,
-  UserRound
 } from 'lucide-react';
 import "./BottomNavbar.css";
 
@@ -15,7 +16,16 @@ const BottomNavbar = () => {
     { name: 'Services', path: '/user/all-services', icon: <BriefcaseBusiness size={21} /> },
     { name: 'Categories', path: '/user/categories', icon: <Sparkles size={24} />, featured: true },
     { name: 'History', path: '/user/chat-history', icon: <History size={21} /> },
-    { name: 'Profile', path: '/user/user-profile', icon: <UserRound size={21} /> },
+    {
+      name: 'Talk',
+      path: '/user/call-chat?page=1&mode=chat',
+      icon: (
+        <span className="chat-call-icon" aria-hidden="true">
+          <MessageCircle size={21} />
+          <PhoneCall size={12} />
+        </span>
+      )
+    },
   ];
 
   return (

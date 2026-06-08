@@ -2562,15 +2562,15 @@
   }
 
   .premium-mobile-welcome {
-    display: grid;
-    gap: 2px;
+    display: block;
+    min-width: 0;
     padding: 2px 2px 0;
   }
 
   .premium-mobile-welcome span {
-    color: var(--mobile-muted);
-    font-size: 0.88rem;
-    font-weight: 750;
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
   }
 
   .premium-mobile-welcome h1 {
@@ -2580,6 +2580,39 @@
     line-height: 1.15;
     font-weight: 950;
     letter-spacing: 0;
+  }
+
+  .premium-mobile-welcome-line {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .premium-mobile-welcome-line span {
+    flex: 0 0 auto;
+    color: #111827;
+    font-size: clamp(17px, 4.8vw, 22px);
+    line-height: 1.18;
+    font-weight: 900;
+  }
+
+  .premium-mobile-welcome-line strong {
+    min-width: 0;
+    display: block;
+    overflow: hidden;
+    color: var(--mobile-primary);
+    font-size: clamp(17px, 4.8vw, 22px);
+    line-height: 1.18;
+    font-weight: 950;
+    letter-spacing: 0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .premium-mobile-welcome button {
@@ -2923,16 +2956,17 @@
   }
 
   .premium-mobile-category-card {
-    flex: 0 0 clamp(78px, 24vw, 104px);
-    width: clamp(78px, 24vw, 104px);
-    min-height: 106px;
+    flex: 0 0 clamp(106px, 31vw, 132px);
+    width: clamp(106px, 31vw, 132px);
+    min-height: 126px;
     scroll-snap-align: start;
     border: 1px solid rgba(0, 0, 128, 0.07);
     border-radius: 18px;
-    padding: 10px 8px;
+    padding: 10px 9px 11px;
     display: grid;
     align-content: start;
-    gap: 9px;
+    justify-items: center;
+    gap: 10px;
     text-decoration: none;
     color: var(--mobile-ink);
     background: #ffffff;
@@ -2967,11 +3001,17 @@
   }
 
   .premium-mobile-category-card strong {
-    font-size: clamp(11px, 3.2vw, 13px);
-    display: -webkit-box;
-    overflow: hidden;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+    width: 100%;
+    min-height: 32px;
+    color: #0f172a;
+    font-size: clamp(11px, 3.1vw, 13px);
+    line-height: 1.25;
+    font-weight: 900;
+    text-align: center;
+    white-space: normal;
+    overflow: visible;
+    overflow-wrap: anywhere;
+    word-break: normal;
   }
 
   .premium-mobile-consultation-card,
@@ -3028,10 +3068,10 @@
   }
 
   .premium-mobile-consultation-card p {
-    margin: 6px 0 10px;
+    margin: 5px 0 10px;
     color: var(--mobile-muted);
-    font-size: clamp(10px, 3.1vw, 12px);
-    line-height: 1.45;
+    font-size: clamp(10.5px, 3vw, 12px);
+    line-height: 1.42;
     font-weight: 650;
   }
 

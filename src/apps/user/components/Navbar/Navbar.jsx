@@ -117,7 +117,7 @@ const Navbar = () => {
   const showMobileBack = location.pathname !== "/user";
   const mobileHeaderTitle = getMobileHeaderTitle(location.pathname);
   const isSearchRoute = location.pathname === "/user/search";
-  const isWalletRoute = location.pathname === "/user/wallet";
+  const isProfileRoute = location.pathname === "/user/user-profile";
 
   const handleBack = () => {
     const historyIndex = typeof window !== "undefined" ? window.history.state?.idx : 0;
@@ -351,14 +351,14 @@ const Navbar = () => {
             </MobileIcon>
           )}
 
-          {!isWalletRoute && (
+          {!isProfileRoute && (
             <HeaderWalletButton
               type="button"
-              onClick={() => handleNav("/user/wallet")}
-              aria-label={t("common.wallet")}
-              title={t("common.wallet")}
+              onClick={() => handleNav("/user/user-profile")}
+              aria-label={t("nav.profile")}
+              title={t("nav.profile")}
             >
-              <FaWallet />
+              <FiUser />
             </HeaderWalletButton>
           )}
 

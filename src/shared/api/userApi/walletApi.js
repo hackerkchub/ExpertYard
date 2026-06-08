@@ -29,9 +29,10 @@ export const getWalletHistoryApi = async () => {
   return data;
 }; 
 
-export const createWalletOrderApi = async (amount) => {
+export const createWalletOrderApi = async (amount, breakdown = {}) => {
   const { data } = await api.post("/wallet/create-order", {
     amount,
+    ...breakdown,
   });
 
   return data;

@@ -501,13 +501,14 @@ export const CategoryCard = styled.div`
   }
 
   ${media.sm} {
-    min-height: ${(props) => (props.$view === "grid" ? "118px" : "88px")};
+    min-height: ${(props) => (props.$view === "grid" ? "132px" : "96px")};
     border-radius: 16px;
     flex-direction: ${(props) => (props.$view === "grid" ? "column" : "row")};
     align-items: ${(props) => (props.$view === "grid" ? "center" : "center")};
     justify-content: ${(props) => (props.$view === "grid" ? "flex-start" : "center")};
-    padding: ${(props) => (props.$view === "grid" ? "9px 6px" : "10px")};
+    padding: ${(props) => (props.$view === "grid" ? "10px 7px 12px" : "10px")};
     box-shadow: 0 8px 18px rgba(10, 20, 60, 0.055);
+    overflow: visible;
 
     &:hover {
       transform: none;
@@ -560,6 +561,7 @@ export const CategoryInfo = styled.div`
     align-items: ${(props) => (props.$view === "grid" ? "center" : "stretch")};
     text-align: ${(props) => (props.$view === "grid" ? "center" : "left")};
     width: 100%;
+    overflow: visible;
   }
 `;
 
@@ -594,11 +596,17 @@ export const CategoryName = styled.h3`
   -webkit-line-clamp: 2;
 
   ${media.sm} {
+    width: 100%;
     font-size: ${(props) => (props.$view === "grid" ? "13px" : "15px")};
-    line-height: ${(props) => (props.$view === "grid" ? "1.22" : "1.3")};
-    font-weight: 600;
-    -webkit-line-clamp: 2;
+    line-height: ${(props) => (props.$view === "grid" ? "1.25" : "1.35")};
+    font-weight: 700;
+    display: block;
+    overflow: visible;
+    white-space: normal;
     overflow-wrap: anywhere;
+    word-break: normal;
+    -webkit-line-clamp: unset;
+    -webkit-box-orient: initial;
   }
 `;
 

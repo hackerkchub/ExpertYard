@@ -215,6 +215,8 @@ export default function UserExpertsPage() {
   const [onlineExperts, setOnlineExperts] = useState({});
   const latestRequestRef = useRef(0);
   const abortRef = useRef(null);
+  const lastLoadedRouteCategoryRef = useRef("");
+  const searchParamsString = searchParams.toString();
 
   // Use Chat Request Hook
   const {
@@ -222,18 +224,6 @@ export default function UserExpertsPage() {
     ChatPopups,
     isWaiting,
   } = useChatRequest();
-
-  // FIX 2: Mode sync effect - only sync when URL mode differs from state
-  useEffect(() => {
-    if (!modeFromUrl) return;
-
-    if (
-      (modeFromUrl === "call" || modeFromUrl === "chat") &&
-      modeFromUrl !== tab
-    ) {
-      setTab(modeFromUrl);
-    }
-  }, [modeFromUrl]); // Removed tab dependency to prevent loop
 
   useEffect(() => {
     if (!isCategoryRoute || !routeCategoryId) return;
@@ -246,7 +236,11 @@ export default function UserExpertsPage() {
         String(current) === String(routeSubcategoryId) ? current : routeSubcategoryId
       ));
     }
-    loadSubCategories(routeCategoryId);
+
+    if (lastLoadedRouteCategoryRef.current !== String(routeCategoryId)) {
+      lastLoadedRouteCategoryRef.current = String(routeCategoryId);
+      loadSubCategories(routeCategoryId);
+    }
   }, [isCategoryRoute, loadSubCategories, routeCategoryId, routeSubcategoryId]);
 
   useEffect(() => {
@@ -266,38 +260,39 @@ export default function UserExpertsPage() {
   }, [isMobileFilterOpen]);
 
   useEffect(() => {
-    const nextPage = parseInt(searchParams.get("page")) || 1;
-    if (nextPage !== currentPage) setCurrentPage(nextPage);
+    const params = new URLSearchParams(searchParamsString);
+    const nextPage = parseInt(params.get("page")) || 1;
+    setCurrentPage((current) => (nextPage === current ? current : nextPage));
 
-    const nextMode = searchParams.get("mode");
-    if ((nextMode === "chat" || nextMode === "call") && nextMode !== tab) {
-      setTab(nextMode);
+    const nextMode = params.get("mode");
+    if (nextMode === "chat" || nextMode === "call") {
+      setTab((current) => (nextMode === current ? current : nextMode));
     }
 
-    const nextSearch = searchParams.get("q") || "";
-    if (nextSearch !== searchInput) setSearchInput(nextSearch);
-    if (nextSearch !== debouncedSearch) setDebouncedSearch(nextSearch);
+    const nextSearch = params.get("q") || "";
+    setSearchInput((current) => (nextSearch === current ? current : nextSearch));
+    setDebouncedSearch((current) => (nextSearch === current ? current : nextSearch));
 
-    const nextMinRating = getParam(searchParams, "rating", "minRating");
-    const nextMinPrice = getParam(searchParams, "minPrice");
-    const nextMaxPrice = getParam(searchParams, "maxPrice");
-    const nextMinExperience = getParam(searchParams, "experience", "minExperience");
-    const nextLanguage = getParam(searchParams, "language");
-    const nextStatus = getParam(searchParams, "status");
-    const nextGender = getParam(searchParams, "gender");
-    const nextSortBy = getParam(searchParams, "sortBy");
-    const nextSortOrder = getParam(searchParams, "order") || "desc";
+    const nextMinRating = getParam(params, "rating", "minRating");
+    const nextMinPrice = getParam(params, "minPrice");
+    const nextMaxPrice = getParam(params, "maxPrice");
+    const nextMinExperience = getParam(params, "experience", "minExperience");
+    const nextLanguage = getParam(params, "language");
+    const nextStatus = getParam(params, "status");
+    const nextGender = getParam(params, "gender");
+    const nextSortBy = getParam(params, "sortBy");
+    const nextSortOrder = getParam(params, "order") || "desc";
 
-    if (nextMinRating !== minRating) setMinRating(nextMinRating);
-    if (nextMinPrice !== minPrice) setMinPrice(nextMinPrice);
-    if (nextMaxPrice !== maxPrice) setMaxPrice(nextMaxPrice);
-    if (nextMinExperience !== minExperience) setMinExperience(nextMinExperience);
-    if (nextLanguage !== language) setLanguage(nextLanguage);
-    if (nextStatus !== statusFilter) setStatusFilter(nextStatus);
-    if (nextGender !== gender) setGender(nextGender);
-    if (nextSortBy !== sortBy) setSortBy(nextSortBy);
-    if (nextSortOrder !== sortOrder) setSortOrder(nextSortOrder);
-  }, [searchParams]);
+    setMinRating((current) => (nextMinRating === current ? current : nextMinRating));
+    setMinPrice((current) => (nextMinPrice === current ? current : nextMinPrice));
+    setMaxPrice((current) => (nextMaxPrice === current ? current : nextMaxPrice));
+    setMinExperience((current) => (nextMinExperience === current ? current : nextMinExperience));
+    setLanguage((current) => (nextLanguage === current ? current : nextLanguage));
+    setStatusFilter((current) => (nextStatus === current ? current : nextStatus));
+    setGender((current) => (nextGender === current ? current : nextGender));
+    setSortBy((current) => (nextSortBy === current ? current : nextSortBy));
+    setSortOrder((current) => (nextSortOrder === current ? current : nextSortOrder));
+  }, [searchParamsString]);
 
   // Debounce search and avoid resetting pagination when the value is unchanged.
   useEffect(() => {
@@ -411,7 +406,8 @@ export default function UserExpertsPage() {
 
   // FIX 3: URL sync effect - prevents loop while keeping page/mode query in sync
   useEffect(() => {
-    const nextParams = new URLSearchParams(searchParams);
+    const currentParams = new URLSearchParams(searchParamsString);
+    const nextParams = new URLSearchParams(searchParamsString);
     nextParams.set("mode", tab);
     nextParams.set("page", String(currentPage));
 
@@ -473,10 +469,12 @@ export default function UserExpertsPage() {
       nextParams.delete("order");
     }
 
-    if (nextParams.toString() !== searchParams.toString()) {
+    const nextParamsString = nextParams.toString();
+
+    if (nextParamsString !== searchParamsString) {
       const isDefaultNormalization =
-        !searchParams.has("mode") ||
-        !searchParams.has("page");
+        !currentParams.has("mode") ||
+        !currentParams.has("page");
 
       setSearchParams(nextParams, { replace: isDefaultNormalization });
     }
@@ -493,7 +491,7 @@ export default function UserExpertsPage() {
     gender,
     sortBy,
     sortOrder,
-    searchParams,
+    searchParamsString,
     setSearchParams
   ]);
 
@@ -555,7 +553,7 @@ export default function UserExpertsPage() {
   // Reset subcategory when category changes AND load subcategories
   useEffect(() => {
     if (routeSubcategoryId) return;
-    setSelectedSubcategoryId("");
+    setSelectedSubcategoryId((current) => (current === "" ? current : ""));
   }, [routeSubcategoryId, selectedCategoryId]);
 
   // Socket listeners for online/offline status ONLY
@@ -565,25 +563,30 @@ export default function UserExpertsPage() {
     const handleMultipleStatus = (data) => {
       setOnlineExperts(prev => {
         const updated = { ...prev };
+        let changed = false;
         Object.keys(data).forEach(id => {
-          updated[String(id)] = data[id];
+          const key = String(id);
+          if (updated[key] !== data[id]) {
+            updated[key] = data[id];
+            changed = true;
+          }
         });
-        return updated;
+        return changed ? updated : prev;
       });
     };
 
     const handleOnline = ({ expert_id }) => {
-      setOnlineExperts(prev => ({
-        ...prev,
-        [String(expert_id)]: true
-      }));
+      setOnlineExperts(prev => {
+        const key = String(expert_id);
+        return prev[key] === true ? prev : { ...prev, [key]: true };
+      });
     };
 
     const handleOffline = ({ expert_id }) => {
-      setOnlineExperts(prev => ({
-        ...prev,
-        [String(expert_id)]: false
-      }));
+      setOnlineExperts(prev => {
+        const key = String(expert_id);
+        return prev[key] === false ? prev : { ...prev, [key]: false };
+      });
     };
 
     socket.on("multiple_expert_status", handleMultipleStatus);

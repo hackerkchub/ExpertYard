@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useExpert } from "../../../../shared/context/ExpertContext";
+import { useExpert } from "../../../../shared/context/ExpertContext"; 
 import Loader from "../../../../shared/components/Loader/Loader";
 import {
   getExpertCurrentPlanApi
@@ -13,7 +13,7 @@ const GuidexaExpertPlan = () => {
   const [error, setError] = useState(null);
 
   // Expert ID context se nikal rahe hain
-  const expertId = expertData?.expertId || 132;
+  const expertId = expertData?.expertId || 132; 
 
   useEffect(() => {
     const fetchPlanDetails = async () => {
@@ -49,12 +49,10 @@ const GuidexaExpertPlan = () => {
         .expert-plan-wrapper {
           display: flex;
           justify-content: center;
-          align-items: flex-start;
-          padding: 80px;
-          min-height: auto;
-          background: #f4f7fa;
-          margin-top: 0;
-          padding-top: 10px;
+          align-items: center;
+          padding: 20px;
+          min-height: 80vh;
+          background: #f4f7fa; /* Light professional background */
         }
         .plan-card {
           width: 100%;
@@ -65,14 +63,13 @@ const GuidexaExpertPlan = () => {
           box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
           border: 1px solid #e2e8f0;
           animation: slideUp 0.5s ease-out;
-          margin-bottom: 0;
         }
         @keyframes slideUp {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
         .plan-header {
-          padding: 25px 30px;
+          padding: 30px;
           background: linear-gradient(135deg, #000080 0%, #00004d 100%);
           color: white;
           display: flex;
@@ -96,19 +93,14 @@ const GuidexaExpertPlan = () => {
           text-transform: uppercase;
           box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3);
         }
-        .status-badge.expired {
-          background: #ef4444;
-          box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
-        }
         .plan-body {
-          padding: 25px 30px;
-          padding-bottom: 20px;
+          padding: 30px;
         }
         .info-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
-          gap: 20px;
-          margin-bottom: 25px;
+          gap: 25px;
+          margin-bottom: 30px;
         }
         .info-item {
           display: flex;
@@ -132,7 +124,6 @@ const GuidexaExpertPlan = () => {
           border-radius: 15px;
           padding: 20px;
           border: 1px solid #edf2f7;
-          margin-bottom: 0;
         }
         .bill-row {
           display: flex;
@@ -163,47 +154,26 @@ const GuidexaExpertPlan = () => {
         }
         .footer-note {
           text-align: center;
-          padding: 15px 20px;
-          font-size: 11px;
+          padding: 20px;
+          font-size: 12px;
           color: #94a3b8;
-          border-top: 1px solid #f1f5f7;
-          background: #ffffff;
-        }
-        .description-box {
-          margin-bottom: 20px;
-          padding: 12px;
-          background: #f8fafc;
-          border-radius: 10px;
-          color: #475569;
-          font-size: 14px;
-          border: 1px solid #edf2f7;
+          border-top: 1px solid #f1f5f9;
         }
 
         /* Mobile Optimization */
         @media (max-width: 480px) {
-          .expert-plan-wrapper {
-            padding: 10px;
-            padding-top: 5px;
-          }
           .info-grid {
             grid-template-columns: 1fr;
-            gap: 12px;
+            gap: 15px;
           }
           .plan-header {
-            padding: 18px 20px;
-          }
-          .plan-header h2 {
-            font-size: 20px;
+            padding: 20px;
           }
           .plan-body {
             padding: 20px;
-            padding-bottom: 15px;
           }
           .bill-row.total {
             font-size: 18px;
-          }
-          .footer-note {
-            padding: 12px 20px;
           }
         }
       `}</style>
@@ -218,19 +188,12 @@ const GuidexaExpertPlan = () => {
           <>
             <div className="plan-header">
               <h2>Subscription Plan</h2>
-              <span className={`status-badge ${!isPlanActive() ? 'expired' : ''}`}>
-                {isPlanActive() ? "Active" : "Expired"}
+              <span className="status-badge">
+                {plan?.plan_status === 1 ? "Active" : "Pending"}
               </span>
             </div>
 
             <div className="plan-body">
-              {/* Plan Description */}
-              {plan?.description && (
-                <div className="description-box">
-                  {plan.description}
-                </div>
-              )}
-
               <div className="info-grid">
                 <div className="info-item">
                   <span className="info-label">Current Plan</span>
@@ -242,45 +205,34 @@ const GuidexaExpertPlan = () => {
                 </div>
                 <div className="info-item">
                   <span className="info-label">Start Date</span>
-                  <span className="info-value">{plan?.start_date ? new Date(plan.start_date).toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: 'numeric'}) : 'N/A'}</span>
+                  <span className="info-value">{new Date(plan?.start_date).toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: 'numeric'})}</span>
                 </div>
                 <div className="info-item">
                   <span className="info-label">Expiry Date</span>
-                  <span className="info-value">{plan?.expiry_date ? new Date(plan.expiry_date).toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: 'numeric'}) : 'N/A'}</span>
+                  <span className="info-value">{new Date(plan?.expiry_date).toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: 'numeric'})}</span>
                 </div>
-                
-                {/* Days Remaining - Most useful for experts */}
-                {plan?.remaining_days !== undefined && (
-                  <div className="info-item">
-                    <span className="info-label">Days Remaining</span>
-                    <span className="info-value" style={{color: plan?.remaining_days < 7 ? '#ef4444' : '#1e293b'}}>
-                      {plan?.remaining_days} Days
-                    </span>
-                  </div>
-                )}
-                
                 <div className="info-item">
                   <span className="info-label">Payment ID</span>
-                  <span className="info-value"><span className="payment-id-tag">{plan?.razorpay_payment_id || 'N/A'}</span></span>
+                  <span className="info-value"><span className="payment-id-tag">{plan?.razorpay_payment_id}</span></span>
                 </div>
                 <div className="info-item">
                   <span className="info-label">Validity</span>
-                  <span className="info-value">{plan?.plan_duration || plan?.duration_years || 'N/A'} Year</span>
+                  <span className="info-value">{plan?.duration_years} Year</span>
                 </div>
               </div>
 
               <div className="billing-box">
                 <div className="bill-row">
                   <span>Base Plan Amount</span>
-                  <span>₹{plan?.original_amount || plan?.base_amount || '0'}</span>
+                  <span>₹{plan?.base_amount}</span>
                 </div>
                 <div className="bill-row">
                   <span>GST (18%)</span>
-                  <span>₹{plan?.gst_amount || '0'}</span>
+                  <span>₹{plan?.gst_amount}</span>
                 </div>
                 <div className="bill-row total">
                   <span>Total Paid</span>
-                  <span>₹{plan?.total_paid || '0'}</span>
+                  <span>₹{plan?.total_paid}</span>
                 </div>
               </div>
             </div>

@@ -543,6 +543,7 @@ export default function SubscriptionPlan() {
         currency: "INR",
         name: "G9Expert",
         description: `${selectedPlan.plan_name} - ${selectedDuration} Year(s)`,
+          webview_intent: true,
         handler: async function(response) {
           try {
             const verifyRes = await verifyExpertPlanPaymentApi({

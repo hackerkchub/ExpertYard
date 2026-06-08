@@ -85,7 +85,7 @@ if (!baseAmount || baseAmount < 1 || isNaN(baseAmount)) {
 
       description: "Add balance",
 
-       web_intent: true,
+        webview_intent: true,
 
    method: {
     upi: true,

@@ -284,17 +284,38 @@ const ExpertProfilePage = () => {
   const pricingModes = useMemo(() => {
     if (!expertPrice?.pricing_modes) return [];
 
+    const normalizeMode = (mode) => {
+      if (typeof mode === "string") return mode.trim().toLowerCase();
+      if (mode && typeof mode === "object") {
+        return String(
+          mode.id ||
+          mode.mode ||
+          mode.type ||
+          mode.name ||
+          mode.pricing_mode ||
+          ""
+        ).trim().toLowerCase();
+      }
+      return "";
+    };
+
     if (Array.isArray(expertPrice.pricing_modes)) {
-      return expertPrice.pricing_modes;
+      return expertPrice.pricing_modes
+        .map(normalizeMode)
+        .filter(Boolean);
     }
 
     if (typeof expertPrice.pricing_modes === 'string') {
       try {
-        return JSON.parse(expertPrice.pricing_modes);
+        const parsedModes = JSON.parse(expertPrice.pricing_modes);
+        return Array.isArray(parsedModes)
+          ? parsedModes.map(normalizeMode).filter(Boolean)
+          : [normalizeMode(parsedModes)].filter(Boolean);
       } catch {
         return expertPrice.pricing_modes
           .split(",")
-          .map(mode => mode.trim());
+          .map(normalizeMode)
+          .filter(Boolean);
       }
     }
 
@@ -325,7 +346,7 @@ const ExpertProfilePage = () => {
       prices.sessionDuration = Number(expertPrice?.session?.duration || 0);
     }
 
-    if (plans && plans.length > 0) {
+    if (pricingModes.includes('subscription') || (plans && plans.length > 0)) {
       prices.hasSubscription = true;
     }
 
@@ -395,6 +416,14 @@ const ExpertProfilePage = () => {
     return modes;
   }, [displayPrices, hasActiveSubscription]);
 
+  useEffect(() => {
+    if (!availablePricingModes.length) return;
+    const selectedModeExists = availablePricingModes.some((mode) => mode.id === selectedPricingMode);
+    if (!selectedModeExists) {
+      setSelectedPricingMode(availablePricingModes[0].id);
+    }
+  }, [availablePricingModes, selectedPricingMode]);
+
   const getRemainingPercentage = useCallback(() => {
     if (!activeSubscription) return 0;
     
@@ -454,22 +483,26 @@ const ExpertProfilePage = () => {
     setPurchaseError(null);
     
     if (!isLoggedIn) {
+      setShowPlansModal(false);
       navigate("/user/auth", { state: { from: location } });
       return;
     }
 
     if (hasActiveSubscription) {
+      setShowPlansModal(false);
       alert("You already have an active subscription for this expert.");
       return;
     }
 
     const userBalance = Number(balance || 0);
     if (userBalance < plan.price) {
+      setShowPlansModal(false);
       setRequiredAmount(plan.price - userBalance);
       setShowRecharge(true);
       return;
     }
 
+    setShowPlansModal(false);
     setPurchasingPlan(plan.id);
     try {
       const response = await buySubscriptionApi(plan.id);
@@ -477,7 +510,6 @@ const ExpertProfilePage = () => {
         setShowSubscribeSuccess(true);
         await fetchActiveSubscription();
         await fetchWallet();
-        setShowPlansModal(false);
         
         // Auto close success modal after 3 seconds
         if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
@@ -789,8 +821,11 @@ const ExpertProfilePage = () => {
   }, [activeTab, fetchPosts]);
 
   useEffect(() => {
-    if (numericExpertId && isLoggedIn) {
+    if (numericExpertId) {
       fetchPlans();
+    }
+
+    if (numericExpertId && isLoggedIn) {
       fetchActiveSubscription();
     }
   }, [numericExpertId, isLoggedIn, fetchPlans, fetchActiveSubscription]);
@@ -814,8 +849,9 @@ const ExpertProfilePage = () => {
         fetchPosts();
       }
 
+      fetchPlans();
+
       if (isLoggedIn) {
-        fetchPlans();
         fetchActiveSubscription();
       }
     }
@@ -829,6 +865,26 @@ const ExpertProfilePage = () => {
       if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if ((!showPlansModal && !showRecharge) || typeof document === "undefined") return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event) => {
+      if (event.key !== "Escape") return;
+      if (showPlansModal) setShowPlansModal(false);
+      if (showRecharge) setShowRecharge(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showPlansModal, showRecharge]);
 
   // Handle start call/chat with selected pricing mode
   const handleStart = useCallback((type) => {
@@ -1080,9 +1136,9 @@ const ExpertProfilePage = () => {
                 </QuickStats>
               </div>
 
-              <TagList>
-                <Tag><FiBookOpen /> Education: {profile.education || "Masters Degree"}</Tag>
-                <Tag><FiTarget /> Category: {profile.category_name || "Business"}</Tag>
+              <TagList className="expert-profile-header-tags">
+                <Tag className="expert-profile-header-tag"><FiBookOpen /> Education: {profile.education || "Masters Degree"}</Tag>
+                <Tag className="expert-profile-header-tag"><FiTarget /> Category: {profile.category_name || "Business"}</Tag>
               </TagList>
 
               {/* Pricing Mode Selection Tabs */}
@@ -1186,10 +1242,10 @@ const ExpertProfilePage = () => {
                 </div>
               </CallToAction>
 
-              {/* Subscription CTA Button - Only show if expert has plans and user has no active subscription */}
-              {isLoggedIn && !hasActiveSubscription && plans.length > 0 && selectedPricingMode !== "subscription" && (
-                <div style={{ marginTop: 16, textAlign: "center" }}>
-                  <button onClick={() => setShowPlansModal(true)} style={{
+              {/* Subscription CTA Button - Only show if expert has subscription pricing and user has no active subscription */}
+              {displayPrices.hasSubscription && !hasActiveSubscription && selectedPricingMode !== "subscription" && (
+                <div className="expert-profile-subscription-cta" style={{ marginTop: 16, textAlign: "center" }}>
+                  <button className="expert-profile-subscription-cta-btn" onClick={() => setShowPlansModal(true)} style={{
                     padding: "10px 24px", background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
                     color: "white", border: "none", borderRadius: 12, fontWeight: 600, fontSize: 14,
                     cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
@@ -1427,10 +1483,10 @@ const ExpertProfilePage = () => {
 
         {/* Subscription Plans Modal */}
         {showPlansModal && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, overflowY: "auto", padding: 10 }}>
-            <div style={{ background: "#fff", padding: 28, borderRadius: 24, width: "min(90vw, 800px)", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 25px 50px rgba(0,0,0,0.25)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "20px 0 24px" }}>
-                <h2 style={{ margin: 0, color: "#0f172a" }}>Subscription Plans</h2>
+          <div className="subscription-plans-modal" onClick={() => setShowPlansModal(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, overflowY: "auto", padding: 10 }}>
+            <div className="subscription-plans-modal__sheet" role="dialog" aria-modal="true" aria-labelledby="subscription-plans-title" onClick={(e) => e.stopPropagation()} style={{ background: "#fff", padding: 28, borderRadius: 24, width: "min(90vw, 800px)", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 25px 50px rgba(0,0,0,0.25)" }}>
+              <div className="subscription-plans-modal__header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "20px 0 24px" }}>
+                <h2 id="subscription-plans-title" style={{ margin: 0, color: "#0f172a" }}>Subscription Plans</h2>
                 <FiX size={24} style={{ cursor: "pointer", color: "#64748b" }} onClick={() => setShowPlansModal(false)} />
               </div>
               
@@ -1502,8 +1558,8 @@ const ExpertProfilePage = () => {
 
         {/* Recharge Modal */}
         {showRecharge && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999 }}>
-            <div style={{ background: "#fff", padding: 28, borderRadius: 16, width: "min(90vw, 380px)", textAlign: "center" }}>
+          <div className="expert-profile-recharge-modal" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 20060 }}>
+            <div className="expert-profile-recharge-modal__sheet" style={{ background: "#fff", padding: 28, borderRadius: 16, width: "min(90vw, 380px)", textAlign: "center" }}>
               <h3 style={{ margin: 0, marginBottom: 12, color: "#0f172a" }}>Low Balance</h3>
               <p style={{ margin: 0, marginBottom: 20, color: "#475569" }}>Need <strong>₹{requiredAmount.toFixed(2)}</strong> more.</p>
               <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>

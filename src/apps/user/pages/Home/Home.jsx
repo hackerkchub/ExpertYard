@@ -339,16 +339,11 @@ function ImageWithFallback({ src, alt, className, fallbackIcon: FallbackIcon = F
 
 function Header({
   balance,
-  isLoggedIn,
   logo,
   onMenuOpen,
-  onProfileClick,
   onWalletClick,
-  user,
   walletLoading,
 }) {
-  const profileImage = getUserProfileImage(user);
-
   return (
     <header className="premium-mobile-header">
       <button type="button" className="premium-mobile-icon-button" onClick={onMenuOpen} aria-label="Open menu">
@@ -361,12 +356,8 @@ function Header({
         <FaWallet />
         <span>{walletLoading ? "..." : `Rs ${Math.floor(Number(balance || 0))}`}</span>
       </button>
-      <button type="button" className="premium-mobile-avatar" onClick={onProfileClick} aria-label="Open profile">
-        {isLoggedIn && profileImage ? (
-          <ImageWithFallback src={profileImage} alt={getUserDisplayName(user)} fallbackIcon={FiUser} />
-        ) : (
-          <FiUser />
-        )}
+      <button type="button" className="premium-mobile-avatar" onClick={onWalletClick} aria-label="Open wallet">
+        <FaWallet />
       </button>
     </header>
   );
@@ -889,12 +880,9 @@ const HomePage = () => {
       <div className="mobile-home-app">
         <Header
           balance={balance}
-          isLoggedIn={isLoggedIn}
           logo={logo}
           onMenuOpen={() => setMobileMenuOpen(true)}
-          onProfileClick={() => navigate(isLoggedIn ? "/user/user-profile" : "/user/auth")}
           onWalletClick={() => navigate("/user/wallet")}
-          user={user}
           walletLoading={walletLoading}
         />
 

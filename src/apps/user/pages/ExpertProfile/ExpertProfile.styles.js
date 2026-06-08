@@ -129,7 +129,7 @@ export const PageWrap = styled.div`
     width: 100%;
     max-width: 100%;
     padding: 10px 10px 8px;
-    padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(var(--mobile-bottom-nav-reserved-space, 80px) + 44px + env(safe-area-inset-bottom, 0px));
     margin-bottom: 0;
     overflow-x: hidden;
     overflow-y: visible;
@@ -173,6 +173,22 @@ export const PageWrap = styled.div`
       overflow: visible;
     }
 
+    .expert-profile-subscription-cta {
+      margin-top: 8px !important;
+      text-align: left !important;
+      grid-column: 1 / -1;
+    }
+
+    .expert-profile-subscription-cta-btn {
+      width: 100% !important;
+      min-height: 40px !important;
+      justify-content: center !important;
+      padding: 9px 12px !important;
+      border-radius: 999px !important;
+      font-size: 12.5px !important;
+      box-shadow: 0 10px 22px rgba(99, 102, 241, 0.24);
+    }
+
     .expert-profile-main > *:last-child,
     .expert-profile-sidebar > *:last-child {
       margin-bottom: 0;
@@ -182,7 +198,7 @@ export const PageWrap = styled.div`
       position: fixed;
       left: 10px;
       right: 10px;
-      bottom: calc(var(--mobile-bottom-nav-reserved-space, 80px) + 6px);
+      bottom: calc(var(--nav-height, 72px) + 8px + env(safe-area-inset-bottom, 0px));
       z-index: 10005;
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -200,10 +216,10 @@ export const PageWrap = styled.div`
 
     .mobile-profile-actions button {
       min-width: 0;
-      min-height: 50px;
+      min-height: 48px;
       border: none;
       border-radius: 999px;
-      font-size: 14px;
+      font-size: 13.5px;
       line-height: 1.2;
       font-weight: 800;
       display: inline-flex;
@@ -233,12 +249,107 @@ export const PageWrap = styled.div`
       color: #000080;
       box-shadow: 0 12px 24px rgba(255, 193, 7, 0.24);
     }
+
+    .subscription-plans-modal {
+      align-items: flex-end !important;
+      justify-content: center !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      z-index: 20050 !important;
+      background: rgba(15, 23, 42, 0.62) !important;
+      backdrop-filter: blur(4px);
+    }
+
+    .subscription-plans-modal__sheet {
+      width: 100% !important;
+      max-width: 100% !important;
+      max-height: min(88dvh, 720px) !important;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 24px 24px 0 0 !important;
+      padding: 18px 12px calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+      box-shadow: 0 -18px 44px rgba(15, 23, 42, 0.24) !important;
+      animation: expertProfileSheetUp 260ms ease-out both;
+    }
+
+    .subscription-plans-modal__header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      margin: 0 0 10px !important;
+      padding: 4px 0 8px;
+      background: #ffffff;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    .subscription-plans-modal__header::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -8px;
+      width: 42px;
+      height: 4px;
+      border-radius: 999px;
+      background: #cbd5e1;
+      transform: translateX(-50%);
+    }
+
+    .subscription-plans-modal__header h2 {
+      font-size: 18px !important;
+      line-height: 1.25 !important;
+      color: #000080 !important;
+    }
+
+    .expert-profile-recharge-modal {
+      align-items: flex-end !important;
+      justify-content: center !important;
+      padding: 0 !important;
+      z-index: 20060 !important;
+      background: rgba(15, 23, 42, 0.62) !important;
+      backdrop-filter: blur(4px);
+    }
+
+    .expert-profile-recharge-modal__sheet {
+      position: relative;
+      width: 100% !important;
+      max-width: 100% !important;
+      max-height: 82dvh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 24px 24px 0 0 !important;
+      padding: 24px 16px calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+      box-shadow: 0 -18px 44px rgba(15, 23, 42, 0.26);
+      animation: expertProfileSheetUp 260ms ease-out both;
+    }
+
+    .expert-profile-recharge-modal__sheet::before {
+      content: "";
+      position: absolute;
+      top: 9px;
+      left: 50%;
+      width: 44px;
+      height: 4px;
+      border-radius: 999px;
+      background: #cbd5e1;
+      transform: translateX(-50%);
+    }
+
+    .expert-profile-recharge-modal__sheet > div {
+      display: grid !important;
+      grid-template-columns: 1fr;
+      gap: 10px !important;
+    }
+
+    .expert-profile-recharge-modal__sheet button {
+      width: 100%;
+      min-height: 46px;
+    }
   }
 
   @media (max-width: 380px) {
     padding-left: 8px;
     padding-right: 8px;
-    padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(var(--mobile-bottom-nav-reserved-space, 80px) + 42px + env(safe-area-inset-bottom, 0px));
 
     .mobile-profile-actions {
       left: 8px;
@@ -256,6 +367,17 @@ export const PageWrap = styled.div`
 
     .mobile-profile-actions button strong {
       font-size: 11px;
+    }
+  }
+
+  @keyframes expertProfileSheetUp {
+    from {
+      opacity: 0.88;
+      transform: translateY(18px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 `;
@@ -295,28 +417,28 @@ export const ProfileCard = styled.div`
   @media (max-width: 768px) {
     width: 100%;
     max-width: 100%;
-    border-radius: 18px;
-    padding: 12px;
-    margin-bottom: 10px;
+    border-radius: 16px;
+    padding: 9px;
+    margin-bottom: 8px;
     box-shadow: 0 14px 34px rgba(0, 0, 128, 0.16);
 
     > div,
     .expert-profile-hero-inner {
       display: grid !important;
-      grid-template-columns: 94px minmax(0, 1fr);
+      grid-template-columns: 82px minmax(0, 1fr);
       align-items: start;
-      gap: 12px;
+      gap: 9px;
       width: 100%;
       max-width: 100%;
     }
 
     .expert-profile-hero-media {
       flex: initial !important;
-      width: 94px;
+      width: 82px;
       min-width: 0;
       display: grid;
       justify-items: center;
-      gap: 8px;
+      gap: 5px;
       text-align: center;
     }
 
@@ -331,13 +453,13 @@ export const ProfileCard = styled.div`
       min-width: 0;
       width: 100%;
       display: grid;
-      gap: 8px;
+      gap: 5px;
     }
 
     .expert-profile-hero-top {
       display: grid !important;
       grid-template-columns: minmax(0, 1fr);
-      gap: 8px;
+      gap: 5px;
       width: 100%;
       min-width: 0;
     }
@@ -346,24 +468,24 @@ export const ProfileCard = styled.div`
       min-width: 0;
       display: grid;
       justify-items: start;
-      gap: 4px;
+      gap: 3px;
     }
 
     .expert-profile-pricing-summary {
       grid-column: 1 / -1;
-      margin: 4px 0 0 !important;
+      margin: 2px 0 0 !important;
     }
   }
 
   @media (max-width: 360px) {
     > div,
     .expert-profile-hero-inner {
-      grid-template-columns: 86px minmax(0, 1fr);
-      gap: 10px;
+      grid-template-columns: 74px minmax(0, 1fr);
+      gap: 8px;
     }
 
     .expert-profile-hero-media {
-      width: 86px;
+      width: 74px;
     }
   }
 `;
@@ -377,16 +499,17 @@ export const LeftImage = styled.img`
   box-shadow: 0 18px 42px rgba(0,0,0,0.28);
   
   @media (max-width: 768px) {
-    width: 88px;
-    height: 88px;
+    width: 78px;
+    height: 78px;
     display: block;
     margin: 0 auto;
-    border-width: 3px;
+    border-width: 2px;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.22);
   }
 
   @media (max-width: 360px) {
-    width: 82px;
-    height: 82px;
+    width: 72px;
+    height: 72px;
   }
 `;
 
@@ -410,18 +533,19 @@ export const AvatarFallback = styled.div`
   box-shadow: 0 18px 42px rgba(0,0,0,0.28);
 
   @media (max-width: 768px) {
-    width: 88px;
-    height: 88px;
-    font-size: 28px;
+    width: 78px;
+    height: 78px;
+    font-size: 25px;
     margin: 0 auto;
     display: flex;
-    border-width: 3px;
+    border-width: 2px;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.22);
   }
 
   @media (max-width: 360px) {
-    width: 82px;
-    height: 82px;
-    font-size: 26px;
+    width: 72px;
+    height: 72px;
+    font-size: 23px;
   }
 `;
 
@@ -438,8 +562,8 @@ export const Name = styled.h1`
   flex-wrap: wrap;
   
   @media (max-width: 768px) { 
-    font-size: clamp(18px, 6vw, 22px);
-    line-height: 1.22;
+    font-size: clamp(17px, 5.3vw, 21px);
+    line-height: 1.16;
     justify-content: flex-start;
     text-align: left; 
     margin-top: 0; 
@@ -459,6 +583,13 @@ export const VerifiedBadge = styled.span`
   gap: 4px;
   font-weight: 900;
   flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    min-height: 20px;
+    padding: 3px 7px;
+    font-size: 10px;
+    gap: 3px;
+  }
 `;
 
 export const Role = styled.p`
@@ -468,8 +599,8 @@ export const Role = styled.p`
   font-weight: 600;
   @media (max-width: 768px) {
     text-align: left;
-    font-size: 13.5px;
-    line-height: 1.4;
+    font-size: 12.5px;
+    line-height: 1.25;
     margin: 0;
     color: rgba(255, 255, 255, 0.82);
   }
@@ -492,9 +623,9 @@ export const Status = styled.div`
     width: fit-content;
     margin: 0;
     text-align: left;
-    font-size: 12px;
-    min-height: 26px;
-    padding: 4px 9px;
+    font-size: 11px;
+    min-height: 22px;
+    padding: 3px 7px;
   }
 `;
 
@@ -512,8 +643,8 @@ export const QuickStats = styled.div`
   @media (max-width: 768px) {
     grid-column: 1 / -1;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
-    margin: 2px 0 4px;
+    gap: 5px;
+    margin: 0;
   }
 `;
 
@@ -538,11 +669,19 @@ export const StatItem = styled.div`
   }
 
   @media (max-width: 768px) {
-    min-height: 42px;
-    padding: 7px 5px;
-    font-size: 10px;
-    line-height: 1.3;
-    border-radius: 12px;
+    min-height: 32px;
+    padding: 4px 4px;
+    gap: 2px;
+    font-size: 9.5px;
+    line-height: 1.15;
+    border-radius: 10px;
+  }
+
+  @media (max-width: 768px) {
+    svg {
+      width: 13px;
+      height: 13px;
+    }
   }
 `;
 
@@ -554,8 +693,16 @@ export const TagList = styled.div`
   @media (max-width: 768px) {
     grid-column: 1 / -1;
     justify-content: flex-start;
-    gap: 6px;
-    margin: 4px 0 0;
+    gap: 4px;
+    margin: 1px 0 0;
+
+    &.expert-profile-header-tags {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 5px;
+      width: 100%;
+      margin-top: 2px;
+    }
   }
 `;
 
@@ -574,11 +721,33 @@ export const Tag = styled.span`
 
   @media (max-width: 768px) {
     max-width: 100%;
-    padding: 6px 10px;
-    font-size: 11px;
+    padding: 4px 7px;
+    font-size: 10.5px;
     line-height: 1.2;
     overflow: hidden;
     text-overflow: ellipsis;
+    gap: 4px;
+
+    &.expert-profile-header-tag {
+      width: 100%;
+      min-height: 28px;
+      justify-content: flex-start;
+      padding: 6px 8px;
+      border-radius: 10px;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      text-overflow: clip;
+      background: rgba(255, 255, 255, 0.95);
+      color: #000080;
+    }
+  }
+
+  @media (max-width: 768px) {
+    svg {
+      width: 12px;
+      height: 12px;
+      flex: 0 0 auto;
+    }
   }
 `;
 
@@ -665,13 +834,14 @@ export const FollowButton = styled.button`
   }
 
   @media (max-width: 768px) {
-    margin: 10px auto 0;
+    margin: 5px auto 0;
     width: 100%;
-    min-height: 34px;
-    padding: 7px 8px;
-    font-size: 12px;
+    min-height: 28px;
+    padding: 5px 7px;
+    font-size: 10.5px;
     line-height: 1.1;
     font-weight: 800;
+    gap: 4px;
   }
 `;
 
@@ -723,6 +893,7 @@ export const SectionBody = styled.div`
 export const ReviewSection = styled(Section)`
   @media (max-width: 768px) {
     padding: 12px;
+    margin-bottom: 0;
   }
 `;
 export const ReviewHeader = styled.div`
@@ -1479,8 +1650,9 @@ export const SubscriptionCard = styled.div`
   @media (max-width: 768px) {
     grid-column: 1 / -1;
     margin-top: 8px;
-    padding: 12px;
+    padding: 10px 12px;
     border-radius: 14px;
+    box-shadow: 0 10px 24px rgba(0, 0, 128, 0.14);
   }
 `;
 
@@ -1502,9 +1674,21 @@ export const PlansContainer = styled.div`
   margin-top: 20px;
 
   @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    margin-top: 14px;
+    display: flex;
+    grid-template-columns: none;
+    gap: 10px;
+    margin-top: 10px;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 2px 2px 8px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 `;
 
@@ -1521,8 +1705,12 @@ export const PlanCard = styled.div`
   }
 
   @media (max-width: 768px) {
-    padding: 16px;
+    flex: 0 0 clamp(218px, 76vw, 286px);
+    min-width: 0;
+    padding: 12px;
     border-radius: 14px;
+    scroll-snap-align: start;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
 
     &:hover {
       transform: none;
@@ -1535,6 +1723,16 @@ export const PlanHeader = styled.div`
   margin-bottom: 20px;
   padding-bottom: 16px;
   border-bottom: 1px solid #e2e8f0;
+
+  @media (max-width: 768px) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 4px 8px;
+    text-align: left;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+  }
 `;
 
 export const PlanName = styled.h3`
@@ -1543,7 +1741,14 @@ export const PlanName = styled.h3`
   font-size: 20px;
 
   @media (max-width: 768px) {
-    font-size: 17px;
+    margin: 0;
+    min-width: 0;
+    font-size: 14px;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 `;
 
@@ -1554,19 +1759,34 @@ export const PlanPrice = styled.div`
   margin: 8px 0;
 
   @media (max-width: 768px) {
-    font-size: 24px;
+    margin: 0;
+    font-size: 19px;
+    line-height: 1.1;
+    white-space: nowrap;
   }
 `;
 
 export const PlanDuration = styled.div`
   color: #64748b;
   font-size: 14px;
+
+  @media (max-width: 768px) {
+    grid-column: 1 / -1;
+    font-size: 11.5px;
+    line-height: 1.25;
+  }
 `;
 
 export const PlanFeatures = styled.ul`
   list-style: none;
   padding: 0;
   margin: 0 0 24px 0;
+
+  @media (max-width: 768px) {
+    display: grid;
+    gap: 3px;
+    margin: 0 0 10px;
+  }
 `;
 
 export const PlanFeature = styled.li`
@@ -1578,8 +1798,24 @@ export const PlanFeature = styled.li`
   font-size: 14px;
 
   @media (max-width: 768px) {
-    font-size: 13px;
-    line-height: 1.4;
+    min-width: 0;
+    gap: 6px;
+    padding: 2px 0;
+    font-size: 12px;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    svg {
+      flex: 0 0 auto;
+      width: 14px;
+      height: 14px;
+    }
+
+    &:nth-child(n + 5) {
+      display: none;
+    }
   }
 `;
 
@@ -1608,8 +1844,11 @@ export const SubscribeButton = styled.button`
   }
 
   @media (max-width: 768px) {
-    min-height: 44px;
-    font-size: 14px;
+    min-height: 38px;
+    padding: 9px 10px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    line-height: 1.2;
   }
 `;
 
@@ -1622,9 +1861,9 @@ export const ActiveSubscriptionCard = styled.div`
 
   @media (max-width: 768px) {
     grid-column: 1 / -1;
-    margin-top: 8px;
-    padding: 12px;
-    border-radius: 12px;
+    margin-top: 4px;
+    padding: 8px;
+    border-radius: 10px;
   }
 `;
 
@@ -1648,10 +1887,38 @@ export const SubscriptionInfo = styled.div`
       font-size: 12px;
     }
   }
+
+  @media (max-width: 768px) {
+    gap: 6px;
+    margin-bottom: 5px;
+
+    > svg {
+      width: 16px;
+      height: 16px;
+      flex: 0 0 auto;
+    }
+
+    div {
+      min-width: 0;
+
+      strong {
+        font-size: 12px;
+        line-height: 1.25;
+      }
+
+      small {
+        font-size: 10.5px;
+      }
+    }
+  }
 `;
 
 export const SubscriptionRemaining = styled.div`
   margin-top: 12px;
+
+  @media (max-width: 768px) {
+    margin-top: 5px;
+  }
 `;
 
 export const ProgressBar = styled.div`
@@ -1661,6 +1928,11 @@ export const ProgressBar = styled.div`
   border-radius: 4px;
   overflow: hidden;
   margin-top: 8px;
+
+  @media (max-width: 768px) {
+    height: 5px;
+    margin-top: 4px;
+  }
 `;
 
 export const UsageText = styled.div`
@@ -1668,6 +1940,11 @@ export const UsageText = styled.div`
   font-size: 13px;
   font-weight: 500;
   margin-top: 8px;
+
+  @media (max-width: 768px) {
+    font-size: 11px;
+    margin-top: 2px;
+  }
 `;
 
 // In ExpertProfile.styles.js, after defining PlanCard
@@ -1765,9 +2042,21 @@ export const PricingModeTabs = styled.div`
   flex-wrap: wrap;
 
   @media (max-width: 768px) {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.08);
     justify-content: flex-start;
-    gap: 6px;
-    margin-bottom: 6px;
+    gap: 5px;
+    margin-bottom: 5px;
+    overflow: visible;
+
+    > button:nth-child(3):last-child {
+      grid-column: 1 / -1;
+    }
   }
 `;
 
@@ -1790,10 +2079,25 @@ export const PricingModeTab = styled.button`
   }
 
   @media (max-width: 768px) {
-    min-height: 36px;
-    padding: 7px 11px;
-    font-size: 12px;
+    min-width: 0;
+    width: 100%;
+    min-height: 38px;
+    justify-content: center;
+    padding: 7px 8px;
+    border-radius: 12px;
+    border-color: ${props => props.$active ? '#ffc107' : 'transparent'};
+    font-size: 11.5px;
     font-weight: 800;
+    gap: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    svg {
+      width: 12px;
+      height: 12px;
+      flex: 0 0 auto;
+    }
   }
 `;
 
@@ -1805,8 +2109,8 @@ export const PricingInfo = styled.div`
 
   @media (max-width: 768px) {
     text-align: left;
-    font-size: 12px;
-    line-height: 1.4;
-    padding: 4px 0;
+    font-size: 11.5px;
+    line-height: 1.3;
+    padding: 1px 0;
   }
 `;

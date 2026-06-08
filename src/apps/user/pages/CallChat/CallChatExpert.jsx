@@ -255,6 +255,17 @@ export default function UserExpertsPage() {
   }, [categories.length, isCategoryRoute, navigate, routeCategoryId]);
 
   useEffect(() => {
+    if (!isMobileFilterOpen) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isMobileFilterOpen]);
+
+  useEffect(() => {
     const nextPage = parseInt(searchParams.get("page")) || 1;
     if (nextPage !== currentPage) setCurrentPage(nextPage);
 
@@ -1264,35 +1275,40 @@ export default function UserExpertsPage() {
           <AnimatePresence>
             {isMobileFilterOpen && (
               <>
-                <Overlay onClick={() => setIsMobileFilterOpen(false)} />
+                <Overlay
+                  as={motion.div}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={() => setIsMobileFilterOpen(false)}
+                />
                 <MobileFilterDrawer
                   as={motion.div}
-                  initial={{ x: '100%' }}
-                  animate={{ x: 0 }}
-                  exit={{ x: '100%' }}
-                  transition={{ type: 'tween', duration: 0.3 }}
+                  initial={{ y: '100%', opacity: 0.98 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: '100%', opacity: 0.98 }}
+                  transition={{ type: 'tween', duration: 0.28 }}
                 >
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    padding: '16px 20px',
-                    borderBottom: '1px solid #e2e8f0'
-                  }}>
-                    <h3 style={{ margin: 0 }}>Filters</h3>
+                  <div className="mobile-filter-grabber" aria-hidden="true" />
+                  <div className="mobile-filter-header">
+                    <div>
+                      <h3>Filters</h3>
+                      {activeFiltersCount > 0 && <span>{activeFiltersCount} selected</span>}
+                    </div>
+                    <button type="button" className="mobile-filter-clear-top" onClick={resetFilters}>
+                      Clear All
+                    </button>
                     <button 
+                      type="button"
+                      className="mobile-filter-close"
                       onClick={() => setIsMobileFilterOpen(false)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        fontSize: 24,
-                        cursor: 'pointer'
-                      }}
+                      aria-label="Close filters"
                     >
                       <FiX size={24} />
                     </button>
                   </div>
-                  <div style={{ padding: '20px' }}>
+                  <div className="mobile-filter-body">
                     <FilterContent />
                   </div>
                   <div className="mobile-filter-actions">

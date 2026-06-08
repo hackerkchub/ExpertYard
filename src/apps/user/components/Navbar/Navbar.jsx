@@ -7,6 +7,7 @@ import {
   BrandLogo,
   HeaderBrandGroup,
   HeaderBackButton,
+  HeaderMobileTitle,
   HeaderCategoryButton,
   HeaderCategoryMenu,
   HeaderCategoryMenuCard,
@@ -63,6 +64,37 @@ import { getCategoryPath } from "../../../../shared/utils/categoryRoutes";
 import ProfilePopup from "../ProfilePopup";
 import GlobalSearchBar from "../search/GlobalSearchBar";
 
+const getMobileHeaderTitle = (pathname) => {
+  if (pathname === "/user/search") return "Search";
+  if (pathname === "/user/all-services") return "Services";
+  if (pathname === "/user/categories") return "Categories";
+  if (pathname === "/user/call-chat") return "Experts";
+  if (pathname === "/user/experts") return "Experts";
+  if (pathname.startsWith("/user/experts/")) return "Expert Profile";
+  if (pathname === "/user/wallet") return "Wallet";
+  if (pathname === "/user/user-profile") return "Profile";
+  if (pathname === "/user/chat-history" || pathname.startsWith("/user/chat-history/")) return "History";
+  if (pathname.startsWith("/user/service-details/")) return "Service Details";
+  if (pathname.startsWith("/user/category/") || pathname.startsWith("/user/categories/")) return "Categories";
+  if (pathname === "/user/my-offers") return "Offers";
+  if (pathname.startsWith("/user/my-booking/")) return "Booking";
+  if (pathname === "/user/about") return "About";
+  if (pathname === "/user/how-it-works") return "How It Works";
+  if (pathname === "/user/reviews") return "Reviews";
+  if (pathname === "/user/guidelines") return "Guidelines";
+  if (pathname === "/user/terms") return "Terms";
+  if (pathname === "/user/privacy") return "Privacy";
+  if (pathname === "/user/faq") return "FAQ";
+  if (pathname === "/user/contact") return "Contact";
+  if (pathname === "/user/careers") return "Careers";
+  if (pathname === "/user/find-experts") return "Find Experts";
+  if (pathname === "/user/become-expert") return "Become Expert";
+  if (pathname === "/user/earnings-model") return "Earnings";
+  if (pathname === "/user/support") return "Support";
+  if (pathname === "/user/marketing") return "Marketing";
+  return "G9 Expert";
+};
+
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -83,6 +115,20 @@ const Navbar = () => {
 
   const userBtnRef = useRef(null);
   const showMobileBack = location.pathname !== "/user";
+  const mobileHeaderTitle = getMobileHeaderTitle(location.pathname);
+  const isSearchRoute = location.pathname === "/user/search";
+  const isWalletRoute = location.pathname === "/user/wallet";
+
+  const handleBack = () => {
+    const historyIndex = typeof window !== "undefined" ? window.history.state?.idx : 0;
+
+    if (historyIndex > 0) {
+      navigate(-1);
+      return;
+    }
+
+    navigate("/user");
+  };
 
   const handleNav = (path) => {
     navigate(path);
@@ -201,10 +247,10 @@ const Navbar = () => {
 
   return (
     <>
-      <Nav>
+      <Nav className={showMobileBack ? "user-common-mobile-header" : undefined}>
         <Container>
           {showMobileBack && (
-            <HeaderBackButton type="button" onClick={() => navigate(-1)} aria-label="Go back">
+            <HeaderBackButton type="button" onClick={handleBack} aria-label="Go back">
               <FiArrowLeft />
             </HeaderBackButton>
           )}
@@ -218,6 +264,12 @@ const Navbar = () => {
             >
               {open ? <FiX size={20} /> : <FiMenu size={20} />}
             </HeaderMenuButton>
+          )}
+
+          {showMobileBack && (
+            <HeaderMobileTitle title={mobileHeaderTitle}>
+              {mobileHeaderTitle}
+            </HeaderMobileTitle>
           )}
 
           <HeaderBrandGroup className={showMobileBack ? "mobile-hidden" : undefined}>
@@ -289,24 +341,28 @@ const Navbar = () => {
             )}
           </HeaderCategoryMenuShell>
 
-          <HeaderWalletButton
-            type="button"
-            onClick={() => handleNav("/user/wallet")}
-            aria-label={t("common.wallet")}
-            title={t("common.wallet")}
-          >
-            <FaWallet />
-          </HeaderWalletButton>
-
           <HeaderSearch>
             <GlobalSearchBar className="navbar-global-search" />
           </HeaderSearch>
 
-          <MobileIcon onClick={() => navigate("/user/search")} aria-label="Open search page">
-            <FiSearch size={20} />
-          </MobileIcon>
+          {!isSearchRoute && (
+            <MobileIcon onClick={() => navigate("/user/search")} aria-label="Open search page">
+              <FiSearch size={20} />
+            </MobileIcon>
+          )}
 
-          <HeaderActions>
+          {!isWalletRoute && (
+            <HeaderWalletButton
+              type="button"
+              onClick={() => handleNav("/user/wallet")}
+              aria-label={t("common.wallet")}
+              title={t("common.wallet")}
+            >
+              <FaWallet />
+            </HeaderWalletButton>
+          )}
+
+          <HeaderActions className={showMobileBack ? "common-mobile-hidden" : undefined}>
             <LanguageSwitcher aria-label={t("common.language")}>
               <LanguageIcon aria-hidden="true">
                 <FiGlobe />

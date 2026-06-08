@@ -1,5 +1,6 @@
 // UserProfile.jsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Grid,
   CircularProgress,
@@ -18,6 +19,10 @@ import {
   Phone as PhoneIcon,
   Badge as BadgeIcon,
   Logout as LogoutIcon,
+  AccountBalanceWallet as WalletIcon,
+  History as HistoryIcon,
+  SupportAgent as SupportIcon,
+  ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material';
 import {
   getUserProfileApi,
@@ -42,6 +47,7 @@ import {
   AvatarIcon,
   UserInfo,
   UserName,
+  MobileUserMeta,
   ReferralBadge,
   InfoGrid,
   InfoItem,
@@ -60,7 +66,8 @@ import {
   StyledSnackbar,
   DecorativeCircle,
   VerifyButton,
-  SignOutButton,
+  MobileShortcutGrid,
+  MobileShortcutButton,
 } from './UserProfile.styles';
 
 // Helper function to get error message
@@ -74,6 +81,7 @@ const getErrorMessage = (error, fallback = "Something went wrong") => {
 };
 
 const UserProfile = () => {
+  const navigate = useNavigate();
   const { logout } = useAuth();
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -446,6 +454,10 @@ const UserProfile = () => {
                     <UserName variant="h4">
                       {userData.full_name}
                     </UserName>
+                    <MobileUserMeta>
+                      {userData.email && <span>{userData.email}</span>}
+                      {userData.phone && <span>{userData.phone}</span>}
+                    </MobileUserMeta>
                     {userData.referral_code && (
                       <ReferralBadge>
                         <Typography variant="body2" color="textSecondary">
@@ -493,6 +505,36 @@ const UserProfile = () => {
                 </InfoGrid>
               </StyledCardContent>
             </ProfileCard>
+          )}
+
+          {!editing && (
+            <MobileShortcutGrid aria-label="Profile quick actions">
+              <MobileShortcutButton type="button" onClick={handleEditClick}>
+                <span><EditIcon /></span>
+                <strong>Edit Profile</strong>
+                <ChevronRightIcon />
+              </MobileShortcutButton>
+              <MobileShortcutButton type="button" onClick={() => navigate('/user/wallet')}>
+                <span><WalletIcon /></span>
+                <strong>Wallet</strong>
+                <ChevronRightIcon />
+              </MobileShortcutButton>
+              <MobileShortcutButton type="button" onClick={() => navigate('/user/chat-history')}>
+                <span><HistoryIcon /></span>
+                <strong>Chat History</strong>
+                <ChevronRightIcon />
+              </MobileShortcutButton>
+              <MobileShortcutButton type="button" onClick={() => navigate('/user/support')}>
+                <span><SupportIcon /></span>
+                <strong>Support</strong>
+                <ChevronRightIcon />
+              </MobileShortcutButton>
+              <MobileShortcutButton type="button" className="danger" onClick={handleSignOutClick}>
+                <span><LogoutIcon /></span>
+                <strong>Logout</strong>
+                <ChevronRightIcon />
+              </MobileShortcutButton>
+            </MobileShortcutGrid>
           )}
 
           {/* Edit Mode */}

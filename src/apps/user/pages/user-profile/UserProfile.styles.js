@@ -46,8 +46,14 @@ export const ProfileContainer = styled(Container)`
 
   @media (max-width: 767px) {
     max-width: 100% !important;
-    padding: 14px 12px calc(88px + env(safe-area-inset-bottom, 0px));
+    padding: 8px 12px 12px;
     overflow-x: hidden;
+    animation: none;
+
+    &,
+    * {
+      box-sizing: border-box;
+    }
   }
 `;
 
@@ -69,9 +75,11 @@ export const StyledPaper = styled(Paper)`
   }
 
   @media (max-width: 767px) {
-    padding: 14px;
-    border-radius: 22px !important;
-    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+    padding: 0;
+    border: 0;
+    border-radius: 0 !important;
+    background: transparent;
+    box-shadow: none;
   }
 `;
 
@@ -85,10 +93,9 @@ export const HeaderSection = styled(Box)`
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 
   @media (max-width: 767px) {
-    flex-wrap: wrap;
-    align-items: flex-start;
-    margin-bottom: 16px;
-    padding-bottom: 14px;
+    margin-bottom: 10px;
+    padding: 0 2px 0;
+    border-bottom: 0;
   }
 `;
 
@@ -103,7 +110,7 @@ export const PageTitle = styled(Typography)`
   letter-spacing: -0.5px;
 
   @media (max-width: 767px) {
-    font-size: clamp(21px, 6vw, 24px) !important;
+    display: none;
   }
 `;
 
@@ -115,7 +122,13 @@ export const ActionButtonsGroup = styled(Box)`
 
   @media (max-width: 767px) {
     width: 100%;
-    justify-content: flex-start;
+    justify-content: flex-end;
+    gap: 7px;
+
+    .edit-btn,
+    .signout-btn {
+      display: none;
+    }
   }
 `;
 
@@ -145,6 +158,13 @@ export const StyledIconButton = styled(IconButton)`
   &.signout-btn:hover {
     background: rgba(245, 158, 11, 0.10) !important;
   }
+
+  @media (max-width: 767px) {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px !important;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  }
 `;
 
 export const ProfileCard = styled(Card)`
@@ -165,7 +185,16 @@ export const ProfileCard = styled(Card)`
   }
 
   @media (max-width: 767px) {
-    border-radius: 20px !important;
+    border-radius: 22px !important;
+    border-color: rgba(0, 0, 128, 0.08);
+    background:
+      radial-gradient(circle at 10% 0%, rgba(37, 99, 235, 0.12), transparent 30%),
+      linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.07);
+
+    &::before {
+      height: 0;
+    }
   }
 `;
 
@@ -178,7 +207,7 @@ export const StyledCardContent = styled(CardContent)`
 
   @media (max-width: 767px) {
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 12px;
     padding: 14px !important;
   }
 `;
@@ -200,8 +229,15 @@ export const AvatarSection = styled(Box)`
   text-align: center;
 
   @media (max-width: 767px) {
-    padding: 18px 14px;
-    border-radius: 18px;
+    min-height: 0;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 4px 2px 12px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    text-align: left;
   }
 `;
 
@@ -219,18 +255,28 @@ export const StyledAvatar = styled(Avatar)`
   }
 
   @media (max-width: 767px) {
-    width: 86px !important;
-    height: 86px !important;
+    width: 78px !important;
+    height: 78px !important;
+    flex: 0 0 78px;
+    box-shadow: 0 14px 28px rgba(0, 0, 128, 0.2);
   }
 `;
 
 export const AvatarIcon = styled(PersonIcon)`
   font-size: clamp(42px, 7vw, 54px) !important;
+
+  @media (max-width: 767px) {
+    font-size: 38px !important;
+  }
 `;
 
 export const UserInfo = styled(Box)`
   width: 100%;
   min-width: 0;
+
+  @media (max-width: 767px) {
+    flex: 1;
+  }
 `;
 
 export const UserName = styled(Typography)`
@@ -245,7 +291,31 @@ export const UserName = styled(Typography)`
   word-break: break-word;
 
   @media (max-width: 767px) {
-    font-size: 20px !important;
+    margin-bottom: 4px !important;
+    font-size: clamp(18px, 5.4vw, 21px) !important;
+    line-height: 1.15 !important;
+  }
+`;
+
+export const MobileUserMeta = styled.div`
+  display: none;
+
+  @media (max-width: 767px) {
+    display: grid;
+    gap: 3px;
+    margin-top: 3px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.25;
+    font-weight: 550;
+
+    span {
+      min-width: 0;
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 `;
 
@@ -266,11 +336,33 @@ export const ReferralBadge = styled(Box)`
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+
+  @media (max-width: 767px) {
+    margin-top: 4px;
+    padding: 4px 9px;
+
+    & .MuiTypography-root {
+      font-size: 10.5px;
+    }
+  }
 `;
 
 export const InfoGrid = styled(Grid)`
   align-content: start;
   margin-top: 0 !important;
+
+  @media (max-width: 767px) {
+    width: calc(100% + 8px) !important;
+    margin: -4px !important;
+
+    & > .MuiGrid-item {
+      padding: 4px !important;
+    }
+
+    & > .MuiGrid-item:last-child {
+      display: none;
+    }
+  }
 `;
 
 export const InfoItem = styled(Box)`
@@ -288,8 +380,10 @@ export const InfoItem = styled(Box)`
   }
 
   @media (max-width: 767px) {
-    padding: 14px;
-    border-radius: 14px;
+    min-height: 82px;
+    padding: 12px;
+    border-radius: 16px;
+    box-shadow: none;
   }
 `;
 
@@ -301,6 +395,18 @@ export const InfoLabel = styled(Typography)`
   color: #64748b !important;
   font-size: 13px !important;
   font-weight: 700 !important;
+
+  @media (max-width: 767px) {
+    gap: 6px;
+    margin-bottom: 6px !important;
+    font-size: 12px !important;
+    line-height: 1.25 !important;
+
+    svg {
+      width: 17px;
+      height: 17px;
+    }
+  }
 `;
 
 export const InfoValue = styled(Typography)`
@@ -312,6 +418,7 @@ export const InfoValue = styled(Typography)`
 
   @media (max-width: 767px) {
     font-size: 13.5px !important;
+    line-height: 1.35 !important;
   }
 `;
 
@@ -337,7 +444,16 @@ export const StyledForm = styled(Box)`
 
   @media (max-width: 767px) {
     padding: 14px;
-    border-radius: 18px;
+    border-radius: 20px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+
+    .MuiGrid-container {
+      row-gap: 2px;
+    }
+
+    .MuiGrid-item {
+      padding-top: 10px !important;
+    }
   }
 `;
 
@@ -360,6 +476,17 @@ export const StyledTextField = styled(TextField)`
   & .MuiInputLabel-root.Mui-focused {
     color: #000080;
   }
+
+  @media (max-width: 767px) {
+    & .MuiOutlinedInput-root {
+      min-height: 46px;
+      border-radius: 14px;
+    }
+
+    & .MuiInputBase-input {
+      font-size: 14px;
+    }
+  }
 `;
 
 export const FormActions = styled(Box)`
@@ -373,7 +500,8 @@ export const FormActions = styled(Box)`
   @media (max-width: 767px) {
     flex-direction: column-reverse;
     gap: 10px;
-    margin-top: 20px;
+    margin-top: 16px;
+    padding-top: 12px;
 
     & .MuiButton-root {
       width: 100%;
@@ -464,6 +592,10 @@ export const StyledSnackbar = styled(Snackbar)`
     border-radius: 14px;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.14);
   }
+
+  @media (max-width: 767px) {
+    bottom: calc(78px + env(safe-area-inset-bottom, 0px)) !important;
+  }
 `;
 
 export const DecorativeCircle = styled(Box)`
@@ -513,6 +645,86 @@ export const VerifyButton = styled(Button)`
   &:disabled {
     opacity: 0.62;
     transform: none;
+  }
+
+  @media (max-width: 767px) {
+    height: 46px;
+    border-radius: 14px !important;
+    font-size: 13px !important;
+  }
+`;
+
+export const MobileShortcutGrid = styled.div`
+  display: none;
+
+  @media (max-width: 767px) {
+    width: 100%;
+    display: grid;
+    gap: 9px;
+    margin-top: 10px;
+    padding-bottom: 0;
+  }
+`;
+
+export const MobileShortcutButton = styled.button`
+  width: 100%;
+  min-height: 50px;
+  border: 1px solid rgba(0, 0, 128, 0.08);
+  border-radius: 16px;
+  background: #ffffff;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.045);
+
+  > span {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 128, 0.08);
+    color: #000080;
+  }
+
+  strong {
+    min-width: 0;
+    flex: 1;
+    color: #111827;
+    font-size: 14px;
+    line-height: 1.2;
+    font-weight: 750;
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    color: #64748b;
+  }
+
+  &.danger {
+    border-color: rgba(220, 38, 38, 0.12);
+
+    > span,
+    svg {
+      color: #dc2626;
+    }
+
+    > span {
+      background: rgba(220, 38, 38, 0.08);
+    }
+  }
+
+  &:active {
+    transform: scale(0.985);
   }
 `;
 

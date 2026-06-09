@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 import {
   Overlay,
@@ -10,82 +11,28 @@ import {
   CloseBtn
 } from "./AddBalancePopup.styles";
 
-const GST_RATE_PERCENT = 18;
-const GST_RATE_DECIMAL = GST_RATE_PERCENT / 100;
-const RAZORPAY_CHECKOUT_SRC = "https://checkout.razorpay.com/v1/checkout.js";
+const AddBalancePopup = ({ amountPreset, onClose, onConfirm, createOrder }) => {
+  const [amount, setAmount] = useState(amountPreset || "");
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-let razorpayScriptPromise = null;
-
-const formatMoney = (value) => {
-  const amount = Number(value || 0);
-  return Number.isFinite(amount) ? amount.toFixed(2) : "0.00";
-};
-
-const toPaise = (amount) => Math.round(Number(amount || 0) * 100);
-
-const getOrderAmountInPaise = (orderAmount, expectedPaise) => {
-  if (orderAmount === undefined || orderAmount === null || orderAmount === "") {
-    return expectedPaise;
-  }
-
-  const numericAmount = Number(orderAmount);
-
-  if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-    return expectedPaise;
-  }
-
-  const roundedAmount = Math.round(numericAmount);
-  const amountIfRupees = toPaise(numericAmount);
-
-  if (Math.abs(roundedAmount - expectedPaise) <= 1) {
-    return roundedAmount;
-  }
-
-  if (Math.abs(amountIfRupees - expectedPaise) <= 1) {
-    return amountIfRupees;
-  }
-
-  return roundedAmount >= 1000 ? roundedAmount : amountIfRupees;
-};
-
-const logPaymentDebug = (...args) => {
-  if (import.meta.env?.DEV) {
-    console.debug("[WalletRecharge]", ...args);
-  }
-};
-
-const loadRazorpayScript = () => {
-  if (typeof window === "undefined") {
-    return Promise.reject(new Error("Payment gateway is not available right now."));
-  }
-
-  if (window.Razorpay) {
-    return Promise.resolve(true);
-  }
-
-  if (razorpayScriptPromise) {
-    return razorpayScriptPromise;
-  }
-
-  razorpayScriptPromise = new Promise((resolve, reject) => {
-    const existingScript = document.querySelector(`script[src="${RAZORPAY_CHECKOUT_SRC}"]`);
-
-    if (existingScript) {
-      existingScript.addEventListener("load", () => resolve(true), { once: true });
-      existingScript.addEventListener("error", () => {
-        razorpayScriptPromise = null;
-        reject(new Error("Payment gateway could not be loaded. Please check your internet connection and try again."));
-      }, { once: true });
+  /* ============================
+     Load Razorpay Script SAFELY
+  ============================== */
+  useEffect(() => {
+    if (window.Razorpay) {
+      setRazorpayLoaded(true);
       return;
     }
 
     const script = document.createElement("script");
-    script.src = RAZORPAY_CHECKOUT_SRC;
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;
-    script.onload = () => resolve(true);
+
+    script.onload = () => setRazorpayLoaded(true);
     script.onerror = () => {
-      razorpayScriptPromise = null;
-      reject(new Error("Payment gateway could not be loaded. Please check your internet connection and try again."));
+      alert("Razorpay SDK load failed");
+      setRazorpayLoaded(false);
     };
 
     document.body.appendChild(script);
@@ -215,37 +162,37 @@ onClose();
         {!amountPreset && (
           <InputField
             type="number"
-            placeholder="Enter Amount (Min Rs 1)"
+            placeholder="Enter Amount (Min ₹1)"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
         )}
 
         {amountPreset && (
-          <PresetText>Amount: Rs {formatMoney(amountPreset)}</PresetText>
+          <PresetText>Amount: ₹{amountPreset}</PresetText>
         )}
 
         <BillingBox>
           <div>
-            <span>Recharge Amount</span>
-            <strong>Rs {formatMoney(baseAmount)}</strong>
+            <span>Base Amount</span>
+            <strong>₹{baseAmount}</strong>
           </div>
 
           <div>
             <span>GST (18%)</span>
-            <strong>Rs {formatMoney(gstAmount)}</strong>
+            <strong>₹{gst.toFixed(2)}</strong>
           </div>
 
           <div>
             <span>Platform Fee</span>
-            <strong>Rs {formatMoney(platformFee)}</strong>
+            <strong>₹{platformFee}</strong>
           </div>
 
           <hr />
 
           <div className="total">
-            <span>Total Payable</span>
-            <strong>Rs {formatMoney(totalAmount)}</strong>
+            <span>Total</span>
+            <strong>₹{total.toFixed(2)}</strong>
           </div>
         </BillingBox>
 
@@ -253,10 +200,10 @@ onClose();
           disabled={!baseAmount || loading}
           onClick={handlePayNow}
         >
-          {loading ? "Preparing payment..." : `Pay Rs ${formatMoney(totalAmount)}`}
+          {loading ? "PROCESSING..." : "PAY NOW"}
         </PayButton>
 
-        <CloseBtn onClick={loading ? undefined : onClose}>Close</CloseBtn>
+        <CloseBtn onClick={onClose}>Close</CloseBtn>
       </PopupBox>
     </Overlay>
   );

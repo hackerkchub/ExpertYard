@@ -87,8 +87,7 @@ export default function ExpertProfile() {
     expertPrice,
     profileLoading,
     priceLoading,
-    refreshPrice,
-    refreshProfile
+    refreshExpertData,
   } = useExpert();
 
   const { categories, subCategories, loadSubCategories } = useCategory();
@@ -540,8 +539,10 @@ setSessionDuration(Number(session?.duration) || 0);
         weakness: ""
       };
 
+      // console.log("PROFILE PAYLOAD", profilePayload);
+
       // ========== BUILD PROMISES ==========
-      const promises = [updateExpertProfileApi(expertId, profilePayload)];
+      const promises = [updateExpertProfileApi(profilePayload)];
 
       // ✅ ONLY call price API if needed
       if (pricingModes.length > 0) {
@@ -550,14 +551,14 @@ setSessionDuration(Number(session?.duration) || 0);
 
       // ========== EXECUTE ==========
       await Promise.all(promises);
-
+await refreshExpertData();
       // ========== REFRESH ==========
       // await Promise.all([refreshPrice()]);
       
       notifySuccess("Profile updated successfully!");
       
       setEdit(false);
-      setDraft(null);
+      // setDraft(null);
       
     } catch (err) {
       console.error("Save failed", err);

@@ -1,7 +1,7 @@
 // src/apps/user/pages/chat-history/UserChatHistory.jsx
 // 🎨 PREMIUM POLISHED VERSION - Blue Theme with Chat & Call Tabs
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import {
   FiMessageSquare,
   FiClock,
@@ -51,6 +51,11 @@ import {
   ModalContent,
   ChatMessagesArea,
   ChatMessageBubble,
+  MobileDetailPage,
+  MobileDetailHeader,
+  MobileBackButton,
+  MobileDetailMeta,
+  MobileDetailEmpty,
   StatsContainer,
   StatCard,
   FilterBar,
@@ -246,7 +251,11 @@ export const UserChatHistory = () => {
   const { experts } = useExpert();
   const { balance, fetchWallet } = useWallet();
   const navigate = useNavigate();
+  const { session_id: detailSessionId } = useParams();
   const { startChat, ChatPopups } = useChatRequest();
+  const [isMobileView, setIsMobileView] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 768px)").matches : false
+  );
 
   // Tab states
   const [activeMainTab, setActiveMainTab] = useState('chat');
@@ -272,12 +281,25 @@ export const UserChatHistory = () => {
   const [selectedSession, setSelectedSession] = useState(null);
   const [messages, setMessages] = useState([]);
   const [showDetails, setShowDetails] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
   
   // Expert pricing and plans data
   const [expertPricing, setExpertPricing] = useState({});
   const [expertPlans, setExpertPlans] = useState({});
 
   const location = useLocation();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia("(max-width: 768px)");
+    const handleChange = (event) => setIsMobileView(event.matches);
+
+    setIsMobileView(mediaQuery.matches);
+    mediaQuery.addEventListener?.("change", handleChange);
+
+    return () => mediaQuery.removeEventListener?.("change", handleChange);
+  }, []);
 
   const expertById = useMemo(() => {
     const map = {};
@@ -724,6 +746,11 @@ export const UserChatHistory = () => {
   }, [user?.id, activeMainTab, activeCallSubTab, fetchChatHistory, fetchCallHistory]);
 
   const openSession = useCallback(async (session) => {
+    if (isMobileView) {
+      navigate(`/user/chat-history/${session.id}`, { state: { session } });
+      return;
+    }
+
     try {
       const res = await getChatHistoryMessagesApi(session.id); 
       const messagesData = Array.isArray(res) ? res : res?.data || [];
@@ -739,7 +766,37 @@ export const UserChatHistory = () => {
       console.error("❌ messages error:", e);
       alert("Failed to load chat messages");
     }
-  }, []);
+  }, [isMobileView, navigate]);
+
+  useEffect(() => {
+    if (!detailSessionId || !isMobileView) return;
+
+    const loadDetailMessages = async () => {
+      try {
+        setDetailLoading(true);
+        const routeSession =
+          location.state?.session ||
+          counterparties
+            .flatMap((counterparty) => counterparty.sessions || [])
+            .find((session) => String(session.id) === String(detailSessionId));
+
+        if (routeSession) {
+          setSelectedSession(routeSession);
+        }
+
+        const res = await getChatHistoryMessagesApi(detailSessionId);
+        const messagesData = Array.isArray(res) ? res : res?.data || [];
+        setMessages(messagesData);
+      } catch (error) {
+        console.error("Mobile chat detail error:", error);
+        setMessages([]);
+      } finally {
+        setDetailLoading(false);
+      }
+    };
+
+    loadDetailMessages();
+  }, [detailSessionId, isMobileView, location.state, counterparties]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
@@ -798,6 +855,82 @@ export const UserChatHistory = () => {
       return callLoading && calls.length === 0;
     }
   };
+
+  if (detailSessionId && isMobileView) {
+    return (
+      <PremiumContainer>
+        <MobileDetailPage>
+          <MobileDetailHeader>
+            <MobileBackButton type="button" onClick={() => navigate("/user/chat-history")}>
+              <FiChevronRight />
+            </MobileBackButton>
+            <div className="detail-title-block">
+              <h1>Chat History</h1>
+              <MobileDetailMeta>
+                <span>{selectedSession?.expert_name || "Expert"}</span>
+                {selectedSession?.end_time && <span>{formatDate(selectedSession.end_time)}</span>}
+                {selectedSession?.duration_minutes && (
+                  <span>{formatTime(selectedSession.duration_minutes)} duration</span>
+                )}
+              </MobileDetailMeta>
+            </div>
+          </MobileDetailHeader>
+
+          <ChatMessagesArea premium className="mobile-detail-messages">
+            <div className="messages-scroll">
+              {detailLoading ? (
+                <MobileDetailEmpty>
+                  <div className="spinner"></div>
+                  <p>Loading chat history...</p>
+                </MobileDetailEmpty>
+              ) : messages.length ? (
+                messages.map((msg, index) => (
+                  <ChatMessageBubble
+                    key={msg.id || index}
+                    isExpert={msg.sender_type === "expert"}
+                    premium
+                  >
+                    <div className="message-header">
+                      <div className="sender-info">
+                        <UserMessageAvatar isExpert={msg.sender_type === "expert"}>
+                          {msg.sender_type === "expert" ? (
+                            <FiBriefcase size={12} />
+                          ) : (
+                            <FiUser size={12} />
+                          )}
+                        </UserMessageAvatar>
+                        <div>
+                          <strong>{msg.sender_name}</strong>
+                          <span className="sender-role">
+                            {msg.sender_type === "expert" ? "Expert" : "You"}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="message-time">
+                        {msg.time_sent || msg.created_at
+                          ? new Date(msg.time_sent || msg.created_at).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : "-"}
+                      </span>
+                    </div>
+                    <div className="message-content">{msg.message}</div>
+                  </ChatMessageBubble>
+                ))
+              ) : (
+                <MobileDetailEmpty>
+                  <FiMessageCircle size={42} />
+                  <p>No messages available for this session</p>
+                </MobileDetailEmpty>
+              )}
+            </div>
+          </ChatMessagesArea>
+        </MobileDetailPage>
+        <ChatPopups />
+      </PremiumContainer>
+    );
+  }
 
   if (isLoading()) {
     return (
@@ -1495,7 +1628,7 @@ export const UserChatHistory = () => {
         </HistoryList>
 
         {/* Chat Details Modal */}
-        {showDetails && selectedSession && (
+        {!isMobileView && showDetails && selectedSession && (
           <ModalOverlay onClick={() => setShowDetails(false)}>
             <ModalContent premium onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">

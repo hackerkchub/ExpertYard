@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useCategory } from "../../../../shared/context/CategoryContext";
+import MobileSelect from "../../components/MobileSelect/MobileSelect";
 import { useSeo } from "../../../../shared/seo/useSeo";
 import { toAbsoluteUrl } from "../../../../shared/seo/siteConfig";
 import {
@@ -66,6 +67,11 @@ const CATEGORIES_SEO_TITLE =
   "Expert Categories Online | Legal, Health, Astrology & Finance Experts - G9Experts";
 const CATEGORIES_SEO_DESCRIPTION =
   "Explore verified expert categories on G9Experts. Connect online with legal, health, astrology, fitness, finance, property, career, business and education experts by chat or call.";
+const CATEGORY_SORT_OPTIONS = [
+  { value: "popular", labelKey: "categoriesPage.mostPopular" },
+  { value: "name", labelKey: "categoriesPage.aToZ" },
+  { value: "newest", labelKey: "categoriesPage.newest" },
+];
 
 const Categories = () => {
   const navigate = useNavigate();
@@ -163,11 +169,16 @@ const Categories = () => {
                 <FiList size={18} />
               </ToggleButton>
             </ViewToggle>
-            <SortSelect value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-              <option value="popular">{t("categoriesPage.mostPopular")}</option>
-              <option value="name">{t("categoriesPage.aToZ")}</option>
-              <option value="newest">{t("categoriesPage.newest")}</option>
-            </SortSelect>
+            <MobileSelect
+              title={t("categoriesPage.sortBy", "Sort Categories")}
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              DesktopSelectComponent={SortSelect}
+              options={CATEGORY_SORT_OPTIONS.map((option) => ({
+                value: option.value,
+                label: t(option.labelKey),
+              }))}
+            />
           </HeaderActions>
         </CategoriesHeader>
 

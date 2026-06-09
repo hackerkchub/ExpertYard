@@ -53,8 +53,8 @@ export const WalletProvider = ({ children }) => {
 
 useNetworkReconnect(fetchWallet, { enabled: isLoggedIn });
 
-const createOrder = async (amount) => {
-  return await createWalletOrderApi(amount);
+const createOrder = async (amount, breakdown = {}) => {
+  return await createWalletOrderApi(amount, breakdown);
 };
 
   /* ================= ADD MONEY ================= */

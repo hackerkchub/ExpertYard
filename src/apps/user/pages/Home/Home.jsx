@@ -2,13 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
+  FiArrowRight,
+  FiCheckCircle,
   FiClock,
   FiChevronLeft,
   FiChevronRight,
   FiPhoneCall,
   FiCreditCard,
-  FiFilter,
-  FiGlobe,
   FiGrid,
   FiHeadphones,
   FiHome,
@@ -18,6 +18,7 @@ import {
   FiLock,
   FiMenu,
   FiMessageCircle,
+  FiMonitor,
   FiSearch,
   FiShare2,
   FiShield,
@@ -29,6 +30,7 @@ import {
 import { FaWallet } from "react-icons/fa";
 
 import "./Home.css";
+import { APP_CONFIG } from "../../../../config/appConfig";
 import HowItWorks from "../../components/howItWorks/HowItWorks";
 import PopularServices from "./PopularServices";
 import PopularQuestions from "../../components/faq/PopularQuestions";
@@ -88,19 +90,28 @@ const QUICK_ACTIONS = [
 const MOBILE_QUICK_ACTIONS = [
   {
     label: "Call",
+    subtitle: "Talk now",
     icon: FiPhoneCall,
     to: "/user/call-chat?page=1&mode=call",
   },
   {
     label: "Chat",
+    subtitle: "Instant reply",
     icon: FiMessageCircle,
     to: "/user/call-chat?page=1&mode=chat",
   },
   {
     label: "Services",
+    subtitle: "Book help",
     icon: FiGrid,
     to: "/user/all-services",
   },
+];
+
+const TRUST_STRIP_ITEMS = [
+  { title: "100% Secure", description: "Protected payments", icon: FiShield },
+  { title: "24/7 Support", description: "Always available", icon: FiHeadphones },
+  { title: "Verified Experts", description: "Trusted profiles", icon: FiCheckCircle },
 ];
 
 const FINAL_STATS = [
@@ -236,17 +247,348 @@ function getServiceImage(service) {
   return service?.image || service?.image_url || service?.service_image || service?.thumbnail || "";
 }
 
+const BACKEND_ASSET_BASE_URL =
+  import.meta.env?.VITE_API_BASE_URL || APP_CONFIG.API_BASE_URL || "";
+
+function resolveAssetUrl(value = "") {
+  const url = String(value || "").trim();
+  if (!url) return "";
+
+  if (/^(https?:|data:|blob:)/i.test(url)) {
+    return url;
+  }
+
+  const base = BACKEND_ASSET_BASE_URL.replace(/\/+$/, "");
+  const path = url.replace(/^\/+/, "");
+  return base ? `${base}/${path}` : `/${path}`;
+}
+
+function getUserDisplayName(user) {
+  return (
+    user?.name ||
+    user?.full_name ||
+    user?.fullName ||
+    user?.first_name ||
+    user?.username ||
+    "User"
+  );
+}
+
+function getUserProfileImage(user) {
+  return resolveAssetUrl(
+    user?.profile_photo ||
+      user?.profile_image ||
+      user?.avatar ||
+      user?.image ||
+      user?.photo ||
+      ""
+  );
+}
+
+function getCategoryName(category) {
+  return category?.name || category?.title || category?.category_name || "Category";
+}
+
+function getCategoryImage(category) {
+  return resolveAssetUrl(
+    category?.image_url ||
+      category?.image ||
+      category?.icon ||
+      category?.category_image ||
+      category?.thumbnail ||
+      ""
+  );
+}
+
+function getServicePrice(service) {
+  const value =
+    service?.price ??
+    service?.amount ??
+    service?.service_price ??
+    service?.session_price ??
+    service?.charges ??
+    null;
+
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) && numericValue > 0
+    ? `Rs ${Math.floor(numericValue)}`
+    : "View price";
+}
+
+function ImageWithFallback({ src, alt, className, fallbackIcon: FallbackIcon = FiGrid }) {
+  const [failed, setFailed] = useState(false);
+
+  if (!src || failed) {
+    return (
+      <span className={`${className || ""} premium-mobile-image-fallback`.trim()} aria-hidden="true">
+        <FallbackIcon />
+      </span>
+    );
+  }
+
+  return (
+    <img
+      className={className}
+      src={src}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+function Header({
+  balance,
+  logo,
+  onMenuOpen,
+  onWalletClick,
+  walletLoading,
+}) {
+  return (
+    <header className="premium-mobile-header">
+      <button type="button" className="premium-mobile-icon-button" onClick={onMenuOpen} aria-label="Open menu">
+        <FiMenu />
+      </button>
+      <Link className="premium-mobile-logo" to="/user" aria-label="G9 Expert home">
+        <img src={logo} alt="G9 Expert" />
+      </Link>
+      <button type="button" className="premium-mobile-wallet" onClick={onWalletClick} aria-label="Open wallet">
+        <FaWallet />
+        <span>{walletLoading ? "..." : `Rs ${Math.floor(Number(balance || 0))}`}</span>
+      </button>
+      <button type="button" className="premium-mobile-avatar" onClick={onWalletClick} aria-label="Open wallet">
+        <FaWallet />
+      </button>
+    </header>
+  );
+}
+
+function WelcomeSection({ isLoggedIn, loading, onLogin, user }) {
+  if (loading) {
+    return (
+      <section className="premium-mobile-welcome" aria-label="Welcome">
+        <span className="premium-mobile-text-skeleton" />
+        <h1 className="premium-mobile-title-skeleton" />
+      </section>
+    );
+  }
+
+  return (
+    <section className="premium-mobile-welcome" aria-label="Welcome">
+      {isLoggedIn ? (
+        <h1 className="premium-mobile-welcome-line">
+          <span>Welcome back,</span>
+          <strong>{getUserDisplayName(user)}</strong>
+        </h1>
+      ) : (
+        <>
+          <h1>Welcome to G9 Expert</h1>
+          <button type="button" onClick={onLogin}>
+            Login / Register
+          </button>
+        </>
+      )}
+    </section>
+  );
+}
+
+function HeroBanner({ onExplore }) {
+  return (
+    <section className="premium-mobile-hero" aria-label="Trusted advice">
+      <div className="premium-mobile-hero__copy">
+        <h2>Trusted Advice, Expert Solutions</h2>
+        <p>Connect with verified experts and get the right solution.</p>
+        <button type="button" onClick={onExplore}>
+          Explore Now
+        </button>
+      </div>
+      <div className="premium-mobile-hero__visual" aria-hidden="true">
+        <div className="premium-mobile-consultant">
+          <FiUser />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SearchBar({ onOpen }) {
+  return (
+    <button
+      type="button"
+      className="premium-mobile-search premium-mobile-search--trigger"
+      onClick={onOpen}
+      aria-label="Open search"
+    >
+      <FiSearch aria-hidden="true" />
+      <span>Search experts, services, categories</span>
+      <span className="premium-mobile-search__chip">Search</span>
+    </button>
+  );
+}
+
+function QuickActions({ actions }) {
+  return (
+    <section className="premium-mobile-quick-actions" aria-label="Quick actions">
+      {actions.map((action) => {
+        const Icon = action.icon;
+        return (
+          <Link key={action.label} to={action.to} className="premium-mobile-action-card">
+            <span className="premium-mobile-action-card__icon">
+              <Icon />
+            </span>
+            <span>
+              <strong>{action.label}</strong>
+              <small>{action.subtitle}</small>
+            </span>
+            <FiArrowRight className="premium-mobile-action-card__arrow" />
+          </Link>
+        );
+      })}
+    </section>
+  );
+}
+
+function MobileSectionHeading({ title, onViewAll }) {
+  return (
+    <div className="premium-mobile-section-heading">
+      <h2>{title}</h2>
+      {onViewAll ? (
+        <button type="button" onClick={onViewAll}>
+          View all <FiArrowRight />
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function CategorySection({ categories, error, loading, onViewAll }) {
+  return (
+    <section className="premium-mobile-section">
+      <MobileSectionHeading title="Categories" onViewAll={onViewAll} />
+      <div className="premium-mobile-category-row">
+        {loading ? (
+          Array.from({ length: 5 }).map((_, index) => (
+            <div key={index} className="premium-mobile-category-card premium-mobile-card-skeleton" />
+          ))
+        ) : error ? (
+          <div className="premium-mobile-state-card">Unable to load categories</div>
+        ) : categories.length === 0 ? (
+          <div className="premium-mobile-state-card">No categories found</div>
+        ) : (
+          categories.map((category) => {
+            const categoryName = getCategoryName(category);
+            const categoryImage = getCategoryImage(category);
+            return (
+              <Link
+                key={category?.id || category?.slug || categoryName}
+                to={getCategoryPath(category)}
+                className="premium-mobile-category-card"
+              >
+                <span>
+                  <ImageWithFallback src={categoryImage} alt={categoryName} fallbackIcon={FiGrid} />
+                </span>
+                <strong>{categoryName}</strong>
+              </Link>
+            );
+          })
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ConsultationCard({ onBook }) {
+  return (
+    <section className="premium-mobile-consultation-card">
+      <div className="premium-mobile-consultation-card__icon">
+        <FiMonitor />
+      </div>
+      <div>
+        <span>Need Digital Help?</span>
+        <h2>Book Digital Services</h2>
+       <p>
+Explore verified services from Lawyers, Astrologers, Doctors, Business Experts, and more.
+Book the service you need and connect with trusted professionals instantly.
+</p>
+        <button type="button" onClick={onBook}>
+          Book Now <FiArrowRight />
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function ServicesSection({ error, loading, onViewAll, services }) {
+  return (
+    <section className="premium-mobile-section">
+      <MobileSectionHeading title="Services" onViewAll={onViewAll} />
+      <div className="premium-mobile-services-row">
+        {loading ? (
+          Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="premium-mobile-service-card premium-mobile-card-skeleton" />
+          ))
+        ) : error ? (
+          <div className="premium-mobile-state-card">Unable to load services</div>
+        ) : services.length === 0 ? (
+          <div className="premium-mobile-state-card">No services found</div>
+        ) : (
+          services.map((service) => {
+            const serviceName = getServiceName(service);
+            const serviceImage = resolveAssetUrl(getServiceImage(service));
+            return (
+            <Link
+              key={service?.id || service?.slug || serviceName}
+              to={getServicePath(service)}
+              className="premium-mobile-service-card"
+            >
+              <span className="premium-mobile-service-card__image">
+                <ImageWithFallback src={serviceImage} alt={serviceName} fallbackIcon={FiHeadphones} />
+              </span>
+              <strong>{serviceName}</strong>
+              <div>
+                <em>{getServicePrice(service)}</em>
+                <span className="premium-mobile-service-card__button">Book Now</span>
+              </div>
+            </Link>
+            );
+          })
+        )}
+      </div>
+    </section>
+  );
+}
+
+function TrustStrip() {
+  return (
+    <section className="premium-mobile-trust-strip" aria-label="Trust and safety">
+      {TRUST_STRIP_ITEMS.map((item) => {
+        const Icon = item.icon;
+        return (
+          <div key={item.title}>
+            <Icon />
+            <strong>{item.title}</strong>
+            <span>{item.description}</span>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
 const HomePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { isLoggedIn, user, logout } = useAuth();
-  const { balance } = useWallet();
-  const { categories, loading: categoriesLoading } = useCategory();
+  const { balance, loading: walletLoading } = useWallet();
+  const {
+    categories,
+    error: categoriesError,
+    loading: categoriesLoading,
+  } = useCategory();
   const { experts, expertsLoading } = usePublicExpert();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mobileLanguageOpen, setMobileLanguageOpen] = useState(false);
-  const [mobileSearch, setMobileSearch] = useState("");
   const [services, setServices] = useState(() => {
     try {
       const saved = localStorage.getItem("popular_services_cache");
@@ -256,6 +598,7 @@ const HomePage = () => {
     }
   });
   const [servicesLoading, setServicesLoading] = useState(services.length === 0);
+  const [servicesError, setServicesError] = useState(null);
   const topCategoriesRowRef = useRef(null);
   const [categoryScrollState, setCategoryScrollState] = useState({
     canScrollLeft: false,
@@ -281,6 +624,7 @@ const HomePage = () => {
     const loadServices = async () => {
       try {
         setServicesLoading(true);
+        setServicesError(null);
         const res = await getAllServices();
         const data = res?.data?.data || res?.data || [];
         const list = Array.isArray(data) ? data : [];
@@ -291,6 +635,8 @@ const HomePage = () => {
         localStorage.setItem("popular_services_cache", JSON.stringify(list));
       } catch (err) {
         console.error("Service load failed", err);
+        setServicesError(err);
+        setServices([]);
       } finally {
         if (isMounted) {
           setServicesLoading(false);
@@ -446,8 +792,8 @@ const HomePage = () => {
   const topCategories = seoCategories.slice(0, 15);
   const topServices = seoServices.slice(0, 16);
   const visibleExperts = experts.slice(0, 5);
-  const mobileCategories = topCategories.slice(0, 5);
-  const mobileServices = topServices.slice(0, 8);
+  const mobileCategories = Array.isArray(categories) ? categories.slice(0, 12) : [];
+  const mobileServices = Array.isArray(services) ? services.slice(0, 10) : [];
   const mobileMenuItems = [
     { label: t("common.home"), to: "/user", icon: FiHome },
     { label: t("common.offers"), to: "/user/all-services", icon: FiGrid },
@@ -533,62 +879,16 @@ const HomePage = () => {
       .map((part) => part[0]?.toUpperCase() || "")
       .join("") || "GE";
 
-  const submitMobileSearch = (event) => {
-    event.preventDefault();
-    const query = mobileSearch.trim();
-    navigate(query ? `/user/search?q=${encodeURIComponent(query)}` : "/user/search");
-  };
-
-  const changeMobileLanguage = (language) => {
-    i18n.changeLanguage(language);
-    setMobileLanguageOpen(false);
-  };
-
   return (
     <div className="home-page">
       <div className="mobile-home-app">
-        <header className="mobile-home-header">
-          <button
-            type="button"
-            className="mobile-icon-button"
-            onClick={() => setMobileMenuOpen(true)}
-            aria-label="Open menu"
-          >
-            <FiMenu />
-          </button>
-          <Link className="mobile-home-logo" to="/user" aria-label="G9Expert home">
-            <img src={logo} alt="G9Expert" />
-          </Link>
-          <button type="button" className="mobile-wallet-card" onClick={() => navigate("/user/wallet")}>
-            <FaWallet />
-            <span>Rs {Math.floor(Number(balance || 0))}</span>
-          </button>
-          <button type="button" className="mobile-icon-button" onClick={() => navigate("/user/search")} aria-label="Search">
-            <FiSearch />
-          </button>
-          <div className="mobile-language-wrap">
-            <button
-              type="button"
-              className="mobile-language-button"
-              onClick={() => setMobileLanguageOpen((prev) => !prev)}
-              aria-label={t("common.language")}
-              aria-expanded={mobileLanguageOpen}
-            >
-              <FiGlobe />
-              <span>{i18n.language === "hi" ? "HI" : "EN"}</span>
-            </button>
-            {mobileLanguageOpen && (
-              <div className="mobile-language-popover">
-                <button type="button" onClick={() => changeMobileLanguage("en")} className={i18n.language === "en" ? "active" : ""}>
-                  EN
-                </button>
-                <button type="button" onClick={() => changeMobileLanguage("hi")} className={i18n.language === "hi" ? "active" : ""}>
-                  Hindi
-                </button>
-              </div>
-            )}
-          </div>
-        </header>
+        <Header
+          balance={balance}
+          logo={logo}
+          onMenuOpen={() => setMobileMenuOpen(true)}
+          onWalletClick={() => navigate("/user/wallet")}
+          walletLoading={walletLoading}
+        />
 
         {mobileMenuOpen && (
           <div className="mobile-home-menu-layer">
@@ -653,127 +953,35 @@ const HomePage = () => {
           </div>
         )}
 
-        <form className="mobile-search-bar" onSubmit={submitMobileSearch}>
-          <FiSearch aria-hidden="true" />
-          <input
-            type="search"
-            value={mobileSearch}
-            onChange={(event) => setMobileSearch(event.target.value)}
-            placeholder="Search experts, services"
-            aria-label="Search experts and services"
-          />
-          <button type="submit" aria-label="Search filters">
-            <FiFilter />
-          </button>
-        </form>
-
-        <section className="mobile-quick-actions" aria-label={t("home.quickActionsLabel")}>
-          {MOBILE_QUICK_ACTIONS.map((action) => {
-            const Icon = action.icon;
-            return (
-              <Link key={action.label} to={action.to} className="mobile-quick-action">
-                <span>
-                  <Icon />
-                </span>
-                <strong>{action.label}</strong>
-              </Link>
-            );
-          })}
-        </section>
-
-        <section className="mobile-home-section">
-          <div className="mobile-section-title">
-            <h2>Categories</h2>
-          </div>
-          <div className="mobile-category-grid">
-            {categoriesLoading && mobileCategories.length === 0
-              ? Array.from({ length: 8 }).map((_, index) => (
-                  <div className="mobile-category-card mobile-category-card--loading" key={index} />
-                ))
-              : (
-                  <>
-                    {mobileCategories.map((category) => (
-                      <Link key={category.id} to={getCategoryPath(category)} className="mobile-category-card">
-                        <span className="mobile-category-media">
-                          {category.image_url ? (
-                            <img src={category.image_url} alt={category.name} loading="lazy" decoding="async" />
-                          ) : (
-                            category.name?.charAt(0)
-                          )}
-                        </span>
-                        <strong>{category.name}</strong>
-                      </Link>
-                    ))}
-                    <button type="button" className="mobile-category-card mobile-category-card--more" onClick={() => navigate("/user/categories")}>
-                      <span className="mobile-category-media">+</span>
-                      <strong>View More</strong>
-                    </button>
-                  </>
-                )}
-          </div>
-        </section>
-
-        <section className="mobile-home-section">
-          <div className="mobile-section-title">
-            <h2>Services</h2>
-            <button type="button" onClick={() => navigate("/user/all-services")}>View all</button>
-          </div>
-          <div className="mobile-services-row">
-            {(servicesLoading && mobileServices.length === 0 ? FALLBACK_SERVICES.slice(0, 4) : mobileServices).map((service) => {
-              const serviceName = getServiceName(service);
-              const serviceImage = getServiceImage(service);
-
-              return (
-                <Link key={service.id || getServiceSlug(service)} to={getServicePath(service)} className="mobile-service-card">
-                  <div className="mobile-service-icon">
-                    {serviceImage ? (
-                      <img src={serviceImage} alt={serviceName} loading="lazy" decoding="async" />
-                    ) : (
-                      <FiHeadphones />
-                    )}
-                  </div>
-                  <strong>{serviceName}</strong>
-                  <span>Book now</span>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="mobile-home-section">
-          <div className="mobile-section-title">
-            <h2>Experts</h2>
-            <button type="button" onClick={() => navigate("/user/call-chat?page=1")}>View all</button>
-          </div>
-          <div className="mobile-experts-row">
-            {expertsLoading && visibleExperts.length === 0
-              ? Array.from({ length: 4 }).map((_, index) => <div className="mobile-expert-card mobile-expert-card--loading" key={index} />)
-              : visibleExperts.map((expert) => (
-                  <article key={expert.id} className="mobile-expert-card">
-                    <button type="button" className="mobile-expert-main" onClick={() => navigate(`/user/experts/${expert.id}`)}>
-                      <span className="mobile-expert-avatar">
-                        {expert.profile_photo ? (
-                          <img src={expert.profile_photo} alt={expert.name} loading="lazy" />
-                        ) : (
-                          getInitials(expert.name)
-                        )}
-                      </span>
-                      <span className="mobile-expert-copy">
-                        <strong>{expert.name}</strong>
-                        <small>{expert.position || "Verified Expert"}</small>
-                        <em><FiStar /> 4.8</em>
-                      </span>
-                    </button>
-                    <div className="mobile-expert-actions">
-                      <Link to={`/user/call-chat?page=1&mode=call&expert=${expert.id}`}>Call</Link>
-                      <Link to={`/user/call-chat?page=1&mode=chat&expert=${expert.id}`}>Chat</Link>
-                    </div>
-                  </article>
-                ))}
-          </div>
-        </section>
-
-        <TestimonialsSection onViewAll={() => navigate("/user/reviews")} />
+        <WelcomeSection
+          isLoggedIn={isLoggedIn}
+          loading={Boolean(isLoggedIn && !user)}
+          onLogin={() => navigate("/user/auth")}
+          user={user}
+        />
+        <SearchBar
+          onOpen={() => navigate("/user/search")}
+        />
+        <HeroBanner onExplore={() => navigate("/user/call-chat?page=1")} />
+        <QuickActions actions={MOBILE_QUICK_ACTIONS} />
+        <CategorySection
+          categories={mobileCategories}
+          error={categoriesError}
+          loading={categoriesLoading}
+          onViewAll={() => navigate("/user/categories")}
+        />
+        <ConsultationCard onBook={() => navigate("/user/all-services")} />
+        <ServicesSection
+          error={servicesError}
+          loading={servicesLoading}
+          onViewAll={() => navigate("/user/all-services")}
+          services={mobileServices}
+        />
+        <TestimonialsSection
+          onViewAll={() => navigate("/user/reviews")}
+          titleOverride="Ratings & Reviews"
+        />
+        <TrustStrip />
       </div>
 
       <div className="home-page__container">

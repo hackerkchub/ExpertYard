@@ -19,3 +19,27 @@ export const searchCategories = ({ signal, ...params } = {}) =>
 
 export const searchSubcategories = ({ signal, ...params } = {}) =>
   api.get(`${SEARCH_BASE}/subcategories`, requestOptions(params, signal));
+
+export const nearbyExperts = ({
+  latitude,
+  longitude,
+  category_id,
+  subcategory_id,
+  page = 1,
+  limit = 20,
+  signal
+} = {}) =>
+  api.get(
+    `${SEARCH_BASE}/nearby-experts`,
+    requestOptions(
+      {
+        latitude,
+        longitude,
+        category_id,
+        subcategory_id,
+        page,
+        limit
+      },
+      signal
+    )
+  );

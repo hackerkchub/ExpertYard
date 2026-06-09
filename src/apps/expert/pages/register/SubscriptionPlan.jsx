@@ -539,7 +539,7 @@ export default function SubscriptionPlan() {
       const options = {
         key: orderData.key_id,
         order_id: orderData.order_id,
-        amount: Math.round(orderData.amount * 100),
+        amount: Math.round(Number(orderData.amount * 100)),
         currency: "INR",
         name: "G9Expert",
         description: `${selectedPlan.plan_name} - ${selectedDuration} Year(s)`,
@@ -595,30 +595,37 @@ export default function SubscriptionPlan() {
 
   // Get display price info (visual only - backend amount is real)
   const getDisplayPriceInfo = (plan) => {
-    const backendAmount = plan.amount;
-    
-    if (selectedDuration === 1) {
-      return { 
-        current: backendAmount, 
-        original: null, 
-        discount: 0 
-      };
-    }
-    
-    const discountPercent = getVisualDiscountPercentage(selectedDuration);
-    const visualOriginalPrice = getVisualOriginalPrice(backendAmount, selectedDuration);
-    
-    return { 
-      current: backendAmount,  // Always show backend amount as payable
-      original: visualOriginalPrice,  // Visual strikethrough only
-      discount: discountPercent,
-      savings: visualOriginalPrice ? visualOriginalPrice - backendAmount : 0
+  const backendAmount = Number(plan.amount);
+
+  if (selectedDuration === 1) {
+    return {
+      current: backendAmount,
+      original: null,
+      discount: 0
     };
+  }
+
+  const discountPercent = getVisualDiscountPercentage(selectedDuration);
+  const visualOriginalPrice = getVisualOriginalPrice(
+    backendAmount,
+    selectedDuration
+  );
+
+  return {
+    current: backendAmount,
+    original: visualOriginalPrice,
+    discount: discountPercent,
+    savings: visualOriginalPrice
+      ? visualOriginalPrice - backendAmount
+      : 0
   };
+};
 
-  const gst = selectedPlan ? selectedPlan.amount * 0.18 : 0;
-  const totalWithTax = selectedPlan ? selectedPlan.amount + gst : 0;
+  const gst = selectedPlan ? Number(selectedPlan.amount) * 0.18 : 0;
 
+const totalWithTax = selectedPlan
+  ? Number(selectedPlan.amount) + gst
+  : 0;
   return (
     <Container>
       <Toaster position="top-right" />

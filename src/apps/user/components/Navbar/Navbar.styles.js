@@ -28,6 +28,23 @@ export const Nav = styled.nav`
     background: linear-gradient(90deg, ${NAVY}, ${YELLOW}, ${NAVY});
     opacity: 0.9;
   }
+
+  @media (max-width: 768px) {
+    &.user-common-mobile-header {
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid rgba(0, 0, 128, 0.08);
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+    }
+
+    &.user-common-mobile-header::before {
+      background: linear-gradient(90deg, ${NAVY}, #2563eb);
+      opacity: 0.85;
+    }
+
+    &.user-common-mobile-header .mobile-menu-trigger {
+      display: none !important;
+    }
+  }
 `;
 
 export const Container = styled.div`
@@ -70,6 +87,32 @@ export const HeaderBrandGroup = styled.div`
 
   @media (max-width: 480px) {
     gap: 5px;
+  }
+`;
+
+export const HeaderMobileTitle = styled.div`
+  display: none;
+
+  @media (max-width: 768px) {
+    min-width: 0;
+    flex: 1 1 auto;
+    display: block;
+    color: #111827;
+    font-size: 17px;
+    line-height: 1.2;
+    font-weight: 850;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @media (max-width: 420px) {
+    font-size: 16px;
+  }
+
+  @media (max-width: 340px) {
+    font-size: 15px;
   }
 `;
 
@@ -213,23 +256,34 @@ export const HeaderWalletButton = styled.button`
   display: none;
 
   @media (max-width: 768px) {
-    width: 44px;
-    height: 44px;
+    width: 38px;
+    height: 38px;
     flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid rgba(255, 193, 7, 0.42);
-    border-radius: 15px;
-    background: linear-gradient(180deg, #fff7d1, rgba(255, 255, 255, 0.94));
+    border: 1px solid rgba(0, 0, 128, 0.12);
+    border-radius: 13px;
+    background: #ffffff;
     color: ${NAVY};
     cursor: pointer;
-    box-shadow: 0 10px 22px rgba(255, 193, 7, 0.14);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
     -webkit-tap-highlight-color: transparent;
 
     svg {
       width: 18px;
       height: 18px;
+    }
+  }
+
+  @media (max-width: 420px) {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+
+    svg {
+      width: 17px;
+      height: 17px;
     }
   }
 `;
@@ -887,6 +941,12 @@ export const HeaderActions = styled.div`
   gap: 6px;
   flex: 0 0 auto;
 
+  @media (max-width: 768px) {
+    &.common-mobile-hidden {
+      display: none;
+    }
+  }
+
   @media (max-width: 640px) {
     gap: 5px;
     margin-left: auto;
@@ -942,12 +1002,22 @@ export const HeaderProfileButton = styled.button`
     width: 38px;
     height: 38px;
     border-radius: 13px;
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
   }
 
   @media (max-width: 420px) {
     width: 34px;
     height: 34px;
     border-radius: 12px;
+
+    svg {
+      width: 17px;
+      height: 17px;
+    }
   }
 `;
 

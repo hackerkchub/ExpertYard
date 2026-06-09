@@ -109,6 +109,7 @@ export default function ExpertProfile() {
   const [subscriptionPlans, setSubscriptionPlans] = useState([]);
   const [plansLoading, setPlansLoading] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [editingPlan, setEditingPlan] = useState(null);
   const [planForm, setPlanForm] = useState({
     name: "",
@@ -189,6 +190,13 @@ console.log("PRICE:", expertPrice);
       description: expertData.profile.description || "",
       education: expertData.profile.education || "",
       location: expertData.profile.location || "",
+      latitude: expertData.profile.latitude || "",
+longitude: expertData.profile.longitude || "",
+
+city: expertData.profile.city || "",
+state: expertData.profile.state || "",
+country: expertData.profile.country || "",
+pincode: expertData.profile.pincode || "",
       callRate: expertPrice?.call || 0,
       chatRate: expertPrice?.chat || 0,
       documents: {
@@ -355,6 +363,101 @@ setSessionDuration(Number(session?.duration) || 0);
     !!draft &&
     (draft.email !== expertData.email || draft.phone !== expertData.phone);
 
+    const handleDetectLocation = () => {
+  if (!navigator.geolocation) {
+    notifyError("Geolocation is not supported by your browser");
+    return;
+  }
+
+  setIsDetectingLocation(true);
+
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const { latitude, longitude } = position.coords;
+
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&addressdetails=1`,
+          {
+            headers: {
+              Accept: "application/json"
+            }
+          }
+        );
+
+        const data = await response.json();
+
+        const address = data?.address || {};
+
+        const city =
+          address.city ||
+          address.town ||
+          address.village ||
+          address.county ||
+          "";
+
+        setDraft((prev) => ({
+          ...prev,
+
+          latitude: latitude.toString(),
+          longitude: longitude.toString(),
+
+          city,
+          state: address.state || "",
+          country: address.country || "",
+          pincode: address.postcode || "",
+
+          location: data.display_name || ""
+        }));
+
+        notifySuccess(
+          city
+            ? `📍 Location detected: ${city}`
+            : "Location detected successfully"
+        );
+      } catch (err) {
+        console.error(err);
+
+        notifyError(
+          "Coordinates captured but address lookup failed"
+        );
+
+        setDraft((prev) => ({
+          ...prev,
+          latitude: latitude.toString(),
+          longitude: longitude.toString()
+        }));
+      } finally {
+        setIsDetectingLocation(false);
+      }
+    },
+    (error) => {
+      setIsDetectingLocation(false);
+
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          notifyError("Location permission denied");
+          break;
+
+        case error.POSITION_UNAVAILABLE:
+          notifyError("Location unavailable");
+          break;
+
+        case error.TIMEOUT:
+          notifyError("Location request timed out");
+          break;
+
+        default:
+          notifyError("Unable to detect location");
+      }
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0
+    }
+  );
+};
   // ========== PRODUCTION READY HANDLE SAVE ==========
   const handleSave = async () => {
     try {
@@ -373,16 +476,28 @@ setSessionDuration(Number(session?.duration) || 0);
         return;
       }
 
+     if (!draft.latitude || !draft.longitude) {
+  notifyError("Please detect your location first");
+  setSaveLoading(false);
+  return;
+}
       // ========== PROFILE PAYLOAD ==========
-      const profilePayload = {
-        name: draft.name,
-        position: draft.title,
-        email: draft.email,
-        phone: draft.phone,
-        description: draft.description,
-        education: draft.education,
-        location: draft.location
-      };
+     const profilePayload = {
+  name: draft.name,
+  position: draft.title,
+  email: draft.email,
+  phone: draft.phone,
+  description: draft.description,
+  education: draft.education,
+
+  location: draft.location,
+  latitude: draft.latitude,
+  longitude: draft.longitude,
+  city: draft.city,
+  state: draft.state,
+  country: draft.country,
+  pincode: draft.pincode
+};
 
       if (draft.documents.photoFile)
         profilePayload.profile_photo = draft.documents.photoFile;
@@ -437,7 +552,7 @@ setSessionDuration(Number(session?.duration) || 0);
       await Promise.all(promises);
 
       // ========== REFRESH ==========
-      await Promise.all([refreshProfile(), refreshPrice()]);
+      // await Promise.all([refreshPrice()]);
       
       notifySuccess("Profile updated successfully!");
       
@@ -1076,11 +1191,66 @@ setSessionDuration(Number(session?.duration) || 0);
                       <S.InfoContent>
                         <S.InfoLabel>Location</S.InfoLabel>
                         {edit ? (
-                          <S.PremiumInput
-                            value={draft.location}
-                            onChange={e => setDraft({ ...draft, location: e.target.value })}
-                            placeholder="City, Country"
-                          />
+                        <div>
+  <button
+    type="button"
+    onClick={handleDetectLocation}
+    disabled={isDetectingLocation}
+    style={{
+      marginBottom: "10px",
+      padding: "10px 14px",
+      borderRadius: "8px",
+      border: "none",
+      cursor: "pointer"
+    }}
+  >
+    <FiMapPin />
+
+    {isDetectingLocation
+      ? " Detecting..."
+      : " Detect Current Location"}
+  </button>
+
+ <>
+  <S.PremiumInput
+    value={draft.location}
+    readOnly
+    placeholder="Location will be detected automatically"
+  />
+
+  {(draft.city || draft.state || draft.country) && (
+    <div
+      style={{
+        marginTop: "10px",
+        padding: "12px",
+        background: "#f8fafc",
+        borderRadius: "8px",
+        border: "1px solid #e2e8f0",
+        fontSize: "13px"
+      }}
+    >
+      <div><strong>City:</strong> {draft.city}</div>
+      <div><strong>State:</strong> {draft.state}</div>
+      <div><strong>Country:</strong> {draft.country}</div>
+      <div><strong>Pincode:</strong> {draft.pincode}</div>
+
+      <div
+        style={{
+          marginTop: "6px",
+          color: "#64748b",
+          fontSize: "12px"
+        }}
+      >
+        Lat: {draft.latitude}
+        <br />
+        Lng: {draft.longitude}
+      </div>
+    </div>
+  )}
+</>
+</div>
+
+                          
                         ) : (
                           <S.InfoValue>{draft.location || "Not specified"}</S.InfoValue>
                         )}

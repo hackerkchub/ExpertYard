@@ -48,6 +48,7 @@ import {
 } from "./CallChatExpert.styles";
 
 import ExpertCard from "../../components/userExperts/ExpertCard";
+import MobileSelect from "../../components/MobileSelect/MobileSelect";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
 import { socket } from "../../../../shared/api/socket"; // Only for online/offline status
@@ -92,6 +93,25 @@ const sortOptions = [
   { value: "price_desc", label: "Price: High to Low" },
   { value: "rating_desc", label: "Rating: High to Low" },
   { value: "rating_asc", label: "Rating: Low to High" },
+];
+const minPriceOptions = [
+  { value: "", label: "No minimum" },
+  { value: "10", label: "From Rs 10" },
+  { value: "30", label: "From Rs 30" },
+  { value: "50", label: "From Rs 50" },
+  { value: "100", label: "From Rs 100" },
+];
+const experienceOptions = [
+  { value: "", label: "Any experience" },
+  { value: "1", label: "1+ years" },
+  { value: "3", label: "3+ years" },
+  { value: "5", label: "5+ years" },
+  { value: "10", label: "10+ years" },
+];
+const statusOptions = [
+  { value: "", label: "Any status" },
+  { value: "online", label: "Online now" },
+  { value: "available", label: "Available" },
 ];
 
 const getParam = (params, ...keys) => {
@@ -195,6 +215,8 @@ export default function UserExpertsPage() {
   const [onlineExperts, setOnlineExperts] = useState({});
   const latestRequestRef = useRef(0);
   const abortRef = useRef(null);
+  const lastLoadedRouteCategoryRef = useRef("");
+  const searchParamsString = searchParams.toString();
 
   // Use Chat Request Hook
   const {
@@ -202,18 +224,6 @@ export default function UserExpertsPage() {
     ChatPopups,
     isWaiting,
   } = useChatRequest();
-
-  // FIX 2: Mode sync effect - only sync when URL mode differs from state
-  useEffect(() => {
-    if (!modeFromUrl) return;
-
-    if (
-      (modeFromUrl === "call" || modeFromUrl === "chat") &&
-      modeFromUrl !== tab
-    ) {
-      setTab(modeFromUrl);
-    }
-  }, [modeFromUrl]); // Removed tab dependency to prevent loop
 
   useEffect(() => {
     if (!isCategoryRoute || !routeCategoryId) return;
@@ -226,7 +236,11 @@ export default function UserExpertsPage() {
         String(current) === String(routeSubcategoryId) ? current : routeSubcategoryId
       ));
     }
-    loadSubCategories(routeCategoryId);
+
+    if (lastLoadedRouteCategoryRef.current !== String(routeCategoryId)) {
+      lastLoadedRouteCategoryRef.current = String(routeCategoryId);
+      loadSubCategories(routeCategoryId);
+    }
   }, [isCategoryRoute, loadSubCategories, routeCategoryId, routeSubcategoryId]);
 
   useEffect(() => {
@@ -235,38 +249,50 @@ export default function UserExpertsPage() {
   }, [categories.length, isCategoryRoute, navigate, routeCategoryId]);
 
   useEffect(() => {
-    const nextPage = parseInt(searchParams.get("page")) || 1;
-    if (nextPage !== currentPage) setCurrentPage(nextPage);
+    if (!isMobileFilterOpen) return undefined;
 
-    const nextMode = searchParams.get("mode");
-    if ((nextMode === "chat" || nextMode === "call") && nextMode !== tab) {
-      setTab(nextMode);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isMobileFilterOpen]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParamsString);
+    const nextPage = parseInt(params.get("page")) || 1;
+    setCurrentPage((current) => (nextPage === current ? current : nextPage));
+
+    const nextMode = params.get("mode");
+    if (nextMode === "chat" || nextMode === "call") {
+      setTab((current) => (nextMode === current ? current : nextMode));
     }
 
-    const nextSearch = searchParams.get("q") || "";
-    if (nextSearch !== searchInput) setSearchInput(nextSearch);
-    if (nextSearch !== debouncedSearch) setDebouncedSearch(nextSearch);
+    const nextSearch = params.get("q") || "";
+    setSearchInput((current) => (nextSearch === current ? current : nextSearch));
+    setDebouncedSearch((current) => (nextSearch === current ? current : nextSearch));
 
-    const nextMinRating = getParam(searchParams, "rating", "minRating");
-    const nextMinPrice = getParam(searchParams, "minPrice");
-    const nextMaxPrice = getParam(searchParams, "maxPrice");
-    const nextMinExperience = getParam(searchParams, "experience", "minExperience");
-    const nextLanguage = getParam(searchParams, "language");
-    const nextStatus = getParam(searchParams, "status");
-    const nextGender = getParam(searchParams, "gender");
-    const nextSortBy = getParam(searchParams, "sortBy");
-    const nextSortOrder = getParam(searchParams, "order") || "desc";
+    const nextMinRating = getParam(params, "rating", "minRating");
+    const nextMinPrice = getParam(params, "minPrice");
+    const nextMaxPrice = getParam(params, "maxPrice");
+    const nextMinExperience = getParam(params, "experience", "minExperience");
+    const nextLanguage = getParam(params, "language");
+    const nextStatus = getParam(params, "status");
+    const nextGender = getParam(params, "gender");
+    const nextSortBy = getParam(params, "sortBy");
+    const nextSortOrder = getParam(params, "order") || "desc";
 
-    if (nextMinRating !== minRating) setMinRating(nextMinRating);
-    if (nextMinPrice !== minPrice) setMinPrice(nextMinPrice);
-    if (nextMaxPrice !== maxPrice) setMaxPrice(nextMaxPrice);
-    if (nextMinExperience !== minExperience) setMinExperience(nextMinExperience);
-    if (nextLanguage !== language) setLanguage(nextLanguage);
-    if (nextStatus !== statusFilter) setStatusFilter(nextStatus);
-    if (nextGender !== gender) setGender(nextGender);
-    if (nextSortBy !== sortBy) setSortBy(nextSortBy);
-    if (nextSortOrder !== sortOrder) setSortOrder(nextSortOrder);
-  }, [searchParams]);
+    setMinRating((current) => (nextMinRating === current ? current : nextMinRating));
+    setMinPrice((current) => (nextMinPrice === current ? current : nextMinPrice));
+    setMaxPrice((current) => (nextMaxPrice === current ? current : nextMaxPrice));
+    setMinExperience((current) => (nextMinExperience === current ? current : nextMinExperience));
+    setLanguage((current) => (nextLanguage === current ? current : nextLanguage));
+    setStatusFilter((current) => (nextStatus === current ? current : nextStatus));
+    setGender((current) => (nextGender === current ? current : nextGender));
+    setSortBy((current) => (nextSortBy === current ? current : nextSortBy));
+    setSortOrder((current) => (nextSortOrder === current ? current : nextSortOrder));
+  }, [searchParamsString]);
 
   // Debounce search and avoid resetting pagination when the value is unchanged.
   useEffect(() => {
@@ -380,7 +406,8 @@ export default function UserExpertsPage() {
 
   // FIX 3: URL sync effect - prevents loop while keeping page/mode query in sync
   useEffect(() => {
-    const nextParams = new URLSearchParams(searchParams);
+    const currentParams = new URLSearchParams(searchParamsString);
+    const nextParams = new URLSearchParams(searchParamsString);
     nextParams.set("mode", tab);
     nextParams.set("page", String(currentPage));
 
@@ -442,10 +469,12 @@ export default function UserExpertsPage() {
       nextParams.delete("order");
     }
 
-    if (nextParams.toString() !== searchParams.toString()) {
+    const nextParamsString = nextParams.toString();
+
+    if (nextParamsString !== searchParamsString) {
       const isDefaultNormalization =
-        !searchParams.has("mode") ||
-        !searchParams.has("page");
+        !currentParams.has("mode") ||
+        !currentParams.has("page");
 
       setSearchParams(nextParams, { replace: isDefaultNormalization });
     }
@@ -462,7 +491,7 @@ export default function UserExpertsPage() {
     gender,
     sortBy,
     sortOrder,
-    searchParams,
+    searchParamsString,
     setSearchParams
   ]);
 
@@ -524,7 +553,7 @@ export default function UserExpertsPage() {
   // Reset subcategory when category changes AND load subcategories
   useEffect(() => {
     if (routeSubcategoryId) return;
-    setSelectedSubcategoryId("");
+    setSelectedSubcategoryId((current) => (current === "" ? current : ""));
   }, [routeSubcategoryId, selectedCategoryId]);
 
   // Socket listeners for online/offline status ONLY
@@ -534,25 +563,30 @@ export default function UserExpertsPage() {
     const handleMultipleStatus = (data) => {
       setOnlineExperts(prev => {
         const updated = { ...prev };
+        let changed = false;
         Object.keys(data).forEach(id => {
-          updated[String(id)] = data[id];
+          const key = String(id);
+          if (updated[key] !== data[id]) {
+            updated[key] = data[id];
+            changed = true;
+          }
         });
-        return updated;
+        return changed ? updated : prev;
       });
     };
 
     const handleOnline = ({ expert_id }) => {
-      setOnlineExperts(prev => ({
-        ...prev,
-        [String(expert_id)]: true
-      }));
+      setOnlineExperts(prev => {
+        const key = String(expert_id);
+        return prev[key] === true ? prev : { ...prev, [key]: true };
+      });
     };
 
     const handleOffline = ({ expert_id }) => {
-      setOnlineExperts(prev => ({
-        ...prev,
-        [String(expert_id)]: false
-      }));
+      setOnlineExperts(prev => {
+        const key = String(expert_id);
+        return prev[key] === false ? prev : { ...prev, [key]: false };
+      });
     };
 
     socket.on("multiple_expert_status", handleMultipleStatus);
@@ -908,9 +942,15 @@ export default function UserExpertsPage() {
       {/* Category Filter - with loadSubCategories */}
       <FilterGroup>
         <FilterLabel>{t("common.categories")}</FilterLabel>
-        <FilterSelect
+        <MobileSelect
+          title="Select Category"
           value={selectedCategoryId}
           disabled={isCategoryRoute}
+          DesktopSelectComponent={FilterSelect}
+          options={[
+            { value: "", label: t("callChat.allCategories") },
+            ...categories.map((cat) => ({ value: cat.id, label: cat.name })),
+          ]}
           onChange={(e) => {
             if (isCategoryRoute) return;
             const value = e.target.value;
@@ -921,165 +961,153 @@ export default function UserExpertsPage() {
               loadSubCategories(value);
             }
           }}
-        >
-          <option value="">{t("callChat.allCategories")}</option>
-          {categories.map(cat => (
-            <option key={cat.id} value={cat.id}>{cat.name}</option>
-          ))}
-        </FilterSelect>
+        />
       </FilterGroup>
 
       {/* Subcategory Filter - FIXED rendering */}
       {selectedCategoryId && (
         <FilterGroup>
           <FilterLabel>{t("callChat.subcategory", "Subcategory")}</FilterLabel>
-          <FilterSelect
+          <MobileSelect
+            title="Select Subcategory"
             value={selectedSubcategoryId}
             disabled={Boolean(routeSubcategoryId)}
+            DesktopSelectComponent={FilterSelect}
+            options={[
+              { value: "", label: t("callChat.allSubcategories") },
+              ...subCategories.map((sub) => ({ value: sub.id, label: sub.name })),
+            ]}
             onChange={(e) => {
               if (routeSubcategoryId) return;
               setSelectedSubcategoryId(e.target.value);
               setCurrentPage(1);
             }}
-          >
-            <option value="">{t("callChat.allSubcategories")}</option>
-            {subCategories.map(sub => (
-              <option key={sub.id} value={sub.id}>{sub.name}</option>
-            ))}
-          </FilterSelect>
+          />
         </FilterGroup>
       )}
 
       {/* Price Filter */}
       <FilterGroup>
         <FilterLabel>Max Price ({tab === "call" ? "₹/min Call" : "₹/min Chat"})</FilterLabel>
-        <FilterSelect
+        <MobileSelect
+          title="Select Max Price"
           value={maxPrice}
+          DesktopSelectComponent={FilterSelect}
+          options={getPriceOptions(tab)}
           onChange={(e) => {
             setMaxPrice(e.target.value);
             setCurrentPage(1);
           }}
-        >
-          {getPriceOptions(tab).map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </FilterSelect>
+        />
       </FilterGroup>
 
       <FilterGroup>
         <FilterLabel>Min Price ({tab === "call" ? "Call" : "Chat"} / min)</FilterLabel>
-        <FilterSelect
+        <MobileSelect
+          title="Select Min Price"
           value={minPrice}
+          DesktopSelectComponent={FilterSelect}
+          options={minPriceOptions}
           onChange={(e) => {
             setMinPrice(e.target.value);
             setCurrentPage(1);
           }}
-        >
-          <option value="">No minimum</option>
-          <option value="10">From Rs 10</option>
-          <option value="30">From Rs 30</option>
-          <option value="50">From Rs 50</option>
-          <option value="100">From Rs 100</option>
-        </FilterSelect>
+        />
       </FilterGroup>
 
       <FilterGroup>
         <FilterLabel>Rating</FilterLabel>
-        <FilterSelect
+        <MobileSelect
+          title="Select Rating"
           value={minRating}
+          DesktopSelectComponent={FilterSelect}
+          options={ratingOptions}
           onChange={(e) => {
             setMinRating(e.target.value);
             setCurrentPage(1);
           }}
-        >
-          {ratingOptions.map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </FilterSelect>
+        />
       </FilterGroup>
 
       <FilterGroup>
         <FilterLabel>Experience</FilterLabel>
-        <FilterSelect
+        <MobileSelect
+          title="Select Experience"
           value={minExperience}
+          DesktopSelectComponent={FilterSelect}
+          options={experienceOptions}
           onChange={(e) => {
             setMinExperience(e.target.value);
             setCurrentPage(1);
           }}
-        >
-          <option value="">Any experience</option>
-          <option value="1">1+ years</option>
-          <option value="3">3+ years</option>
-          <option value="5">5+ years</option>
-          <option value="10">10+ years</option>
-        </FilterSelect>
+        />
       </FilterGroup>
 
       <FilterGroup>
         <FilterLabel>Language</FilterLabel>
-        <FilterSelect
+        <MobileSelect
+          title="Select Language"
           value={language}
+          DesktopSelectComponent={FilterSelect}
+          options={[
+            { value: "", label: "Any language" },
+            ...languageOptions.map((item) => ({ value: item, label: item })),
+          ]}
           onChange={(e) => {
             setLanguage(e.target.value);
             setCurrentPage(1);
           }}
-        >
-          <option value="">Any language</option>
-          {languageOptions.map((item) => (
-            <option key={item} value={item}>{item}</option>
-          ))}
-        </FilterSelect>
+        />
       </FilterGroup>
 
       <FilterGroup>
         <FilterLabel>Availability</FilterLabel>
-        <FilterSelect
+        <MobileSelect
+          title="Select Availability"
           value={statusFilter}
+          DesktopSelectComponent={FilterSelect}
+          options={statusOptions}
           onChange={(e) => {
             setStatusFilter(e.target.value);
             setCurrentPage(1);
           }}
-        >
-          <option value="">Any status</option>
-          <option value="online">Online now</option>
-          <option value="available">Available</option>
-        </FilterSelect>
+        />
       </FilterGroup>
 
       {genderOptions.length > 0 && (
         <FilterGroup>
           <FilterLabel>Gender</FilterLabel>
-          <FilterSelect
+          <MobileSelect
+            title="Select Gender"
             value={gender}
+            DesktopSelectComponent={FilterSelect}
+            options={[
+              { value: "", label: "Any gender" },
+              ...genderOptions.map((item) => ({ value: item, label: item })),
+            ]}
             onChange={(e) => {
               setGender(e.target.value);
               setCurrentPage(1);
             }}
-          >
-            <option value="">Any gender</option>
-            {genderOptions.map((item) => (
-              <option key={item} value={item}>{item}</option>
-            ))}
-          </FilterSelect>
+          />
         </FilterGroup>
       )}
 
       {/* Sort By */}
       <FilterGroup>
         <FilterLabel>Sort By</FilterLabel>
-        <FilterSelect
+        <MobileSelect
+          title="Sort Experts"
           value={sortBy ? `${sortBy}_${sortOrder}` : ""}
+          DesktopSelectComponent={FilterSelect}
+          options={sortOptions}
           onChange={(e) => {
             const [newSortBy, newOrder] = splitSortValue(e.target.value);
             setSortBy(newSortBy);
             setSortOrder(newOrder);
             setCurrentPage(1);
           }}
-        >
-          {sortOptions.map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </FilterSelect>
+        />
       </FilterGroup>
 
       <ResetFilterBtn onClick={resetFilters}>
@@ -1250,35 +1278,40 @@ export default function UserExpertsPage() {
           <AnimatePresence>
             {isMobileFilterOpen && (
               <>
-                <Overlay onClick={() => setIsMobileFilterOpen(false)} />
+                <Overlay
+                  as={motion.div}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={() => setIsMobileFilterOpen(false)}
+                />
                 <MobileFilterDrawer
                   as={motion.div}
-                  initial={{ x: '100%' }}
-                  animate={{ x: 0 }}
-                  exit={{ x: '100%' }}
-                  transition={{ type: 'tween', duration: 0.3 }}
+                  initial={{ y: '100%', opacity: 0.98 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: '100%', opacity: 0.98 }}
+                  transition={{ type: 'tween', duration: 0.28 }}
                 >
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    padding: '16px 20px',
-                    borderBottom: '1px solid #e2e8f0'
-                  }}>
-                    <h3 style={{ margin: 0 }}>Filters</h3>
+                  <div className="mobile-filter-grabber" aria-hidden="true" />
+                  <div className="mobile-filter-header">
+                    <div>
+                      <h3>Filters</h3>
+                      {activeFiltersCount > 0 && <span>{activeFiltersCount} selected</span>}
+                    </div>
+                    <button type="button" className="mobile-filter-clear-top" onClick={resetFilters}>
+                      Clear All
+                    </button>
                     <button 
+                      type="button"
+                      className="mobile-filter-close"
                       onClick={() => setIsMobileFilterOpen(false)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        fontSize: 24,
-                        cursor: 'pointer'
-                      }}
+                      aria-label="Close filters"
                     >
                       <FiX size={24} />
                     </button>
                   </div>
-                  <div style={{ padding: '20px' }}>
+                  <div className="mobile-filter-body">
                     <FilterContent />
                   </div>
                   <div className="mobile-filter-actions">

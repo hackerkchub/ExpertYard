@@ -3,13 +3,14 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiUserCheck, FiX } from "react-icons/fi";
+import { FiUserCheck, FiX, FiZap } from "react-icons/fi";
 import { useAuth } from "../context/UserAuthContext";
 import { useWallet } from "../context/WalletContext";
 import { socket } from "../api/socket";
 
 const MIN_CHAT_MINUTES = 5;
 const REQUEST_LOCK_TIMEOUT_MS = 10000;
+const WAITING_TIMEOUT_SECONDS = 30;
 
 /* ================= ANIMATIONS ================= */
 const spin = keyframes`
@@ -28,6 +29,15 @@ const Overlay = styled(motion.div)`
   align-items: center;
   justify-content: center;
   z-index: 2000;
+
+  @media (max-width: 768px) {
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 20060;
+    padding: 0;
+    background: rgba(15, 23, 42, 0.62);
+    backdrop-filter: blur(4px);
+  }
 `;
 
 const ModalContent = styled(motion.div)`
@@ -37,6 +47,32 @@ const ModalContent = styled(motion.div)`
   width: min(90vw, 420px);
   text-align: center;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+
+  @media (max-width: 768px) {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    max-height: 86dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 22px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+    border-radius: 26px 26px 0 0;
+    box-shadow: 0 -18px 44px rgba(15, 23, 42, 0.26);
+  }
+
+  @media (max-width: 768px) {
+    &::before {
+      content: "";
+      position: absolute;
+      top: 9px;
+      left: 50%;
+      width: 44px;
+      height: 4px;
+      border-radius: 999px;
+      background: #cbd5e1;
+      transform: translateX(-50%);
+    }
+  }
 `;
 
 const IconWrapper = styled.div`
@@ -48,6 +84,12 @@ const IconWrapper = styled.div`
   align-items: center;
   justify-content: center;
   margin: 0 auto 20px;
+
+  @media (max-width: 768px) {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 12px;
+  }
 `;
 
 const ModalTitle = styled.h3`
@@ -55,6 +97,12 @@ const ModalTitle = styled.h3`
   color: ${props => props.$color || "#0f172a"};
   font-size: 1.5rem;
   font-weight: 600;
+
+  @media (max-width: 768px) {
+    font-size: 20px;
+    line-height: 1.25;
+    font-weight: 800;
+  }
 `;
 
 const ModalText = styled.p`
@@ -62,10 +110,20 @@ const ModalText = styled.p`
   margin-bottom: 0;
   color: #475569;
   line-height: 1.5;
+
+  @media (max-width: 768px) {
+    margin-top: 8px;
+    font-size: 13.5px;
+    line-height: 1.45;
+  }
 `;
 
 const SpinnerWrapper = styled.div`
   margin-top: 20px;
+
+  @media (max-width: 768px) {
+    margin-top: 14px;
+  }
 `;
 
 const Spinner = styled.div`
@@ -103,6 +161,14 @@ const Button = styled.button`
     cursor: not-allowed;
     transform: none;
   }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    min-height: 46px;
+    margin-top: ${props => Math.min(Number(props.$marginTop || 24), 16)}px;
+    padding: 11px 18px;
+    font-size: 14px;
+  }
 `;
 
 const AIContainer = styled(motion.div)`
@@ -112,6 +178,30 @@ const AIContainer = styled(motion.div)`
   width: min(92vw, 440px);
   text-align: center;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+
+  @media (max-width: 768px) {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    max-height: 88dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 22px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+    border-radius: 26px 26px 0 0;
+    box-shadow: 0 -18px 44px rgba(15, 23, 42, 0.26);
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 9px;
+      left: 50%;
+      width: 44px;
+      height: 4px;
+      border-radius: 999px;
+      background: #cbd5e1;
+      transform: translateX(-50%);
+    }
+  }
 `;
 
 const PriceRow = styled.div`
@@ -133,6 +223,13 @@ const ButtonGroup = styled.div`
   gap: 12px;
   margin-top: 24px;
   justify-content: center;
+
+  @media (max-width: 768px) {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 9px;
+    margin-top: 16px;
+  }
 `;
 
 const PrimaryButton = styled.button`
@@ -160,6 +257,13 @@ const PrimaryButton = styled.button`
     cursor: not-allowed;
     transform: none;
   }
+
+  @media (max-width: 768px) {
+    min-height: 46px;
+    padding: 11px 18px;
+    border-radius: 999px;
+    font-size: 14px;
+  }
 `;
 
 const SecondaryButton = styled.button`
@@ -181,12 +285,81 @@ const SecondaryButton = styled.button`
   &:active {
     transform: translateY(0);
   }
+
+  @media (max-width: 768px) {
+    min-height: 46px;
+    padding: 11px 18px;
+    border-radius: 999px;
+    font-size: 14px;
+  }
 `;
 
 const Divider = styled.hr`
   margin: 20px 0;
   border: none;
   border-top: 1px solid #e2e8f0;
+`;
+
+const CountdownWrap = styled.div`
+  margin-top: 14px;
+`;
+
+const CountdownText = styled.div`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #000080;
+  font-size: 13px;
+  font-weight: 800;
+`;
+
+const CountdownTrack = styled.div`
+  width: 100%;
+  height: 7px;
+  margin-top: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #e2e8f0;
+`;
+
+const CountdownFill = styled.div`
+  width: ${({ $progress }) => `${Math.max(0, Math.min(100, $progress))}%`};
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(135deg, #000080, #2563eb);
+  transition: width 0.3s ease;
+`;
+
+const SheetCloseButton = styled.button`
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #e2e8f0;
+  }
+
+  @media (max-width: 768px) {
+    top: 18px;
+    right: 14px;
+    width: 36px;
+    height: 36px;
+  }
 `;
 
 /* ================= HELPER ================= */
@@ -207,6 +380,7 @@ export default function useChatRequest() {
   const userId = user?.id;
   const mountedRef = useRef(true);
   const requestLockTimeoutRef = useRef(null);
+  const waitingCountdownRef = useRef(null);
   
   // Refs for stale closure prevention
   const currentRequestIdRef = useRef(null);
@@ -216,6 +390,7 @@ export default function useChatRequest() {
 
   const [chatRequestId, setChatRequestId] = useState(null);
   const [showWaiting, setShowWaiting] = useState(false);
+  const [waitingSecondsLeft, setWaitingSecondsLeft] = useState(WAITING_TIMEOUT_SECONDS);
   const [waitingText, setWaitingText] = useState("Waiting for expert to accept...");
   const [rejectedMsg, setRejectedMsg] = useState("");
   const [showCancelled, setShowCancelled] = useState(false);
@@ -244,8 +419,74 @@ export default function useChatRequest() {
       if (requestLockTimeoutRef.current) {
         clearTimeout(requestLockTimeoutRef.current);
       }
+      if (waitingCountdownRef.current) {
+        clearInterval(waitingCountdownRef.current);
+      }
     };
   }, []);
+
+  useEffect(() => {
+    const hasOpenPopup = showWaiting || showAiOffer || Boolean(rejectedMsg) || showCancelled || Boolean(aiError);
+    if (!hasOpenPopup || typeof document === "undefined") return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [showWaiting, showAiOffer, rejectedMsg, showCancelled, aiError]);
+
+  useEffect(() => {
+    if (!showWaiting || !chatRequestId) {
+      if (waitingCountdownRef.current) {
+        clearInterval(waitingCountdownRef.current);
+        waitingCountdownRef.current = null;
+      }
+      return undefined;
+    }
+
+    setWaitingSecondsLeft(WAITING_TIMEOUT_SECONDS);
+
+    if (waitingCountdownRef.current) {
+      clearInterval(waitingCountdownRef.current);
+    }
+
+    waitingCountdownRef.current = setInterval(() => {
+      setWaitingSecondsLeft((current) => {
+        if (current <= 1) {
+          if (waitingCountdownRef.current) {
+            clearInterval(waitingCountdownRef.current);
+            waitingCountdownRef.current = null;
+          }
+
+          if (mountedRef.current && showWaitingRef.current) {
+            setShowWaiting(false);
+            setAiOffer((existingOffer) => existingOffer || {
+              request_id: currentRequestIdRef.current,
+              pricing_mode: "per_minute",
+              fallback_reason: "timeout",
+              ai_price: null,
+              human_price: null,
+            });
+            setShowAiOffer(true);
+            setIsRequesting(false);
+          }
+
+          return 0;
+        }
+
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (waitingCountdownRef.current) {
+        clearInterval(waitingCountdownRef.current);
+        waitingCountdownRef.current = null;
+      }
+    };
+  }, [showWaiting, chatRequestId]);
 
   /* ================= START CHAT ================= */
   const startChat = useCallback(
@@ -342,7 +583,59 @@ setIsStartingAi(false);
     setShowAiOffer(false);
     setAiOffer(null);
     setIsStartingAi(false);
+    if (currentRequestIdRef.current) {
+      setWaitingText("Waiting for expert to accept...");
+      setShowWaiting(true);
+    }
   }, []);
+
+  const dismissAiOffer = useCallback(() => {
+    setShowAiOffer(false);
+    setAiOffer(null);
+    setIsStartingAi(false);
+    setIsRequesting(false);
+  }, []);
+
+  const tryAnotherExpert = useCallback(() => {
+    dismissAiOffer();
+    navigate("/user/call-chat?page=1&mode=chat");
+  }, [dismissAiOffer, navigate]);
+
+  useEffect(() => {
+    const hasOpenPopup = showWaiting || showAiOffer || Boolean(rejectedMsg) || showCancelled || Boolean(aiError);
+    if (!hasOpenPopup || typeof window === "undefined") return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key !== "Escape") return;
+
+      if (showWaiting) {
+        cancelRequest();
+        return;
+      }
+
+      if (showAiOffer) {
+        dismissAiOffer();
+        return;
+      }
+
+      if (rejectedMsg) {
+        setRejectedMsg("");
+        return;
+      }
+
+      if (showCancelled) {
+        setShowCancelled(false);
+        return;
+      }
+
+      if (aiError) {
+        setAiError("");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showWaiting, showAiOffer, rejectedMsg, showCancelled, aiError, cancelRequest, dismissAiOffer]);
 
   /* ================= SOCKET EVENTS ================= */
   useEffect(() => {
@@ -539,6 +832,7 @@ setIsStartingAi(false);
   // Helper to get AI price display
   const getAiPriceDisplay = useCallback((offer) => {
     if (!offer) return "";
+    if (offer.ai_price == null) return "Available instantly";
     
     if (offer.pricing_mode === "per_minute") {
       return `₹${offer.ai_price}/min`;
@@ -558,6 +852,7 @@ setIsStartingAi(false);
   // Helper to get human price display
   const getHumanPriceDisplay = useCallback((offer) => {
     if (!offer) return "";
+    if (offer.human_price == null) return "Human expert did not respond in time";
     
     if (offer.pricing_mode === "per_minute") {
       return `Human Chat: ₹${offer.human_price}/min`;
@@ -585,6 +880,9 @@ setIsStartingAi(false);
           exit={{ opacity: 0 }}
         >
           <ModalContent
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="chat-waiting-title"
             initial={{ opacity: 0, y: 12, scale: 0.98 }}
             animate={{
               opacity: 1,
@@ -604,11 +902,22 @@ setIsStartingAi(false);
               }
             }}
           >
+            <SheetCloseButton type="button" aria-label="Cancel chat request" onClick={cancelRequest}>
+              <FiX size={18} />
+            </SheetCloseButton>
             <IconWrapper $bgColor="#eff6ff">
               <FiUserCheck size={28} color="#3b82f6" />
             </IconWrapper>
-            <ModalTitle>Request Sent</ModalTitle>
+            <ModalTitle id="chat-waiting-title">Request Sent</ModalTitle>
             <ModalText>{waitingText}</ModalText>
+            <CountdownWrap>
+              <CountdownText>
+                Waiting for expert response... {waitingSecondsLeft}s
+              </CountdownText>
+              <CountdownTrack aria-hidden="true">
+                <CountdownFill $progress={(waitingSecondsLeft / WAITING_TIMEOUT_SECONDS) * 100} />
+              </CountdownTrack>
+            </CountdownWrap>
             <SpinnerWrapper>
               <Spinner />
             </SpinnerWrapper>
@@ -627,6 +936,9 @@ setIsStartingAi(false);
           exit={{ opacity: 0 }}
         >
           <AIContainer
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ai-connect-title"
             initial={{ opacity: 0, y: 12, scale: 0.98 }}
             animate={{
               opacity: 1,
@@ -646,11 +958,14 @@ setIsStartingAi(false);
               }
             }}
           >
+            <SheetCloseButton type="button" aria-label="Close AI connect popup" onClick={dismissAiOffer}>
+              <FiX size={18} />
+            </SheetCloseButton>
             <IconWrapper $bgColor="#fef3c7">
-              <span style={{ fontSize: 28 }}>🤖</span>
+              <FiZap size={28} color="#000080" />
             </IconWrapper>
-            <ModalTitle>Expert Unavailable</ModalTitle>
-            <ModalText>Continue instantly with AI Expert</ModalText>
+            <ModalTitle id="ai-connect-title">Expert Unavailable</ModalTitle>
+            <ModalText>Expert is currently unavailable. You can continue with AI assistance.</ModalText>
 
             <Divider />
 
@@ -673,10 +988,13 @@ setIsStartingAi(false);
                 onClick={startAiChat}
                 disabled={isStartingAi}
               >
-                {isStartingAi ? "Starting..." : "Start AI Chat"}
+                {isStartingAi ? "Connecting..." : "Connect with AI"}
               </PrimaryButton>
-              <SecondaryButton onClick={keepWaiting}>
-                Keep Waiting
+              <SecondaryButton onClick={tryAnotherExpert}>
+                Try another expert
+              </SecondaryButton>
+              <SecondaryButton onClick={dismissAiOffer}>
+                Cancel
               </SecondaryButton>
             </ButtonGroup>
           </AIContainer>
@@ -691,6 +1009,9 @@ setIsStartingAi(false);
           exit={{ opacity: 0 }}
         >
           <ModalContent
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="chat-rejected-title"
             initial={{ opacity: 0, y: 12, scale: 0.98 }}
             animate={{
               opacity: 1,
@@ -710,10 +1031,13 @@ setIsStartingAi(false);
               }
             }}
           >
+            <SheetCloseButton type="button" aria-label="Close request declined popup" onClick={() => setRejectedMsg("")}>
+              <FiX size={18} />
+            </SheetCloseButton>
             <IconWrapper $bgColor="#fef2f2">
               <FiX size={28} color="#ef4444" />
             </IconWrapper>
-            <ModalTitle $color="#dc2626">Request Declined</ModalTitle>
+            <ModalTitle id="chat-rejected-title" $color="#dc2626">Request Declined</ModalTitle>
             <ModalText>{rejectedMsg}</ModalText>
             <Button 
               onClick={() => setRejectedMsg("")} 
@@ -734,6 +1058,9 @@ setIsStartingAi(false);
           exit={{ opacity: 0 }}
         >
           <ModalContent
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="chat-cancelled-title"
             initial={{ opacity: 0, y: 12, scale: 0.98 }}
             animate={{
               opacity: 1,
@@ -753,10 +1080,13 @@ setIsStartingAi(false);
               }
             }}
           >
+            <SheetCloseButton type="button" aria-label="Close request cancelled popup" onClick={() => setShowCancelled(false)}>
+              <FiX size={18} />
+            </SheetCloseButton>
             <IconWrapper $bgColor="#f1f5f9">
               <FiX size={28} color="#64748b" />
             </IconWrapper>
-            <ModalTitle $color="#475569">Request Cancelled</ModalTitle>
+            <ModalTitle id="chat-cancelled-title" $color="#475569">Request Cancelled</ModalTitle>
             <ModalText>Your chat request has been cancelled.</ModalText>
             <Button 
               onClick={() => setShowCancelled(false)} 
@@ -776,6 +1106,9 @@ setIsStartingAi(false);
           exit={{ opacity: 0 }}
         >
           <ModalContent
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ai-error-title"
             initial={{ opacity: 0, y: 12, scale: 0.98 }}
             animate={{
               opacity: 1,
@@ -795,10 +1128,13 @@ setIsStartingAi(false);
               }
             }}
           >
+            <SheetCloseButton type="button" aria-label="Close AI error popup" onClick={() => setAiError("")}>
+              <FiX size={18} />
+            </SheetCloseButton>
             <IconWrapper $bgColor="#fef2f2">
               <FiX size={28} color="#ef4444" />
             </IconWrapper>
-            <ModalTitle $color="#dc2626">AI Chat Error</ModalTitle>
+            <ModalTitle id="ai-error-title" $color="#dc2626">AI Chat Error</ModalTitle>
             <ModalText>{aiError}</ModalText>
             <Button 
               onClick={() => setAiError("")} 

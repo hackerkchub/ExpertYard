@@ -36,7 +36,8 @@ import {
   FiFile,
   FiImage,
   FiAlertCircle,
-  FiUploadCloud
+  FiUploadCloud,
+  FiMapPin
 } from "react-icons/fi";
 
 const MAX_SINGLE_FILE_SIZE = 1.5 * 1024 * 1024;
@@ -60,6 +61,12 @@ export default function StepProfile() {
     description: "",
     education: "",
     location: "",
+    latitude: "",
+    longitude: "",
+    city: "",
+    state: "",
+    country: "",
+    pincode: "",
     profile_photo: null,
     experience_certificate: null,
     marksheet: null,
@@ -77,6 +84,7 @@ export default function StepProfile() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [isLoadingExisting, setIsLoadingExisting] = useState(true);
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const notifyError = (message) => void toastify("error", message);
   const notifySuccess = (message) => void toastify("success", message);
 
@@ -110,6 +118,12 @@ export default function StepProfile() {
             description: profile.description || "",
             education: profile.education || "",
             location: profile.location || "",
+            latitude: profile.latitude || "",
+            longitude: profile.longitude || "",
+            city: profile.city || "",
+            state: profile.state || "",
+            country: profile.country || "",
+            pincode: profile.pincode || "",
           }));
 
           setExistingFiles({
@@ -153,12 +167,98 @@ export default function StepProfile() {
     setFileErrors(prev => ({ ...prev, [field]: null }));
   };
 
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      notifyError("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setIsDetectingLocation(true);
+    
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        setForm(prev => ({
+          ...prev,
+          latitude: latitude.toString(),
+          longitude: longitude.toString()
+        }));
+
+        // Reverse geocoding to get address details
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&addressdetails=1`,
+            {
+              headers: {
+                Accept: "application/json"
+              }
+            }
+          );
+          const data = await response.json();
+          
+          if (data && data.address) {
+            const address = data.address;
+            const cityName = address.city || 
+                           address.town || 
+                           address.village || 
+                           address.county || 
+                           "";
+            
+            setForm(prev => ({
+              ...prev,
+              city: cityName,
+              state: address.state || "",
+              country: address.country || "",
+              pincode: address.postcode || "",
+              location: data.display_name || ""
+            }));
+            
+            // Better user experience message
+            if (cityName) {
+              notifySuccess(`📍 Location detected: ${cityName}`);
+            } else {
+              notifySuccess("Location detected successfully!");
+            }
+          } else {
+            notifySuccess("Location coordinates detected!");
+          }
+        } catch (error) {
+          console.error("Reverse geocoding error:", error);
+          notifyError("Could not fetch address details, but coordinates saved");
+        } finally {
+          setIsDetectingLocation(false);
+        }
+      },
+      (error) => {
+        setIsDetectingLocation(false);
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            notifyError("Location permission denied. Please enable location access.");
+            break;
+          case error.POSITION_UNAVAILABLE:
+            notifyError("Location information is unavailable.");
+            break;
+          case error.TIMEOUT:
+            notifyError("Location request timed out.");
+            break;
+          default:
+            notifyError("An error occurred while detecting location.");
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
   const validateForm = () => {
     const textFields = {
       position: "Position is required",
       description: "Description is required",
-      education: "Education is required",
-      location: "Location is required"
+      education: "Education is required"
     };
 
     for (const [field, message] of Object.entries(textFields)) {
@@ -166,6 +266,17 @@ export default function StepProfile() {
         notifyError(message);
         return false;
       }
+    }
+
+    // Validate latitude and longitude (backend mandatory) - Extra safe validation
+    if (
+      Number.isNaN(Number(form.latitude)) ||
+      Number.isNaN(Number(form.longitude)) ||
+      !form.latitude ||
+      !form.longitude
+    ) {
+      notifyError("Please detect your location");
+      return false;
     }
 
     const requiredFiles = {
@@ -201,6 +312,12 @@ export default function StepProfile() {
     payload.append("description", form.description);
     payload.append("education", form.education);
     payload.append("location", form.location);
+    payload.append("latitude", form.latitude);
+    payload.append("longitude", form.longitude);
+    payload.append("city", form.city);
+    payload.append("state", form.state);
+    payload.append("country", form.country);
+    payload.append("pincode", form.pincode);
 
     if (form.profile_photo) payload.append("profile_photo", form.profile_photo);
     if (form.experience_certificate) payload.append("experience_certificate", form.experience_certificate);
@@ -229,7 +346,10 @@ export default function StepProfile() {
     form.position.trim() && 
     form.description.trim() && 
     form.education.trim() && 
-    form.location.trim() && 
+    form.latitude && 
+    form.longitude &&
+    !Number.isNaN(Number(form.latitude)) &&
+    !Number.isNaN(Number(form.longitude)) &&
     (form.profile_photo || existingFiles.profile_photo) &&
     (form.experience_certificate || existingFiles.experience_certificate) &&
     (form.marksheet || existingFiles.marksheet) &&
@@ -300,16 +420,70 @@ export default function StepProfile() {
         </div>
 
         <Field>
-          <Label>Working Location <span style={{ color: '#ef4444' }}>*</span></Label>
-          <Input value={form.location} onChange={e => handleChange("location", e.target.value)} placeholder="e.g., Indore, India" />
-        </Field>
-
-        <Field>
           <Label>About You / Experience <span style={{ color: '#ef4444' }}>*</span></Label>
           <TextArea value={form.description} onChange={e => handleChange("description", e.target.value)} placeholder="Tell us about your years of experience..." rows={4} />
         </Field>
 
-        {/* 📁 Section 3: Documents (Description के ठीक नीचे, एक के नीचे एक) */}
+        {/* 📍 Section 3: Location with Detect Button */}
+        <Field>
+          <Label>Working Location <span style={{ color: '#ef4444' }}>*</span></Label>
+          <div style={{ marginBottom: '12px' }}>
+            <button
+              type="button"
+              onClick={handleDetectLocation}
+              disabled={isDetectingLocation}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 16px',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: isDetectingLocation ? 'not-allowed' : 'pointer',
+                opacity: isDetectingLocation ? 0.7 : 1,
+                transition: 'all 0.2s'
+              }}
+            >
+              <FiMapPin size={18} />
+              {isDetectingLocation ? 'Detecting...' : '📍 Detect Current Location'}
+            </button>
+          </div>
+          <Input 
+            value={form.location} 
+            readOnly
+            placeholder="Click 'Detect Current Location' button first" 
+            style={{ backgroundColor: '#f8fafc', cursor: 'not-allowed' }}
+          />
+        </Field>
+
+        {/* Show location details if available */}
+        {(form.city || form.state || form.country || form.pincode) && (
+          <div style={{
+            marginTop: '-8px',
+            padding: '12px',
+            backgroundColor: '#f0f9ff',
+            borderRadius: '8px',
+            fontSize: '13px',
+            color: '#0c4a6e'
+          }}>
+            <strong>📍 Location Details:</strong><br />
+            {form.city && <span>City: {form.city} | </span>}
+            {form.state && <span>State: {form.state} | </span>}
+            {form.country && <span>Country: {form.country} | </span>}
+            {form.pincode && <span>Pincode: {form.pincode}</span>}
+            {form.latitude && form.longitude && (
+              <div style={{ fontSize: '11px', marginTop: '4px', color: '#64748b' }}>
+                Coordinates: {parseFloat(form.latitude).toFixed(6)}, {parseFloat(form.longitude).toFixed(6)}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 📁 Section 4: Documents */}
         <div style={{ marginTop: "24px", width: "100%" }}>
           <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b", marginBottom: "16px", borderBottom: "1px solid #e2e8f0", paddingBottom: "12px" }}>
             📁 Document Verification

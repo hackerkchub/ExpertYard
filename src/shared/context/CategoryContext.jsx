@@ -22,6 +22,7 @@ export const CategoryProvider = ({ children }) => {
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [subCategoriesLoading, setSubCategoriesLoading] = useState(false);
 
   const subCatCache = useRef({});
@@ -35,6 +36,7 @@ export const CategoryProvider = ({ children }) => {
 
     try {
       setLoading(true);
+      setError(null);
       const res = await getCategoriesApi();
       const actualData = res?.data || res || [];
 
@@ -42,6 +44,7 @@ export const CategoryProvider = ({ children }) => {
       isFetched.current = true;
     } catch (err) {
       console.error("Category load failed", err);
+      setError(err);
       setCategories([]);
     } finally {
       setLoading(false);
@@ -100,6 +103,7 @@ export const CategoryProvider = ({ children }) => {
   const value = useMemo(
     () => ({
       categories,
+      error,
       subCategories,
       subCategoriesLoading,
       loadSubCategories,
@@ -108,6 +112,7 @@ export const CategoryProvider = ({ children }) => {
     }),
     [
       categories,
+      error,
       subCategories,
       subCategoriesLoading,
       loadSubCategories,

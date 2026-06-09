@@ -17,8 +17,26 @@ export const PageContainer = styled.div`
   padding: 28px 0 52px;
   color: #111827;
 
-  @media (max-width: 640px) {
-    
+  @media (max-width: 767px) {
+    width: 100%;
+    max-width: 100%;
+    min-height: auto;
+    overflow-x: hidden;
+    padding: 10px 0 0;
+    margin-bottom: -6px;
+    background: #ffffff;
+    font-family: inherit;
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    img,
+    svg {
+      max-width: 100%;
+    }
   }
 `;
 
@@ -30,6 +48,14 @@ export const ContentWrapper = styled.div`
   @media (max-width: 640px) {
     width: calc(100% - 20px);
     max-width: 560px;
+  }
+
+  @media (max-width: 767px) {
+    width: min(100% - 16px, 560px);
+    max-width: 100%;
+    overflow-x: hidden;
+    margin: 0 auto;
+    padding-bottom: 0;
   }
 `;
 
@@ -200,8 +226,16 @@ export const TopActionButton = styled.button`
     box-shadow: 0 20px 38px rgba(255, 193, 7, 0.32);
   }
 
-  @media (max-width: 560px) {
-    width: 100%;
+  @media (max-width: 767px) {
+    width: auto;
+    max-width: 100%;
+    min-height: 38px;
+    margin-bottom: 10px;
+    padding: 0 13px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 8px 18px rgba(255, 193, 7, 0.18);
   }
 `;
 
@@ -292,11 +326,21 @@ export const ServiceGrid = styled.div`
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  @media (max-width: 680px) {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 14px;
+  @media (min-width: 768px) and (max-width: 1024px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  @media (max-width: 767px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
     width: 100%;
-    overflow: hidden;
+    max-width: 100%;
+    overflow: visible;
+  }
+
+  @media (max-width: 359px) {
+    grid-template-columns: minmax(0, 1fr);
   }
 `;
 
@@ -318,11 +362,17 @@ export const ServiceCard = styled.article`
     box-shadow: 0 24px 48px rgba(15, 23, 42, 0.12);
   }
 
-  @media (max-width: 680px) {
+  @media (max-width: 767px) {
     width: 100%;
     max-width: 100%;
-    border-radius: 18px;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+    min-height: 0;
+    border-radius: 16px;
+    border-color: #e6eaf2;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+
+    &:hover {
+      transform: none;
+    }
   }
 `;
 
@@ -369,14 +419,21 @@ export const ExpertIdentitySection = styled.div`
     font-weight: 800;
   }
 
-  @media (max-width: 680px) {
-    padding: 12px;
-    gap: 9px;
+  @media (max-width: 767px) {
+    padding: 9px;
+    gap: 7px;
+    min-width: 0;
 
     .expert-avatar {
-      width: 34px;
-      height: 34px;
-      border-radius: 12px;
+      width: 28px;
+      height: 28px;
+      border-radius: 10px;
+      box-shadow: none;
+
+      svg {
+        width: 15px;
+        height: 15px;
+      }
     }
 
     .expert-info {
@@ -385,7 +442,16 @@ export const ExpertIdentitySection = styled.div`
     }
 
     .expert-info h4 {
-      font-size: 0.86rem;
+      font-size: 12px;
+      line-height: 1.25;
+      font-weight: 600;
+    }
+
+    .expert-info span {
+      margin-top: 1px;
+      font-size: 10.5px;
+      line-height: 1.2;
+      font-weight: 500;
     }
   }
 `;
@@ -409,8 +475,12 @@ export const ImageWrapper = styled.div`
     filter: saturate(1.06);
   }
 
-  @media (max-width: 680px) {
-    height: clamp(132px, 42vw, 166px);
+  @media (max-width: 767px) {
+    height: clamp(92px, 27vw, 126px);
+
+    &:hover img {
+      transform: none;
+    }
   }
 `;
 
@@ -426,11 +496,14 @@ export const PriceBadge = styled.div`
   font-size: 0.9rem;
   box-shadow: 0 12px 24px rgba(255, 193, 7, 0.24);
 
-  @media (max-width: 680px) {
-    top: 10px;
-    right: 10px;
-    padding: 6px 9px;
-    font-size: 0.78rem;
+  @media (max-width: 767px) {
+    top: 7px;
+    right: 7px;
+    padding: 4px 7px;
+    font-size: 12px;
+    line-height: 1;
+    font-weight: 700;
+    box-shadow: 0 8px 16px rgba(255, 193, 7, 0.18);
   }
 `;
 
@@ -464,20 +537,20 @@ export const CardContent = styled.div`
     overflow: hidden;
   }
 
-  @media (max-width: 680px) {
-    padding: 12px;
+  @media (max-width: 767px) {
+    padding: 9px;
+    min-width: 0;
 
     h3 {
-      margin: 8px 0 7px;
-      font-size: 0.98rem;
-      line-height: 1.32;
+      margin: 6px 0 0;
+      font-size: clamp(14px, 3.8vw, 16px);
+      line-height: 1.28;
+      font-weight: 600;
+      overflow-wrap: anywhere;
     }
 
     .description {
-      min-height: 0;
-      margin-bottom: 12px;
-      font-size: 0.82rem;
-      line-height: 1.45;
+      display: none;
     }
   }
 `;
@@ -497,10 +570,13 @@ export const CategoryTag = styled.div`
   text-transform: uppercase;
   letter-spacing: 0.02em;
 
-  @media (max-width: 680px) {
+  @media (max-width: 767px) {
     max-width: 100%;
-    padding: 5px 8px;
-    font-size: 0.66rem;
+    padding: 4px 7px;
+    font-size: 10px;
+    line-height: 1.2;
+    font-weight: 600;
+    letter-spacing: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -528,10 +604,20 @@ export const RatingLine = styled.div`
     fill: currentColor;
   }
 
-  @media (max-width: 680px) {
-    gap: 6px;
-    margin-top: 8px;
-    font-size: 0.74rem;
+  @media (max-width: 767px) {
+    gap: 5px;
+    margin-top: 6px;
+    font-size: 11px;
+    line-height: 1.2;
+    font-weight: 500;
+
+    span {
+      min-width: 0;
+    }
+
+    span:last-child {
+      display: none;
+    }
   }
 `;
 
@@ -551,17 +637,8 @@ export const DeliverablesContainer = styled.div`
     border: 1px solid #e5e7eb;
   }
 
-  @media (max-width: 680px) {
-    gap: 5px;
-
-    .skill-pill {
-      max-width: 100%;
-      padding: 4px 7px;
-      font-size: 0.68rem;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+  @media (max-width: 767px) {
+    display: none;
   }
 `;
 
@@ -573,10 +650,15 @@ export const CardFooter = styled.div`
   border-top: 1px solid #eef2f7;
   margin-top: auto;
 
-  @media (max-width: 420px) {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    padding: 12px;
+  @media (max-width: 767px) {
+    grid-template-columns: 1fr;
+    gap: 7px;
+    padding: 0 9px 9px;
+    border-top: 0;
+  }
+
+  @media (max-width: 360px) {
+    grid-template-columns: 1fr;
   }
 `;
 
@@ -602,13 +684,16 @@ export const PrimaryButton = styled.button`
     box-shadow: 0 16px 28px rgba(0, 0, 128, 0.22);
   }
 
-  @media (max-width: 680px) {
+  @media (max-width: 767px) {
     min-width: 0;
-    min-height: 40px;
+    min-height: 34px;
     padding: 0 8px;
-    border-radius: 12px;
-    font-size: 0.8rem;
+    border-radius: 10px;
+    font-size: clamp(13px, 3.2vw, 14px);
+    line-height: 1;
+    font-weight: 700;
     white-space: nowrap;
+    box-shadow: 0 8px 16px rgba(0, 0, 128, 0.12);
 
     svg {
       flex: 0 0 auto;
@@ -638,12 +723,14 @@ export const SecondaryButton = styled.button`
     border-color: rgba(0, 0, 128, 0.34);
   }
 
-  @media (max-width: 680px) {
+  @media (max-width: 767px) {
     min-width: 0;
-    min-height: 40px;
+    min-height: 32px;
     padding: 0 8px;
-    border-radius: 12px;
-    font-size: 0.8rem;
+    border-radius: 10px;
+    font-size: clamp(12px, 3vw, 13px);
+    line-height: 1;
+    font-weight: 600;
     white-space: nowrap;
 
     svg {
@@ -675,6 +762,22 @@ export const EmptyState = styled.div`
   p {
     margin: 0;
     color: #64748b;
+  }
+
+  @media (max-width: 767px) {
+    margin: 14px 0;
+    padding: 24px 12px;
+    border-radius: 18px;
+
+    h3 {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    p {
+      font-size: 13px;
+      line-height: 1.4;
+    }
   }
 `;
 
@@ -717,12 +820,35 @@ export const CtaSection = styled.section`
     box-shadow: 0 14px 30px rgba(255, 193, 7, 0.26);
   }
 
-  @media (max-width: 680px) {
+  @media (max-width: 767px) {
     align-items: stretch;
     flex-direction: column;
+    gap: 10px;
+    margin-top: 14px;
+    margin-bottom: 0;
+    padding: 16px;
+    border-radius: 18px;
+    box-shadow: 0 12px 28px rgba(0, 0, 128, 0.12);
+
+    h2 {
+      font-size: clamp(18px, 5vw, 20px);
+      line-height: 1.22;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin-top: 6px;
+      font-size: clamp(12px, 3.4vw, 14px);
+      line-height: 1.45;
+      font-weight: 400;
+    }
 
     button {
       width: 100%;
+      min-height: 40px;
+      font-size: 14px;
+      font-weight: 700;
     }
   }
 `;
@@ -751,5 +877,17 @@ export const LoaderContainer = styled.div`
 
   @keyframes spin {
     to { transform: rotate(360deg); }
+  }
+
+  @media (max-width: 767px) {
+    height: calc(100svh - 128px);
+    min-height: 260px;
+    padding: 0 16px;
+    text-align: center;
+
+    p {
+      font-size: 13px;
+      font-weight: 500;
+    }
   }
 `;

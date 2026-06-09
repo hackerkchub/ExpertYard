@@ -4,7 +4,7 @@ import { testimonials } from "./testimonialsData";
 import TestimonialCard from "./TestimonialCard";
 import "./TestimonialsSection.css";
 
-const TestimonialsSection = ({ onViewAll }) => {
+const TestimonialsSection = ({ onViewAll, titleOverride }) => {
   const { t } = useTranslation();
   const rowRef = useRef(null);
   const pausedRef = useRef(false);
@@ -81,7 +81,7 @@ const TestimonialsSection = ({ onViewAll }) => {
       <div className="section-topline premium-testimonials-section__header">
         <div>
           <span className="section-kicker">{t("testimonials.kicker")}</span>
-          <h2>{t("testimonials.title")}</h2>
+          <h2>{titleOverride || t("testimonials.title")}</h2>
         </div>
         <button type="button" className="section-link" onClick={onViewAll}>
           {t("common.viewAll")}

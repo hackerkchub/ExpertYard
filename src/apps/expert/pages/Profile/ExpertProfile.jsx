@@ -480,35 +480,50 @@ setSessionDuration(Number(session?.duration) || 0);
   setSaveLoading(false);
   return;
 }
-      // ========== PROFILE PAYLOAD ==========
-     const profilePayload = {
-  name: draft.name,
-  position: draft.title,
-  email: draft.email,
-  phone: draft.phone,
-  description: draft.description,
-  education: draft.education,
+  const profileFormData = new FormData();
 
-  location: draft.location,
-  latitude: draft.latitude,
-  longitude: draft.longitude,
-  city: draft.city,
-  state: draft.state,
-  country: draft.country,
-  pincode: draft.pincode
-};
+profileFormData.append("name", draft.name || "");
+profileFormData.append("position", draft.title || "");
+profileFormData.append("email", draft.email || "");
+profileFormData.append("phone", draft.phone || "");
+profileFormData.append("description", draft.description || "");
+profileFormData.append("education", draft.education || "");
 
-      if (draft.documents.photoFile)
-        profilePayload.profile_photo = draft.documents.photoFile;
+profileFormData.append("location", draft.location || "");
+profileFormData.append("latitude", draft.latitude || "");
+profileFormData.append("longitude", draft.longitude || "");
+profileFormData.append("city", draft.city || "");
+profileFormData.append("state", draft.state || "");
+profileFormData.append("country", draft.country || "");
+profileFormData.append("pincode", draft.pincode || "");
 
-      if (draft.documents.experience_certificateFile)
-        profilePayload.experience_certificate = draft.documents.experience_certificateFile;
+if (draft.documents.photoFile) {
+  profileFormData.append(
+    "profile_photo",
+    draft.documents.photoFile
+  );
+}
 
-      if (draft.documents.marksheetFile)
-        profilePayload.marksheet = draft.documents.marksheetFile;
+if (draft.documents.experience_certificateFile) {
+  profileFormData.append(
+    "experience_certificate",
+    draft.documents.experience_certificateFile
+  );
+}
 
-      if (draft.documents.aadhar_cardFile)
-        profilePayload.aadhar_card = draft.documents.aadhar_cardFile;
+if (draft.documents.marksheetFile) {
+  profileFormData.append(
+    "marksheet",
+    draft.documents.marksheetFile
+  );
+}
+
+if (draft.documents.aadhar_cardFile) {
+  profileFormData.append(
+    "aadhar_card",
+    draft.documents.aadhar_cardFile
+  );
+}
 
       // ========== PRICING MODES (NO SUBSCRIPTION) ==========
       const pricingModes = [];
@@ -539,10 +554,10 @@ setSessionDuration(Number(session?.duration) || 0);
         weakness: ""
       };
 
-      // console.log("PROFILE PAYLOAD", profilePayload);
+      console.log("PROFILE PAYLOAD", profileFormData);
 
       // ========== BUILD PROMISES ==========
-      const promises = [updateExpertProfileApi(profilePayload)];
+      const promises = [updateExpertProfileApi(profileFormData)];
 
       // ✅ ONLY call price API if needed
       if (pricingModes.length > 0) {

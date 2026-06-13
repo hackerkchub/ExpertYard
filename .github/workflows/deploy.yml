@@ -1,17 +1,18 @@
-name: Auto Deploy to Domainz
+name: Auto Deploy Frontend
 
 on:
   push:
     branches:
+      - main
       - production
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -26,21 +27,54 @@ jobs:
           mkdir -p public
           curl -L http://softmaxs.com/sitemap.xml -o public/sitemap.xml
 
-      - name: Verify Sitemap
-        run: |
-          ls -la public
-          head -20 public/sitemap.xml
-
       - name: Build project
         run: npm run build
 
-      - name: Verify Dist Sitemap
-        run: |
-          ls -la dist
-          head -20 dist/sitemap.xml
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-files
+          path: dist
 
-      - name: Deploy to FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+  deploy-guidexa:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Build
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-files
+          path: dist
+
+      - name: Deploy to Guidexa
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.GUIDEXA_FTP_SERVER }}
+          username: ${{ secrets.GUIDEXA_FTP_USERNAME }}
+          password: ${{ secrets.GUIDEXA_FTP_PASSWORD }}
+          local-dir: dist/
+          server-dir: /
+          dangerous-clean-slate: true
+          exclude: |
+            **/.git*
+            **/node_modules/**
+
+  deploy-production:
+    if: github.ref == 'refs/heads/production'
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Build
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-files
+          path: dist
+
+      - name: Deploy to G9Expert Production
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}

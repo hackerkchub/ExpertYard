@@ -37,6 +37,7 @@ import PopularQuestions from "../../components/faq/PopularQuestions";
 import TestimonialsSection from "../../components/testimonials/TestimonialsSection";
 import TrustStats from "../../components/trustStats/TrustStats";
 import WhyChoose from "../../components/whyChoose/WhyChoose";
+import BannerSlider from "../../components/BannerSlider/BannerSlider";
 import {
   HeroBackdrop,
   HeroBadge,
@@ -65,6 +66,7 @@ import { useSeo } from "../../../../shared/seo/useSeo";
 import { toAbsoluteUrl } from "../../../../shared/seo/siteConfig";
 import { getCategoryPath } from "../../../../shared/utils/categoryRoutes";
 import { getAllServices } from "../../../../shared/api/service.api";
+import { getBannersApi } from "../../../../shared/api/admin/banner.api";
 
 const QUICK_ACTIONS = [
   {
@@ -597,6 +599,12 @@ const HomePage = () => {
       return [];
     }
   });
+
+  const [banners, setBanners] = useState([]);
+const [bannerLoading, setBannerLoading] =
+  useState(true);
+
+
   const [servicesLoading, setServicesLoading] = useState(services.length === 0);
   const [servicesError, setServicesError] = useState(null);
   const topCategoriesRowRef = useRef(null);
@@ -659,6 +667,30 @@ const HomePage = () => {
       }
     };
   }, []);
+
+  useEffect(() => {
+  const loadBanners = async () => {
+    try {
+      const res =
+        await getBannersApi(
+          "home_hero"
+        );
+
+      setBanners(
+        res?.data || []
+      );
+    } catch (err) {
+      console.error(
+        "Banner load failed",
+        err
+      );
+    } finally {
+      setBannerLoading(false);
+    }
+  };
+
+  loadBanners();
+}, []);
 
   const seoCategories = useMemo(
     () => (categories.length > 0 ? categories : !categoriesLoading ? FALLBACK_CATEGORIES : []),
@@ -959,10 +991,25 @@ const HomePage = () => {
           onLogin={() => navigate("/user/auth")}
           user={user}
         />
-        <SearchBar
-          onOpen={() => navigate("/user/search")}
-        />
-        <HeroBanner onExplore={() => navigate("/user/call-chat?page=1")} />
+       <SearchBar
+  onOpen={() =>
+    navigate("/user/search")
+  }
+/>
+
+{banners.length > 0 && (
+  <BannerSlider
+    banners={banners}
+  />
+)}
+
+<HeroBanner
+  onExplore={() =>
+    navigate(
+      "/user/call-chat?page=1"
+    )
+  }
+/>
         <QuickActions actions={MOBILE_QUICK_ACTIONS} />
         <CategorySection
           categories={mobileCategories}
@@ -985,6 +1032,13 @@ const HomePage = () => {
       </div>
 
       <div className="home-page__container">
+
+         {banners.length > 0 && (
+    <BannerSlider
+      banners={banners}
+    />
+  )}
+  
         <HeroSection>
           <HeroBackdrop />
           <HeroInner>

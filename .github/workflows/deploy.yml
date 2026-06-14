@@ -9,7 +9,24 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        include:
+          - branch: main
+            deploy-name: guidexa
+            api-url-secret: GUIDEXA_API_URL
+            ftp-server-secret: GUIDEXA_FTP_SERVER
+            ftp-username-secret: GUIDEXA_FTP_USERNAME
+            ftp-password-secret: GUIDEXA_FTP_PASSWORD
+            server-dir: /
+          - branch: production
+            deploy-name: g9expert
+            api-url-secret: SOFTMAXS_API_URL
+            ftp-server-secret: FTP_SERVER
+            ftp-username-secret: FTP_USERNAME
+            ftp-password-secret: FTP_PASSWORD
+            server-dir: public_html/
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,61 +44,55 @@ jobs:
           mkdir -p public
           curl -L http://softmaxs.com/sitemap.xml -o public/sitemap.xml
 
-      - name: Build project
+      - name: Build project with environment variables
+        if: github.ref == format('refs/heads/{0}', matrix.branch)
+        env:
+          VITE_API_BASE_URL: ${{ secrets[matrix.api-url-secret] }}
         run: npm run build
 
       - name: Upload Build Artifact
+        if: github.ref == format('refs/heads/{0}', matrix.branch)
         uses: actions/upload-artifact@v4
         with:
-          name: dist-files
+          name: dist-${{ matrix.deploy-name }}
           path: dist
 
-  deploy-guidexa:
-    if: github.ref == 'refs/heads/main'
+  deploy:
     needs: build
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        include:
+          - branch: main
+            deploy-name: guidexa
+            ftp-server-secret: GUIDEXA_FTP_SERVER
+            ftp-username-secret: GUIDEXA_FTP_USERNAME
+            ftp-password-secret: GUIDEXA_FTP_PASSWORD
+            server-dir: /
+          - branch: production
+            deploy-name: g9expert
+            ftp-server-secret: FTP_SERVER
+            ftp-username-secret: FTP_USERNAME
+            ftp-password-secret: FTP_PASSWORD
+            server-dir: public_html/
+    
     steps:
       - name: Download Build
         uses: actions/download-artifact@v4
         with:
-          name: dist-files
+          name: dist-${{ matrix.deploy-name }}
           path: dist
 
-      - name: Deploy to Guidexa
+      - name: Deploy to ${{ matrix.deploy-name }}
+        if: github.ref == format('refs/heads/{0}', matrix.branch)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.GUIDEXA_FTP_SERVER }}
-          username: ${{ secrets.GUIDEXA_FTP_USERNAME }}
-          password: ${{ secrets.GUIDEXA_FTP_PASSWORD }}
+          server: ${{ secrets[matrix.ftp-server-secret] }}
+          username: ${{ secrets[matrix.ftp-username-secret] }}
+          password: ${{ secrets[matrix.ftp-password-secret] }}
           local-dir: dist/
-          server-dir: /
+          server-dir: ${{ matrix.server-dir }}
           dangerous-clean-slate: true
           exclude: |
             **/.git*
-            **/node_modules/**
-
-  deploy-production:
-    if: github.ref == 'refs/heads/production'
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download Build
-        uses: actions/download-artifact@v4
-        with:
-          name: dist-files
-          path: dist
-
-      - name: Deploy to G9Expert Production
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: dist/
-          server-dir: public_html/
-          dangerous-clean-slate: true
-          exclude: |
-            **/.git*
-            **/node_modules/**
+            **/node_modules/

@@ -5,7 +5,7 @@ import React, {
   useRef,
   useMemo,
 } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   PageWrap,
   ChatLayout,
@@ -26,6 +26,7 @@ import {
   LoadingSpinner,
   ErrorMessage,
   EmptyChatMessage,
+  TypingIndicator,
 } from "./ExpertChat.styles";
 
 import { FiSend, FiUserX, FiClock, FiMail, FiPhone, FiPaperclip, FiX } from "react-icons/fi";
@@ -33,6 +34,9 @@ import { socket } from "../../../../shared/api/socket";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { getUserPublicProfileApi } from "../../../../shared/api/userApi";
 import { hotToast } from "../../../../shared/utils/lazyNotifications";
+import { APP_CONFIG } from "../../../../config/appConfig";
+import { getChatRoomCandidates, getChatRoomId, waitForChatDetailsRetry } from "../../../../shared/utils/chatRoom";
+import { saveActiveChatSession, clearActiveChatSession } from "../../../../shared/utils/chatSession";
 
 /* ------------------ HELPERS ------------------ */
 const getInitials = (name) => {
@@ -48,6 +52,7 @@ const getInitials = (name) => {
 const ExpertChat = () => {
   const { room_id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { expert } = useExpert();
 
   const [chatData, setChatData] = useState(null);
@@ -57,6 +62,7 @@ const ExpertChat = () => {
   const [error, setError] = useState("");
   const [userProfile, setUserProfile] = useState(null);
   const [sessionActive, setSessionActive] = useState(false);
+  const [peerTyping, setPeerTyping] = useState(false);
   
   // IMAGE UPLOAD STATES
   const [selectedImage, setSelectedImage] = useState(null);
@@ -65,6 +71,8 @@ const ExpertChat = () => {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
+  const peerTypingTimeoutRef = useRef(null);
 
   /* ------------------ HIDE GLOBAL HEADER ------------------ */
   useEffect(() => {
@@ -91,6 +99,11 @@ const ExpertChat = () => {
     return expert?.id || expert?.expert_id || chatData?.expert_id || null;
   }, [expert, chatData]);
 
+  const roomCandidates = useMemo(
+    () => getChatRoomCandidates(location.state?.roomCandidates || [], location.state || {}, room_id),
+    [location.state, room_id]
+  );
+
   /* ------------------ FETCH USER ------------------ */
   const fetchUserProfile = async (userId) => {
     try {
@@ -103,11 +116,46 @@ const ExpertChat = () => {
   const fetchChat = useCallback(async () => {
     try {
       setLoading(true);
+      setError("");
+      const token = localStorage.getItem("expert_token");
 
-      const res = await fetch(
-        `https://softmaxs.com/api/chat/details/${room_id}`
-      );
-      const data = await res.json();
+      let res = null;
+      let data = null;
+      let lastErrorText = "";
+      let loadedRoomId = room_id;
+
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        for (const candidateRoomId of roomCandidates) {
+          res = await fetch(
+            `${APP_CONFIG.API_BASE_URL}/chat/details/${candidateRoomId}`,
+            {
+              headers: token
+                ? {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                  }
+                : undefined,
+              cache: "no-cache",
+            }
+          );
+
+          if (res.ok) {
+            loadedRoomId = candidateRoomId;
+            data = await res.json();
+            break;
+          }
+
+          lastErrorText = await res.text();
+          if (res.status !== 404) break;
+        }
+
+        if (res?.ok || res?.status !== 404 || attempt === 4) break;
+        await waitForChatDetailsRetry();
+      }
+
+      if (!res?.ok || !data?.success || !data?.data) {
+        throw new Error(lastErrorText || data?.message || "Chat not found");
+      }
 
       const { session, messages: fetchedMessages } = data.data;
 
@@ -120,6 +168,8 @@ const ExpertChat = () => {
           message: m.message,
           message_type: m.message_type || "text",
           image_url: m.image_url || null,
+          is_seen: Number(m.is_seen) === 1 || m.is_seen === true,
+          seen_at: m.seen_at || null,
           sender_type: m.sender_type,
           time: new Date(m.created_at).toLocaleTimeString([], {
             hour: "2-digit",
@@ -129,19 +179,25 @@ const ExpertChat = () => {
       );
 
       if (session.user_id) fetchUserProfile(session.user_id);
+      if (String(loadedRoomId) !== String(room_id)) {
+        navigate(`/expert/chat/${loadedRoomId}`, {
+          replace: true,
+          state: { ...location.state, roomCandidates },
+        });
+      }
     } catch {
       setError("Failed to load chat");
     } finally {
       setLoading(false);
     }
-  }, [room_id]);
+  }, [room_id, location.state, navigate, roomCandidates]);
 
   /* ------------------ IMAGE UPLOAD ------------------ */
   const uploadImage = async (file) => {
     const formData = new FormData();
     formData.append("image", file);
 
-    const response = await fetch("https://softmaxs.com/api/chat/upload", {
+    const response = await fetch(`${APP_CONFIG.API_BASE_URL}/chat/upload`, {
       method: "POST",
       body: formData,
     });
@@ -151,7 +207,8 @@ const ExpertChat = () => {
     }
 
     const data = await response.json();
-    return `https://softmaxs.com${data.imageUrl}`;
+    const backendHost = APP_CONFIG.API_BASE_URL.replace("/api", "");
+    return `${backendHost}${data.imageUrl}`;
   };
 
   /* ------------------ IMAGE SELECT ------------------ */
@@ -166,6 +223,43 @@ const ExpertChat = () => {
     
     setSelectedImage(file);
   };
+
+  const markMessagesSeen = useCallback(() => {
+    if (!room_id || !expertId) return;
+
+    if (socket.connected) {
+      socket.emit("message:seen", { room_id });
+      return;
+    }
+
+    fetch(`${APP_CONFIG.API_BASE_URL}/chat/seen/${room_id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        viewer_id: expertId,
+        viewer_type: "expert",
+      }),
+    }).catch(() => {});
+  }, [room_id, expertId]);
+
+  const emitTyping = useCallback((value) => {
+    if (!room_id || !socket.connected) return;
+    socket.emit(value ? "typing:start" : "typing:stop", { room_id });
+  }, [room_id]);
+
+  const handleMessageChange = useCallback((e) => {
+    setMessage(e.target.value);
+
+    emitTyping(true);
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      emitTyping(false);
+    }, 1200);
+  }, [emitTyping]);
 
   /* ------------------ SEND MESSAGE (with optimistic UI + client_id) ------------------ */
   const handleSendMessage = async () => {
@@ -186,6 +280,8 @@ const ExpertChat = () => {
           sender_id: expertId,
           message: message.trim(),
           message_type: "text",
+          is_seen: false,
+          seen_at: null,
           time: new Date().toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
@@ -196,12 +292,13 @@ const ExpertChat = () => {
       
       // Emit with client_id to prevent duplicates
       socket.emit("sendMessage", {
-  room_id,
-  client_id: tempId,
-  message: message.trim(),
-  type: "text"
-});
+        room_id,
+        client_id: tempId,
+        message: message.trim(),
+        type: "text"
+      });
 
+      emitTyping(false);
       setMessage("");
 
       setTimeout(() => {
@@ -234,6 +331,8 @@ const ExpertChat = () => {
             message: message.trim() || "",
             message_type: "image",
             image_url: tempImageUrl,
+            is_seen: false,
+            seen_at: null,
             time: new Date().toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
@@ -260,14 +359,15 @@ const ExpertChat = () => {
         ));
         
         // Emit with client_id to prevent duplicates
-       socket.emit("sendMessage", {
-  room_id,
-  client_id: tempId,
-  message: message.trim() || "",
-  type: "image",
-  imageUrl
-});
+        socket.emit("sendMessage", {
+          room_id,
+          client_id: tempId,
+          message: message.trim() || "",
+          type: "image",
+          imageUrl
+        });
         setSelectedImage(null);
+        emitTyping(false);
         setMessage("");
         
       } catch (err) {
@@ -291,9 +391,25 @@ const ExpertChat = () => {
 
   /* ------------------ SOCKET (UPDATED with client_id deduplication) ------------------ */
   useEffect(() => {
-    if (!room_id) return;
+    if (!room_id || !expertId) return;
 
-    socket.emit("join_room", { room_id });
+    const joinChatRoom = () => {
+      socket.emit("register", {
+        userId: Number(expertId),
+        role: "expert",
+      });
+
+      socket.emit("join_room", { room_id });
+      markMessagesSeen();
+    };
+
+    socket.on("connect", joinChatRoom);
+
+    if (socket.connected) {
+      joinChatRoom();
+    } else {
+      socket.connect();
+    }
 
     const handleNewMessage = (msgData) => {
       // UNIVERSAL ROOM ID CHECK
@@ -319,6 +435,8 @@ const ExpertChat = () => {
                 id: msgData.id,
                 message_type: msgData.message_type || "text",
                 image_url: msgData.image_url || m.image_url,
+                is_seen: Number(msgData.is_seen) === 1 || msgData.is_seen === true || m.is_seen,
+                seen_at: msgData.seen_at || m.seen_at || null,
                 isTemp: false
               };
             }
@@ -333,6 +451,8 @@ const ExpertChat = () => {
           message: msgData.message,
           message_type: msgData.message_type || "text",
           image_url: msgData.image_url || null,
+          is_seen: Number(msgData.is_seen) === 1 || msgData.is_seen === true,
+          seen_at: msgData.seen_at || null,
           sender_type: msgData.sender_type,
           time: new Date(
             msgData.time || msgData.created_at || Date.now()
@@ -346,31 +466,98 @@ const ExpertChat = () => {
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
       }, 100);
+
+      if (msgData.sender_type === "user") {
+        markMessagesSeen();
+      }
     };
 
     // Listen to BOTH events
     socket.on("message", handleNewMessage);
     socket.on("message_sent", handleNewMessage);
 
-    socket.on("chat_ended", ({ room_id: endedRoomId }) => {
-  if (String(endedRoomId) !== String(room_id)) return;
+    const handlePeerTypingStart = (data = {}) => {
+      if (String(data.room_id) !== String(room_id) || data.sender_type !== "user") return;
 
-  setSessionActive(false);
-  hotToast("success", "Chat Ended");
-  navigate("/expert/chat-history");
-});
+      setPeerTyping(true);
+      if (peerTypingTimeoutRef.current) {
+        clearTimeout(peerTypingTimeoutRef.current);
+      }
+      peerTypingTimeoutRef.current = setTimeout(() => {
+        setPeerTyping(false);
+      }, 1600);
+    };
+
+    const handlePeerTypingStop = (data = {}) => {
+      if (String(data.room_id) !== String(room_id) || data.sender_type !== "user") return;
+
+      setPeerTyping(false);
+      if (peerTypingTimeoutRef.current) {
+        clearTimeout(peerTypingTimeoutRef.current);
+        peerTypingTimeoutRef.current = null;
+      }
+    };
+
+    const handleMessagesSeen = (data = {}) => {
+      if (String(data.room_id) !== String(room_id) || data.viewer_type !== "user") return;
+
+      const seenIds = new Set((data.message_ids || []).map((id) => Number(id)));
+      setMessages((prev) => prev.map((msg) => (
+        seenIds.has(Number(msg.id))
+          ? { ...msg, is_seen: true, seen_at: data.seen_at || msg.seen_at }
+          : msg
+      )));
+    };
+
+    socket.on("typing:start", handlePeerTypingStart);
+    socket.on("typing:stop", handlePeerTypingStop);
+    socket.on("messages:seen", handleMessagesSeen);
+
+    const handleChatEnded = (data = {}) => {
+      if (String(getChatRoomId(data)) !== String(room_id)) return;
+
+      setSessionActive(false);
+      hotToast("success", "Chat Ended");
+      navigate("/expert/chat-history");
+    };
+
+    socket.on("chat_ended", handleChatEnded);
 
     return () => {
+      emitTyping(false);
       socket.emit("leave_room", { room_id });
       socket.off("message", handleNewMessage);
       socket.off("message_sent", handleNewMessage);
-      socket.off("chat_ended");
+      socket.off("typing:start", handlePeerTypingStart);
+      socket.off("typing:stop", handlePeerTypingStop);
+      socket.off("messages:seen", handleMessagesSeen);
+      socket.off("chat_ended", handleChatEnded);
+      socket.off("connect", joinChatRoom);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (peerTypingTimeoutRef.current) clearTimeout(peerTypingTimeoutRef.current);
     };
-  }, [room_id, navigate]);
+  }, [room_id, expertId, navigate, markMessagesSeen, emitTyping]);
 
   useEffect(() => {
     fetchChat();
   }, [fetchChat]);
+
+  // Synchronize active chat session state
+  useEffect(() => {
+    if (chatData && sessionActive === true && room_id) {
+      const pName = userProfile?.full_name || "User";
+      saveActiveChatSession({
+        room_id: String(room_id),
+        participantName: pName,
+        role: "expert",
+        module: "expert",
+        isActive: true,
+        timestamp: Date.now()
+      });
+    } else if (sessionActive === false) {
+      clearActiveChatSession();
+    }
+  }, [chatData, sessionActive, room_id, userProfile]);
 
   /* ------------------ SCROLL FIX ------------------ */
   const scrollToBottom = () => {
@@ -498,6 +685,9 @@ const ExpertChat = () => {
                             <span className="time">
                               {msg.time}
                               {msg.isTemp && " (sending...)"}
+                              {!msg.isTemp && isExpert && (
+                                <span> {msg.is_seen ? "Seen" : "Sent"}</span>
+                              )}
                             </span>
                           </Bubble>
                         </Message>
@@ -507,6 +697,10 @@ const ExpertChat = () => {
 
                   <div ref={messagesEndRef} />
                 </Messages>
+
+                {peerTyping && (
+                  <TypingIndicator>User is typing...</TypingIndicator>
+                )}
 
                 {/* IMAGE PREVIEW BEFORE SEND */}
                 {selectedImage && (
@@ -560,7 +754,8 @@ const ExpertChat = () => {
                     ref={inputRef}
                     value={message}
                     onFocus={() => scrollToBottom()}
-                    onChange={(e) => setMessage(e.target.value)}
+                    onChange={handleMessageChange}
+                    onBlur={() => emitTyping(false)}
                     onKeyDown={handleKeyPress}
                     placeholder={
                       sessionActive 

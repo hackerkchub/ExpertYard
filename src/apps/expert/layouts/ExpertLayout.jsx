@@ -4,6 +4,7 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import ExpertSidebar from "../components/ExpertSidebar";
 import ExpertTopbar from "../components/ExpertTopbar";
 import IncomingCallPopup from "../components/IncomingCallPopup";
+import ContinueChatBanner from "../../../shared/components/ContinueChatBanner";
 
 import { LayoutWrapper, ContentWrapper } from "./expertLayout.styles";
 
@@ -262,6 +263,7 @@ function ExpertLayoutInner() {
     <LayoutWrapper>
       <ExpertTopbar />
       <ExpertSidebar />
+      <ContinueChatBanner />
 
       <ContentWrapper>
         <Outlet />

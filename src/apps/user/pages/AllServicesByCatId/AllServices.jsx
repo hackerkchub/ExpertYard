@@ -18,6 +18,7 @@ import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { usePublicExpert } from "../../context/PublicExpertContext";
 import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 import * as S from "./AllServices.style";
+import { APP_CONFIG } from "../../../../config/appConfig";
 
 const AllServices = () => {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ const AllServices = () => {
   const fetchAllServices = useCallback(async () => {
       try {
         // Background fetch: User ko purana data dikhta rahega tab tak naya load hoga
-        const res = await axios.get(`https://softmaxs.com/api/services`);
+        const res = await axios.get(`${APP_CONFIG.API_BASE_URL}/services`);
         if (res.data && res.data.success) {
           const freshData = res.data.data || [];
           setServices(freshData);

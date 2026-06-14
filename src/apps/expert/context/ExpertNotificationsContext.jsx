@@ -47,7 +47,13 @@ const normalizeCallPayload = (data) => ({
 
 export function ExpertNotificationsProvider({ children }) {
   const { expertData } = useExpert();
-  const expertId = expertData?.expertId || null;
+  const expertId =
+    expertData?.expertId ||
+    expertData?.expert_id ||
+    expertData?.id ||
+    expertData?.expert?.id ||
+    expertData?.profile?.expert_id ||
+    null;
   
   // Use Map for timers
   const timers = useRef(new Map());
@@ -791,7 +797,13 @@ export function ExpertNotificationsProvider({ children }) {
         });
 
         // ✅ Smart ID mapping to prevent duplicates
-        const mapped = (Array.isArray(res.data) ? res.data : []).map((n) => {
+        const rows = Array.isArray(res.data?.data)
+          ? res.data.data
+          : Array.isArray(res.data)
+            ? res.data
+            : [];
+
+        const mapped = rows.map((n) => {
           const meta =
             typeof n.meta === "string"
               ? JSON.parse(n.meta)

@@ -114,6 +114,8 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem("active_chat_session");
+    window.dispatchEvent(new Event("active_chat_session_changed"));
 
     await clearApiCache();
 

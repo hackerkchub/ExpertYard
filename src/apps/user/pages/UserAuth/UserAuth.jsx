@@ -43,6 +43,7 @@ import logo from "../../../../assets/logo.webp";
 
 import { registerUserApi } from "../../../../shared/api/userApi";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
+import { APP_CONFIG } from "../../../../config/appConfig";
 
 const normalizeRedirectPath = (from) => {
   if (!from) return "/user";
@@ -281,10 +282,10 @@ const UserAuth = () => {
       let payload = {};
 
       if (type === "email") {
-        apiUrl = "https://softmaxs.com/api/otp/email/send";
+        apiUrl = `${APP_CONFIG.API_BASE_URL}/otp/email/send`;
         payload = { email: form.email.trim().toLowerCase() };
       } else {
-        apiUrl = "https://softmaxs.com/api/otp/sms/send";
+        apiUrl = `${APP_CONFIG.API_BASE_URL}/otp/sms/send`;
         // Sanitize phone number - remove non-digits
         const sanitizedPhone = form.phone.replace(/\D/g, "");
         payload = { countryCode: "91", mobile: sanitizedPhone };
@@ -349,7 +350,7 @@ const UserAuth = () => {
         payload.mobile = sanitizedMobile;
       }
 
-      const response = await fetch("https://softmaxs.com/api/forgot-password/send-otp", {
+      const response = await fetch(`${APP_CONFIG.API_BASE_URL}/forgot-password/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -390,7 +391,7 @@ const UserAuth = () => {
         payload.mobile = sanitizedMobile;
       }
 
-      const response = await fetch("https://softmaxs.com/api/forgot-password/verify-otp", {
+      const response = await fetch(`${APP_CONFIG.API_BASE_URL}/forgot-password/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -438,7 +439,7 @@ const UserAuth = () => {
         payload.mobile = mobile;
       }
 
-      const response = await fetch("https://softmaxs.com/api/forgot-password/reset-password", {
+      const response = await fetch(`${APP_CONFIG.API_BASE_URL}/forgot-password/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

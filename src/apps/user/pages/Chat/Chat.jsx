@@ -36,6 +36,8 @@ import { socket } from "../../../../shared/api/socket";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { usePublicExpert as useExpert } from "../../context/PublicExpertContext";
 import useChatTimer from "../../../../shared/hooks/useChatTimer";
+import { saveActiveChatSession, clearActiveChatSession } from "../../../../shared/utils/chatSession";
+import { APP_CONFIG } from "../../../../config/appConfig";
 import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
 
@@ -66,6 +68,10 @@ const Chat = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [aiTyping, setAiTyping] = useState(false);
+  const [peerTyping, setPeerTyping] = useState(false);
+
+  const typingTimeoutRef = useRef(null);
+  const peerTypingTimeoutRef = useRef(null);
   
   // IMAGE UPLOAD STATES
   const [selectedImage, setSelectedImage] = useState(null);
@@ -97,41 +103,29 @@ const Chat = () => {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
- useEffect(() => {
-  if (!Capacitor.isNativePlatform()) return;
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
 
-  let listener;
+    let listener;
 
-  const setupBackHandler = async () => {
-    listener = await App.addListener("backButton", () => {
-      if (sessionActive) {
-        const ok = window.confirm(
-          "End Chat?\n\nGoing back will end this active chat session."
-        );
-
-        if (!ok) return;
-
-        if (socket.connected) {
-          socket.emit("end_chat", { room_id });
-        }
-      }
-
-      navigate("/user/chat-history", {
-        replace: true,
-        state: {
-          from: "chat",
-          expertId: chatData?.expert_id,
-        },
+    const setupBackHandler = async () => {
+      listener = await App.addListener("backButton", () => {
+        navigate("/user/chat-history", {
+          replace: true,
+          state: {
+            from: "chat",
+            expertId: chatData?.expert_id,
+          },
+        });
       });
-    });
-  };
+    };
 
-  setupBackHandler();
+    setupBackHandler();
 
-  return () => {
-    listener?.remove();
-  };
-}, [sessionActive, room_id, navigate, chatData?.expert_id]);
+    return () => {
+      listener?.remove();
+    };
+  }, [room_id, navigate, chatData?.expert_id]);
 
   // 5) FIX: Detect unlimited subscription correctly with fallback fields
   const getRemainingMinutes = useCallback(() => {
@@ -190,7 +184,7 @@ const Chat = () => {
         throw new Error("Login required to open this chat.");
       }
       
-      const response = await fetch(`https://softmaxs.com/api/chat/details/${room_id}`, {
+      const response = await fetch(`${APP_CONFIG.API_BASE_URL}/chat/details/${room_id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -221,12 +215,18 @@ const Chat = () => {
         message: msg.message,
         message_type: msg.message_type || "text",
         image_url: msg.image_url || null,
+        is_seen: Number(msg.is_seen) === 1 || msg.is_seen === true,
+        seen_at: msg.seen_at || null,
         time: new Date(msg.created_at).toLocaleTimeString('en-US', { 
           hour: '2-digit', minute: '2-digit', hour12: true 
         })
       })));
       
       setSessionActive(Number(session.is_active) === 1);
+
+      if (Number(session.is_active) === 1) {
+        setTimeout(() => markMessagesSeen(), 100);
+      }
 
       // C) FIX: endTime from session or location state
       if (session?.end_time) {
@@ -302,61 +302,14 @@ const Chat = () => {
 
   // D) FIX: Handle back button - unified
   const handleBack = () => {
-    if (sessionActive) {
-      const ok = window.confirm("Are you sure you want to leave and end this chat?");
-      if (ok) {
-        if (socket.connected) {
-          socket.emit("end_chat", { room_id });
-        }
-        navigate("/user/chat-history", {
-          replace: true,
-          state: {
-            from: "chat",
-            expertId: chatData?.expert_id
-          }
-        });
+    navigate("/user/chat-history", {
+      replace: true,
+      state: {
+        from: "chat",
+        expertId: chatData?.expert_id
       }
-    } else {
-      navigate("/user/chat-history", {
-        replace: true,
-        state: {
-          from: "chat",
-          expertId: chatData?.expert_id
-        }
-      });
-    }
+    });
   };
-
-  // D) FIX: Popstate handler - unified
-  useEffect(() => {
-    if (!sessionActive) return;
-     if (Capacitor.isNativePlatform()) return;
-
-    const handlePopState = () => {
-      const ok = window.confirm("Are you sure you want to leave and end this chat?");
-      
-      if (ok) {
-        if (socket.connected) {
-          socket.emit("end_chat", { room_id });
-        }
-        navigate("/user/chat-history", {
-          replace: true,
-          state: {
-            from: "chat",
-            expertId: chatData?.expert_id
-          }
-        });
-      } else {
-        window.history.go(1);
-      }
-    };
-
-    window.addEventListener("popstate", handlePopState);
-
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
-  }, [sessionActive, room_id, navigate, chatData?.expert_id]);
 
   // Before unload handler
   useEffect(() => {
@@ -400,7 +353,7 @@ const Chat = () => {
     const formData = new FormData();
     formData.append("image", file);
 
-    const response = await fetch("https://softmaxs.com/api/chat/upload", {
+    const response = await fetch(`${APP_CONFIG.API_BASE_URL}/chat/upload`, {
       method: "POST",
       body: formData,
     });
@@ -410,7 +363,8 @@ const Chat = () => {
     }
 
     const data = await response.json();
-    return `https://softmaxs.com${data.imageUrl}`;
+    const backendHost = APP_CONFIG.API_BASE_URL.replace("/api", "");
+    return `${backendHost}${data.imageUrl}`;
   };
 
   // 7) FIX: IMAGE SELECT HANDLER with preview URL
@@ -435,10 +389,48 @@ const Chat = () => {
     }
   }, []);
 
+  const markMessagesSeen = useCallback(() => {
+    if (!room_id || !user?.id) return;
+
+    if (socket.connected) {
+      socket.emit("message:seen", { room_id });
+      return;
+    }
+
+    fetch(`${APP_CONFIG.API_BASE_URL}/chat/seen/${room_id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        viewer_id: user.id,
+        viewer_type: "user",
+      }),
+    }).catch(() => {});
+  }, [room_id, user?.id]);
+
+  const emitTyping = useCallback((value) => {
+    if (!room_id || !socket.connected) return;
+    socket.emit(value ? "typing:start" : "typing:stop", { room_id });
+  }, [room_id]);
+
+  const handleInputChange = (e) => {
+    setInput(e.target.value);
+    emitTyping(true);
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      emitTyping(false);
+    }, 1200);
+  };
+
   // G) FIX: sendMessage with unified payload
   const sendMessage = useCallback(async () => {
     if (!room_id || !sessionActive) return;
     if (uploading) return;
+
+    emitTyping(false);
 
     // Ensure socket is connected
     ensureSocketConnected();
@@ -561,16 +553,23 @@ const Chat = () => {
   useEffect(() => {
     if (!room_id || !socket) return;
 
-    if (!socket.connected) {
+    const joinChatRoom = () => {
+      if (!user?.id) return;
+      socket.emit("register", {
+        userId: Number(user.id),
+        role: "user",
+      });
+      socket.emit("join_room", { room_id });
+      markMessagesSeen();
+    };
+
+    socket.on("connect", joinChatRoom);
+
+    if (socket.connected) {
+      joinChatRoom();
+    } else {
       socket.connect();
     }
-
-    console.log(`🔌 User joining room: ${room_id}`);
-    
-    // E) FIX: Unified join payload
-    socket.emit("join_room", {
-      room_id
-    });
 
     const handleNewMessage = (msgData) => {
       setAiTyping(false);
@@ -597,6 +596,8 @@ const Chat = () => {
                 id: msgData.id,
                 message_type: msgData.message_type || "text",
                 image_url: msgData.image_url || m.image_url,
+                is_seen: Number(msgData.is_seen) === 1 || msgData.is_seen === true || m.is_seen,
+                seen_at: msgData.seen_at || m.seen_at || null,
                 isTemp: false
               };
             }
@@ -613,6 +614,8 @@ const Chat = () => {
           message: msgData.message,
           message_type: msgData.message_type || "text",
           image_url: msgData.image_url || null,
+          is_seen: Number(msgData.is_seen) === 1 || msgData.is_seen === true,
+          seen_at: msgData.seen_at || null,
           time: new Date(
             msgData.time || msgData.created_at || Date.now()
           ).toLocaleTimeString('en-US', {
@@ -621,13 +624,16 @@ const Chat = () => {
           }),
         }];
       });
+
+      if (msgData.sender_type !== "user") {
+        markMessagesSeen();
+      }
       
       setTimeout(() => {
         scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
       }, 100);
     };
 
-    
     const handleChatAccepted = (data) => {
       if (data.room_id === room_id) {
         if (data.endTime) {
@@ -657,6 +663,39 @@ const Chat = () => {
       setAiTyping(!!data.isTyping);
     };
 
+    const handlePeerTypingStart = (data = {}) => {
+      if (String(data.room_id) !== String(room_id) || data.sender_type !== "expert") return;
+
+      setPeerTyping(true);
+      if (peerTypingTimeoutRef.current) {
+        clearTimeout(peerTypingTimeoutRef.current);
+      }
+      peerTypingTimeoutRef.current = setTimeout(() => {
+        setPeerTyping(false);
+      }, 1600);
+    };
+
+    const handlePeerTypingStop = (data = {}) => {
+      if (String(data.room_id) !== String(room_id) || data.sender_type !== "expert") return;
+
+      setPeerTyping(false);
+      if (peerTypingTimeoutRef.current) {
+        clearTimeout(peerTypingTimeoutRef.current);
+        peerTypingTimeoutRef.current = null;
+      }
+    };
+
+    const handleMessagesSeen = (data = {}) => {
+      if (String(data.room_id) !== String(room_id) || data.viewer_type !== "expert") return;
+
+      const seenIds = new Set((data.message_ids || []).map((id) => Number(id)));
+      setMessages((prev) => prev.map((msg) => (
+        seenIds.has(Number(msg.id))
+          ? { ...msg, is_seen: true, seen_at: data.seen_at || msg.seen_at }
+          : msg
+      )));
+    };
+
     // Listen to unified events
     socket.on("message", handleNewMessage);
     socket.on("message_sent", handleNewMessage);
@@ -664,6 +703,9 @@ const Chat = () => {
     socket.on("chat_updated", handleChatUpdate);
     socket.on("chat_ended", handleChatEnded);
     socket.on("ai_typing", handleAITyping);
+    socket.on("typing:start", handlePeerTypingStart);
+    socket.on("typing:stop", handlePeerTypingStop);
+    socket.on("messages:seen", handleMessagesSeen);
 
     return () => {
       socket.off("message", handleNewMessage);
@@ -672,13 +714,17 @@ const Chat = () => {
       socket.off("chat_updated", handleChatUpdate);
       socket.off("chat_ended", handleChatEnded);
       socket.off("ai_typing", handleAITyping);
+      socket.off("typing:start", handlePeerTypingStart);
+      socket.off("typing:stop", handlePeerTypingStop);
+      socket.off("messages:seen", handleMessagesSeen);
+      socket.off("connect", joinChatRoom);
       
       if (socket.connected) {
         // F) FIX: Unified leave payload
         socket.emit("leave_room", { room_id });
       }
     };
-  }, [room_id, user?.id, fetchChatDetails]);
+  }, [room_id, user?.id, fetchChatDetails, markMessagesSeen]);
 
   // 6) FIX: Expert info from chatData using isAIChat
   const expertInfo = useMemo(() => {
@@ -731,6 +777,29 @@ const Chat = () => {
   useEffect(() => {
     fetchChatDetails();
   }, [fetchChatDetails]);
+
+  // Synchronize active chat session state
+  useEffect(() => {
+    if (chatData && sessionActive === true && room_id) {
+      const pName = isAIChat 
+        ? "AI Expert" 
+        : (expertData?.expertId === chatData.expert_id ? expertData.name : null) || 
+          experts.find(e => e.id == chatData.expert_id)?.name || 
+          `Expert #${chatData.expert_id}`;
+
+      saveActiveChatSession({
+        room_id: String(room_id),
+        chatPath: `/user/chat/${room_id}`,
+        participantName: pName,
+        role: "user",
+        module: "user",
+        isActive: true,
+        timestamp: Date.now()
+      });
+    } else if (sessionActive === false) {
+      clearActiveChatSession();
+    }
+  }, [chatData, sessionActive, room_id, isAIChat, experts, expertData]);
 
   // Mobile keyboard handling
   useEffect(() => {
@@ -827,6 +896,7 @@ const Chat = () => {
                 )}
 
                 <EndChatButton
+                  id="end-chat-button"
                   onClick={handleEndChat}
                   disabled={isChatDisabled}
                   $active={!isChatDisabled}
@@ -895,6 +965,9 @@ const Chat = () => {
                     <MessageTime>
                       {msg.time}
                       {msg.isTemp && " (sending...)"}
+                      {!msg.isTemp && isMine && (
+                        <span> {msg.is_seen ? "🟢 Seen" : "✓ Sent"}</span>
+                      )}
                     </MessageTime>
                   </MessageBubble>
                 </MessageRow>
@@ -902,15 +975,14 @@ const Chat = () => {
             })
           )}
           
-          {/* AI typing indicator */}
-          {aiTyping && (
-            <TypingIndicator>
-              AI Expert is typing...
-            </TypingIndicator>
-          )}
-          
           <div ref={scrollRef} />
         </MessagesArea>
+
+        {(aiTyping || peerTyping) && (
+          <TypingIndicator>
+            {aiTyping ? "AI Expert is typing..." : `${expertInfo?.name || "Expert"} is typing...`}
+          </TypingIndicator>
+        )}
 
         {/* 7) FIX: Use previewUrl for image preview */}
         {!isAIChat && previewUrl && (
@@ -981,7 +1053,8 @@ const Chat = () => {
             ref={inputRef}
             placeholder={isChatDisabled ? "Chat session ended" : (uploading ? "Uploading image..." : "Type your message...")}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={handleInputChange}
+            onBlur={() => emitTyping(false)}
             onKeyDown={handleKeyPress}
             disabled={isChatDisabled || uploading}
             maxLength={1000}

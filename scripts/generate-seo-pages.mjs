@@ -1,8 +1,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { APP_CONFIG } from "../src/config/appConfig.js";
 
 const siteUrl = "https://g9expert.com";
-const apiUrl = process.env.VITE_API_BASE_URL || "https://softmaxs.com/api";
+const apiUrl = APP_CONFIG.API_BASE_URL;
 const distDir = path.resolve("dist");
 const publicDir = path.resolve("public");
 

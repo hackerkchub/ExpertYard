@@ -7,6 +7,7 @@ import { FiUserCheck, FiX, FiZap } from "react-icons/fi";
 import { useAuth } from "../context/UserAuthContext";
 import { useWallet } from "../context/WalletContext";
 import { socket } from "../api/socket";
+import { getChatRoomCandidates, getChatRoomId } from "../utils/chatRoom";
 
 const MIN_CHAT_MINUTES = 5;
 const REQUEST_LOCK_TIMEOUT_MS = 10000;
@@ -664,7 +665,7 @@ setIsStartingAi(false);
 
     // ========== ACCEPTED HANDLER ==========
     const accepted = (data = {}) => {
-      const room_id = data.room_id;
+      const room_id = getChatRoomId(data);
       
       console.log("chat_accepted received", room_id);
       
@@ -688,7 +689,10 @@ setIsStartingAi(false);
       setAiError("");
       setIsStartingAi(false);
       
-      navigate(`/user/chat/${room_id}`, { replace: true });
+      navigate(`/user/chat/${room_id}`, {
+        replace: true,
+        state: { roomCandidates: getChatRoomCandidates(data) },
+      });
     };
 
     // ========== REJECTED HANDLER ==========
@@ -758,7 +762,9 @@ setIsStartingAi(false);
 
     // ========== AI ACCEPTED HANDLER ==========
     const aiAccepted = (data = {}) => {
-      if (!data.room_id) {
+      const room_id = getChatRoomId(data);
+
+      if (!room_id) {
         console.warn("ai_fallback_accepted missing room_id", data);
         return;
       }
@@ -776,8 +782,9 @@ setIsStartingAi(false);
       setIsStartingAi(false);
       setIsRequesting(false);
 
-      navigate(`/user/chat/${data.room_id}`, {
+      navigate(`/user/chat/${room_id}`, {
         state: {
+          roomCandidates: getChatRoomCandidates(data),
           aiOrderId: data.ai_order_id || null,
           session_id: data.session_id || null,
           pricing_mode: data.pricing_mode,

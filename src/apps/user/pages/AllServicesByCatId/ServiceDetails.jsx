@@ -13,6 +13,7 @@ import {
   deductWalletApi
 } from "../../../../shared/api/userApi/walletApi";
 import * as S from "./ServiceDetails.style";
+import { APP_CONFIG } from "../../../../config/appConfig";
 
 const DEFAULT_SERVICE_IMAGE = "https://via.placeholder.com/800x450?text=Service+Image";
 
@@ -35,7 +36,7 @@ const ServiceDetail = () => {
 
   const fetchServiceData = useCallback(async () => {
     try {
-      const res = await axios.get(`https://softmaxs.com/api/services/s/${slug}`);
+      const res = await axios.get(`${APP_CONFIG.API_BASE_URL}/services/s/${slug}`);
       if (res.data && res.data.success) {
         const freshData = res.data.data;
         setService(freshData);
@@ -54,7 +55,7 @@ const ServiceDetail = () => {
 
   const checkExistingBooking = async (serviceId, userId) => {
     try {
-      const res = await axios.get(`https://softmaxs.com/api/bookings/user/${userId}`);
+      const res = await axios.get(`${APP_CONFIG.API_BASE_URL}/bookings/user/${userId}`);
       if (res.data && res.data.success) {
         const exists = res.data.data.some(b => b.service_id === parseInt(serviceId) && b.status !== 'cancelled');
         setIsBooked(exists);
@@ -118,7 +119,7 @@ const ServiceDetail = () => {
   transaction_id: deductRes.transaction_id
 };
 
-        const bookRes = await axios.post("https://softmaxs.com/api/bookings/book", bookingPayload);
+        const bookRes = await axios.post(`${APP_CONFIG.API_BASE_URL}/bookings/book`, bookingPayload);
 
         if (bookRes.data.success) {
           if (fetchWalletHistory) fetchWalletHistory(); 

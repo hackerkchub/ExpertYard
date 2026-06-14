@@ -1,6 +1,7 @@
 // src/apps/expert/components/OtpModal.jsx
 import React, { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
+import { APP_CONFIG } from "../../../config/appConfig";
 
 const Backdrop = styled.div`
   position: fixed;
@@ -178,10 +179,10 @@ export default function OtpModal({ email, phone, type, onClose, onSuccess }) {
       let payload = {};
 
       if (apiType === "email") {
-        apiUrl = "https://softmaxs.com/api/otp/email/verify";
+        apiUrl = `${APP_CONFIG.API_BASE_URL}/otp/email/verify`;
         payload = { email, otp: otpString };
       } else {
-        apiUrl = "https://softmaxs.com/api/otp/sms/verify";
+        apiUrl = `${APP_CONFIG.API_BASE_URL}/otp/sms/verify`;
         payload = { countryCode: "91", mobile: phone, otp: otpString };
       }
 

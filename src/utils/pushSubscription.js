@@ -1,5 +1,6 @@
 // src/hooks/useWebPush.js
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { APP_CONFIG } from "../config/appConfig";
 
 const VAPID_PUBLIC_KEY = "BGaWmiJyJLWBiYqSYLW1icykb-GgJZbDnRAqvhCU1YU9BAbmk4DlNb8SLmRJst0-q54rW4sNfJkuZdQBRyN0OGI";
 
@@ -10,7 +11,7 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
 }
 
-export function useWebPush({ panel = "user", userId, subscribeUrl = "/api/push/subscription" } = {}) {
+export function useWebPush({ panel = "user", userId, subscribeUrl = `${APP_CONFIG.API_BASE_URL}/push/subscription` } = {}) {
   const supported = useMemo(
     () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window,
     []

@@ -148,6 +148,8 @@ export const ExpertProvider = ({ children }) => {
     try {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem("active_chat_session");
+      window.dispatchEvent(new Event("active_chat_session_changed"));
 
       await clearApiCache();
 

@@ -1,4 +1,5 @@
 import { io } from "socket.io-client";
+import { APP_CONFIG } from "../../config/appConfig";
 
 /* -------------------------------------------------------
    🔐 GET TOKEN BY ROLE
@@ -15,10 +16,22 @@ const getAuthToken = (role) => {
   return null;
 };
 
+const getSocketBaseUrl = () => {
+  try {
+    const apiUrl = new URL(APP_CONFIG.API_BASE_URL);
+    apiUrl.pathname = apiUrl.pathname.replace(/\/api\/?$/, "") || "/";
+    apiUrl.search = "";
+    apiUrl.hash = "";
+    return apiUrl.origin;
+  } catch {
+    return "http://localhost:5000";
+  }
+};
+
 /* -------------------------------------------------------
    🌐 CREATE SOCKET INSTANCE
 ------------------------------------------------------- */
-export const socket = io("https://softmaxs.com", {
+export const socket = io(getSocketBaseUrl(), {
   path: "/socket.io",
  transports: ["websocket", "polling"],
   autoConnect: false,
@@ -31,6 +44,8 @@ export const socket = io("https://softmaxs.com", {
 /* -------------------------------------------------------
    🟢 CONNECT FUNCTION
 ------------------------------------------------------- */
+let registerOnConnectHandler = null;
+
 export const connectSocket = ({ userId, role }) => {
   const token = getAuthToken(role);
 
@@ -41,19 +56,29 @@ export const connectSocket = ({ userId, role }) => {
 
   socket.auth = { token };
 
-  if (!socket.connected) {
-    socket.connect();
+  if (registerOnConnectHandler) {
+    socket.off("connect", registerOnConnectHandler);
   }
 
-  socket.off("connect");
-
-  socket.on("connect", () => {
+  registerOnConnectHandler = () => {
     console.log("🟢 Socket connected:", socket.id);
 
     socket.emit("register", {
       userId,
       role,
     });
+  };
+
+  socket.on("connect", registerOnConnectHandler);
+
+  if (!socket.connected) {
+    socket.connect();
+    return;
+  }
+
+  socket.emit("register", {
+    userId,
+    role,
   });
 };
 

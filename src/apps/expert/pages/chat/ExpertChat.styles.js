@@ -102,7 +102,7 @@ export const ChatArea = styled.div`
 export const Messages = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding: 18px 16px;
+  padding: 18px 16px 28px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -110,6 +110,19 @@ export const Messages = styled.div`
 
   /* 🔥 IMPORTANT */
   height: 0;
+`;
+
+export const TypingIndicator = styled.div`
+  flex-shrink: 0;
+  min-height: 32px;
+  padding: 7px 16px;
+  font-size: 12px;
+  color: #64748b;
+  font-style: italic;
+  background: rgba(255, 255, 255, 0.94);
+  border-top: 1px solid rgba(216, 224, 235, 0.72);
+  backdrop-filter: blur(14px);
+  z-index: 20;
 `;
 
 /* MESSAGE */

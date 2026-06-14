@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { connectSocket, disconnectSocket, socket } from "../../../shared/api/socket";
 import UserSocketListener from "../../../shared/socket/UserSocketListener";
+import ContinueChatBanner from "../../../shared/components/ContinueChatBanner";
 import { useAuth } from "../../../shared/context/UserAuthContext";
 import { generateToken } from "../../../firebase/generateToken";
 import useFCM from "../../../hooks/useFCM";
@@ -86,6 +87,7 @@ export default function UserRouteBoundary() {
   return (
     <>
       <UserSocketListener />
+      <ContinueChatBanner />
       <PublicExpertProvider>
         <Outlet />
         {showChatLauncher && <ChatLauncher />}

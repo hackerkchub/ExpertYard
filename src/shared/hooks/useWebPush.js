@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { APP_CONFIG } from "../../config/appConfig";
 
 /* ===============================
    🔐 VAPID PUBLIC KEY
@@ -25,7 +26,7 @@ function urlBase64ToUint8Array(base64String) {
 export function useWebPush({
   panel,
   userId,
-  subscribeUrl = "https://softmaxs.com/api/push/subscription",
+  subscribeUrl = `${APP_CONFIG.API_BASE_URL}/push/subscription`,
 } = {}) {
   const supported = useMemo(
     () =>

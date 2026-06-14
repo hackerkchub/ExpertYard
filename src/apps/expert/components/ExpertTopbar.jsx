@@ -49,6 +49,7 @@ import { useExpertNotifications } from "../context/ExpertNotificationsContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useExpert } from "../../../shared/context/ExpertContext";
 import { socket, disconnectSocket } from "../../../shared/api/socket";
+import { getChatRoomCandidates, getChatRoomId } from "../../../shared/utils/chatRoom";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/40?img=12";
 const FINAL_STATES = ["missed", "rejected", "ended", "low_balance", "cancelled"];
@@ -124,9 +125,14 @@ export default function ExpertTopbar() {
 
   // CHAT REDIRECT
   useEffect(() => {
-    const onChatStarted = ({ room_id }) => {
+    const onChatStarted = (data = {}) => {
+      const room_id = getChatRoomId(data);
+      if (!room_id) return;
+
       console.log("🚀 Topbar redirecting to chat:", room_id);
-      navigate(`/expert/chat/${room_id}`);
+      navigate(`/expert/chat/${room_id}`, {
+        state: { roomCandidates: getChatRoomCandidates(data) },
+      });
     };
 
     socket.on("chat_started", onChatStarted);

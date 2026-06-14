@@ -3,6 +3,7 @@ import axios from "axios";
 import { FiCalendar, FiClock, FiUser, FiMail, FiPhone, FiPackage } from "react-icons/fi";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import * as S from "./ExpertBookings.style";
+import { APP_CONFIG } from "../../../../config/appConfig";
 
 const ExpertBookings = () => {
   const { expertData, profileLoading } = useExpert();
@@ -21,7 +22,7 @@ const ExpertBookings = () => {
     try {
       setLoading(true);
       // 1. Fetch Bookings
-      const res = await axios.get(`https://softmaxs.com/api/bookings/expert/${expertData.expertId}`);
+      const res = await axios.get(`${APP_CONFIG.API_BASE_URL}/bookings/expert/${expertData.expertId}`);
       const bookingData = res.data.data || [];
       setBookings(bookingData);
 
@@ -33,7 +34,7 @@ const ExpertBookings = () => {
       await Promise.all(
         uniqueUserIds.map(async (id) => {
           try {
-            const userRes = await axios.get(`https://softmaxs.com/api/user/public/${id}`);
+            const userRes = await axios.get(`${APP_CONFIG.API_BASE_URL}/user/public/${id}`);
             // Maan lete hain ki backend se data res.data.data me aa raha hai
             userDetailsMap[id] = userRes.data.data || userRes.data; 
           } catch (err) {
@@ -53,7 +54,7 @@ const ExpertBookings = () => {
   const handleStatusUpdate = async (bookingId, newStatus) => {
     setUpdateLoading(bookingId);
     try {
-      const response = await axios.put(`https://softmaxs.com/api/bookings/status/${bookingId}`, { 
+      const response = await axios.put(`${APP_CONFIG.API_BASE_URL}/bookings/status/${bookingId}`, { 
         status: newStatus 
       });
       if (response.data.success) {

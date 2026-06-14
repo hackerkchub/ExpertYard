@@ -31,6 +31,7 @@ import {
 } from '../../../../shared/api/userApi/auth.api';
 import { useAuth } from '../../../../shared/context/UserAuthContext';
 import OtpModal from '../../../expert/components/OtpModal';
+import { APP_CONFIG } from '../../../../config/appConfig';
 
 // Import styled components
 import {
@@ -238,10 +239,10 @@ const UserProfile = () => {
       let payload = {};
 
       if (type === "email") {
-        apiUrl = "https://softmaxs.com/api/otp/email/send";
+        apiUrl = `${APP_CONFIG.API_BASE_URL}/otp/email/send`;
         payload = { email: editForm.email.trim().toLowerCase() };
       } else {
-        apiUrl = "https://softmaxs.com/api/otp/sms/send";
+        apiUrl = `${APP_CONFIG.API_BASE_URL}/otp/sms/send`;
         const sanitizedPhone = editForm.phone.replace(/\D/g, "");
         payload = { countryCode: "91", mobile: sanitizedPhone };
       }

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { FiInfo, FiDollarSign, FiList, FiType, FiCheckCircle, FiLock, FiUpload, FiFileText } from "react-icons/fi";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import * as S from "./CreateService.style";
+import { APP_CONFIG } from "../../../../config/appConfig";
 
 const CreateService = () => {
   const navigate = useNavigate();
@@ -54,7 +55,7 @@ const CreateService = () => {
     }
 
     try {
-      const response = await axios.post("https://softmaxs.com/api/services", data);
+      const response = await axios.post(`${APP_CONFIG.API_BASE_URL}/services`, data);
       if (response.data) {
         setMessage({ type: "success", text: "Service published successfully!" });
         setFormData({ title: "", deliverables: "", description: "", price: "" });

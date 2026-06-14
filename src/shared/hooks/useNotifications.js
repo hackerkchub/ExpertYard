@@ -5,13 +5,27 @@ import {
   getUnreadCount,
 } from "../api/notification.api";
 
+const normalizeNotification = (notification) => {
+  let meta = notification?.meta || {};
+  if (typeof meta === "string") {
+    try {
+      meta = JSON.parse(meta);
+    } catch {
+      meta = {};
+    }
+  }
+
+  return {
+    ...notification,
+    meta,
+    time: notification?.time || notification?.createdAt || notification?.created_at,
+  };
+};
+
 export const useNotifications = ({ panel, userId }) => {
   const [notifications, setNotifications] = useState([]);
   const [unread, setUnread] = useState(0);
 
-  /* ===============================
-     1️⃣ HISTORY LOAD
-  =============================== */
   useEffect(() => {
     if (!userId) return;
 
@@ -22,10 +36,16 @@ export const useNotifications = ({ panel, userId }) => {
           panel,
         });
 
-        setNotifications(res.data);
+        const list = Array.isArray(res.data?.data)
+          ? res.data.data
+          : Array.isArray(res.data)
+            ? res.data
+            : [];
+
+        setNotifications(list.map(normalizeNotification));
 
         const count = await getUnreadCount({ userId });
-        setUnread(count.data.count);
+        setUnread(Number(count.data?.count || 0));
       } catch (err) {
         console.log("notif load error", err);
       }
@@ -34,15 +54,14 @@ export const useNotifications = ({ panel, userId }) => {
     load();
   }, [panel, userId]);
 
-  /* ===============================
-     2️⃣ REALTIME
-  =============================== */
   useEffect(() => {
+    if (!userId) return undefined;
+
     const handler = (notif) => {
       if (notif.panel !== panel) return;
-      if (notif.user_id !== userId) return; // ⭐ important
+      if (Number(notif.user_id) !== Number(userId)) return;
 
-      setNotifications((prev) => [notif, ...prev]);
+      setNotifications((prev) => [normalizeNotification(notif), ...prev]);
       setUnread((c) => c + 1);
     };
 

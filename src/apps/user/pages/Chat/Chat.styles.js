@@ -319,7 +319,7 @@ export const EndChatButton = styled.button`
 export const MessagesArea = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding: 18px 16px;
+  padding: 18px 16px 28px;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -328,7 +328,7 @@ export const MessagesArea = styled.div`
   -webkit-overflow-scrolling: touch;
   
   @media (max-width: 768px) {
-    padding: 12px;
+    padding: 12px 12px 24px;
   }
 `;
 
@@ -589,10 +589,20 @@ export const EmptyChatMessage = styled.div`
 `;
 
 export const TypingIndicator = styled.div`
-  padding: 8px 16px;
+  flex-shrink: 0;
+  min-height: 32px;
+  padding: 7px 16px;
   font-size: 12px;
   color: #64748b;
   font-style: italic;
+  background: rgba(255, 255, 255, 0.94);
+  border-top: 1px solid rgba(216, 224, 235, 0.72);
+  backdrop-filter: blur(14px);
+  z-index: 20;
+
+  @media (max-width: 768px) {
+    padding: 7px 12px;
+  }
 `;
 
 export const NoMessages = styled.div`

@@ -5,6 +5,7 @@ import { FiCalendar, FiClock, FiTag, FiChevronRight } from "react-icons/fi";
 import { useAuth } from "../../../../shared/context/UserAuthContext"; 
 import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 import * as S from "./MyBookings.style";
+import { APP_CONFIG } from "../../../../config/appConfig";
 
 const MyBookings = () => {
   const { user, isLoggedIn } = useAuth();
@@ -16,7 +17,7 @@ const MyBookings = () => {
       if (!user?.id) return;
       try {
         setLoading(true);
-        const res = await axios.get(`https://softmaxs.com/api/bookings/user/${user.id}`);
+        const res = await axios.get(`${APP_CONFIG.API_BASE_URL}/bookings/user/${user.id}`);
         if (res.data.success) {
           setBookings(res.data.data);
         }

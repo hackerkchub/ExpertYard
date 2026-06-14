@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { registerApi, loginApi } from "../../../../shared/api/expertapi/auth.api";
 import useApi from "../../../../shared/hooks/useApi";
+import { APP_CONFIG } from "../../../../config/appConfig";
 
 import RegisterLayout from "../../components/RegisterLayout";
 import OtpModal from "../../components/OtpModal";
@@ -254,10 +255,10 @@ export default function Auth() {
       let payload = {};
 
       if (type === "email") {
-        apiUrl = "https://softmaxs.com/api/otp/email/send";
+        apiUrl = `${APP_CONFIG.API_BASE_URL}/otp/email/send`;
         payload = { email: registerForm.email };
       } else {
-        apiUrl = "https://softmaxs.com/api/otp/sms/send";
+        apiUrl = `${APP_CONFIG.API_BASE_URL}/otp/sms/send`;
         payload = { countryCode: "91", mobile: registerForm.phone };
       }
 
@@ -353,7 +354,7 @@ export default function Auth() {
         payload.mobile = mobile;
       }
 
-      const response = await fetch("https://softmaxs.com/api/forgot-password/send-otp", {
+      const response = await fetch(`${APP_CONFIG.API_BASE_URL}/forgot-password/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -391,7 +392,7 @@ export default function Auth() {
         payload.mobile = mobile;
       }
 
-      const response = await fetch("https://softmaxs.com/api/forgot-password/verify-otp", {
+      const response = await fetch(`${APP_CONFIG.API_BASE_URL}/forgot-password/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -431,7 +432,7 @@ export default function Auth() {
         payload.mobile = mobile;
       }
 
-      const response = await fetch("https://softmaxs.com/api/forgot-password/reset-password", {
+      const response = await fetch(`${APP_CONFIG.API_BASE_URL}/forgot-password/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)

@@ -35,7 +35,7 @@ workbox.precaching.precacheAndRoute([
 /* ================= FIREBASE INITIALIZATION ================= */
 
 firebase.initializeApp({
-  apiKey: "AIzaSyDSP...",            // Replace with your full key
+  apiKey: "AIzaSyDSPw3lTarBu6X0rTqM8KLNVh7Av6XgKXI",
   authDomain: "expert-yard-f2d19.firebaseapp.com",
   projectId: "expert-yard-f2d19",
   storageBucket: "expert-yard-f2d19.firebasestorage.app",
@@ -45,31 +45,102 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+const normalizePayload = (payload = {}) => {
+  const data = {
+    ...(payload.data || {}),
+    ...(payload.notification || {}),
+  };
+
+  if (!data.title) data.title = payload.title || "Notification";
+  if (!data.body) data.body = payload.body || "";
+  if (!data.type) data.type = "generic";
+
+  return data;
+};
+
+const getNotificationUrl = (data = {}) => {
+  if (data.url) return data.url;
+  if (data.click_action) return data.click_action;
+  if (data.type === "voice_call" && data.callId) {
+    return `/expert?from_notification=1&callId=${encodeURIComponent(data.callId)}`;
+  }
+  if (data.type === "chat_request" && data.request_id) {
+    return `/expert?from_notification=1&request_id=${encodeURIComponent(data.request_id)}`;
+  }
+  return "/";
+};
+
+const getNotificationTag = (data = {}) => (
+  data.tag ||
+  data.request_id ||
+  data.callId ||
+  data.notification_id ||
+  (
+    (data.type === "follow" || data.type === "like" || data.type === "comment") &&
+    `${data.type}_${data.related_id || data.post_id || "related"}_${data.sender_id || data.sender_name || "sender"}`
+  ) ||
+  `${data.type || "notification"}_${Date.now()}` ||
+  "notification"
+);
+
+const buildNotificationOptions = (data = {}) => {
+  const type = data.type;
+  const isCall = type === "voice_call" || type === "incoming_call";
+
+  return {
+    body: data.body || "",
+    icon: "/logo-192.png",
+    badge: "/logo-192.png",
+    tag: getNotificationTag(data),
+    data: {
+      ...data,
+      url: getNotificationUrl(data),
+    },
+    requireInteraction: isCall || data.requireInteraction === "true" || data.requireInteraction === true,
+    renotify: isCall || data.renotify === "true" || data.renotify === true,
+    vibrate: isCall ? [200, 100, 200, 100, 400] : [80, 40, 80],
+    actions: isCall
+      ? [
+          { action: "open", title: "Open" },
+          { action: "dismiss", title: "Dismiss" },
+        ]
+      : [{ action: "open", title: "Open" }],
+  };
+};
+
+const showDedupedNotification = async (title, options) => {
+  const tag = options.tag || "notification";
+  const existing = await self.registration.getNotifications({ tag });
+  const type = options.data?.type;
+  const allowReplace = type === "voice_call" || type === "incoming_call" || type === "chat_request";
+  if (existing.length > 0 && !allowReplace) return;
+  existing.forEach((notification) => notification.close());
+  await self.registration.showNotification(title || "Notification", options);
+};
+
 /* ================= BACKGROUND MESSAGE HANDLER ================= */
 
 messaging.onBackgroundMessage(async (payload) => {
-  const type = payload.data?.type;
-  const title = payload.data?.title || "Notification";
-  const body = payload.data?.body || "";
-  const tag =
-    payload.data?.request_id ||
-    payload.data?.callId ||
-    payload.data?.type;
+  const data = normalizePayload(payload);
+  const title = data.title || "Notification";
+  await showDedupedNotification(title, buildNotificationOptions(data));
+});
 
-  // Avoid duplicate notifications using tag
-  const existing = await self.registration.getNotifications({ tag });
-  if (existing.length > 0) return;
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
 
-  // Ignore voice call notifications (handled by your app UI)
-  if (type === "voice_call") return;
+  event.waitUntil((async () => {
+    let payload = {};
+    try {
+      payload = event.data.json();
+    } catch {
+      payload = { title: "Notification", body: event.data.text() };
+    }
 
-  self.registration.showNotification(title, {
-    body,
-    icon: "/logo-192.png",
-    badge: "/logo-192.png",
-    tag,
-    data: payload.data
-  });
+    const data = normalizePayload(payload);
+    const title = payload.title || data.title || "Notification";
+    await showDedupedNotification(title, buildNotificationOptions(data));
+  })());
 });
 
 /* ================= NOTIFICATION CLICK HANDLER ================= */
@@ -78,6 +149,8 @@ self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
   const data = event.notification?.data || {};
+  if (event.action === "dismiss") return;
+
   const url = data.url || data.click_action || "/";
 
   event.waitUntil(

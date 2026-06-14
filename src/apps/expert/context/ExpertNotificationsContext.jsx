@@ -1,1005 +1,492 @@
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
-  useState,
-  useCallback,
   useRef,
+  useState,
 } from "react";
-// import { useNavigate } from "react-router-dom"; // ⚠️ 2️⃣ Added for SPA navigation
+import { useNavigate } from "react-router-dom";
 
 import { socket } from "../../../shared/api/socket";
 import { useExpert } from "../../../shared/context/ExpertContext";
 import {
-  saveNotification,
   getNotifications,
+  markRead,
+  markAllRead,
   deleteNotification,
-  updateNotificationStatus
+  updateNotificationStatus,
 } from "../../../shared/api/notification.api";
 import { soundManager } from "../../../shared/services/sound/soundManager";
 import { SOUNDS } from "../../../shared/services/sound/soundRegistry";
 import { getMessagingClient } from "../../../shared/utils/lazyFirebase";
-const Ctx = createContext(null);
-const getStorageKey = (expertId) =>
-  expertId ? `expert_notifications_${expertId}` : "expert_notifications_guest";
 
-const getSafeUserName = (user_name, user_id) => {
-  if (typeof user_name === "string" && user_name.trim()) {
-    return user_name.trim();
-  }
-  return `User #${user_id}`;
-};
+const Ctx = createContext(null);
 
 const FINAL_STATES = ["missed", "rejected", "ended", "low_balance", "cancelled"];
+const CALL_TYPES = new Set(["voice_call", "incoming_call"]);
+const CHAT_TYPES = new Set(["chat_request", "chat_message", "chat_accepted", "chat_rejected", "chat_cancelled", "chat_timeout"]);
 
-/* =====================================================
-   🔧 UTILITIES
-===================================================== */
-const normalizeCallPayload = (data) => ({
-  callId: data.callId || data.call_id,
-  fromUserId: data.fromUserId || data.caller_id,
-  user_name: data.user_name || data.userName,
-  pricePerMinute: data.pricePerMinute || data.price_per_minute,
-  status: data.status || "ringing",
-  createdAt: data.createdAt || Date.now(), // ✅ FIX 4: Include createdAt
-});
+const parseMeta = (meta) => {
+  if (!meta) return {};
+  if (typeof meta === "string") {
+    try {
+      return JSON.parse(meta);
+    } catch {
+      return {};
+    }
+  }
+  return meta;
+};
+
+const asTime = (value) => {
+  const time = value ? new Date(value).getTime() : Date.now();
+  return Number.isFinite(time) ? time : Date.now();
+};
+
+const getExpertId = (expertData) =>
+  expertData?.expertId ||
+  expertData?.expert_id ||
+  expertData?.id ||
+  expertData?.expert?.id ||
+  expertData?.profile?.expert_id ||
+  null;
+
+const getSenderName = (n, meta) =>
+  n.sender_name ||
+  meta.sender_name ||
+  meta.user_name ||
+  meta.userName ||
+  (meta.user_id || n.sender_id ? `User #${meta.user_id || n.sender_id}` : "Someone");
+
+const buildTargetUrl = (n, meta) => {
+  if (n.target_url) return n.target_url;
+  if (meta.target_url) return meta.target_url;
+  if (meta.url) return meta.url;
+  if (meta.click_action) return meta.click_action;
+  if ((n.type === "voice_call" || n.type === "incoming_call") && (meta.callId || n.related_id)) {
+    return `/expert?from_notification=1&callId=${encodeURIComponent(meta.callId || n.related_id)}`;
+  }
+  if (n.type === "chat_request" && (meta.request_id || n.related_id)) {
+    return `/expert?from_notification=1&request_id=${encodeURIComponent(meta.request_id || n.related_id)}`;
+  }
+  if ((n.type === "like" || n.type === "comment") && (meta.post_id || n.related_id)) {
+    return `/expert/posts/${encodeURIComponent(meta.post_id || n.related_id)}`;
+  }
+  return "/expert/notifications";
+};
+
+const localKeyFor = (n, meta) => {
+  const type = n.type || meta.type || "system";
+  if ((type === "voice_call" || type === "incoming_call" || type === "missed_call") && (meta.callId || meta.call_id || n.related_id)) {
+    return `call:${meta.callId || meta.call_id || n.related_id}`;
+  }
+  if (CHAT_TYPES.has(type) && (meta.request_id || meta.chat_id || n.related_id)) {
+    return `chat:${meta.request_id || meta.chat_id || n.related_id}:${type}`;
+  }
+  return n.notification_id || n.id || meta.notification_id || `${type}:${n.related_id || meta.related_id || Date.now()}`;
+};
+
+const normalizeNotification = (raw = {}) => {
+  const meta = parseMeta(raw.meta || raw.data || {});
+  const type = String(raw.type || meta.type || "system").toLowerCase();
+  const senderName = getSenderName(raw, meta);
+  const targetUrl = buildTargetUrl({ ...raw, type }, meta);
+  const notificationId = raw.notification_id || meta.notification_id || raw.id || `${type}:${Date.now()}`;
+  const status = raw.status || (type === "chat_request" ? "pending" : type === "voice_call" ? "ringing" : "info");
+
+  const defaultMessage =
+    type === "follow" ? `${senderName} started following you` :
+    type === "like" ? `${senderName} liked your post` :
+    type === "comment" ? `${senderName} commented on your post` :
+    type === "voice_call" ? `${senderName} is calling you` :
+    type === "missed_call" ? `${senderName} called you. You missed the call.` :
+    raw.message || raw.body || meta.body || "";
+
+  return {
+    id: localKeyFor({ ...raw, type, notification_id: notificationId }, meta),
+    dbId: raw.id || notificationId,
+    notificationId,
+    type,
+    status,
+    title: raw.title || meta.title || "Notification",
+    message: raw.message || raw.body || meta.body || defaultMessage,
+    meta: raw.message || raw.body || meta.body || defaultMessage,
+    unread: !(raw.is_read === 1 || raw.is_read === true),
+    is_read: raw.is_read,
+    senderName,
+    senderAvatar: raw.sender_avatar || meta.sender_avatar || "",
+    targetUrl,
+    relatedId: raw.related_id || meta.related_id || meta.post_id || meta.request_id || meta.callId || "",
+    relatedType: raw.related_type || meta.related_type || "",
+    payload: {
+      ...meta,
+      callId: meta.callId || meta.call_id || (type.includes("call") ? raw.related_id : undefined),
+      request_id: meta.request_id || (type.includes("chat") ? raw.related_id : undefined),
+      user_name: meta.user_name || raw.sender_name || senderName,
+      targetUrl,
+      url: targetUrl,
+    },
+    createdAt: asTime(raw.created_at || raw.createdAt || meta.created_at),
+  };
+};
+
+const normalizeForegroundPayload = (payload = {}) => {
+  const data = payload.data || {};
+  return normalizeNotification({
+    id: data.notification_id || data.id,
+    notification_id: data.notification_id,
+    type: data.type,
+    title: data.title || payload.notification?.title,
+    body: data.body || payload.notification?.body,
+    message: data.body || payload.notification?.body,
+    target_url: data.url || data.click_action,
+    related_id: data.related_id || data.request_id || data.callId,
+    related_type: data.related_type,
+    sender_name: data.sender_name,
+    sender_avatar: data.sender_avatar,
+    meta: data,
+    is_read: false,
+    created_at: new Date().toISOString(),
+  });
+};
+
+const upsertById = (items, incoming) => {
+  const next = new Map(items.map((item) => [item.id, item]));
+  const existing = next.get(incoming.id);
+  next.set(incoming.id, existing ? { ...existing, ...incoming, unread: existing.unread || incoming.unread } : incoming);
+  return Array.from(next.values()).sort((a, b) => b.createdAt - a.createdAt);
+};
 
 export function ExpertNotificationsProvider({ children }) {
+  const navigate = useNavigate();
   const { expertData } = useExpert();
-  const expertId =
-    expertData?.expertId ||
-    expertData?.expert_id ||
-    expertData?.id ||
-    expertData?.expert?.id ||
-    expertData?.profile?.expert_id ||
-    null;
-  
-  // Use Map for timers
-  const timers = useRef(new Map());
-  
-  // ✅ REF for accessing latest notifications in callbacks
+  const expertId = getExpertId(expertData);
   const notificationsRef = useRef([]);
-  
-  // ✅ FIX 1: History load guard ref
-  const hasLoadedHistoryRef = useRef(false);
-  
-  // ✅ BroadcastChannel for multi-tab communication
-  const broadcastChannel = useRef(null);
-
-  // 🔒 Prevent duplicate calls even after reload
-
-  // Track if history has loaded
-  const [historyLoaded, setHistoryLoaded] = useState(false);
-  
-  // const navigate = useNavigate();
-
-  /* ---------------------------------- STATE ---------------------------------- */
   const [notifications, setNotifications] = useState([]);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
-  /* ---------------------------------- SYNC REF WITH STATE ---------------------------------- */
+  useEffect(() => {
+    window.__expertNotificationProviderActive = true;
+    return () => {
+      window.__expertNotificationProviderActive = false;
+    };
+  }, []);
+
   useEffect(() => {
     notificationsRef.current = notifications;
   }, [notifications]);
 
-  /* ---------------------------------- AUTO STOP SOUND ON TAB HIDE (PRO IMPROVEMENT 2) ---------------------------------- */
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        soundManager.stopAll();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, []);
-
-  /* ---------------------------------- TIMER CLEANUP ---------------------------------- */
-  useEffect(() => {
-    return () => {
-      // Clear all pending timeouts on unmount
-      timers.current.forEach((timerId) => clearTimeout(timerId));
-      timers.current.clear();
-      
-      // Close broadcast channel
-      if (broadcastChannel.current) {
-        broadcastChannel.current.close();
-      }
-    };
-  }, []);
-
-  /* ---------------------------------- RESET ON EXPERT CHANGE ---------------------------------- */
-  useEffect(() => {
-    console.log("🔄 Expert changed, resetting notifications state");
     setNotifications([]);
     setHistoryLoaded(false);
-    hasLoadedHistoryRef.current = false; // ✅ FIX 1: Reset history guard
-    timers.current.forEach(clearTimeout);
-    timers.current.clear();
+    soundManager.stopAll();
   }, [expertId]);
 
-  /* ---------------------------------- LOAD FROM STORAGE (temporary until DB loads) ---------------------------------- */
-  useEffect(() => {
-    if (!expertId) return;
-    
-    if (historyLoaded) return;
-    
-    const key = getStorageKey(expertId);
+  const addNotification = useCallback((notification, { playSound = true, showSystem = false } = {}) => {
+    if (!notification?.id) return;
 
-    try {
-      const saved = localStorage.getItem(key);
-      if (saved) {
-        setNotifications(JSON.parse(saved));
-      }
-    } catch {
-      // Ignore storage errors
-    }
-  }, [expertId, historyLoaded]);
+    setNotifications((prev) => upsertById(prev, notification));
 
-  /* ---------------------------------- PERSIST TO STORAGE ---------------------------------- */
-  useEffect(() => {
-    if (!expertId) return;
-    
-    if (!historyLoaded) return;
-    
-    const key = getStorageKey(expertId);
-    localStorage.setItem(key, JSON.stringify(notifications));
-  }, [notifications, expertId, historyLoaded]);
-
-  /* ---------------------------------- UNREAD ---------------------------------- */
-  const unreadCount = useMemo(
-    () =>
-      notifications.filter(
-        (n) =>
-          n.unread &&
-          !FINAL_STATES.includes(n.status)
-      ).length,
-    [notifications]
-  );
-
-  const chatUnreadCount = useMemo(
-    () =>
-      notifications.filter(
-        (n) =>
-          n.type === "chat_request" &&
-          n.unread &&
-          !FINAL_STATES.includes(n.status)
-      ).length,
-    [notifications]
-  );
-
-  const callUnreadCount = useMemo(
-    () =>
-      notifications.filter(
-        (n) =>
-          n.type === "voice_call" &&
-          n.unread &&
-          !FINAL_STATES.includes(n.status)
-      ).length,
-    [notifications]
-  );
-
-  /* =====================================================
-     📢 BROADCAST CHANNEL (ONCE ONLY - ISSUE 4 FIXED)
-  ===================================================== */
-  useEffect(() => {
-    // Create broadcast channel once
-   if ("BroadcastChannel" in window) {
-  broadcastChannel.current = new BroadcastChannel("expert_notifications");
-}
-    return () => {
-      if (broadcastChannel.current) {
-        broadcastChannel.current.close();
-      }
-    };
-  }, []); // Empty dependency array = once only
-
-  /* =====================================================
-     🔥 REUSABLE FUNCTION FOR INCOMING CALLS (SOCKET + FCM + BROADCAST)
-     FIXED: fromBroadcast flag to prevent loops (ISSUE 1)
-     OPTIMIZED: Sound only for ringing status (MICRO OPTIMIZATION 2)
-     ✅ FIX 2, 3, 4: Added all protections
-  ===================================================== */
-  const createIncomingCallNotification = useCallback(
-    async (data, { fromBroadcast = false } = {}) => {
-      // ✅ FIX 2: Block incoming calls before history load
-      if (!hasLoadedHistoryRef.current) {
-        console.log("⛔ Blocking incoming call before history load");
-        return;
-      }
-
-      const { callId, fromUserId, user_name, pricePerMinute, status, createdAt } = data;
-      
-      // ✅ FIX 4: Block stale calls
-      const isOldCall = Date.now() - (createdAt || Date.now()) > 30000;
-      if (isOldCall) {
-        console.log("⛔ Ignoring stale incoming call:", callId);
-        return;
-      }
-      
-      // Prevent duplicate notifications for same callId
-      if (notificationsRef.current.some((n) => n.id === callId)) {
-        console.log(`⚠️ Call ${callId} notification already exists, skipping`);
-        return;
-      }
-
-      // ✅ FIX 3: Check if existing notification is already in final state
-      const existing = notificationsRef.current.find(n => n.id === callId);
-      if (existing && existing.status !== "ringing") {
-        console.log("⛔ Ignoring incoming - already final state:", existing.status);
-        return;
-      }
-
-      // ✅ Broadcast duplicate guard
-      if (fromBroadcast && notificationsRef.current.some((n) => n.id === callId)) {
-        return;
-      }
-
-      const safeName = getSafeUserName(user_name, fromUserId);
-      const isRinging = status === "ringing";
-
-      // ✅ FIX 7: Ensure only ringing status can be created
-      const finalStatus = status === "ringing" ? "ringing" : "missed";
-
-      const newNotif = {
-        id: callId,
-        type: "voice_call",
-        status: finalStatus,
-        title: `Incoming call from ${safeName}`,
-        meta: pricePerMinute ? `₹${pricePerMinute}/min` : "Tap to answer",
-        unread: isRinging,
-        payload: { callId },
-        createdAt: createdAt || Date.now(), // ✅ FIX 4: Use provided createdAt
-      };
-
-      // ✅ Save to DB
-      if (expertId != null) {
-        try {
-          const res = await saveNotification({
-            userId: expertId,
-            panel: "expert",
-            title: newNotif.title,
-            message: newNotif.meta,
-            type: "voice_call",
-            meta: { callId },
-          });
-
-          if (res?.data?.data?.id) {
-            newNotif.dbId = res.data.data.id;
-          }
-        } catch (err) {
-          console.log("❌ Failed to save call notification to DB:", err);
-        }
-      }
-
-      // ✅ Broadcast to other tabs ONLY if this is the origin tab (ISSUE 1 FIX)
-      if (!fromBroadcast) {
-        if (broadcastChannel.current) {
-          broadcastChannel.current.postMessage({
-            type: "INCOMING_CALL",
-            data: { callId, fromUserId, user_name, pricePerMinute, status, createdAt }
-          });
-        }
-      }
-
-      setNotifications((prev) => {
-        if (prev.some((n) => n.id === callId)) return prev;
-        return [newNotif, ...prev];
-      });
-
-      // 🔊 Play sound for incoming call ONLY if:
-      // 1. Status is "ringing" (MICRO OPTIMIZATION 2)
-      // 2. Tab is visible (ISSUE 2 FIX)
-      if (isRinging && document.visibilityState === "visible") {
+    if (playSound && document.visibilityState === "visible") {
+      if (notification.type === "voice_call" && notification.status === "ringing") {
         soundManager.play(SOUNDS.INCOMING_CALL, { loop: true, volume: 1 });
-      }
-    },
-    [expertId]
-  );
-
-  /* =====================================================
-     📢 BROADCAST LISTENER (receives from other tabs)
-     FIXED: Memory leak with cleanup (REAL BUG 2)
-  ===================================================== */
-  useEffect(() => {
-    const channel = broadcastChannel.current;
-    if (!channel) return;
-
-    const handleBroadcastMessage = (event) => {
-      console.log("📢 Broadcast message received:", event.data);
-
-      if (event.data?.type === "INCOMING_CALL") {
-        createIncomingCallNotification(event.data.data, { fromBroadcast: true });
-      }
-
-      if (event.data?.type === "NEW_CHAT_REQUEST") {
-        const { request_id, user_id, user_name } = event.data.data;
-
-        if (!notificationsRef.current.some((n) => n.id === request_id)) {
-          const safeName = getSafeUserName(user_name, user_id);
-
-          setNotifications((prev) => [
-            {
-              id: request_id,
-              type: "chat_request",
-              status: "pending",
-              title: `Chat request from ${safeName}`,
-              meta: "Tap to open",
-              unread: true,
-              payload: { request_id },
-              createdAt: Date.now(),
-            },
-            ...prev,
-          ]);
-        }
-      }
-
-      if (event.data?.type === "NOTIFICATION_REMOVED") {
-        setNotifications((prev) => 
-          prev.filter((n) => n.id !== event.data.notificationId)
-        );
-        // Stop sound on other tabs when notification is removed (PRO IMPROVEMENT 3)
-        soundManager.stopAll();
-      }
-
-      if (event.data?.type === "CALL_ACCEPTED" || event.data?.type === "CALL_REJECTED") {
-        // Stop sound on other tabs when call is accepted/rejected
-        soundManager.stopAll();
-      }
-    };
-
-    channel.onmessage = handleBroadcastMessage;
-
-    // ✅ IMPORTANT: Cleanup to prevent memory leak
-    return () => {
-      channel.onmessage = null;
-    };
-  }, [createIncomingCallNotification]);
-
-  /* =====================================================
-     📡 SOCKET LISTENER FOR INCOMING CALLS
-     FIXED: Proper handler reference (REAL BUG 1)
-     ✅ FIX 6: Hard filter for ringing only
-  ===================================================== */
-  useEffect(() => {
-    const handleIncomingCall = (data) => {
-      const normalized = normalizeCallPayload(data);
-      
-      // ✅ FIX 6: Only process ringing calls from socket
-      if (normalized.status !== "ringing") {
-        console.log("⛔ Ignoring non-ringing incoming from socket");
-        return;
-      }
-      
-      createIncomingCallNotification(normalized);
-    };
-    
-    socket.off("call:incoming");
-    socket.on("call:incoming", handleIncomingCall);
-
-    return () => {
-      socket.off("call:incoming", handleIncomingCall);
-    };
-  }, [createIncomingCallNotification]);
-
-  /* =====================================================
-  /* =====================================================
-     🔥 FCM LISTENER FOR INCOMING CALLS (PRO IMPROVEMENT 1)
-  ===================================================== */
-  useEffect(() => {
-    if (!expertId) return;
-
-    let unsubscribe = () => {};
-    let isActive = true;
-
-    getMessagingClient()
-      .then((firebase) => {
-        if (!firebase?.messaging || !isActive) return;
-
-        unsubscribe = firebase.onMessage(firebase.messaging, (payload) => {
-          console.log("FCM message received:", payload);
-        });
-      })
-      .catch(() => {});
-
-    return () => {
-      isActive = false;
-      unsubscribe();
-    };
-  }, [expertId, createIncomingCallNotification]);
-
-  /* =====================================================
-     🔔 CHAT REQUEST
-  ===================================================== */
-  useEffect(() => {
-    const onIncomingChat = async ({ request_id, user_id, user_name }) => {
-      const safeName = getSafeUserName(user_name, user_id);
-
-      const newNotif = {
-        id: request_id,                    // Local ID (request_id)
-        type: "chat_request",
-        status: "pending",
-        title: `Chat request from ${safeName}`,
-        meta: "Tap to open",
-        unread: true,
-        payload: { request_id },
-        createdAt: Date.now(),
-      };
-
-      if (document.visibilityState === "visible") {
+      } else {
         soundManager.play(SOUNDS.NOTIFICATION);
       }
+    }
 
-      // ✅ Save to DB
-      if (expertId != null) {
-        try {
-          const res = await saveNotification({
-            userId: expertId,
-            panel: "expert",
-            title: newNotif.title,
-            message: "Tap to open",
-            type: "chat_request",
-            meta: { request_id },
-          });
-          
-          // ✅ Store DB ID in notification
-          if (res?.data?.data?.id) {
-            newNotif.dbId = res.data.data.id;
-          }
-        } catch (err) {
-          console.log("❌ Failed to save chat request to DB", err);
-        }
-      }
-
-      // ✅ Broadcast to other tabs
-      if (broadcastChannel.current) {
-        broadcastChannel.current.postMessage({
-          type: "NEW_CHAT_REQUEST",
-          data: { request_id, user_id, user_name }
+    if (
+      showSystem &&
+      document.visibilityState === "visible" &&
+      "Notification" in window &&
+      Notification.permission === "granted" &&
+      navigator.serviceWorker
+    ) {
+      navigator.serviceWorker.ready.then((registration) => {
+        registration.showNotification(notification.title || "Notification", {
+          body: notification.message || "",
+          icon: notification.senderAvatar || "/logo-192.png",
+          badge: "/logo-192.png",
+          tag: notification.notificationId || notification.id,
+          data: { ...notification.payload, url: notification.targetUrl },
+          requireInteraction: notification.type === "voice_call",
+          renotify: notification.type === "voice_call",
+          vibrate: notification.type === "voice_call" ? [200, 100, 200, 100, 400] : [80, 40, 80],
         });
-      }
-
-      setNotifications((prev) => {
-        if (prev.some((n) => n.id === request_id)) return prev;
-        return [newNotif, ...prev];
-      });
-    }; 
-
-    socket.on("incoming_chat_request", onIncomingChat);
-    return () => socket.off("incoming_chat_request", onIncomingChat);
-  }, [expertId]);
-
-  /* =====================================================
-     🔔 WINDOW EVENT CHAT REQUEST (FROM NOTIFICATION CLICK)
-  ===================================================== */
-  useEffect(() => {
-    const handleIncomingChatFromWindow = (e) => {
-      const { request_id, user_name } = e.detail || {};
-
-      if (!request_id) return;
-
-      // ✅ Duplicate protection (same request already exists)
-      if (notificationsRef.current.some((n) => n.id === request_id)) {
-        return;
-      }
-
-      const safeName = getSafeUserName(user_name, request_id);
-
-      const newNotif = {
-        id: request_id,
-        type: "chat_request",
-        status: "pending",
-        title: `Chat request from ${safeName}`,
-        meta: "Tap to open",
-        unread: true,
-        payload: { request_id },
-        createdAt: Date.now(),
-      };
-
-      setNotifications((prev) => {
-        // ✅ Double safety (React state check)
-        if (prev.some((n) => n.id === request_id)) return prev;
-        return [newNotif, ...prev];
-      });
-    };
-
-    window.addEventListener(
-      "incoming_chat_request",
-      handleIncomingChatFromWindow
-    );
-
-    return () => {
-      window.removeEventListener(
-        "incoming_chat_request",
-        handleIncomingChatFromWindow
-      );
-    };
+      }).catch(() => {});
+    }
   }, []);
 
-  /* =====================================================
-     🗑️ REMOVE NOTIFICATION BY ID
-  ===================================================== */
-  const removeById = useCallback(
-    async (notification) => {
-      if (!notification?.id) return;
-      
-      try {
-        // Clear timer for this notification first
-        const timer = timers.current.get(notification.id);
-        if (timer) {
-          clearTimeout(timer);
-          timers.current.delete(notification.id);
-        }
-
-        // UI instant remove
-        setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
-
-        // Stop sound
-        soundManager.stopAll();
-
-        // Broadcast to other tabs
-        if (broadcastChannel.current) {
-          broadcastChannel.current.postMessage({
-            type: "NOTIFICATION_REMOVED",
-            notificationId: notification.id
-          });
-        }
-
-        // DB delete using dbId
-        if (expertId && notification.dbId) {
-          try {
-            await deleteNotification(notification.dbId, expertId);
-          } catch (err) {
-            console.log("❌ DB delete failed", err);
-          }
-        }
-      } catch (err) {
-        console.log("❌ Delete notification failed", err);
-      }
-    },
-    [expertId]
-  );
-
-  // ✅ Helper to get full notification from ref
-  const getNotification = useCallback((id) => {
-    return notificationsRef.current.find(n => n.id === id);
-  }, []);
-
-  /* =====================================================
-     📞 CALL STATUS EVENTS
-  ===================================================== */
-  useEffect(() => {
-    const handleMissed = ({ callId, status }) => {
-      const notif = getNotification(callId);
-      if (notif) {
-        updateStatus(notif, status || "missed");
-      }
-    };
-
-    const handleCancelled = ({ callId }) => {
-  const notif = getNotification(callId);
-  if (notif) {
-    updateStatus(notif, "cancelled");
-    soundManager.stopAll();
-  }
-
-  window.dispatchEvent(new Event("call_cancelled")); // 🔥 ADD THIS
-};
-    
-    const handleRejected = ({ callId, status }) => {
-      const notif = getNotification(callId);
-      if (notif) {
-        updateStatus(notif, status || "rejected");
-        
-        // Broadcast to other tabs
-        if (broadcastChannel.current) {
-          broadcastChannel.current.postMessage({
-            type: "CALL_REJECTED",
-            callId
-          });
-        }
-      }
-    };
-
-    const handleTaken = ({ callId }) => {
-      const notif = getNotification(callId);
-      if (notif) {
-        removeById(notif);
-        
-        // Broadcast to other tabs
-        if (broadcastChannel.current) {
-          broadcastChannel.current.postMessage({
-            type: "CALL_ACCEPTED",
-            callId
-          });
-        }
-      }
-    };
-
-    const handleEnded = ({ callId, status }) => {
-      const notif = getNotification(callId);
-      if (notif) {
-        updateStatus(notif, status || "ended");
-      }
-    };
-
-    const handleConnected = ({ callId }) => {
-      const notif = getNotification(callId);
-      if (notif) {
-        // Stop ringing sound when call is connected
-        soundManager.stopAll();
-        removeById(notif);
-        
-        // Broadcast to other tabs
-        if (broadcastChannel.current) {
-          broadcastChannel.current.postMessage({
-            type: "CALL_ACCEPTED",
-            callId
-          });
-        }
-      }
-    };
-
-    // ✅ Timer overwrite protection with full notification
-    const updateStatus = (notification, status) => {
-      if (!notification?.id) return;
-
-      // ✅ Backend sync for call status
-      if (notification?.payload?.callId) {
-        updateNotificationStatus({
-          requestId: notification.payload.callId,
-          type: "voice_call",
-          status
-        }).catch(() => {});
-      }
-      
-      setNotifications((prev) => {
-        if (!prev.some((n) => n.id === notification.id)) {
-          console.log(`⚠️ Notification ${notification.id} not found, skipping status update`);
-          return prev;
-        }
-
-        return prev.map((n) =>
-          n.id === notification.id 
-            ? { 
-                ...n, 
-                status, 
-                unread: status === "ringing" ? true : false 
-              } 
-            : n
-        );
-      });
-
-      if (FINAL_STATES.includes(status)) {
-        // Stop ringing sound for final states
-        soundManager.stopAll();
-        
-        // Clear existing timer if any
-        const existing = timers.current.get(notification.id);
-        if (existing) {
-          clearTimeout(existing);
-          console.log(`⏰ Cleared existing timer for ${notification.id}`);
-        }
-
-        const timerId = setTimeout(() => {
-          const notif = getNotification(notification.id);
-          if (notif) {
-            removeById(notif);
-            timers.current.delete(notification.id);
-          }
-        }, 60000);
-        
-        timers.current.set(notification.id, timerId);
-      }
-    };
-
-    socket.on("call:missed", handleMissed);
-    socket.on("call:cancelled", handleCancelled);
-    socket.on("call:rejected", handleRejected);
-    socket.on("call:taken", handleTaken);
-    socket.on("call:ended", handleEnded);
-    socket.on("call:connected", handleConnected);
-
-    return () => {
-      socket.off("call:missed", handleMissed);
-      socket.off("call:cancelled", handleCancelled);
-      socket.off("call:rejected", handleRejected);
-      socket.off("call:taken", handleTaken);
-      socket.off("call:ended", handleEnded);
-      socket.off("call:connected", handleConnected);
-    };
-  }, [getNotification, removeById]);
-
-  /* =====================================================
-     💬 CHAT STATUS EVENTS
-  ===================================================== */
-  useEffect(() => {
-    const handleChatCancelled = ({ request_id }) => {
-      const notif = getNotification(request_id);
-      if (notif) markDone(notif, "cancelled");
-    };
-    
-    const handleChatRejected = ({ request_id }) => {
-      const notif = getNotification(request_id);
-      if (notif) markDone(notif, "rejected");
-    };
-    
-    const handleChatEnded = ({ request_id }) => {
-      const notif = getNotification(request_id);
-      if (notif) markDone(notif, "ended");
-    };
-
-    // ✅ Added guard and timer overwrite protection
-    const markDone = (notification, status) => {
-      if (!notification?.id) return;
-
-      // ✅ Backend sync for chat status
-      if (notification?.payload?.request_id) {
-        updateNotificationStatus({
-          requestId: notification.payload.request_id,
-          type: "chat_request",
-          status
-        }).catch(() => {});
-      }
-      
-      setNotifications((prev) => {
-        if (!prev.some((n) => n.id === notification.id)) return prev;
-
-        return prev.map((n) =>
-          n.id === notification.id ? { ...n, status, unread: false } : n
-        );
-      });
-
-      if (FINAL_STATES.includes(status)) {
-        // Clear existing timer if any
-        const existing = timers.current.get(notification.id);
-        if (existing) {
-          clearTimeout(existing);
-          console.log(`⏰ Cleared existing chat timer for ${notification.id}`);
-        }
-
-        const timerId = setTimeout(() => {
-          const notif = getNotification(notification.id);
-          if (notif) {
-            removeById(notif);
-            timers.current.delete(notification.id);
-          }
-        }, 60000);
-        
-        timers.current.set(notification.id, timerId);
-      }
-    };
-
-    socket.on("chat_cancelled", handleChatCancelled);
-    socket.on("chat_rejected", handleChatRejected);
-    socket.on("chat_ended", handleChatEnded);
-
-    return () => {
-      socket.off("chat_cancelled", handleChatCancelled);
-      socket.off("chat_rejected", handleChatRejected);
-      socket.off("chat_ended", handleChatEnded);
-    };
-  }, [getNotification, removeById]);
-
-  /* =====================================================
-     📜 LOAD HISTORY FROM DB (merge with live)
-     OPTIMIZED: Prevent live notifications from being overwritten (MICRO OPTIMIZATION 3)
-     ✅ FIX 5: History mapping fix
-  ===================================================== */
   useEffect(() => {
     if (!expertId) return;
 
-    const loadHistory = async () => {
-      try {
-        const res = await getNotifications({
-          userId: expertId,
-          panel: "expert",
-        });
-
-        // ✅ Smart ID mapping to prevent duplicates
+    let active = true;
+    getNotifications({
+      receiverId: expertId,
+      receiverRole: "expert",
+      page: 1,
+      limit: 50,
+    })
+      .then((res) => {
+        if (!active) return;
         const rows = Array.isArray(res.data?.data)
           ? res.data.data
           : Array.isArray(res.data)
             ? res.data
             : [];
-
-        const mapped = rows.map((n) => {
-          const meta =
-            typeof n.meta === "string"
-              ? JSON.parse(n.meta)
-              : n.meta || {};
-          
-          // Use request_id or callId from meta as local ID, fallback to DB ID
-          const localId = meta.request_id || meta.callId || n.id;
-
-          // ✅ FIX 5: Prevent ringing status from DB
-          const getStatus = () => {
-            if (n.status === "ringing") return "missed"; // ❌ NEVER allow ringing from DB
-            return n.status || (n.type === "chat_request" ? "pending" : "missed");
-          };
-
-          return {
-            id: localId,                    // Local ID for UI matching
-            dbId: n.id,                      // DB ID for delete
-            type: n.type,
-            status: getStatus(),
-            title: n.title,
-            meta: n.message,
-            unread: !n.is_read,
-            payload: meta,
-            createdAt: new Date(n.created_at).getTime(),
-          };
-        });
-
-        // Merge with live notifications (MICRO OPTIMIZATION 3)
+        const mapped = rows.map(normalizeNotification);
         setNotifications((prev) => {
-          const liveMap = new Map(prev.map((n) => [n.id, n]));
-
+          let next = prev;
           mapped.forEach((n) => {
-            // ✅ Only add if not already in live notifications
-            // This prevents live ringing from being overwritten by DB "missed"
-            if (!liveMap.has(n.id)) {
-              liveMap.set(n.id, n);
-            } else {
-              // Optional: Update DB fields without overwriting live status
-              const existing = liveMap.get(n.id);
-              if (
-                existing &&
-                (existing.status === "ringing" || existing.status === "pending")
-              ) {
-                return;
-              }
-              liveMap.set(n.id, { ...existing, ...n, unread: existing.unread });
-            }
+            next = upsertById(next, n);
           });
-
-          return Array.from(liveMap.values()).sort((a, b) => b.createdAt - a.createdAt);
+          return next;
         });
+      })
+      .catch((err) => console.log("Expert notification history load failed", err))
+      .finally(() => active && setHistoryLoaded(true));
 
-        // Clear localStorage if DB empty
-        if (mapped.length === 0) {
-          localStorage.removeItem(getStorageKey(expertId));
-        }
-
-        setHistoryLoaded(true);
-        hasLoadedHistoryRef.current = true; // ✅ FIX 1: Set history loaded flag
-
-      } catch (err) {
-        console.log("❌ History load failed", err);
-        setHistoryLoaded(true);
-        hasLoadedHistoryRef.current = true; // ✅ FIX 1: Set flag even on error
-      }
+    return () => {
+      active = false;
     };
-
-    loadHistory();
   }, [expertId]);
 
-  /* ---------------------------------- ACCEPT / REJECT ---------------------------------- */
+  useEffect(() => {
+    const handleNotification = (raw) => {
+      const notification = normalizeNotification(raw);
+      addNotification(notification, { showSystem: true });
+    };
+
+    socket.on("notification:new", handleNotification);
+    return () => socket.off("notification:new", handleNotification);
+  }, [addNotification]);
+
+  useEffect(() => {
+    const handleIncomingCall = (data = {}) => {
+      const notification = normalizeNotification({
+        id: data.notification_id || data.callId,
+        notification_id: data.notification_id || `call:${data.callId}`,
+        type: "voice_call",
+        title: `Incoming call from ${data.user_name || `User #${data.fromUserId || data.userId || ""}`}`,
+        message: data.pricePerMinute ? `Rs ${data.pricePerMinute}/min` : "Tap to answer",
+        related_id: data.callId,
+        related_type: "voice_call",
+        target_url: `/expert?from_notification=1&callId=${data.callId}`,
+        status: data.status || "ringing",
+        meta: {
+          ...data,
+          callId: data.callId,
+          user_name: data.user_name,
+        },
+      });
+      addNotification(notification, { showSystem: true });
+    };
+
+    const handleIncomingChat = (data = {}) => {
+      const notification = normalizeNotification({
+        id: data.notification_id || data.request_id,
+        notification_id: data.notification_id || `chat:${data.request_id}`,
+        type: "chat_request",
+        title: `Chat request from ${data.user_name || `User #${data.user_id || ""}`}`,
+        message: "Tap to respond",
+        related_id: data.request_id,
+        related_type: "chat",
+        target_url: `/expert?from_notification=1&request_id=${data.request_id}`,
+        status: "pending",
+        meta: data,
+      });
+      addNotification(notification, { showSystem: false });
+    };
+
+    const handleIncomingChatEvent = (event) => handleIncomingChat(event.detail || {});
+
+    socket.on("call:incoming", handleIncomingCall);
+    socket.on("incoming_chat_request", handleIncomingChat);
+    window.addEventListener("incoming_chat_request", handleIncomingChatEvent);
+
+    return () => {
+      socket.off("call:incoming", handleIncomingCall);
+      socket.off("incoming_chat_request", handleIncomingChat);
+      window.removeEventListener("incoming_chat_request", handleIncomingChatEvent);
+    };
+  }, [addNotification]);
+
+  useEffect(() => {
+    if (!expertId) return;
+
+    let unsubscribe = () => {};
+    let active = true;
+
+    getMessagingClient()
+      .then((firebase) => {
+        if (!active || !firebase?.messaging) return;
+
+        unsubscribe = firebase.onMessage(firebase.messaging, (payload) => {
+          const notification = normalizeForegroundPayload(payload);
+          addNotification(notification, { showSystem: true });
+
+          if (CALL_TYPES.has(notification.type)) {
+            window.dispatchEvent(new CustomEvent("incoming_call", { detail: notification.payload }));
+          }
+          if (notification.type === "chat_request") {
+            window.dispatchEvent(new CustomEvent("incoming_chat_request", { detail: notification.payload }));
+          }
+        });
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [expertId, addNotification]);
+
+  const updateLocalStatus = useCallback((matcher, status) => {
+    setNotifications((prev) =>
+      prev.map((n) => {
+        if (!matcher(n)) return n;
+        return { ...n, status, unread: false };
+      })
+    );
+    if (FINAL_STATES.includes(status)) soundManager.stopAll();
+  }, []);
+
+  useEffect(() => {
+    const byCallId = (callId) => (n) => n.payload?.callId && String(n.payload.callId) === String(callId);
+    const byRequestId = (requestId) => (n) => n.payload?.request_id && String(n.payload.request_id) === String(requestId);
+
+    const missed = ({ callId }) => updateLocalStatus(byCallId(callId), "missed");
+    const rejected = ({ callId }) => updateLocalStatus(byCallId(callId), "rejected");
+    const ended = ({ callId }) => updateLocalStatus(byCallId(callId), "ended");
+    const cancelled = ({ callId }) => updateLocalStatus(byCallId(callId), "cancelled");
+    const connected = ({ callId }) => updateLocalStatus(byCallId(callId), "accepted");
+    const chatCancelled = ({ request_id }) => updateLocalStatus(byRequestId(request_id), "cancelled");
+    const chatRejected = ({ request_id }) => updateLocalStatus(byRequestId(request_id), "rejected");
+    const chatEnded = ({ request_id }) => updateLocalStatus(byRequestId(request_id), "ended");
+
+    socket.on("call:missed", missed);
+    socket.on("call:rejected", rejected);
+    socket.on("call:ended", ended);
+    socket.on("call:cancelled", cancelled);
+    socket.on("call:connected", connected);
+    socket.on("chat_cancelled", chatCancelled);
+    socket.on("chat_rejected", chatRejected);
+    socket.on("chat_ended", chatEnded);
+
+    return () => {
+      socket.off("call:missed", missed);
+      socket.off("call:rejected", rejected);
+      socket.off("call:ended", ended);
+      socket.off("call:cancelled", cancelled);
+      socket.off("call:connected", connected);
+      socket.off("chat_cancelled", chatCancelled);
+      socket.off("chat_rejected", chatRejected);
+      socket.off("chat_ended", chatEnded);
+    };
+  }, [updateLocalStatus]);
+
+  const markNotificationAsRead = useCallback(async (notificationId) => {
+    const notification = notificationsRef.current.find((n) => n.id === notificationId || n.dbId === notificationId);
+    setNotifications((prev) => prev.map((n) => n.id === notificationId || n.dbId === notificationId ? { ...n, unread: false, is_read: true } : n));
+    if (expertId && notification?.dbId) {
+      await markRead({ receiverId: expertId, receiverRole: "expert", id: notification.dbId }).catch(() => {});
+    }
+  }, [expertId]);
+
+  const onNotificationTap = useCallback(async (notification) => {
+    if (!notification) return;
+    await markNotificationAsRead(notification.id);
+
+    if (notification.type === "voice_call" && notification.payload?.callId && notification.status === "ringing") {
+      navigate(`/expert/voice-call/${notification.payload.callId}`);
+      return;
+    }
+
+    navigate(notification.targetUrl || "/expert/notifications");
+  }, [markNotificationAsRead, navigate]);
+
   const acceptNotification = useCallback((notification) => {
     if (!notification) return;
 
     if (notification.type === "voice_call") {
       soundManager.stopAll();
-      console.log("[expert-notifications] accept clicked", {
-        callId: notification.payload.callId,
-        expertId: Number(expertId),
-      });
-
-     
-      
-      // Broadcast to other tabs
-      if (broadcastChannel.current) {
-        broadcastChannel.current.postMessage({
-          type: "CALL_ACCEPTED",
-          callId: notification.payload.callId
-        });
-      }
-      
-      window.dispatchEvent(
-        new CustomEvent("go_to_call_page", {
-          detail: notification.payload.callId,
-        })
-      );
-      // ✅ Remove notification after dispatch
-      removeById(notification);
+      window.dispatchEvent(new CustomEvent("go_to_call_page", { detail: notification.payload?.callId }));
+      markNotificationAsRead(notification.id);
       return;
     }
 
     if (notification.type === "chat_request") {
-      // ✅ Backend sync for chat accept
       updateNotificationStatus({
-        requestId: notification.payload.request_id,
+        requestId: notification.payload?.request_id,
         type: "chat_request",
-        status: "accepted"
+        status: "accepted",
       }).catch(() => {});
-
-      socket.emit("accept_chat", {
-        request_id: notification.payload.request_id,
-      });
+      socket.emit("accept_chat", { request_id: notification.payload?.request_id });
+      markNotificationAsRead(notification.id);
     }
-
-    removeById(notification);
-  }, [expertId, removeById]);
+  }, [markNotificationAsRead]);
 
   const rejectNotification = useCallback((notification) => {
     if (!notification) return;
 
-    if (notification.type === "chat_request") {
-      // ✅ Backend sync for chat reject
-      updateNotificationStatus({
-        requestId: notification.payload.request_id,
-        type: "chat_request",
-        status: "rejected"
-      }).catch(() => {});
-
-      socket.emit("reject_chat", {
-        request_id: notification.payload.request_id,
-      });
-    }
-
     if (notification.type === "voice_call") {
       soundManager.stopAll();
-      
-      // Broadcast to other tabs
-      if (broadcastChannel.current) {
-        broadcastChannel.current.postMessage({
-          type: "CALL_REJECTED",
-          callId: notification.payload.callId
-        });
-      }
-      
-      // ✅ Backend sync for call reject
       updateNotificationStatus({
-        requestId: notification.payload.callId,
+        requestId: notification.payload?.callId,
         type: "voice_call",
-        status: "rejected"
+        status: "rejected",
       }).catch(() => {});
-
-      socket.emit("call:reject", {
-        callId: notification.payload.callId,
-      });
+      socket.emit("call:reject", { callId: notification.payload?.callId });
+      updateLocalStatus((n) => n.id === notification.id, "rejected");
     }
 
-    removeById(notification);
-  }, [removeById]);
+    if (notification.type === "chat_request") {
+      updateNotificationStatus({
+        requestId: notification.payload?.request_id,
+        type: "chat_request",
+        status: "rejected",
+      }).catch(() => {});
+      socket.emit("reject_chat", { request_id: notification.payload?.request_id });
+      updateLocalStatus((n) => n.id === notification.id, "rejected");
+    }
+  }, [updateLocalStatus]);
 
-  /* ---------------------------------- MARK AS READ ---------------------------------- */
-  const markAsRead = useCallback((notificationId) => {
-    setNotifications((prev) =>
-      prev.map((n) =>
-        n.id === notificationId ? { ...n, unread: false } : n
-      )
-    );
-  }, []);
-
-  /* ---------------------------------- MARK ALL AS READ ---------------------------------- */
-  const markAllAsRead = useCallback(() => {
-    setNotifications((prev) =>
-      prev.map((n) => ({ ...n, unread: false }))
-    );
-  }, []);
-
-  /* ---------------------------------- CLEAR ALL ---------------------------------- */
-  const clearAll = useCallback(async () => {
-    // Clear all timers
-    timers.current.forEach(clearTimeout);
-    timers.current.clear();
-    
-    // Stop all sounds
+  const removeById = useCallback(async (notification) => {
+    if (!notification?.id) return;
+    setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
     soundManager.stopAll();
-    
-    // Remove all from UI
-    setNotifications([]);
-    
-    // Clear from localStorage
-    if (expertId) {
-      localStorage.removeItem(getStorageKey(expertId));
+    if (expertId && notification.dbId) {
+      await deleteNotification(notification.dbId, expertId, "expert").catch(() => {});
     }
-    
-    // TODO: Optionally delete from DB
   }, [expertId]);
 
-  /* ---------------------------------- CONTEXT ---------------------------------- */
+  const markAllAsRead = useCallback(async () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, unread: false, is_read: true })));
+    if (expertId) {
+      await markAllRead({ receiverId: expertId, receiverRole: "expert" }).catch(() => {});
+    }
+  }, [expertId]);
+
+  const clearAll = useCallback(() => {
+    soundManager.stopAll();
+    setNotifications([]);
+  }, []);
+
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => n.unread && !FINAL_STATES.includes(n.status)).length,
+    [notifications]
+  );
+  const chatUnreadCount = useMemo(
+    () => notifications.filter((n) => n.type === "chat_request" && n.unread && !FINAL_STATES.includes(n.status)).length,
+    [notifications]
+  );
+  const callUnreadCount = useMemo(
+    () => notifications.filter((n) => n.type === "voice_call" && n.unread && !FINAL_STATES.includes(n.status)).length,
+    [notifications]
+  );
+
   const value = useMemo(() => ({
     notifications,
     unreadCount,
@@ -1008,22 +495,25 @@ export function ExpertNotificationsProvider({ children }) {
     acceptNotification,
     rejectNotification,
     removeById,
-    markAsRead,
+    markAsRead: markNotificationAsRead,
     markAllAsRead,
+    markAllRead: markAllAsRead,
     clearAll,
+    onNotificationTap,
     historyLoaded,
   }), [
-    notifications, 
-    unreadCount, 
-    chatUnreadCount, 
-    callUnreadCount, 
-    acceptNotification, 
-    rejectNotification, 
+    notifications,
+    unreadCount,
+    chatUnreadCount,
+    callUnreadCount,
+    acceptNotification,
+    rejectNotification,
     removeById,
-    markAsRead,
+    markNotificationAsRead,
     markAllAsRead,
     clearAll,
-    historyLoaded
+    onNotificationTap,
+    historyLoaded,
   ]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

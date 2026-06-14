@@ -64,6 +64,36 @@ export function useWebPush({
     refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    if (!supported || !userId || permission !== "granted") return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        if (!sub || cancelled) return;
+
+        await fetch(subscribeUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            panel,
+            userId,
+            subscription: sub.toJSON(),
+          }),
+        });
+      } catch {
+        // best-effort relink; FCM remains the primary push channel
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [panel, permission, subscribeUrl, supported, userId]);
+
   /* ===============================
      ✅ ENABLE PUSH (SUBSCRIBE)
   ================================ */

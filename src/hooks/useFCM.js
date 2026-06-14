@@ -24,12 +24,34 @@ const useFCM = (openCallPopup, expertId = null, setNotifications = null) => {
         console.log("FCM FULL PAYLOAD:", payload);
         console.log("Current expertId:", expertId);
 
-        const type = payload.data?.type;
+        const type = String(payload.data?.type || "").toLowerCase();
         const title = payload.data?.title || "Notification";
         const body = payload.data?.body || "";
 
-        if (type === "voice_call") {
-          console.log("Voice call handled by socket");
+        if (type === "voice_call" || type === "incoming_call") {
+          if (window.__expertNotificationProviderActive) return;
+
+          soundManager.play(SOUNDS.INCOMING_CALL, { loop: true, volume: 1 });
+          window.setTimeout(() => soundManager.stopAll(), 30000);
+
+          if (Notification.permission === "granted") {
+            const registration = await navigator.serviceWorker.ready;
+            registration.showNotification(title || "Incoming Call", {
+              body: body || "User is calling you",
+              icon: "/logo-192.png",
+              badge: "/logo-192.png",
+              data: {
+                ...payload.data,
+                url: payload.data?.url || payload.data?.click_action || "/expert?from_notification=1",
+              },
+              requireInteraction: true,
+              renotify: true,
+              tag: payload.data?.tag || payload.data?.callId || "voice_call",
+              vibrate: [200, 100, 200, 100, 400],
+            });
+          }
+
+          window.dispatchEvent(new CustomEvent("incoming_call", { detail: payload.data }));
           return;
         }
 
@@ -273,6 +295,7 @@ const useFCM = (openCallPopup, expertId = null, setNotifications = null) => {
           type &&
           ![
             "voice_call",
+            "incoming_call",
             "call_attempt",
             "expert_online",
             "call_rejected",

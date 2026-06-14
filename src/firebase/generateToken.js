@@ -12,6 +12,19 @@ export const generateToken = async (role) => {
   try {
     const api = role === "expert" ? expertApi : userApi;
     const storageKey = role === "expert" ? "expertFcmToken" : "userFcmToken";
+    const ownerKey = `${storageKey}:owner`;
+    const getAccountId = () => {
+      try {
+        if (role === "expert") {
+          const session = JSON.parse(localStorage.getItem("expert_session") || "{}");
+          return session.expertId || session.expert_id || session.id || "";
+        }
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        return user.id || user.user_id || "";
+      } catch {
+        return "";
+      }
+    };
 
     /* ================= ANDROID / NATIVE ================= */
     if (Capacitor.isNativePlatform()) {
@@ -39,8 +52,10 @@ export const generateToken = async (role) => {
             console.log("ANDROID FCM:", token.value);
 
             const existingToken = localStorage.getItem(storageKey);
+            const existingOwner = localStorage.getItem(ownerKey);
+            const accountId = String(getAccountId() || "");
 
-            if (existingToken === token.value) {
+            if (existingToken === token.value && existingOwner === accountId) {
               resolve();
               return;
             }
@@ -52,6 +67,7 @@ export const generateToken = async (role) => {
             });
 
             localStorage.setItem(storageKey, token.value);
+            localStorage.setItem(ownerKey, accountId);
 
             console.log("Android FCM token saved");
             resolve();
@@ -94,8 +110,10 @@ export const generateToken = async (role) => {
     if (!token) return;
 
     const existingToken = localStorage.getItem(storageKey);
+    const existingOwner = localStorage.getItem(ownerKey);
+    const accountId = String(getAccountId() || "");
 
-    if (existingToken === token) return;
+    if (existingToken === token && existingOwner === accountId) return;
 
     await api.post(`/fcm/${role}/save-token`, {
       token,
@@ -103,6 +121,7 @@ export const generateToken = async (role) => {
     });
 
     localStorage.setItem(storageKey, token);
+    localStorage.setItem(ownerKey, accountId);
 
     console.log("Web FCM token saved");
   } catch (error) {

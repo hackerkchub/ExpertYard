@@ -13,6 +13,7 @@ import {
   getExpertsProfileListApi,
 } from "../api/expertapi/profile.api";
 import { getMyPriceApi } from "../api/expertapi/price.api";
+import expertApi from "../api/expertapi/axiosInstance";
 
 const ExpertContext = createContext(null);
 
@@ -146,8 +147,17 @@ export const ExpertProvider = ({ children }) => {
     isLoggingOut.current = true;
 
     try {
+      const fcmToken = localStorage.getItem("expertFcmToken");
+      if (fcmToken) {
+        await expertApi.delete("/fcm/expert/delete-token", {
+          data: { token: fcmToken },
+        }).catch(() => {});
+      }
+
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem("expertFcmToken");
+      localStorage.removeItem("expertFcmToken:owner");
       localStorage.removeItem("active_chat_session");
       window.dispatchEvent(new Event("active_chat_session_changed"));
 

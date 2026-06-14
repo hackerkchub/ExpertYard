@@ -52,7 +52,6 @@ import { socket, disconnectSocket } from "../../../shared/api/socket";
 import { getChatRoomCandidates, getChatRoomId } from "../../../shared/utils/chatRoom";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/40?img=12";
-const FINAL_STATES = ["missed", "rejected", "ended", "low_balance", "cancelled"];
 
 export default function ExpertTopbar() {
   const navigate = useNavigate();
@@ -81,6 +80,8 @@ export default function ExpertTopbar() {
     acceptNotification,
     rejectNotification,
     removeById,
+    markAllRead,
+    onNotificationTap,
   } = useExpertNotifications();
 
   // SHARE REFERRAL FUNCTION
@@ -208,13 +209,11 @@ export default function ExpertTopbar() {
     return location.pathname.startsWith(path);
   };
 
-  const hasUnreadChat = notifications.some(
-    n => n.type === "chat_request" && n.unread && !FINAL_STATES.includes(n.status)
-  );
-
   const hasRingingCall = notifications.some(
     n => n.type === "voice_call" && n.status === "ringing"
   );
+
+  const hasUnreadNotification = unreadCount > 0;
 
   return (
     <>
@@ -240,7 +239,7 @@ export default function ExpertTopbar() {
           <div ref={notifRef} style={{ position: "relative" }}>
             <IconBtn onClick={() => setShowNotif(p => !p)} title="Notifications">
               <FiBell />
-              {(hasUnreadChat || hasRingingCall) && <UnreadDot />}
+              {(hasUnreadNotification || hasRingingCall) && <UnreadDot />}
             </IconBtn>
 
             {showNotif && (
@@ -256,6 +255,8 @@ export default function ExpertTopbar() {
                   setShowNotif(false);
                 }}
                 removeById={removeById}
+                markAllRead={markAllRead}
+                onNotificationTap={onNotificationTap}
               />
             )}
           </div>

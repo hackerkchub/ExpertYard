@@ -39,6 +39,7 @@ let remoteTrackAttached = false;
 
 // RTP freeze detection
 let audioPlaybackStarted = false;
+let canInitiateIceRestart = false;
 
 // ICE restart debounce
 let lastIceRestartAt = 0;
@@ -345,7 +346,9 @@ function setupVisibilityListener() {
         await ensureLocalAudioSender(recoveredStream);
       } catch (error) { logError("Tab visibility mic recovery failed", error); }
     }
-    if (pc.connectionState !== "connected") restartIceWithRenegotiation();
+    if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
+      restartIceWithRenegotiation();
+    }
   });
   visibilityListenerAttached = true;
 }
@@ -462,6 +465,7 @@ export async function createPeer({ socket, callId, audioRef, stream }) {
   isClosing = false;
   socketRef = socket;
   callIdRef = callId;
+  canInitiateIceRestart = false;
   remoteTrackAttached = false;
   audioPlaybackStarted = false;
 
@@ -675,6 +679,7 @@ export async function createAndSendOffer() {
     });
 
     await pc.setLocalDescription(offer);
+    canInitiateIceRestart = true;
 
     // Set timeout for answer
     if (offerAnswerTimeout) clearTimeout(offerAnswerTimeout);
@@ -701,6 +706,7 @@ export async function createAndSendOffer() {
 
 async function restartIceWithRenegotiation() {
   if (isRestartingIce) return;
+  if (!canInitiateIceRestart) return;
   
   const peer = pc;
   if (!peer || !socketRef || !callIdRef) return;
@@ -997,6 +1003,7 @@ export async function closePeer(fullCleanup = true) {
   
   socketRef = null;
   callIdRef = null;
+  canInitiateIceRestart = false;
   isRestartingIce = false;
   remoteTrackAttached = false;
   

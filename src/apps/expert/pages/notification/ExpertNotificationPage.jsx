@@ -75,6 +75,7 @@ export default function ExpertNotificationPage() {
     notifications,
     unreadCount,
     onNotificationTap,
+    markAsRead,
   } = useExpertNotifications();
 
   return (
@@ -99,6 +100,7 @@ export default function ExpertNotificationPage() {
           title="All Notifications"
           data={notifications}
           onTap={onNotificationTap}
+          onMarkRead={markAsRead}
         />
       </ScrollArea>
     </PageWrap>

@@ -8,6 +8,7 @@ import React, {
 
 import { disconnectSocket } from "../api/socket";
 import { loginUserApi } from "../api/userApi";
+import userApi from "../api/userApi/axiosInstance";
 
 const AuthContext = createContext(null);
 
@@ -112,8 +113,17 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    const fcmToken = localStorage.getItem("userFcmToken");
+    if (fcmToken) {
+      await userApi.delete("/fcm/user/delete-token", {
+        data: { token: fcmToken },
+      }).catch(() => {});
+    }
+
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem("userFcmToken");
+    localStorage.removeItem("userFcmToken:owner");
     localStorage.removeItem("active_chat_session");
     window.dispatchEvent(new Event("active_chat_session_changed"));
 

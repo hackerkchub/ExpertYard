@@ -44,6 +44,8 @@ const timeAgo = (time) => {
 
 export default function NotificationHistory({
   data = [],
+  onTap,
+  onMarkRead,
 }) {
   const [filter, setFilter] = useState("all");
   const [readIds, setReadIds] = useState([]);
@@ -62,6 +64,7 @@ export default function NotificationHistory({
 
   const markRead = (id) => {
     setReadIds((prev) => [...new Set([...prev, id])]);
+    onMarkRead?.(id);
   };
 
   const isRead = (n) => readIds.includes(n.id) || n.is_read === 1 || n.is_read === true;
@@ -103,7 +106,7 @@ export default function NotificationHistory({
             const read = isRead(n);
 
             return (
-              <Item key={n.id}>
+              <Item key={n.id} onClick={() => onTap?.(n)} style={{ cursor: onTap ? "pointer" : "default" }}>
                 <Dot color={color}>{icon}</Dot>
 
                 <Card $read={read}>
@@ -116,7 +119,10 @@ export default function NotificationHistory({
                     <Time>{timeAgo(n.time || n.createdAt || n.created_at)}</Time>
 
                     {!read && (
-                      <MarkReadBtn onClick={() => markRead(n.id)}>
+                      <MarkReadBtn onClick={(e) => {
+                        e.stopPropagation();
+                        markRead(n.id);
+                      }}>
                         Mark as read
                       </MarkReadBtn>
                     )}

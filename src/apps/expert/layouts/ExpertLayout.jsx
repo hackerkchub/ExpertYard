@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useCallback } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 
 import ExpertSidebar from "../components/ExpertSidebar";
@@ -22,8 +22,8 @@ import {
   ExpertNotificationsProvider,
   useExpertNotifications,
 } from "../context/ExpertNotificationsContext";
-import useFCM from "../../../hooks/useFCM";
 import { generateToken } from "../../../firebase/generateToken";
+import { APP_CONFIG } from "../../../config/appConfig";
 
 /* ===================================================== */
 function ExpertLayoutInner() {
@@ -58,7 +58,7 @@ function ExpertLayoutInner() {
     const checkActiveRequests = async () => {
       try {
         const res = await fetch(
-          `/notifications?panel=expert&userId=${expertId}&limit=10`
+          `${APP_CONFIG.API_BASE_URL}/notifications?panel=expert&userId=${expertId}&limit=10`
         );
 
         const data = await res.json();
@@ -242,12 +242,6 @@ function ExpertLayoutInner() {
     return () => window.removeEventListener("resume_call", handler);
   }, [navigate]);
 
-  const handleFCM = useCallback(() => {
-  console.log("FCM handled by notification provider");
-}, []);
-
-  useFCM(handleFCM);
-  
   /* =====================================================
      📲 INCOMING CALL
   ===================================================== */

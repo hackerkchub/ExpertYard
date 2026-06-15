@@ -66,6 +66,7 @@ const Count = styled.span`
   font-size: 11px;
   padding: 2px 7px;
   border-radius: 999px;
+  margin-left: 6px;
 `;
 
 /* ================= COMPONENT ================= */
@@ -76,6 +77,8 @@ export default function ExpertNotificationPage() {
     unreadCount,
     onNotificationTap,
     markAsRead,
+    removeById,
+    markAllRead,
   } = useExpertNotifications();
 
   return (
@@ -87,11 +90,13 @@ export default function ExpertNotificationPage() {
             <Sub>Stay updated with calls, chats and system activity</Sub>
           </div>
 
-          <Btn>
-            <FiCheckCircle />
-            Unread
-            {unreadCount > 0 && <Count>{unreadCount}</Count>}
-          </Btn>
+          {unreadCount > 0 && (
+            <Btn onClick={markAllRead}>
+              <FiCheckCircle />
+              Mark all read
+              <Count>{unreadCount}</Count>
+            </Btn>
+          )}
         </Header>
       </StickyTop>
 
@@ -101,6 +106,7 @@ export default function ExpertNotificationPage() {
           data={notifications}
           onTap={onNotificationTap}
           onMarkRead={markAsRead}
+          onDelete={removeById}
         />
       </ScrollArea>
     </PageWrap>

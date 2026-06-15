@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Popover,
   HeaderRow,
@@ -109,6 +110,17 @@ export default function NotificationPopover({
             <Meta>
               {n.message || n.meta} {"\u2022"} {n.status === "ringing" ? "Ringing..." : timeAgo(n.createdAt)}
             </Meta>
+            <ActionRow>
+              <ActionBtn
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeById(n);
+                }}
+              >
+                Remove
+              </ActionBtn>
+            </ActionRow>
           </PopItem>
         ))
       )}
@@ -175,7 +187,7 @@ export default function NotificationPopover({
 
                     <ActionBtn
                       danger
-                      outline
+                      variant="outline"
                       onClick={(e) => {
                         e.stopPropagation();
                         rejectNotification(n);
@@ -189,7 +201,7 @@ export default function NotificationPopover({
                 {FINAL_STATES.includes(n.status) && (
                   <ActionRow>
                     <ActionBtn
-                      outline
+                      variant="outline"
                       onClick={(e) => {
                         e.stopPropagation();
                         removeById(n);
@@ -228,7 +240,7 @@ export default function NotificationPopover({
                     </ActionBtn>
                     <ActionBtn
                       danger
-                      outline
+                      variant="outline"
                       onClick={(e) => {
                         e.stopPropagation();
                         rejectNotification(n);
@@ -240,7 +252,7 @@ export default function NotificationPopover({
                 ) : (
                   <ActionRow>
                     <ActionBtn
-                      outline
+                      variant="outline"
                       onClick={(e) => {
                         e.stopPropagation();
                         removeById(n);

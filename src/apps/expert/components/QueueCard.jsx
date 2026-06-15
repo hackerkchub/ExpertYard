@@ -166,11 +166,9 @@ const navigate = useNavigate();
                 {req.type === "voice_call" && req.status === "ringing" && (
                   <ActionBtn
                     className="accept"
-                   onClick={() => {
-  navigate(`/expert/voice-call/${req.payload.callId}`);
-  removeById(req);
-}}
-
+                    onClick={() => {
+                      navigate(`/expert/voice-call/${req.payload.callId}`);
+                    }}
                   >
                     Tap to Answer
                   </ActionBtn>

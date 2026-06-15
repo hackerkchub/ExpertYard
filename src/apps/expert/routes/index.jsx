@@ -216,6 +216,16 @@ export default function ExpertAppRoutes() {
             </ProtectedExpertRoute>
           }
         />
+        <Route
+          path="notification"
+          element={
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <LazyRoute>
+                <ExpertNotificationPage />
+              </LazyRoute>
+            </ProtectedExpertRoute>
+          }
+        />
       </Route>
 
       <Route

@@ -80,24 +80,34 @@ const buildTargetUrl = (n, meta) => {
   const explicit = n.target_url || meta.target_url || meta.url || meta.click_action;
   if (isValidExpertRoute(explicit)) return explicit;
 
-  if ((n.type === "voice_call" || n.type === "incoming_call") && (meta.callId || n.related_id)) {
-    return `/expert/voice-call/${encodeURIComponent(meta.callId || n.related_id)}`;
+  const type = String(n.type || "").toLowerCase();
+
+  if (type === "follow" || type === "like" || type === "comment") {
+    return "/expert/notifications";
   }
-  if (n.type === "chat_request" && (meta.request_id || n.related_id)) {
-    return `/expert/home?from_notification=1&request_id=${encodeURIComponent(meta.request_id || n.related_id)}`;
+
+  if (CHAT_TYPES.has(type) || type.includes("chat")) {
+    const chatId = meta.chat_id || meta.request_id || meta.room_id || n.related_id;
+    if (chatId) {
+      if (type === "chat_request") {
+        return `/expert/home?from_notification=1&request_id=${encodeURIComponent(chatId)}`;
+      }
+      return `/expert/chat/${encodeURIComponent(chatId)}`;
+    }
+    return "/expert/chat-history";
   }
-  if ((n.type === "like" || n.type === "comment") && (meta.post_id || n.related_id)) {
-    const params = new URLSearchParams({ post_id: String(meta.post_id || n.related_id) });
-    if (meta.comment_id) params.set("comment_id", String(meta.comment_id));
-    return `/expert/my-content?${params.toString()}`;
+
+  if (CALL_TYPES.has(type) || type.includes("call")) {
+    const callId = meta.callId || meta.call_id || n.related_id;
+    if (callId) {
+      if (type === "missed_call" || type === "call_rejected" || type === "call_cancelled" || type === "call_ended") {
+        return "/expert/notifications";
+      }
+      return `/expert/voice-call/${encodeURIComponent(callId)}`;
+    }
+    return "/expert/notifications";
   }
-  if (n.type === "missed_call" && (meta.callId || n.related_id)) {
-    return `/expert/notifications?callId=${encodeURIComponent(meta.callId || n.related_id)}&status=missed`;
-  }
-  if (n.type === "follow") {
-    const senderId = meta.sender_id || meta.user_id || n.sender_id;
-    return senderId ? `/expert/notifications?sender_id=${encodeURIComponent(senderId)}` : "/expert/notifications";
-  }
+
   return "/expert/notifications";
 };
 

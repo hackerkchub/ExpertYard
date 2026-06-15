@@ -14,6 +14,7 @@ import {
   Message,
   Time,
   MarkReadBtn,
+  RemoveBtn,
   EmptyState,
 } from "./Notification.styles";
 
@@ -46,6 +47,7 @@ export default function NotificationHistory({
   data = [],
   onTap,
   onMarkRead,
+  onDelete,
 }) {
   const [filter, setFilter] = useState("all");
   const [readIds, setReadIds] = useState([]);
@@ -115,17 +117,28 @@ export default function NotificationHistory({
                     <Message>{n.message || n.meta}</Message>
                   </Content>
 
-                  <div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
                     <Time>{timeAgo(n.time || n.createdAt || n.created_at)}</Time>
 
-                    {!read && (
-                      <MarkReadBtn onClick={(e) => {
-                        e.stopPropagation();
-                        markRead(n.id);
-                      }}>
-                        Mark as read
-                      </MarkReadBtn>
-                    )}
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      {!read && (
+                        <MarkReadBtn onClick={(e) => {
+                          e.stopPropagation();
+                          markRead(n.id);
+                        }}>
+                          Mark as read
+                        </MarkReadBtn>
+                      )}
+
+                      {onDelete && (
+                        <RemoveBtn onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(n);
+                        }}>
+                          Delete
+                        </RemoveBtn>
+                      )}
+                    </div>
                   </div>
                 </Card>
               </Item>

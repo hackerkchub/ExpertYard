@@ -62,26 +62,33 @@ const getNotificationUrl = (data = {}) => {
   if (data.target_url) return data.target_url;
   if (data.url) return data.url;
   if (data.click_action) return data.click_action;
-  if (data.type === "voice_call" && data.callId) {
-    return `/expert/voice-call/${encodeURIComponent(data.callId)}`;
+
+  const type = String(data.type || "").toLowerCase();
+
+  if (data.receiver_role === "expert") {
+    if (type === "follow" || type === "like" || type === "comment") {
+      return "/expert/notifications";
+    }
+
+    const chatRoomId = data.request_id || data.chat_id || data.room_id || data.related_id;
+    if ((type.includes("chat") || type === "chat_request") && chatRoomId) {
+      if (type === "chat_request") {
+        return `/expert/home?from_notification=1&request_id=${encodeURIComponent(chatRoomId)}`;
+      }
+      return `/expert/chat/${encodeURIComponent(chatRoomId)}`;
+    }
+
+    const voiceCallId = data.callId || data.call_id || data.related_id;
+    if ((type.includes("call") || type === "voice_call" || type === "incoming_call") && voiceCallId) {
+      if (type === "missed_call" || type === "call_rejected" || type === "call_cancelled" || type === "call_ended") {
+        return "/expert/notifications";
+      }
+      return `/expert/voice-call/${encodeURIComponent(voiceCallId)}`;
+    }
+
+    return "/expert/notifications";
   }
-  if (data.type === "chat_request" && data.request_id) {
-    return `/expert/home?from_notification=1&request_id=${encodeURIComponent(data.request_id)}`;
-  }
-  if ((data.type === "like" || data.type === "comment") && (data.post_id || data.related_id)) {
-    const params = new URLSearchParams({ post_id: String(data.post_id || data.related_id) });
-    if (data.comment_id) params.set("comment_id", String(data.comment_id));
-    return `/expert/my-content?${params.toString()}`;
-  }
-  if (data.type === "follow") {
-    const params = new URLSearchParams();
-    if (data.sender_id || data.user_id) params.set("sender_id", String(data.sender_id || data.user_id));
-    return params.toString() ? `/expert/notifications?${params.toString()}` : "/expert/notifications";
-  }
-  if (data.type === "missed_call" && (data.callId || data.related_id)) {
-    return `/expert/notifications?callId=${encodeURIComponent(data.callId || data.related_id)}&status=missed`;
-  }
-  if (data.receiver_role === "expert") return "/expert/notifications";
+
   if (data.receiver_role === "user") return "/user";
   return "/";
 };

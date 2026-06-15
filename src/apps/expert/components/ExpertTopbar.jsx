@@ -41,7 +41,6 @@ import {
   FiShare2
 } from "react-icons/fi";
 import Logo from "../../../assets/logo.webp";
-import NotificationPopover from "./NotificationPopover";
 import ProfileDropdown from "./ProfileDropdown";
 
 import useDebounce from "../hooks/useDebounce";
@@ -65,7 +64,6 @@ export default function ExpertTopbar() {
   };
 
   // STATES
-  const [showNotif, setShowNotif] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -77,11 +75,6 @@ export default function ExpertTopbar() {
   const {
     notifications,
     unreadCount,
-    acceptNotification,
-    rejectNotification,
-    removeById,
-    markAllRead,
-    onNotificationTap,
   } = useExpertNotifications();
 
   // SHARE REFERRAL FUNCTION
@@ -143,9 +136,6 @@ export default function ExpertTopbar() {
   // OUTSIDE CLICK
   useEffect(() => {
     const handleClick = (e) => {
-      if (notifRef.current && !notifRef.current.contains(e.target)) {
-        setShowNotif(false);
-      }
       if (profileRef.current && !profileRef.current.contains(e.target)) {
         setShowProfile(false);
       }
@@ -156,22 +146,14 @@ export default function ExpertTopbar() {
 
   useEffect(() => {
     const handleConnected = ({ callId }) => {
-      setShowNotif(false);
       if (!location.pathname.includes("/expert/voice-call/")) {
         navigate(`/expert/voice-call/${callId}`);
       }
     };
 
-    const handleEnded = () => {
-      setShowNotif(false);
-    };
-
     socket.on("call:connected", handleConnected);
-    socket.on("call:ended", handleEnded);
-
     return () => {
       socket.off("call:connected", handleConnected);
-      socket.off("call:ended", handleEnded);
     };
   }, [navigate, location.pathname]);
 
@@ -188,9 +170,6 @@ export default function ExpertTopbar() {
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
-
-  // SEARCH STATES (KEEP FOR FUTURE)
-  const [searchTerm, setSearchTerm] = useState("");
 
   // COMPLETE MOBILE NAV ITEMS (Same as Sidebar)
   const mobileNavItems = [
@@ -237,28 +216,10 @@ export default function ExpertTopbar() {
         <RightActions>
           {/* NOTIFICATIONS */}
           <div ref={notifRef} style={{ position: "relative" }}>
-            <IconBtn onClick={() => setShowNotif(p => !p)} title="Notifications">
+            <IconBtn onClick={() => navigate("/expert/notification")} title="Notifications">
               <FiBell />
               {(hasUnreadNotification || hasRingingCall) && <UnreadDot />}
             </IconBtn>
-
-            {showNotif && (
-              <NotificationPopover
-                notifications={notifications}
-                unreadCount={unreadCount}
-                acceptNotification={(n) => {
-                  acceptNotification(n);
-                  setShowNotif(false);
-                }}
-                rejectNotification={(n) => {
-                  rejectNotification(n);
-                  setShowNotif(false);
-                }}
-                removeById={removeById}
-                markAllRead={markAllRead}
-                onNotificationTap={onNotificationTap}
-              />
-            )}
           </div>
 
           {/* CHATS */}

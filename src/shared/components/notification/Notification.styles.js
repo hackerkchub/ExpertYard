@@ -183,6 +183,19 @@ export const MarkReadBtn = styled.button`
   }
 `;
 
+export const RemoveBtn = styled.button`
+  margin-left: 14px;
+  font-size: 12px;
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
 export const EmptyState = styled.div`
   text-align: center;
   opacity: 0.5;

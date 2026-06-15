@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   FiUsers,
   FiUserCheck,
@@ -15,10 +15,14 @@ import {
   FiEye,
   FiCalendar,
   FiBarChart2,
+  FiSearch,
+  FiRefreshCw,
+  FiMessageSquare,
+  FiStar,
 } from "react-icons/fi";
-import { MdPendingActions, MdVerified, MdWarning } from "react-icons/md";
+import { MdPendingActions, MdVerified, MdWarning, MdOutlineRateReview } from "react-icons/md";
 import { HiOutlineCurrencyRupee } from "react-icons/hi";
-import { BsGraphUp, BsLightningCharge } from "react-icons/bs";
+import { BsGraphUp, BsLightningCharge, BsShieldCheck } from "react-icons/bs";
 
 import {
   DashboardContainer,
@@ -50,68 +54,167 @@ import {
   QuickActions,
   QuickActionButton,
   Row,
-  ChartContainer,
-  ChartPlaceholder,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  LoadingSpinner,
+  EmptyState,
+  TextArea,
+  Select,
+  Input,
 } from "../styles/dashboard";
 
-// Mock Data
-const expertStats = {
-  total: 156,
-  active: 98,
-  pending: 42,
-  disabled: 16,
-  growth: 12.5,
-};
-
-const earningsStats = {
-  totalEarnings: 1250000,
-  commission: 250000,
-  pendingPayouts: 85000,
-  completedPayouts: 1150000,
-  thisMonth: 245000,
-};
-
-const payoutRequests = [
-  { id: 1, expert: "Ravi Singh", amount: 25000, status: "pending", date: "2024-02-27" },
-  { id: 2, expert: "Kritika Sharma", amount: 18000, status: "approved", date: "2024-02-26" },
-  { id: 3, expert: "Amit Desai", amount: 32000, status: "pending", date: "2024-02-26" },
-  { id: 4, expert: "Priya Shah", amount: 15000, status: "rejected", date: "2024-02-25" },
-  { id: 5, expert: "Vikram Rao", amount: 42000, status: "approved", date: "2024-02-25" },
-];
-
-const recentExperts = [
-  { name: "Ravi Singh", category: "Software Dev", status: "ENABLED", avatar: null },
-  { name: "Kritika Sharma", category: "Nutrition", status: "ENABLED", avatar: null },
-  { name: "Amit Desai", category: "AI", status: "PENDING", avatar: null },
-  { name: "Priya Shah", category: "Business", status: "ENABLED", avatar: null },
-  { name: "Vikram Rao", category: "Education", status: "PENDING", avatar: null },
-];
-
-const categories = [
-  { name: "Technology", experts: 45, status: "active" },
-  { name: "Health", experts: 32, status: "active" },
-  { name: "Education", experts: 28, status: "active" },
-  { name: "Business", experts: 24, status: "active" },
-  { name: "AI", experts: 18, status: "active" },
-  { name: "Nutrition", experts: 9, status: "pending" },
-];
-
-const subCategories = [
-  { name: "Software Dev", category: "Technology", experts: 28, status: "active" },
-  { name: "Fitness", category: "Health", experts: 18, status: "active" },
-  { name: "Online Courses", category: "Education", experts: 15, status: "active" },
-  { name: "AI Research", category: "AI", experts: 12, status: "active" },
-  { name: "Diet Planning", category: "Nutrition", experts: 6, status: "pending" },
-];
+import {
+  getExpertRegistrationsApi,
+  getExpertRegistrationDetailApi,
+  updateExpertRegistrationStatusApi,
+  getExpertRegistrationStatsApi,
+} from "../../../shared/api/admin/expert.api";
 
 export default function Dashboard() {
+  const [loading, setLoading] = useState(true);
+  const [registrations, setRegistrations] = useState([]);
+  const [stats, setStats] = useState({
+    total: 0,
+    new: 0,
+    reviewed: 0,
+    contacted: 0,
+    approved: 0,
+    rejected: 0,
+  });
   const [filter, setFilter] = useState({
     search: "",
-    category: "",
-    subcategory: "",
     status: "",
   });
+  const [selectedRegistration, setSelectedRegistration] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [statusUpdate, setStatusUpdate] = useState({
+    status: "",
+    adminNote: "",
+  });
+  const [updating, setUpdating] = useState(false);
 
+  // Fetch all data
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [statsRes, registrationsRes] = await Promise.all([
+        getExpertRegistrationStatsApi(),
+        getExpertRegistrationsApi(filter.status || ""),
+      ]);
+
+      if (statsRes.data.success) {
+        setStats(statsRes.data.data);
+      }
+
+      if (registrationsRes.data.success) {
+        setRegistrations(registrationsRes.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [filter.status]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Handle filter change
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilter(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Apply search filter
+  const filteredRegistrations = registrations.filter(reg => {
+    if (!filter.search) return true;
+    const searchTerm = filter.search.toLowerCase();
+    return (
+      reg.full_name.toLowerCase().includes(searchTerm) ||
+      reg.mobile_number.includes(searchTerm) ||
+      reg.category.toLowerCase().includes(searchTerm)
+    );
+  });
+
+  // View registration details
+  const handleViewDetails = async (id) => {
+    try {
+      const response = await getExpertRegistrationDetailApi(id);
+      if (response.data.success) {
+        setSelectedRegistration(response.data.data);
+        setShowDetailModal(true);
+        // Refresh list to update status
+        fetchData();
+      }
+    } catch (error) {
+      console.error("Error fetching registration details:", error);
+    }
+  };
+
+  // Open status update modal
+  const handleOpenStatusModal = (registration) => {
+    setSelectedRegistration(registration);
+    setStatusUpdate({
+      status: registration.status,
+      adminNote: registration.admin_note || "",
+    });
+    setShowStatusModal(true);
+  };
+
+  // Update status
+  const handleUpdateStatus = async () => {
+    if (!selectedRegistration) return;
+    
+    setUpdating(true);
+    try {
+      const response = await updateExpertRegistrationStatusApi(
+        selectedRegistration.id,
+        statusUpdate.status,
+        statusUpdate.adminNote
+      );
+      
+      if (response.data.success) {
+        await fetchData();
+        setShowStatusModal(false);
+        setSelectedRegistration(null);
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // Get status badge variant
+  const getStatusVariant = (status) => {
+    const variants = {
+      new: "warning",
+      reviewed: "info",
+      contacted: "primary",
+      approved: "success",
+      rejected: "danger",
+    };
+    return variants[status] || "secondary";
+  };
+
+  // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  // Format currency
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -120,406 +223,421 @@ export default function Dashboard() {
     }).format(amount);
   };
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilter(prev => ({ ...prev, [name]: value }));
-  };
-
-  const getStatusBadge = (status) => {
-    return <StatusBadge $status={status}>{status}</StatusBadge>;
-  };
+  // Stat cards configuration
+  const statCards = [
+    { key: "total", label: "Total Registrations", icon: FiUsers, color: "#3b82f6", bg: "rgba(59, 130, 246, 0.1)" },
+    { key: "new", label: "New", icon: FiClock, color: "#f59e0b", bg: "rgba(245, 158, 11, 0.1)" },
+    { key: "reviewed", label: "Reviewed", icon: FiEye, color: "#8b5cf6", bg: "rgba(139, 92, 246, 0.1)" },
+    { key: "contacted", label: "Contacted", icon: FiMessageSquare, color: "#06b6d4", bg: "rgba(6, 182, 212, 0.1)" },
+    { key: "approved", label: "Approved", icon: FiCheckCircle, color: "#10b981", bg: "rgba(16, 185, 129, 0.1)" },
+    { key: "rejected", label: "Rejected", icon: FiXCircle, color: "#ef4444", bg: "rgba(239, 68, 68, 0.1)" },
+  ];
 
   return (
     <DashboardContainer>
       <DashboardHeader>
         <h1>
           <FiBarChart2 />
-          Admin Dashboard
+          Expert Registrations Dashboard
         </h1>
-        <p>Welcome back! Here's what's happening with your platform today.</p>
+        <p>Manage and track all expert registration requests from one place.</p>
       </DashboardHeader>
+
+      {/* Statistics Section */}
+      <StatsSection>
+        <SectionTitle>
+          <FiBarChart2 /> Registration Overview
+        </SectionTitle>
+        <StatsGrid>
+          {statCards.map((card) => (
+            <StatCard key={card.key}>
+              <StatIcon style={{ background: card.bg }}>
+                <card.icon color={card.color} />
+              </StatIcon>
+              <div style={{ flex: 1 }}>
+                <StatLabel>{card.label}</StatLabel>
+                <StatValue>{stats[card.key] || 0}</StatValue>
+                <StatTrend>
+                  {card.key === "total" && "All time registrations"}
+                  {card.key === "new" && "Awaiting review"}
+                  {card.key === "reviewed" && "Reviewed by admin"}
+                  {card.key === "contacted" && "Contact initiated"}
+                  {card.key === "approved" && "Ready to onboard"}
+                  {card.key === "rejected" && "Not selected"}
+                </StatTrend>
+              </div>
+            </StatCard>
+          ))}
+        </StatsGrid>
+      </StatsSection>
 
       {/* Filter Bar */}
       <FilterBar>
-        <input
-          type="text"
-          name="search"
-          placeholder="Search experts by name, email, or ID..."
-          value={filter.search}
-          onChange={handleFilterChange}
-        />
-
-        <select name="category" value={filter.category} onChange={handleFilterChange}>
-          <option value="">All Categories</option>
-          {categories.map(cat => (
-            <option key={cat.name} value={cat.name}>{cat.name}</option>
-          ))}
-        </select>
-
-        <select name="subcategory" value={filter.subcategory} onChange={handleFilterChange}>
-          <option value="">All Sub-Categories</option>
-          {subCategories.map(sub => (
-            <option key={sub.name} value={sub.name}>{sub.name}</option>
-          ))}
-        </select>
+        <div className="search-wrapper">
+          <FiSearch />
+          <input
+            type="text"
+            name="search"
+            placeholder="Search by name, mobile, or category..."
+            value={filter.search}
+            onChange={handleFilterChange}
+          />
+        </div>
 
         <select name="status" value={filter.status} onChange={handleFilterChange}>
           <option value="">All Status</option>
-          <option value="ENABLED">Enabled</option>
-          <option value="DISABLED">Disabled</option>
-          <option value="PENDING">Pending</option>
+          <option value="new">New</option>
+          <option value="reviewed">Reviewed</option>
+          <option value="contacted">Contacted</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
         </select>
+
+        <ActionButton onClick={fetchData}>
+          <FiRefreshCw /> Refresh
+        </ActionButton>
       </FilterBar>
 
-      {/* Expert Statistics Section */}
-      <StatsSection>
-        <SectionTitle>
-          <FiUsers /> Expert Overview
-        </SectionTitle>
-        <StatsGrid>
-          <StatCard $primary>
-            <StatIcon>
-              <FiUsers />
-            </StatIcon>
-            <div style={{ flex: 1 }}>
-              <StatLabel>Total Experts</StatLabel>
-              <StatValue>{expertStats.total}</StatValue>
-              <StatTrend $positive>
-                <FiTrendingUp /> +{expertStats.growth}% from last month
-              </StatTrend>
-            </div>
-          </StatCard>
-
-          <StatCard $success>
-            <StatIcon>
-              <FiUserCheck />
-            </StatIcon>
-            <div style={{ flex: 1 }}>
-              <StatLabel>Active Experts</StatLabel>
-              <StatValue>{expertStats.active}</StatValue>
-              <StatTrend $positive>
-                <FiCheckCircle /> {Math.round((expertStats.active / expertStats.total) * 100)}% of total
-              </StatTrend>
-            </div>
-          </StatCard>
-
-          <StatCard $warning>
-            <StatIcon>
-              <MdPendingActions />
-            </StatIcon>
-            <div style={{ flex: 1 }}>
-              <StatLabel>Pending Verification</StatLabel>
-              <StatValue>{expertStats.pending}</StatValue>
-              <StatTrend>
-                <FiClock /> Awaiting approval
-              </StatTrend>
-            </div>
-          </StatCard>
-
-          <StatCard $danger>
-            <StatIcon>
-              <FiUserX />
-            </StatIcon>
-            <div style={{ flex: 1 }}>
-              <StatLabel>Disabled Experts</StatLabel>
-              <StatValue>{expertStats.disabled}</StatValue>
-              <StatTrend $negative>
-                <FiXCircle /> Needs attention
-              </StatTrend>
-            </div>
-          </StatCard>
-        </StatsGrid>
-      </StatsSection>
-
-      {/* Earnings & Payouts Section */}
-      <StatsSection>
-        <SectionTitle>
-          <HiOutlineCurrencyRupee /> Earnings & Payouts
-        </SectionTitle>
-        <StatsGrid>
-          <StatCard>
-            <StatIcon style={{ background: 'rgba(14, 165, 255, 0.1)' }}>
-              <FiDollarSign color="#0ea5ff" />
-            </StatIcon>
-            <div style={{ flex: 1 }}>
-              <StatLabel>Total Platform Earnings</StatLabel>
-              <StatValue>{formatCurrency(earningsStats.totalEarnings)}</StatValue>
-              <StatTrend $positive>
-                <BsLightningCharge /> +18% this month
-              </StatTrend>
-            </div>
-          </StatCard>
-
-          <StatCard>
-            <StatIcon style={{ background: 'rgba(245, 158, 11, 0.1)' }}>
-              <FiTrendingUp color="#f59e0b" />
-            </StatIcon>
-            <div style={{ flex: 1 }}>
-              <StatLabel>Commission (20%)</StatLabel>
-              <StatValue>{formatCurrency(earningsStats.commission)}</StatValue>
-              <StatTrend>
-                Platform revenue
-              </StatTrend>
-            </div>
-          </StatCard>
-
-          <StatCard $warning>
-            <StatIcon>
-              <MdPendingActions />
-            </StatIcon>
-            <div style={{ flex: 1 }}>
-              <StatLabel>Pending Payouts</StatLabel>
-              <StatValue>{formatCurrency(earningsStats.pendingPayouts)}</StatValue>
-              <StatTrend>
-                {payoutRequests.filter(r => r.status === 'pending').length} requests
-              </StatTrend>
-            </div>
-          </StatCard>
-
-          <StatCard $success>
-            <StatIcon>
-              <FiCheckCircle />
-            </StatIcon>
-            <div style={{ flex: 1 }}>
-              <StatLabel>Completed Payouts</StatLabel>
-              <StatValue>{formatCurrency(earningsStats.completedPayouts)}</StatValue>
-              <StatTrend $positive>
-                <MdVerified /> All processed
-              </StatTrend>
-            </div>
-          </StatCard>
-        </StatsGrid>
-      </StatsSection>
-
-      {/* Main Content Grid */}
-      <ContentGrid>
-        {/* Payout Requests Section */}
-        <SectionBox>
-          <h3>
-            Payout Requests
-            <span>{payoutRequests.filter(r => r.status === 'pending').length} pending</span>
-          </h3>
-          <Table>
-            <TableHead>
-              <tr>
-                <th>Expert</th>
-                <th>Amount</th>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </TableHead>
-            <tbody>
-              {payoutRequests.slice(0, 4).map((request) => (
-                <TableRow key={request.id}>
-                  <TableCell>{request.expert}</TableCell>
-                  <TableCell>
-                    <strong>{formatCurrency(request.amount)}</strong>
-                  </TableCell>
-                  <TableCell>{new Date(request.date).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    {getStatusBadge(request.status)}
-                  </TableCell>
-                  <TableCell>
-                    {request.status === 'pending' && (
-                      <>
-                        <ActionButton $primary>Approve</ActionButton>
-                        <ActionButton $danger>Reject</ActionButton>
-                      </>
-                    )}
-                    {request.status !== 'pending' && (
-                      <ActionButton>
-                        <FiEye /> View
-                      </ActionButton>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </tbody>
-          </Table>
-          <QuickActions>
-            <QuickActionButton>
-              <FiEye /> View All Requests
-            </QuickActionButton>
-          </QuickActions>
-        </SectionBox>
-
-        {/* Category Management */}
-        <SectionBox>
-          <h3>
-            Category Management
-            <span>{categories.length} total</span>
-          </h3>
-          <Table>
-            <TableHead>
-              <tr>
-                <th>Category</th>
-                <th>Experts</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </TableHead>
-            <tbody>
-              {categories.slice(0, 4).map((cat, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    <strong>{cat.name}</strong>
-                  </TableCell>
-                  <TableCell>{cat.experts}</TableCell>
-                  <TableCell>
-                    <StatusBadge $status={cat.status === 'active' ? 'ENABLED' : 'PENDING'}>
-                      {cat.status}
-                    </StatusBadge>
-                  </TableCell>
-                  <TableCell>
-                    <ActionButton>
-                      <FiEdit2 />
-                    </ActionButton>
-                    <ActionButton $danger>
-                      <FiTrash2 />
-                    </ActionButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </tbody>
-          </Table>
-          <QuickActions>
-            <QuickActionButton>
-              <FiPlus /> Add Category
-            </QuickActionButton>
-            <QuickActionButton>
-              <FiEdit2 /> Manage All
-            </QuickActionButton>
-          </QuickActions>
-        </SectionBox>
-      </ContentGrid>
-
-      {/* Subcategory Management */}
-      <SectionBox style={{ marginBottom: '32px' }}>
+      {/* Registrations Table */}
+      <SectionBox>
         <h3>
-          Subcategory Management
-          <span>{subCategories.length} total</span>
+          Expert Registrations
+          <span>{filteredRegistrations.length} records</span>
         </h3>
-        <Table>
-          <TableHead>
-            <tr>
-              <th>Subcategory</th>
-              <th>Category</th>
-              <th>Experts</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </TableHead>
-          <tbody>
-            {subCategories.map((sub, index) => (
-              <TableRow key={index}>
-                <TableCell>
-                  <strong>{sub.name}</strong>
-                </TableCell>
-                <TableCell>{sub.category}</TableCell>
-                <TableCell>{sub.experts}</TableCell>
-                <TableCell>
-                  <StatusBadge $status={sub.status === 'active' ? 'ENABLED' : 'PENDING'}>
-                    {sub.status}
-                  </StatusBadge>
-                </TableCell>
-                <TableCell>
-                  <ActionButton>
-                    <FiEdit2 />
-                  </ActionButton>
-                  <ActionButton $danger>
-                    <FiTrash2 />
-                  </ActionButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </tbody>
-        </Table>
-        <QuickActions>
-          <QuickActionButton>
-            <FiPlus /> Add Subcategory
-          </QuickActionButton>
-        </QuickActions>
+        
+        {loading ? (
+          <LoadingSpinner>
+            <div className="spinner"></div>
+            <p>Loading registrations...</p>
+          </LoadingSpinner>
+        ) : filteredRegistrations.length === 0 ? (
+          <EmptyState>
+            <FiUsers size={48} />
+            <h4>No registrations found</h4>
+            <p>Try adjusting your search or filter criteria</p>
+          </EmptyState>
+        ) : (
+          <Table>
+            <TableHead>
+              <tr>
+                <th>ID</th>
+                <th>Expert Details</th>
+                <th>Contact</th>
+                <th>Category</th>
+                <th>Plan</th>
+                <th>Experience</th>
+                <th>Charge</th>
+                <th>Status</th>
+                <th>Registered</th>
+                <th>Actions</th>
+              </tr>
+            </TableHead>
+            <tbody>
+              {filteredRegistrations.map((reg) => (
+                <TableRow key={reg.id}>
+                  <TableCell>#{reg.id}</TableCell>
+                  <TableCell>
+                    <div className="expert-info">
+                      <div className="expert-avatar">
+                        {reg.full_name.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="expert-name">{reg.full_name}</div>
+                        <div className="expert-bio">{reg.bio?.substring(0, 50)}...</div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{reg.mobile_number}</TableCell>
+                  <TableCell>
+                    <span className="category-badge">{reg.category}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className={`plan-badge ${reg.plan?.toLowerCase()}`}>
+                      {reg.plan}
+                    </span>
+                  </TableCell>
+                  <TableCell>{reg.experience} years</TableCell>
+                  <TableCell>₹{reg.charge}/min</TableCell>
+                  <TableCell>
+                    <div className="status-wrapper">
+                      <StatusBadge $status={getStatusVariant(reg.status)}>
+                        {reg.status.toUpperCase()}
+                      </StatusBadge>
+                      {reg.is_new === 1 && (
+                        <span className="new-badge">NEW</span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>{formatDate(reg.created_at)}</TableCell>
+                  <TableCell>
+                    <ActionButton onClick={() => handleViewDetails(reg.id)}>
+                      <FiEye /> View
+                    </ActionButton>
+                    <ActionButton onClick={() => handleOpenStatusModal(reg)}>
+                      <FiEdit2 /> Update
+                    </ActionButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </tbody>
+          </Table>
+        )}
       </SectionBox>
 
-      {/* Recent Activity Row */}
-      <Row>
-        <SectionBox>
-          <h4>Recent Experts</h4>
-          <RecentList>
-            {recentExperts.map((expert, index) => (
-              <RecentItem key={index}>
-                <RecentAvatar src="/assets/avatar-placeholder.png">
-                  {expert.name.charAt(0)}
-                </RecentAvatar>
-                <RecentInfo>
-                  <RecentName>{expert.name}</RecentName>
-                  <RecentMeta>
-                    <span>{expert.category}</span>
-                    {getStatusBadge(expert.status)}
-                  </RecentMeta>
-                </RecentInfo>
-              </RecentItem>
-            ))}
-          </RecentList>
-          <QuickActionButton style={{ marginTop: '16px', width: '100%' }}>
-            <FiEye /> View All Experts
-          </QuickActionButton>
-        </SectionBox>
+      {/* Detail Modal */}
+      {showDetailModal && selectedRegistration && (
+        <Modal onClick={() => setShowDetailModal(false)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalHeader>
+              <h2>Registration Details</h2>
+              <button className="close-btn" onClick={() => setShowDetailModal(false)}>×</button>
+            </ModalHeader>
+            <ModalBody>
+              <div className="detail-section">
+                <div className="detail-group">
+                  <label>Full Name</label>
+                  <div className="detail-value">{selectedRegistration.full_name}</div>
+                </div>
+                <div className="detail-group">
+                  <label>Mobile Number</label>
+                  <div className="detail-value">{selectedRegistration.mobile_number}</div>
+                </div>
+                <div className="detail-group">
+                  <label>Category</label>
+                  <div className="detail-value">
+                    <span className="category-badge">{selectedRegistration.category}</span>
+                  </div>
+                </div>
+                <div className="detail-group">
+                  <label>Plan</label>
+                  <div className="detail-value">
+                    <span className={`plan-badge ${selectedRegistration.plan?.toLowerCase()}`}>
+                      {selectedRegistration.plan}
+                    </span>
+                  </div>
+                </div>
+                <div className="detail-group">
+                  <label>Experience</label>
+                  <div className="detail-value">{selectedRegistration.experience} years</div>
+                </div>
+                <div className="detail-group">
+                  <label>Charge (per minute)</label>
+                  <div className="detail-value">₹{selectedRegistration.charge}</div>
+                </div>
+                <div className="detail-group">
+                  <label>Bio</label>
+                  <div className="detail-value bio-text">{selectedRegistration.bio}</div>
+                </div>
+                <div className="detail-group">
+                  <label>Status</label>
+                  <div className="detail-value">
+                    <StatusBadge $status={getStatusVariant(selectedRegistration.status)}>
+                      {selectedRegistration.status.toUpperCase()}
+                    </StatusBadge>
+                  </div>
+                </div>
+                {selectedRegistration.admin_note && (
+                  <div className="detail-group">
+                    <label>Admin Note</label>
+                    <div className="detail-value note-text">{selectedRegistration.admin_note}</div>
+                  </div>
+                )}
+                <div className="detail-group">
+                  <label>Registration Date</label>
+                  <div className="detail-value">{formatDate(selectedRegistration.created_at)}</div>
+                </div>
+                <div className="detail-group">
+                  <label>Last Updated</label>
+                  <div className="detail-value">{formatDate(selectedRegistration.updated_at)}</div>
+                </div>
+              </div>
+            </ModalBody>
+            <ModalFooter>
+              <ActionButton onClick={() => setShowDetailModal(false)}>Close</ActionButton>
+              <ActionButton $primary onClick={() => {
+                setShowDetailModal(false);
+                handleOpenStatusModal(selectedRegistration);
+              }}>
+                <FiEdit2 /> Update Status
+              </ActionButton>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      )}
 
-        <SectionBox>
-          <h4>Recent Payouts</h4>
-          <RecentList>
-            {payoutRequests.slice(0, 3).map((payout, index) => (
-              <RecentItem key={index}>
-                <RecentAvatar>
-                  {payout.expert.charAt(0)}
-                </RecentAvatar>
-                <RecentInfo>
-                  <RecentName>{payout.expert}</RecentName>
-                  <RecentMeta>
-                    <span>{new Date(payout.date).toLocaleDateString()}</span>
-                    {getStatusBadge(payout.status)}
-                  </RecentMeta>
-                </RecentInfo>
-                <RecentAmount>
-                  {formatCurrency(payout.amount)}
-                </RecentAmount>
-              </RecentItem>
-            ))}
-          </RecentList>
-        </SectionBox>
+      {/* Status Update Modal */}
+      {showStatusModal && selectedRegistration && (
+        <Modal onClick={() => setShowStatusModal(false)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalHeader>
+              <h2>Update Registration Status</h2>
+              <button className="close-btn" onClick={() => setShowStatusModal(false)}>×</button>
+            </ModalHeader>
+            <ModalBody>
+              <div className="form-group">
+                <label>Expert: {selectedRegistration.full_name}</label>
+                <label>Current Status: 
+                  <StatusBadge $status={getStatusVariant(selectedRegistration.status)}>
+                    {selectedRegistration.status.toUpperCase()}
+                  </StatusBadge>
+                </label>
+              </div>
+              <div className="form-group">
+                <label>New Status</label>
+                <Select
+                  value={statusUpdate.status}
+                  onChange={(e) => setStatusUpdate({ ...statusUpdate, status: e.target.value })}
+                >
+                  <option value="new">New</option>
+                  <option value="reviewed">Reviewed</option>
+                  <option value="contacted">Contacted</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </Select>
+              </div>
+              <div className="form-group">
+                <label>Admin Note (Optional)</label>
+                <TextArea
+                  rows="4"
+                  placeholder="Add any notes about this registration..."
+                  value={statusUpdate.adminNote}
+                  onChange={(e) => setStatusUpdate({ ...statusUpdate, adminNote: e.target.value })}
+                />
+              </div>
+            </ModalBody>
+            <ModalFooter>
+              <ActionButton onClick={() => setShowStatusModal(false)}>Cancel</ActionButton>
+              <ActionButton $primary onClick={handleUpdateStatus} disabled={updating}>
+                {updating ? "Updating..." : "Update Status"}
+              </ActionButton>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      )}
 
-        <SectionBox>
-          <h4>Quick Stats</h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#64748b' }}>This Month's Earnings</span>
-              <span style={{ fontWeight: 700, color: '#0ea5ff' }}>
-                {formatCurrency(earningsStats.thisMonth)}
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#64748b' }}>Avg. per Expert</span>
-              <span style={{ fontWeight: 700, color: '#10b981' }}>
-                {formatCurrency(earningsStats.totalEarnings / expertStats.total)}
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#64748b' }}>Completion Rate</span>
-              <span style={{ fontWeight: 700, color: '#f59e0b' }}>
-                {Math.round((expertStats.active / expertStats.total) * 100)}%
-              </span>
-            </div>
-          </div>
-          <ChartPlaceholder style={{ marginTop: '20px' }}>
-            <div style={{ textAlign: 'center' }}>
-              <BsGraphUp size={24} />
-              <div style={{ marginTop: '8px' }}>Earnings Chart</div>
-            </div>
-          </ChartPlaceholder>
-        </SectionBox>
-      </Row>
+      <style jsx>{`
+        .expert-info {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .expert-avatar {
+          width: 40px;
+          height: 40px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: 600;
+          font-size: 16px;
+        }
+        .expert-name {
+          font-weight: 600;
+          color: #1e293b;
+          margin-bottom: 4px;
+        }
+        .expert-bio {
+          font-size: 12px;
+          color: #64748b;
+        }
+        .category-badge {
+          background: #e0e7ff;
+          color: #4338ca;
+          padding: 4px 12px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 500;
+        }
+        .plan-badge {
+          padding: 4px 12px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 600;
+        }
+        .plan-badge.premium {
+          background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+          color: white;
+        }
+        .plan-badge.basic {
+          background: #d1fae5;
+          color: #065f46;
+        }
+        .status-wrapper {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+        }
+        .new-badge {
+          background: #ef4444;
+          color: white;
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-size: 10px;
+          font-weight: 700;
+          animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.6; }
+        }
+        .search-wrapper {
+          position: relative;
+          flex: 1;
+        }
+        .search-wrapper svg {
+          position: absolute;
+          left: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #94a3b8;
+        }
+        .search-wrapper input {
+          width: 100%;
+          padding: 10px 12px 10px 36px;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          font-size: 14px;
+        }
+        .detail-section {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .detail-group {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+        .detail-group label {
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          color: #94a3b8;
+          font-weight: 600;
+        }
+        .detail-value {
+          font-size: 14px;
+          color: #1e293b;
+        }
+        .bio-text, .note-text {
+          background: #f8fafc;
+          padding: 12px;
+          border-radius: 12px;
+          line-height: 1.5;
+        }
+        .form-group {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-bottom: 20px;
+        }
+        .form-group label {
+          font-weight: 500;
+          color: #1e293b;
+        }
+      `}</style>
     </DashboardContainer>
   );
 }

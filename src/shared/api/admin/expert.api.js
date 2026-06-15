@@ -1,32 +1,61 @@
 import adminApi from "./axiosInstance";
 
-// LIST
+// EXISTING APIs
 export const getAllExpertsApi = () =>
   adminApi.get("/admin/experts");
 
-// STATUS UPDATE
 export const updateExpertStatusApi = (id, data) =>
   adminApi.put(`/expert/status/${id}`, data);
-// GET FULL EXPERT DETAILS
+
 export const getFullExpertApi = (id) =>
   adminApi.get(`/expert/full/${id}`);
 
-// DELETE EXPERT
 export const deleteExpertApi = (id) =>
   adminApi.delete(`/expert/${id}`);
 
-// DELETE REVIEW
 export const deleteReviewApi = (id) =>
   adminApi.delete(`/expert/review/${id}`);
 
-// DELETE COMMENT
 export const deleteCommentApi = (id) =>
   adminApi.delete(`/expert/comment/${id}`);
 
-// DELETE POST
 export const deletePostApi = (id) =>
   adminApi.delete(`/expert/post/${id}`);
 
-// DELETE EXPERIENCE
 export const deleteExperienceApi = (id) =>
   adminApi.delete(`/expert/experience/${id}`);
+
+
+// =========================
+// EXPERT REGISTRATIONS
+// =========================
+
+// List all registrations
+export const getExpertRegistrationsApi = (status = "") =>
+  adminApi.get(
+    `/expert-detail/expert-registration${
+      status ? `?status=${status}` : ""
+    }`
+  );
+
+// Single registration detail
+export const getExpertRegistrationDetailApi = (id) =>
+  adminApi.get(`/expert-detail/expert-registration/${id}`);
+
+// Update registration status + note
+export const updateExpertRegistrationStatusApi = (
+  id,
+  status,
+  adminNote = ""
+) =>
+  adminApi.patch(
+    `/expert-detail/expert-registration/${id}/status`,
+    {
+      status,
+      adminNote,
+    }
+  );
+
+// Dashboard stats
+export const getExpertRegistrationStatsApi = () =>
+  adminApi.get("/expert-detail/expert-registration-stats");

@@ -6,5 +6,6 @@ export { default as Avatar } from "./Avatar/Avatar";
 export { default as Loader } from "./Loader/Loader";
 export { default as StateBlock } from "./StateBlock/StateBlock";
 export { default as Tabs } from "./Tabs/Tabs";
-export { default as Dropdown } from "./Dropdown/Dropdown.styles";
+export { default as Dropdown } from "./Dropdown/Dropdown";
 export { default as ErrorBoundary } from "./ErrorMessage/ErrorMessage";
+export { default as LocationSelector } from "./LocationSelector/LocationSelector";

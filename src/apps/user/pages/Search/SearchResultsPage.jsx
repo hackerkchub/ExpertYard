@@ -4,9 +4,11 @@ import { FiArrowLeft, FiArrowRight, FiBriefcase, FiGrid, FiSearch, FiStar, FiUse
 
 import {
   searchCategories,
-  searchExperts,
   searchSubcategories,
 } from "../../../../shared/api/userApi/searchV2.api";
+import {
+  searchWithLocation
+} from "../../../../shared/api/userApi/locationDiscovery.api";
 import { getAllServices } from "../../../../shared/api/service.api";
 import { useCategory } from "../../../../shared/context/CategoryContext";
 import { usePublicExpert } from "../../context/PublicExpertContext";
@@ -111,6 +113,7 @@ const SearchResultsPage = () => {
   const [servicesLoading, setServicesLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [fallbackInfo, setFallbackInfo] = useState({ used: false, reason: null });
 
   useEffect(() => {
     document.body.classList.add("g9-search-route");
@@ -148,6 +151,18 @@ const SearchResultsPage = () => {
   }, [queryInput, setSearchParams, urlQuery]);
 
   useEffect(() => {
+    const handleLocChange = () => {
+      setPage(1);
+      setResults((prev) => ({ ...prev, experts: [] }));
+      const currentQ = urlQuery;
+      setSearchParams({ q: currentQ, _t: Date.now() });
+    };
+
+    window.addEventListener("g9-location-changed", handleLocChange);
+    return () => window.removeEventListener("g9-location-changed", handleLocChange);
+  }, [urlQuery, setSearchParams]);
+
+  useEffect(() => {
     let active = true;
 
     const loadServices = async () => {
@@ -175,6 +190,7 @@ const SearchResultsPage = () => {
     const q = urlQuery.trim();
     if (!q) {
       setResults({ experts: [], categories: [], subcategories: [], services: [] });
+      setFallbackInfo({ used: false, reason: null });
       return undefined;
     }
 
@@ -185,24 +201,52 @@ const SearchResultsPage = () => {
         setLoading(true);
         setError(false);
 
+        const savedLocStr = localStorage.getItem("last_selected_location");
+        const savedLoc = savedLocStr ? JSON.parse(savedLocStr) : null;
+
+        const expertParams = {
+          q,
+          page,
+          limit: 20,
+          signal: controller.signal
+        };
+
+        if (savedLoc) {
+          if (savedLoc.type === "coordinates") {
+            expertParams.lat = savedLoc.latitude;
+            expertParams.lng = savedLoc.longitude;
+          } else {
+            expertParams.city = savedLoc.city;
+            expertParams.area = savedLoc.area;
+            expertParams.pincode = savedLoc.pincode;
+          }
+        }
+
         const [expertsRes, categoriesRes, subcategoriesRes] = await Promise.all([
-          searchExperts({ q, page, limit: 20, signal: controller.signal }),
+          searchWithLocation(expertParams),
           searchCategories({ q, page: 1, limit: 20, signal: controller.signal }),
           searchSubcategories({ q, page: 1, limit: 20, signal: controller.signal }),
         ]);
 
+        const expertsPayload = expertsRes?.data || {};
         setResults({
-          experts: getList(expertsRes, "experts"),
+          experts: expertsPayload.data || [],
           categories: getList(categoriesRes, "categories"),
           subcategories: getList(subcategoriesRes, "subcategories"),
           services: services.filter((service) => matchesQuery(service, q)).slice(0, 20),
         });
-      } catch {
-        if (controller.signal.aborted) return;
+
+        setFallbackInfo({
+          used: expertsPayload.fallback_used || false,
+          reason: expertsPayload.fallback_reason || null
+        });
+      } catch (err) {
+        if (controller.signal?.aborted) return;
+        console.error("Search failed:", err);
         setResults({ experts: [], categories: [], subcategories: [], services: [] });
         setError(true);
       } finally {
-        if (!controller.signal.aborted) {
+        if (!controller.signal?.aborted) {
           setLoading(false);
         }
       }
@@ -287,6 +331,8 @@ const SearchResultsPage = () => {
           <small>{expert?.position || expert?.speciality || expert?.subcategory_name || "G9 Experts professional"}</small>
           <span className="search-page-card__meta">
             {expert?.location && <span>{expert.location}</span>}
+            {expert?.city && !expert?.location && <span>{expert.city}</span>}
+            {expert?.distance_km != null && <span>📍 {expert.distance_km} km</span>}
             {rating && (
               <span>
                 <FiStar aria-hidden="true" /> {rating}
@@ -384,6 +430,19 @@ const SearchResultsPage = () => {
           <h2>{title}</h2>
           <span>{items.length}</span>
         </div>
+        {key === "experts" && fallbackInfo.used && (
+          <div className="location-fallback-warning" style={{
+            margin: "0 0 16px",
+            padding: "12px 16px",
+            background: "#fffbeb",
+            border: "1px solid #fef3c7",
+            borderRadius: "12px",
+            color: "#b45309",
+            fontSize: "13px"
+          }}>
+            ⚠️ {fallbackInfo.reason}
+          </div>
+        )}
         <div className="search-page-grid">
           {loading
             ? Array.from({ length: key === "experts" ? 6 : 3 }).map((_, index) => (

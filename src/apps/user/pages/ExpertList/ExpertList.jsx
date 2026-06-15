@@ -1,6 +1,8 @@
 // src/pages/ExpertList/ExpertList.jsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useSeo } from "../../../../shared/seo/useSeo";
+import { discoverExperts, getSeoLocationPage } from "../../../../shared/api/userApi/locationDiscovery.api";
 
 import {
   PageWrap,
@@ -50,6 +52,7 @@ const useQuery = () => {
 const ExpertListPage = () => {
   const query = useQuery();
   const navigate = useNavigate();
+  const { categorySlug, citySlug, areaSlug, pincode } = useParams();
 
   const categoryId = query.get("category");
   const subCategoryId = query.get("sub_category");
@@ -58,9 +61,42 @@ const ExpertListPage = () => {
 
   const [experts, setExperts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [seoData, setSeoData] = useState(null);
+  const [fallbackInfo, setFallbackInfo] = useState({ used: false, reason: null });
 
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("rating-high");
+
+  /* ---------------- LOAD SEO DATA ---------------- */
+  useEffect(() => {
+    if (!categorySlug) return;
+
+    const loadSeo = async () => {
+      try {
+        const res = await getSeoLocationPage({
+          category: categorySlug,
+          city: citySlug,
+          area: areaSlug,
+          pincode
+        });
+        if (res.data?.success) {
+          setSeoData(res.data.data);
+        }
+      } catch (err) {
+        console.error("SEO load failed:", err);
+      }
+    };
+    loadSeo();
+  }, [categorySlug, citySlug, areaSlug, pincode]);
+
+  /* ---------------- INJECT SEO METADATA ---------------- */
+  useSeo({
+    title: seoData?.title || "G9 Experts",
+    description: seoData?.meta_description || "Compare and connect with verified G9 Experts.",
+    canonicalPath: categorySlug 
+      ? `/experts/${categorySlug}/${citySlug ? (areaSlug ? citySlug + '/' + areaSlug : citySlug) : 'pincode/' + pincode}`
+      : undefined
+  });
 
   /* ---------------- LOAD SUBCATEGORIES ---------------- */
   useEffect(() => {
@@ -69,19 +105,45 @@ const ExpertListPage = () => {
 
   /* ---------------- LOAD EXPERTS ---------------- */
   const loadExperts = useCallback(async () => {
-    if (!subCategoryId) return;
-
+    if (categorySlug) {
       try {
         setLoading(true);
-        const res = await getExpertsBySubCategoryApi(subCategoryId);
-        setExperts(res.data?.data || []);
+        const res = await discoverExperts({
+          category_slug: categorySlug,
+          city: citySlug,
+          area: areaSlug,
+          pincode
+        });
+        if (res.data?.success) {
+          setExperts(res.data.data || []);
+          setFallbackInfo({
+            used: res.data.fallback_used || false,
+            reason: res.data.fallback_reason || null
+          });
+        }
       } catch (err) {
-        console.error(err);
+        console.error("Discovery failed:", err);
         setExperts([]);
       } finally {
         setLoading(false);
       }
-  }, [subCategoryId]);
+      return;
+    }
+
+    if (!subCategoryId) return;
+
+    try {
+      setLoading(true);
+      const res = await getExpertsBySubCategoryApi(subCategoryId);
+      setExperts(res.data?.data || []);
+      setFallbackInfo({ used: false, reason: null });
+    } catch (err) {
+      console.error("Load experts failed:", err);
+      setExperts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [categorySlug, citySlug, areaSlug, pincode, subCategoryId]);
 
   useEffect(() => {
     loadExperts();
@@ -93,11 +155,13 @@ const ExpertListPage = () => {
   }, { enabled: Boolean(categoryId || subCategoryId) });
 
   /* ---------------- TITLES ---------------- */
-  const categoryName =
-    categories.find((c) => c.id == categoryId)?.name || "Experts";
+  const categoryName = categorySlug
+    ? (seoData?.category_name || categorySlug.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()))
+    : (categories.find((c) => c.id == categoryId)?.name || "Experts");
 
-  const subCategoryName =
-    subCategories.find((s) => s.id == subCategoryId)?.name || "";
+  const subCategoryName = categorySlug
+    ? ""
+    : (subCategories.find((s) => s.id == subCategoryId)?.name || "");
 
   /* ---------------- FILTER & SORT ---------------- */
   const filteredExperts = useMemo(() => {
@@ -136,7 +200,7 @@ const ExpertListPage = () => {
       {/* ================= HEADER ================= */}
       <HeaderWrap>
         <PageTitle>
-          Top {subCategoryName} • {categoryName}
+          {seoData?.h1 || `Top ${subCategoryName || categoryName} Experts`}
         </PageTitle>
         <PageSubtitle>
           Verified experts • Real-time availability • Trusted guidance
@@ -192,43 +256,81 @@ const ExpertListPage = () => {
 
         {/* ================= EXPERT LIST ================= */}
         <RightPanel>
+          {fallbackInfo.used && (
+            <div style={{
+              marginBottom: 16,
+              padding: "12px 16px",
+              background: "#fffbeb",
+              border: "1px solid #fef3c7",
+              borderRadius: "12px",
+              color: "#b45309",
+              fontSize: "13px"
+            }}>
+              ⚠️ {fallbackInfo.reason}
+            </div>
+          )}
           {loading ? (
             <div style={{ padding: 40 }}>Loading experts…</div>
           ) : (
             <ExpertsGrid>
-              {filteredExperts.map((exp) => (
-                <ExpertCard
-                  key={exp.expert_id}
-                  onClick={() => navigate(`/user/experts/${exp.expert_id}`)}
-                >
-                  <AvatarImg src={exp.profile_photo} />
+              {filteredExperts.map((exp) => {
+                const name = exp.expert_name || exp.name || "Verified Expert";
+                const avatar = exp.profile_image || exp.profile_photo;
+                const price = exp.call_per_minute || 0;
+                return (
+                  <ExpertCard
+                    key={exp.expert_id}
+                    onClick={() => navigate(`/user/experts/${exp.expert_id}`)}
+                  >
+                    <AvatarImg src={avatar} />
 
-                  <ExpertBody>
-                    <ExpertName>{exp.name}</ExpertName>
+                    <ExpertBody>
+                      <ExpertName>{name}</ExpertName>
 
-                    <StatusPill $online>
-                      Online
-                    </StatusPill>
+                      <StatusPill $online>
+                        Online
+                      </StatusPill>
 
-                    <MetaRow>
-                      <Rating>★ {exp.rating}</Rating>
-                      <span>{exp.reviews} reviews</span>
-                    </MetaRow>
+                      <MetaRow>
+                        <Rating>★ {exp.rating}</Rating>
+                        <span>{exp.review_count || exp.reviews || 0} reviews</span>
+                      </MetaRow>
 
-                    <MetaRow>{exp.subcategory_name}</MetaRow>
-                    <MetaRow>{exp.location}</MetaRow>
+                      <MetaRow>{exp.subcategory_name || exp.position}</MetaRow>
+                      <MetaRow>
+                        {exp.location || `${exp.city || ""}${exp.state ? ", " + exp.state : ""}`}
+                        {exp.distance_km != null && <span style={{ marginLeft: 8 }}>📍 {exp.distance_km} km</span>}
+                      </MetaRow>
 
-                    <PriceRow>
-                      <Price>₹{exp.call_per_minute}</Price>
-                      <PerMinute>/min</PerMinute>
-                    </PriceRow>
-                  </ExpertBody>
-                </ExpertCard>
-              ))}
+                      <PriceRow>
+                        <Price>₹{price}</Price>
+                        <PerMinute>/min</PerMinute>
+                      </PriceRow>
+                    </ExpertBody>
+                  </ExpertCard>
+                );
+              })}
             </ExpertsGrid>
           )}
         </RightPanel>
       </Layout>
+
+      {seoData?.seo_text && (
+        <section style={{
+          padding: "24px 32px",
+          background: "#ffffff",
+          borderTop: "1px solid #f1f5f9",
+          fontSize: "14px",
+          lineHeight: "1.6",
+          color: "#475569",
+          borderRadius: "16px",
+          boxShadow: "0 4px 12px rgba(15, 23, 42, 0.03)",
+          margin: "24px 0"
+        }}>
+          <h3 style={{ margin: "0 0 10px", color: "#0f172a" }}>About {seoData.h1}</h3>
+          <p style={{ margin: 0 }}>{seoData.seo_text}</p>
+        </section>
+      )}
 
       {/* ================= SUGGESTED ================= */}
       <SuggestedSection>

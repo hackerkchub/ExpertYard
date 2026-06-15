@@ -63,6 +63,7 @@ import { useWallet } from "../../../../shared/context/WalletContext";
 import { getCategoryPath } from "../../../../shared/utils/categoryRoutes";
 import ProfilePopup from "../ProfilePopup";
 import GlobalSearchBar from "../search/GlobalSearchBar";
+import { LocationSelector } from "../../../../shared/components";
 
 const getMobileHeaderTitle = (pathname) => {
   if (pathname === "/user/search") return "Search";
@@ -345,6 +346,12 @@ const Navbar = () => {
             <GlobalSearchBar className="navbar-global-search" />
           </HeaderSearch>
 
+          <div className="desktop-only-location" style={{ marginLeft: "12px", marginRight: "12px" }}>
+            <LocationSelector onLocationSelect={(loc) => {
+              window.dispatchEvent(new CustomEvent("g9-location-changed", { detail: loc }));
+            }} />
+          </div>
+
           {!isSearchRoute && (
             <MobileIcon onClick={() => navigate("/user/search")} aria-label="Open search page">
               <FiSearch size={20} />
@@ -440,6 +447,12 @@ const Navbar = () => {
               </MobileMenuHeader>
 
               <MobileMenuSection>
+                <MobileMenuTitle>Location</MobileMenuTitle>
+                <div style={{ padding: "8px 16px 12px" }}>
+                  <LocationSelector onLocationSelect={(loc) => {
+                    window.dispatchEvent(new CustomEvent("g9-location-changed", { detail: loc }));
+                  }} />
+                </div>
                 <MobileMenuTitle>Navigation</MobileMenuTitle>
                 {primaryMenuItems.map((item) => (
                   <MobileItem

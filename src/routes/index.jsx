@@ -17,6 +17,7 @@ const ExpertAppRoutes = lazy(() => import("../apps/expert/routes"));
 const AdminAppRoutes = lazy(() => import("../apps/admin/routes"));
 const PublicCategoriesPage = lazy(() => import("../apps/user/pages/Category/Categories"));
 const PublicCategoryPage = lazy(() => import("../apps/user/pages/Subcategory/SubcategoryPage"));
+const PublicExpertListPage = lazy(() => import("../apps/user/pages/ExpertList/ExpertList"));
 
 const APP_SHELL_STYLE = {
   width: "100%",
@@ -90,6 +91,30 @@ export default function AppRouter() {
                 element={
                   <LazyRoute>
                     <PublicCategoryPage />
+                  </LazyRoute>
+                }
+              />
+              <Route
+                path="/experts/:categorySlug/:citySlug"
+                element={
+                  <LazyRoute>
+                    <PublicExpertListPage />
+                  </LazyRoute>
+                }
+              />
+              <Route
+                path="/experts/:categorySlug/:citySlug/:areaSlug"
+                element={
+                  <LazyRoute>
+                    <PublicExpertListPage />
+                  </LazyRoute>
+                }
+              />
+              <Route
+                path="/experts/:categorySlug/pincode/:pincode"
+                element={
+                  <LazyRoute>
+                    <PublicExpertListPage />
                   </LazyRoute>
                 }
               />

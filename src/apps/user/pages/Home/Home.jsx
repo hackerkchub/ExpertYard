@@ -65,6 +65,7 @@ import { useSeo } from "../../../../shared/seo/useSeo";
 import { toAbsoluteUrl } from "../../../../shared/seo/siteConfig";
 import { getCategoryPath } from "../../../../shared/utils/categoryRoutes";
 import { getAllServices } from "../../../../shared/api/service.api";
+import { LocationSelector } from "../../../../shared/components";
 
 const QUICK_ACTIONS = [
   {
@@ -959,6 +960,11 @@ const HomePage = () => {
           onLogin={() => navigate("/user/auth")}
           user={user}
         />
+        <div className="mobile-home-location" style={{ padding: "0 16px 12px" }}>
+          <LocationSelector onLocationSelect={(loc) => {
+            window.dispatchEvent(new CustomEvent("g9-location-changed", { detail: loc }));
+          }} />
+        </div>
         <SearchBar
           onOpen={() => navigate("/user/search")}
         />

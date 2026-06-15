@@ -71,6 +71,31 @@ useEffect(() => {
   };
 }, [socket]);
 
+useEffect(() => {
+  const closeForCall = ({ callId, status } = {}) => {
+    if (caller?.callId && callId && String(caller.callId) !== String(callId)) return;
+    console.log("Call lifecycle cleanup received:", { callId, status });
+
+    soundManager.stopAll();
+    setVisible(false);
+    setProcessing(false);
+  };
+
+  socket.on("call:rejected", closeForCall);
+  socket.on("call:missed", closeForCall);
+  socket.on("call:ended", closeForCall);
+  socket.on("call:connected", closeForCall);
+  socket.on("call:taken", closeForCall);
+
+  return () => {
+    socket.off("call:rejected", closeForCall);
+    socket.off("call:missed", closeForCall);
+    socket.off("call:ended", closeForCall);
+    socket.off("call:connected", closeForCall);
+    socket.off("call:taken", closeForCall);
+  };
+}, [socket, caller?.callId]);
+
   if (!caller || !visible) return null;
 
 const handleAccept = () => {
@@ -92,8 +117,7 @@ const handleReject = () => {
 };
   /* ❌ Close popup only (recommended UX) */
   const handleClose = () => {
-  soundManager.stopAll();
-  setVisible(false);
+  handleReject();
 };
 
   return (

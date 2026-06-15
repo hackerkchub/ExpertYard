@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Popover,
   HeaderRow,
@@ -19,7 +18,7 @@ import {
 } from "../styles/Notification.styles";
 
 const DEFAULT_LIMIT = 5;
-const FINAL_STATES = ["missed", "rejected", "ended", "low_balance", "cancelled"];
+const FINAL_STATES = ["missed", "rejected", "ended", "low_balance", "cancelled", "accepted", "connected", "taken"];
 
 const timeAgo = (timestamp) => {
   const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
@@ -87,7 +86,7 @@ export default function NotificationPopover({
 
   const openNotification = (n) => {
     if (n.type === "voice_call" && n.status === "ringing" && n.payload?.callId) {
-      navigate(`/expert/voice-call/${n.payload.callId}`);
+      acceptNotification?.(n);
       return;
     }
     onNotificationTap?.(n);
@@ -168,8 +167,7 @@ export default function NotificationPopover({
                       success
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/expert/voice-call/${n.payload?.callId}`);
-                        removeById(n);
+                        acceptNotification?.(n);
                       }}
                     >
                       Tap to answer

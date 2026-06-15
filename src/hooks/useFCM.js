@@ -42,7 +42,9 @@ const useFCM = (openCallPopup, expertId = null, setNotifications = null) => {
               badge: "/logo-192.png",
               data: {
                 ...payload.data,
-                url: payload.data?.url || payload.data?.click_action || "/expert?from_notification=1",
+                target_url: payload.data?.target_url || payload.data?.url || payload.data?.click_action || "/expert/home",
+                url: payload.data?.target_url || payload.data?.url || payload.data?.click_action || "/expert/home",
+                click_action: payload.data?.target_url || payload.data?.url || payload.data?.click_action || "/expert/home",
               },
               requireInteraction: true,
               renotify: true,

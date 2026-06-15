@@ -135,7 +135,7 @@ function ExpertLayoutInner() {
         }
 
         // ✅ Bug 2 Fixed: Remove from_notification param after processing
-        window.history.replaceState({}, document.title, "/expert");
+        window.history.replaceState({}, document.title, window.location.pathname || "/expert/home");
 
       } catch (err) {
         console.log("Active request fetch failed:", err);
@@ -272,6 +272,7 @@ function ExpertLayoutInner() {
                 "Incoming call from ",
                 ""
               ),
+            callId: activeIncomingCall.payload?.callId,
           }
         }
         onAccept={() =>

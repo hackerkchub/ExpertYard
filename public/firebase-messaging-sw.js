@@ -59,14 +59,30 @@ const normalizePayload = (payload = {}) => {
 };
 
 const getNotificationUrl = (data = {}) => {
+  if (data.target_url) return data.target_url;
   if (data.url) return data.url;
   if (data.click_action) return data.click_action;
   if (data.type === "voice_call" && data.callId) {
-    return `/expert?from_notification=1&callId=${encodeURIComponent(data.callId)}`;
+    return `/expert/voice-call/${encodeURIComponent(data.callId)}`;
   }
   if (data.type === "chat_request" && data.request_id) {
-    return `/expert?from_notification=1&request_id=${encodeURIComponent(data.request_id)}`;
+    return `/expert/home?from_notification=1&request_id=${encodeURIComponent(data.request_id)}`;
   }
+  if ((data.type === "like" || data.type === "comment") && (data.post_id || data.related_id)) {
+    const params = new URLSearchParams({ post_id: String(data.post_id || data.related_id) });
+    if (data.comment_id) params.set("comment_id", String(data.comment_id));
+    return `/expert/my-content?${params.toString()}`;
+  }
+  if (data.type === "follow") {
+    const params = new URLSearchParams();
+    if (data.sender_id || data.user_id) params.set("sender_id", String(data.sender_id || data.user_id));
+    return params.toString() ? `/expert/notifications?${params.toString()}` : "/expert/notifications";
+  }
+  if (data.type === "missed_call" && (data.callId || data.related_id)) {
+    return `/expert/notifications?callId=${encodeURIComponent(data.callId || data.related_id)}&status=missed`;
+  }
+  if (data.receiver_role === "expert") return "/expert/notifications";
+  if (data.receiver_role === "user") return "/user";
   return "/";
 };
 
@@ -94,7 +110,9 @@ const buildNotificationOptions = (data = {}) => {
     tag: getNotificationTag(data),
     data: {
       ...data,
+      target_url: getNotificationUrl(data),
       url: getNotificationUrl(data),
+      click_action: getNotificationUrl(data),
     },
     requireInteraction: isCall || data.requireInteraction === "true" || data.requireInteraction === true,
     renotify: isCall || data.renotify === "true" || data.renotify === true,
@@ -151,18 +169,24 @@ self.addEventListener("notificationclick", (event) => {
   const data = event.notification?.data || {};
   if (event.action === "dismiss") return;
 
-  const url = data.url || data.click_action || "/";
+  const targetUrl =
+    data.target_url ||
+    data.url ||
+    data.click_action ||
+    (data.receiver_role === "expert" ? "/expert/notifications" : "/");
+
+  const finalUrl = new URL(targetUrl, self.location.origin).href;
 
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true })
       .then((clientList) => {
         for (const client of clientList) {
           if (client.url.includes(self.location.origin)) {
-            client.navigate(url);
+            client.navigate(finalUrl);
             return client.focus();
           }
         }
-        return clients.openWindow(url);
+        return clients.openWindow(finalUrl);
       })
   );
 });

@@ -762,9 +762,10 @@ export async function createAnswer() {
 export async function setRemote(description, attemptId = null) {
   if (!pc || !description) return false;
   
-  if (attemptId && attemptId !== currentAttemptIdGlobal) {
-    return false;
-  }
+  // Relax attemptId check to avoid mismatch between independent client counters
+  // if (attemptId && attemptId !== currentAttemptIdGlobal) {
+  //   return false;
+  // }
   
   if (pc.remoteDescription && pc.remoteDescription.sdp === description.sdp) {
     return false;
@@ -803,9 +804,10 @@ export async function setRemote(description, attemptId = null) {
 export async function addIce(candidate, attemptId = null) {
   if (!candidate) return;
   
-  if (attemptId && attemptId !== currentAttemptIdGlobal) {
-    return;
-  }
+  // Relax attemptId check to avoid mismatch between independent client counters
+  // if (attemptId && attemptId !== currentAttemptIdGlobal) {
+  //   return;
+  // }
   
   try {
     if (pc && pc.remoteDescription) {
@@ -1016,4 +1018,25 @@ export async function handleSocketReconnect() {
   log("SOCKET", "Socket reconnected");
   connectionAttemptId++;
   await cleanupPeerOnly();
+}
+
+export function getPeerConnection() {
+  return pc;
+}
+
+// Document click/touchstart listener to bypass browser audio autoplay restrictions
+if (typeof document !== "undefined") {
+  const resumeAudioOnInteraction = () => {
+    if (remoteAudioEl && remoteTrackAttached && remoteAudioEl.paused) {
+      log("MEDIA", "User interacted, attempting to play remote audio");
+      safePlayAudio(remoteAudioEl, "user-interaction").then((success) => {
+        if (success) {
+          document.removeEventListener("click", resumeAudioOnInteraction);
+          document.removeEventListener("touchstart", resumeAudioOnInteraction);
+        }
+      });
+    }
+  };
+  document.addEventListener("click", resumeAudioOnInteraction, { passive: true });
+  document.addEventListener("touchstart", resumeAudioOnInteraction, { passive: true });
 }

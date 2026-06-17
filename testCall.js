@@ -62,7 +62,7 @@ import puppeteer from 'puppeteer';
     console.log('👨‍🏫 Navigating Expert to login page...');
     await expertPage.goto('http://localhost:5173/expert/register', { waitUntil: 'domcontentloaded' });
     await expertPage.waitForSelector('input[placeholder="Enter email or phone number"]');
-    await expertPage.type('input[placeholder="Enter email or phone number"]', 'dhotehimanshu87@gmail.com');
+    await expertPage.type('input[placeholder="Enter email or phone number"]', 'testexpert@example.com');
     await expertPage.type('input[placeholder="Enter your password"]', 'password123');
 
     await expertPage.evaluate(() => {
@@ -80,8 +80,8 @@ import puppeteer from 'puppeteer';
     await new Promise(resolve => setTimeout(resolve, 3000));
 
     // 3. User initiates call
-    console.log('📞 User starting voice call to Expert (ID 132)...');
-    await userPage.goto('http://localhost:5173/user/voice-call/132', { waitUntil: 'domcontentloaded' });
+    console.log('📞 User starting voice call to Expert (ID 166)...');
+    await userPage.goto('http://localhost:5173/user/voice-call/166', { waitUntil: 'domcontentloaded' });
 
     // 4. Expert receives and accepts call
     console.log('⌛ Waiting for incoming call popup on Expert side...');

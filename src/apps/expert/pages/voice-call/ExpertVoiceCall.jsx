@@ -48,6 +48,7 @@ import {
   getStats,
   attachRemoteAudio,
   ensureAudioPlaying,
+  getPeerConnection,
 } from "../../../../shared/webrtc/voicePeer";
 import { soundManager } from "../../../../shared/services/sound/soundManager";
 
@@ -75,7 +76,6 @@ export default function ExpertVoiceCall() {
   const callStateRef = useRef("connecting");
   const makingAnswerRef = useRef(false);
   const isCleaningUpRef = useRef(false);
-  const pcRef = useRef(null);
   const reconnectAttemptsRef = useRef(0);
   const MAX_RECONNECT_ATTEMPTS = 5;
   
@@ -133,7 +133,6 @@ export default function ExpertVoiceCall() {
     }
     
     closePeer(fullCleanup);
-    pcRef.current = null;
     
     // Reset all refs
     makingAnswerRef.current = false;
@@ -287,14 +286,54 @@ export default function ExpertVoiceCall() {
       }, 1000);
     };
 
+    const onResumed = async ({ callId: resumedCallId }) => {
+      console.log("🔁 Expert received call:resumed event for call:", resumedCallId);
+      if (Number(resumedCallId) !== Number(callIdRef.current)) {
+        console.log("⏭️ call:resumed callId mismatch, ignoring");
+        return;
+      }
+      setReconnecting(false);
+      setCallState("connected");
+      
+      // Reset lock/answer negotiation flags
+      makingAnswerRef.current = false;
+      
+      // Soft-clean the old peer connection without stopping microphone track
+      console.log("🧹 Soft cleaning old peer on call:resumed");
+      cleanupMedia(false);
+      
+      // Recreate the peer connection and prepare to receive the new offer
+      setTimeout(async () => {
+        if (callStateRef.current === "connected" && Number(callIdRef.current) === Number(resumedCallId)) {
+          console.log("♻ Recreating expert peer connection to receive offer");
+          if (!streamRef.current || streamRef.current.getAudioTracks()[0]?.readyState !== "live") {
+            try {
+              streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch (err) {
+              console.error("❌ Mic failed on call:resumed", err);
+              return;
+            }
+          }
+          await createPeer({
+            socket,
+            callId: callIdRef.current,
+            audioRef,
+            stream: streamRef.current
+          });
+        }
+      }, 500);
+    };
+
     socket.on(CALL_EVENTS.CONNECTED, onConnected);
     socket.on(CALL_EVENTS.ENDED, onEnded);
     socket.on(CALL_EVENTS.BUSY, onBusy);
+    socket.on("call:resumed", onResumed);
 
     return () => {
       socket.off(CALL_EVENTS.CONNECTED, onConnected);
       socket.off(CALL_EVENTS.ENDED, onEnded);
       socket.off(CALL_EVENTS.BUSY, onBusy);
+      socket.off("call:resumed", onResumed);
     };
   }, [socket, navigate, cleanupMedia, normalizedCallId]);
 
@@ -340,7 +379,7 @@ export default function ExpertVoiceCall() {
           }
           
           // Reuse existing peer if possible
-          let pc = pcRef.current;
+          let pc = getPeerConnection();
           if (!pc || pc.connectionState === "closed") {
             pc = await createPeer({
               socket,
@@ -348,7 +387,6 @@ export default function ExpertVoiceCall() {
               audioRef,
               stream: streamRef.current
             });
-            pcRef.current = pc;
           }
         }, 400);
       }
@@ -415,14 +453,15 @@ export default function ExpertVoiceCall() {
       if (callStateRef.current === "ended") return;
       if (makingAnswerRef.current) return;
       
+      const currentPC = getPeerConnection();
       // Check if already have a remote offer pending
-      if (pcRef.current?.signalingState === "have-remote-offer") {
+      if (currentPC?.signalingState === "have-remote-offer") {
         console.log("⏭️ Existing remote offer already pending");
         return;
       }
       
       // Duplicate SDP protection
-      if (pcRef.current?.remoteDescription?.sdp === offer.sdp) {
+      if (currentPC?.remoteDescription?.sdp === offer.sdp) {
         console.log("⏭️ Duplicate offer ignored");
         return;
       }
@@ -440,7 +479,7 @@ export default function ExpertVoiceCall() {
 
       try {
         // Reuse existing peer if possible
-        let pc = pcRef.current;
+        let pc = currentPC;
         
         if (!pc || pc.connectionState === "closed") {
           console.log("📡 Creating new peer for answer");
@@ -450,7 +489,6 @@ export default function ExpertVoiceCall() {
             audioRef,
             stream: streamRef.current
           });
-          pcRef.current = pc;
         } else {
           console.log("♻ Reusing existing peer for answer");
         }
@@ -512,6 +550,11 @@ export default function ExpertVoiceCall() {
     setCallState("connecting");
     reconnectAttemptsRef.current = 0;
 
+    // Unlock browser audio context on user interaction
+    if (audioRef.current) {
+      audioRef.current.play().catch(() => {});
+    }
+
     socket.emit(CALL_EVENTS.ACCEPT, { callId: callIdRef.current });
   }, [socket]);
 
@@ -543,6 +586,11 @@ export default function ExpertVoiceCall() {
   const toggleMuteClick = useCallback(() => {
     setMuted((m) => {
       toggleMute(!m);
+      
+      // Unlock audio context
+      if (audioRef.current) {
+        audioRef.current.play().catch(() => {});
+      }
       
       if (callIdRef.current) {
         socket.emit("call:mute", {
@@ -621,7 +669,7 @@ export default function ExpertVoiceCall() {
 
   return (
     <PageWrapper>
-      <audio ref={audioRef} autoPlay playsInline />
+      <audio ref={audioRef} autoPlay={true} playsInline={true} muted={false} />
 
       {/* Network Quality Indicator */}
       {callState === "connected" && networkQuality !== "good" && (

@@ -288,6 +288,63 @@ export const HeaderWalletButton = styled.button`
   }
 `;
 
+export const HeaderMobileLocation = styled.div`
+  display: none;
+  min-width: 0;
+
+  @media (max-width: 768px) {
+    flex: 0 1 auto;
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+    max-width: min(42vw, 178px);
+
+    .g9-location-selector-container {
+      min-width: 0;
+      width: 100%;
+    }
+
+    .g9-location-trigger-chip {
+      width: 100%;
+      max-width: 100%;
+      min-height: 38px;
+      padding: 0 10px;
+      border-radius: 13px;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 850;
+      background: #ffffff;
+      border-color: rgba(0, 0, 128, 0.12);
+      color: ${NAVY};
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+    }
+
+    .g9-location-trigger-chip .location-name {
+      min-width: 0;
+      max-width: none;
+    }
+
+    .g9-location-trigger-chip .clear-icon {
+      display: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    max-width: min(40vw, 150px);
+
+    .g9-location-trigger-chip {
+      min-height: 34px;
+      padding: 0 8px;
+      border-radius: 12px;
+      font-size: 11px;
+    }
+  }
+
+  @media (max-width: 360px) {
+    max-width: 116px;
+  }
+`;
+
 export const HeaderCategoryMenu = styled.div`
   position: absolute;
   top: calc(100% + 12px);
@@ -998,10 +1055,18 @@ export const HeaderProfileButton = styled.button`
     box-shadow: 0 14px 28px rgba(0, 0, 128, 0.1);
   }
 
+  &.mobile-profile-shortcut {
+    display: none;
+  }
+
   @media (max-width: 768px) {
     width: 38px;
     height: 38px;
     border-radius: 13px;
+
+    &.mobile-profile-shortcut {
+      display: inline-flex;
+    }
 
     svg {
       width: 18px;

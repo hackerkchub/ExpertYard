@@ -15,7 +15,7 @@ import {
   HeaderCategoryMenuItem,
   HeaderCategoryMenuShell,
   HeaderCategoryMenuState,
-  HeaderWalletButton,
+  HeaderMobileLocation,
   HeaderMenuButton,
   HeaderActions,
   HeaderProfileButton,
@@ -358,15 +358,20 @@ const Navbar = () => {
             </MobileIcon>
           )}
 
+          <HeaderMobileLocation className={showMobileBack ? "common-mobile-location" : undefined}>
+            <LocationSelector />
+          </HeaderMobileLocation>
+
           {!isProfileRoute && (
-            <HeaderWalletButton
+            <HeaderProfileButton
               type="button"
+              className="mobile-profile-shortcut"
               onClick={() => handleNav("/user/user-profile")}
               aria-label={t("nav.profile")}
               title={t("nav.profile")}
             >
               <FiUser />
-            </HeaderWalletButton>
+            </HeaderProfileButton>
           )}
 
           <HeaderActions className={showMobileBack ? "common-mobile-hidden" : undefined}>

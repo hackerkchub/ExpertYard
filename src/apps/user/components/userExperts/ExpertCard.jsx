@@ -297,6 +297,11 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
                     <MetaItem $callChat={isCallChatCard}>
                       <FiMapPin size={12} />
                       {location}
+                      {data.distance_km !== null && data.distance_km !== undefined && (
+                        <span style={{ color: '#0ea5e9', marginLeft: '4px', fontWeight: '600' }}>
+                          ({Number(data.distance_km).toFixed(1)} km)
+                        </span>
+                      )}
                     </MetaItem>
                   )}
                   <MetaItem $callChat={isCallChatCard}>
@@ -498,6 +503,7 @@ const areExpertCardPropsEqual = (prev, next) => {
     prevData.session_price === nextData.session_price &&
     prevData.avg_rating === nextData.avg_rating &&
     prevData.total_reviews === nextData.total_reviews &&
+    prevData.distance_km === nextData.distance_km &&
     prevData.category_name === nextData.category_name &&
     prevData.subcategory_name === nextData.subcategory_name
   );

@@ -17,7 +17,22 @@ const SEARCH_DELAY = 400;
 const emptyResults = {
   experts: [],
   categories: [],
+  locations: [],
   subcategories: [],
+};
+
+const getStoredLocationQuery = () => {
+  try {
+    const saved = localStorage.getItem("last_selected_location");
+    if (!saved) return "";
+    const location = JSON.parse(saved);
+    if (!location || location.type === "global") return "";
+    return [location.area, location.city, location.pincode, location.state]
+      .filter(Boolean)
+      .join(", ");
+  } catch {
+    return "";
+  }
 };
 
 const GlobalSearchBar = ({ className = "", onSearch }) => {
@@ -57,6 +72,7 @@ const GlobalSearchBar = ({ className = "", onSearch }) => {
         const response = await globalSearch({
           q: trimmedQuery,
           limit: 5,
+          location: getStoredLocationQuery() || undefined,
           signal: controller.signal,
         });
 
@@ -108,6 +124,23 @@ const GlobalSearchBar = ({ className = "", onSearch }) => {
 
   const navigateToResult = (group, item) => {
     setOpen(false);
+    if (group === "locations") {
+      const formatted = {
+        city: item?.city || "",
+        area: item?.area || "",
+        state: item?.state || "",
+        country: item?.country || "",
+        pincode: item?.pincode || "",
+        latitude: item?.latitude ? Number(item.latitude) : null,
+        longitude: item?.longitude ? Number(item.longitude) : null,
+        type: item?.type || "city",
+        displayName: item?.search_text || item?.displayName || [item?.area, item?.city, item?.state].filter(Boolean).join(", "),
+      };
+      localStorage.setItem("last_selected_location", JSON.stringify(formatted));
+      window.dispatchEvent(new CustomEvent("g9-location-changed", { detail: formatted }));
+      navigate(`/user/search?location=${encodeURIComponent(formatted.displayName || "")}`);
+      return;
+    }
     navigate(getResultPath(group, item));
   };
 

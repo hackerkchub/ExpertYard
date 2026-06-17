@@ -22,6 +22,7 @@ const DEFAULT_STATE = {
 };
 
 const DEFAULT_PRICE = {
+  expertId: null,
   pricing_modes: [],
   call: 0,
   chat: 0,
@@ -59,9 +60,9 @@ export const PublicExpertProvider = ({ children }) => {
           position: p.position,
           profile_photo: p.profile_photo,
          chat: p.chat?.per_minute || 0,
-call: p.call?.per_minute || 0,
-session: p.session || null,
-pricing_modes: p.pricing_modes || [],
+         call: p.call?.per_minute || 0,
+         session: p.session || null,
+         pricing_modes: p.pricing_modes || [],
           subcategory_id: p.subcategory_id,
         }));
 
@@ -81,8 +82,11 @@ pricing_modes: p.pricing_modes || [],
   useNetworkReconnect(loadExperts);
 
   /* ================= PROFILE ================= */
-  const fetchProfile = useCallback(async (slug) => {
+  const fetchProfile = useCallback(async (slug, force = false) => {
     if (!slug) return;
+    if (!force && (expertData.profile?.expert_slug === slug || expertData.profile?.slug === slug)) {
+      return;
+    }
 
     try {
       setProfileLoading(true);
@@ -109,11 +113,14 @@ pricing_modes: p.pricing_modes || [],
     } finally {
       setProfileLoading(false);
     }
-  }, []);
+  }, [expertData.profile]);
 
   /* ================= PRICE ================= */
- const fetchPrice = useCallback(async (expertId) => {
+ const fetchPrice = useCallback(async (expertId, force = false) => {
   if (!expertId) return;
+  if (!force && expertPrice.expertId === expertId) {
+    return;
+  }
 
   try {
     setPriceLoading(true);
@@ -126,11 +133,12 @@ pricing_modes: p.pricing_modes || [],
     console.log("PUBLIC PRICE:", priceData);
 
     if (!priceData || !priceData.pricing_modes) {
-      setExpertPrice(DEFAULT_PRICE);
+      setExpertPrice({ ...DEFAULT_PRICE, expertId });
       return;
     }
 
     setExpertPrice({
+      expertId,
       pricing_modes: priceData.pricing_modes || [],
       call: priceData.call?.per_minute || 0,
       chat: priceData.chat?.per_minute || 0,
@@ -143,11 +151,11 @@ pricing_modes: p.pricing_modes || [],
 
   } catch (err) {
     console.error("PRICE ERROR:", err);
-    setExpertPrice(DEFAULT_PRICE);
+    setExpertPrice({ ...DEFAULT_PRICE, expertId });
   } finally {
     setPriceLoading(false);
   }
-}, []);
+}, [expertPrice.expertId]);
 
   /* ================= AUTO PRICE LOAD ================= */
   useEffect(() => {
@@ -158,13 +166,14 @@ pricing_modes: p.pricing_modes || [],
 
   const refreshProfile = async () => {
     if (expertData.expertId) {
-      await fetchProfile(expertData.expertId);
+      const slugVal = expertData.profile?.expert_slug || expertData.profile?.slug || expertData.expertId;
+      await fetchProfile(slugVal, true);
     }
   };
 
   const refreshPrice = async () => {
     if (expertData.expertId) {
-      await fetchPrice(expertData.expertId);
+      await fetchPrice(expertData.expertId, true);
     }
   };
 

@@ -71,6 +71,33 @@ const SearchResultItem = ({ group, item, active, onClick, onMouseEnter }) => {
     );
   }
 
+  if (group === "locations") {
+    const displayName = getText(item?.search_text, item?.displayName, item?.area, item?.city, item?.pincode);
+    const detail = [
+      item?.area && item?.city ? item.city : "",
+      item?.state,
+      item?.pincode,
+    ].filter(Boolean).join(", ");
+
+    return (
+      <button
+        type="button"
+        className={`g9-search-result ${active ? "g9-search-result--active" : ""}`}
+        onClick={onClick}
+        onMouseEnter={onMouseEnter}
+      >
+        <span className="g9-search-result__avatar g9-search-result__avatar--icon">
+          <FiMapPin aria-hidden="true" />
+        </span>
+        <span className="g9-search-result__body">
+          <strong>{displayName || "Location"}</strong>
+          <small>{detail || "Location"}</small>
+        </span>
+        <span className="g9-search-result__cta">Set Location</span>
+      </button>
+    );
+  }
+
   const parent = getText(item?.category_name, item?.parent_category_name);
 
   return (

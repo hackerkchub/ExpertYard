@@ -113,7 +113,18 @@ const SearchResultsPage = () => {
   const [servicesLoading, setServicesLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [selectedLoc, setSelectedLoc] = useState(() => {
+    try {
+      const saved = localStorage.getItem("last_selected_location");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [fallbackInfo, setFallbackInfo] = useState({ used: false, reason: null });
+
+  const servicesRef = useRef([]);
+  const latestRequestRef = useRef(0);
 
   useEffect(() => {
     document.body.classList.add("g9-search-route");
@@ -151,16 +162,15 @@ const SearchResultsPage = () => {
   }, [queryInput, setSearchParams, urlQuery]);
 
   useEffect(() => {
-    const handleLocChange = () => {
+    const handleLocChange = (e) => {
       setPage(1);
       setResults((prev) => ({ ...prev, experts: [] }));
-      const currentQ = urlQuery;
-      setSearchParams({ q: currentQ, _t: Date.now() });
+      setSelectedLoc(e.detail);
     };
 
     window.addEventListener("g9-location-changed", handleLocChange);
     return () => window.removeEventListener("g9-location-changed", handleLocChange);
-  }, [urlQuery, setSearchParams]);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -170,10 +180,16 @@ const SearchResultsPage = () => {
         setServicesLoading(true);
         const response = await getAllServices();
         const payload = response?.data?.data || response?.data || [];
-        if (active) setServices(Array.isArray(payload) ? payload : []);
+        if (active) {
+          setServices(Array.isArray(payload) ? payload : []);
+          servicesRef.current = Array.isArray(payload) ? payload : [];
+        }
       } catch (err) {
         console.error("Search services load failed", err);
-        if (active) setServices([]);
+        if (active) {
+          setServices([]);
+          servicesRef.current = [];
+        }
       } finally {
         if (active) setServicesLoading(false);
       }
@@ -186,6 +202,11 @@ const SearchResultsPage = () => {
     };
   }, []);
 
+  const selectedLocKey = useMemo(() => {
+    if (!selectedLoc) return "";
+    return `${selectedLoc.type || ""}-${selectedLoc.city || ""}-${selectedLoc.area || ""}-${selectedLoc.pincode || ""}-${selectedLoc.latitude || ""}-${selectedLoc.longitude || ""}`;
+  }, [selectedLoc]);
+
   useEffect(() => {
     const q = urlQuery.trim();
     if (!q) {
@@ -194,15 +215,14 @@ const SearchResultsPage = () => {
       return undefined;
     }
 
+    const requestId = latestRequestRef.current + 1;
+    latestRequestRef.current = requestId;
     const controller = new AbortController();
 
     const loadSearchResults = async () => {
       try {
         setLoading(true);
         setError(false);
-
-        const savedLocStr = localStorage.getItem("last_selected_location");
-        const savedLoc = savedLocStr ? JSON.parse(savedLocStr) : null;
 
         const expertParams = {
           q,
@@ -211,15 +231,21 @@ const SearchResultsPage = () => {
           signal: controller.signal
         };
 
-        if (savedLoc) {
-          if (savedLoc.type === "coordinates") {
-            expertParams.lat = savedLoc.latitude;
-            expertParams.lng = savedLoc.longitude;
+        if (selectedLoc) {
+          if (selectedLoc.type === "coordinates") {
+            expertParams.lat = selectedLoc.latitude;
+            expertParams.lng = selectedLoc.longitude;
+            expertParams.location_mode = "nearby";
+          } else if (selectedLoc.type === "global") {
+            expertParams.location_mode = "global";
           } else {
-            expertParams.city = savedLoc.city;
-            expertParams.area = savedLoc.area;
-            expertParams.pincode = savedLoc.pincode;
+            expertParams.city = selectedLoc.city;
+            expertParams.area = selectedLoc.area;
+            expertParams.pincode = selectedLoc.pincode;
+            expertParams.location_mode = "local";
           }
+        } else {
+          expertParams.location_mode = "global";
         }
 
         const [expertsRes, categoriesRes, subcategoriesRes] = await Promise.all([
@@ -228,12 +254,14 @@ const SearchResultsPage = () => {
           searchSubcategories({ q, page: 1, limit: 20, signal: controller.signal }),
         ]);
 
+        if (latestRequestRef.current !== requestId) return;
+
         const expertsPayload = expertsRes?.data || {};
         setResults({
           experts: expertsPayload.data || [],
           categories: getList(categoriesRes, "categories"),
           subcategories: getList(subcategoriesRes, "subcategories"),
-          services: services.filter((service) => matchesQuery(service, q)).slice(0, 20),
+          services: servicesRef.current.filter((service) => matchesQuery(service, q)).slice(0, 20),
         });
 
         setFallbackInfo({
@@ -241,12 +269,12 @@ const SearchResultsPage = () => {
           reason: expertsPayload.fallback_reason || null
         });
       } catch (err) {
-        if (controller.signal?.aborted) return;
+        if (controller.signal?.aborted || latestRequestRef.current !== requestId) return;
         console.error("Search failed:", err);
         setResults({ experts: [], categories: [], subcategories: [], services: [] });
         setError(true);
       } finally {
-        if (!controller.signal?.aborted) {
+        if (!controller.signal?.aborted && latestRequestRef.current === requestId) {
           setLoading(false);
         }
       }
@@ -254,8 +282,10 @@ const SearchResultsPage = () => {
 
     loadSearchResults();
 
-    return () => controller.abort();
-  }, [page, services, urlQuery]);
+    return () => {
+      controller.abort();
+    };
+  }, [page, urlQuery, selectedLocKey]);
 
   const counts = useMemo(
     () => ({
@@ -330,8 +360,11 @@ const SearchResultsPage = () => {
           <strong>{name}</strong>
           <small>{expert?.position || expert?.speciality || expert?.subcategory_name || "G9 Experts professional"}</small>
           <span className="search-page-card__meta">
-            {expert?.location && <span>{expert.location}</span>}
-            {expert?.city && !expert?.location && <span>{expert.city}</span>}
+            {(expert?.location || expert?.city) && (
+              <span>
+                {expert.location || (expert.area ? `${expert.area}, ${expert.city}` : expert.city)}
+              </span>
+            )}
             {expert?.distance_km != null && <span>📍 {expert.distance_km} km</span>}
             {rating && (
               <span>

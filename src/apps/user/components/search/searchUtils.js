@@ -3,6 +3,7 @@ import { getCategoryPath } from "../../../../shared/utils/categoryRoutes";
 export const SEARCH_GROUPS = [
   { key: "experts", label: "Experts" },
   { key: "categories", label: "Categories" },
+  { key: "locations", label: "Locations" },
   { key: "subcategories", label: "Subcategories" },
 ];
 
@@ -25,6 +26,7 @@ export const normalizeGlobalResults = (response) => {
   return {
     experts: asArray(payload.experts || payload.expert || payload.users),
     categories: asArray(payload.categories || payload.category),
+    locations: asArray(payload.locations || payload.location_suggestions || payload.places),
     subcategories: asArray(payload.subcategories || payload.sub_categories || payload.subcategory),
   };
 };
@@ -87,5 +89,6 @@ export const flattenResults = (groups) =>
 export const getResultPath = (group, item) => {
   if (group === "experts") return getExpertPath(item);
   if (group === "categories") return getCategoryResultPath(item);
+  if (group === "locations") return `/user/search?location=${encodeURIComponent(item?.search_text || item?.displayName || item?.city || "")}`;
   return getSubcategoryResultPath(item);
 };

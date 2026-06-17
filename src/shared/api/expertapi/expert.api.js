@@ -81,48 +81,19 @@ export const getExpertsBySubCategoryApi = async (subCategoryId) => {
  * GET /api/expert/public/list
  */
 export const getExpertsApi = async (params = {}) => {
-  const {
-    page = 1,
-    limit = 20,
-    category,
-    subcategory,
-    search,
-    sortBy,
-    order,
-    top,
-    priceMode,
-    minRating,
-    minPrice,
-    maxPrice,
-    minExperience,
-    language,
-    status,
-    gender,
-    signal,
-  } = params;
-
+  const { signal, ...rest } = params;
   const query = new URLSearchParams();
 
-  query.append("page", page);
-  query.append("limit", limit);
+  Object.entries(rest).forEach(([key, val]) => {
+    if (val !== undefined && val !== null && val !== "") {
+      query.append(key, val);
+    }
+  });
 
-  if (category) query.append("category", category);
-  if (subcategory) query.append("subcategory", subcategory);
-  if (search) query.append("search", search);
-  if (sortBy) query.append("sortBy", sortBy);
-  if (order) query.append("order", order);
-  if (top) query.append("top", "true");
-  if (priceMode) query.append("priceMode", priceMode);
-  if (minRating) query.append("minRating", minRating);
-  if (minPrice) query.append("minPrice", minPrice);
-  if (maxPrice) query.append("maxPrice", maxPrice);
-  if (minExperience) query.append("minExperience", minExperience);
-  if (language) query.append("language", language);
-  if (status) query.append("status", status);
-  if (gender) query.append("gender", gender);
+  if (!query.has("page")) query.append("page", "1");
+  if (!query.has("limit")) query.append("limit", "20");
 
   const { data } = await api.get(`/expert/public/list?${query.toString()}`, { signal });
-
   return data;
 };
 

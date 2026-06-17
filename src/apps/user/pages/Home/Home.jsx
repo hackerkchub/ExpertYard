@@ -340,11 +340,8 @@ function ImageWithFallback({ src, alt, className, fallbackIcon: FallbackIcon = F
 }
 
 function Header({
-  balance,
   logo,
   onMenuOpen,
-  onWalletClick,
-  walletLoading,
 }) {
   return (
     <header className="premium-mobile-header">
@@ -354,13 +351,9 @@ function Header({
       <Link className="premium-mobile-logo" to="/user" aria-label="G9 Expert home">
         <img src={logo} alt="G9 Expert" />
       </Link>
-      <button type="button" className="premium-mobile-wallet" onClick={onWalletClick} aria-label="Open wallet">
-        <FaWallet />
-        <span>{walletLoading ? "..." : `Rs ${Math.floor(Number(balance || 0))}`}</span>
-      </button>
-      <button type="button" className="premium-mobile-avatar" onClick={onWalletClick} aria-label="Open wallet">
-        <FaWallet />
-      </button>
+      <div className="premium-mobile-location">
+        <LocationSelector />
+      </div>
     </header>
   );
 }
@@ -582,7 +575,7 @@ const HomePage = () => {
   const location = useLocation();
   const { t } = useTranslation();
   const { isLoggedIn, user, logout } = useAuth();
-  const { balance, loading: walletLoading } = useWallet();
+  const { balance } = useWallet();
   const {
     categories,
     error: categoriesError,
@@ -884,11 +877,8 @@ const HomePage = () => {
     <div className="home-page">
       <div className="mobile-home-app">
         <Header
-          balance={balance}
           logo={logo}
           onMenuOpen={() => setMobileMenuOpen(true)}
-          onWalletClick={() => navigate("/user/wallet")}
-          walletLoading={walletLoading}
         />
 
         {mobileMenuOpen && (
@@ -960,11 +950,6 @@ const HomePage = () => {
           onLogin={() => navigate("/user/auth")}
           user={user}
         />
-        <div className="mobile-home-location" style={{ padding: "0 16px 12px" }}>
-          <LocationSelector onLocationSelect={(loc) => {
-            window.dispatchEvent(new CustomEvent("g9-location-changed", { detail: loc }));
-          }} />
-        </div>
         <SearchBar
           onOpen={() => navigate("/user/search")}
         />

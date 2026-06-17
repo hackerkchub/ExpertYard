@@ -1,7 +1,20 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FiMapPin, FiNavigation, FiSearch, FiX, FiCheck, FiLoader } from "react-icons/fi";
+import { createPortal } from "react-dom";
+import { FiMapPin, FiNavigation, FiSearch, FiX, FiCheck, FiLoader, FiGlobe } from "react-icons/fi";
 import { autocompleteLocation, reverseGeocode } from "../../api/userApi/locationDiscovery.api";
 import "./LocationSelector.css";
+
+const GLOBAL_LOCATION = {
+  type: "global",
+  displayName: "Global",
+  city: "",
+  area: "",
+  state: "",
+  country: "",
+  pincode: "",
+  latitude: null,
+  longitude: null
+};
 
 export default function LocationSelector({ onLocationSelect, currentSelected }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,9 +28,9 @@ export default function LocationSelector({ onLocationSelect, currentSelected }) 
   const [selectedLoc, setSelectedLoc] = useState(() => {
     try {
       const saved = localStorage.getItem("last_selected_location");
-      return saved ? JSON.parse(saved) : null;
+      return saved ? JSON.parse(saved) : GLOBAL_LOCATION;
     } catch {
-      return null;
+      return GLOBAL_LOCATION;
     }
   });
 
@@ -29,6 +42,17 @@ export default function LocationSelector({ onLocationSelect, currentSelected }) 
       setSelectedLoc(currentSelected);
     }
   }, [currentSelected]);
+
+  // Sync state across multiple selector instances
+  useEffect(() => {
+    const handleLocationChange = (e) => {
+      if (e.detail) {
+        setSelectedLoc(e.detail);
+      }
+    };
+    window.addEventListener("g9-location-changed", handleLocationChange);
+    return () => window.removeEventListener("g9-location-changed", handleLocationChange);
+  }, []);
 
   // Fetch autocomplete suggestions
   useEffect(() => {
@@ -56,6 +80,17 @@ export default function LocationSelector({ onLocationSelect, currentSelected }) 
   }, [searchTerm]);
 
   const handleSelect = (loc) => {
+    let displayName = loc.search_text;
+    if (!displayName) {
+      if (loc.type === "global") {
+        displayName = "Global";
+      } else if (loc.type === "coordinates") {
+        displayName = `Current Location (${Number(loc.latitude).toFixed(4)}, ${Number(loc.longitude).toFixed(4)})`;
+      } else {
+        displayName = `${loc.area ? loc.area + ', ' : ''}${loc.city}, ${loc.state}`;
+      }
+    }
+
     const formatted = {
       city: loc.city || "",
       area: loc.area || "",
@@ -65,7 +100,7 @@ export default function LocationSelector({ onLocationSelect, currentSelected }) 
       latitude: loc.latitude ? Number(loc.latitude) : null,
       longitude: loc.longitude ? Number(loc.longitude) : null,
       type: loc.type || "city",
-      displayName: loc.search_text || `${loc.area ? loc.area + ', ' : ''}${loc.city}, ${loc.state}`
+      displayName
     };
 
     setSelectedLoc(formatted);
@@ -74,6 +109,7 @@ export default function LocationSelector({ onLocationSelect, currentSelected }) 
     if (onLocationSelect) {
       onLocationSelect(formatted);
     }
+    window.dispatchEvent(new CustomEvent("g9-location-changed", { detail: formatted }));
     setIsOpen(false);
     setSearchTerm("");
     setSuggestions([]);
@@ -119,13 +155,12 @@ export default function LocationSelector({ onLocationSelect, currentSelected }) 
             }
             setIsOpen(false);
           } else {
-            // Fallback if reverse geocoding didn't match local data
             const fallbackLoc = {
-              city: "Indore", // Default fallback if coordinates can't map
-              area: "Vijay Nagar",
-              state: "Madhya Pradesh",
-              country: "India",
-              pincode: "452010",
+              city: "",
+              area: "",
+              state: "",
+              country: "",
+              pincode: "",
               latitude: Number(latitude),
               longitude: Number(longitude),
               type: "coordinates",
@@ -186,11 +221,12 @@ export default function LocationSelector({ onLocationSelect, currentSelected }) 
 
   const handleClearLocation = (e) => {
     e.stopPropagation();
-    setSelectedLoc(null);
-    localStorage.removeItem("last_selected_location");
+    setSelectedLoc(GLOBAL_LOCATION);
+    localStorage.setItem("last_selected_location", JSON.stringify(GLOBAL_LOCATION));
     if (onLocationSelect) {
-      onLocationSelect(null);
+      onLocationSelect(GLOBAL_LOCATION);
     }
+    window.dispatchEvent(new CustomEvent("g9-location-changed", { detail: GLOBAL_LOCATION }));
   };
 
   return (
@@ -198,15 +234,15 @@ export default function LocationSelector({ onLocationSelect, currentSelected }) 
       {/* Location Trigger Chip */}
       <button 
         type="button" 
-        className={`g9-location-trigger-chip ${selectedLoc ? 'active' : ''}`}
+        className={`g9-location-trigger-chip ${selectedLoc && selectedLoc.type !== 'global' ? 'active' : ''}`}
         onClick={() => setIsOpen(true)}
         aria-label="Select location"
       >
         <FiMapPin className="pin-icon" />
         <span className="location-name truncate">
-          {selectedLoc ? selectedLoc.displayName : "Select Location"}
+          {selectedLoc && selectedLoc.type !== "global" ? selectedLoc.displayName : "Set Location"}
         </span>
-        {selectedLoc && (
+        {selectedLoc && selectedLoc.type !== "global" && (
           <span className="clear-icon" onClick={handleClearLocation} aria-label="Clear location">
             <FiX />
           </span>
@@ -214,7 +250,7 @@ export default function LocationSelector({ onLocationSelect, currentSelected }) 
       </button>
 
       {/* Modal Dialog */}
-      {isOpen && (
+      {isOpen && typeof document !== "undefined" && createPortal(
         <div className="g9-location-modal-overlay" onClick={() => setIsOpen(false)}>
           <div className="g9-location-modal-content" onClick={(e) => e.stopPropagation()}>
             {/* Modal Header */}
@@ -239,6 +275,16 @@ export default function LocationSelector({ onLocationSelect, currentSelected }) 
                   <FiNavigation className="action-icon" />
                 )}
                 <span>{gpsLoading ? "Detecting location..." : "Use Current Location / Near Me"}</span>
+              </button>
+
+              <button 
+                type="button" 
+                className="g9-gps-btn g9-global-location-btn"
+                onClick={() => handleSelect({ type: "global", search_text: "Global" })}
+                style={{ marginTop: "10px", background: "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)", color: "#ffffff" }}
+              >
+                <FiGlobe className="action-icon" />
+                <span>Global (Show All Experts)</span>
               </button>
 
               {errorMsg && (
@@ -306,7 +352,8 @@ export default function LocationSelector({ onLocationSelect, currentSelected }) 
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

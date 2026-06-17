@@ -6,7 +6,7 @@ import {
   FiX, FiChevronLeft, FiChevronRight, FiSearch, FiFilter, 
   FiSliders, FiXCircle, FiTrendingUp, FiClock,
   FiStar, FiUserCheck, FiZap,
-  FiMessageSquare, FiPhoneCall, FiGlobe
+  FiMessageSquare, FiPhoneCall, FiGlobe, FiMapPin
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -206,10 +206,30 @@ export default function UserExpertsPage() {
   const [sortBy, setSortBy] = useState(sortByFromUrl);
   const [sortOrder, setSortOrder] = useState(sortOrderFromUrl);
 
+  const [selectedLoc, setSelectedLoc] = useState(() => {
+    try {
+      const saved = localStorage.getItem("last_selected_location");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    const handleLocChange = (e) => {
+      setSelectedLoc(e.detail);
+      setCurrentPage(1);
+    };
+
+    window.addEventListener("g9-location-changed", handleLocChange);
+    return () => window.removeEventListener("g9-location-changed", handleLocChange);
+  }, []);
+
   // Experts data
   const [experts, setExperts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [fallbackInfo, setFallbackInfo] = useState({ used: false, reason: null });
 
   // Online/Offline state
   const [onlineExperts, setOnlineExperts] = useState({});
@@ -321,6 +341,23 @@ export default function UserExpertsPage() {
       priceMode: tab
     };
 
+    if (selectedLoc) {
+      if (selectedLoc.type === "coordinates") {
+        params.lat = selectedLoc.latitude;
+        params.lng = selectedLoc.longitude;
+        params.location_mode = "nearby";
+      } else if (selectedLoc.type === "global") {
+        params.location_mode = "global";
+      } else {
+        params.city = selectedLoc.city;
+        params.area = selectedLoc.area;
+        params.pincode = selectedLoc.pincode;
+        params.location_mode = "local";
+      }
+    } else {
+      params.location_mode = "global";
+    }
+
     if (effectiveCategoryId) {
       params.category = effectiveCategoryId;
     }
@@ -377,7 +414,8 @@ export default function UserExpertsPage() {
       language.trim() ||
       statusFilter ||
       gender ||
-      sortBy;
+      sortBy ||
+      (selectedLoc && selectedLoc.type !== "global");
 
     if (!hasFilters) {
       params.top = "true";
@@ -401,7 +439,8 @@ export default function UserExpertsPage() {
     gender,
     sortBy,
     sortOrder,
-    tab
+    tab,
+    selectedLoc
   ]);
 
   // FIX 3: URL sync effect - prevents loop while keeping page/mode query in sync
@@ -523,6 +562,10 @@ export default function UserExpertsPage() {
       setExperts(response.data || []);
       setTotalExperts(response.total || 0);
       setTotalPages(response.totalPages || 1);
+      setFallbackInfo({
+        used: response.fallback_used || false,
+        reason: response.fallback_reason || null
+      });
     } catch (error) {
       if (controller.signal.aborted || error?.code === "ERR_CANCELED") return;
       if (latestRequestRef.current !== requestId) return;
@@ -532,6 +575,7 @@ export default function UserExpertsPage() {
       setExperts([]);
       setTotalExperts(0);
       setTotalPages(1);
+      setFallbackInfo({ used: false, reason: null });
     } finally {
       if (latestRequestRef.current === requestId) {
         setLoading(false);
@@ -625,6 +669,7 @@ export default function UserExpertsPage() {
     setSortBy("");
     setSortOrder("desc");
     setCurrentPage(1);
+    setFallbackInfo({ used: false, reason: null });
     if (routeCategoryId) {
       loadSubCategories(routeCategoryId);
     }
@@ -670,6 +715,7 @@ export default function UserExpertsPage() {
       position: exp.category_name,
       speciality: exp.subcategory_name,
       location: exp.location,
+      distance_km: exp.distance_km,
       isOnline: onlineExperts[String(exp.id)],
       call_per_minute: exp.call_per_minute || 0,
       chat_per_minute: exp.chat_per_minute || 0,
@@ -1368,6 +1414,19 @@ export default function UserExpertsPage() {
               </EmptyState>
             ) : (
               <>
+                {fallbackInfo.used && (
+                  <div className="location-fallback-warning" style={{
+                    marginBottom: 16,
+                    padding: "12px 16px",
+                    background: "#fffbeb",
+                    border: "1px solid #fef3c7",
+                    borderRadius: "12px",
+                    color: "#b45309",
+                    fontSize: "13px"
+                  }}>
+                    ⚠️ {fallbackInfo.reason}
+                  </div>
+                )}
                 <div className="experts-result-count" style={{ marginBottom: 16, fontSize: 14, color: "#64748b" }}>
                   Showing {filteredCardExperts.length} of {totalExperts || filteredCardExperts.length} experts
                 </div>
@@ -1411,6 +1470,17 @@ export default function UserExpertsPage() {
                               <span className="mobile-callchat-card__line">
                                 <FiClock aria-hidden="true" />
                                 {exp.total_experience}+ years experience
+                              </span>
+                            )}
+                            {exp.location && (
+                              <span className="mobile-callchat-card__line">
+                                <FiMapPin aria-hidden="true" />
+                                {exp.location}
+                                {exp.distance_km !== null && exp.distance_km !== undefined && (
+                                  <span style={{ color: '#0ea5e9', marginLeft: '4px', fontWeight: '600' }}>
+                                    ({Number(exp.distance_km).toFixed(1)} km)
+                                  </span>
+                                )}
                               </span>
                             )}
                           </span>

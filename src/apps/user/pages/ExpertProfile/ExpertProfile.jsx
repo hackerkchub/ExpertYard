@@ -806,12 +806,7 @@ const ExpertProfilePage = () => {
     }
   }, [slug, fetchProfile]);
 
-  // Price load AFTER expertId mile
-  useEffect(() => {
-    if (numericExpertId) {
-      fetchPrice(numericExpertId);
-    }
-  }, [numericExpertId, fetchPrice]);
+
 
   useEffect(() => {
     if (numericExpertId) fetchExperience();

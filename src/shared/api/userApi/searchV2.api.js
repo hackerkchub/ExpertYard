@@ -8,8 +8,8 @@ const requestOptions = (params, signal) => ({
   skipLoader: true,
 });
 
-export const globalSearch = ({ q, limit = 5, signal } = {}) =>
-  api.get(`${SEARCH_BASE}/global`, requestOptions({ q, limit }, signal));
+export const globalSearch = ({ q, limit = 5, signal, ...params } = {}) =>
+  api.get(`${SEARCH_BASE}/global`, requestOptions({ q, limit, ...params }, signal));
 
 export const searchExperts = ({ signal, ...params } = {}) =>
   api.get(`${SEARCH_BASE}/experts`, requestOptions(params, signal));

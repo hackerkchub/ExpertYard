@@ -7,7 +7,8 @@ on:
       - production
 
 jobs:
-  build:
+  deploy-guidexa:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
@@ -27,26 +28,10 @@ jobs:
           mkdir -p public
           curl -L http://softmaxs.com/sitemap.xml -o public/sitemap.xml
 
-      - name: Build project
+      - name: Build Guidexa
+        env:
+          VITE_API_BASE_URL: ${{ secrets.GUIDEXA_API_URL }}
         run: npm run build
-
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist-files
-          path: dist
-
-  deploy-guidexa:
-    if: github.ref == 'refs/heads/main'
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download Build
-        uses: actions/download-artifact@v4
-        with:
-          name: dist-files
-          path: dist
 
       - name: Deploy to Guidexa
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -63,17 +48,31 @@ jobs:
 
   deploy-production:
     if: github.ref == 'refs/heads/production'
-    needs: build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download Build
-        uses: actions/download-artifact@v4
-        with:
-          name: dist-files
-          path: dist
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Deploy to G9Expert Production
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Download Sitemap
+        run: |
+          mkdir -p public
+          curl -L http://softmaxs.com/sitemap.xml -o public/sitemap.xml
+
+      - name: Build Softmaxs
+        env:
+          VITE_API_BASE_URL: ${{ secrets.SOFTMAXS_API_URL }}
+        run: npm run build
+
+      - name: Deploy to Softmaxs
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}

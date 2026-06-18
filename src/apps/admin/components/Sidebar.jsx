@@ -11,7 +11,8 @@ import {
   FiSettings,
   FiHelpCircle,
   FiCreditCard,
-  FiBarChart2
+  FiBarChart2,
+   FiImage,
 } from "react-icons/fi";
 import {
   Side,
@@ -71,6 +72,7 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
         { path: "/admin/dashboard", icon: FiHome, label: "Dashboard" },
         { path: "/admin/category-management", icon: FiLayers, label: "Categories" },
         { path: "/admin/sub-category-management", icon: FiGrid, label: "Sub-Categories" },
+        { path: "/admin/banner", icon:  FiImage, label: "Banners" },
       ]
     },
     {

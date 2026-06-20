@@ -3611,9 +3611,9 @@
 
 .home-banner-slider img {
   width: 100%;
-  height: 500px;
+  height: 600px;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
   cursor: pointer;
   border-radius: 16px;
 }

@@ -31,4 +31,4 @@ export const getWithdrawalPayoutDetailsApi = (withdrawalId) =>
   adminApi.get(`/admin/withdrawal/payout-details/${withdrawalId}`);
 
 export const walletAuditApi = (expertId) =>
-  adminApi.get(`/admin/wallet-audit/${expertId}`);
+  adminApi.get(`/finance/wallet-audit/${expertId}`);

@@ -84,17 +84,17 @@ export const ContentWrapper = styled.main`
 
   /* --- MOBILE VIEW (Up to 768px) --- */
   @media (max-width: 768px) {
-    margin-top: 60px; /* Chota Header height */
-    height: calc(100vh - 60px);
-    min-height: calc(100vh - 60px);
+    margin-top: 64px; /* Matches Topbar height exactly */
+    height: calc(100vh - 64px);
+    min-height: calc(100vh - 64px);
     padding: 16px 14px 88px;
   }
 
   /* --- SMALL MOBILE (Up to 480px) --- */
   @media (max-width: 480px) {
-    margin-top: 56px;
-    height: calc(100vh - 56px);
-    min-height: calc(100vh - 56px);
+    margin-top: 64px;
+    height: calc(100vh - 64px);
+    min-height: calc(100vh - 64px);
     padding: 12px 12px 84px;
   }
 

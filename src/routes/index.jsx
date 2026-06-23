@@ -150,7 +150,7 @@ export default function AppRouter() {
         </Routes>
       </div>
 
-      {showNavbar ? <BottomNavbar /> : null}
+      {showNavbar && !location.pathname.toLowerCase().startsWith("/expert") ? <BottomNavbar /> : null}
     </div>
   );
 }

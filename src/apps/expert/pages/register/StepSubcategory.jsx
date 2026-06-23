@@ -248,7 +248,12 @@ export default function StepSubcategory() {
               {saving ? "Saving..." : canNext ? `Continue to Profile →` : "Choose a specialty"}
             </PrimaryButton>
 
-           
+            <SecondaryButton
+              onClick={() => navigate("/expert/register/category")}
+              style={{ width: "100%", justifyContent: "center" }}
+            >
+              ← Back to Category
+            </SecondaryButton>
           </ActionsRow>
         </CategoryRightFixed>
 

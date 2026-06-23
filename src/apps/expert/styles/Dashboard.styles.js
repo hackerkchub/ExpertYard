@@ -53,7 +53,7 @@ export const Welcome = styled.h2`
 /* Stats Grid - Instagram Insight Style */
 export const StatsRow = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr); /* Desktop: 4 Columns */
+  grid-template-columns: repeat(3, 1fr); /* Desktop: 3 Columns */
   gap: 16px;
   margin-bottom: 24px;
 
@@ -61,8 +61,9 @@ export const StatsRow = styled.div`
     grid-template-columns: repeat(2, 1fr); /* Tablet: 2 Columns */
   }
 
-  @media (max-width: 480px) {
-    gap: 8px; /* Mobile par kam space */
+  @media (max-width: 580px) {
+    grid-template-columns: 1fr; /* Mobile: Single Column stack */
+    gap: 12px;
   }
 `;
 

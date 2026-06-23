@@ -1,6 +1,4 @@
 import React, { useMemo } from "react";
-import Sidebar from "../components/ExpertSidebar";
-import Topbar from "../components/ExpertTopbar";
 import { useExpertNotifications } from "../context/ExpertNotificationsContext";
 import { useExpert } from "../../../shared/context/ExpertContext";
 import { useWebPush } from "../../../shared/hooks/useWebPush";
@@ -9,8 +7,6 @@ import StatsCard from "../components/StatsCard";
 import QueueCard from "../components/QueueCard";
 
 import {
-  Layout,
-  MainContent,
   ContentInner,
   Welcome,
   StatsRow,
@@ -50,51 +46,43 @@ export default function Dashboard() {
   };
 
   return (
-    <Layout>
-      <Sidebar />
+    <ContentInner>
+      <Welcome>
+        {profileLoading ? "Loading..." : `Welcome, ${expertName}`}
+      </Welcome>
 
-      <MainContent>
-        <Topbar />
+      {/* 🔔 1. Default State: Jab user ne choose nahi kiya (Pehli baar load par) */}
+      {supported && permission === "default" && expertId && (
+        <div style={bannerStyle}>
+          <span style={{ fontSize: "14px", color: "#666" }}>
+            🔔 Enable desktop notifications to never miss a client request.
+          </span>
+          <button onClick={enable} style={buttonStyle}>
+            Enable
+          </button>
+        </div>
+      )}
 
-        <ContentInner>
-          <Welcome>
-            {profileLoading ? "Loading..." : `Welcome, ${expertName}`}
-          </Welcome>
+      {/* 🚫 2. Blocked State: Jab user ne ya browser ne notifications disable/block kar di hain */}
+      {supported && permission === "denied" && expertId && (
+        <div style={{ ...bannerStyle, border: "1px solid #ffcccc", background: "#fff5f5" }}>
+          <span style={{ fontSize: "14px", color: "#d9534f" }}>
+            ⚠️ Notifications are Blocked. Please enable them in browser settings to receive alerts.
+          </span>
+          <button onClick={handleBlockedNotificationGuide} style={{ ...buttonStyle, color: "#d9534f" }}>
+            How to Enable?
+          </button>
+        </div>
+      )}
 
-          {/* 🔔 1. Default State: Jab user ne choose nahi kiya (Pehli baar load par) */}
-          {supported && permission === "default" && expertId && (
-            <div style={bannerStyle}>
-              <span style={{ fontSize: "14px", color: "#666" }}>
-                🔔 Enable desktop notifications to never miss a client request.
-              </span>
-              <button onClick={enable} style={buttonStyle}>
-                Enable
-              </button>
-            </div>
-          )}
+      <StatsRow>
+        {stats.map((stat, index) => (
+          <StatsCard key={index} label={stat.label} value={stat.value} />
+        ))}
+      </StatsRow>
 
-          {/* 🚫 2. Blocked State: Jab user ne ya browser ne notifications disable/block kar di hain */}
-          {supported && permission === "denied" && expertId && (
-            <div style={{ ...bannerStyle, border: "1px solid #ffcccc", background: "#fff5f5" }}>
-              <span style={{ fontSize: "14px", color: "#d9534f" }}>
-                ⚠️ Notifications are Blocked. Please enable them in browser settings to receive alerts.
-              </span>
-              <button onClick={handleBlockedNotificationGuide} style={{ ...buttonStyle, color: "#d9534f" }}>
-                How to Enable?
-              </button>
-            </div>
-          )}
-
-          <StatsRow>
-            {stats.map((stat, index) => (
-              <StatsCard key={index} label={stat.label} value={stat.value} />
-            ))}
-          </StatsRow>
-
-          <QueueCard />
-        </ContentInner>
-      </MainContent>
-    </Layout>
+      <QueueCard />
+    </ContentInner>
   );
 }
 

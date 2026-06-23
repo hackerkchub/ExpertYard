@@ -6,6 +6,7 @@ import React, {
   useMemo,
 } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import {
   PageWrap,
   ChatLayout,
@@ -517,8 +518,9 @@ const ExpertChat = () => {
       if (String(getChatRoomId(data)) !== String(room_id)) return;
 
       setSessionActive(false);
-      hotToast("success", "Chat Ended");
-      navigate("/expert/chat-history");
+      clearActiveChatSession();
+      hotToast("success", "Chat ended", { id: "chat-ended" });
+      navigate("/expert/chat-history", { replace: true });
     };
 
     socket.on("chat_ended", handleChatEnded);
@@ -609,6 +611,7 @@ const ExpertChat = () => {
 
   return (
     <PageWrap>
+      <Toaster position="top-center" />
       <ChatLayout>
         <RightPanel>
           {chatData && user ? (

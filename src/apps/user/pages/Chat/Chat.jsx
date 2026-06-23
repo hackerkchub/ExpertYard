@@ -1,6 +1,7 @@
 // src/apps/user/pages/chat/Chat.jsx - COMPLETE FIXED VERSION WITH UNIFIED ARCHITECTURE
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import { FiPaperclip, FiImage, FiVideo, FiFile, FiX, FiClock } from "react-icons/fi";
 import { IoMdSend } from "react-icons/io";
 import {
@@ -37,6 +38,7 @@ import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { usePublicExpert as useExpert } from "../../context/PublicExpertContext";
 import useChatTimer from "../../../../shared/hooks/useChatTimer";
 import { saveActiveChatSession, clearActiveChatSession } from "../../../../shared/utils/chatSession";
+import { hotToast } from "../../../../shared/utils/lazyNotifications";
 import { APP_CONFIG } from "../../../../config/appConfig";
 import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
@@ -654,7 +656,15 @@ const Chat = () => {
     const handleChatEnded = (data = {}) => {
       if (String(data.room_id) === String(room_id) || !data.room_id) {
         setSessionActive(false);
-        setShowEndPopup(true);
+        clearActiveChatSession();
+        void hotToast("success", "Chat ended", { id: "chat-ended" });
+        navigate("/user/chat-history", {
+          replace: true,
+          state: {
+            from: "chat",
+            expertId: chatData?.expert_id
+          }
+        });
       }
     };
 
@@ -724,7 +734,7 @@ const Chat = () => {
         socket.emit("leave_room", { room_id });
       }
     };
-  }, [room_id, user?.id, fetchChatDetails, markMessagesSeen]);
+  }, [room_id, user?.id, fetchChatDetails, markMessagesSeen, navigate, chatData?.expert_id]);
 
   // 6) FIX: Expert info from chatData using isAIChat
   const expertInfo = useMemo(() => {
@@ -844,6 +854,7 @@ const Chat = () => {
 
   return (
     <>
+      <Toaster position="top-center" />
       <ChatGlobalStyle />
       <PageWrap>
         <Header>

@@ -14,6 +14,9 @@ import {
 } from "../styles/Register.styles";
 
 export default function RegisterLayout({ title, subtitle, step, tabs, children }) {
+  const totalSteps = 5;
+  const percent = step ? (step / totalSteps) * 100 : 0;
+
   return (
     <RegisterPageWrap>
       <RegisterCard>
@@ -43,6 +46,25 @@ export default function RegisterLayout({ title, subtitle, step, tabs, children }
               </div>
             ))}
           </div>
+        )}
+
+        {/* Step Progress Indicator */}
+        {step && step >= 1 && step <= 5 && (
+          <ProgressWrap>
+            <ProgressRow>
+              <ProgressLabel>
+                {step === 1 && "Account Info"}
+                {step === 2 && "Expertise Category"}
+                {step === 3 && "Specialization"}
+                {step === 4 && "Profile Details"}
+                {step === 5 && "Pricing Rates"}
+              </ProgressLabel>
+              <ProgressSteps>Step {step} of {totalSteps}</ProgressSteps>
+            </ProgressRow>
+            <ProgressBarOuter>
+              <ProgressBarInner percent={percent} />
+            </ProgressBarOuter>
+          </ProgressWrap>
         )}
 
         <StepHeader>

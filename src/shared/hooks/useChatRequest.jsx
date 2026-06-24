@@ -719,6 +719,24 @@ setIsStartingAi(false);
       setIsStartingAi(false);
     };
 
+    const blocked = (data = {}) => {
+      if (!mountedRef.current) return;
+
+      if (requestLockTimeoutRef.current) {
+        clearTimeout(requestLockTimeoutRef.current);
+        requestLockTimeoutRef.current = null;
+      }
+
+      setShowWaiting(false);
+      setChatRequestId(null);
+      setRejectedMsg(data?.message || "Chat is currently unavailable for this expert.");
+      setIsRequesting(false);
+      setShowAiOffer(false);
+      setAiOffer(null);
+      setAiError("");
+      setIsStartingAi(false);
+    };
+
     // ========== CANCELLED HANDLER ==========
     const cancelled = (data = {}) => {
       const user_id = data.user_id;
@@ -819,6 +837,7 @@ setIsStartingAi(false);
     socket.on("request_pending", pending);
     socket.on("chat_accepted", accepted);
     socket.on("chat_rejected", rejected);
+    socket.on("chat_blocked", blocked);
     socket.on("chat_cancelled", cancelled);
     socket.on("ai_fallback_offer", aiOfferHandler);
     socket.on("ai_fallback_accepted", aiAccepted);
@@ -829,6 +848,7 @@ setIsStartingAi(false);
       socket.off("request_pending", pending);
       socket.off("chat_accepted", accepted);
       socket.off("chat_rejected", rejected);
+      socket.off("chat_blocked", blocked);
       socket.off("chat_cancelled", cancelled);
       socket.off("ai_fallback_offer", aiOfferHandler);
       socket.off("ai_fallback_accepted", aiAccepted);

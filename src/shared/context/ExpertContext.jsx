@@ -23,6 +23,12 @@ const STORAGE_KEY = "expert_session";
 const TOKEN_KEY = "expert_token";
 const DEFAULT_AVATAR = "https://i.pravatar.cc/40?img=12";
 
+const truthyFlag = (value) =>
+  value === true ||
+  value === 1 ||
+  value === "1" ||
+  String(value || "").toLowerCase() === "true";
+
 const clearApiCache = async () => {
   if ("caches" in window) {
     try {
@@ -68,6 +74,8 @@ const DEFAULT_STATE = {
   can_create_service: false,
   can_earn: false,
   can_withdraw: false,
+  profile_edit_enabled: false,
+  can_edit_profile: false,
   priceId: null,
 };
 
@@ -148,7 +156,9 @@ export const ExpertProvider = ({ children }) => {
         prev.can_call !== newState.can_call ||
         prev.can_create_service !== newState.can_create_service ||
         prev.can_earn !== newState.can_earn ||
-        prev.can_withdraw !== newState.can_withdraw;
+        prev.can_withdraw !== newState.can_withdraw ||
+        prev.profile_edit_enabled !== newState.profile_edit_enabled ||
+        prev.can_edit_profile !== newState.can_edit_profile;
 
       if (hasChanged) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
@@ -239,12 +249,14 @@ export const ExpertProvider = ({ children }) => {
           planName: accessProfile.access?.plan_name || accessProfile.plan_name || null,
           planStartedAt: accessProfile.access?.plan_started_at || accessProfile.plan_started_at || null,
           planExpiresAt: accessProfile.access?.plan_expires_at || accessProfile.plan_expires_at || null,
-          can_view_contact: Boolean(accessProfile.access?.can_view_contact ?? accessProfile.can_view_contact),
-          can_chat: Boolean(accessProfile.access?.can_chat ?? accessProfile.can_chat),
-          can_call: Boolean(accessProfile.access?.can_call ?? accessProfile.can_call),
-          can_create_service: Boolean(accessProfile.access?.can_create_service ?? accessProfile.can_create_service),
-          can_earn: Boolean(accessProfile.access?.can_earn ?? accessProfile.can_earn),
-          can_withdraw: Boolean(accessProfile.access?.can_withdraw ?? accessProfile.can_withdraw),
+          can_view_contact: truthyFlag(accessProfile.access?.can_view_contact ?? accessProfile.can_view_contact),
+          can_chat: truthyFlag(accessProfile.access?.can_chat ?? accessProfile.can_chat),
+          can_call: truthyFlag(accessProfile.access?.can_call ?? accessProfile.can_call),
+          can_create_service: truthyFlag(accessProfile.access?.can_create_service ?? accessProfile.can_create_service),
+          can_earn: truthyFlag(accessProfile.access?.can_earn ?? accessProfile.can_earn),
+          can_withdraw: truthyFlag(accessProfile.access?.can_withdraw ?? accessProfile.can_withdraw),
+          profile_edit_enabled: truthyFlag(accessProfile.access?.profile_edit_enabled ?? accessProfile.access?.can_edit_profile ?? accessProfile.profile_edit_enabled ?? accessProfile.can_edit_profile),
+          can_edit_profile: truthyFlag(accessProfile.access?.can_edit_profile ?? accessProfile.access?.profile_edit_enabled ?? accessProfile.can_edit_profile ?? accessProfile.profile_edit_enabled),
         });
       } catch (err) {
         console.error("Profile fetch error:", err);

@@ -103,13 +103,7 @@ export default function ExpertLeads() {
   const [noteText, setNoteText] = useState("");
   const [access, setAccess] = useState(null);
 
-  const isLimited = access
-    ? !(
-        access.can_view_contact ||
-        (access.subscription_status === "active" &&
-          ["paid_basic", "paid_growth"].includes(access.access_level))
-      )
-    : false;
+  const isLimited = access ? !Boolean(access.can_view_contact) : false;
 
   const goUpgrade = () => navigate("/expert/g9-plan");
 

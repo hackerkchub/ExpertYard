@@ -26,11 +26,7 @@ export default function Dashboard() {
   }, [expertData]);
 
   const expertName = expertData?.profile?.name || expertData?.name || "Expert";
-  const isPaid =
-    Boolean(expertData?.can_view_contact) ||
-    (expertData?.subscription_status === "active" &&
-      ["paid_basic", "paid_growth"].includes(expertData?.access_level));
-  const isLimited = !isPaid;
+  const isLimited = !Boolean(expertData?.can_view_contact);
 
   useEffect(() => {
     getExpertLeadStatsApi()

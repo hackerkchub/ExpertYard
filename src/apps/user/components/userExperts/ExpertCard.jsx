@@ -54,6 +54,11 @@ import {
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/150?img=12";
 const MIN_CHAT_MINUTES = 5;
+const isEnabledFlag = (value) =>
+  value === true ||
+  value === 1 ||
+  value === "1" ||
+  String(value || "").toLowerCase() === "true";
 
 // REMOVED maxPrice prop - backend handles filtering
 const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
@@ -93,6 +98,8 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
   const responseTime = data.avg_response_time || "< 1 min";
   const consultationCount = data.total_consultations || 0;
   const isCallChatCard = variant === "callChat";
+  const chatAllowedByAdmin = isEnabledFlag(data.effective_access?.show_chat_button ?? data.effective_access?.can_chat ?? data.show_chat_button ?? data.showChatButton ?? data.can_chat ?? data.canChat);
+  const callAllowedByAdmin = isEnabledFlag(data.effective_access?.show_call_button ?? data.effective_access?.can_call ?? data.show_call_button ?? data.showCallButton ?? data.can_call ?? data.canCall);
   const canUseMode = Boolean(expertId);
 
   const trackUserAttempt = useCallback((type) => {
@@ -134,6 +141,10 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
 
   const handleStartChatLocal = useCallback(() => {
     if (!expertId) return;
+    if (!chatAllowedByAdmin) {
+      alert("Chat is currently unavailable for this expert.");
+      return;
+    }
     trackUserAttempt("chat");
 
     if (!isLoggedIn) {
@@ -177,10 +188,14 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
       navigate(`/user/experts/${expertSlug}`);
     }
   }, [expertId, trackUserAttempt, isLoggedIn, navigate, expertSlug, hasPerMinute, hasSession, hasSubscription, 
-      chatPrice, sessionPrice, balance, userId, user, onStartChat]);
+      chatPrice, sessionPrice, balance, userId, user, onStartChat, chatAllowedByAdmin]);
 
   const handleStartCallLocal = useCallback(() => {
     if (!expertId) return;
+    if (!callAllowedByAdmin) {
+      alert("Call is currently unavailable for this expert.");
+      return;
+    }
     trackUserAttempt("call");
 
     if (!isLoggedIn) {
@@ -223,7 +238,7 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
       navigate(`/user/experts/${expertSlug}`);
     }
   }, [expertId, trackUserAttempt, isLoggedIn, navigate, expertSlug, hasPerMinute, hasSession, hasSubscription,
-      callPrice, sessionPrice, balance, onStartCall]);
+      callPrice, sessionPrice, balance, onStartCall, callAllowedByAdmin]);
 
   const handleViewProfile = useCallback(() => {
     navigate(`/user/experts/${expertSlug}`);
@@ -250,6 +265,8 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
 
   const isButtonDisabled = () => {
     if (!canUseMode) return true;
+    if (mode === "chat" && !chatAllowedByAdmin) return true;
+    if (mode !== "chat" && !callAllowedByAdmin) return true;
     return false;
   };
 
@@ -520,6 +537,10 @@ const areExpertCardPropsEqual = (prev, next) => {
     prevData.isOnline === nextData.isOnline &&
     prevData.call_per_minute === nextData.call_per_minute &&
     prevData.chat_per_minute === nextData.chat_per_minute &&
+    prevData.show_chat_button === nextData.show_chat_button &&
+    prevData.show_call_button === nextData.show_call_button &&
+    prevData.can_chat === nextData.can_chat &&
+    prevData.can_call === nextData.can_call &&
     prevData.session_price === nextData.session_price &&
     prevData.avg_rating === nextData.avg_rating &&
     prevData.total_reviews === nextData.total_reviews &&

@@ -10,6 +10,12 @@ export const updateExpertStatusApi = (id, data) =>
 export const getFullExpertApi = (id) =>
   adminApi.get(`/expert/full/${id}`);
 
+export const getExpertAccessSettingsApi = (id) =>
+  adminApi.get(`/expert/${id}/access-settings`);
+
+export const updateExpertAccessSettingsApi = (id, data) =>
+  adminApi.put(`/expert/${id}/access-settings`, data);
+
 export const deleteExpertApi = (id) =>
   adminApi.delete(`/expert/${id}`);
 

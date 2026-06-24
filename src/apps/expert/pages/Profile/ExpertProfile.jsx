@@ -54,7 +54,8 @@ import {
   FiCalendar,
   FiClock,
   FiPackage,
-  FiDollarSign
+  FiDollarSign,
+  FiLock
 } from "react-icons/fi";
 
 import { useExpert } from "../../../../shared/context/ExpertContext";
@@ -67,6 +68,11 @@ import {
 import * as S from "./ExpertProfile.styles";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/150?img=12";
+const isEnabledFlag = (value) =>
+  value === true ||
+  value === 1 ||
+  value === "1" ||
+  String(value || "").toLowerCase() === "true";
 
 // Utility function to check if URL is an image
 const isImageUrl = (url) => {
@@ -155,6 +161,9 @@ export default function ExpertProfile() {
   });
 
   const expertId = expertData?.expertId || expertData?.id;
+  const canEditProfile = isEnabledFlag(expertData?.profile_edit_enabled ?? expertData?.can_edit_profile);
+  const profileEditBlockedMessage =
+    "Profile editing is currently disabled for your account. Please upgrade your plan or contact admin.";
   
   const draftRef = useRef();
 
@@ -459,6 +468,12 @@ setSessionDuration(Number(session?.duration) || 0);
 };
   // ========== PRODUCTION READY HANDLE SAVE ==========
   const handleSave = async () => {
+    if (!canEditProfile) {
+      notifyError(profileEditBlockedMessage);
+      setEdit(false);
+      return;
+    }
+
     try {
       setSaveLoading(true);
       
@@ -591,6 +606,10 @@ await refreshExpertData();
   // ================= SUBSCRIPTION PLAN CRUD OPERATIONS =================
   
   const handleAddPlan = () => {
+    if (!canEditProfile) {
+      notifyError(profileEditBlockedMessage);
+      return;
+    }
     setEditingPlan(null);
     setPlanForm({
       name: "",
@@ -605,6 +624,10 @@ await refreshExpertData();
   };
 
   const handleEditPlan = (plan) => {
+    if (!canEditProfile) {
+      notifyError(profileEditBlockedMessage);
+      return;
+    }
     setEditingPlan(plan);
     setPlanForm({
       name: plan.name,
@@ -623,6 +646,11 @@ await refreshExpertData();
   };
 
   const handleSubmitPlan = async () => {
+    if (!canEditProfile) {
+      notifyError(profileEditBlockedMessage);
+      return;
+    }
+
     if (!planForm.name || !planForm.price) {
       notifyError("Plan name and price are required");
       return;
@@ -661,6 +689,11 @@ await refreshExpertData();
   };
 
   const handleDeletePlan = async (planId, planName) => {
+    if (!canEditProfile) {
+      notifyError(profileEditBlockedMessage);
+      return;
+    }
+
     if (!window.confirm(`Are you sure you want to delete "${planName}" plan?`)) {
       return;
     }
@@ -678,6 +711,10 @@ await refreshExpertData();
   // ================= EXPERIENCE CRUD OPERATIONS =================
   
   const handleAddExperience = () => {
+    if (!canEditProfile) {
+      notifyError(profileEditBlockedMessage);
+      return;
+    }
     setEditingExperience(null);
     setExperienceForm({
       title: "",
@@ -691,6 +728,10 @@ await refreshExpertData();
   };
 
   const handleEditExperience = (exp) => {
+    if (!canEditProfile) {
+      notifyError(profileEditBlockedMessage);
+      return;
+    }
     setEditingExperience(exp);
     setExperienceForm({
       title: exp.title || "",
@@ -776,6 +817,11 @@ await refreshExpertData();
   };
 
   const handleDeleteExperience = async (id) => {
+    if (!canEditProfile) {
+      notifyError(profileEditBlockedMessage);
+      return;
+    }
+
     if (!window.confirm("Are you sure you want to delete this experience?")) {
       return;
     }
@@ -1027,7 +1073,17 @@ await refreshExpertData();
               {/* Right Column - Action Buttons */}
               <S.ProfileRightColumn>
                 {!edit ? (
-                  <S.ActionButton primary onClick={() => setEdit(true)}>
+                  <S.ActionButton
+                    primary
+                    disabled={!canEditProfile}
+                    onClick={() => {
+                      if (!canEditProfile) {
+                        notifyError(profileEditBlockedMessage);
+                        return;
+                      }
+                      setEdit(true);
+                    }}
+                  >
                     <FiEdit /> Edit Profile
                   </S.ActionButton>
                 ) : (
@@ -1152,6 +1208,23 @@ await refreshExpertData();
 
           {/* Tab Content */}
           <S.TabContent>
+            {!canEditProfile && (
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "14px 16px",
+                marginBottom: 18,
+                border: "1px solid #fecaca",
+                borderRadius: 8,
+                background: "#fef2f2",
+                color: "#991b1b",
+                fontWeight: 600
+              }}>
+                <FiLock />
+                <span>{profileEditBlockedMessage}</span>
+              </div>
+            )}
             {activeTab === "overview" && (
               <S.OverviewGrid>
                 {/* Contact Information */}

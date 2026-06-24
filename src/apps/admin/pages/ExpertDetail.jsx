@@ -24,11 +24,14 @@ import {
   FaTrash,
   FaEye,
   FaDollarSign,
-  FaChartLine
+  FaChartLine,
+  FaUserShield
 } from "react-icons/fa";
 
 import {
   getFullExpertApi,
+  getExpertAccessSettingsApi,
+  updateExpertAccessSettingsApi,
   deleteExperienceApi,
   deletePostApi,
   deleteReviewApi
@@ -68,11 +71,15 @@ import {
   PlanBadge
 } from "../styles/expertDetail.styles";
 
+const DEFAULT_EXPERT_IMAGE = "https://via.placeholder.com/160?text=Expert";
+
 export default function ExpertDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [accessSettings, setAccessSettings] = useState({});
+  const [savingAccess, setSavingAccess] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -83,7 +90,16 @@ export default function ExpertDetail() {
       setLoading(true);
       const res = await getFullExpertApi(id);
       console.log("API Response:", res.data);
-      setData(res.data.data);
+      const detailData = res.data.data;
+      setData(detailData);
+      setAccessSettings(detailData?.effective_access || {});
+
+      try {
+        const accessRes = await getExpertAccessSettingsApi(id);
+        setAccessSettings(accessRes.data?.data?.effective_access || detailData?.effective_access || {});
+      } catch (accessErr) {
+        console.warn("Access settings endpoint failed, using detail response access data:", accessErr);
+      }
     } catch (err) {
       console.error("Error fetching expert details:", err);
       alert("Failed to load expert details");
@@ -128,7 +144,7 @@ export default function ExpertDetail() {
     }
   };
 
-  const truncateText = (text, maxLength = 200) => {
+const truncateText = (text, maxLength = 200) => {
     if (!text || typeof text !== 'string') return 'No content available';
     return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
   };
@@ -143,6 +159,76 @@ export default function ExpertDetail() {
       });
     } catch (error) {
       return 'Invalid date';
+    }
+  };
+
+  const resolveImageUrl = (value) => {
+    if (!value) return DEFAULT_EXPERT_IMAGE;
+    const text = String(value);
+    if (/^https?:\/\//i.test(text)) return text;
+    const clean = text.replace(/^\/+/, "");
+    if (clean.startsWith("uploads/")) return `https://softmaxs.com/${clean}`;
+    return `https://softmaxs.com/uploads/${clean}`;
+  };
+
+  const normalizePricingModes = (value) => {
+    if (Array.isArray(value)) {
+      return value.filter(Boolean).map(String);
+    }
+
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (!trimmed) return [];
+
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(Boolean).map(String);
+        }
+      } catch {
+        // fall through to comma-separated parsing
+      }
+
+      return trimmed
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+
+    if (value && typeof value === "object") {
+      return Object.values(value).filter(Boolean).map(String);
+    }
+
+    return [];
+  };
+
+  const accessOptions = [
+    ["show_in_user_module", "Show expert in User Module"],
+    ["show_on_listing", "Show expert on listing page"],
+    ["show_chat_button", "Show Chat button"],
+    ["show_call_button", "Show Call button"],
+    ["leads_enabled", "Enable Leads"],
+    ["earnings_enabled", "Enable Earnings"],
+    ["chat_history_enabled", "Enable Chat History"],
+    ["services_enabled", "Enable Services"],
+    ["my_content_enabled", "Enable My Content"],
+    ["profile_edit_enabled", "Enable Profile Edit"],
+    ["public_profile_enabled", "Enable Public Profile"],
+  ];
+
+  const handleAccessToggle = async (field) => {
+    const nextValue = !Boolean(accessSettings[field]);
+    try {
+      setSavingAccess(true);
+      setAccessSettings((prev) => ({ ...prev, [field]: nextValue }));
+      const res = await updateExpertAccessSettingsApi(id, { [field]: nextValue });
+      setAccessSettings(res.data?.data?.effective_access || {});
+    } catch (err) {
+      console.error("Access settings update error:", err);
+      alert("Failed to update access settings");
+      fetchData();
+    } finally {
+      setSavingAccess(false);
     }
   };
 
@@ -196,6 +282,7 @@ export default function ExpertDetail() {
   const reviews = data.reviews || [];
   const plans = data.plans || [];
   const prices = data.prices || {};
+  const pricingModes = normalizePricingModes(prices.pricing_modes);
 
   const stats = {
     totalExperience: experiences.length,
@@ -300,6 +387,32 @@ export default function ExpertDetail() {
           </InfoGrid>
         </InfoCard>
 
+        <InfoCard>
+          <h3><FaUserShield /> Admin Expert Access Settings</h3>
+          <p style={{ marginTop: 0, color: "#475569", lineHeight: 1.5 }}>
+            Admin settings override subscription plan status.
+          </p>
+          <p style={{ color: "#64748b", lineHeight: 1.5 }}>
+            If enabled here, the expert can use this feature even without a paid plan. If disabled here, the feature remains blocked even if the expert has a paid plan.
+          </p>
+          <InfoGrid>
+            {accessOptions.map(([field, label]) => (
+              <InfoItem key={field}>
+                <strong>{label}</strong>
+                <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: savingAccess ? "wait" : "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(accessSettings[field])}
+                    disabled={savingAccess}
+                    onChange={() => handleAccessToggle(field)}
+                  />
+                  <span>{accessSettings[field] ? "Enabled" : "Disabled"}</span>
+                </label>
+              </InfoItem>
+            ))}
+          </InfoGrid>
+        </InfoCard>
+
         {/* Profile Details */}
         {profile && Object.keys(profile).length > 0 && (
           <InfoCard>
@@ -322,10 +435,10 @@ export default function ExpertDetail() {
                   <strong>Profile Photo</strong>
                   <div>
                     <img 
-                      src={`https://softmaxs.com/${profile.profile_photo}`} 
+                      src={resolveImageUrl(profile.profile_photo)} 
                       alt="Profile" 
                       style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover' }}
-                      onError={(e) => { e.target.style.display = 'none'; }}
+                      onError={(e) => { e.currentTarget.src = DEFAULT_EXPERT_IMAGE; }}
                     />
                   </div>
                 </InfoItem>
@@ -363,12 +476,10 @@ export default function ExpertDetail() {
                   <span>{prices.session_duration} minutes</span>
                 </InfoItem>
               )}
-              {prices.pricing_modes && (
-                <InfoItem>
-                  <strong>Pricing Modes</strong>
-                  <span>{prices.pricing_modes.join(', ')}</span>
-                </InfoItem>
-              )}
+              <InfoItem>
+                <strong>Pricing Modes</strong>
+                <span>{pricingModes.length ? pricingModes.join(', ') : 'Not configured'}</span>
+              </InfoItem>
             </InfoGrid>
           </InfoCard>
         )}
@@ -463,10 +574,10 @@ export default function ExpertDetail() {
                 </CardMeta>
                 {post.image_url && (
                   <img 
-                    src={`https://softmaxs.com/${post.image_url}`} 
+                    src={resolveImageUrl(post.image_url)} 
                     alt={post.title}
                     style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '12px', marginTop: '12px' }}
-                    onError={(e) => { e.target.style.display = 'none'; }}
+                    onError={(e) => { e.currentTarget.src = DEFAULT_EXPERT_IMAGE; }}
                   />
                 )}
                 <CardContent>{truncateText(post.description || post.content)}</CardContent>

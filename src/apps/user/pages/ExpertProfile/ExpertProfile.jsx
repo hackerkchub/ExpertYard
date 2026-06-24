@@ -171,6 +171,11 @@ import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/l
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/300?img=12";
 const MIN_CHAT_MINUTES = 5;
+const isEnabledFlag = (value) =>
+  value === true ||
+  value === 1 ||
+  value === "1" ||
+  String(value || "").toLowerCase() === "true";
 
 // Helper function to get post ID consistently
 const getPostId = (post) => post?.id || post?.post_id;
@@ -216,8 +221,12 @@ const ExpertProfilePage = () => {
   const profile = expertData?.profile;
   const price = expertPrice || {};
   const numericExpertId = expertData?.expertId || null;
-  const canShowUserChatButton = Boolean(numericExpertId);
-  const canShowUserCallButton = Boolean(numericExpertId);
+  const canShowUserChatButton =
+    Boolean(numericExpertId) &&
+    isEnabledFlag(expertData?.effective_access?.show_chat_button ?? expertData?.effective_access?.can_chat ?? expertData?.show_chat_button ?? expertData?.showChatButton ?? expertData?.can_chat ?? expertData?.canChat);
+  const canShowUserCallButton =
+    Boolean(numericExpertId) &&
+    isEnabledFlag(expertData?.effective_access?.show_call_button ?? expertData?.effective_access?.can_call ?? expertData?.show_call_button ?? expertData?.showCallButton ?? expertData?.can_call ?? expertData?.canCall);
 
   // REMOVED: chatRequestId, showWaitingPopup, waitingText, showChatCancelled, chatRejectedMessage, requestingChat, requestIdRef
 
@@ -910,6 +919,16 @@ const ExpertProfilePage = () => {
   const handleStart = useCallback((type) => {
     if (!numericExpertId) return;
 
+    if (type === "chat" && !canShowUserChatButton) {
+      alert("Chat is currently unavailable for this expert.");
+      return;
+    }
+
+    if (type === "call" && !canShowUserCallButton) {
+      alert("Call is currently unavailable for this expert.");
+      return;
+    }
+
     const trackActionableLead = () => {
       trackLeadEvent(
         type === "chat" ? "chat-attempt" : "call-attempt",
@@ -1026,7 +1045,7 @@ const ExpertProfilePage = () => {
         setShowRecharge(true);
       }
     }
-  }, [isLoggedIn, navigate, location, displayPrices, balance, userId, numericExpertId, hasActiveSubscription, currentPricingInfo, profile, expertData, startChat, user]);
+  }, [isLoggedIn, navigate, location, displayPrices, balance, userId, numericExpertId, canShowUserChatButton, canShowUserCallButton, hasActiveSubscription, currentPricingInfo, profile, expertData, startChat, user]);
 
   const handleFollowAction = useCallback(async () => {
     if (!isLoggedIn || !userId || !numericExpertId) {

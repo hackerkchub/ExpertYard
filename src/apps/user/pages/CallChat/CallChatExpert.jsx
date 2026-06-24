@@ -68,6 +68,12 @@ const TABS = [
   { id: "chat", labelKey: "callChat.chatTab", icon: "💬" },
 ];
 
+const isEnabledFlag = (value) =>
+  value === true ||
+  value === 1 ||
+  value === "1" ||
+  String(value || "").toLowerCase() === "true";
+
 // Rating options
 const ratingOptions = [
   { value: "", label: "Any Rating" },
@@ -681,6 +687,11 @@ export default function UserExpertsPage() {
   const handleStartChat = useCallback((expertId) => {
     const expert = experts.find(e => Number(e.id) === Number(expertId));
     if (!expertId) return;
+    const chatAllowed = isEnabledFlag(expert?.effective_access?.show_chat_button ?? expert?.effective_access?.can_chat ?? expert?.show_chat_button ?? expert?.showChatButton ?? expert?.can_chat ?? expert?.canChat);
+    if (!chatAllowed) {
+      alert("Chat is currently unavailable for this expert.");
+      return;
+    }
 
     trackLeadEvent(
       "chat-attempt",
@@ -713,6 +724,11 @@ export default function UserExpertsPage() {
   const handleStartCall = useCallback((expertId) => {
     const expert = experts.find(e => Number(e.id) === Number(expertId));
     if (!expertId) return;
+    const callAllowed = isEnabledFlag(expert?.effective_access?.show_call_button ?? expert?.effective_access?.can_call ?? expert?.show_call_button ?? expert?.showCallButton ?? expert?.can_call ?? expert?.canCall);
+    if (!callAllowed) {
+      alert("Call is currently unavailable for this expert.");
+      return;
+    }
 
     trackLeadEvent(
       "call-attempt",
@@ -783,6 +799,7 @@ export default function UserExpertsPage() {
       isPaidExpert: exp.isPaidExpert,
       is_subscribed: exp.is_subscribed,
       isSubscribed: exp.isSubscribed,
+      effective_access: exp.effective_access,
       subscription_status: exp.subscription_status,
       subscriptionStatus: exp.subscriptionStatus,
       access_level: exp.access_level,
@@ -797,6 +814,10 @@ export default function UserExpertsPage() {
       chatEnabled: exp.chatEnabled,
       call_enabled: exp.call_enabled,
       callEnabled: exp.callEnabled,
+      show_chat_button: exp.show_chat_button,
+      showChatButton: exp.showChatButton,
+      show_call_button: exp.show_call_button,
+      showCallButton: exp.showCallButton,
       plan_expires_at: exp.plan_expires_at,
       planExpiresAt: exp.planExpiresAt,
     }));
@@ -1494,6 +1515,10 @@ export default function UserExpertsPage() {
                     const { basePrice, discountedPrice } = getModePrice(exp);
                     const shownPrice = discountedPrice > 0 ? discountedPrice : basePrice;
                     const languageText = getLanguageText(exp.languages);
+                    const allowedByAdmin =
+                      tab === "chat"
+                        ? isEnabledFlag(exp.effective_access?.show_chat_button ?? exp.effective_access?.can_chat ?? exp.show_chat_button ?? exp.showChatButton ?? exp.can_chat ?? exp.canChat)
+                        : isEnabledFlag(exp.effective_access?.show_call_button ?? exp.effective_access?.can_call ?? exp.show_call_button ?? exp.showCallButton ?? exp.can_call ?? exp.canCall);
 
                     return (
                       <article className="mobile-callchat-card" key={`mobile-${exp.id}`}>
@@ -1567,7 +1592,7 @@ export default function UserExpertsPage() {
                           <button
                             type="button"
                             className="mobile-callchat-card__cta"
-                            disabled={!exp.id}
+                            disabled={!exp.id || !allowedByAdmin}
                             title={tab === "chat" ? "Start chat" : "Start call"}
                             onClick={() => (tab === "chat" ? handleStartChat(exp.id) : handleStartCall(exp.id))}
                           >

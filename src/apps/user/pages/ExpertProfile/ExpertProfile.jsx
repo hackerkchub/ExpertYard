@@ -167,6 +167,7 @@ import {
   getMySubscriptionApi 
 } from "../../../../shared/api/userApi/subscription.api";
 import useChatRequest from "../../../../shared/hooks/useChatRequest";
+import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/leadTracking";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/300?img=12";
 const MIN_CHAT_MINUTES = 5;
@@ -215,6 +216,8 @@ const ExpertProfilePage = () => {
   const profile = expertData?.profile;
   const price = expertPrice || {};
   const numericExpertId = expertData?.expertId || null;
+  const canShowUserChatButton = Boolean(numericExpertId);
+  const canShowUserCallButton = Boolean(numericExpertId);
 
   // REMOVED: chatRequestId, showWaitingPopup, waitingText, showChatCancelled, chatRejectedMessage, requestingChat, requestIdRef
 
@@ -234,6 +237,7 @@ const ExpertProfilePage = () => {
   const [isExpertOnline, setIsExpertOnline] = useState(false);
   const [calling, setCalling] = useState(false);
   const successTimeoutRef = useRef(null);
+  const profileTrackedRef = useRef(null);
 
   // Tab states
   const [activeTab, setActiveTab] = useState("about");
@@ -358,6 +362,26 @@ const ExpertProfilePage = () => {
     if (!activeSubscription) return false;
     return activeSubscription.status === 'active' && new Date(activeSubscription.end_date) > new Date();
   }, [activeSubscription]);
+
+  useEffect(() => {
+    if (!numericExpertId || profileTrackedRef.current === numericExpertId) return;
+    profileTrackedRef.current = numericExpertId;
+    trackLeadEvent(
+      "profile-view",
+      buildTrackingPayload({
+        user,
+        sourcePage: "expert_profile",
+        actionLabel: "Expert Profile Open",
+        extra: {
+          expert_id: numericExpertId,
+          category_id: profile?.category_id || expertData?.category_id || null,
+          subcategory_id: profile?.subcategory_id || expertData?.subcategory_id || null,
+          city: user?.city || "",
+          area: user?.area || "",
+        },
+      })
+    );
+  }, [numericExpertId, profile?.category_id, profile?.subcategory_id, expertData, user]);
   
   // Get current pricing info based on selected mode
   const currentPricingInfo = useMemo(() => {
@@ -884,6 +908,30 @@ const ExpertProfilePage = () => {
 
   // Handle start call/chat with selected pricing mode
   const handleStart = useCallback((type) => {
+    if (!numericExpertId) return;
+
+    const trackActionableLead = () => {
+      trackLeadEvent(
+        type === "chat" ? "chat-attempt" : "call-attempt",
+        buildTrackingPayload({
+          user,
+          sourcePage: "expert_profile",
+          actionLabel: type === "chat" ? "Chat Now" : "Call Now",
+          extra: {
+            expert_id: numericExpertId,
+            category_id: profile?.category_id || expertData?.category_id || null,
+            subcategory_id: profile?.subcategory_id || expertData?.subcategory_id || null,
+            city: user?.city || "",
+            area: user?.area || "",
+            contact_consent: true,
+            can_show_contact_to_expert: true,
+          },
+        })
+      );
+    };
+
+    trackActionableLead();
+
     if (!isLoggedIn) {
       navigate("/user/auth", { state: { from: location } });
       return;
@@ -978,7 +1026,7 @@ const ExpertProfilePage = () => {
         setShowRecharge(true);
       }
     }
-  }, [isLoggedIn, navigate, location, displayPrices, balance, userId, numericExpertId, hasActiveSubscription, currentPricingInfo, profile, startChat]);
+  }, [isLoggedIn, navigate, location, displayPrices, balance, userId, numericExpertId, hasActiveSubscription, currentPricingInfo, profile, expertData, startChat, user]);
 
   const handleFollowAction = useCallback(async () => {
     if (!isLoggedIn || !userId || !numericExpertId) {
@@ -1203,48 +1251,58 @@ const ExpertProfilePage = () => {
               {/* Action Buttons based on selected pricing mode */}
               <CallToAction>
                 <div>
-                  {hasActiveSubscription ? (
+                  {hasActiveSubscription && canShowUserCallButton ? (
                     <>
                       <PriceTag style={{ background: "#10b981", color: "white" }}><FiUnlock /> Active Subscription</PriceTag>
                       <ActionButton $primary onClick={() => handleStart("call")}><FiPhoneCall /> Call (Free)</ActionButton>
                     </>
-                  ) : selectedPricingMode === "per_minute" && displayPrices.hasPerMinute ? (
+                  ) : canShowUserCallButton && selectedPricingMode === "per_minute" && displayPrices.hasPerMinute ? (
                     <>
                       <PriceTag>₹{displayPrices.callPrice}/min</PriceTag>
                       <ActionButton $primary onClick={() => handleStart("call")}><FiPhoneCall /> {t("expertProfile.startCall")}</ActionButton>
                     </>
-                  ) : selectedPricingMode === "session" && displayPrices.hasSession ? (
+                  ) : canShowUserCallButton && selectedPricingMode === "session" && displayPrices.hasSession ? (
                     <>
                       <PriceTag>₹{displayPrices.sessionPrice}</PriceTag>
                       <ActionButton $primary onClick={() => handleStart("call")}><FiPhoneCall /> Book Session Call</ActionButton>
                     </>
-                  ) : selectedPricingMode === "subscription" && displayPrices.hasSubscription ? (
+                  ) : canShowUserCallButton && selectedPricingMode === "subscription" && displayPrices.hasSubscription ? (
                     <>
                       <PriceTag style={{ background: "#8b5cf6", color: "white" }}><FiZap /> Subscribe</PriceTag>
                       <ActionButton $primary onClick={() => setShowPlansModal(true)}><FiZap /> View Plans</ActionButton>
                     </>
+                  ) : canShowUserCallButton ? (
+                    <>
+                      <PriceTag>Price not set</PriceTag>
+                      <ActionButton $primary onClick={() => handleStart("call")}><FiPhoneCall /> {t("expertProfile.startCall")}</ActionButton>
+                    </>
                   ) : null}
                 </div>
                 <div>
-                  {hasActiveSubscription ? (
+                  {hasActiveSubscription && canShowUserChatButton ? (
                     <>
                       <PriceTag style={{ background: "#10b981", color: "white" }}><FiUnlock /> Active Subscription</PriceTag>
                       <ActionButton onClick={() => handleStart("chat")}><FiMessageSquare /> Chat (Free)</ActionButton>
                     </>
-                  ) : selectedPricingMode === "per_minute" && displayPrices.hasPerMinute ? (
+                  ) : canShowUserChatButton && selectedPricingMode === "per_minute" && displayPrices.hasPerMinute ? (
                     <>
                       <PriceTag>₹{displayPrices.chatPrice}/min</PriceTag>
                       <ActionButton onClick={() => handleStart("chat")}><FiMessageSquare /> {t("expertProfile.startChat")}</ActionButton>
                     </>
-                  ) : selectedPricingMode === "session" && displayPrices.hasSession ? (
+                  ) : canShowUserChatButton && selectedPricingMode === "session" && displayPrices.hasSession ? (
                     <>
                       <PriceTag>₹{displayPrices.sessionPrice}</PriceTag>
                       <ActionButton onClick={() => handleStart("chat")}><FiMessageSquare /> Book Session Chat</ActionButton>
                     </>
-                  ) : selectedPricingMode === "subscription" && displayPrices.hasSubscription ? (
+                  ) : canShowUserChatButton && selectedPricingMode === "subscription" && displayPrices.hasSubscription ? (
                     <>
                       <PriceTag style={{ background: "#8b5cf6", color: "white" }}><FiZap /> Subscribe</PriceTag>
                       <ActionButton onClick={() => setShowPlansModal(true)}><FiZap /> Subscribe Now</ActionButton>
+                    </>
+                  ) : canShowUserChatButton ? (
+                    <>
+                      <PriceTag>Price not set</PriceTag>
+                      <ActionButton onClick={() => handleStart("chat")}><FiMessageSquare /> {t("expertProfile.startChat")}</ActionButton>
                     </>
                   ) : null}
                 </div>
@@ -1271,14 +1329,14 @@ const ExpertProfilePage = () => {
             <Section className="consult-card">
               <SectionTitle>{t("expertProfile.consultWithMe")}</SectionTitle>
               <div className="consult-options">
-                <button type="button" className="consult-option consult-call" onClick={() => handleStart("call")}>
+                <button type="button" className="consult-option consult-call" disabled={!canShowUserCallButton} onClick={() => handleStart("call")}>
                   <FiPhoneCall />
                   <span>Call</span>
                   <strong>
                     {hasActiveSubscription ? "Free" : selectedPricingMode === "session" && displayPrices.hasSession ? `₹${displayPrices.sessionPrice}` : `₹${displayPrices.callPrice}/min`}
                   </strong>
                 </button>
-                <button type="button" className="consult-option consult-chat" onClick={() => handleStart("chat")}>
+                <button type="button" className="consult-option consult-chat" disabled={!canShowUserChatButton} onClick={() => handleStart("chat")}>
                   <FiMessageSquare />
                   <span>Chat</span>
                   <strong>
@@ -1477,12 +1535,12 @@ const ExpertProfilePage = () => {
         </div>
 
         <div className="mobile-profile-actions">
-          <button type="button" className="mobile-message-btn" onClick={() => handleStart("chat")}>
+          <button type="button" className="mobile-message-btn" disabled={!canShowUserChatButton} onClick={() => handleStart("chat")}>
             <FiMessageSquare />
             <span>Chat</span>
             <strong>{hasActiveSubscription ? "Free" : `₹${currentPricingInfo.price}/min`}</strong>
           </button>
-          <button type="button" className="mobile-call-btn" onClick={() => handleStart("call")}>
+          <button type="button" className="mobile-call-btn" disabled={!canShowUserCallButton} onClick={() => handleStart("call")}>
             <FiPhoneCall />
             <span>Call</span>
             <strong>{hasActiveSubscription ? "Free" : `₹${currentPricingInfo.callPrice}/min`}</strong>

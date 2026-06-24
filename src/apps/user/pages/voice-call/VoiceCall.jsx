@@ -52,6 +52,7 @@ import {
 import { CALL_EVENTS } from "../../../../shared/constants/call.constants";
 import { soundManager } from "../../../../shared/services/sound/soundManager";
 import { SOUNDS } from "../../../../shared/services/sound/soundRegistry";
+import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/leadTracking";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/300?img=44";
 
@@ -102,6 +103,7 @@ export default function VoiceCall() {
   const [isResumed, setIsResumed] = useState(false);
   const [resumeChecked, setResumeChecked] = useState(false);
   const navigatedRef = useRef(false);
+  const trackedOutcomeRef = useRef(null);
 
   // Sync callState to ref
   useEffect(() => {
@@ -113,6 +115,27 @@ export default function VoiceCall() {
     navigatedRef.current = true;
     navigate(`/user/experts/${expert?.slug}`, { replace: true });
   }, [navigate, expert?.slug]);
+
+  const trackCallOutcome = useCallback(
+    (eventPath, actionLabel) => {
+      if (trackedOutcomeRef.current === eventPath) return;
+      trackedOutcomeRef.current = eventPath;
+      trackLeadEvent(
+        eventPath,
+        buildTrackingPayload({
+          user,
+          sourcePage: "voice_call",
+          actionLabel,
+          extra: {
+            expert_id: Number(expertId),
+            contact_consent: true,
+            can_show_contact_to_expert: true,
+          },
+        })
+      );
+    },
+    [expertId, user]
+  );
 
   useEffect(() => {
     callIdRef.current = callId;
@@ -415,6 +438,7 @@ if (!currentStream) {
 
     const onBusy = () => {
       soundManager.stopAll();
+      trackCallOutcome("call-declined", "Call Declined");
       callStartedRef.current = false;
       setCallState("busy");
       setReconnecting(false);
@@ -424,6 +448,7 @@ if (!currentStream) {
 
     const onOffline = () => {
       soundManager.stopAll();
+      trackCallOutcome("call-not-answered", "Call Not Answered");
       callStartedRef.current = false;
       setCallState("offline");
       setReconnecting(false);
@@ -433,6 +458,9 @@ if (!currentStream) {
     const onEnded = ({ reason }) => {
       soundManager.stopAll();
       console.log("❌ Call ended:", reason);
+      if (callStateRef.current !== "connected") {
+        trackCallOutcome("call-failed", "Call Failed");
+      }
       callStartedRef.current = false;
       setCallState("ended");
       setReconnecting(false);
@@ -555,7 +583,7 @@ if (!currentStream) {
       socket.off("call:resumed", onResumed);
       cleanupHard();
     };
-  }, [socket, handleWebRTCOffer, cleanupHard]);
+  }, [socket, handleWebRTCOffer, cleanupHard, trackCallOutcome]);
 
   useEffect(() => {
     const handleExpertOnline = ({ expertId }) => {
@@ -674,6 +702,7 @@ if (!currentStream) {
       });
     } else {
       console.log("⚠️ No callId yet → cancelling attempt");
+      trackCallOutcome("call-failed", "Call Cancelled Before Connect");
       socket.emit("call:cancel_attempt", {
         expertId: Number(expertId),
       });
@@ -684,7 +713,7 @@ if (!currentStream) {
       goBackToProfile();
       isCleaningUpRef.current = false;
     }, 200);
-  }, [goBackToProfile, socket, expertId, cleanupHard]);
+  }, [goBackToProfile, socket, expertId, cleanupHard, trackCallOutcome]);
 
   // Mute toggle
   const handleMute = useCallback(() => {

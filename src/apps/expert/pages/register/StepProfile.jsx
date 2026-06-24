@@ -334,7 +334,7 @@ export default function StepProfile() {
       updateExpertData({ profileId: profile?.id, profile });
 
       notifySuccess("Profile saved successfully! 🎉");
-      setTimeout(() => navigate("/expert/register/pricing"), 500);
+      setTimeout(() => navigate("/expert/home"), 500);
     } catch (err) {
       setSubmitError(err || "Failed to save profile.");
     } finally {

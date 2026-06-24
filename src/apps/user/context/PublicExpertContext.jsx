@@ -6,6 +6,7 @@ import {
 } from "../../../shared/api/expertapi/profile.api";
 import { getExpertPriceByIdApi } from "../../../shared/api/expertapi/price.api";
 import useNetworkReconnect from "../../../shared/hooks/useNetworkReconnect";
+import { normalizeExpertAccess } from "../../../shared/utils/expertAccess";
 
 const ExpertContext = createContext(null);
 export const usePublicExpert = () => useContext(ExpertContext);
@@ -52,7 +53,7 @@ export const PublicExpertProvider = ({ children }) => {
         // ✅ FIX: backend returns { success, data }
         const raw = res?.data || [];
 
-        const mapped = raw.map((p) => ({
+        const mapped = raw.map((p) => normalizeExpertAccess({
           id: p.expert_id,
           profileId: p.id,
           slug: p.expert_slug,
@@ -64,6 +65,25 @@ export const PublicExpertProvider = ({ children }) => {
          session: p.session || null,
          pricing_modes: p.pricing_modes || [],
           subcategory_id: p.subcategory_id,
+          isPaidExpert: p.isPaidExpert,
+          is_subscribed: p.is_subscribed,
+          isSubscribed: p.isSubscribed,
+          subscription_status: p.subscription_status,
+          subscriptionStatus: p.subscriptionStatus,
+          access_level: p.access_level,
+          accessLevel: p.accessLevel,
+          can_chat: p.can_chat,
+          canChat: p.canChat,
+          can_call: p.can_call,
+          canCall: p.canCall,
+          can_view_contact: p.can_view_contact,
+          canViewContact: p.canViewContact,
+          chat_enabled: p.chat_enabled,
+          chatEnabled: p.chatEnabled,
+          call_enabled: p.call_enabled,
+          callEnabled: p.callEnabled,
+          plan_expires_at: p.plan_expires_at,
+          planExpiresAt: p.planExpiresAt,
         }));
 
         setExperts(mapped);
@@ -98,10 +118,12 @@ export const PublicExpertProvider = ({ children }) => {
 
       if (!data) return;
 
+      const normalizedData = normalizeExpertAccess(data);
+
       setExpertData({
         expertId: data.expert_id,
         profileId: data.id,
-        profile: data,
+        profile: normalizedData,
         name: data.name,
         email: data.email,
         phone: data.phone,

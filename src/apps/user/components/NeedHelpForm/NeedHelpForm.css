@@ -1,0 +1,87 @@
+.need-help-form {
+  margin: 24px 0;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.need-help-form__header h2 {
+  margin: 0 0 4px;
+  color: #0f172a;
+  font-size: 20px;
+}
+
+.need-help-form__header p {
+  margin: 0 0 16px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.need-help-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.need-help-form input,
+.need-help-form select,
+.need-help-form textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 11px 12px;
+  color: #0f172a;
+  font: inherit;
+}
+
+.need-help-form textarea,
+.need-help-form__consent,
+.need-help-form button {
+  grid-column: 1 / -1;
+}
+
+.need-help-form textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.need-help-form__consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #334155;
+  font-size: 13px;
+}
+
+.need-help-form__consent input {
+  width: auto;
+  margin-top: 3px;
+}
+
+.need-help-form button {
+  border: 0;
+  border-radius: 8px;
+  padding: 12px 16px;
+  background: #0f172a;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.need-help-form button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.need-help-form__message {
+  margin: 12px 0 0;
+  color: #0f766e;
+  font-size: 14px;
+}
+
+@media (max-width: 700px) {
+  .need-help-form__grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -56,6 +56,8 @@ import { useCategory } from "../../../../shared/context/CategoryContext";
 import { getExpertsApi } from "../../../../shared/api/expertapi/expert.api";
 import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 import useChatRequest from "../../../../shared/hooks/useChatRequest"; // NEW IMPORT
+import { normalizeExpertAccess } from "../../../../shared/utils/expertAccess";
+import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/leadTracking";
 import {
   findCategoryById,
   findCategoryBySlug,
@@ -677,27 +679,64 @@ export default function UserExpertsPage() {
 
   // UPDATED: Use hook's startChat instead of direct socket emit
   const handleStartChat = useCallback((expertId) => {
+    const expert = experts.find(e => Number(e.id) === Number(expertId));
+    if (!expertId) return;
+
+    trackLeadEvent(
+      "chat-attempt",
+      buildTrackingPayload({
+        user,
+        sourcePage: "call_chat_listing",
+        actionLabel: "Chat Now",
+        extra: {
+          expert_id: Number(expertId),
+          category_id: expert?.category_id || expert?.categoryId || null,
+          subcategory_id: expert?.subcategory_id || expert?.subcategoryId || null,
+          contact_consent: true,
+          can_show_contact_to_expert: true,
+        },
+      })
+    );
+
     if (!isLoggedIn) {
       navigate("/user/auth", { state: { from: location } });
       return;
     }
-
-    const expert = experts.find(e => Number(e.id) === Number(expertId));
     
     startChat({
       expertId,
       chatPrice: expert?.chat_per_minute || 0,
       pricingMode: "per_minute",
     });
-  }, [isLoggedIn, experts, startChat, navigate, location]);
+  }, [isLoggedIn, experts, startChat, navigate, location, user]);
 
   const handleStartCall = useCallback((expertId) => {
+    const expert = experts.find(e => Number(e.id) === Number(expertId));
+    if (!expertId) return;
+
+    trackLeadEvent(
+      "call-attempt",
+      buildTrackingPayload({
+        user,
+        sourcePage: "call_chat_listing",
+        actionLabel: "Call Now",
+        extra: {
+          expert_id: Number(expertId),
+          category_id: expert?.category_id || expert?.categoryId || null,
+          subcategory_id: expert?.subcategory_id || expert?.subcategoryId || null,
+          contact_consent: true,
+          can_show_contact_to_expert: true,
+        },
+      })
+    );
+
     if (!isLoggedIn) {
       navigate("/user/auth", { state: { from: location } });
       return;
     }
+
     navigate(`/user/voice-call/${expertId}`);
-  }, [isLoggedIn, navigate, location]);
+  }, [isLoggedIn, experts, navigate, location, user]);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -707,7 +746,7 @@ export default function UserExpertsPage() {
   };
 
   const cardExperts = useMemo(() => {
-    return experts.map((exp) => ({
+    return experts.map((exp) => normalizeExpertAccess({
       id: exp.id,
       slug: exp.slug || exp.id,
       name: exp.name,
@@ -741,6 +780,25 @@ export default function UserExpertsPage() {
       gender: exp.gender || exp.expert_gender || "",
       status: exp.status || exp.availability || exp.available_status || "",
       is_available: exp.is_available,
+      isPaidExpert: exp.isPaidExpert,
+      is_subscribed: exp.is_subscribed,
+      isSubscribed: exp.isSubscribed,
+      subscription_status: exp.subscription_status,
+      subscriptionStatus: exp.subscriptionStatus,
+      access_level: exp.access_level,
+      accessLevel: exp.accessLevel,
+      can_chat: exp.can_chat,
+      canChat: exp.canChat,
+      can_call: exp.can_call,
+      canCall: exp.canCall,
+      can_view_contact: exp.can_view_contact,
+      canViewContact: exp.canViewContact,
+      chat_enabled: exp.chat_enabled,
+      chatEnabled: exp.chatEnabled,
+      call_enabled: exp.call_enabled,
+      callEnabled: exp.callEnabled,
+      plan_expires_at: exp.plan_expires_at,
+      planExpiresAt: exp.planExpiresAt,
     }));
   }, [experts, onlineExperts]);
 
@@ -1509,6 +1567,8 @@ export default function UserExpertsPage() {
                           <button
                             type="button"
                             className="mobile-callchat-card__cta"
+                            disabled={!exp.id}
+                            title={tab === "chat" ? "Start chat" : "Start call"}
                             onClick={() => (tab === "chat" ? handleStartChat(exp.id) : handleStartCall(exp.id))}
                           >
                             {tab === "chat" ? <FiMessageSquare aria-hidden="true" /> : <FiPhoneCall aria-hidden="true" />}

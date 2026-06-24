@@ -1,10 +1,12 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useExpertNotifications } from "../context/ExpertNotificationsContext";
 import { useExpert } from "../../../shared/context/ExpertContext";
 import { useWebPush } from "../../../shared/hooks/useWebPush";
 
 import StatsCard from "../components/StatsCard";
 import QueueCard from "../components/QueueCard";
+import { getExpertLeadStatsApi } from "../../../shared/api/expertapi/leads.api";
 
 import {
   ContentInner,
@@ -13,8 +15,10 @@ import {
 } from "../styles/Dashboard.styles";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { expertData, profileLoading } = useExpert();
   const { unreadCount, chatUnreadCount, callUnreadCount } = useExpertNotifications();
+  const [leadStats, setLeadStats] = useState({});
 
   const expertId = useMemo(() => {
     if (!expertData) return null;
@@ -22,6 +26,17 @@ export default function Dashboard() {
   }, [expertData]);
 
   const expertName = expertData?.profile?.name || expertData?.name || "Expert";
+  const isPaid =
+    Boolean(expertData?.can_view_contact) ||
+    (expertData?.subscription_status === "active" &&
+      ["paid_basic", "paid_growth"].includes(expertData?.access_level));
+  const isLimited = !isPaid;
+
+  useEffect(() => {
+    getExpertLeadStatsApi()
+      .then((res) => setLeadStats(res.data?.data || res.data?.stats || {}))
+      .catch(() => setLeadStats({}));
+  }, []);
 
   const { supported, permission, enable } = useWebPush({
     panel: "expert",
@@ -50,6 +65,21 @@ export default function Dashboard() {
       <Welcome>
         {profileLoading ? "Loading..." : `Welcome, ${expertName}`}
       </Welcome>
+
+      {isLimited && (
+        <div style={{ ...bannerStyle, alignItems: "flex-start", background: "#f8fafc" }}>
+          <div>
+            <strong>Your free expert account is active.</strong>
+            <p style={{ margin: "6px 0 0", color: "#475569" }}>
+              Users are viewing your profile and category. Activate a G9 Expert plan to unlock contact details,
+              chat/call access, service creation, earnings, and withdrawals.
+            </p>
+          </div>
+          <button onClick={() => navigate("/expert/g9-plan")} style={buttonStyle}>
+            Upgrade Plan
+          </button>
+        </div>
+      )}
 
       {/* 🔔 1. Default State: Jab user ne choose nahi kiya (Pehli baar load par) */}
       {supported && permission === "default" && expertId && (
@@ -81,6 +111,41 @@ export default function Dashboard() {
         ))}
       </StatsRow>
 
+      {isLimited && (
+        <StatsRow>
+          <StatsCard label="Category Views" value={String(leadStats.today_category_views || leadStats.todayCategoryViews || 0)} />
+          <StatsCard label="Profile Visits" value={String(leadStats.profile_visits || leadStats.profileVisits || 0)} />
+          <StatsCard label="Lead Opportunities" value={String(leadStats.new_inquiries || leadStats.newInquiries || 0)} />
+          <StatsCard label="Chat Attempts" value={String(leadStats.chat_attempts || leadStats.chatAttempts || 0)} />
+          <StatsCard label="Call Attempts" value={String(leadStats.call_attempts || leadStats.callAttempts || 0)} />
+          <StatsCard label="Missed/Failed Calls" value={String((leadStats.missed_calls || leadStats.missedCalls || 0) + (leadStats.failed_calls || leadStats.failedCalls || 0))} />
+        </StatsRow>
+      )}
+
+      {isLimited && (
+        <div style={lockedGridStyle}>
+          {[
+            "Lead contact details",
+            "Chat and call access",
+            "Service creation",
+            "Earnings",
+            "Withdrawals",
+          ].map((label) => (
+            <div key={label} style={lockedCardStyle}>
+              <div>
+                <strong>{label}</strong>
+                <p style={{ margin: "6px 0 0", color: "#64748b", fontSize: "13px" }}>
+                  Activate a G9 Expert plan to unlock.
+                </p>
+              </div>
+              <button onClick={() => navigate("/expert/g9-plan")} style={buttonStyle}>
+                Upgrade Plan
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <QueueCard />
     </ContentInner>
   );
@@ -106,4 +171,22 @@ const buttonStyle = {
   fontWeight: "700",
   cursor: "pointer",
   fontSize: "14px"
+};
+
+const lockedGridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+  gap: "12px",
+  marginBottom: "20px",
+};
+
+const lockedCardStyle = {
+  border: "1px solid #e2e8f0",
+  borderRadius: "8px",
+  padding: "14px",
+  background: "#ffffff",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: "12px",
 };

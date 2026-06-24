@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCategory } from "../../../../shared/context/CategoryContext";
+import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { getCategoryPath } from "../../../../shared/utils/categoryRoutes";
+import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/leadTracking";
 
 const DEFAULT_CATEGORY_IMAGE = "/default-category.png";
 
 const Categories = () => {
   const { categories: apiCategories, loading } = useCategory();
+  const { user } = useAuth();
   const [categories, setCategories] = useState(() => {
     const cached = localStorage.getItem("cached_categories");
     return cached ? JSON.parse(cached) : [];
@@ -36,6 +39,18 @@ const Categories = () => {
     );
   }
 
+  const handleCategoryClick = (cat) => {
+    trackLeadEvent(
+      "category-view",
+      buildTrackingPayload({
+        user,
+        sourcePage: "home_category_card",
+        actionLabel: "Home Category Card",
+        extra: { category_id: cat.id },
+      })
+    );
+  };
+
   return (
     <section className="section">
       <div className="category-grid">
@@ -44,6 +59,7 @@ const Categories = () => {
             className="category-item"
             key={cat.id}
             to={getCategoryPath(cat)}
+            onClick={() => handleCategoryClick(cat)}
             aria-label={`Browse ${cat.name} experts`}
           >
             <div className="category-image-wrapper">

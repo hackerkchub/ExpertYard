@@ -240,11 +240,11 @@ const UserProfile = () => {
 
       if (type === "email") {
         apiUrl = `${APP_CONFIG.API_BASE_URL}/otp/email/send`;
-        payload = { email: editForm.email.trim().toLowerCase() };
+        payload = { email: editForm.email.trim().toLowerCase(), userType: "user", purpose: "account_verify" };
       } else {
         apiUrl = `${APP_CONFIG.API_BASE_URL}/otp/sms/send`;
         const sanitizedPhone = editForm.phone.replace(/\D/g, "");
-        payload = { countryCode: "91", mobile: sanitizedPhone };
+        payload = { countryCode: "91", mobile: sanitizedPhone, userType: "user", purpose: "account_verify" };
       }
 
       const response = await fetch(apiUrl, {
@@ -757,6 +757,8 @@ const UserProfile = () => {
           email={editForm.email}
           phone={editForm.phone}
           type={verifyType}
+          userType="user"
+          purpose="account_verify"
           onClose={() => setShowOtp(false)}
           onSuccess={handleOtpVerifySuccess}
         />

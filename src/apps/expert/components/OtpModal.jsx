@@ -94,7 +94,15 @@ const Button = styled.button`
   transition: opacity 0.2s;
 `;
 
-export default function OtpModal({ email, phone, type, onClose, onSuccess }) {
+export default function OtpModal({
+  email,
+  phone,
+  type,
+  userType = "user",
+  purpose = "registration",
+  onClose,
+  onSuccess,
+}) {
   const [otp, setOtp] = useState(["", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -180,10 +188,10 @@ export default function OtpModal({ email, phone, type, onClose, onSuccess }) {
 
       if (apiType === "email") {
         apiUrl = `${APP_CONFIG.API_BASE_URL}/otp/email/verify`;
-        payload = { email, otp: otpString };
+        payload = { email, otp: otpString, userType, purpose };
       } else {
         apiUrl = `${APP_CONFIG.API_BASE_URL}/otp/sms/verify`;
-        payload = { countryCode: "91", mobile: phone, otp: otpString };
+        payload = { countryCode: "91", mobile: phone, otp: otpString, userType, purpose };
       }
 
       const response = await fetch(apiUrl, {

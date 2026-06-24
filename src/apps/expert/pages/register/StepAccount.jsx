@@ -211,6 +211,19 @@ export default function Auth() {
         email: res.expert.email,
         phone: res.expert.phone,
         isSubscribed: res.expert.is_subscribed,
+        is_subscribed: res.expert.is_subscribed,
+        subscription_status: res.expert.subscription_status || "free",
+        access_level: res.expert.access_level || "free_limited",
+        planId: res.expert.plan_id || null,
+        planName: res.expert.plan_name || null,
+        planStartedAt: res.expert.plan_started_at || null,
+        planExpiresAt: res.expert.plan_expires_at || null,
+        can_view_contact: Boolean(res.expert.can_view_contact),
+        can_chat: Boolean(res.expert.can_chat),
+        can_call: Boolean(res.expert.can_call),
+        can_create_service: Boolean(res.expert.can_create_service),
+        can_earn: Boolean(res.expert.can_earn),
+        can_withdraw: Boolean(res.expert.can_withdraw),
         categoryId: res.expert.category_id || null,
         subCategoryIds: res.expert.subcategory_id ? [res.expert.subcategory_id] : [],
         profileId: res.expert.profile_id || null,
@@ -220,16 +233,12 @@ export default function Auth() {
       const expert = res.expert;
 
       // ✅ Step Based Navigation
-      if (!expert.is_subscribed) {
-        navigate("/expert/register/subscription");
-      } else if (!expert.category_id) {
+      if (!expert.category_id) {
         navigate("/expert/register/category");
       } else if (!expert.subcategory_id) {
         navigate("/expert/register/subcategory");
       } else if (!expert.profile_id) {
         navigate("/expert/register/profile");
-      } else if (!expert.price_id) {
-        navigate("/expert/register/pricing");
       } else {
         navigate("/expert/home");
       }
@@ -256,10 +265,15 @@ export default function Auth() {
 
       if (type === "email") {
         apiUrl = `${APP_CONFIG.API_BASE_URL}/otp/email/send`;
-        payload = { email: registerForm.email };
+        payload = { email: registerForm.email.trim().toLowerCase(), userType: "expert", purpose: "registration" };
       } else {
         apiUrl = `${APP_CONFIG.API_BASE_URL}/otp/sms/send`;
-        payload = { countryCode: "91", mobile: registerForm.phone };
+        payload = {
+          countryCode: "91",
+          mobile: registerForm.phone.replace(/\D/g, ""),
+          userType: "expert",
+          purpose: "registration",
+        };
       }
 
       const response = await fetch(apiUrl, {
@@ -323,9 +337,17 @@ export default function Auth() {
         email: registerForm.email,
         phone: registerForm.phone,
         referral_code: registerForm.referral_code || null,
+        subscription_status: "free",
+        access_level: "free_limited",
+        can_view_contact: false,
+        can_chat: false,
+        can_call: false,
+        can_create_service: false,
+        can_earn: false,
+        can_withdraw: false,
       });
 
-      navigate("/expert/register/subscription");
+      navigate("/expert/register/category");
 
     } catch (err) {
       showMessage(`❌ Registration failed: ${err.message || "Try again."}`, true);
@@ -804,6 +826,8 @@ export default function Auth() {
           email={registerForm.email}
           phone={registerForm.phone}
           type={verifyType}
+          userType="expert"
+          purpose="registration"
           onClose={() => setShowOtp(false)}
           onSuccess={handleOtpVerifySuccess}
         />

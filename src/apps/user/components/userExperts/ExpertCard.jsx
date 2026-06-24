@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
+import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/leadTracking";
 
 import {
   Card,
@@ -92,6 +93,26 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
   const responseTime = data.avg_response_time || "< 1 min";
   const consultationCount = data.total_consultations || 0;
   const isCallChatCard = variant === "callChat";
+  const canUseMode = Boolean(expertId);
+
+  const trackUserAttempt = useCallback((type) => {
+    if (!expertId) return;
+    trackLeadEvent(
+      type === "chat" ? "chat-attempt" : "call-attempt",
+      buildTrackingPayload({
+        user,
+        sourcePage: "expert_card",
+        actionLabel: type === "chat" ? "Chat Now" : "Call Now",
+        extra: {
+          expert_id: Number(expertId),
+          category_id: data.category_id || data.categoryId || null,
+          subcategory_id: data.subcategory_id || data.subcategoryId || null,
+          contact_consent: true,
+          can_show_contact_to_expert: true,
+        },
+      })
+    );
+  }, [data.category_id, data.categoryId, data.subcategory_id, data.subcategoryId, expertId, user]);
 
   // PRICING LOGIC
   const hasPerMinute = callPrice > 0 || chatPrice > 0;
@@ -112,6 +133,9 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
   }, [hasPerMinute, hasSession, mode, callPrice, chatPrice, sessionPrice]);
 
   const handleStartChatLocal = useCallback(() => {
+    if (!expertId) return;
+    trackUserAttempt("chat");
+
     if (!isLoggedIn) {
       navigate("/user/auth", { state: { from: `/user/experts/${expertSlug}` } });
       return;
@@ -152,10 +176,13 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
     } else {
       navigate(`/user/experts/${expertSlug}`);
     }
-  }, [isLoggedIn, navigate, expertId, expertSlug, hasPerMinute, hasSession, hasSubscription, 
+  }, [expertId, trackUserAttempt, isLoggedIn, navigate, expertSlug, hasPerMinute, hasSession, hasSubscription, 
       chatPrice, sessionPrice, balance, userId, user, onStartChat]);
 
   const handleStartCallLocal = useCallback(() => {
+    if (!expertId) return;
+    trackUserAttempt("call");
+
     if (!isLoggedIn) {
       navigate("/user/auth", { state: { from: `/user/experts/${expertSlug}` } });
       return;
@@ -195,7 +222,7 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
     } else {
       navigate(`/user/experts/${expertSlug}`);
     }
-  }, [isLoggedIn, navigate, expertId, expertSlug, hasPerMinute, hasSession, hasSubscription,
+  }, [expertId, trackUserAttempt, isLoggedIn, navigate, expertSlug, hasPerMinute, hasSession, hasSubscription,
       callPrice, sessionPrice, balance, onStartCall]);
 
   const handleViewProfile = useCallback(() => {
@@ -222,15 +249,8 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
   };
 
   const isButtonDisabled = () => {
-    if (mode === "chat") {
-      if (hasPerMinute) return chatPrice <= 0;
-      if (hasSession) return sessionPrice <= 0;
-      return false;
-    } else {
-      if (hasPerMinute) return callPrice <= 0;
-      if (hasSession) return sessionPrice <= 0;
-      return false;
-    }
+    if (!canUseMode) return true;
+    return false;
   };
 
   // Animation variants

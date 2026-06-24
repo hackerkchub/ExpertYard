@@ -2,9 +2,11 @@ import React, { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useCategory } from "../../../../shared/context/CategoryContext";
+import { useAuth } from "../../../../shared/context/UserAuthContext";
 import MobileSelect from "../../components/MobileSelect/MobileSelect";
 import { useSeo } from "../../../../shared/seo/useSeo";
 import { toAbsoluteUrl } from "../../../../shared/seo/siteConfig";
+import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/leadTracking";
 import {
   buildCategorySeoDescription,
   getCategorySubcategoriesPath,
@@ -77,6 +79,7 @@ const Categories = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { categories, loading } = useCategory();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'list'
   const [sortBy, setSortBy] = useState("popular");
@@ -144,6 +147,18 @@ const Categories = () => {
 
   if (loading) return null; // Or show your SkeletonGrid here
 
+  const handleCategoryClick = (cat) => {
+    trackLeadEvent(
+      "category-view",
+      buildTrackingPayload({
+        user,
+        sourcePage: "categories_page",
+        actionLabel: "Category Card",
+        extra: { category_id: cat.id },
+      })
+    );
+  };
+
   return (
     <PageContainer>
       {/* 1. Breadcrumb - Desktop only or subtle on mobile */}
@@ -191,6 +206,7 @@ const Categories = () => {
                 key={cat.id} 
                 $view={viewMode}
                 to={getCategorySubcategoriesPath(cat)}
+                onClick={() => handleCategoryClick(cat)}
                 aria-label={`Browse ${cat.name} experts`}
               >
                 <CategoryImage 

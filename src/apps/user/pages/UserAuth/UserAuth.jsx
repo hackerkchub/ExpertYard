@@ -283,12 +283,12 @@ const UserAuth = () => {
 
       if (type === "email") {
         apiUrl = `${APP_CONFIG.API_BASE_URL}/otp/email/send`;
-        payload = { email: form.email.trim().toLowerCase() };
+        payload = { email: form.email.trim().toLowerCase(), userType: "user", purpose: "registration" };
       } else {
         apiUrl = `${APP_CONFIG.API_BASE_URL}/otp/sms/send`;
         // Sanitize phone number - remove non-digits
         const sanitizedPhone = form.phone.replace(/\D/g, "");
-        payload = { countryCode: "91", mobile: sanitizedPhone };
+        payload = { countryCode: "91", mobile: sanitizedPhone, userType: "user", purpose: "registration" };
       }
 
       const response = await fetch(apiUrl, {
@@ -776,6 +776,8 @@ const UserAuth = () => {
           email={form.email}
           phone={form.phone}
           type={verifyType}
+          userType="user"
+          purpose="registration"
           onClose={() => setShowOtp(false)}
           onSuccess={handleOtpVerifySuccess}
         />

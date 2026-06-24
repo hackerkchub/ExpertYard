@@ -1,15 +1,15 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FiInfo, FiDollarSign, FiList, FiType, FiCheckCircle, FiLock, FiUpload, FiFileText } from "react-icons/fi";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import * as S from "./CreateService.style";
-import { APP_CONFIG } from "../../../../config/appConfig";
+import expertApi from "../../../../shared/api/expertapi/axiosInstance";
 
 const CreateService = () => {
   const navigate = useNavigate();
   const { expertData, profileLoading } = useExpert();
   const isLoggedIn = !!expertData?.expertId;
+  const canCreateService = Boolean(expertData?.can_create_service);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -37,6 +37,10 @@ const CreateService = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isLoggedIn) return;
+    if (!canCreateService) {
+      setMessage({ type: "error", text: "Activate a G9 Expert plan to create and publish services." });
+      return;
+    }
 
     setLoading(true);
     setMessage({ type: "", text: "" });
@@ -55,7 +59,7 @@ const CreateService = () => {
     }
 
     try {
-      const response = await axios.post(`${APP_CONFIG.API_BASE_URL}/services`, data);
+      const response = await expertApi.post("/services", data);
       if (response.data) {
         setMessage({ type: "success", text: "Service published successfully!" });
         setFormData({ title: "", deliverables: "", description: "", price: "" });
@@ -81,6 +85,21 @@ const CreateService = () => {
           <S.SectionTitle style={{ border: 'none', textAlign: 'center' }}>Access Denied</S.SectionTitle>
           <p>Please login as an Expert to create a service.</p>
           <S.SubmitButton onClick={() => navigate('/expert/login')} style={{ marginTop: '20px' }}>Go to Login</S.SubmitButton>
+        </S.FormContainer>
+      </S.PageWrapper>
+    );
+  }
+
+  if (!canCreateService) {
+    return (
+      <S.PageWrapper>
+        <S.FormContainer style={{ textAlign: "center", padding: "50px" }}>
+          <FiLock size={50} color="#0A66C2" />
+          <S.SectionTitle style={{ border: "none", textAlign: "center" }}>Upgrade Required</S.SectionTitle>
+          <p>Activate a G9 Expert plan to create services, receive bookings, and start earning.</p>
+          <S.SubmitButton onClick={() => navigate("/expert/g9-plan")} style={{ marginTop: "20px" }}>
+            View Plans
+          </S.SubmitButton>
         </S.FormContainer>
       </S.PageWrapper>
     );

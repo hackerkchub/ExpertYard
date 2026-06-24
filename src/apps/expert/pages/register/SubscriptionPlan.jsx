@@ -553,9 +553,22 @@ export default function SubscriptionPlan() {
             });
 
             if (verifyRes.data.success) {
-              updateExpertData({ isSubscribed: 1 });
+              updateExpertData({
+                isSubscribed: 1,
+                is_subscribed: 1,
+                subscription_status: "active",
+                access_level: verifyRes.data.access_level || "paid_basic",
+                planId: verifyRes.data.plan_id || selectedPlan.id,
+                planName: selectedPlan.plan_name,
+                can_view_contact: true,
+                can_chat: true,
+                can_call: true,
+                can_create_service: true,
+                can_earn: true,
+                can_withdraw: true,
+              });
               toast.success("Payment successful! Redirecting...");
-              setTimeout(() => navigate("/expert/register/category"), 1500);
+              setTimeout(() => navigate("/expert/home"), 1500);
             }
           } catch(err) {
             toast.error(err.response?.data?.message || "Payment verification failed");

@@ -5,7 +5,10 @@ import { IoChatbubble, IoGridOutline } from "react-icons/io5";
 
 import { getSubCategoriesApi } from "../../../../shared/api/expertapi/category.api";
 import { useCategory } from "../../../../shared/context/CategoryContext";
+import { useAuth } from "../../../../shared/context/UserAuthContext";
+import NeedHelpForm from "../../components/NeedHelpForm/NeedHelpForm";
 import { useSeo } from "../../../../shared/seo/useSeo";
+import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/leadTracking";
 import {
   buildCategoryCanonicalPath,
   getCategorySeoData,
@@ -64,8 +67,10 @@ export default function SubcategoryPage() {
   const navigate = useNavigate();
   const requestRef = useRef(0);
   const abortRef = useRef(null);
+  const trackedCategoryRef = useRef(null);
 
   const { categories, loading: categoriesLoading } = useCategory();
+  const { user } = useAuth();
   const [subcategories, setSubcategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -130,6 +135,20 @@ export default function SubcategoryPage() {
     loadSubcategories();
     return () => abortRef.current?.abort();
   }, [loadSubcategories]);
+
+  useEffect(() => {
+    if (!resolvedCategoryId || trackedCategoryRef.current === resolvedCategoryId) return;
+    trackedCategoryRef.current = resolvedCategoryId;
+    trackLeadEvent(
+      "category-view",
+      buildTrackingPayload({
+        user,
+        sourcePage: "category_page",
+        actionLabel: "Category Page Open",
+        extra: { category_id: resolvedCategoryId },
+      })
+    );
+  }, [resolvedCategoryId, user]);
 
   const handleSubcategoryClick = useCallback(
     (subcategoryId) => {
@@ -234,6 +253,14 @@ export default function SubcategoryPage() {
           </EmptyStateBox>
         )}
       </SectionCard>
+
+      {resolvedCategoryId && (
+        <NeedHelpForm
+          categoryId={resolvedCategoryId}
+          categoryName={matchedCategory?.name || categorySeoData.label}
+          sourcePage="category_page"
+        />
+      )}
     </PageContainer>
   );
 }

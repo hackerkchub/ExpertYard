@@ -21,13 +21,13 @@ const ExpertChatHistory = lazy(() => import("../pages/chat-history/ExpertChatHis
 const ExpertVoiceCall = lazy(() => import("../pages/voice-call/ExpertVoiceCall"));
 const ExpertNotificationPage = lazy(() => import("../pages/notification/ExpertNotificationPage"));
 const EarningDashboard = lazy(() => import("../pages/earnings/ExpertEarningsDashboard"));
+const ExpertLeads = lazy(() => import("../pages/leads/ExpertLeads"));
 const Calendar = lazy(() => import("../pages/calendar/Calendar"));
 const ExpertSettings = lazy(() => import("../pages/settings/ExpertSettings"));
 const CreateService = lazy(() => import("../pages/services/CreateServices"));
 const MyServices = lazy(() => import("../pages/services/MyServices"));
 const ExpertBookings = lazy(() => import("../pages/services/ExpertBookings"));
 const SubscriptionPlan = lazy(() => import("../pages/register/SubscriptionPlan"));
-const GuidexaExpertPlan = lazy(() => import("../pages/GuidexaExpertPlan/GuidexaExpertPlan"));
 
 const withLazyRoute = (node) => <LazyRoute>{node}</LazyRoute>;
 
@@ -81,7 +81,7 @@ export default function ExpertAppRoutes() {
           element={
             <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
               <LazyRoute>
-                <GuidexaExpertPlan />
+                <SubscriptionPlan />
               </LazyRoute>
             </ProtectedExpertRoute>
           }
@@ -162,6 +162,16 @@ export default function ExpertAppRoutes() {
             <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
               <LazyRoute>
                 <EarningDashboard />
+              </LazyRoute>
+            </ProtectedExpertRoute>
+          }
+        />
+        <Route
+          path="leads"
+          element={
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <LazyRoute>
+                <ExpertLeads />
               </LazyRoute>
             </ProtectedExpertRoute>
           }

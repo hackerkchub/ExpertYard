@@ -56,6 +56,18 @@ const DEFAULT_STATE = {
   position: "",
   profile_photo: "",
   is_subscribed: 0,
+  subscription_status: "free",
+  access_level: "free_limited",
+  planId: null,
+  planName: null,
+  planStartedAt: null,
+  planExpiresAt: null,
+  can_view_contact: false,
+  can_chat: false,
+  can_call: false,
+  can_create_service: false,
+  can_earn: false,
+  can_withdraw: false,
   priceId: null,
 };
 
@@ -128,7 +140,15 @@ export const ExpertProvider = ({ children }) => {
         prev.expertId !== newState.expertId ||
         prev.name !== newState.name ||
         prev.profile_photo !== newState.profile_photo ||
-        prev.priceId !== newState.priceId;
+        prev.priceId !== newState.priceId ||
+        prev.subscription_status !== newState.subscription_status ||
+        prev.access_level !== newState.access_level ||
+        prev.can_view_contact !== newState.can_view_contact ||
+        prev.can_chat !== newState.can_chat ||
+        prev.can_call !== newState.can_call ||
+        prev.can_create_service !== newState.can_create_service ||
+        prev.can_earn !== newState.can_earn ||
+        prev.can_withdraw !== newState.can_withdraw;
 
       if (hasChanged) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
@@ -199,12 +219,32 @@ export const ExpertProvider = ({ children }) => {
             : `${BASE_URL}${profileData.profile_photo}`
           : DEFAULT_AVATAR;
 
+        let accessProfile = {};
+        try {
+          const meRes = await expertApi.get("/expert/me", { skipLoader: true });
+          accessProfile = meRes?.data?.data || {};
+        } catch {
+          accessProfile = {};
+        }
+
         updateExpertData({
           expertId: profileData.expert_id,
           profileId: profileData.id,
           profile: profileData,
           name: profileData.name,
           profile_photo: photoUrl,
+          subscription_status: accessProfile.access?.subscription_status || accessProfile.subscription_status || "free",
+          access_level: accessProfile.access?.access_level || accessProfile.access_level || "free_limited",
+          planId: accessProfile.access?.plan_id || accessProfile.current_plan_id || null,
+          planName: accessProfile.access?.plan_name || accessProfile.plan_name || null,
+          planStartedAt: accessProfile.access?.plan_started_at || accessProfile.plan_started_at || null,
+          planExpiresAt: accessProfile.access?.plan_expires_at || accessProfile.plan_expires_at || null,
+          can_view_contact: Boolean(accessProfile.access?.can_view_contact ?? accessProfile.can_view_contact),
+          can_chat: Boolean(accessProfile.access?.can_chat ?? accessProfile.can_chat),
+          can_call: Boolean(accessProfile.access?.can_call ?? accessProfile.can_call),
+          can_create_service: Boolean(accessProfile.access?.can_create_service ?? accessProfile.can_create_service),
+          can_earn: Boolean(accessProfile.access?.can_earn ?? accessProfile.can_earn),
+          can_withdraw: Boolean(accessProfile.access?.can_withdraw ?? accessProfile.can_withdraw),
         });
       } catch (err) {
         console.error("Profile fetch error:", err);

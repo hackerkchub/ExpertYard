@@ -1,5 +1,6 @@
 // ExpertEarningsDashboard.jsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FiDollarSign,
   FiClock,
@@ -152,7 +153,9 @@ import {
 } from "../../../../shared/api/expertapi/withdrawal.api";
 
 const ExpertEarningsDashboard = () => {
+  const navigate = useNavigate();
   const { expertData } = useExpert();
+  const canEarn = Boolean(expertData?.can_earn);
   const [timeFilter, setTimeFilter] = useState("month");
   const [earningsStats, setEarningsStats] = useState(null);
   const [transactions, setTransactions] = useState([]);
@@ -372,8 +375,12 @@ const ExpertEarningsDashboard = () => {
   }, [expertData, loadPayoutMethods]);
 
   useEffect(() => {
-    loadDashboard();
-  }, [loadDashboard]);
+    if (canEarn) {
+      loadDashboard();
+    } else {
+      setLoading(false);
+    }
+  }, [loadDashboard, canEarn]);
 
   // Filter withdrawals based on filter criteria
   useEffect(() => {
@@ -1257,6 +1264,34 @@ const ExpertEarningsDashboard = () => {
       </>
     );
   };
+
+  if (!canEarn) {
+    return (
+      <PremiumContainer>
+        <div style={{ textAlign: "center", padding: "60px 20px" }}>
+          <FiLock size={52} color="#0A66C2" />
+          <h3>Upgrade Required</h3>
+          <p>Activate a G9 Expert plan to access earnings, wallet history, and withdrawals.</p>
+          <button
+            type="button"
+            onClick={() => navigate("/expert/g9-plan")}
+            style={{
+              marginTop: 18,
+              border: 0,
+              borderRadius: 8,
+              background: "#0f172a",
+              color: "#fff",
+              padding: "10px 16px",
+              cursor: "pointer",
+              fontWeight: 700,
+            }}
+          >
+            Activate Plan
+          </button>
+        </div>
+      </PremiumContainer>
+    );
+  }
 
   if (loading) {
     return (

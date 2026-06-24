@@ -1,5 +1,5 @@
 // src/pages/ExpertList/ExpertList.jsx
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useSeo } from "../../../../shared/seo/useSeo";
 import { discoverExperts, getSeoLocationPage } from "../../../../shared/api/userApi/locationDiscovery.api";
@@ -40,8 +40,11 @@ import {
 } from "./ExpertList.styles";
 
 import { useCategory } from "../../../../shared/context/CategoryContext";
+import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { getExpertsBySubCategoryApi } from "../../../../shared/api/expertapi/auth.api";
 import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
+import NeedHelpForm from "../../components/NeedHelpForm/NeedHelpForm";
+import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/leadTracking";
 
 /* ---------------- QUERY ---------------- */
 const useQuery = () => {
@@ -53,11 +56,13 @@ const ExpertListPage = () => {
   const query = useQuery();
   const navigate = useNavigate();
   const { categorySlug, citySlug, areaSlug, pincode } = useParams();
+  const trackedListRef = useRef("");
 
   const categoryId = query.get("category");
   const subCategoryId = query.get("sub_category");
 
   const { categories, subCategories, loadSubCategories } = useCategory();
+  const { user } = useAuth();
 
   const [experts, setExperts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -148,6 +153,33 @@ const ExpertListPage = () => {
   useEffect(() => {
     loadExperts();
   }, [loadExperts]);
+
+  const effectiveCategoryId =
+    categoryId ||
+    seoData?.category_id ||
+    experts[0]?.category_id ||
+    experts[0]?.categoryId ||
+    null;
+
+  useEffect(() => {
+    const trackingKey = `${effectiveCategoryId || categorySlug || ""}:${subCategoryId || ""}:${citySlug || ""}`;
+    if (!trackingKey || trackedListRef.current === trackingKey) return;
+    trackedListRef.current = trackingKey;
+    trackLeadEvent(
+      "expert-list-view",
+      buildTrackingPayload({
+        user,
+        sourcePage: "expert_listing",
+        actionLabel: "Expert Listing Open",
+        extra: {
+          category_id: effectiveCategoryId,
+          subcategory_id: subCategoryId || null,
+          city: citySlug || user?.city || "",
+          area: areaSlug || user?.area || "",
+        },
+      })
+    );
+  }, [effectiveCategoryId, subCategoryId, categorySlug, citySlug, areaSlug, user]);
 
   useNetworkReconnect(() => {
     if (categoryId) loadSubCategories(categoryId, true);
@@ -312,8 +344,25 @@ const ExpertListPage = () => {
               })}
             </ExpertsGrid>
           )}
+          {!loading && filteredExperts.length === 0 && effectiveCategoryId && (
+            <NeedHelpForm
+              categoryId={effectiveCategoryId}
+              subcategoryId={subCategoryId}
+              categoryName={categoryName}
+              sourcePage="expert_listing_no_results"
+            />
+          )}
         </RightPanel>
       </Layout>
+
+      {effectiveCategoryId && filteredExperts.length > 0 && (
+        <NeedHelpForm
+          categoryId={effectiveCategoryId}
+          subcategoryId={subCategoryId}
+          categoryName={categoryName}
+          sourcePage="expert_listing"
+        />
+      )}
 
       {seoData?.seo_text && (
         <section style={{

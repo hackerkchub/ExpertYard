@@ -1,11 +1,11 @@
-// src/apps/expert/pages/register/StepSubcategory.jsx
-import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { getSubCategoriesApi, saveSubCategoryApi } from "../../../../shared/api/expertapi/category.api";
 import useApi from "../../../../shared/hooks/useApi";
+import { toastify } from "../../../../shared/utils/lazyNotifications";
 
 import RegisterLayout from "../../components/RegisterLayout";
 import Loader from "../../../../shared/components/Loader/Loader";
@@ -26,237 +26,318 @@ import {
   SelectionStats,
   SelectedCount,
   SubcategoryEmptyState,
-  SelectionPreviewBox
+  SelectionPreviewBox,
 } from "../../styles/SubcategorySelect.style";
+
+const toNumber = (value) => {
+  const next = Number(value);
+  return Number.isFinite(next) && next > 0 ? next : null;
+};
 
 export default function StepSubcategory() {
   const navigate = useNavigate();
-  const { expertData, updateExpertData } = useExpert();
+  const { search } = useLocation();
+  const isEditMode = useMemo(() => {
+    return new URLSearchParams(search).get("mode") === "edit";
+  }, [search]);
+  const { expertData, updateExpertData, refreshExpertData } = useExpert();
 
-  const [subCategories, setSubCategories] = useState([]);
-  const [selectedIds, setSelectedIds] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [selectedByCategory, setSelectedByCategory] = useState({});
+  const [primary, setPrimary] = useState({
+    category_id: expertData.primaryCategoryId || expertData.categoryId || null,
+    subcategory_id: expertData.primarySubCategoryId || expertData.subCategoryIds?.[0] || null,
+  });
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredSubCategories, setFilteredSubCategories] = useState([]);
 
   const { request: getSubCategories, loading, error } = useApi(getSubCategoriesApi);
   const { request: saveSubCategory, loading: saving } = useApi(saveSubCategoryApi);
 
-  // 🔐 Route Guard & Data Fetch (INFINITY LOOP FIX)
+  const selectedCategoryIdsStr = useMemo(() => {
+    const ids = expertData.categoryIds?.length
+      ? expertData.categoryIds
+      : (expertData.categoryId ? [expertData.categoryId] : []);
+    return ids.map(toNumber).filter(Boolean).join(",");
+  }, [expertData.categoryId, expertData.categoryIds]);
+
+  const selectedCategoryIds = useMemo(() => {
+    return selectedCategoryIdsStr.split(",").map(Number).filter(Boolean);
+  }, [selectedCategoryIdsStr]);
+
   useEffect(() => {
-    if (!expertData.categoryId) {
+    if (!selectedCategoryIds.length) {
       navigate("/expert/register/category");
       return;
     }
 
-    const loadSubCategories = async () => {
+    const initial = {};
+    (expertData.categorySelections || []).forEach((item) => {
+      const categoryId = toNumber(item.category_id);
+      if (categoryId && selectedCategoryIds.includes(categoryId)) {
+        initial[categoryId] = (item.subcategory_ids || []).map(toNumber).filter(Boolean);
+      }
+    });
+
+    if (!Object.keys(initial).length && expertData.categoryId && expertData.subCategoryIds?.length) {
+      initial[Number(expertData.categoryId)] = expertData.subCategoryIds.map(toNumber).filter(Boolean);
+    }
+    setSelectedByCategory(initial);
+  }, [expertData.categoryId, expertData.categorySelections, expertData.subCategoryIds, navigate, selectedCategoryIdsStr]);
+
+  useEffect(() => {
+    if (!selectedCategoryIds.length) return;
+
+    const loadGroups = async () => {
       try {
-        const res = await getSubCategories(expertData.categoryId);
-        const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-        setSubCategories(list);
-        setFilteredSubCategories(list);
+        const loaded = await Promise.all(
+          selectedCategoryIds.map(async (categoryId) => {
+            const res = await getSubCategories(categoryId);
+            const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+            const categoryName = list[0]?.category_name || list[0]?.categoryName || `Category ${categoryId}`;
+            return {
+              category_id: categoryId,
+              category_name: categoryName,
+              subcategories: list,
+            };
+          })
+        );
+        setGroups(loaded);
       } catch (err) {
         console.error("SubCategory API failed", err);
-        setSubCategories([]);
-        setFilteredSubCategories([]);
+        setGroups([]);
       }
     };
 
-    loadSubCategories();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [expertData.categoryId]); // 👈 सिर्फ़ CategoryId बदलने पर ही API कॉल होगी!
+    loadGroups();
+  }, [getSubCategories, selectedCategoryIdsStr]);
 
-  // 🔹 Filter subcategories
-  useEffect(() => {
-    if (!searchQuery) {
-      setFilteredSubCategories(subCategories);
-    } else {
-      const filtered = subCategories.filter(sub =>
-        sub.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredSubCategories(filtered);
-    }
-  }, [searchQuery, subCategories]);
+  const visibleGroups = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return groups;
+    return groups
+      .map((group) => ({
+        ...group,
+        subcategories: group.subcategories.filter((sub) =>
+          String(sub.name || "").toLowerCase().includes(query)
+        ),
+      }))
+      .filter((group) => group.subcategories.length);
+  }, [groups, searchQuery]);
 
-  const handleSelect = useCallback((id, name) => {
-    setSelectedIds([id]);
-    updateExpertData({
-      subCategoryIds: [id],
-      primarySubCategory: name
+  const selectedCount = useMemo(
+    () => Object.values(selectedByCategory).reduce((sum, ids) => sum + ids.length, 0),
+    [selectedByCategory]
+  );
+
+  const payloadCategories = useMemo(
+    () => Object.entries(selectedByCategory)
+      .map(([categoryId, ids]) => ({
+        category_id: Number(categoryId),
+        subcategory_ids: [...new Set((ids || []).map(toNumber).filter(Boolean))],
+      }))
+      .filter((item) => selectedCategoryIds.includes(item.category_id) && item.subcategory_ids.length),
+    [selectedByCategory, selectedCategoryIds]
+  );
+
+  const handleToggle = useCallback((categoryId, subcategory) => {
+    const subcategoryId = Number(subcategory.id);
+    setSelectedByCategory((prev) => {
+      const current = prev[categoryId] || [];
+      const next = current.includes(subcategoryId)
+        ? current.filter((id) => id !== subcategoryId)
+        : [...current, subcategoryId];
+      return { ...prev, [categoryId]: next };
     });
-  }, [updateExpertData]);
+
+    setPrimary((prev) => {
+      if (prev.category_id && prev.subcategory_id && !(prev.category_id === categoryId && prev.subcategory_id === subcategoryId)) {
+        return prev;
+      }
+      return { category_id: categoryId, subcategory_id: subcategoryId };
+    });
+  }, []);
 
   const handleNext = async () => {
-    if (selectedIds.length === 0) return;
+    if (!payloadCategories.length) return;
+
+    const firstCategory = payloadCategories[0];
+    const primaryCategoryId = primary.category_id || firstCategory.category_id;
+    const primarySubcategoryId = primary.subcategory_id || firstCategory.subcategory_ids[0];
+    const primaryIsSelected = payloadCategories.some(
+      (item) => item.category_id === primaryCategoryId && item.subcategory_ids.includes(primarySubcategoryId)
+    );
+    const finalPrimary = primaryIsSelected
+      ? { category_id: primaryCategoryId, subcategory_id: primarySubcategoryId }
+      : { category_id: firstCategory.category_id, subcategory_id: firstCategory.subcategory_ids[0] };
 
     try {
-      await saveSubCategory({ subcategory_id: selectedIds[0] });
-      updateExpertData({ subCategoryIds: selectedIds });
-      navigate("/expert/register/profile");
+      await saveSubCategory({
+        categories: payloadCategories,
+        primary_category_id: finalPrimary.category_id,
+        primary_subcategory_id: finalPrimary.subcategory_id,
+      });
+      updateExpertData({
+        categorySelections: payloadCategories,
+        categoryId: finalPrimary.category_id,
+        primaryCategoryId: finalPrimary.category_id,
+        primarySubCategoryId: finalPrimary.subcategory_id,
+        subCategoryIds: payloadCategories.flatMap((item) => item.subcategory_ids),
+      });
+      
+      // Refresh the context with updated profile expertise details
+      await refreshExpertData();
+
+      if (isEditMode) {
+        toastify("success", "Expertise areas updated successfully!");
+        navigate("/expert/profile");
+      } else {
+        navigate("/expert/register/profile");
+      }
     } catch (err) {
       console.error("Save subcategory failed", err);
     }
   };
 
-  useEffect(() => {
-    if (expertData.subCategoryIds?.length) {
-      setSelectedIds(expertData.subCategoryIds);
-    }
-  }, [expertData.subCategoryIds]);
-
-  const selectedSubCategories = useMemo(() => 
-    subCategories.filter(sub => selectedIds.includes(sub.id)),
-    [subCategories, selectedIds]
-  );
-
-  const canNext = selectedIds.length > 0;
-  const totalSubCategories = filteredSubCategories.length;
+  const totalOptions = visibleGroups.reduce((sum, group) => sum + group.subcategories.length, 0);
 
   if (loading) return <Loader />;
   if (error) return <ErrorMessage message={error} />;
 
   return (
     <RegisterLayout
-      title="Select your specialization"
-      subtitle="Choose your primary specialization within your expertise area."
+      title="Select your specializations"
+      subtitle="Choose one or more subcategories under each selected category."
       step={3}
       hasNavbar={true}
     >
       <CategorySplitWrapper>
-        
         <CategoryLeftScroll>
           <SelectionStats style={{ marginBottom: 16 }}>
             <div>
-              <SelectedCount>{selectedIds.length}</SelectedCount>
+              <SelectedCount>{selectedCount}</SelectedCount>
               <span>Selected</span>
             </div>
             <div>
-              <span>{totalSubCategories}</span>
+              <span>{totalOptions}</span>
               <span>Options Found</span>
             </div>
           </SelectionStats>
 
           <SubcategorySearch>
             <input
-              placeholder={`Search in ${totalSubCategories} options...`}
+              placeholder="Search specializations..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </SubcategorySearch>
 
           <AnimatePresence>
-            <CardGrid>
-              {filteredSubCategories.length === 0 ? (
-                <SubcategoryEmptyState style={{ gridColumn: "1 / -1" }}>
-                  <div>
-                    <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
-                    <h3>No specialization found</h3>
-                    <p>Try searching something else</p>
-                  </div>
-                </SubcategoryEmptyState>
-              ) : (
-                filteredSubCategories.map((sub, index) => (
-                  <motion.div
-                    key={sub.id}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -15 }}
-                    transition={{ duration: 0.3, delay: index * 0.03 }}
-                  >
-                    <SelectCard
-                      type="button"
-                      active={selectedIds.includes(sub.id)}
-                      onClick={() => handleSelect(sub.id, sub.name)}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <div
-                          style={{
-                            width: 44,
-                            height: 44,
-                            borderRadius: "50%",
-                            background: selectedIds.includes(sub.id)
-                              ? "linear-gradient(135deg, #10b981, #34d399)"
-                              : "rgba(16,185,129,0.12)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            flexShrink: 0
-                          }}
+            {visibleGroups.length === 0 ? (
+              <SubcategoryEmptyState>
+                <div>
+                  <h3>No specialization found</h3>
+                  <p>Try searching something else</p>
+                </div>
+              </SubcategoryEmptyState>
+            ) : (
+              visibleGroups.map((group) => (
+                <div key={group.category_id} style={{ marginBottom: 24 }}>
+                  <h3 style={{ margin: "0 0 12px", color: "#0f172a", fontSize: 18 }}>{group.category_name}</h3>
+                  <CardGrid>
+                    {group.subcategories.map((sub, index) => {
+                      const active = (selectedByCategory[group.category_id] || []).includes(Number(sub.id));
+                      const isPrimary = primary.category_id === group.category_id && primary.subcategory_id === Number(sub.id);
+                      return (
+                        <motion.div
+                          key={`${group.category_id}-${sub.id}`}
+                          initial={{ opacity: 0, y: 15 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -15 }}
+                          transition={{ duration: 0.3, delay: index * 0.02 }}
                         >
-                          <span style={{ 
-                            color: selectedIds.includes(sub.id) ? "#fff" : "#10b981",
-                            fontSize: 18,
-                            fontWeight: "bold"
-                          }}>
-                            {selectedIds.includes(sub.id) ? "✓" : "★"}
-                          </span>
-                        </div>
-
-                        <div style={{ textAlign: "left" }}>
-                          <CardTitle>{sub.name}</CardTitle>
-                          <CardMeta>Click to select</CardMeta>
-                        </div>
-                      </div>
-                    </SelectCard>
-                  </motion.div>
-                ))
-              )}
-            </CardGrid>
+                          <SelectCard type="button" active={active} onClick={() => handleToggle(group.category_id, sub)}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                              <div
+                                style={{
+                                  width: 44,
+                                  height: 44,
+                                  borderRadius: "50%",
+                                  background: active ? "linear-gradient(135deg, #10b981, #34d399)" : "rgba(16,185,129,0.12)",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  flexShrink: 0,
+                                  color: active ? "#fff" : "#10b981",
+                                  fontWeight: 700,
+                                }}
+                              >
+                                {active ? "Yes" : "+"}
+                              </div>
+                              <div style={{ textAlign: "left", flex: 1 }}>
+                                <CardTitle>{sub.name}</CardTitle>
+                                <CardMeta>{isPrimary ? "Primary expertise" : active ? "Selected" : "Tap to select"}</CardMeta>
+                              </div>
+                              {active && (
+                                <input
+                                  type="radio"
+                                  checked={isPrimary}
+                                  onChange={(e) => {
+                                    e.stopPropagation();
+                                    setPrimary({ category_id: group.category_id, subcategory_id: Number(sub.id) });
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  title="Set primary expertise"
+                                />
+                              )}
+                            </div>
+                          </SelectCard>
+                        </motion.div>
+                      );
+                    })}
+                  </CardGrid>
+                </div>
+              ))
+            )}
           </AnimatePresence>
         </CategoryLeftScroll>
 
         <CategoryRightFixed>
           <SelectionPreviewBox>
-            <h3>Specialty Selected</h3>
-            
-            <AnimatePresence mode="wait">
-              {selectedSubCategories.length > 0 ? (
-                <motion.div
-                  key={selectedSubCategories[0].id}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  style={{ textAlign: "center", width: "100%" }}
-                >
-                  <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
-                    <div style={{
-                      width: 64, height: 64, borderRadius: "50%",
-                      background: "linear-gradient(135deg, #10b981, #34d399)",
-                      display: "flex", alignItems: "center", justifyContent: "center"
-                    }}>
-                      <span style={{ color: "#fff", fontSize: 24 }}>✓</span>
+            <h3>Selected Specializations</h3>
+            {payloadCategories.length ? (
+              <div style={{ width: "100%", display: "grid", gap: 10 }}>
+                {payloadCategories.map((item) => {
+                  const group = groups.find((g) => g.category_id === item.category_id);
+                  return (
+                    <div key={item.category_id} style={{ textAlign: "left" }}>
+                      <strong style={{ color: "#0f172a", fontSize: 14 }}>{group?.category_name || `Category ${item.category_id}`}</strong>
+                      <p style={{ margin: "4px 0 0", color: "#475569", fontSize: 13 }}>
+                        {item.subcategory_ids
+                          .map((id) => group?.subcategories.find((sub) => Number(sub.id) === id)?.name)
+                          .filter(Boolean)
+                          .join(", ")}
+                      </p>
                     </div>
-                  </div>
-                  <h4 style={{ margin: "0 0 4px 0", color: "#0f172a" }}>
-                    {selectedSubCategories[0].name}
-                  </h4>
-                </motion.div>
-              ) : (
-                <div style={{ textAlign: "center", color: "#64748b" }}>
-                  <div style={{ fontSize: 32, marginBottom: 8 }}>🎯</div>
-                  <p style={{ margin: 0, fontSize: 14 }}>Please select options from the left.</p>
-                </div>
-              )}
-            </AnimatePresence>
+                  );
+                })}
+              </div>
+            ) : (
+              <p style={{ margin: 0, fontSize: 14, color: "#64748b" }}>Select at least one specialization.</p>
+            )}
           </SelectionPreviewBox>
 
           <ActionsRow style={{ flexDirection: "column", gap: 12, marginTop: 0 }}>
-            <PrimaryButton
-              disabled={!canNext || saving}
-              onClick={handleNext}
-              style={{ width: "100%", justifyContent: "center" }}
-            >
-              {saving ? "Saving..." : canNext ? `Continue to Profile →` : "Choose a specialty"}
+            <PrimaryButton disabled={!payloadCategories.length || saving} onClick={handleNext} style={{ width: "100%", justifyContent: "center" }}>
+              {saving ? "Saving..." : payloadCategories.length ? "Continue to Profile" : "Choose a specialization"}
             </PrimaryButton>
-
-            <SecondaryButton
-              onClick={() => navigate("/expert/register/category")}
+            <SecondaryButton 
+              onClick={() => navigate(isEditMode ? "/expert/register/category?mode=edit" : "/expert/register/category")} 
               style={{ width: "100%", justifyContent: "center" }}
             >
-              ← Back to Category
+              Back to Category
             </SecondaryButton>
           </ActionsRow>
         </CategoryRightFixed>
-
       </CategorySplitWrapper>
     </RegisterLayout>
   );

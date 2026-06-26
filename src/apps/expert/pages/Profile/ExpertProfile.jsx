@@ -64,6 +64,9 @@ import {
   getCategoryNameById,
   getSubCategoryNameById
 } from "../../../../shared/utils/categoryMapper";
+import { reverseGeocode, autocompleteLocation } from "../../../../shared/api/userApi/locationDiscovery.api";
+import { getCategoriesApi, getSubCategoriesApi, saveCategoryApi, saveSubCategoryApi } from "../../../../shared/api/expertapi/category.api";
+import { prettyLabel } from "../../constants/categoryIcons";
 
 import * as S from "./ExpertProfile.styles";
 
@@ -115,6 +118,99 @@ export default function ExpertProfile() {
   const [plansLoading, setPlansLoading] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [manualSearch, setManualSearch] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [isSearchingManually, setIsSearchingManually] = useState(false);
+  
+  // Category/Subcategory edit states
+  const [selectedCatIds, setSelectedCatIds] = useState([]);
+  const [selectedSubCats, setSelectedSubCats] = useState({}); // categoryId -> array of subcategoryIds
+  const [subCatGroups, setSubCatGroups] = useState([]); // Array of { category_id, category_name, subcategories }
+  const [primaryCatSub, setPrimaryCatSub] = useState({ category_id: null, subcategory_id: null });
+  const [subCatLoading, setSubCatLoading] = useState(false);
+
+  useEffect(() => {
+    if (edit && expertData) {
+      const catIds = expertData.categoryIds || [];
+      setSelectedCatIds(catIds.map(Number));
+
+      const subCats = {};
+      (expertData.categorySelections || []).forEach((item) => {
+        subCats[Number(item.category_id)] = (item.subcategory_ids || []).map(Number);
+      });
+      setSelectedSubCats(subCats);
+
+      setPrimaryCatSub({
+        category_id: Number(expertData.primaryCategoryId || expertData.categoryId || 0) || null,
+        subcategory_id: Number(expertData.primarySubCategoryId || expertData.subCategoryIds?.[0] || 0) || null
+      });
+    }
+  }, [edit, expertData]);
+
+  useEffect(() => {
+    if (!edit || !selectedCatIds.length) {
+      setSubCatGroups([]);
+      return;
+    }
+
+    const loadSubCategoriesForSelected = async () => {
+      setSubCatLoading(true);
+      try {
+        const loaded = await Promise.all(
+          selectedCatIds.map(async (categoryId) => {
+            const res = await getSubCategoriesApi(categoryId);
+            const list = Array.isArray(res?.data?.data) ? res.data.data : Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+            const categoryName = list[0]?.category_name || list[0]?.categoryName || `Category ${categoryId}`;
+            return {
+              category_id: categoryId,
+              category_name: categoryName,
+              subcategories: list,
+            };
+          })
+        );
+        setSubCatGroups(loaded);
+      } catch (err) {
+        console.error("Failed to load subcategories for edit", err);
+      } finally {
+        setSubCatLoading(false);
+      }
+    };
+
+    loadSubCategoriesForSelected();
+  }, [selectedCatIds, edit]);
+
+  const handleToggleCategory = (catId) => {
+    setSelectedCatIds((prev) => {
+      const next = prev.includes(catId) ? prev.filter((id) => id !== catId) : [...prev, catId];
+      if (prev.includes(catId)) {
+        setSelectedSubCats((sub) => {
+          const copy = { ...sub };
+          delete copy[catId];
+          return copy;
+        });
+      }
+      return next;
+    });
+  };
+
+  const handleToggleSubcategory = (catId, subId) => {
+    setSelectedSubCats((prev) => {
+      const current = prev[catId] || [];
+      const next = current.includes(subId) ? current.filter((id) => id !== subId) : [...current, subId];
+      return { ...prev, [catId]: next };
+    });
+
+    setPrimaryCatSub((prev) => {
+      if (!prev.category_id || !prev.subcategory_id) {
+        return { category_id: catId, subcategory_id: subId };
+      }
+      return prev;
+    });
+  };
+
+  const handleSetPrimary = (catId, subId) => {
+    setPrimaryCatSub({ category_id: catId, subcategory_id: subId });
+  };
   const [editingPlan, setEditingPlan] = useState(null);
   const [planForm, setPlanForm] = useState({
     name: "",
@@ -371,101 +467,126 @@ setSessionDuration(Number(session?.duration) || 0);
     !!draft &&
     (draft.email !== expertData.email || draft.phone !== expertData.phone);
 
-    const handleDetectLocation = () => {
-  if (!navigator.geolocation) {
-    notifyError("Geolocation is not supported by your browser");
-    return;
-  }
-
-  setIsDetectingLocation(true);
-
-  navigator.geolocation.getCurrentPosition(
-    async (position) => {
-      const { latitude, longitude } = position.coords;
-
-      try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&addressdetails=1`,
-          {
-            headers: {
-              Accept: "application/json"
-            }
-          }
-        );
-
-        const data = await response.json();
-
-        const address = data?.address || {};
-
-        const city =
-          address.city ||
-          address.town ||
-          address.village ||
-          address.county ||
-          "";
-
-        setDraft((prev) => ({
-          ...prev,
-
-          latitude: latitude.toString(),
-          longitude: longitude.toString(),
-
-          city,
-          state: address.state || "",
-          country: address.country || "",
-          pincode: address.postcode || "",
-
-          location: data.display_name || ""
-        }));
-
-        notifySuccess(
-          city
-            ? `📍 Location detected: ${city}`
-            : "Location detected successfully"
-        );
-      } catch (err) {
-        console.error(err);
-
-        notifyError(
-          "Coordinates captured but address lookup failed"
-        );
-
-        setDraft((prev) => ({
-          ...prev,
-          latitude: latitude.toString(),
-          longitude: longitude.toString()
-        }));
-      } finally {
-        setIsDetectingLocation(false);
-      }
-    },
-    (error) => {
-      setIsDetectingLocation(false);
-
-      switch (error.code) {
-        case error.PERMISSION_DENIED:
-          notifyError("Location permission denied");
-          break;
-
-        case error.POSITION_UNAVAILABLE:
-          notifyError("Location unavailable");
-          break;
-
-        case error.TIMEOUT:
-          notifyError("Location request timed out");
-          break;
-
-        default:
-          notifyError("Unable to detect location");
-      }
-    },
-    {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 0
+  useEffect(() => {
+    if (!manualSearch || manualSearch.trim().length < 2) {
+      setSuggestions([]);
+      return;
     }
-  );
-};
+    const timer = setTimeout(async () => {
+      try {
+        const res = await autocompleteLocation(manualSearch.trim());
+        if (res.data?.success) {
+          setSuggestions(res.data.data || []);
+        }
+      } catch (err) {
+        console.error("Autocomplete failed:", err);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [manualSearch]);
+
+  const handleSelectSuggestion = (loc) => {
+    const cityName = loc.city || "";
+    const addressName = loc.search_text || `${loc.area ? loc.area + ', ' : ''}${loc.city}, ${loc.state}`;
+    
+    setDraft((prev) => ({
+      ...prev,
+      city: cityName,
+      state: loc.state || "",
+      country: loc.country || "",
+      pincode: loc.pincode || "",
+      latitude: loc.latitude ? loc.latitude.toString() : "",
+      longitude: loc.longitude ? loc.longitude.toString() : "",
+      location: addressName
+    }));
+    
+    setSuggestions([]);
+    setManualSearch("");
+    setIsSearchingManually(false);
+    notifySuccess(`📍 Location set manually: ${cityName}`);
+  };
+
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      notifyError("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setIsDetectingLocation(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+
+        try {
+          const res = await reverseGeocode(latitude, longitude);
+          if (res.data?.success && res.data.data) {
+            const loc = res.data.data;
+            const city = loc.city || "";
+            setDraft((prev) => ({
+              ...prev,
+              latitude: latitude.toString(),
+              longitude: longitude.toString(),
+              city,
+              state: loc.state || "",
+              country: loc.country || "",
+              pincode: loc.pincode || "",
+              location: loc.search_text || ""
+            }));
+
+            notifySuccess(
+              city
+                ? `📍 Location detected: ${city}`
+                : "Location detected successfully"
+            );
+          } else {
+            notifySuccess("Location coordinates detected");
+          }
+        } catch (err) {
+          console.error(err);
+
+          notifyError(
+            "Coordinates captured but address lookup failed"
+          );
+
+          setDraft((prev) => ({
+            ...prev,
+            latitude: latitude.toString(),
+            longitude: longitude.toString()
+          }));
+          setIsSearchingManually(true);
+        } finally {
+          setIsDetectingLocation(false);
+        }
+      },
+      (error) => {
+        setIsDetectingLocation(false);
+        setIsSearchingManually(true);
+
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            notifyError("Location permission denied. Please search manually using the 'Search Manually' button.");
+            break;
+
+          case error.POSITION_UNAVAILABLE:
+            notifyError("Location unavailable. Please search manually.");
+            break;
+
+          case error.TIMEOUT:
+            notifyError("Location request timed out. Please try again or search manually.");
+            break;
+
+          default:
+            notifyError("Unable to detect location. Please search manually.");
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      }
+    );
+  };
   // ========== PRODUCTION READY HANDLE SAVE ==========
   const handleSave = async () => {
     if (!canEditProfile) {
@@ -577,6 +698,43 @@ if (draft.documents.aadhar_cardFile) {
       // ✅ ONLY call price API if needed
       if (pricingModes.length > 0) {
         promises.push(savePriceApi(pricePayload));
+      }
+
+      // ========== SAVE CATEGORY & SUBCATEGORY MAPPINGS ==========
+      if (selectedCatIds.length > 0) {
+        const payloadCategories = Object.entries(selectedSubCats)
+          .map(([catId, subIds]) => ({
+            category_id: Number(catId),
+            subcategory_ids: [...new Set((subIds || []).map(Number).filter(Boolean))],
+          }))
+          .filter((item) => selectedCatIds.includes(item.category_id) && item.subcategory_ids.length);
+
+        if (!payloadCategories.length) {
+          notifyError("Please select at least one subcategory/specialization.");
+          setSaveLoading(false);
+          return;
+        }
+
+        const firstCategory = payloadCategories[0];
+        const primaryCategoryId = primaryCatSub.category_id || firstCategory.category_id;
+        const primarySubcategoryId = primaryCatSub.subcategory_id || firstCategory.subcategory_ids[0];
+        const primaryIsSelected = payloadCategories.some(
+          (item) => item.category_id === primaryCategoryId && item.subcategory_ids.includes(primarySubcategoryId)
+        );
+        const finalPrimary = primaryIsSelected
+          ? { category_id: primaryCategoryId, subcategory_id: primarySubcategoryId }
+          : { category_id: firstCategory.category_id, subcategory_id: firstCategory.subcategory_ids[0] };
+
+        promises.push(saveCategoryApi({
+          category_ids: selectedCatIds,
+          category_id: finalPrimary.category_id
+        }));
+
+        promises.push(saveSubCategoryApi({
+          categories: payloadCategories,
+          primary_category_id: finalPrimary.category_id,
+          primary_subcategory_id: finalPrimary.subcategory_id
+        }));
       }
 
       // ========== EXECUTE ==========
@@ -1035,16 +1193,29 @@ await refreshExpertData();
                     <S.ExpertTitle>{draft.title}</S.ExpertTitle>
                   )}
 
-                  <S.ExpertCategories>
-                    <S.CategoryPill>
-                      {categoryName || "Category"}
-                    </S.CategoryPill>
-                    {subCategoryName && (
+                  <S.ExpertCategories style={{ flexWrap: 'wrap', gap: '4px' }}>
+                    {expertData.profile?.expertise && expertData.profile.expertise.length > 0 ? (
+                      expertData.profile.expertise.map((exp, idx) => (
+                        <React.Fragment key={exp.category_id}>
+                          {idx > 0 && <span style={{ color: '#94a3b8', margin: '0 4px' }}>|</span>}
+                          <S.CategoryPill title={(exp.subcategories || []).map(s => s.subcategory_name).join(', ')}>
+                            {exp.category_name}
+                          </S.CategoryPill>
+                        </React.Fragment>
+                      ))
+                    ) : (
                       <>
-                        <FiChevronRight size={14} />
                         <S.CategoryPill>
-                          {subCategoryName}
+                          {categoryName || "Category"}
                         </S.CategoryPill>
+                        {subCategoryName && (
+                          <>
+                            <FiChevronRight size={14} />
+                            <S.CategoryPill>
+                              {subCategoryName}
+                            </S.CategoryPill>
+                          </>
+                        )}
                       </>
                     )}
                   </S.ExpertCategories>
@@ -1281,62 +1452,133 @@ await refreshExpertData();
                         <S.InfoLabel>Location</S.InfoLabel>
                         {edit ? (
                         <div>
-  <button
-    type="button"
-    onClick={handleDetectLocation}
-    disabled={isDetectingLocation}
-    style={{
-      marginBottom: "10px",
-      padding: "10px 14px",
-      borderRadius: "8px",
-      border: "none",
-      cursor: "pointer"
-    }}
-  >
-    <FiMapPin />
+                          <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                            <button
+                              type="button"
+                              onClick={handleDetectLocation}
+                              disabled={isDetectingLocation}
+                              style={{
+                                padding: "10px 14px",
+                                borderRadius: "8px",
+                                border: "none",
+                                cursor: isDetectingLocation ? "not-allowed" : "pointer",
+                                backgroundColor: "#0284c7",
+                                color: "white"
+                              }}
+                            >
+                              <FiMapPin />
+                              {isDetectingLocation ? " Detecting..." : " Detect Current Location"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setIsSearchingManually(!isSearchingManually)}
+                              style={{
+                                padding: "10px 14px",
+                                borderRadius: "8px",
+                                border: "none",
+                                cursor: "pointer",
+                                backgroundColor: "#64748b",
+                                color: "white"
+                              }}
+                            >
+                              Search Manually
+                            </button>
+                          </div>
 
-    {isDetectingLocation
-      ? " Detecting..."
-      : " Detect Current Location"}
-  </button>
+                          {isSearchingManually && (
+                            <div style={{ marginBottom: "12px", position: "relative" }}>
+                              <S.PremiumInput
+                                type="text"
+                                value={manualSearch}
+                                onChange={e => setManualSearch(e.target.value)}
+                                placeholder="Type city, area or pincode to search..."
+                              />
+                              {suggestions.length > 0 && (
+                                <div style={{
+                                  position: "absolute",
+                                  top: "100%",
+                                  left: 0,
+                                  right: 0,
+                                  backgroundColor: "white",
+                                  border: "1px solid #cbd5e1",
+                                  borderRadius: "6px",
+                                  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                                  zIndex: 10,
+                                  maxHeight: "200px",
+                                  overflowY: "auto"
+                                }}>
+                                  {suggestions.map(loc => (
+                                    <div
+                                      key={loc.id}
+                                      onClick={() => handleSelectSuggestion(loc)}
+                                      style={{
+                                        padding: "10px 12px",
+                                        cursor: "pointer",
+                                        borderBottom: "1px solid #f1f5f9",
+                                        fontSize: "13px",
+                                        textAlign: "left",
+                                        color: "#0f172a"
+                                      }}
+                                      onMouseEnter={e => e.currentTarget.style.backgroundColor = "#f8fafc"}
+                                      onMouseLeave={e => e.currentTarget.style.backgroundColor = "white"}
+                                    >
+                                      {loc.search_text}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
 
- <>
-  <S.PremiumInput
-    value={draft.location}
-    readOnly
-    placeholder="Location will be detected automatically"
-  />
-
-  {(draft.city || draft.state || draft.country) && (
-    <div
-      style={{
-        marginTop: "10px",
-        padding: "12px",
-        background: "#f8fafc",
-        borderRadius: "8px",
-        border: "1px solid #e2e8f0",
-        fontSize: "13px"
-      }}
-    >
-      <div><strong>City:</strong> {draft.city}</div>
-      <div><strong>State:</strong> {draft.state}</div>
-      <div><strong>Country:</strong> {draft.country}</div>
-      <div><strong>Pincode:</strong> {draft.pincode}</div>
-
-      <div
-        style={{
-          marginTop: "6px",
-          color: "#64748b",
-          fontSize: "12px"
-        }}
-      >
-        Lat: {draft.latitude}
-        <br />
-        Lng: {draft.longitude}
-      </div>
-    </div>
-  )}
-</>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+                            <div>
+                              <label style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold' }}>Address / Location Name</label>
+                              <S.PremiumInput
+                                value={draft.location || ""}
+                                onChange={e => setDraft({ ...draft, location: e.target.value })}
+                                placeholder="Enter address or location name"
+                              />
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                              <div>
+                                <label style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold' }}>City</label>
+                                <S.PremiumInput
+                                  value={draft.city || ""}
+                                  onChange={e => setDraft({ ...draft, city: e.target.value })}
+                                  placeholder="City"
+                                />
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold' }}>State</label>
+                                <S.PremiumInput
+                                  value={draft.state || ""}
+                                  onChange={e => setDraft({ ...draft, state: e.target.value })}
+                                  placeholder="State"
+                                />
+                              </div>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                              <div>
+                                <label style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold' }}>Country</label>
+                                <S.PremiumInput
+                                  value={draft.country || ""}
+                                  onChange={e => setDraft({ ...draft, country: e.target.value })}
+                                  placeholder="Country"
+                                />
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold' }}>Pincode</label>
+                                <S.PremiumInput
+                                  value={draft.pincode || ""}
+                                  onChange={e => setDraft({ ...draft, pincode: e.target.value })}
+                                  placeholder="Pincode"
+                                />
+                              </div>
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                              <strong>Coordinates:</strong> Lat: {draft.latitude || "Not detected"}, Lng: {draft.longitude || "Not detected"}
+                            </div>
+                          </div>
 </div>
 
                           
@@ -1372,16 +1614,144 @@ await refreshExpertData();
                   <S.CardHeader>
                     <FiAward /> Expertise Areas
                   </S.CardHeader>
-                  <S.CategoriesList>
-                    <S.CategoryTag>
-                      {categoryName || "Category"}
-                    </S.CategoryTag>
-                    {subCategoryName && (
-                      <S.CategoryTag>
-                        {subCategoryName}
-                      </S.CategoryTag>
-                    )}
-                  </S.CategoriesList>
+                  {edit ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {/* Category selection */}
+                      <div>
+                        <h4 style={{ fontSize: '14px', color: '#1e293b', marginBottom: '10px', fontWeight: 'bold' }}>Choose Categories</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '8px' }}>
+                          {categories.map((cat) => {
+                            const catId = Number(cat.id);
+                            const isChecked = selectedCatIds.includes(catId);
+                            return (
+                              <label
+                                key={cat.id}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '8px',
+                                  padding: '8px 12px',
+                                  borderRadius: '6px',
+                                  border: isChecked ? '1.5px solid #000080' : '1px solid #cbd5e1',
+                                  backgroundColor: isChecked ? 'rgba(0, 0, 128, 0.05)' : 'white',
+                                  cursor: 'pointer',
+                                  fontSize: '13px',
+                                  fontWeight: isChecked ? 'bold' : 'normal',
+                                  transition: 'all 0.2s'
+                                }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={() => handleToggleCategory(catId)}
+                                  style={{ accentColor: '#000080' }}
+                                />
+                                <span>{prettyLabel(cat.name)}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Subcategory selection for selected categories */}
+                      {selectedCatIds.length > 0 && (
+                        <div>
+                          <h4 style={{ fontSize: '14px', color: '#1e293b', marginBottom: '10px', fontWeight: 'bold' }}>Select Specializations & Set Primary</h4>
+                          {subCatLoading ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px', color: '#64748b' }}>
+                              <S.LoadingSpinnerSmall />
+                              <span style={{ fontSize: '13px' }}>Loading specializations...</span>
+                            </div>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                              {subCatGroups.map((group) => (
+                                <div key={group.category_id} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', background: '#f8fafc' }}>
+                                  <h5 style={{ fontSize: '13px', color: '#334155', fontWeight: 'bold', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '10px' }}>
+                                    {group.category_name}
+                                  </h5>
+                                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px' }}>
+                                    {(group.subcategories || []).map((sub) => {
+                                      const subId = Number(sub.id);
+                                      const isSubChecked = (selectedSubCats[group.category_id] || []).includes(subId);
+                                      const isPrimary = primaryCatSub.category_id === group.category_id && primaryCatSub.subcategory_id === subId;
+                                      return (
+                                        <div
+                                          key={sub.id}
+                                          style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            gap: '8px',
+                                            padding: '8px 10px',
+                                            borderRadius: '6px',
+                                            backgroundColor: 'white',
+                                            border: isSubChecked ? '1px solid #10b981' : '1px solid #e2e8f0',
+                                            fontSize: '12px'
+                                          }}
+                                        >
+                                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', flex: 1 }}>
+                                            <input
+                                              type="checkbox"
+                                              checked={isSubChecked}
+                                              onChange={() => handleToggleSubcategory(group.category_id, subId)}
+                                              style={{ accentColor: '#10b981' }}
+                                            />
+                                            <span style={{ fontWeight: isSubChecked ? 'bold' : 'normal' }}>{sub.name}</span>
+                                          </label>
+                                          
+                                          {isSubChecked && (
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '2px', cursor: 'pointer', color: isPrimary ? '#d97706' : '#64748b', fontSize: '11px' }} title="Set as primary specialization">
+                                              <input
+                                                type="radio"
+                                                name="primary_specialization"
+                                                checked={isPrimary}
+                                                onChange={() => handleSetPrimary(group.category_id, subId)}
+                                                style={{ accentColor: '#d97706', width: '12px', height: '12px' }}
+                                              />
+                                              <span>Primary</span>
+                                            </label>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <S.CategoriesList style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-start' }}>
+                      {expertData.profile?.expertise && expertData.profile.expertise.length > 0 ? (
+                        expertData.profile.expertise.map((exp) => (
+                          <div key={exp.category_id} style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                            <S.CategoryTag style={{ fontWeight: 'bold', background: 'rgba(14, 165, 233, 0.15)', color: '#0369a1' }}>
+                              {exp.category_name}
+                            </S.CategoryTag>
+                            <FiChevronRight size={14} style={{ color: '#64748b' }} />
+                            {(exp.subcategories || []).map((sub) => (
+                              <S.CategoryTag key={sub.subcategory_id} style={{ background: sub.is_primary ? 'rgba(16, 185, 129, 0.15)' : 'rgba(226, 232, 240, 0.8)', color: sub.is_primary ? '#065f46' : '#334155' }}>
+                                {sub.subcategory_name} {sub.is_primary && "(Primary)"}
+                              </S.CategoryTag>
+                            ))}
+                          </div>
+                        ))
+                      ) : (
+                        <>
+                          <S.CategoryTag>
+                            {categoryName || "Category"}
+                          </S.CategoryTag>
+                          {subCategoryName && (
+                            <S.CategoryTag>
+                              {subCategoryName}
+                            </S.CategoryTag>
+                          )}
+                        </>
+                      )}
+                    </S.CategoriesList>
+                  )}
                 </S.InfoCard>
               </S.OverviewGrid>
             )}

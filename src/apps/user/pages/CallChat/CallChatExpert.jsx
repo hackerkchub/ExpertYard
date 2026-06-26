@@ -567,7 +567,17 @@ export default function UserExpertsPage() {
 
       if (latestRequestRef.current !== requestId) return;
 
-      setExperts(response.data || []);
+      const rawData = response.data || [];
+      const seen = new Set();
+      const unique = [];
+      for (const item of rawData) {
+        const id = Number(item.id || item.expert_id || item.expertId);
+        if (id && !seen.has(id)) {
+          seen.add(id);
+          unique.push(item);
+        }
+      }
+      setExperts(unique);
       setTotalExperts(response.total || 0);
       setTotalPages(response.totalPages || 1);
       setFallbackInfo({

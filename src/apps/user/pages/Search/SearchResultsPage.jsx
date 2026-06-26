@@ -257,8 +257,19 @@ const SearchResultsPage = () => {
         if (latestRequestRef.current !== requestId) return;
 
         const expertsPayload = expertsRes?.data || {};
+        const rawExperts = expertsPayload.data || [];
+        const seenExperts = new Set();
+        const uniqueExperts = [];
+        for (const item of rawExperts) {
+          const id = Number(item.id || item.expert_id || item.expertId);
+          if (id && !seenExperts.has(id)) {
+            seenExperts.add(id);
+            uniqueExperts.push(item);
+          }
+        }
+
         setResults({
-          experts: expertsPayload.data || [],
+          experts: uniqueExperts,
           categories: getList(categoriesRes, "categories"),
           subcategories: getList(subcategoriesRes, "subcategories"),
           services: servicesRef.current.filter((service) => matchesQuery(service, q)).slice(0, 20),

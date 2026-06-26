@@ -220,6 +220,12 @@ const ExpertProfilePage = () => {
 
   const profile = expertData?.profile;
   const price = expertPrice || {};
+  const expertiseGroups = Array.isArray(profile?.expertise) ? profile.expertise : [];
+  const primaryExpertise = profile?.primary_expertise || expertiseGroups
+    .flatMap((group) => (group.subcategories || []).map((sub) => ({ group, sub })))
+    .find(({ sub }) => sub?.is_primary);
+  const displayCategoryName = primaryExpertise?.category_name || primaryExpertise?.group?.category_name || profile?.category_name;
+  const displaySubcategoryName = primaryExpertise?.subcategory_name || primaryExpertise?.sub?.subcategory_name || profile?.subcategory_name;
   const numericExpertId = expertData?.expertId || null;
   const canShowUserChatButton =
     Boolean(numericExpertId) &&
@@ -1213,7 +1219,7 @@ const ExpertProfilePage = () => {
 
               <TagList className="expert-profile-header-tags">
                 <Tag className="expert-profile-header-tag"><FiBookOpen /> Education: {profile.education || "Masters Degree"}</Tag>
-                <Tag className="expert-profile-header-tag"><FiTarget /> Category: {profile.category_name || "Business"}</Tag>
+                <Tag className="expert-profile-header-tag"><FiTarget /> Category: {displayCategoryName || "Business"}</Tag>
               </TagList>
 
               {/* Pricing Mode Selection Tabs */}
@@ -1370,7 +1376,8 @@ const ExpertProfilePage = () => {
               <SectionTitle>{t("expertProfile.aboutMe")}</SectionTitle>
               <SectionBody>{profile.description || "Experienced professional with proven track record in the field."}</SectionBody>
               <TagList>
-                {profile.category_name && <Tag><FiTarget />{profile.category_name}</Tag>}
+                {displayCategoryName && <Tag><FiTarget />{displayCategoryName}</Tag>}
+                {displaySubcategoryName && <Tag><FiAward />{displaySubcategoryName}</Tag>}
                 {profile.position && <Tag><FiBriefcase />{profile.position}</Tag>}
                 {profile.education && <Tag><FiBookOpen />{profile.education}</Tag>}
               </TagList>
@@ -1391,6 +1398,19 @@ const ExpertProfilePage = () => {
                 <TabContent>
                   <InfoGrid>
                     <InfoItem><InfoLabel>Professional Summary</InfoLabel><InfoValue>{profile.description || "Experienced professional with proven track record in the field."}</InfoValue></InfoItem>
+                    {expertiseGroups.length > 0 && (
+                      <InfoItem>
+                        <InfoLabel>Expertise Areas</InfoLabel>
+                        <InfoValue>
+                          {expertiseGroups.map((group) => (
+                            <div key={group.category_id} style={{ marginBottom: 8 }}>
+                              <strong>{group.category_name}</strong>
+                              <div>{(group.subcategories || []).map((sub) => sub.subcategory_name).filter(Boolean).join(", ")}</div>
+                            </div>
+                          ))}
+                        </InfoValue>
+                      </InfoItem>
+                    )}
                     <InfoItem>
                       <InfoLabel>Price Details</InfoLabel>
                       <InfoValue>

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { createProfileApi, updateExpertProfileApi, getExpertProfileApi } from "../../../../shared/api/expertapi/profile.api";
+import { reverseGeocode, autocompleteLocation } from "../../../../shared/api/userApi/locationDiscovery.api";
 import useApi from "../../../../shared/hooks/useApi";
 import RegisterLayout from "../../components/RegisterLayout";
 import Loader from "../../../../shared/components/Loader/Loader";
@@ -37,7 +38,8 @@ import {
   FiImage,
   FiAlertCircle,
   FiUploadCloud,
-  FiMapPin
+  FiMapPin,
+  FiSearch
 } from "react-icons/fi";
 
 const MAX_SINGLE_FILE_SIZE = 1.5 * 1024 * 1024;
@@ -85,6 +87,9 @@ export default function StepProfile() {
   const [submitError, setSubmitError] = useState(null);
   const [isLoadingExisting, setIsLoadingExisting] = useState(true);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [manualSearch, setManualSearch] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [isSearchingManually, setIsSearchingManually] = useState(false);
   const notifyError = (message) => void toastify("error", message);
   const notifySuccess = (message) => void toastify("success", message);
 
@@ -167,6 +172,45 @@ export default function StepProfile() {
     setFileErrors(prev => ({ ...prev, [field]: null }));
   };
 
+  useEffect(() => {
+    if (!manualSearch || manualSearch.trim().length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await autocompleteLocation(manualSearch.trim());
+        if (res.data?.success) {
+          setSuggestions(res.data.data || []);
+        }
+      } catch (err) {
+        console.error("Autocomplete failed:", err);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [manualSearch]);
+
+  const handleSelectSuggestion = (loc) => {
+    const cityName = loc.city || "";
+    const addressName = loc.search_text || `${loc.area ? loc.area + ', ' : ''}${loc.city}, ${loc.state}`;
+    
+    setForm(prev => ({
+      ...prev,
+      city: cityName,
+      state: loc.state || "",
+      country: loc.country || "",
+      pincode: loc.pincode || "",
+      latitude: loc.latitude ? loc.latitude.toString() : "",
+      longitude: loc.longitude ? loc.longitude.toString() : "",
+      location: addressName
+    }));
+    
+    setSuggestions([]);
+    setManualSearch("");
+    setIsSearchingManually(false);
+    notifySuccess(`📍 Location set manually: ${cityName}`);
+  };
+
   const handleDetectLocation = () => {
     if (!navigator.geolocation) {
       notifyError("Geolocation is not supported by your browser");
@@ -185,38 +229,21 @@ export default function StepProfile() {
           longitude: longitude.toString()
         }));
 
-        // Reverse geocoding to get address details
         try {
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&addressdetails=1`,
-            {
-              headers: {
-                Accept: "application/json"
-              }
-            }
-          );
-          const data = await response.json();
-          
-          if (data && data.address) {
-            const address = data.address;
-            const cityName = address.city || 
-                           address.town || 
-                           address.village || 
-                           address.county || 
-                           "";
-            
+          const res = await reverseGeocode(latitude, longitude);
+          if (res.data?.success && res.data.data) {
+            const loc = res.data.data;
             setForm(prev => ({
               ...prev,
-              city: cityName,
-              state: address.state || "",
-              country: address.country || "",
-              pincode: address.postcode || "",
-              location: data.display_name || ""
+              city: loc.city || "",
+              state: loc.state || "",
+              country: loc.country || "",
+              pincode: loc.pincode || "",
+              location: loc.search_text || ""
             }));
             
-            // Better user experience message
-            if (cityName) {
-              notifySuccess(`📍 Location detected: ${cityName}`);
+            if (loc.city) {
+              notifySuccess(`📍 Location detected: ${loc.city}`);
             } else {
               notifySuccess("Location detected successfully!");
             }
@@ -226,29 +253,31 @@ export default function StepProfile() {
         } catch (error) {
           console.error("Reverse geocoding error:", error);
           notifyError("Could not fetch address details, but coordinates saved");
+          setIsSearchingManually(true);
         } finally {
           setIsDetectingLocation(false);
         }
       },
       (error) => {
         setIsDetectingLocation(false);
+        setIsSearchingManually(true);
         switch(error.code) {
           case error.PERMISSION_DENIED:
-            notifyError("Location permission denied. Please enable location access.");
+            notifyError("Location permission denied. Please search manually using the 'Search Manually' button.");
             break;
           case error.POSITION_UNAVAILABLE:
-            notifyError("Location information is unavailable.");
+            notifyError("Location information is unavailable. Please search manually.");
             break;
           case error.TIMEOUT:
-            notifyError("Location request timed out.");
+            notifyError("Location request timed out. Please try again or search manually.");
             break;
           default:
-            notifyError("An error occurred while detecting location.");
+            notifyError("An error occurred while detecting location. Please search manually.");
         }
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 15000,
         maximumAge: 0
       }
     );
@@ -334,7 +363,7 @@ export default function StepProfile() {
       updateExpertData({ profileId: profile?.id, profile });
 
       notifySuccess("Profile saved successfully! 🎉");
-      setTimeout(() => navigate("/expert/home"), 500);
+      setTimeout(() => navigate("/expert/register/pricing"), 500);
     } catch (err) {
       setSubmitError(err || "Failed to save profile.");
     } finally {
@@ -427,7 +456,7 @@ export default function StepProfile() {
         {/* 📍 Section 3: Location with Detect Button */}
         <Field>
           <Label>Working Location <span style={{ color: '#ef4444' }}>*</span></Label>
-          <div style={{ marginBottom: '12px' }}>
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
             <button
               type="button"
               onClick={handleDetectLocation}
@@ -451,11 +480,77 @@ export default function StepProfile() {
               <FiMapPin size={18} />
               {isDetectingLocation ? 'Detecting...' : '📍 Detect Current Location'}
             </button>
+            <button
+              type="button"
+              onClick={() => setIsSearchingManually(!isSearchingManually)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 16px',
+                backgroundColor: '#64748b',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              <FiSearch size={18} />
+              Search Manually
+            </button>
           </div>
+
+          {isSearchingManually && (
+            <div style={{ marginBottom: '12px', position: 'relative' }}>
+              <Input
+                value={manualSearch}
+                onChange={e => setManualSearch(e.target.value)}
+                placeholder="Type city, area or pincode to search..."
+                style={{ marginBottom: '4px' }}
+              />
+              {suggestions.length > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  backgroundColor: 'white',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                  zIndex: 10,
+                  maxHeight: '200px',
+                  overflowY: 'auto'
+                }}>
+                  {suggestions.map(loc => (
+                    <div
+                      key={loc.id}
+                      onClick={() => handleSelectSuggestion(loc)}
+                      style={{
+                        padding: '10px 12px',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid #f1f5f9',
+                        fontSize: '13px',
+                        textAlign: 'left'
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}
+                    >
+                      {loc.search_text}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <Input 
             value={form.location} 
             readOnly
-            placeholder="Click 'Detect Current Location' button first" 
+            placeholder="Click 'Detect Current Location' or 'Search Manually'" 
             style={{ backgroundColor: '#f8fafc', cursor: 'not-allowed' }}
           />
         </Field>

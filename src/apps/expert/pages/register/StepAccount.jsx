@@ -227,6 +227,7 @@ export default function Auth() {
         categoryId: res.expert.category_id || null,
         subCategoryIds: res.expert.subcategory_id ? [res.expert.subcategory_id] : [],
         profileId: res.expert.profile_id || null,
+        priceId: res.expert.price_id || null,
         referral_code: res.expert.referral_code || null,
       });
 
@@ -239,6 +240,8 @@ export default function Auth() {
         navigate("/expert/register/subcategory");
       } else if (!expert.profile_id) {
         navigate("/expert/register/profile");
+      } else if (!expert.price_id) {
+        navigate("/expert/register/pricing");
       } else {
         navigate("/expert/home");
       }

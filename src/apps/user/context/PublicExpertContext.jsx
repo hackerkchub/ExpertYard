@@ -65,6 +65,11 @@ export const PublicExpertProvider = ({ children }) => {
          session: p.session || null,
          pricing_modes: p.pricing_modes || [],
           subcategory_id: p.subcategory_id,
+          category_id: p.category_id,
+          category_name: p.category_name,
+          subcategory_name: p.subcategory_name,
+          expertise: p.expertise || [],
+          primary_expertise: p.primary_expertise || null,
           isPaidExpert: p.isPaidExpert,
           is_subscribed: p.is_subscribed,
           isSubscribed: p.isSubscribed,
@@ -154,6 +159,8 @@ export const PublicExpertProvider = ({ children }) => {
         phone: data.phone,
         position: data.position,
         profile_photo: data.profile_photo,
+        expertise: normalizedData.expertise || data.expertise || [],
+        primary_expertise: normalizedData.primary_expertise || data.primary_expertise || null,
       });
     } catch (err) {
       console.error("PROFILE ERROR:", err);

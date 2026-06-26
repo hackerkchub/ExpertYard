@@ -1,6 +1,6 @@
 // src/apps/user/components/userExperts/ExpertCard.jsx - PREMIUM UPGRADED VERSION (NO FRONTEND FILTERING)
 import React, { useCallback, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { 
   FiPhoneCall, FiMessageSquare, FiMapPin, FiZap, FiClock, 
@@ -90,9 +90,114 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
   const chatTime = data.chat_time || 0;
   const callTime = data.call_time || 0;
 
-  const hasSubscription = data.has_subscription || false;
-  const categoryName = data.category_name || "";
-  const subcategoryName = data.subcategory_name || "";
+  const hasSubscription = Boolean(
+    data.has_subscription ||
+    data.hasSubscription ||
+    data.is_subscribed ||
+    (data.subscription_status && data.subscription_status !== "free") ||
+    (data.access_level && data.access_level !== "free_limited")
+  );
+  const routerLocation = useLocation();
+
+  const slugify = (text) => {
+    if (!text) return "";
+    return text.toString().toLowerCase().trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '')
+      .replace(/\-\-+/g, '-');
+  };
+
+  const { categoryName, subcategoryName, categoryChips, skillChips } = useMemo(() => {
+    const params = new URLSearchParams(routerLocation.search);
+    const catParam = params.get("category") || params.get("categoryId");
+    const subParam = params.get("sub_category") || params.get("subCategory") || params.get("subcategory") || params.get("subCategoryId");
+    
+    let matchedCategory = null;
+    let matchedSubcategory = null;
+    
+    const pathname = routerLocation.pathname.toLowerCase();
+    const expertise = Array.isArray(data.expertise) ? data.expertise : [];
+    
+    for (const group of expertise) {
+      const catId = String(group.category_id);
+      const catSlug = slugify(group.category_name);
+      
+      const isCatMatch = catParam === catId || (catSlug && pathname.includes(catSlug));
+      if (isCatMatch) {
+        matchedCategory = group;
+      }
+      
+      for (const sub of (group.subcategories || [])) {
+        const subId = String(sub.subcategory_id);
+        const subSlug = slugify(sub.subcategory_name);
+        
+        const isSubMatch = subParam === subId || (subSlug && pathname.includes(subSlug));
+        if (isSubMatch) {
+          matchedSubcategory = sub;
+          matchedCategory = group;
+        }
+      }
+    }
+    
+    // Check primary fallback if no match found
+    if (!matchedCategory && data.category_id) {
+      const catId = String(data.category_id);
+      const catSlug = slugify(data.category_name);
+      if (catParam === catId || (catSlug && pathname.includes(catSlug))) {
+        matchedCategory = {
+          category_id: data.category_id,
+          category_name: data.category_name,
+          subcategories: [{ subcategory_id: data.subcategory_id, subcategory_name: data.subcategory_name }]
+        };
+      }
+    }
+    if (!matchedSubcategory && data.subcategory_id) {
+      const subId = String(data.subcategory_id);
+      const subSlug = slugify(data.subcategory_name);
+      if (subParam === subId || (subSlug && pathname.includes(subSlug))) {
+        matchedSubcategory = {
+          subcategory_id: data.subcategory_id,
+          subcategory_name: data.subcategory_name
+        };
+        matchedCategory = {
+          category_id: data.category_id,
+          category_name: data.category_name,
+          subcategories: [matchedSubcategory]
+        };
+      }
+    }
+    
+    if (matchedCategory) {
+      // Category-specific mode: show only relevant category and relevant subcategories
+      const catName = matchedCategory.category_name;
+      const subNames = matchedSubcategory 
+        ? [matchedSubcategory.subcategory_name]
+        : (matchedCategory.subcategories || []).map(s => s.subcategory_name || s.name).filter(Boolean);
+      
+      return {
+        categoryName: catName,
+        subcategoryName: subNames.join(", "),
+        categoryChips: [catName],
+        skillChips: subNames.slice(0, 3)
+      };
+    } else {
+      // General listing/search: show expertise chips like Category 1 | Category 2 | Category 3
+      const primaryCatName = data.category_name || "";
+      const primarySubCatName = data.subcategory_name || "";
+      
+      const expertiseCategories = expertise.map((item) => item.category_name).filter(Boolean);
+      const categoryChips = expertiseCategories.length
+        ? [...new Set(expertiseCategories)].slice(0, 3)
+        : [primaryCatName].filter(Boolean);
+        
+      return {
+        categoryName: primaryCatName,
+        subcategoryName: primarySubCatName,
+        categoryChips: categoryChips,
+        skillChips: []
+      };
+    }
+  }, [data, routerLocation.search, routerLocation.pathname]);
   const location = data.location || "";
   const isPremium = data.is_premium || false;
   const responseTime = data.avg_response_time || "< 1 min";
@@ -352,13 +457,8 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
                   </MetaItem>
                 </MetaRow>
 
-                <CategoryTags $callChat={isCallChatCard}>
-                  {consultationCount > 0 && (
-                    <CategoryChip>
-                      <FiTrendingUp size={10} /> {consultationCount}+ consultations
-                    </CategoryChip>
-                  )}
-                </CategoryTags>
+                
+                
               </ExpertInfo>
             </CardHeader>
 

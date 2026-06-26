@@ -1,6 +1,5 @@
-// src/apps/expert/pages/register/StepCategory.jsx
-import React, { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useExpert } from "../../../../shared/context/ExpertContext";
@@ -11,7 +10,6 @@ import RegisterLayout from "../../components/RegisterLayout";
 import Loader from "../../../../shared/components/Loader/Loader";
 import ErrorMessage from "../../../../shared/components/ErrorMessage/ErrorMessage";
 
-// ✅ साफ़ सुथरे इंपोर्ट्स (ताकि कोई Component 'undefined' न आए)
 import {
   CategorySplitWrapper,
   CategoryLeftScroll,
@@ -25,92 +23,120 @@ import {
   PrimaryButton,
   SecondaryButton,
   ActionsRow,
-  SelectionPreviewBox
+  SelectionPreviewBox,
 } from "../../styles/SubcategorySelect.style";
 
 import { prettyLabel } from "../../constants/categoryIcons";
 
+const DEFAULT_CATEGORY_IMAGE = "/default-category.png";
+
 export default function StepCategory() {
   const navigate = useNavigate();
+  const { search } = useLocation();
+  const isEditMode = useMemo(() => {
+    return new URLSearchParams(search).get("mode") === "edit";
+  }, [search]);
   const { expertData, updateExpertData } = useExpert();
 
   const [categories, setCategories] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredCategories, setFilteredCategories] = useState([]);
 
   const { request: getCategories, loading, error } = useApi(getCategoriesApi);
   const { request: saveCategory, loading: saving } = useApi(saveCategoryApi);
 
-  const DEFAULT_CATEGORY_IMAGE = "/default-category.png";
+  const selectedIds = useMemo(() => {
+    const ids = expertData.categoryIds?.length
+      ? expertData.categoryIds
+      : (expertData.categoryId ? [expertData.categoryId] : []);
+    return ids.map(Number).filter(Boolean);
+  }, [expertData.categoryId, expertData.categoryIds]);
 
   useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const res = await getCategories();
+        const list = Array.isArray(res) ? res : res?.data || [];
+        setCategories(list);
+      } catch (err) {
+        console.error("Category API failed", err);
+        setCategories([]);
+      }
+    };
+
     loadCategories();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [getCategories]);
 
-  useEffect(() => {
-    if (!searchQuery) {
-      setFilteredCategories(categories);
-    } else {
-      const filtered = categories.filter((cat) =>
-        prettyLabel(cat.name).toLowerCase().includes(searchQuery.toLowerCase()) ||
-        cat.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredCategories(filtered);
-    }
-  }, [searchQuery, categories]);
+  const filteredCategories = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return categories;
+    return categories.filter((cat) =>
+      prettyLabel(cat.name).toLowerCase().includes(query) ||
+      String(cat.name || "").toLowerCase().includes(query)
+    );
+  }, [categories, searchQuery]);
 
-  const loadCategories = async () => {
-    try {
-      const res = await getCategories();
-      const list = Array.isArray(res) ? res : res?.data || [];
-      setCategories(list);
-      setFilteredCategories(list);
-    } catch (err) {
-      console.error("Category API failed", err);
-      setCategories([]);
-      setFilteredCategories([]);
-    }
-  };
+  const selectedCategories = useMemo(
+    () => categories.filter((cat) => selectedIds.includes(Number(cat.id))),
+    [categories, selectedIds]
+  );
 
   const handleSelect = useCallback((category) => {
+    const categoryId = Number(category.id);
+    const nextIds = selectedIds.includes(categoryId)
+      ? selectedIds.filter((id) => id !== categoryId)
+      : [...selectedIds, categoryId];
+    const nextSelections = (expertData.categorySelections || [])
+      .filter((item) => nextIds.includes(Number(item.category_id)));
+
     updateExpertData({
-      categoryId: category.id,
-      categoryName: prettyLabel(category.name),
-      categoryKey: category.key || category.slug
+      categoryIds: nextIds,
+      categorySelections: nextSelections,
+      categoryId: nextIds[0] || null,
+      categoryName: nextIds[0]
+        ? prettyLabel(categories.find((cat) => Number(cat.id) === nextIds[0])?.name || category.name)
+        : "",
+      categoryKey: nextIds[0]
+        ? categories.find((cat) => Number(cat.id) === nextIds[0])?.key ||
+          categories.find((cat) => Number(cat.id) === nextIds[0])?.slug ||
+          category.key ||
+          category.slug
+        : null,
     });
-  }, [updateExpertData]);
+  }, [categories, expertData.categorySelections, selectedIds, updateExpertData]);
 
   const handleNext = async () => {
+    if (!selectedIds.length) return;
+
     try {
-      await saveCategory({ category_id: expertData.categoryId });
-      navigate("/expert/register/subcategory");
+      await saveCategory({
+        category_ids: selectedIds,
+        category_id: selectedIds[0],
+      });
+      if (isEditMode) {
+        navigate("/expert/register/subcategory?mode=edit");
+      } else {
+        navigate("/expert/register/subcategory");
+      }
     } catch (err) {
       console.error("Save category failed", err);
     }
   };
-
-  const canNext = !!expertData.categoryId;
-  const selectedCategory = categories.find((cat) => cat.id === expertData.categoryId);
-  const totalCategories = filteredCategories.length;
 
   if (loading) return <Loader />;
   if (error) return <ErrorMessage message={error} />;
 
   return (
     <RegisterLayout
-      title="Choose your expertise area"
-      subtitle="Select the main category where you can help clients best."
+      title="Choose your expertise areas"
+      subtitle="Select every category where you can help clients."
       step={2}
       hasNavbar={true}
     >
       <CategorySplitWrapper>
-        
-        {/* ⬅️ Left Side: Search + Grid (Scrollable) */}
         <CategoryLeftScroll>
           <CategorySearch>
             <input
-              placeholder={`Search ${totalCategories} ${totalCategories === 1 ? "category" : "categories"}...`}
+              placeholder={`Search ${filteredCategories.length} categories...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -121,132 +147,105 @@ export default function StepCategory() {
               {filteredCategories.length === 0 ? (
                 <CategoryEmptyState style={{ gridColumn: "1 / -1" }}>
                   <div>
-                    <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
                     <h3>No categories found</h3>
                     <p>Try a different search term</p>
                   </div>
                 </CategoryEmptyState>
               ) : (
-                filteredCategories.map((cat, index) => (
-                  <motion.div
-                    key={cat.id}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -15 }}
-                    transition={{ duration: 0.3, delay: index * 0.03 }}
-                  >
-                    <SelectCard
-                      type="button"
-                      active={expertData.categoryId === cat.id}
-                      onClick={() => handleSelect(cat)}
+                filteredCategories.map((cat, index) => {
+                  const active = selectedIds.includes(Number(cat.id));
+                  return (
+                    <motion.div
+                      key={cat.id}
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -15 }}
+                      transition={{ duration: 0.3, delay: index * 0.02 }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <div
-                          style={{
-                            width: 44,
-                            height: 44,
-                            borderRadius: "50%",
-                            background: expertData.categoryId === cat.id 
-                              ? "linear-gradient(135deg, #0ea5ff, #38bdf8)" 
-                              : "rgba(56,189,248,0.12)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            overflow: "hidden",
-                            flexShrink: 0
-                          }}
-                        >
-                          <img
-                            src={cat.image_url || DEFAULT_CATEGORY_IMAGE}
-                            alt={cat.name}
+                      <SelectCard type="button" active={active} onClick={() => handleSelect(cat)}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <div
                             style={{
-                              width: "75%",
-                              height: "75%",
-                              objectFit: "cover",
-                              borderRadius: "50%"
+                              width: 44,
+                              height: 44,
+                              borderRadius: "50%",
+                              background: active ? "linear-gradient(135deg, #0ea5ff, #38bdf8)" : "rgba(56,189,248,0.12)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              overflow: "hidden",
+                              flexShrink: 0,
+                              color: active ? "#fff" : "#0ea5ff",
+                              fontWeight: 700,
                             }}
-                            onError={(e) => {
-                              e.target.style.display = "none";
-                              e.target.parentElement.innerHTML = cat.name.charAt(0).toUpperCase();
-                            }}
-                          />
+                          >
+                            {active ? "OK" : (
+                              <img
+                                src={cat.image_url || DEFAULT_CATEGORY_IMAGE}
+                                alt={cat.name}
+                                style={{ width: "75%", height: "75%", objectFit: "cover", borderRadius: "50%" }}
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                }}
+                              />
+                            )}
+                          </div>
+                          <div style={{ textAlign: "left" }}>
+                            <CardTitle>{prettyLabel(cat.name)}</CardTitle>
+                            <CardMeta>{active ? "Selected" : "Tap to select"}</CardMeta>
+                          </div>
                         </div>
-
-                        <div style={{ textAlign: "left" }}>
-                          <CardTitle>{prettyLabel(cat.name)}</CardTitle>
-                          <CardMeta>Expertise area</CardMeta>
-                        </div>
-                      </div>
-                    </SelectCard>
-                  </motion.div>
-                ))
+                      </SelectCard>
+                    </motion.div>
+                  );
+                })
               )}
             </CardGrid>
           </AnimatePresence>
         </CategoryLeftScroll>
 
-        {/* ➡️ Right Side: Sticky/Eyes-Fixed Preview + Action CTA */}
         <CategoryRightFixed>
           <SelectionPreviewBox>
-            <h3>Your Selection</h3>
-            
-            <AnimatePresence mode="wait">
-              {selectedCategory ? (
-                <motion.div
-                  key={selectedCategory.id}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  style={{ textAlign: "center", width: "100%" }}
-                >
-                  <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
-                    <div style={{
-                      width: 64, height: 64, borderRadius: "50%",
-                      background: "linear-gradient(135deg, #0ea5ff, #38bdf8)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      boxShadow: "0 4px 12px rgba(14,165,233,0.3)"
-                    }}>
-                      <img
-                        src={selectedCategory.image_url || DEFAULT_CATEGORY_IMAGE}
-                        alt={selectedCategory.name}
-                        style={{ width: "70%", height: "70%", borderRadius: "50%", objectFit: "cover" }}
-                      />
-                    </div>
-                  </div>
-                  <h4 style={{ margin: "0 0 4px 0", color: "#0f172a" }}>{prettyLabel(selectedCategory.name)}</h4>
-                  <span style={{ color: "#10b981", fontSize: 13, fontWeight: 500 }}>✅ Perfect match chosen!</span>
-                </motion.div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  style={{ textAlign: "center", color: "#64748b" }}
-                >
-                  <div style={{ fontSize: 32, marginBottom: 8 }}>👇</div>
-                  <p style={{ margin: 0, fontSize: 14 }}>Click on a category to select.</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <h3>Your Categories</h3>
+            {selectedCategories.length ? (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
+                {selectedCategories.map((cat) => (
+                  <span
+                    key={cat.id}
+                    style={{
+                      padding: "8px 10px",
+                      borderRadius: 8,
+                      background: "#e0f2fe",
+                      color: "#0369a1",
+                      fontSize: 13,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {prettyLabel(cat.name)}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p style={{ margin: 0, fontSize: 14, color: "#64748b" }}>Select at least one category.</p>
+            )}
           </SelectionPreviewBox>
 
           <ActionsRow style={{ flexDirection: "column", gap: 12, marginTop: 0 }}>
             <PrimaryButton
-              disabled={!canNext || saving}
+              disabled={!selectedIds.length || saving}
               onClick={handleNext}
               style={{ width: "100%", justifyContent: "center" }}
             >
-              {saving ? "Saving..." : selectedCategory ? `Continue with ${prettyLabel(selectedCategory.name)} →` : "Choose a category to continue"}
+              {saving ? "Saving..." : selectedIds.length ? "Continue to specializations" : "Choose a category to continue"}
             </PrimaryButton>
-
-            <SecondaryButton
-              onClick={() => navigate("/expert/register")}
+            <SecondaryButton 
+              onClick={() => navigate(isEditMode ? "/expert/profile" : "/expert/register")} 
               style={{ width: "100%", justifyContent: "center" }}
             >
-              ← Back to Basic Info
+              {isEditMode ? "Cancel & Go to Profile" : "Back to Basic Info"}
             </SecondaryButton>
           </ActionsRow>
         </CategoryRightFixed>
-
       </CategorySplitWrapper>
     </RegisterLayout>
   );

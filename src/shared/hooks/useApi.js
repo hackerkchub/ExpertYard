@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 const useApi = (apiFunction) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const request = async (...args) => {
+  const request = useCallback(async (...args) => {
     try {
       setLoading(true);
       setError(null);
@@ -28,7 +28,7 @@ const useApi = (apiFunction) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiFunction]);
 
   return { request, loading, error };
 };

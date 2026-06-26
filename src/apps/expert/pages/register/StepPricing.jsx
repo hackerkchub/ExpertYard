@@ -43,7 +43,7 @@ import {
 
 export default function StepPricing() {
   const navigate = useNavigate();
-  const { expertData } = useExpert();
+  const { expertData, updateExpertData, refreshExpertData } = useExpert();
 
   // Pricing modes state
   const [selectedModes, setSelectedModes] = useState(["per_minute"]);
@@ -490,8 +490,15 @@ if (!isSuccess) {
 
       notifySuccess("Pricing saved successfully! 🎉");
       
-      // Navigate to completion
-      navigate(`/expert/register?completed=1&email=${expertData.email}`);
+      if (updateExpertData) {
+        updateExpertData({ priceId: 1 });
+      }
+      if (refreshExpertData) {
+        await refreshExpertData();
+      }
+
+      // Navigate to dashboard
+      navigate("/expert/home");
 
     } catch (err) {
       console.error("Pricing API failed:", err);

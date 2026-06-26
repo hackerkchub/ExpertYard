@@ -56,6 +56,10 @@ const DEFAULT_STATE = {
   email: "",
   phone: "",
   categoryId: null,
+  categoryIds: [],
+  categorySelections: [],
+  primaryCategoryId: null,
+  primarySubCategoryId: null,
   subCategoryIds: [],
   profileId: null,
   profile: null,
@@ -148,6 +152,8 @@ export const ExpertProvider = ({ children }) => {
         prev.expertId !== newState.expertId ||
         prev.name !== newState.name ||
         prev.profile_photo !== newState.profile_photo ||
+        JSON.stringify(prev.categoryIds || []) !== JSON.stringify(newState.categoryIds || []) ||
+        JSON.stringify(prev.categorySelections || []) !== JSON.stringify(newState.categorySelections || []) ||
         prev.priceId !== newState.priceId ||
         prev.subscription_status !== newState.subscription_status ||
         prev.access_level !== newState.access_level ||
@@ -243,6 +249,21 @@ export const ExpertProvider = ({ children }) => {
           profile: profileData,
           name: profileData.name,
           profile_photo: photoUrl,
+          categoryId: profileData.primary_expertise?.category_id ?? profileData.category_id ?? null,
+          categoryIds: Array.isArray(profileData.expertise)
+            ? profileData.expertise.map((item) => item.category_id).filter(Boolean)
+            : (profileData.category_id ? [profileData.category_id] : []),
+          categorySelections: Array.isArray(profileData.expertise)
+            ? profileData.expertise.map((item) => ({
+                category_id: item.category_id,
+                subcategory_ids: (item.subcategories || []).map((sub) => sub.subcategory_id).filter(Boolean),
+              }))
+            : [],
+          primaryCategoryId: profileData.primary_expertise?.category_id ?? profileData.category_id ?? null,
+          primarySubCategoryId: profileData.primary_expertise?.subcategory_id ?? profileData.subcategory_id ?? null,
+          subCategoryIds: Array.isArray(profileData.expertise)
+            ? profileData.expertise.flatMap((item) => (item.subcategories || []).map((sub) => sub.subcategory_id)).filter(Boolean)
+            : (profileData.subcategory_id ? [profileData.subcategory_id] : []),
           subscription_status: accessProfile.access?.subscription_status || accessProfile.subscription_status || "free",
           access_level: accessProfile.access?.access_level || accessProfile.access_level || "free_limited",
           planId: accessProfile.access?.plan_id || accessProfile.current_plan_id || null,

@@ -120,7 +120,17 @@ const ExpertListPage = () => {
           pincode
         });
         if (res.data?.success) {
-          setExperts(res.data.data || []);
+          const rawData = res.data.data || [];
+          const seen = new Set();
+          const unique = [];
+          for (const item of rawData) {
+            const id = Number(item.id || item.expert_id || item.expertId);
+            if (id && !seen.has(id)) {
+              seen.add(id);
+              unique.push(item);
+            }
+          }
+          setExperts(unique);
           setFallbackInfo({
             used: res.data.fallback_used || false,
             reason: res.data.fallback_reason || null
@@ -140,7 +150,17 @@ const ExpertListPage = () => {
     try {
       setLoading(true);
       const res = await getExpertsBySubCategoryApi(subCategoryId);
-      setExperts(res.data?.data || []);
+      const rawData = res.data?.data || [];
+      const seen = new Set();
+      const unique = [];
+      for (const item of rawData) {
+        const id = Number(item.id || item.expert_id || item.expertId);
+        if (id && !seen.has(id)) {
+          seen.add(id);
+          unique.push(item);
+        }
+      }
+      setExperts(unique);
       setFallbackInfo({ used: false, reason: null });
     } catch (err) {
       console.error("Load experts failed:", err);

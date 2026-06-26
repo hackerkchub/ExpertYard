@@ -6,6 +6,7 @@
   );
   --linkedin-blue: #000080;
   --nav-bg: #ffffff;
+  --nav-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 .bottom-nav {
@@ -21,6 +22,7 @@
   z-index: 1000;
   box-sizing: border-box;
   padding-bottom: env(safe-area-inset-bottom);
+  font-family: var(--nav-font);
 }
 
 .nav-item {
@@ -100,10 +102,10 @@
     align-items: center;
     border: 0;
     border-top: 1px solid rgba(15, 23, 42, 0.08);
-    border-radius: 22px 22px 0 0;
+    border-radius: 24px 24px 0 0;
     background: rgba(255, 255, 255, 0.98);
     box-shadow:
-      0 -14px 34px rgba(15, 23, 42, 0.1),
+      0 -16px 36px rgba(15, 23, 42, 0.11),
       0 -1px 0 rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(18px) saturate(150%);
     -webkit-backdrop-filter: blur(18px) saturate(150%);
@@ -121,7 +123,7 @@
     min-height: 44px;
     height: 100%;
     gap: 2px;
-    color: #64748b;
+    color: #667085;
     font-weight: 700;
     border-radius: 18px;
     transform: translateZ(0);
@@ -192,9 +194,9 @@
     width: 100%;
     overflow: hidden;
     color: inherit;
-    font-size: clamp(9px, 2.6vw, 10.5px);
+    font-size: clamp(9px, 2.55vw, 10.5px);
     line-height: 1.1;
-    font-weight: 750;
+    font-weight: 760;
     letter-spacing: 0;
     text-align: center;
     text-overflow: ellipsis;
@@ -214,10 +216,10 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 128, 0.08);
+    background: rgba(0, 0, 128, 0.085);
     color: #000080;
     box-shadow:
-      0 8px 18px rgba(0, 0, 128, 0.1),
+      0 9px 18px rgba(0, 0, 128, 0.11),
       inset 0 0 0 1px rgba(0, 0, 128, 0.05);
     transform: translateY(-2px);
   }

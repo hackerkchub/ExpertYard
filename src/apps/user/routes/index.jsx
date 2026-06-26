@@ -40,6 +40,7 @@ const AllServices = lazy(() => import("../pages/AllServicesByCatId/AllServices")
 const ServiceDetails = lazy(() => import("../pages/AllServicesByCatId/ServiceDetails"));
 const MyBookings = lazy(() => import("../pages/AllServicesByCatId/MyBookings"));
 const UserProfile = lazy(() => import("../pages/user-profile/UserProfile"))
+const UserNotificationPage = lazy(() => import("../pages/notification/UserNotificationPage"));
 
 const withLazyRoute = (node) => <LazyRoute>{node}</LazyRoute>;
 
@@ -81,6 +82,16 @@ export default function UserAppRoutes() {
             <Route path="all-services" element={withLazyRoute(<AllServices />)} />
             <Route path="service-details/:slug" element={withLazyRoute(<ServiceDetails />)} />
             <Route path="my-booking/:id" element={withLazyRoute(<MyBookings />)} />
+            <Route
+              path="notifications"
+              element={
+                <ProtectedRoute>
+                  <LazyRoute>
+                    <UserNotificationPage />
+                  </LazyRoute>
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="wallet"
               element={

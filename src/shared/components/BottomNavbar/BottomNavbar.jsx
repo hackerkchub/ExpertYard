@@ -2,11 +2,11 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   BriefcaseBusiness,
-  History,
   Home,
   MessageCircle,
   PhoneCall,
   Sparkles,
+  Wallet,
 } from 'lucide-react';
 import "./BottomNavbar.css";
 
@@ -14,8 +14,8 @@ const BottomNavbar = () => {
   const menuItems = [
     { name: 'Home', path: '/user', icon: <Home size={21} />, end: true },
     { name: 'Services', path: '/user/all-services', icon: <BriefcaseBusiness size={21} /> },
-    { name: 'Categories', path: '/user/categories', icon: <Sparkles size={24} />, featured: true },
-    { name: 'History', path: '/user/chat-history', icon: <History size={21} /> },
+    { name: 'Category', path: '/user/categories', icon: <Sparkles size={24} />, featured: true },
+    { name: 'Wallet', path: '/user/wallet', icon: <Wallet size={21} /> },
     {
       name: 'Talk',
       path: '/user/call-chat?page=1&mode=chat',

@@ -79,7 +79,7 @@ const NetworkStatus = () => {
   if (!show) return null;
 
   return (
-    <ToastContainer isOnline={isOnline}>
+    <ToastContainer $isOnline={isOnline}>
       {isOnline ? <FiWifi /> : <FiWifiOff />}
       <span>{isOnline ? "Back Online" : "No Internet Connection"}</span>
     </ToastContainer>
@@ -91,7 +91,7 @@ const ToastContainer = styled.div`
   bottom: 80px;
   left: 50%;
   transform: translateX(-50%);
-  background: ${(props) => (props.isOnline ? "#057642" : "#191919")};
+  background: ${(props) => (props.$isOnline ? "#057642" : "#191919")};
   color: white;
   padding: 10px 20px;
   border-radius: 30px;

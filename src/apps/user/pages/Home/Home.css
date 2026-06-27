@@ -258,54 +258,178 @@ body {
   font-weight: 650;
 }
 
+/* Story-style Categories Row */
 .home-category-chips {
   display: flex;
-  gap: 9px;
-  margin: 15px -2px 3px;
-  padding: 2px 2px 13px;
+  gap: 15px;
+  margin: 8px 0;
+  padding: 8px 4px 14px;
   overflow-x: auto;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .home-category-chips::-webkit-scrollbar {
   display: none;
 }
 
-.home-category-chips button,
-.home-chip--skeleton {
+.category-item-btn {
   flex: 0 0 auto;
-  height: 40px;
-  max-width: 180px;
-  border: 1px solid var(--g9-line-soft);
-  border-radius: 999px;
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 0 13px;
-  color: #374151;
-  background: #ffffff;
-  font-size: 13px;
-  font-weight: 800;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  padding: 0;
   cursor: pointer;
-  white-space: nowrap;
+  width: 74px;
+  outline: none;
+  transition: transform 0.2s ease;
 }
 
-.home-category-chips button.active {
-  border-color: var(--g9-blue);
-  color: #ffffff;
-  background: var(--g9-blue);
+.category-item-btn:hover {
+  transform: translateY(-2px);
 }
 
-.home-category-chips img {
-  width: 24px;
-  height: 24px;
+.category-circle-wrapper {
+  position: relative;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Gradient ring like Instagram */
+.category-circle-ring {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  padding: 2.5px;
+  background: #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.category-item-btn.active .category-circle-ring {
+  background: linear-gradient(45deg, #ffd54a, #000080);
+  box-shadow: 0 4px 12px rgba(0, 0, 128, 0.2);
+}
+
+.category-item-btn:hover .category-circle-ring {
+  background: linear-gradient(45deg, #000080, #3b82f6);
+}
+
+.category-circle-ring img {
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   object-fit: cover;
+  border: 2px solid #ffffff;
+  background: #ffffff;
 }
 
-.home-chip--skeleton {
-  width: 112px;
+.category-circle {
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 850;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.category-circle-fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 900;
+  border: 2px solid #ffffff;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.category-label {
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #334155;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.category-item-btn.active .category-label {
+  color: #000080;
+  font-weight: 900;
+}
+
+/* Skeleton loader for circular stories */
+.category-skeleton-item {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 74px;
+}
+
+.category-skeleton-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #eef2f7 0%, #f8fafc 50%, #eef2f7 100%);
   animation: feedPulse 1.2s ease-in-out infinite;
+}
+
+.category-skeleton-text {
+  width: 50px;
+  height: 10px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #eef2f7 0%, #f8fafc 50%, #eef2f7 100%);
+  animation: feedPulse 1.2s ease-in-out infinite;
+}
+
+@media (min-width: 769px) {
+  .home-category-chips {
+    gap: 22px;
+    padding: 10px 4px 18px;
+  }
+  .category-item-btn {
+    width: 86px;
+    gap: 8px;
+  }
+  .category-circle-wrapper {
+    width: 72px;
+    height: 72px;
+  }
+  .category-circle-ring {
+    width: 70px;
+    height: 70px;
+  }
+  .category-circle {
+    width: 64px;
+    height: 64px;
+  }
+  .category-label {
+    font-size: 12.5px;
+  }
 }
 
 .home-feed-stream {
@@ -1045,5 +1169,18 @@ body {
 
   .feed-ctas a {
     font-size: 14px;
+  }
+}
+
+.home-footer-container {
+  display: block;
+  width: 100%;
+  margin-top: 50px;
+  border-top: 1px solid var(--g9-line);
+}
+
+@media (max-width: 768px) {
+  .home-footer-container {
+    display: none !important;
   }
 }

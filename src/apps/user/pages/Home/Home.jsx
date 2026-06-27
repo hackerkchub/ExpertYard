@@ -17,6 +17,7 @@ import {
 
 import "./Home.css";
 import HomeHeader from "./components/HomeHeader";
+import Footer from "../../components/Footer/Footer";
 import HomeSearch from "./components/HomeSearch";
 import QuickActions from "./components/QuickActions";
 import CategoryChips from "./components/CategoryChips";
@@ -271,6 +272,9 @@ export default function HomePage() {
         </section>
 
         <HomeRightSidebar experts={suggestedExperts} services={trendingServices} />
+      </div>
+      <div className="home-footer-container">
+        <Footer />
       </div>
     </main>
   );

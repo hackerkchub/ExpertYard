@@ -693,12 +693,14 @@ if (draft.documents.aadhar_cardFile) {
       console.log("PROFILE PAYLOAD", profileFormData);
 
       // ========== BUILD PROMISES ==========
-      const promises = [updateExpertProfileApi(profileFormData)];
+      const profilePromises = [updateExpertProfileApi(profileFormData)];
 
       // ✅ ONLY call price API if needed
       if (pricingModes.length > 0) {
-        promises.push(savePriceApi(pricePayload));
+        profilePromises.push(savePriceApi(pricePayload));
       }
+
+      await Promise.all(profilePromises);
 
       // ========== SAVE CATEGORY & SUBCATEGORY MAPPINGS ==========
       if (selectedCatIds.length > 0) {
@@ -725,21 +727,19 @@ if (draft.documents.aadhar_cardFile) {
           ? { category_id: primaryCategoryId, subcategory_id: primarySubcategoryId }
           : { category_id: firstCategory.category_id, subcategory_id: firstCategory.subcategory_ids[0] };
 
-        promises.push(saveCategoryApi({
+        await saveCategoryApi({
           category_ids: selectedCatIds,
           category_id: finalPrimary.category_id
-        }));
+        });
 
-        promises.push(saveSubCategoryApi({
+        await saveSubCategoryApi({
           categories: payloadCategories,
           primary_category_id: finalPrimary.category_id,
           primary_subcategory_id: finalPrimary.subcategory_id
-        }));
+        });
       }
 
-      // ========== EXECUTE ==========
-      await Promise.all(promises);
-await refreshExpertData();
+      await refreshExpertData();
       // ========== REFRESH ==========
       // await Promise.all([refreshPrice()]);
       

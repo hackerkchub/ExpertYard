@@ -13,6 +13,7 @@ import {
   FiCreditCard,
   FiBarChart2,
    FiImage,
+  FiArchive,
 } from "react-icons/fi";
 import {
   Side,
@@ -83,6 +84,11 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
           icon: FiUsers, 
           label: "All Experts",
           badge: null 
+        },
+        {
+          path: "/admin/deleted-experts",
+          icon: FiArchive,
+          label: "Deleted Experts",
         },
         { 
           path: "/admin/expert-approval", 

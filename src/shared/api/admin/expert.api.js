@@ -17,7 +17,19 @@ export const updateExpertAccessSettingsApi = (id, data) =>
   adminApi.put(`/expert/${id}/access-settings`, data);
 
 export const deleteExpertApi = (id) =>
-  adminApi.delete(`/expert/${id}`);
+  adminApi.delete(`/admin/experts/${id}/delete`);
+
+export const updateExpertRankApi = (id, data) =>
+  adminApi.put(`/admin/experts/${id}/rank`, data);
+
+export const getDeletedExpertsApi = ({ page = 1, limit = 20 } = {}) =>
+  adminApi.get(`/admin/deleted-experts?page=${page}&limit=${limit}`);
+
+export const getDeletedExpertDetailApi = (id) =>
+  adminApi.get(`/admin/deleted-experts/${id}`);
+
+export const restoreDeletedExpertApi = (id) =>
+  adminApi.post(`/admin/deleted-experts/${id}/restore`);
 
 export const deleteReviewApi = (id) =>
   adminApi.delete(`/expert/review/${id}`);

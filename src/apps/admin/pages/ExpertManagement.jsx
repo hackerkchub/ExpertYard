@@ -16,13 +16,15 @@ import {
   FaLayerGroup,
   FaToggleOn,
   FaToggleOff,
-  FaSpinner
+  FaSpinner,
+  FaSave
 } from "react-icons/fa";
 
 // API IMPORTS
 import { 
   getAllExpertsApi, 
-  deleteExpertApi 
+  deleteExpertApi,
+  updateExpertRankApi
 } from "../../../shared/api/admin/expert.api";
 
 // Animations
@@ -361,6 +363,47 @@ const ActionButtons = styled.div`
   }
 `;
 
+const RankControls = styled.div`
+  display: grid;
+  grid-template-columns: 82px 92px;
+  gap: 8px;
+  align-items: center;
+  min-width: 190px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    min-width: 150px;
+  }
+`;
+
+const RankInput = styled.input`
+  width: 82px;
+  padding: 8px 10px;
+  border: 1px solid #dfe3ea;
+  border-radius: 8px;
+  font-size: 13px;
+
+  &:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
+  }
+`;
+
+const RankToggle = styled.label`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #495057;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+
+  input {
+    accent-color: #667eea;
+  }
+`;
+
 const ActionBtn = styled.button`
   padding: 8px;
   border: none;
@@ -376,6 +419,12 @@ const ActionBtn = styled.button`
   &:hover {
     transform: scale(1.05);
     background: ${props => props.$hover || '#e9ecef'};
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+    transform: none;
   }
   
   @media (max-width: 768px) {
@@ -467,6 +516,7 @@ export default function ExpertManagement() {
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
   const [loading, setLoading] = useState(true);
+  const [savingRankId, setSavingRankId] = useState(null);
 
   useEffect(() => {
     fetchExperts();
@@ -485,7 +535,10 @@ export default function ExpertManagement() {
           category: e.category_name || e.category_id || "-",
           subcategory: e.subcategory_name || e.subcategory_id || "-",
           photo: e.profile_photo || "https://via.placeholder.com/48",
-          status: e.status === 1 ? "ENABLED" : "DISABLED"
+          status: e.status === 1 ? "ENABLED" : "DISABLED",
+          manual_rank: e.manual_rank || "",
+          rank_enabled: e.rank_enabled === 1 || e.rank_enabled === true,
+          rank_context: e.rank_context || "call_chat"
         }))
       );
     } catch (err) {
@@ -497,15 +550,48 @@ export default function ExpertManagement() {
   };
 
   const remove = async (id) => {
-    if (!window.confirm("Delete this expert? This action cannot be undone.")) return;
+    if (!window.confirm("This expert will be removed from platform but saved in Deleted Experts for restore.")) return;
 
     try {
       await deleteExpertApi(id);
       setRows(rows.filter((r) => r.id !== id));
-      alert("Expert deleted successfully");
+      alert("Expert moved to Deleted Experts.");
     } catch (err) {
       console.error("Delete failed:", err);
       alert("Delete failed. Please try again.");
+    }
+  };
+
+  const updateRankRow = (id, patch) => {
+    setRows((current) =>
+      current.map((row) => (row.id === id ? { ...row, ...patch } : row))
+    );
+  };
+
+  const saveRank = async (row) => {
+    const rankValue = row.manual_rank === "" || row.manual_rank === null || row.manual_rank === undefined
+      ? null
+      : Number(row.manual_rank);
+
+    if (row.rank_enabled && (!Number.isInteger(rankValue) || rankValue < 1)) {
+      alert("Manual rank must be a positive integer when ranking is enabled.");
+      return;
+    }
+
+    try {
+      setSavingRankId(row.id);
+      await updateExpertRankApi(row.id, {
+        rank_enabled: row.rank_enabled,
+        manual_rank: rankValue,
+        rank_context: row.rank_context || "call_chat",
+      });
+      await fetchExperts();
+      alert("Expert rank updated successfully");
+    } catch (err) {
+      console.error("Rank update failed:", err);
+      alert(typeof err === "string" ? err : "Rank update failed");
+    } finally {
+      setSavingRankId(null);
     }
   };
 
@@ -614,6 +700,7 @@ export default function ExpertManagement() {
                 <Th>Expert</Th>
                 <Th>Category</Th>
                 <Th>Subcategory</Th>
+                <Th>Manual Rank</Th>
                 <Th>Status</Th>
                 <Th>Actions</Th>
               </tr>
@@ -621,7 +708,7 @@ export default function ExpertManagement() {
             <tbody>
               {filteredData.length === 0 ? (
                 <tr>
-                  <Td colSpan="5">
+                  <Td colSpan="6">
                     <EmptyState>
                       <FaUserGraduate />
                       <h3>No experts found</h3>
@@ -656,6 +743,25 @@ export default function ExpertManagement() {
                       </div>
                     </Td>
                     <Td>
+                      <RankControls>
+                        <RankInput
+                          type="number"
+                          min="1"
+                          placeholder="Rank"
+                          value={r.manual_rank}
+                          onChange={(event) => updateRankRow(r.id, { manual_rank: event.target.value })}
+                        />
+                        <RankToggle>
+                          <input
+                            type="checkbox"
+                            checked={r.rank_enabled}
+                            onChange={(event) => updateRankRow(r.id, { rank_enabled: event.target.checked })}
+                          />
+                          Enabled
+                        </RankToggle>
+                      </RankControls>
+                    </Td>
+                    <Td>
                       <StatusBadge $enabled={r.status === "ENABLED"}>
                         {r.status === "ENABLED" ? <FaToggleOn /> : <FaToggleOff />}
                         {r.status}
@@ -681,6 +787,16 @@ export default function ExpertManagement() {
                         >
                           <FaEdit />
                         </ActionBtn> */}
+                        <ActionBtn
+                          title="Save Rank"
+                          onClick={() => saveRank(r)}
+                          disabled={savingRankId === r.id}
+                          $color="#e8f5e9"
+                          $textColor="#2e7d32"
+                          $hover="#c8e6c9"
+                        >
+                          {savingRankId === r.id ? <FaSpinner /> : <FaSave />}
+                        </ActionBtn>
                         <ActionBtn
                           title="Delete Expert"
                           onClick={() => remove(r.id)}

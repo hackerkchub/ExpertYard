@@ -852,83 +852,8 @@ export default function UserExpertsPage() {
   }, [cardExperts, gender]);
 
   const filteredCardExperts = useMemo(() => {
-    const minPriceNumber = Number(minPrice || 0);
-    const maxPriceNumber = Number(maxPrice || 0);
-    const minRatingNumber = Number(minRating || 0);
-    const minExperienceNumber = Number(minExperience || 0);
-    const languageQuery = language.trim().toLowerCase();
-    const genderQuery = gender.trim().toLowerCase();
-
-    const filtered = cardExperts.filter((expert) => {
-      const modePrice = tab === "chat" ? expert.chat_per_minute : expert.call_per_minute;
-      const price = Number(modePrice || 0);
-      const rating = Number(expert.avg_rating || 0);
-      const experience = Number(expert.total_experience || 0);
-      const expertLanguages = normalizeTextList(expert.languages)
-        .join(" ")
-        .toLowerCase();
-      const expertGender = String(expert.gender || "").toLowerCase();
-      const expertStatus = String(expert.status || "").toLowerCase();
-
-      if (minPriceNumber > 0 && price > 0 && price < minPriceNumber) return false;
-      if (maxPriceNumber > 0 && price > maxPriceNumber) return false;
-      if (minRatingNumber > 0 && rating < minRatingNumber) return false;
-      if (minExperienceNumber > 0 && experience < minExperienceNumber) return false;
-      if (languageQuery && !expertLanguages.includes(languageQuery)) return false;
-      if (genderQuery && expertGender !== genderQuery) return false;
-
-      if (statusFilter === "online" && expert.isOnline !== true) return false;
-      if (
-        statusFilter === "available" &&
-        !(
-          expert.isOnline === true ||
-          expert.is_available === true ||
-          expertStatus === "available" ||
-          expertStatus === "online"
-        )
-      ) {
-        return false;
-      }
-
-      return true;
-    });
-
-    if (!sortBy) return filtered;
-
-    return [...filtered].sort((a, b) => {
-      if (sortBy === "experience") {
-        return sortOrder === "asc"
-          ? Number(a.total_experience || 0) - Number(b.total_experience || 0)
-          : Number(b.total_experience || 0) - Number(a.total_experience || 0);
-      }
-
-      if (sortBy === "price") {
-        const aPrice = Number((tab === "chat" ? a.chat_per_minute : a.call_per_minute) || 0);
-        const bPrice = Number((tab === "chat" ? b.chat_per_minute : b.call_per_minute) || 0);
-        return sortOrder === "asc" ? aPrice - bPrice : bPrice - aPrice;
-      }
-
-      if (sortBy === "rating") {
-        return sortOrder === "asc"
-          ? Number(a.avg_rating || 0) - Number(b.avg_rating || 0)
-          : Number(b.avg_rating || 0) - Number(a.avg_rating || 0);
-      }
-
-      return 0;
-    });
-  }, [
-    cardExperts,
-    gender,
-    language,
-    maxPrice,
-    minExperience,
-    minPrice,
-    minRating,
-    sortBy,
-    sortOrder,
-    statusFilter,
-    tab
-  ]);
+    return cardExperts;
+  }, [cardExperts]);
 
   // Get active filters count
   const activeFiltersCount = useMemo(() => {

@@ -17,6 +17,7 @@ const ExpertDetail = lazy(() => import("../pages/ExpertDetail"));
 const MembershipPlan = lazy(() => import("../pages/mebership-plan"));
 const FinanceDashboard = lazy(() => import("../pages/FinanceDashboard"));
 const BannerManagement =lazy(() => import("../pages/BannerManagement"));
+const DeletedExperts = lazy(() => import("../pages/DeletedExperts"));
 
 const withLazyRoute = (node) => <LazyRoute>{node}</LazyRoute>;
 
@@ -36,6 +37,7 @@ export default function AdminAppRoutes() {
             element={withLazyRoute(<SubCategoryManagement />)}
           />
           <Route path="expert-management" element={withLazyRoute(<ExpertManagement />)} />
+          <Route path="deleted-experts" element={withLazyRoute(<DeletedExperts />)} />
           <Route path="expert-approval" element={withLazyRoute(<ExpertApproval />)} />
           <Route path="payout-management" element={withLazyRoute(<PayoutManagement />)} />
           <Route path="expert/:id" element={withLazyRoute(<ExpertDetail />)} />

@@ -151,16 +151,16 @@ export default function SubcategoryPage() {
   }, [resolvedCategoryId, user]);
 
   const handleSubcategoryClick = useCallback(
-    (subcategoryId) => {
-      if (!resolvedCategoryId || !subcategoryId) return;
+    (subcategory) => {
+      if (!matchedCategory || !subcategory) return;
       navigate(
-        getSubcategoryExpertsPath(resolvedCategoryId, subcategoryId, {
+        getSubcategoryExpertsPath(matchedCategory, subcategory, {
           page: 1,
           mode: "chat",
         })
       );
     },
-    [navigate, resolvedCategoryId]
+    [navigate, matchedCategory]
   );
 
   const isInitialCategoryLoading = categoriesLoading && categories.length === 0;
@@ -239,7 +239,7 @@ export default function SubcategoryPage() {
               <SubcategoryCard
                 key={subcategory.id}
                 type="button"
-                onClick={() => handleSubcategoryClick(subcategory.id)}
+                onClick={() => handleSubcategoryClick(subcategory)}
               >
                 <SubcategoryImage src={getImage(subcategory)} alt={subcategory.name} />
                 <SubcategoryName>{subcategory.name}</SubcategoryName>

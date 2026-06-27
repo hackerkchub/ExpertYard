@@ -61,6 +61,7 @@ export default function UserAppRoutes() {
             <Route path="category/:categorySlug/experts" element={withLazyRoute(<CallChatExpert />)} />
             <Route path="category/:categoryId/subcategories" element={withLazyRoute(<SubcategoryPage />)} />
             <Route path="category/:categoryId/subcategory/:subcategoryId/experts" element={withLazyRoute(<CallChatExpert />)} />
+            <Route path="category/:categorySlug/:subcategorySlug" element={withLazyRoute(<CallChatExpert />)} />
             <Route path="category/:slug" element={withLazyRoute(<SubcategoryPage />)} />
             <Route path="category/:slug/subcategory/:subcategoryId" element={withLazyRoute(<SubcategoryPage />)} />
             <Route path="categories/:slug" element={withLazyRoute(<SubcategoryPage />)} />

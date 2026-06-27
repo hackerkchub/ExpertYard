@@ -148,7 +148,7 @@ const handleSubCategoryChange = (id) => {
           {experts.map((exp) => (
             <ExpertCard
               key={exp.expert_id}
-              onClick={() => navigate(`/user/experts/${exp.expert_id}`)}
+              onClick={() => navigate(`/user/experts/${exp.slug || exp.expert_slug || exp.expert_id}`)}
             >
               <Avatar
                 src={exp.profile_photo || DEFAULT_AVATAR}

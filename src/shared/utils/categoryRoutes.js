@@ -25,15 +25,40 @@ export function getCategoryExpertsPath(category) {
   return slug ? `${USER_CATEGORY_BASE_PATH}/${slug}/experts` : USER_CATEGORY_BASE_PATH;
 }
 
+export function toSlug(text) {
+  if (!text) return "";
+  return String(text)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export function getCategorySubcategoriesPath(category) {
-  const categoryId = category?.id || category?.category_id || toCategorySlug(category);
+  const slug = toCategorySlug(category);
+  if (slug && isNaN(slug)) {
+    return `${USER_CATEGORY_BASE_PATH}/${slug}`;
+  }
+  const categoryId = category?.id || category?.category_id || slug;
   return categoryId ? `${USER_CATEGORY_BASE_PATH}/${categoryId}/subcategories` : USER_CATEGORY_BASE_PATH;
 }
 
-export function getSubcategoryExpertsPath(categoryId, subcategoryId, params = {}) {
+export function getSubcategoryExpertsPath(category, subcategory, params = {}) {
   const query = new URLSearchParams(params);
   const queryString = query.toString();
-  const path = `${USER_CATEGORY_BASE_PATH}/${categoryId}/subcategory/${subcategoryId}/experts`;
+
+  const categorySlug = category?.slug || toCategorySlug(category) || (typeof category === "string" ? category : "");
+  const subcategorySlug = subcategory?.slug || 
+    (subcategory?.name ? toSlug(subcategory.name) : (typeof subcategory === "string" ? subcategory : ""));
+
+  let path;
+  if (categorySlug && subcategorySlug && isNaN(categorySlug) && isNaN(subcategorySlug)) {
+    path = `${USER_CATEGORY_BASE_PATH}/${categorySlug}/${subcategorySlug}`;
+  } else {
+    const categoryId = category?.id || category;
+    const subcategoryId = subcategory?.id || subcategory;
+    path = `${USER_CATEGORY_BASE_PATH}/${categoryId}/subcategory/${subcategoryId}/experts`;
+  }
 
   return queryString ? `${path}?${queryString}` : path;
 }

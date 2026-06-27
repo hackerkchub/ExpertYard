@@ -61,6 +61,7 @@ import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/l
 import {
   findCategoryById,
   findCategoryBySlug,
+  toSlug,
 } from "../../../../shared/utils/categoryRoutes";
 
 const TABS = [
@@ -152,7 +153,7 @@ export default function UserExpertsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { categorySlug, categoryId: routeCategoryParam, subcategoryId: routeSubcategoryParam } = useParams();
+  const { categorySlug, categoryId: routeCategoryParam, subcategoryId: routeSubcategoryParam, subcategorySlug } = useParams();
   const { t } = useTranslation();
   const modeFromUrl = searchParams.get("mode");
   const searchQueryFromUrl = searchParams.get("q");
@@ -192,7 +193,19 @@ export default function UserExpertsPage() {
     : routeCategoryParam
       ? String(routeCategoryParam)
       : "";
-  const routeSubcategoryId = routeSubcategoryParam ? String(routeSubcategoryParam) : "";
+  const matchedSubcategory = useMemo(() => {
+    if (!subcategorySlug && !routeSubcategoryParam) return null;
+    const key = subcategorySlug || routeSubcategoryParam;
+    return subCategories.find(
+      s => String(s.id) === String(key) || s.slug === key || (s.name && toSlug(s.name) === key)
+    );
+  }, [subCategories, subcategorySlug, routeSubcategoryParam]);
+
+  const routeSubcategoryId = matchedSubcategory?.id 
+    ? String(matchedSubcategory.id) 
+    : routeSubcategoryParam 
+      ? String(routeSubcategoryParam) 
+      : "";
   const isCategoryRoute = Boolean(routeCategoryKey);
   const isSubcategoryExpertRoute = Boolean(routeCategoryId && routeSubcategoryId);
   const { isLoggedIn, user } = useAuth();

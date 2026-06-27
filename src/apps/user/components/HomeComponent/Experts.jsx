@@ -124,21 +124,21 @@ export default function Experts() {
       
       case "session":
         // Navigate to expert profile for session booking
-        navigate(`/user/experts/${expert.id}`, { 
+        navigate(`/user/experts/${expert.slug || expert.id}`, { 
           state: { scrollToBooking: true, bookingType: "session" }
         });
         break;
       
       case "view":
         // Navigate to expert profile to view subscription plans
-        navigate(`/user/experts/${expert.id}`, { 
+        navigate(`/user/experts/${expert.slug || expert.id}`, { 
           state: { scrollToPlans: true }
         });
         break;
       
       default:
         // Navigate to profile
-        navigate(`/user/experts/${expert.id}`);
+        navigate(`/user/experts/${expert.slug || expert.id}`);
         break;
     }
   };
@@ -342,7 +342,7 @@ export default function Experts() {
                 <div
                   className="expert-card"
                   key={ex.id}
-                  onClick={() => navigate(`/user/experts/${ex.id}`)}
+                  onClick={() => navigate(`/user/experts/${ex.slug || ex.id}`)}
                   style={{ cursor: "pointer" }}
                 >
                   {ex.profile_photo ? (

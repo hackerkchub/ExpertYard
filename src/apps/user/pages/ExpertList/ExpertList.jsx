@@ -332,7 +332,7 @@ const ExpertListPage = () => {
                 return (
                   <ExpertCard
                     key={exp.expert_id}
-                    onClick={() => navigate(`/user/experts/${exp.expert_id}`)}
+                    onClick={() => navigate(`/user/experts/${exp.slug || exp.expert_slug || exp.expert_id}`)}
                   >
                     <AvatarImg src={avatar} />
 

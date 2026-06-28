@@ -154,3 +154,83 @@ export const EditorWrapper = styled.div`
     color: rgba(0,0,0,0.3);
   }
 `;
+
+// Add these new styles to your existing CreateService.style.js
+
+export const LoaderContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0;
+`;
+
+export const ProgressBarWrapper = styled.div`
+  width: 100%;
+  height: 6px;
+  background-color: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+`;
+
+export const ProgressBar = styled.div`
+  height: 100%;
+  background: linear-gradient(90deg, #0a66c2, #0057a3);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  width: ${props => props.$progress || 0}%;
+  animation: ${props => props.$progress === 100 ? 'pulse 0.5s ease 3' : 'none'};
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+`;
+
+export const LoaderText = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #0a66c2;
+  font-weight: 500;
+
+  .spinning {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+// Update SubmitButton to handle loading state
+export const SubmitButton = styled.button`
+  background-color: ${props => props.disabled ? '#cbd5e0' : '#0a66c2'};
+  color: white;
+  border: none;
+  border-radius: 24px;
+  padding: 12px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 160px;
+  transition: background-color 0.2s;
+
+  &:hover:not(:disabled) {
+    background-color: #004182;
+  }
+
+  .spinning {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;

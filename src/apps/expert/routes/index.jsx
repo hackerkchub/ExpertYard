@@ -28,6 +28,7 @@ const CreateService = lazy(() => import("../pages/services/CreateServices"));
 const MyServices = lazy(() => import("../pages/services/MyServices"));
 const ExpertBookings = lazy(() => import("../pages/services/ExpertBookings"));
 const SubscriptionPlan = lazy(() => import("../pages/register/SubscriptionPlan"));
+const G9Plan = lazy(() => import("../pages/GuidexaExpertPlan/GuidexaExpertPlan"));
 
 const withLazyRoute = (node) => <LazyRoute>{node}</LazyRoute>;
 
@@ -81,7 +82,7 @@ export default function ExpertAppRoutes() {
           element={
             <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
               <LazyRoute>
-                <SubscriptionPlan />
+                <G9Plan />
               </LazyRoute>
             </ProtectedExpertRoute>
           }

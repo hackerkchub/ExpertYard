@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiInfo, FiDollarSign, FiList, FiType, FiCheckCircle, FiLock, FiUpload, FiFileText } from "react-icons/fi";
+import { FiInfo, FiDollarSign, FiList, FiType, FiCheckCircle, FiLock, FiUpload, FiFileText, FiLoader } from "react-icons/fi";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import * as S from "./CreateService.style";
 import expertApi from "../../../../shared/api/expertapi/axiosInstance";
@@ -21,6 +21,7 @@ const CreateService = () => {
   const [imageFile, setImageFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -43,6 +44,7 @@ const CreateService = () => {
     }
 
     setLoading(true);
+    setUploadProgress(0);
     setMessage({ type: "", text: "" });
 
     const data = new FormData();
@@ -59,16 +61,40 @@ const CreateService = () => {
     }
 
     try {
-      const response = await expertApi.post("/services", data);
+      // Simulate progress for better UX (optional - can be removed if backend provides progress)
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 300);
+
+      const response = await expertApi.post("/services", data, {
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        }
+      });
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      
       if (response.data) {
         setMessage({ type: "success", text: "Service published successfully!" });
         setFormData({ title: "", deliverables: "", description: "", price: "" });
         setImageFile(null);
-         setTimeout(() => {
-      navigate("/expert/myservices");
-    }, 800);
+        
+        // Reset progress before navigation
+        setTimeout(() => {
+          setUploadProgress(0);
+          navigate("/expert/myservices");
+        }, 800);
       }
     } catch (error) {
+      setUploadProgress(0);
       setMessage({ type: "error", text: error.response?.data?.message || "Failed to create service" });
     } finally {
       setLoading(false);
@@ -162,9 +188,28 @@ const CreateService = () => {
             <textarea name="description" rows="4" value={formData.description} onChange={handleChange} placeholder="Briefly describe your service..." required />
           </S.InputGroup>
 
+          {loading && (
+            <S.LoaderContainer>
+              <S.ProgressBarWrapper>
+                <S.ProgressBar $progress={uploadProgress} />
+              </S.ProgressBarWrapper>
+              <S.LoaderText>
+                <FiLoader className="spinning" />
+                Publishing your service... {uploadProgress}%
+              </S.LoaderText>
+            </S.LoaderContainer>
+          )}
+
           <S.ButtonGroup>
             <S.SubmitButton type="submit" disabled={loading}>
-              {loading ? "Publishing..." : "Publish Service"}
+              {loading ? (
+                <>
+                  <FiLoader className="spinning" />
+                  Publishing...
+                </>
+              ) : (
+                "Publish Service"
+              )}
             </S.SubmitButton>
           </S.ButtonGroup>
         </S.StyledForm>

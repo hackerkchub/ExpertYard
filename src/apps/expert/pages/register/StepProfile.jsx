@@ -308,19 +308,19 @@ export default function StepProfile() {
       return false;
     }
 
-    const requiredFiles = {
-      profile_photo: "Profile photo is required",
-      experience_certificate: "Experience certificate is required",
-      marksheet: "Marksheet is required",
-      aadhar_card: "Aadhar card is required"
-    };
+    // const requiredFiles = {
+    //   profile_photo: "Profile photo is required",
+    //   experience_certificate: "Experience certificate is required",
+    //   marksheet: "Marksheet is required",
+    //   aadhar_card: "Aadhar card is required"
+    // };
 
-    for (const [field, message] of Object.entries(requiredFiles)) {
-      if (!form[field] && !existingFiles[field]) {
-        notifyError(message);
-        return false;
-      }
-    }
+    // for (const [field, message] of Object.entries(requiredFiles)) {
+    //   if (!form[field] && !existingFiles[field]) {
+    //     notifyError(message);
+    //     return false;
+    //   }
+    // }
 
     return true;
   };
@@ -378,11 +378,12 @@ export default function StepProfile() {
     form.latitude && 
     form.longitude &&
     !Number.isNaN(Number(form.latitude)) &&
-    !Number.isNaN(Number(form.longitude)) &&
-    (form.profile_photo || existingFiles.profile_photo) &&
-    (form.experience_certificate || existingFiles.experience_certificate) &&
-    (form.marksheet || existingFiles.marksheet) &&
-    (form.aadhar_card || existingFiles.aadhar_card);
+    !Number.isNaN(Number(form.longitude)) 
+    // && (form.profile_photo || existingFiles.profile_photo) &&
+    // (form.experience_certificate || existingFiles.experience_certificate) &&
+    // (form.marksheet || existingFiles.marksheet) &&
+    // (form.aadhar_card || existingFiles.aadhar_card)
+    ;
 
   if (isLoadingExisting) {
     return (
@@ -397,7 +398,12 @@ export default function StepProfile() {
 
   const FileFieldUI = ({ field, label, accept }) => (
     <Field style={{ marginBottom: 0 }}>
-      <Label>{label} <span style={{ color: '#ef4444' }}>*</span></Label>
+     <Label>
+  {label}
+  <span style={{ color: "#64748b", fontWeight: 400 }}>
+    (Optional)
+  </span>
+</Label>
       {existingFiles[field] || form[field] ? (
         <FilePreview>
           {field === "profile_photo" ? <FiImage size={20} /> : <FiFile size={20} />}
@@ -426,7 +432,7 @@ export default function StepProfile() {
   );
 
   return (
-    <RegisterLayout title="Build your expert profile" subtitle="All fields are mandatory." step={4}>
+    <RegisterLayout title="Build your expert profile" subtitle="All required (*) fields are mandatory." step={4}>
       <ProfileContainer>
         
         {/* 📋 Section 1: Basic Info */}
@@ -581,7 +587,7 @@ export default function StepProfile() {
         {/* 📁 Section 4: Documents */}
         <div style={{ marginTop: "24px", width: "100%" }}>
           <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1e293b", marginBottom: "16px", borderBottom: "1px solid #e2e8f0", paddingBottom: "12px" }}>
-            📁 Document Verification
+           📁 Supporting Documents (Optional)
           </h3>
           
           <DocumentsListWrapper>

@@ -153,12 +153,13 @@ const navigate = useNavigate();
 
               <div style={{ display: "flex", gap: 8 }}>
                 {/* ACCEPT CHAT */}
-                {req.type === "chat_request" && req.status === "pending" && (
+                {req.type === "chat_request" && (req.status === "pending" || req.status === "accepting") && (
                   <ActionBtn
                     className="accept"
+                    disabled={req.status === "accepting"}
                     onClick={() => acceptNotification(req)}
                   >
-                    Accept
+                    {req.status === "accepting" ? "Accepting..." : "Accept"}
                   </ActionBtn>
                 )}
 

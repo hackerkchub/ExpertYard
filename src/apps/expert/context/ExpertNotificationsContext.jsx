@@ -144,6 +144,7 @@ const normalizeNotification = (raw = {}) => {
     notificationId,
     type,
     status,
+    tag: raw.tag || meta.tag || "",
     title: raw.title || meta.title || "Notification",
     message: raw.message || raw.body || meta.body || defaultMessage,
     meta: raw.message || raw.body || meta.body || defaultMessage,
@@ -333,12 +334,16 @@ export function ExpertNotificationsProvider({ children }) {
       Notification.permission === "granted" &&
       navigator.serviceWorker
     ) {
-      navigator.serviceWorker.ready.then((registration) => {
+      navigator.serviceWorker.ready.then(async (registration) => {
+        const tag = notification.tag || notification.notificationId || notification.id;
+        const existing = await registration.getNotifications({ tag });
+        if (existing.length > 0) return;
+
         registration.showNotification(notification.title || "Notification", {
           body: notification.message || "",
           icon: notification.senderAvatar || "/logo-192.png",
           badge: "/logo-192.png",
-          tag: notification.notificationId || notification.id,
+          tag,
           data: {
             ...notification.payload,
             target_url: notification.targetUrl,
@@ -395,6 +400,12 @@ export function ExpertNotificationsProvider({ children }) {
   useEffect(() => {
     const handleNotification = (raw) => {
       const notification = normalizeNotification(raw);
+      if (notification.type === "chat_message") {
+        const roomId = notification.payload?.room_id || notification.relatedId;
+        if (roomId && window.location.pathname.includes(`/chat/${roomId}`)) {
+          return;
+        }
+      }
       addNotification(notification, { showSystem: true });
     };
 
@@ -562,6 +573,7 @@ export function ExpertNotificationsProvider({ children }) {
     }
 
     if (notification.type === "chat_request") {
+      updateLocalStatus((n) => n.id === notification.id, "accepting");
       updateNotificationStatus({
         requestId: notification.payload?.request_id,
         type: "chat_request",
@@ -570,7 +582,7 @@ export function ExpertNotificationsProvider({ children }) {
       socket.emit("accept_chat", { request_id: notification.payload?.request_id });
       markNotificationAsRead(notification.id);
     }
-  }, [markNotificationAsRead, markCallFinal, navigate]);
+  }, [markNotificationAsRead, markCallFinal, navigate, updateLocalStatus]);
 
   const rejectNotification = useCallback((notification) => {
     if (!notification) return;

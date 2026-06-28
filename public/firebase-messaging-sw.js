@@ -93,18 +93,34 @@ const getNotificationUrl = (data = {}) => {
   return "/";
 };
 
-const getNotificationTag = (data = {}) => (
-  data.tag ||
-  data.request_id ||
-  data.callId ||
-  data.notification_id ||
-  (
-    (data.type === "follow" || data.type === "like" || data.type === "comment") &&
-    `${data.type}_${data.related_id || data.post_id || "related"}_${data.sender_id || data.sender_name || "sender"}`
-  ) ||
-  `${data.type || "notification"}_${Date.now()}` ||
-  "notification"
-);
+const getNotificationTag = (data = {}) => {
+  if (data.tag) return data.tag;
+  const type = String(data.type || "").toLowerCase();
+  const conversationId = data.room_id || data.roomId || data.request_id || data.related_id || "default";
+  const messageId = data.notification_id || data.id || "default";
+  const callId = data.callId || data.call_id || data.related_id || "default";
+  const postId = data.related_id || data.post_id || "default";
+  const actorId = data.sender_id || "default";
+  const commentId = data.comment_id || data.related_id || "default";
+  const targetUserId = data.receiver_id || data.user_id || "default";
+
+  if (type === "chat_message" || type === "chat_request") {
+    return `chat:${conversationId}:${messageId}`;
+  }
+  if (type === "voice_call" || type === "incoming_call" || type === "missed_call") {
+    return `call:${callId}`;
+  }
+  if (type === "like") {
+    return `like:${postId}:${actorId}`;
+  }
+  if (type === "comment") {
+    return `comment:${commentId}`;
+  }
+  if (type === "follow") {
+    return `follow:${actorId}:${targetUserId}`;
+  }
+  return `${type}_${data.id || Date.now()}`;
+};
 
 const buildNotificationOptions = (data = {}) => {
   const type = data.type;

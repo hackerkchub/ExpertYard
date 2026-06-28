@@ -4,6 +4,35 @@ import { SOUNDS } from "../shared/services/sound/soundRegistry";
 import { soundManager } from "../shared/services/sound/soundManager";
 import { getMessagingClient } from "../shared/utils/lazyFirebase";
 
+const getNotificationTag = (data = {}) => {
+  if (data.tag) return data.tag;
+  const type = String(data.type || "").toLowerCase();
+  const conversationId = data.room_id || data.roomId || data.request_id || data.related_id || "default";
+  const messageId = data.notification_id || data.id || "default";
+  const callId = data.callId || data.call_id || data.related_id || "default";
+  const postId = data.related_id || data.post_id || "default";
+  const actorId = data.sender_id || "default";
+  const commentId = data.comment_id || data.related_id || "default";
+  const targetUserId = data.receiver_id || data.user_id || "default";
+
+  if (type === "chat_message" || type === "chat_request") {
+    return `chat:${conversationId}:${messageId}`;
+  }
+  if (type === "voice_call" || type === "incoming_call" || type === "missed_call") {
+    return `call:${callId}`;
+  }
+  if (type === "like") {
+    return `like:${postId}:${actorId}`;
+  }
+  if (type === "comment") {
+    return `comment:${commentId}`;
+  }
+  if (type === "follow") {
+    return `follow:${actorId}:${targetUserId}`;
+  }
+  return `${type}_${data.id || Date.now()}`;
+};
+
 const useFCM = (openCallPopup, expertId = null, setNotifications = null) => {
   useEffect(() => {
     let channel;
@@ -27,6 +56,24 @@ const useFCM = (openCallPopup, expertId = null, setNotifications = null) => {
         const type = String(payload.data?.type || "").toLowerCase();
         const title = payload.data?.title || "Notification";
         const body = payload.data?.body || "";
+        const tag = getNotificationTag(payload.data);
+
+        // Suppress notifications/sounds if receiver is viewing the active chat thread
+        const roomId = payload.data?.room_id || payload.data?.roomId;
+        if (type === "chat_message" && roomId && window.location.pathname.includes(`/chat/${roomId}`)) {
+          console.log("Receiver is viewing the active chat thread, skipping foreground notification");
+          return;
+        }
+
+        // Deduplicate: check if a notification with this tag is already visible
+        if (Notification.permission === "granted") {
+          const registration = await navigator.serviceWorker.ready;
+          const existing = await registration.getNotifications({ tag });
+          if (existing.length > 0) {
+            console.log(`Notification with tag ${tag} already visible, skipping foreground show`);
+            return;
+          }
+        }
 
         if (type === "voice_call" || type === "incoming_call") {
           if (window.__expertNotificationProviderActive) return;
@@ -48,7 +95,7 @@ const useFCM = (openCallPopup, expertId = null, setNotifications = null) => {
               },
               requireInteraction: true,
               renotify: true,
-              tag: payload.data?.tag || payload.data?.callId || "voice_call",
+              tag,
               vibrate: [200, 100, 200, 100, 400],
             });
           }
@@ -72,7 +119,7 @@ const useFCM = (openCallPopup, expertId = null, setNotifications = null) => {
                 badge: "/logo-192.png",
                 data: payload.data,
                 requireInteraction: true,
-                tag: `call_attempt_${userId}_${Date.now()}`,
+                tag,
               });
             }
 
@@ -117,7 +164,7 @@ const useFCM = (openCallPopup, expertId = null, setNotifications = null) => {
                 badge: "/logo-192.png",
                 data: payload.data,
                 requireInteraction: true,
-                tag: `expert_online_${onlineExpertId}`,
+                tag,
               });
             }
 
@@ -161,7 +208,7 @@ const useFCM = (openCallPopup, expertId = null, setNotifications = null) => {
                 icon: "/logo-192.png",
                 badge: "/logo-192.png",
                 data: payload.data,
-                tag: `call_rejected_${callId}`,
+                tag,
               });
             }
 
@@ -207,7 +254,7 @@ const useFCM = (openCallPopup, expertId = null, setNotifications = null) => {
                 badge: "/logo-192.png",
                 data: payload.data,
                 requireInteraction: true,
-                tag: `missed_call_${callId}`,
+                tag,
               });
             }
 
@@ -249,11 +296,6 @@ const useFCM = (openCallPopup, expertId = null, setNotifications = null) => {
 
           if (Notification.permission === "granted") {
             const registration = await navigator.serviceWorker.ready;
-            const tag =
-              payload.data?.request_id ||
-              payload.data?.callId ||
-              payload.data?.type;
-
             registration.showNotification(title, {
               body,
               icon: "/logo-192.png",
@@ -318,7 +360,7 @@ const useFCM = (openCallPopup, expertId = null, setNotifications = null) => {
               icon: "/logo-192.png",
               badge: "/logo-192.png",
               data: payload.data,
-              tag: `notification_${Date.now()}`,
+              tag,
             });
           }
 

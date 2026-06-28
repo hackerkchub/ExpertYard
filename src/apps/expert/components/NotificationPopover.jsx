@@ -227,20 +227,22 @@ export default function NotificationPopover({
                 <strong>{n.title}</strong>
                 <Meta>{n.message || n.meta} {"\u2022"} {timeAgo(n.createdAt)}</Meta>
 
-                {n.status === "pending" ? (
+                {n.status === "pending" || n.status === "accepting" ? (
                   <ActionRow>
                     <ActionBtn
                       success
+                      disabled={n.status === "accepting"}
                       onClick={(e) => {
                         e.stopPropagation();
                         acceptNotification(n);
                       }}
                     >
-                      Accept
+                      {n.status === "accepting" ? "Accepting..." : "Accept"}
                     </ActionBtn>
                     <ActionBtn
                       danger
                       variant="outline"
+                      disabled={n.status === "accepting"}
                       onClick={(e) => {
                         e.stopPropagation();
                         rejectNotification(n);

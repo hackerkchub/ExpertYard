@@ -5,6 +5,7 @@ import { FaRecycle, FaSpinner, FaTrashRestore, FaUserSlash } from "react-icons/f
 import {
   getDeletedExpertsApi,
   restoreDeletedExpertApi,
+  permanentDeleteDeletedExpertApi,
 } from "../../../shared/api/admin/expert.api";
 
 const Page = styled.div`
@@ -150,6 +151,25 @@ const RestoreButton = styled.button`
   }
 `;
 
+const DeleteButton = styled.button`
+  min-height: 36px;
+  border: 0;
+  border-radius: 9px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #ffffff;
+  background: #dc2626;
+  font-weight: 800;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+`;
+
 const State = styled.div`
   padding: 56px 20px;
   color: #64748b;
@@ -172,6 +192,32 @@ export default function DeletedExperts() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [restoringId, setRestoringId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+
+  const permanentDelete = async (row) => {
+    if (
+      !window.confirm(
+        `This will permanently delete this expert (${row.name}) and all related data. This action cannot be undone.`
+      )
+    )
+      return;
+
+    try {
+      setDeletingId(row.id);
+      await permanentDeleteDeletedExpertApi(row.id);
+      await loadRows();
+      alert("Expert permanently deleted");
+    } catch (err) {
+      console.error("Permanent delete failed:", err);
+      alert(
+        typeof err === "string"
+          ? err
+          : err.response?.data?.message || "Failed to permanently delete expert"
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const loadRows = async () => {
     try {
@@ -264,14 +310,24 @@ export default function DeletedExperts() {
                     <Td>{row.deleted_by_admin_name || row.deleted_by_admin_id || "-"}</Td>
                     <Td><Badge $restored={row.status === "restored"}>{row.status}</Badge></Td>
                     <Td>
-                      <RestoreButton
-                        type="button"
-                        disabled={row.status === "restored" || restoringId === row.id}
-                        onClick={() => restore(row)}
-                      >
-                        {restoringId === row.id ? <FaSpinner /> : <FaTrashRestore />}
-                        Restore
-                      </RestoreButton>
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <RestoreButton
+                          type="button"
+                          disabled={row.status === "restored" || restoringId === row.id || deletingId === row.id}
+                          onClick={() => restore(row)}
+                        >
+                          {restoringId === row.id ? <FaSpinner /> : <FaTrashRestore />}
+                          Restore
+                        </RestoreButton>
+                        <DeleteButton
+                          type="button"
+                          disabled={row.status === "restored" || restoringId === row.id || deletingId === row.id}
+                          onClick={() => permanentDelete(row)}
+                        >
+                          {deletingId === row.id ? <FaSpinner /> : <FaUserSlash />}
+                          Permanent Delete
+                        </DeleteButton>
+                      </div>
                     </Td>
                   </tr>
                 ))}

@@ -31,6 +31,9 @@ export const getDeletedExpertDetailApi = (id) =>
 export const restoreDeletedExpertApi = (id) =>
   adminApi.post(`/admin/deleted-experts/${id}/restore`);
 
+export const permanentDeleteDeletedExpertApi = (id) =>
+  adminApi.delete(`/admin/deleted-experts/${id}/permanent`);
+
 export const deleteReviewApi = (id) =>
   adminApi.delete(`/expert/review/${id}`);
 

@@ -111,18 +111,18 @@ export const ButtonGroup = styled.div`
   justify-content: flex-end;
 `;
 
-export const SubmitButton = styled.button`
-  background-color: #0a66c2;
-  color: white;
-  border: none;
-  border-radius: 24px;
-  padding: 12px 32px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  &:hover { background-color: #004182; }
-  &:disabled { background-color: #cbd5e0; cursor: not-allowed; }
-`;
+// export const SubmitButton = styled.button`
+//   background-color: #0a66c2;
+//   color: white;
+//   border: none;
+//   border-radius: 24px;
+//   padding: 12px 32px;
+//   font-size: 16px;
+//   font-weight: 600;
+//   cursor: pointer;
+//   &:hover { background-color: #004182; }
+//   &:disabled { background-color: #cbd5e0; cursor: not-allowed; }
+// `;
 
 export const Alert = styled.div`
   padding: 12px;

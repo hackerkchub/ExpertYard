@@ -5,9 +5,13 @@ import { FiSearch, FiX } from "react-icons/fi";
 import { globalSearch } from "../../../../shared/api/userApi/searchV2.api";
 import SearchDropdown from "./SearchDropdown";
 import {
+  buildUserSearchPath,
   flattenResults,
+  getLocationDisplayName,
   getResultPath,
+  getStoredLocationQuery,
   normalizeGlobalResults,
+  normalizeSearchTerm,
 } from "./searchUtils";
 import "./GlobalSearch.css";
 
@@ -19,20 +23,6 @@ const emptyResults = {
   categories: [],
   locations: [],
   subcategories: [],
-};
-
-const getStoredLocationQuery = () => {
-  try {
-    const saved = localStorage.getItem("last_selected_location");
-    if (!saved) return "";
-    const location = JSON.parse(saved);
-    if (!location || location.type === "global") return "";
-    return [location.area, location.city, location.pincode, location.state]
-      .filter(Boolean)
-      .join(", ");
-  } catch {
-    return "";
-  }
 };
 
 const GlobalSearchBar = ({ className = "", onSearch }) => {
@@ -47,7 +37,7 @@ const GlobalSearchBar = ({ className = "", onSearch }) => {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
 
-  const trimmedQuery = query.trim();
+  const trimmedQuery = normalizeSearchTerm(query);
   const flattenedResults = useMemo(() => flattenResults(results), [results]);
   const hasResults = flattenedResults.length > 0;
   const showDropdown = open && (trimmedQuery.length >= MIN_QUERY_LENGTH || loading || error);
@@ -119,7 +109,7 @@ const GlobalSearchBar = ({ className = "", onSearch }) => {
     if (!trimmedQuery) return;
     setOpen(false);
     onSearch?.(trimmedQuery);
-    navigate(`/user/search?q=${encodeURIComponent(trimmedQuery)}`);
+    navigate(buildUserSearchPath(trimmedQuery));
   };
 
   const navigateToResult = (group, item) => {
@@ -134,11 +124,11 @@ const GlobalSearchBar = ({ className = "", onSearch }) => {
         latitude: item?.latitude ? Number(item.latitude) : null,
         longitude: item?.longitude ? Number(item.longitude) : null,
         type: item?.type || "city",
-        displayName: item?.search_text || item?.displayName || [item?.area, item?.city, item?.state].filter(Boolean).join(", "),
+        displayName: getLocationDisplayName(item),
       };
       localStorage.setItem("last_selected_location", JSON.stringify(formatted));
       window.dispatchEvent(new CustomEvent("g9-location-changed", { detail: formatted }));
-      navigate(`/user/search?location=${encodeURIComponent(formatted.displayName || "")}`);
+      navigate(buildUserSearchPath(formatted.displayName, "location"));
       return;
     }
     navigate(getResultPath(group, item));

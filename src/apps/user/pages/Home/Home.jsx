@@ -28,6 +28,7 @@ import { useCategory } from "../../../../shared/context/CategoryContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
 import { useSeo } from "../../../../shared/seo/useSeo";
 import { getHomeFeedApi } from "../../../../shared/api/userApi/home.api";
+import { buildUserSearchPath } from "../../components/search/searchUtils";
 
 const FEED_LIMIT = 12;
 
@@ -170,11 +171,7 @@ export default function HomePage() {
   };
 
   const handleSearch = (query) => {
-    if (!query) {
-      navigate("/user/search");
-      return;
-    }
-    navigate(`/user/search?q=${encodeURIComponent(query)}`);
+    navigate(buildUserSearchPath(query));
   };
 
   const handleCategorySelect = (category) => {

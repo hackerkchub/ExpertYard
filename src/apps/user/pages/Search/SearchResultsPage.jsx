@@ -3,8 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { FiArrowLeft, FiArrowRight, FiBriefcase, FiGrid, FiSearch, FiStar, FiUser, FiX } from "react-icons/fi";
 
 import {
-  searchCategories,
-  searchSubcategories,
+  globalSearch,
 } from "../../../../shared/api/userApi/searchV2.api";
 import {
   searchWithLocation
@@ -14,11 +13,16 @@ import { useCategory } from "../../../../shared/context/CategoryContext";
 import { usePublicExpert } from "../../context/PublicExpertContext";
 import {
   asArray,
+  getLocationDisplayName,
   getCategoryResultPath,
   getExpertPath,
   getInitials,
+  getStoredLocationQuery,
   getPayload,
+  getResultPath,
   getSubcategoryResultPath,
+  normalizeGlobalResults,
+  normalizeSearchTerm,
 } from "../../components/search/searchUtils";
 import "./SearchResultsPage.css";
 
@@ -26,18 +30,28 @@ const DESKTOP_TABS = [
   { key: "all", label: "All" },
   { key: "experts", label: "Experts" },
   { key: "categories", label: "Categories" },
+  { key: "services", label: "Services" },
+  { key: "locations", label: "Locations" },
   { key: "subcategories", label: "Subcategories" },
 ];
 const MOBILE_TABS = [
-  ...DESKTOP_TABS.slice(0, 3),
+  { key: "all", label: "All" },
+  { key: "experts", label: "Experts" },
+  { key: "categories", label: "Categories" },
   { key: "services", label: "Services" },
-  DESKTOP_TABS[3],
+  { key: "locations", label: "Locations" },
+  { key: "subcategories", label: "Subcategories" },
 ];
 const MOBILE_QUERY = "(max-width: 767px)";
 
 const getList = (response, key) => {
   const payload = getPayload(response);
   return asArray(payload[key] || payload.results || payload.items || payload);
+};
+
+const getSearchParamObject = (value = "", paramName = "q") => {
+  const query = normalizeSearchTerm(value);
+  return query ? { [paramName]: query } : {};
 };
 
 function useIsMobileSearchPage() {
@@ -99,8 +113,10 @@ const SearchResultsPage = () => {
   const inputRef = useRef(null);
   const { categories, loading: categoriesLoading } = useCategory();
   const { experts, expertsLoading } = usePublicExpert();
-  const urlQuery = searchParams.get("q") || "";
-  const [queryInput, setQueryInput] = useState(urlQuery);
+  const urlQuery = normalizeSearchTerm(searchParams.get("q") || "");
+  const urlLocation = normalizeSearchTerm(searchParams.get("location") || "");
+  const activeUrlQuery = urlQuery || urlLocation;
+  const [queryInput, setQueryInput] = useState(activeUrlQuery);
   const [activeTab, setActiveTab] = useState("all");
   const [page, setPage] = useState(1);
   const [results, setResults] = useState({
@@ -108,6 +124,7 @@ const SearchResultsPage = () => {
     categories: [],
     subcategories: [],
     services: [],
+    locations: [],
   });
   const [services, setServices] = useState([]);
   const [servicesLoading, setServicesLoading] = useState(false);
@@ -136,14 +153,14 @@ const SearchResultsPage = () => {
   }, []);
 
   useEffect(() => {
-    setQueryInput(urlQuery);
+    setQueryInput(activeUrlQuery);
     setPage(1);
-  }, [urlQuery]);
+  }, [activeUrlQuery]);
 
   useEffect(() => {
-    const q = queryInput.trim();
+    const q = normalizeSearchTerm(queryInput);
 
-    if (q === urlQuery.trim()) {
+    if (q === activeUrlQuery) {
       return undefined;
     }
 
@@ -152,14 +169,14 @@ const SearchResultsPage = () => {
       setPage(1);
 
       if (q) {
-        setSearchParams({ q });
+        setSearchParams(getSearchParamObject(q));
       } else {
         setSearchParams({});
       }
     }, 300);
 
     return () => window.clearTimeout(timer);
-  }, [queryInput, setSearchParams, urlQuery]);
+  }, [activeUrlQuery, queryInput, setSearchParams]);
 
   useEffect(() => {
     const handleLocChange = (e) => {
@@ -208,9 +225,9 @@ const SearchResultsPage = () => {
   }, [selectedLoc]);
 
   useEffect(() => {
-    const q = urlQuery.trim();
+    const q = activeUrlQuery;
     if (!q) {
-      setResults({ experts: [], categories: [], subcategories: [], services: [] });
+      setResults({ experts: [], categories: [], subcategories: [], services: [], locations: [] });
       setFallbackInfo({ used: false, reason: null });
       return undefined;
     }
@@ -231,7 +248,10 @@ const SearchResultsPage = () => {
           signal: controller.signal
         };
 
-        if (selectedLoc) {
+        if (urlLocation) {
+          expertParams.location = urlLocation;
+          expertParams.location_mode = "local";
+        } else if (selectedLoc) {
           if (selectedLoc.type === "coordinates") {
             expertParams.lat = selectedLoc.latitude;
             expertParams.lng = selectedLoc.longitude;
@@ -248,31 +268,39 @@ const SearchResultsPage = () => {
           expertParams.location_mode = "global";
         }
 
-        const [expertsRes, categoriesRes, subcategoriesRes] = await Promise.all([
+        const [expertsRes, globalRes] = await Promise.all([
           searchWithLocation(expertParams),
-          searchCategories({ q, page: 1, limit: 20, signal: controller.signal }),
-          searchSubcategories({ q, page: 1, limit: 20, signal: controller.signal }),
+          globalSearch({
+            q,
+            page: 1,
+            limit: 20,
+            location: urlLocation || getStoredLocationQuery() || undefined,
+            signal: controller.signal,
+          }),
         ]);
 
         if (latestRequestRef.current !== requestId) return;
 
         const expertsPayload = expertsRes?.data || {};
         const rawExperts = expertsPayload.data || [];
+        const globalResults = normalizeGlobalResults(globalRes);
         const seenExperts = new Set();
         const uniqueExperts = [];
-        for (const item of rawExperts) {
-          const id = Number(item.id || item.expert_id || item.expertId);
-          if (id && !seenExperts.has(id)) {
-            seenExperts.add(id);
+        for (const item of [...asArray(rawExperts), ...asArray(globalResults.experts)]) {
+          const id = item?.slug || item?.expert_slug || item?.id || item?.expert_id || item?.expertId || item?.user_id;
+          const key = id || item?.name || item?.expert_name || JSON.stringify(item);
+          if (key && !seenExperts.has(key)) {
+            seenExperts.add(key);
             uniqueExperts.push(item);
           }
         }
 
         setResults({
           experts: uniqueExperts,
-          categories: getList(categoriesRes, "categories"),
-          subcategories: getList(subcategoriesRes, "subcategories"),
+          categories: getList({ data: globalResults.categories }, "categories"),
+          subcategories: getList({ data: globalResults.subcategories }, "subcategories"),
           services: servicesRef.current.filter((service) => matchesQuery(service, q)).slice(0, 20),
+          locations: asArray(globalResults.locations),
         });
 
         setFallbackInfo({
@@ -282,7 +310,7 @@ const SearchResultsPage = () => {
       } catch (err) {
         if (controller.signal?.aborted || latestRequestRef.current !== requestId) return;
         console.error("Search failed:", err);
-        setResults({ experts: [], categories: [], subcategories: [], services: [] });
+        setResults({ experts: [], categories: [], subcategories: [], services: [], locations: [] });
         setError(true);
       } finally {
         if (!controller.signal?.aborted && latestRequestRef.current === requestId) {
@@ -296,26 +324,26 @@ const SearchResultsPage = () => {
     return () => {
       controller.abort();
     };
-  }, [page, urlQuery, selectedLocKey]);
+  }, [activeUrlQuery, page, selectedLocKey, urlLocation]);
 
   const counts = useMemo(
     () => ({
-      all: results.experts.length + results.categories.length + results.subcategories.length + (isMobile ? results.services.length : 0),
+      all:
+        results.experts.length +
+        results.categories.length +
+        results.subcategories.length +
+        results.services.length +
+        results.locations.length,
       experts: results.experts.length,
       categories: results.categories.length,
       subcategories: results.subcategories.length,
       services: results.services.length,
+      locations: results.locations.length,
     }),
-    [isMobile, results]
+    [results]
   );
 
   const visibleTabs = isMobile ? MOBILE_TABS : DESKTOP_TABS;
-
-  useEffect(() => {
-    if (!isMobile && activeTab === "services") {
-      setActiveTab("all");
-    }
-  }, [activeTab, isMobile]);
 
   const recommendedExperts = useMemo(
     () => (Array.isArray(experts) ? experts.slice(0, 8) : []),
@@ -334,14 +362,14 @@ const SearchResultsPage = () => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    const q = queryInput.trim();
+    const q = normalizeSearchTerm(queryInput);
     setActiveTab("all");
     setPage(1);
     if (!q) {
       setSearchParams({});
       return;
     }
-    setSearchParams({ q });
+    setSearchParams(getSearchParamObject(q));
   };
 
   const clearSearch = () => {
@@ -430,6 +458,50 @@ const SearchResultsPage = () => {
         </span>
         <span className="search-page-card__action">
           Explore <FiArrowRight />
+        </span>
+      </button>
+    );
+  };
+
+  const renderLocationCard = (location) => {
+    const name = getLocationDisplayName(location) || "Location";
+    const detail = [
+      location?.area && location?.city ? location.city : "",
+      location?.state,
+      location?.pincode,
+    ].filter(Boolean).join(", ");
+
+    return (
+      <button
+        type="button"
+        className="search-page-card"
+        key={`location-${location?.id || location?.pincode || name}`}
+        onClick={() => {
+          const formatted = {
+            city: location?.city || "",
+            area: location?.area || "",
+            state: location?.state || "",
+            country: location?.country || "",
+            pincode: location?.pincode || "",
+            latitude: location?.latitude ? Number(location.latitude) : null,
+            longitude: location?.longitude ? Number(location.longitude) : null,
+            type: location?.type || "city",
+            displayName: name,
+          };
+          localStorage.setItem("last_selected_location", JSON.stringify(formatted));
+          window.dispatchEvent(new CustomEvent("g9-location-changed", { detail: formatted }));
+          navigate(getResultPath("locations", location));
+        }}
+      >
+        <span className="search-page-card__avatar search-page-card__avatar--icon">
+          <FiSearch />
+        </span>
+        <span className="search-page-card__body">
+          <strong>{name}</strong>
+          <small>{detail || "Search experts in this location"}</small>
+        </span>
+        <span className="search-page-card__action">
+          Search <FiArrowRight />
         </span>
       </button>
     );
@@ -628,7 +700,8 @@ const SearchResultsPage = () => {
           )}
           {renderSection("experts", "Experts", results.experts, renderExpertCard)}
           {renderSection("categories", "Categories", results.categories, renderCategoryCard)}
-          {isMobile && renderSection("services", "Services", results.services, renderServiceCard)}
+          {renderSection("services", "Services", results.services, renderServiceCard)}
+          {renderSection("locations", "Locations", results.locations, renderLocationCard)}
           {renderSection("subcategories", "Subcategories", results.subcategories, renderSubcategoryCard)}
 
           {(activeTab === "all" || activeTab === "experts") && results.experts.length >= 20 && (

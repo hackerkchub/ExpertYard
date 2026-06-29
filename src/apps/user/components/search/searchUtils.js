@@ -9,6 +9,39 @@ export const SEARCH_GROUPS = [
 
 export const getPayload = (response) => response?.data?.data || response?.data || {};
 
+export const normalizeSearchTerm = (value = "") => String(value || "").trim().replace(/\s+/g, " ");
+
+export const buildUserSearchPath = (value = "", paramName = "q") => {
+  const query = normalizeSearchTerm(value);
+  if (!query) return "/user/search";
+
+  const params = new URLSearchParams();
+  params.set(paramName, query);
+  return `/user/search?${params.toString()}`;
+};
+
+export const getStoredLocation = () => {
+  try {
+    const saved = localStorage.getItem("last_selected_location");
+    return saved ? JSON.parse(saved) : null;
+  } catch {
+    return null;
+  }
+};
+
+export const getLocationDisplayName = (location = {}) =>
+  normalizeSearchTerm(
+    location.search_text ||
+      location.displayName ||
+      [location.area, location.city, location.pincode, location.state].filter(Boolean).join(", ")
+  );
+
+export const getStoredLocationQuery = () => {
+  const location = getStoredLocation();
+  if (!location || location.type === "global") return "";
+  return getLocationDisplayName(location);
+};
+
 export const asArray = (value) => {
   if (Array.isArray(value)) return value;
   if (Array.isArray(value?.data)) return value.data;
@@ -89,6 +122,6 @@ export const flattenResults = (groups) =>
 export const getResultPath = (group, item) => {
   if (group === "experts") return getExpertPath(item);
   if (group === "categories") return getCategoryResultPath(item);
-  if (group === "locations") return `/user/search?location=${encodeURIComponent(item?.search_text || item?.displayName || item?.city || "")}`;
+  if (group === "locations") return buildUserSearchPath(getLocationDisplayName(item), "location");
   return getSubcategoryResultPath(item);
 };

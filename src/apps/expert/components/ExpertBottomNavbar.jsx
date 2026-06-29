@@ -12,6 +12,7 @@ import "../../../shared/components/BottomNavbar/BottomNavbar.css";
 const ExpertBottomNavbar = () => {
   const location = useLocation();
   const currentPath = location.pathname.toLowerCase();
+  const isChatPage = currentPath === '/expert/chat' || currentPath.startsWith('/expert/chat/');
 
   const menuItems = [
     { 
@@ -47,7 +48,10 @@ const ExpertBottomNavbar = () => {
   ];
 
   return (
-    <nav className="bottom-nav" aria-label="Expert mobile navigation">
+    <nav
+      className={['bottom-nav', isChatPage ? 'expert-chat-mobile-hidden' : ''].filter(Boolean).join(' ')}
+      aria-label="Expert mobile navigation"
+    >
       {menuItems.map((item) => {
         const active = item.isActive();
         return (

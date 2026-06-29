@@ -91,6 +91,14 @@ export const RightActions = styled.div`
   align-items: center;
   gap: 12px;
 
+  @media (max-width: 768px) {
+    gap: 10px;
+
+    .mobile-header-hidden {
+      display: none;
+    }
+  }
+
   @media (max-width: 480px) {
     gap: 8px;
   }
@@ -149,6 +157,18 @@ export const IconBtn = styled.button`
       display: flex;
     }
   }
+
+  @media (max-width: 390px) {
+    width: 38px;
+    height: 38px;
+    font-size: 20px;
+  }
+
+  @media (max-width: 360px) {
+    width: 36px;
+    height: 36px;
+    font-size: 19px;
+  }
 `;
 
 export const UnreadDot = styled.span`
@@ -191,8 +211,8 @@ export const MobileMenu = styled.div`
   position: fixed;
   top: 0;
   left: 0;
-  width: 280px;
-  height: 100vh;
+  width: min(320px, 88vw);
+  height: 100dvh;
   background: #fff;
   z-index: 2100;
   transform: translateX(${({ open }) => (open ? "0" : "-100%")});
@@ -200,13 +220,22 @@ export const MobileMenu = styled.div`
   box-shadow: 5px 0 15px rgba(0,0,0,0.1);
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+
+  @media (max-width: 360px) {
+    width: min(304px, 90vw);
+  }
 `;
 
 /* ✅ MISSING EXPORTS ADDED HERE */
 export const MobileMenuHeader = styled.div`
-  padding: 24px 20px;
+  padding: 22px 20px 18px;
   border-bottom: 1px solid #f0f0f0;
   background: #f9fafb;
+  flex: 0 0 auto;
 `;
 
 export const MobileMenuTitle = styled.div`
@@ -222,29 +251,39 @@ export const MobileMenuSubtitle = styled.div`
 
 export const MobileNavList = styled.div`
   padding: 12px;
-  flex: 1;
+  flex: 0 0 auto;
 `;
 
 export const MobileNavItem = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
   padding: 12px;
   border-radius: 8px;
   color: #475569;
   font-weight: 500;
   cursor: pointer;
   margin-bottom: 4px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  -webkit-tap-highlight-color: transparent;
 
   &:hover, &.active {
     background: #f0f7ff;
     color: #000080;
+  }
+
+  @media (max-width: 390px) {
+    padding: 11px 10px;
+    gap: 10px;
   }
 `;
 
 export const MobileNavIcon = styled.span`
   font-size: 20px;
   display: flex;
+  flex: 0 0 auto;
 `;
 
 export const MobileSectionTitle = styled.div`

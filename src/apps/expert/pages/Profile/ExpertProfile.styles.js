@@ -1,4 +1,4 @@
-import styled, { keyframes, css } from "styled-components";
+import styled, { keyframes } from "styled-components";
 
 /* Animations */
 const fadeIn = keyframes`
@@ -49,25 +49,43 @@ export const LoadingText = styled.p`
 
 /* Page Layout - LinkedIn Background */
 export const PageWrap = styled.div`
-  min-height: 100vh;
+  min-height: 100%;
+  width: 100%;
+  overflow-x: hidden;
   background:
-    radial-gradient(circle at top left, rgba(63, 81, 181, 0.06), transparent 24%),
-    #f3f6fb;
-  padding: 24px 0 48px;
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 26%),
+    linear-gradient(180deg, #f8fafc 0%, #eef3f8 100%);
+  padding: 24px 0 56px;
+  color: #111827;
   
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  @media (max-width: 1024px) {
+    padding: 20px 0 48px;
+  }
+
   @media (max-width: 768px) {
-    padding: 0;
+    padding: 0 0 40px;
   }
 `;
 
 export const Content = styled.div`
-  max-width: 1128px;
+  width: min(100%, 1128px);
   margin: 0 auto;
   animation: ${fadeIn} 0.5s ease-out;
   padding: 0 16px;
+  min-width: 0;
 
   @media (max-width: 768px) {
-    padding: 0;
+    padding: 0 12px;
+  }
+
+  @media (max-width: 390px) {
+    padding: 0 10px;
   }
 `;
 
@@ -75,18 +93,22 @@ export const Content = styled.div`
 export const PremiumHeader = styled.div`
   background: #ffffff;
   border: 1px solid #d8e0eb;
-  border-radius: 24px;
-  padding: 24px;
-  margin-bottom: 20px;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
 
   @media (max-width: 768px) {
     flex-direction: column;
     align-items: flex-start;
-    gap: 16px;
-    border-radius: 0;
+    gap: 14px;
+    border-radius: 10px;
+    padding: 16px;
   }
 `;
 
@@ -94,50 +116,88 @@ export const HeaderGlow = styled.div`
   display: none;
 `;
 
-export const HeaderContent = styled.div``;
+export const HeaderContent = styled.div`
+  min-width: 0;
+`;
 
 export const HeaderTitle = styled.h1`
-  font-size: 24px;
-  font-weight: 700;
-  color: #000;
+  font-size: clamp(22px, 3vw, 28px);
+  line-height: 1.15;
+  font-weight: 800;
+  color: #0f172a;
   margin: 0;
+  overflow-wrap: anywhere;
 `;
 
 export const HeaderGreeting = styled.span`
   font-size: 14px;
-  color: #737373;
-  font-weight: 400;
+  color: #64748b;
+  font-weight: 600;
 `;
 
 export const HeaderBadge = styled.div`
-  background: #e7f3ff;
-  color: #000080;
-  padding: 6px 12px;
-  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 6px 10px;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 800;
 `;
 
 export const HeaderStats = styled.div`
   display: flex;
-  gap: 16px;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: flex-start;
+  }
 `;
 
 export const HeaderStat = styled.div`
-  text-align: right;
+  min-width: 132px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  text-align: left;
   cursor: ${props => props.clickable ? 'pointer' : 'default'};
-  transition: opacity 0.2s;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   
   &:hover {
-    opacity: ${props => props.clickable ? '0.8' : '1'};
+    border-color: ${props => props.clickable ? '#bfdbfe' : '#e2e8f0'};
+    box-shadow: ${props => props.clickable ? '0 10px 22px rgba(15, 23, 42, 0.08)' : 'none'};
+    transform: ${props => props.clickable ? 'translateY(-1px)' : 'none'};
+  }
+
+  @media (max-width: 430px) {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 0;
   }
 `;
 
 export const HeaderStatIcon = styled.div`
-  display: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
 `;
 
-export const HeaderStatInfo = styled.div``;
+export const HeaderStatInfo = styled.div`
+  min-width: 0;
+`;
 
 export const HeaderStatLabel = styled.div`
   font-size: 11px;
@@ -146,44 +206,79 @@ export const HeaderStatLabel = styled.div`
 
 export const HeaderStatValue = styled.div`
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 800;
+  color: #0f172a;
+  overflow-wrap: anywhere;
 `;
 
 /* Profile Card */
 export const ProfileCard = styled.div`
+  position: relative;
   background: #fff;
   border: 1px solid #d8e0eb;
-  border-radius: 24px;
+  border-radius: 12px;
   overflow: hidden;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06);
 
+  &::before {
+    content: "";
+    display: block;
+    height: 164px;
+    background:
+      linear-gradient(135deg, rgba(0, 0, 128, 0.92), rgba(37, 99, 235, 0.82)),
+      radial-gradient(circle at 82% 10%, rgba(255, 255, 255, 0.45), transparent 22%);
+  }
+
   @media (max-width: 768px) {
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
+    border-radius: 10px;
+    margin-bottom: 16px;
+
+    &::before {
+      height: 124px;
+    }
+  }
+
+  @media (max-width: 390px) {
+    &::before {
+      height: 110px;
+    }
   }
 `;
 
 export const ProfileCardInner = styled.div`
-  padding: 24px;
+  padding: 0 28px 28px;
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 24px;
+  align-items: start;
 
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 0 18px 22px;
+  }
+
+  @media (max-width: 390px) {
+    padding: 0 14px 18px;
   }
 `;
 
 export const ProfileLeftColumn = styled.div`
   display: flex;
+  align-items: flex-start;
   gap: 24px;
+  min-width: 0;
+  flex-wrap: wrap;
 
   @media (max-width: 768px) {
     flex-direction: column;
-    align-items: center;
-    text-align: center;
+    align-items: flex-start;
+    text-align: left;
+    gap: 14px;
   }
 `;
 
@@ -191,25 +286,47 @@ export const ProfileRightColumn = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+
+  @media (max-width: 1024px) {
+    align-items: flex-start;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 export const PremiumAvatar = styled.div`
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 148px;
+  height: 148px;
   border-radius: 50%;
-  border: 4px solid #fff;
-  box-shadow: 0 0 0 1px #dbdbdb;
+  border: 5px solid #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.22), 0 0 0 1px #d8e0eb;
   overflow: hidden;
+  background: #e2e8f0;
   
   img { 
     width: 100%; 
     height: 100%; 
     object-fit: cover; 
   }
+
+  @media (max-width: 768px) {
+    width: 116px;
+    height: 116px;
+    border-width: 4px;
+  }
 `;
 
-export const AvatarContainer = styled.div``;
+export const AvatarContainer = styled.div`
+  margin-top: -74px;
+  flex: 0 0 auto;
+
+  @media (max-width: 768px) {
+    margin-top: -58px;
+  }
+`;
 
 export const AvatarBadge = styled.div`
   position: absolute;
@@ -239,59 +356,116 @@ export const AvatarUploadButton = styled.label`
   opacity: 0;
   transition: 0.2s;
   ${PremiumAvatar}:hover & { opacity: 1; }
+
+  @media (max-width: 768px) {
+    opacity: 1;
+    inset: auto 8px 8px auto;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    background: #0f172a;
+  }
 `;
 
 export const ExpertNameSection = styled.div`
-  flex: 1;
+  flex: 1 1 420px;
+  min-width: 0;
+  padding-top: 22px;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    flex-basis: auto;
+    padding-top: 0;
+  }
 `;
 
 export const ExpertName = styled.h2`
-  font-size: 24px;
-  font-weight: 700;
-  color: #000;
-  margin: 0 0 4px;
+  font-size: clamp(24px, 3vw, 32px);
+  line-height: 1.16;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px;
+  overflow-wrap: break-word;
+  word-break: normal;
 `;
 
 export const ExpertTitle = styled.p`
   font-size: 16px;
-  color: #737373;
+  color: #475569;
   margin: 0 0 12px;
+  line-height: 1.45;
+  overflow-wrap: break-word;
+  word-break: normal;
 `;
 
 export const ExpertCategories = styled.div`
   display: flex;
-  gap: 8px;
+  column-gap: 8px;
+  row-gap: 6px;
   margin-top: 8px;
   flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+
+  > span:not(:last-child) {
+    flex: 0 0 auto;
+  }
 `;
 
 export const CategoryPill = styled.span`
-  background: #f3f2ef;
-  padding: 4px 12px;
-  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 1 auto;
+  max-width: 100%;
+  background: #eef6ff;
+  border: 1px solid #bfdbfe;
+  padding: 5px 11px;
+  border-radius: 999px;
   font-size: 12px;
-  color: #666;
+  font-weight: 700;
+  color: #1d4ed8;
+  line-height: 1.25;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: manual;
 `;
 
 /* Quick Stats */
 export const QuickStatsGrid = styled.div`
-  display: flex;
-  gap: 16px;
-  margin-top: 12px;
-  flex-wrap: wrap;
+  flex: 1 0 100%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(104px, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+  width: 100%;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 360px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 export const QuickStatCard = styled.div`
-  background: #fafafa;
-  padding: 10px;
-  border-radius: 8px;
-  flex: 1;
-  min-width: 100px;
+  min-width: 0;
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
   cursor: ${props => props.clickable ? 'pointer' : 'default'};
-  transition: all 0.2s;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   
   &:hover {
-    background: ${props => props.clickable ? '#f0f0f0' : '#fafafa'};
+    border-color: ${props => props.clickable ? '#bfdbfe' : '#e2e8f0'};
+    box-shadow: ${props => props.clickable ? '0 10px 22px rgba(15, 23, 42, 0.08)' : 'none'};
     transform: ${props => props.clickable ? 'translateY(-2px)' : 'none'};
   }
 `;
@@ -303,87 +477,115 @@ export const QuickStatIcon = styled.div`
 export const QuickStatContent = styled.div``;
 
 export const QuickStatValue = styled.div`
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 18px;
+  line-height: 1.15;
+  font-weight: 800;
+  color: #0f172a;
+  overflow-wrap: anywhere;
 `;
 
 export const QuickStatLabel = styled.div`
-  font-size: 10px;
-  color: #737373;
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.25;
+  color: #64748b;
+  font-weight: 700;
 `;
 
 /* Buttons */
 export const ActionButton = styled.button`
   background: ${props => props.primary ? '#000080' : 'transparent'};
   color: ${props => props.primary ? '#fff' : '#000080'};
-  border: ${props => props.primary ? 'none' : '1px solid #000080'};
-  padding: 8px 24px;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 15px;
+  border: ${props => props.primary ? '1px solid #000080' : '1px solid #000080'};
+  min-height: 42px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 14px;
   cursor: pointer;
-  transition: 0.2s;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  white-space: nowrap;
   
   &:hover:not(:disabled) {
     background: ${props => props.primary ? '#004182' : 'rgba(10, 102, 194, 0.1)'};
     transform: translateY(-1px);
+    box-shadow: 0 10px 18px rgba(0, 0, 128, 0.14);
   }
   
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
   }
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 export const ActionButtonGroup = styled.div`
   display: flex;
   gap: 12px;
-  margin-top: 16px;
+  flex-wrap: wrap;
+  margin-top: 0;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    gap: 10px;
+  }
 `;
 
 /* Pricing Section */
 export const PricingSection = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-  margin-bottom: 32px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 
   @media (max-width: 768px) {
-    padding: 0 16px;
+    grid-template-columns: 1fr;
   }
 `;
 
 export const PricingCard = styled.div`
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 20px;
+  background: #ffffff;
+  border-radius: 12px;
   padding: 20px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid #d8e0eb;
   
   &[gradient="call"] {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
     color: white;
   }
   
   &[gradient="chat"] {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    background: linear-gradient(135deg, #0f766e 0%, #0ea5e9 100%);
     color: white;
   }
   
   &[gradient="session"] {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    background: linear-gradient(135deg, #6d28d9 0%, #2563eb 100%);
     color: white;
   }
   
   &:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  @media (max-width: 768px) {
+    padding: 16px;
   }
 `;
 
@@ -405,8 +607,10 @@ export const PricingContent = styled.div`
 `;
 
 export const PricingValue = styled.div`
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.1;
+  font-weight: 800;
+  overflow-wrap: anywhere;
 `;
 
 export const PricingLabel = styled.div`
@@ -451,20 +655,31 @@ export const PremiumSlider = styled.input`
 /* Tabs */
 export const PremiumTabs = styled.div`
   display: flex;
-  border-bottom: 1px solid #dbdbdb;
-  margin-bottom: 20px;
+  gap: 6px;
+  border: 1px solid #d8e0eb;
+  border-radius: 12px;
+  margin-bottom: 18px;
   background: #fff;
+  padding: 6px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 export const PremiumTab = styled.button`
   flex: 1;
-  background: none;
+  min-width: max-content;
+  background: ${props => props.active ? '#eef6ff' : 'transparent'};
   border: none;
-  padding: 16px;
+  padding: 12px 14px;
+  border-radius: 9px;
   font-size: 14px;
-  font-weight: ${props => props.active ? '700' : '400'};
-  color: ${props => props.active ? '#000' : '#737373'};
-  border-bottom: ${props => props.active ? '2px solid #000' : 'none'};
+  font-weight: ${props => props.active ? '800' : '700'};
+  color: ${props => props.active ? '#1d4ed8' : '#64748b'};
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -475,25 +690,83 @@ export const PremiumTab = styled.button`
   &:hover {
     background: #f8f9fa;
   }
+
+  @media (max-width: 430px) {
+    font-size: 13px;
+    padding: 11px 12px;
+  }
 `;
 
-export const TabContent = styled.div``;
+export const TabContent = styled.div`
+  min-width: 0;
+`;
 
 /* Cards & Lists */
 export const InfoCard = styled.div`
   background: #fff;
   border: 1px solid #d8e0eb;
-  border-radius: 24px;
+  border-radius: 12px;
   padding: 24px;
-  margin-bottom: 20px;
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06);
+  margin-bottom: 0;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.055);
+  min-width: 0;
+
+  @media (max-width: 768px) {
+    padding: 18px;
+  }
+
+  @media (max-width: 390px) {
+    padding: 16px 14px;
+  }
+
+  label {
+    display: inline-block;
+    max-width: 100%;
+    line-height: 1.35;
+  }
+
+  button {
+    max-width: 100%;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: normal;
+  }
+
+  div[style*="display: flex"][style*="gap: 8px"],
+  div[style*="display: flex"][style*="gap: '8px'"],
+  div[style*="display: flex"][style*='gap: "8px"'] {
+    flex-wrap: wrap;
+  }
+
+  div[style*="grid-template-columns: 1fr 1fr"],
+  div[style*="grid-template-columns: '1fr 1fr'"],
+  div[style*='grid-template-columns: "1fr 1fr"'],
+  div[style*="gridTemplateColumns"] {
+    min-width: 0;
+  }
+
+  @media (max-width: 430px) {
+    div[style*="gridTemplateColumns"],
+    div[style*="grid-template-columns"] {
+      grid-template-columns: 1fr !important;
+    }
+
+    button {
+      width: 100%;
+    }
+  }
 `;
 
 export const CardHeader = styled.div`
-  font-size: 18px;
-  font-weight: 700;
-  color: #000;
-  margin-bottom: 20px;
+  font-size: 17px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 18px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -509,15 +782,23 @@ export const InfoList = styled.div`
 export const InfoItem = styled.div`
   display: flex;
   gap: 12px;
+  min-width: 0;
+
+  @media (max-width: 430px) {
+    gap: 10px;
+  }
 `;
 
 export const InfoIcon = styled.div`
-  color: #737373;
+  color: #64748b;
   font-size: 18px;
+  flex: 0 0 auto;
+  padding-top: 2px;
 `;
 
 export const InfoContent = styled.div`
   flex: 1;
+  min-width: 0;
 `;
 
 export const InfoLabel = styled.div`
@@ -528,13 +809,18 @@ export const InfoLabel = styled.div`
 
 export const InfoValue = styled.div`
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 `;
 
 export const Description = styled.p`
   font-size: 14px;
-  color: #262626;
-  line-height: 1.5;
+  color: #334155;
+  line-height: 1.65;
+  margin: 0;
+  overflow-wrap: anywhere;
 `;
 
 export const InputGroup = styled.div`
@@ -554,46 +840,72 @@ export const CategoriesList = styled.div`
 `;
 
 export const CategoryTag = styled.span`
+  display: inline-flex;
+  max-width: 100%;
   background: #e7f3ff;
   color: #000080;
-  padding: 4px 10px;
-  border-radius: 4px;
+  padding: 6px 10px;
+  border-radius: 999px;
   font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 `;
 
 /* Form Elements */
 export const PremiumInput = styled.input`
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #dbdbdb;
+  min-width: 0;
+  min-height: 42px;
+  padding: 11px 13px;
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
   font-size: 14px;
+  color: #0f172a;
+  background: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+
+  &::placeholder {
+    color: #94a3b8;
+  }
+
   &:focus { 
     outline: none; 
-    border-color: #000080; 
-    box-shadow: 0 0 0 1px #000080; 
+    border-color: #2563eb; 
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    background: #ffffff;
   }
 `;
 
 export const TextArea = styled.textarea`
   width: 100%;
-  padding: 12px;
-  border: 1px solid #dbdbdb;
+  min-width: 0;
+  padding: 12px 13px;
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
   font-size: 14px;
   min-height: 100px;
+  line-height: 1.55;
+  color: #0f172a;
+  resize: vertical;
   &:focus {
     outline: none;
-    border-color: #000080;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
   }
 `;
 
 /* Grid System */
 export const OverviewGrid = styled.div`
   display: grid;
-  grid-template-columns: 2fr 1.2fr;
-  gap: 20px;
-  @media (max-width: 1024px) { grid-template-columns: 1fr; }
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+  gap: 16px;
+  align-items: start;
+  min-width: 0;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 export const ExperienceGrid = styled.div`
@@ -605,20 +917,27 @@ export const ExperienceGrid = styled.div`
 /* Documents */
 export const DocumentsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap: 16px;
+  min-width: 0;
+
+  @media (max-width: 430px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 export const DocumentCard = styled.div`
-  border: 1px solid #dbdbdb;
-  border-radius: 8px;
+  border: 1px solid #d8e0eb;
+  border-radius: 12px;
   overflow: hidden;
   background: #fff;
+  min-width: 0;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
 `;
 
 export const DocumentPreview = styled.div`
-  height: 120px;
-  background: #f3f2ef;
+  height: 148px;
+  background: #f1f5f9;
   position: relative;
   img { width: 100%; height: 100%; object-fit: cover; }
 `;
@@ -656,11 +975,15 @@ export const DocumentInfo = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 10px;
+  min-width: 0;
 `;
 
 export const DocumentTitle = styled.span`
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 700;
+  color: #0f172a;
+  overflow-wrap: anywhere;
 `;
 
 export const DocumentUploadButton = styled.label`
@@ -695,6 +1018,7 @@ export const PdfPreview = styled.div`
 /* Experience Section */
 export const ExperienceSection = styled.div`
   margin-top: 24px;
+  min-width: 0;
 `;
 
 export const ExperienceHeader = styled.div`
@@ -737,6 +1061,7 @@ export const ExperienceItem = styled.div`
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 16px;
+  min-width: 0;
   transition: all 0.2s ease;
 
   &:hover {
@@ -756,6 +1081,7 @@ export const ExperienceItemHeader = styled.div`
 
 export const ExperienceTitleSection = styled.div`
   flex: 1;
+  min-width: 0;
 `;
 
 export const ExperienceTitle = styled.h4`
@@ -763,6 +1089,7 @@ export const ExperienceTitle = styled.h4`
   font-weight: 600;
   margin: 0 0 4px 0;
   color: #1f2937;
+  overflow-wrap: anywhere;
 `;
 
 export const ExperienceCompany = styled.div`
@@ -771,6 +1098,7 @@ export const ExperienceCompany = styled.div`
   gap: 6px;
   font-size: 14px;
   color: #6b7280;
+  overflow-wrap: anywhere;
 `;
 
 export const ExperienceActions = styled.div`
@@ -823,6 +1151,7 @@ export const ExperienceCertificate = styled.div`
   gap: 12px;
   padding-top: 12px;
   border-top: 1px solid #e5e7eb;
+  flex-wrap: wrap;
 
   a {
     display: flex;
@@ -926,17 +1255,23 @@ export const AddPlanButton = styled.button`
 
 export const PlansGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  min-width: 0;
+
+  @media (max-width: 430px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 export const PlanCard = styled.div`
   background: white;
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   border: 1px solid #e2e8f0;
+  min-width: 0;
   
   &:hover {
     transform: translateY(-5px);
@@ -949,6 +1284,7 @@ export const PlanHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
+  gap: 12px;
 `;
 
 export const PlanName = styled.h3`
@@ -956,11 +1292,13 @@ export const PlanName = styled.h3`
   font-weight: 700;
   color: #1e293b;
   margin: 0;
+  overflow-wrap: anywhere;
 `;
 
 export const PlanActions = styled.div`
   display: flex;
   gap: 8px;
+  flex: 0 0 auto;
 `;
 
 export const PlanEditButton = styled.button`
@@ -1018,6 +1356,8 @@ export const PlanFeature = styled.div`
   gap: 8px;
   font-size: 14px;
   color: #475569;
+  min-width: 0;
+  overflow-wrap: anywhere;
 `;
 
 export const NoPlansMessage = styled.div`
@@ -1050,16 +1390,18 @@ export const ModalOverlay = styled.div`
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 16px;
 `;
 
 export const ModalContent = styled.div`
   background: white;
-  border-radius: 24px;
-  width: 90%;
+  border-radius: 14px;
+  width: min(100%, 600px);
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  min-width: 0;
 `;
 
 export const ModalHeader = styled.div`
@@ -1103,6 +1445,14 @@ export const ModalFooter = styled.div`
   gap: 12px;
   padding: 16px 24px;
   border-top: 1px solid #e2e8f0;
+
+  @media (max-width: 430px) {
+    flex-direction: column-reverse;
+
+    button {
+      width: 100%;
+    }
+  }
 `;
 
 export const ModalCancelButton = styled.button`
@@ -1155,6 +1505,7 @@ export const FormLabel = styled.label`
 
 export const FormInput = styled.input`
   width: 100%;
+  min-width: 0;
   padding: 12px 16px;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
@@ -1170,6 +1521,7 @@ export const FormInput = styled.input`
 
 export const FormSelect = styled.select`
   width: 100%;
+  min-width: 0;
   padding: 12px 16px;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
@@ -1229,6 +1581,7 @@ export const FileInputWrapper = styled.div`
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  min-width: 0;
 `;
 
 export const FileInputLabel = styled.label`
@@ -1250,6 +1603,8 @@ export const FileInputLabel = styled.label`
 export const FileName = styled.span`
   font-size: 13px;
   color: #64748b;
+  overflow-wrap: anywhere;
+  min-width: 0;
 `;
 
 export const FilePreview = styled.div`

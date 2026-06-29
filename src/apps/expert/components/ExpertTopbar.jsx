@@ -30,15 +30,12 @@ import {
   FiPlus, 
   FiHome, 
   FiFileText, 
-  FiCalendar, 
   FiBarChart2, 
-  FiSettings, 
-  FiX, 
   FiClock, 
-  FiDollarSign, 
   FiLogOut, 
   FiUser, 
-  FiShare2
+  FiShare2,
+  FiUsers
 } from "react-icons/fi";
 import Logo from "../../../assets/logo.webp";
 import ProfileDropdown from "./ProfileDropdown";
@@ -173,17 +170,18 @@ export default function ExpertTopbar() {
 
   // COMPLETE MOBILE NAV ITEMS (Same as Sidebar)
   const mobileNavItems = [
-    { icon: FiHome, label: "Dashboard", path: "/expert", exact: true },
+    { icon: FiHome, label: "Dashboard", path: "/expert/home" },
     { icon: FiFileText, label: "My Content", path: "/expert/my-content" },
     { icon: FiMessageSquare, label: "Chat History", path: "/expert/chat-history" },
+    { icon: FiUsers, label: "Leads", path: "/expert/leads" },
     { icon: FiBarChart2, label: "Earnings", path: "/expert/earnings" },
-    { icon: FiBell, label: "My Service", path: "/expert/myservices" },
+    { icon: FiBell, label: "Services", path: "/expert/myservices" },
     { icon: FiClock, label: "G9-Plan", path: "/expert/g9-plan" },
   ];
 
   const isActivePath = (path) => {
-    if (path === "/expert") {
-      return location.pathname === "/expert";
+    if (path === "/expert/home") {
+      return location.pathname === "/expert" || location.pathname === "/expert/" || location.pathname === "/expert/home";
     }
     return location.pathname.startsWith(path);
   };
@@ -223,7 +221,11 @@ export default function ExpertTopbar() {
           </div>
 
           {/* CHATS */}
-          <IconBtn onClick={() => navigate("/expert/chat-history")} title="Messages">
+          <IconBtn
+            onClick={() => navigate("/expert/chat-history")}
+            title="Messages"
+            className="mobile-header-hidden"
+          >
             <FiMessageSquare />
           </IconBtn>
 
@@ -236,6 +238,7 @@ export default function ExpertTopbar() {
           <IconBtn
             onClick={handleShareReferral}
             title="Refer Expert"
+            className="mobile-header-hidden"
           >
             <FiShare2 />
           </IconBtn>
@@ -291,6 +294,19 @@ export default function ExpertTopbar() {
         <MobileSectionTitle>Account</MobileSectionTitle>
         
         <MobileNavList style={{ paddingBottom: '24px' }}>
+          <MobileNavItem
+            onClick={() => {
+              navigate("/expert/notification");
+              setMobileMenuOpen(false);
+            }}
+            className={isActivePath("/expert/notification") || isActivePath("/expert/notifications") ? 'active' : ''}
+          >
+            <MobileNavIcon>
+              <FiBell />
+            </MobileNavIcon>
+            Notifications
+          </MobileNavItem>
+
           {/* REFERRAL EXPERT IN MOBILE MENU */}
           <MobileNavItem
             onClick={() => {

@@ -113,6 +113,10 @@
     z-index: 10010;
   }
 
+  .bottom-nav.expert-chat-mobile-hidden {
+    display: none;
+  }
+
   .main-content-wrapper.has-mobile-bottom-nav {
     padding-bottom: var(--mobile-bottom-nav-reserved-space);
   }

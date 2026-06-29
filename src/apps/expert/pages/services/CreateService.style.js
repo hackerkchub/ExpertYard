@@ -13,7 +13,7 @@ export const PageWrapper = styled.div`
 export const FormContainer = styled.div`
   background: white;
   width: 100%;
-  max-width: 700px;
+  max-width: 920px;
   border-radius: 8px;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.15);
   padding: 24px;
@@ -45,13 +45,20 @@ export const InputGroup = styled.div`
   flex-direction: column;
   gap: 6px;
   label { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: rgba(0, 0, 0, 0.7); }
-  input, textarea {
+  input, textarea, select {
     padding: 10px 12px;
     border: 1px solid rgba(0, 0, 0, 0.3);
     border-radius: 4px;
     font-size: 14px;
     width: 100%;
+    background: #fff;
+    font-family: inherit;
     &:focus { outline: none; border-color: #0a66c2; box-shadow: 0 0 0 1px #0a66c2; }
+  }
+
+  textarea {
+    resize: vertical;
+    line-height: 1.5;
   }
 `;
 
@@ -104,11 +111,140 @@ export const SectionTitle = styled.h3`
   color: #333;
   margin: 10px 0;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 `;
 
 export const ButtonGroup = styled.div`
   display: flex;
   justify-content: flex-end;
+`;
+
+export const BuilderSection = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+
+  @media (max-width: 640px) {
+    padding: 14px;
+  }
+`;
+
+export const CheckboxLine = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
+
+  input {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
+export const FileBuilderList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+export const FileBuilderRow = styled.div`
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f8fafc;
+
+  .file-icon {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: #eff6ff;
+    color: #0a66c2;
+  }
+
+  .file-fields {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  strong,
+  span {
+    overflow-wrap: anywhere;
+  }
+
+  strong {
+    color: #111827;
+    font-size: 14px;
+  }
+
+  span {
+    color: #64748b;
+    font-size: 12px;
+  }
+
+  input[type="text"],
+  .file-fields > input {
+    width: 100%;
+    min-height: 36px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+
+  .file-flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    color: #334155;
+    font-size: 12px;
+  }
+
+  .file-flags label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 600;
+  }
+
+  .remove {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 8px;
+    background: #fee2e2;
+    color: #b91c1c;
+    cursor: pointer;
+  }
+
+  @media (max-width: 560px) {
+    grid-template-columns: 34px minmax(0, 1fr);
+
+    .file-icon {
+      width: 34px;
+      height: 34px;
+    }
+
+    .remove {
+      grid-column: 2;
+      width: 100%;
+    }
+  }
 `;
 
 // export const SubmitButton = styled.button`

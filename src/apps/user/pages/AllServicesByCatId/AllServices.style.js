@@ -495,6 +495,15 @@ export const PriceBadge = styled.div`
   font-weight: 950;
   font-size: 0.9rem;
   box-shadow: 0 12px 24px rgba(255, 193, 7, 0.24);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+
+  small {
+    color: #475569;
+    text-decoration: line-through;
+    font-size: 0.72rem;
+  }
 
   @media (max-width: 767px) {
     top: 7px;
@@ -504,6 +513,33 @@ export const PriceBadge = styled.div`
     line-height: 1;
     font-weight: 700;
     box-shadow: 0 8px 16px rgba(255, 193, 7, 0.18);
+  }
+`;
+
+export const TypeOverlay = styled.div`
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  max-width: calc(100% - 110px);
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: ${NAVY};
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: capitalize;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: 767px) {
+    left: 7px;
+    top: 7px;
+    max-width: calc(100% - 86px);
+    padding: 4px 7px;
+    font-size: 10px;
+    font-weight: 700;
   }
 `;
 
@@ -580,6 +616,35 @@ export const CategoryTag = styled.div`
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+`;
+
+export const ProductMetaRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 24px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    color: #334155;
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+
+  svg {
+    color: ${NAVY};
+  }
+
+  @media (max-width: 767px) {
+    display: none;
   }
 `;
 

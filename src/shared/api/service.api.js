@@ -68,3 +68,20 @@ export const updateService = (id, formData) => {
 export const deleteService = (id) => {
   return axios.delete(`/services/${id}`);
 };
+
+export const uploadServiceFiles = (serviceId, formData, onUploadProgress) => {
+  return axios.post(`/services/${serviceId}/files`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+    onUploadProgress,
+  });
+};
+
+export const deleteServiceFile = (serviceId, fileId) => {
+  return axios.delete(`/services/${serviceId}/files/${fileId}`);
+};
+
+export const getServiceDownloadUrl = (serviceId, fileId) => {
+  return `/services/${serviceId}/download/${fileId}`;
+};

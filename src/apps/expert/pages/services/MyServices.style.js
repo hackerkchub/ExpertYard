@@ -100,7 +100,8 @@ export const ServiceInfo = styled.div`
   padding: 16px;
   flex: 1;
   .top-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-  .price { font-size: 18px; font-weight: 700; color: #0a66c2; }
+  .price { font-size: 18px; font-weight: 700; color: #0a66c2; display: inline-flex; align-items: baseline; gap: 6px; }
+  .price small { color: #94a3b8; text-decoration: line-through; font-size: 12px; }
   h3 { font-size: 18px; color: #1d1d1d; margin: 0 0 8px 0; }
   .description { font-size: 14px; color: #666; line-height: 1.4; margin-bottom: 12px; }
 `;
@@ -123,6 +124,26 @@ export const StatusBadge = styled.span`
   border-radius: 12px;
   background: ${props => props.$status?.toLowerCase() === 'active' ? '#e7f4ed' : '#f9eaea'};
   color: ${props => props.$status?.toLowerCase() === 'active' ? '#057642' : '#cc1011'};
+`;
+
+export const TypeBadge = styled.span`
+  font-size: 11px;
+  text-transform: capitalize;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #0a66c2;
+`;
+
+export const FileSummary = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
 `;
 
 export const ActionButtons = styled.div`
@@ -274,6 +295,92 @@ export const FormGroup = styled.div`
   small {
     font-size: 0.75rem;
     color: #718096;
+  }
+`;
+
+export const CheckboxRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #334155;
+  font-size: 0.875rem;
+
+  label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+  }
+`;
+
+export const FileManagerList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+
+  .file-row {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr) 34px;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f8fafc;
+  }
+
+  .file-row > svg {
+    color: #0a66c2;
+  }
+
+  strong,
+  span {
+    display: block;
+    overflow-wrap: anywhere;
+  }
+
+  strong {
+    color: #111827;
+    font-size: 13px;
+  }
+
+  span {
+    color: #64748b;
+    font-size: 12px;
+  }
+
+  button {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 8px;
+    background: #fee2e2;
+    color: #b91c1c;
+    cursor: pointer;
+  }
+
+  .stacked {
+    align-items: start;
+  }
+
+  .stacked input:not([type="checkbox"]) {
+    width: 100%;
+    margin-top: 6px;
+  }
+
+  .flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+    font-size: 12px;
+  }
+
+  .flags label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
 `;
 

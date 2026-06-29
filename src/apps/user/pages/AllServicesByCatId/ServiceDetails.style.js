@@ -233,6 +233,8 @@ export const DescriptionBox = styled.div`
   margin-top: 25px;
   h3 { font-size: 18px; margin-bottom: 10px; color: #333; }
   p { line-height: 1.6; color: #555; font-size: 15px; }
+  .formatted h4 { margin: 14px 0 6px; color: #111827; font-size: 16px; }
+  .formatted li { margin-left: 18px; line-height: 1.6; color: #475569; }
 
   @media (max-width: 767px) {
     order: 3;
@@ -291,6 +293,7 @@ export const PricingActionRow = styled.div`
 export const PriceBlock = styled.div`
   .label { font-size: 12px; color: #666; font-weight: 600; text-transform: uppercase; }
   .price-val { font-size: 34px; color: #0a66c2; font-weight: 800; margin: 0; }
+  .price-val small { color: #94a3b8; text-decoration: line-through; font-size: 18px; margin-right: 8px; }
 
   @media (max-width: 767px) {
     flex: 1 1 130px;
@@ -315,6 +318,31 @@ export const PriceBlock = styled.div`
       line-height: 1.15;
       font-weight: 800;
     }
+  }
+`;
+
+export const SecondaryActionRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+
+  button {
+    min-height: 42px;
+    border-radius: 999px;
+    border: 1px solid rgba(10, 102, 194, 0.22);
+    background: #ffffff;
+    color: #0a66c2;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+  }
+
+  @media (max-width: 767px) {
+    order: 7;
   }
 `;
 
@@ -436,6 +464,153 @@ export const TrustBar = styled.div`
       border-radius: 999px;
       background: #f8fafc;
       border: 1px solid #e5e7eb;
+    }
+  }
+`;
+
+export const ProductSections = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+  gap: 18px;
+  margin-top: 22px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+
+  @media (max-width: 767px) {
+    gap: 12px;
+    margin-top: 12px;
+  }
+`;
+
+export const IncludedBox = styled.div`
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 22px;
+
+  h3 {
+    margin: 0 0 12px;
+    color: #111827;
+    font-size: 18px;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: #334155;
+    line-height: 1.45;
+  }
+
+  svg {
+    flex: 0 0 auto;
+    color: #057642;
+    margin-top: 2px;
+  }
+`;
+
+export const FilesBox = styled.div`
+  grid-column: 1 / -1;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 22px;
+
+  h3 {
+    margin: 0 0 12px;
+    color: #111827;
+    font-size: 18px;
+  }
+
+  .files-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .file-card {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #f8fafc;
+  }
+
+  .file-icon {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #eff6ff;
+    color: #0a66c2;
+  }
+
+  .file-copy {
+    min-width: 0;
+  }
+
+  .file-copy strong,
+  .file-copy span {
+    display: block;
+    overflow-wrap: anywhere;
+  }
+
+  .file-copy strong {
+    color: #111827;
+    font-size: 14px;
+  }
+
+  .file-copy span {
+    color: #64748b;
+    font-size: 12px;
+    margin-top: 3px;
+  }
+
+  button {
+    min-height: 36px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 999px;
+    background: #0a66c2;
+    color: #ffffff;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 767px) {
+    padding: 16px;
+
+    .files-list {
+      grid-template-columns: 1fr;
+    }
+
+    .file-card {
+      grid-template-columns: 36px minmax(0, 1fr);
+    }
+
+    button {
+      grid-column: 1 / -1;
+      justify-content: center;
     }
   }
 `;

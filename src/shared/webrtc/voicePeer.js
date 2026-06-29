@@ -105,7 +105,7 @@ const RTC_CONFIG = {
       credential: "securepass123",
     },
   ],
-  iceTransportPolicy: "all",
+  iceTransportPolicy: "relay",
   iceCandidatePoolSize: 10,
   bundlePolicy: "max-bundle",
   rtcpMuxPolicy: "require",

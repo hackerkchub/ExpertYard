@@ -13,6 +13,9 @@ import {
   FiCreditCard,
   FiMessageCircle,
   FiStar,
+  FiFileText,
+  FiVideo,
+  FiDownload,
 } from "react-icons/fi";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { usePublicExpert } from "../../context/PublicExpertContext";
@@ -152,6 +155,11 @@ const AllServices = () => {
               expertMap[service.expert_id]?.name ||
               "Expert Professional";
             const serviceCategory = service.category_name || service.category || service.service_category || "Digital Service";
+            const serviceType = service.type_label || String(service.service_type || "consultation").replace("_", " ");
+            const fileTypes = Array.isArray(service.file_types) ? service.file_types : [];
+            const hasVideo = fileTypes.includes("mp4");
+            const hasPdf = fileTypes.includes("pdf");
+            const displayPrice = service.offer_price || service.price;
 
             return (
               <S.ServiceCard key={service.id}>
@@ -173,13 +181,22 @@ const AllServices = () => {
                     onLoad={(e) => e.target.classList.add('loaded')}
                     onError={(e) => e.target.src = "https://via.placeholder.com/400x200?text=Service+Image"} 
                   />
-                  <S.PriceBadge>₹{Math.floor(service.price)}</S.PriceBadge>
+                  <S.TypeOverlay>{serviceType}</S.TypeOverlay>
+                  <S.PriceBadge>
+                    {service.offer_price && <small>₹{Math.floor(service.price || 0)}</small>}
+                    ₹{Math.floor(displayPrice || 0)}
+                  </S.PriceBadge>
                 </S.ImageWrapper>
 
                 <S.CardContent>
                   <S.CategoryTag>
                     <FiLayers size={12} /> {serviceCategory}
                   </S.CategoryTag>
+                  <S.ProductMetaRow>
+                    {hasPdf && <span><FiFileText /> PDF</span>}
+                    {hasVideo && <span><FiVideo /> Video</span>}
+                    {service.instant_access && <span><FiDownload /> Instant Access</span>}
+                  </S.ProductMetaRow>
                   <S.RatingLine>
                     <span><FiStar /> 4.8</span>
                     <span>Verified service</span>

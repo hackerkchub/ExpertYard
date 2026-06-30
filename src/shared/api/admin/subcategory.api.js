@@ -32,14 +32,12 @@ export const createSubcategoryApi = (payload) => {
   if (!(payload instanceof FormData)) {
     formData.append("category_id", payload.category_id);
     formData.append("name", payload.name);
-    if (payload.image) formData.append("image", payload.image);
+    if (payload.image instanceof File) {
+      formData.append("image", payload.image);
+    }
   }
 
-  return api.post("/subcategory", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  return api.post("/subcategory", formData);
 };
 
 /* ===========================
@@ -51,13 +49,9 @@ export const updateSubcategoryApi = ({ id, category_id, name, file }) => {
   const formData = new FormData();
   formData.append("category_id", category_id);
   formData.append("name", name);
-  if (file) formData.append("image", file);
+  if (file instanceof File) formData.append("image", file);
   
-  return api.put(`/subcategory/${id}`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data"
-    }
-  });
+  return api.put(`/subcategory/${id}`, formData);
 };
 
 /* ===========================

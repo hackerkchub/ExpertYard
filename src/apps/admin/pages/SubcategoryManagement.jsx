@@ -678,6 +678,11 @@ export default function SubCategoryManagement() {
     return Array.isArray(payload) ? payload : [];
   };
 
+  const getErrorMessage = (error) => {
+    if (typeof error === "string") return error;
+    return error?.response?.data?.message || error?.message || "Failed to save sub-category.";
+  };
+
   const fetchPageData = async () => {
     try {
       setLoading(true);
@@ -778,8 +783,9 @@ export default function SubCategoryManagement() {
       await fetchSubcategories();
       alert(editingRow ? "Sub-category updated successfully." : "Sub-category created successfully.");
     } catch (error) {
-      console.error("Error:", error.response?.data || error);
-      setFormError(error.response?.data?.message || error.message || "Failed to save sub-category.");
+      const message = getErrorMessage(error);
+      console.error("Error:", message);
+      setFormError(message);
     }
   };
 

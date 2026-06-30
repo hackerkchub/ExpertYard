@@ -678,6 +678,13 @@ export default function SubCategoryManagement() {
     return Array.isArray(payload) ? payload : [];
   };
 
+  const isSelectedImageFile = (value) =>
+    value &&
+    typeof value === "object" &&
+    typeof value.name === "string" &&
+    typeof value.size === "number" &&
+    typeof value.type === "string";
+
   const getErrorMessage = (error) => {
     if (typeof error === "string") return error;
     return error?.response?.data?.message || error?.message || "Failed to save sub-category.";
@@ -748,7 +755,7 @@ export default function SubCategoryManagement() {
       setFormSuccess("");
 
       if (editingRow && !showModal) {
-        if (formData.image instanceof File) {
+        if (isSelectedImageFile(formData.image)) {
           payload.image = formData.image;
         }
         
@@ -759,7 +766,7 @@ export default function SubCategoryManagement() {
           file: payload.image
         });
       } else {
-        if (formData.image instanceof File) {
+        if (isSelectedImageFile(formData.image)) {
           payload.image = formData.image;
         }
         

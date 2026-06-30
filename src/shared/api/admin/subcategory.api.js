@@ -21,23 +21,43 @@ export const getSubCategoryByIdApi = async (id) => {
   return data;
 };
 
+const isFileLike = (value) =>
+  value &&
+  typeof value === "object" &&
+  typeof value.name === "string" &&
+  typeof value.size === "number" &&
+  typeof value.type === "string";
+
+const createSubcategoryFormData = ({ category_id, name, image }) => {
+  const formData = new FormData();
+  formData.append("category_id", category_id);
+  formData.append("name", name);
+  if (isFileLike(image)) {
+    formData.append("image", image);
+  }
+  return formData;
+};
+
 /* ===========================
    CREATE SUBCATEGORY
    API: /api/subcategory
-   (FormData required: category_id, name, image)
+   category_id + name required, image optional
 =========================== */
 export const createSubcategoryApi = (payload) => {
-  const formData = payload instanceof FormData ? payload : new FormData();
-
-  if (!(payload instanceof FormData)) {
-    formData.append("category_id", payload.category_id);
-    formData.append("name", payload.name);
-    if (payload.image instanceof File) {
-      formData.append("image", payload.image);
-    }
+  if (payload instanceof FormData) {
+    return api.post("/subcategory", payload);
   }
 
-  return api.post("/subcategory", formData);
+  const cleanPayload = {
+    category_id: payload.category_id,
+    name: payload.name,
+  };
+
+  if (!isFileLike(payload.image)) {
+    return api.post("/subcategory", cleanPayload);
+  }
+
+  return api.post("/subcategory", createSubcategoryFormData(payload));
 };
 
 /* ===========================
@@ -46,12 +66,14 @@ export const createSubcategoryApi = (payload) => {
    (FormData: category_id, name, image)
 =========================== */
 export const updateSubcategoryApi = ({ id, category_id, name, file }) => {
-  const formData = new FormData();
-  formData.append("category_id", category_id);
-  formData.append("name", name);
-  if (file instanceof File) formData.append("image", file);
-  
-  return api.put(`/subcategory/${id}`, formData);
+  if (!isFileLike(file)) {
+    return api.put(`/subcategory/${id}`, { category_id, name });
+  }
+
+  return api.put(
+    `/subcategory/${id}`,
+    createSubcategoryFormData({ category_id, name, image: file })
+  );
 };
 
 /* ===========================

@@ -7,7 +7,8 @@ import useApi from "../../../../shared/hooks/useApi";
 import { APP_CONFIG } from "../../../../config/appConfig";
 
 import RegisterLayout from "../../components/RegisterLayout";
-import OtpModal from "../../components/OtpModal";
+// Registration OTP is temporarily disabled. Keep this import commented so OTP can be restored later.
+// import OtpModal from "../../components/OtpModal";
 import Loader from "../../../../shared/components/Loader/Loader";
 import ErrorMessage from "../../../../shared/components/ErrorMessage/ErrorMessage";
 
@@ -50,9 +51,10 @@ export default function Auth() {
   const [apiMessage, setApiMessage] = useState({ text: "", isError: false });
 
   // 🔑 OTP Modals (Registration)
-  const [showOtp, setShowOtp] = useState(false);
-  const [verifyType, setVerifyType] = useState(null); 
-  const [verified, setVerified] = useState({ email: false, phone: false });
+  // Registration OTP is temporarily disabled. Keep these states commented so OTP can be restored later.
+  // const [showOtp, setShowOtp] = useState(false);
+  // const [verifyType, setVerifyType] = useState(null);
+  // const [verified, setVerified] = useState({ email: false, phone: false });
 
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
@@ -113,7 +115,8 @@ export default function Auth() {
       newPassword: "",
       confirmPassword: ""
     });
-    setVerified({ email: false, phone: false });
+    // Registration OTP is temporarily disabled.
+    // setVerified({ email: false, phone: false });
     showMessage("");
   };
 
@@ -255,6 +258,11 @@ export default function Auth() {
 
   /* ================= REGISTRATION OTP TRIGGERS ================= */
 
+  /*
+   * Registration OTP is temporarily disabled.
+   * Email OTP send/verify and phone OTP send/verify code is kept here commented
+   * so it can be restored later.
+   *
   const openOtp = async (type) => {
     showMessage("");
 
@@ -306,12 +314,18 @@ export default function Auth() {
     showMessage(`✅ ${verifyType === "email" ? "Email" : "Phone"} verified successfully!`, false);
   };
 
+  */
+
   /* ================= REGISTER ================= */
 
   const handleRegister = async () => {
+    // Registration OTP is temporarily disabled.
+    /*
     if (!verified.email || !verified.phone) {
       return showMessage("❌ Please verify both email and phone number first.", true);
     }
+
+    */
 
     try {
       setSubmitting(true);
@@ -484,8 +498,9 @@ export default function Auth() {
     registerForm.email && 
     registerForm.phone && 
     registerForm.password &&
-    passwordStrength >= 3 &&
-    (isForgotMode || (verified.email && verified.phone));
+    passwordStrength >= 3;
+    // Registration OTP is temporarily disabled.
+    // && (isForgotMode || (verified.email && verified.phone));
 
   return (
     <>
@@ -584,17 +599,18 @@ export default function Auth() {
                 type="email"
                 placeholder="example@domain.com"
                 value={registerForm.email}
-                disabled={verified.email || submitting || loading}
+                disabled={submitting || loading}
                 onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
               />
-              <SecondaryButton 
+              {/* Registration OTP is temporarily disabled. */}
+              {/* <SecondaryButton
                 type="button" 
                 style={{ marginTop: "4px" }}
                 onClick={() => openOtp("email")} 
                 disabled={verified.email || loadingType === "email" || submitting || loading}
               >
                 {verified.email ? "Verified" : loadingType === "email" ? "..." : "Verify Email"}
-              </SecondaryButton>
+              </SecondaryButton> */}
             </Field>
 
             <Field>
@@ -603,17 +619,18 @@ export default function Auth() {
                 type="tel"
                 placeholder="9876543210"
                 value={registerForm.phone}
-                disabled={verified.phone || submitting || loading}
+                disabled={submitting || loading}
                 onChange={(e) => setRegisterForm({ ...registerForm, phone: e.target.value })}
               />
-              <SecondaryButton 
+              {/* Registration OTP is temporarily disabled. */}
+              {/* <SecondaryButton
                 type="button" 
                 style={{ marginTop: "4px" }}
                 onClick={() => openOtp("phone")} 
                 disabled={verified.phone || loadingType === "phone" || submitting || loading}
               >
                 {verified.phone ? "Verified" : loadingType === "phone" ? "..." : "Verify Mobile"}
-              </SecondaryButton>
+              </SecondaryButton> */}
             </Field>
 
             {/* ✅ REFERRAL CODE FIELD - LOCKED IF FROM LINK */}
@@ -824,7 +841,8 @@ export default function Auth() {
         )}
       </RegisterLayout>
 
-      {showOtp && (
+      {/* Registration OTP is temporarily disabled. */}
+      {/* {showOtp && (
         <OtpModal
           email={registerForm.email}
           phone={registerForm.phone}
@@ -834,7 +852,7 @@ export default function Auth() {
           onClose={() => setShowOtp(false)}
           onSuccess={handleOtpVerifySuccess}
         />
-      )}
+      )} */}
     </>
   );
 }

@@ -23,6 +23,7 @@ import {
   updateSubcategoryApi,
   deleteSubcategoryApi
 } from "../../../shared/api/admin/subcategory.api.js";
+import { getCategoriesApi } from "../../../shared/api/admin/category.api.js";
 
 // Animations
 const fadeIn = keyframes`
@@ -509,13 +510,15 @@ const FormGroup = styled.div`
     font-size: 14px;
   }
   
-  input {
+  input,
+  select {
     width: 100%;
     padding: 12px;
     border: 2px solid #e9ecef;
     border-radius: 12px;
     font-size: 14px;
     transition: all 0.3s ease;
+    background: white;
     
     &:focus {
       outline: none;
@@ -523,6 +526,21 @@ const FormGroup = styled.div`
       box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
   }
+
+  select {
+    cursor: pointer;
+  }
+`;
+
+const FormMessage = styled.div`
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: ${props => props.$error ? '#b91c1c' : '#047857'};
+  background: ${props => props.$error ? '#fee2e2' : '#d1fae5'};
+  border: 1px solid ${props => props.$error ? '#fecaca' : '#a7f3d0'};
 `;
 
 const ImagePreview = styled.div`
@@ -611,6 +629,7 @@ const EmptyState = styled.div`
 
 export default function SubCategoryManagement() {
   const [rows, setRows] = useState([]);
+  const [categoryOptions, setCategoryOptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -622,16 +641,69 @@ export default function SubCategoryManagement() {
     image: null
   });
   const [imagePreview, setImagePreview] = useState(null);
+  const [formError, setFormError] = useState("");
+  const [formSuccess, setFormSuccess] = useState("");
 
   useEffect(() => {
-    fetchSubcategories();
+    fetchPageData();
   }, []);
+
+  const getCategoryId = (category) =>
+    category?.id || category?.category_id || category?.value || "";
+
+  const getCategoryName = (category) =>
+    category?.name || category?.category_name || category?.title || "";
+
+  const normalizeCategoryResponse = (response) => {
+    const payload = response?.data?.data || response?.data || response || [];
+    const list = Array.isArray(payload) ? payload : [];
+
+    return list
+      .filter((category) => {
+        const rawStatus = category?.status ?? category?.is_active ?? category?.active ?? "";
+        const status = String(rawStatus).toLowerCase();
+        return !status || status === "active" || status === "1" || status === "true";
+      })
+      .map((category) => ({
+        ...category,
+        id: getCategoryId(category),
+        name: getCategoryName(category),
+      }))
+      .filter((category) => category.id && category.name)
+      .sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  };
+
+  const normalizeSubcategoryResponse = (response) => {
+    const payload = response?.data?.data || response?.data || response || [];
+    return Array.isArray(payload) ? payload : [];
+  };
+
+  const fetchPageData = async () => {
+    try {
+      setLoading(true);
+      const [subcategoriesResponse, categoriesResponse] = await Promise.all([
+        getAllSubcategoriesApi(),
+        getCategoriesApi(),
+      ]);
+
+      const sortedData = normalizeSubcategoryResponse(subcategoriesResponse)
+        .sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
+
+      setRows(sortedData);
+      setCategoryOptions(normalizeCategoryResponse(categoriesResponse));
+    } catch (error) {
+      console.error("Error fetching subcategory page data:", error);
+      setRows([]);
+      setCategoryOptions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchSubcategories = async () => {
     try {
-      setLoading(true);
       const response = await getAllSubcategoriesApi();
-      const dataArray = response.data || [];
+      const dataArray = normalizeSubcategoryResponse(response);
       const sortedData = Array.isArray(dataArray)
         ? [...dataArray].sort((a, b) => a.id - b.id)
         : [];
@@ -649,13 +721,28 @@ export default function SubCategoryManagement() {
     
     if (!editingRow && !showModal) return;
 
+    const payload = {
+      category_id: String(formData.category_id || "").trim(),
+      name: String(formData.name || "").trim()
+    };
+
+    if (!payload.category_id) {
+      setFormError("Please select a parent category.");
+      setFormSuccess("");
+      return;
+    }
+
+    if (!payload.name) {
+      setFormError("Please enter a sub-category name.");
+      setFormSuccess("");
+      return;
+    }
+
     try {
+      setFormError("");
+      setFormSuccess("");
+
       if (editingRow && !showModal) {
-        const payload = {
-          category_id: editingRow.category_id,
-          name: formData.name.trim() || editingRow.name
-        };
-        
         if (formData.image instanceof File) {
           payload.image = formData.image;
         }
@@ -667,11 +754,6 @@ export default function SubCategoryManagement() {
           file: payload.image
         });
       } else {
-        const payload = {
-          category_id: formData.category_id.trim() || "",
-          name: formData.name.trim() || ""
-        };
-        
         if (formData.image instanceof File) {
           payload.image = formData.image;
         }
@@ -688,14 +770,16 @@ export default function SubCategoryManagement() {
         }
       }
       
+      setFormSuccess(editingRow ? "Sub-category updated successfully." : "Sub-category created successfully.");
       setEditingRow(null);
       setFormData({ name: "", category_id: "", image: null });
       setImagePreview(null);
       setShowModal(false);
       await fetchSubcategories();
+      alert(editingRow ? "Sub-category updated successfully." : "Sub-category created successfully.");
     } catch (error) {
       console.error("Error:", error.response?.data || error);
-      alert("Failed to save: " + (error.response?.data?.message || error.message || "Unknown error"));
+      setFormError(error.response?.data?.message || error.message || "Failed to save sub-category.");
     }
   };
 
@@ -715,6 +799,8 @@ export default function SubCategoryManagement() {
     setEditingRow(null);
     setFormData({ name: "", category_id: "", image: null });
     setImagePreview(null);
+    setFormError("");
+    setFormSuccess("");
     setShowModal(true);
   };
 
@@ -726,6 +812,8 @@ export default function SubCategoryManagement() {
       image: null
     });
     setImagePreview(row.image_url);
+    setFormError("");
+    setFormSuccess("");
     setShowModal(true);
   };
 
@@ -749,6 +837,8 @@ export default function SubCategoryManagement() {
       image: null
     });
     setImagePreview(row.image_url);
+    setFormError("");
+    setFormSuccess("");
     setShowModal(false);
   };
 
@@ -756,12 +846,16 @@ export default function SubCategoryManagement() {
     setEditingRow(null);
     setFormData({ name: "", category_id: "", image: null });
     setImagePreview(null);
+    setFormError("");
+    setFormSuccess("");
   };
 
   const cancelModal = () => {
     setEditingRow(null);
     setFormData({ name: "", category_id: "", image: null });
     setImagePreview(null);
+    setFormError("");
+    setFormSuccess("");
     setShowModal(false);
   };
 
@@ -774,15 +868,20 @@ export default function SubCategoryManagement() {
   }, [rows, query, categoryFilter]);
 
   const categories = useMemo(() => {
-    if (!Array.isArray(rows)) return [];
-    return [...new Set(rows.map((r) => r.category_name))];
-  }, [rows]);
+    const rowCategories = Array.isArray(rows) ? rows.map((r) => r.category_name).filter(Boolean) : [];
+    const optionCategories = categoryOptions.map((category) => category.name);
+    return [...new Set([...optionCategories, ...rowCategories])];
+  }, [categoryOptions, rows]);
 
   const stats = {
     total: rows.length,
     categories: categories.length,
     withImages: rows.filter(r => r.image_url).length
   };
+
+  const selectedCategoryExists = categoryOptions.some(
+    (category) => String(category.id) === String(formData.category_id)
+  );
 
   if (loading) {
     return (
@@ -967,6 +1066,9 @@ export default function SubCategoryManagement() {
             
             <ModalBody>
               <form onSubmit={handleSubmit}>
+                {formError && <FormMessage $error>{formError}</FormMessage>}
+                {formSuccess && <FormMessage>{formSuccess}</FormMessage>}
+
                 <FormGroup>
                   <label>Sub-Category Name *</label>
                   <input
@@ -979,14 +1081,24 @@ export default function SubCategoryManagement() {
                 </FormGroup>
 
                 <FormGroup>
-                  <label>Category ID *</label>
-                  <input
-                    type="text"
+                  <label>Parent Category *</label>
+                  <select
                     value={formData.category_id}
                     onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
                     required
-                    placeholder="Enter category ID"
-                  />
+                  >
+                    <option value="">Select parent category</option>
+                    {formData.category_id && !selectedCategoryExists && (
+                      <option value={formData.category_id}>
+                        {editingRow?.category_name || `Category ${formData.category_id}`}
+                      </option>
+                    )}
+                    {categoryOptions.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
                 </FormGroup>
 
                 <FormGroup>

@@ -26,7 +26,15 @@ export const getSubCategoryByIdApi = async (id) => {
    API: /api/subcategory
    (FormData required: category_id, name, image)
 =========================== */
-export const createSubcategoryApi = (formData) => {
+export const createSubcategoryApi = (payload) => {
+  const formData = payload instanceof FormData ? payload : new FormData();
+
+  if (!(payload instanceof FormData)) {
+    formData.append("category_id", payload.category_id);
+    formData.append("name", payload.name);
+    if (payload.image) formData.append("image", payload.image);
+  }
+
   return api.post("/subcategory", formData, {
     headers: {
       "Content-Type": "multipart/form-data",

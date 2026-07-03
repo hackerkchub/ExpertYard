@@ -571,7 +571,7 @@ const SearchResultsPage = () => {
   };
 
   const hasAnyResult = counts.all > 0;
-  const showingRecommendations = !urlQuery.trim();
+  const showingRecommendations = !activeUrlQuery.trim();
   const recommendationsLoading = categoriesLoading || expertsLoading || servicesLoading;
   const showMobileRecommendations = isMobile && showingRecommendations;
 

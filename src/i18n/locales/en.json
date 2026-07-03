@@ -305,8 +305,8 @@
     "ctaText": "Get instant guidance and the right solution for your need."
   },
   "callChat": {
-    "callTab": "Call with Experts",
-    "chatTab": "Chat with Experts",
+    "callTab": "Call",
+    "chatTab": "Chat",
     "title": "Find the right expert – instantly",
     "subtitle": "Choose a verified expert and start secure chat or call consultation in seconds.",
     "verifiedExperts": "Verified Experts",

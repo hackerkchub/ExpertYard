@@ -145,5 +145,23 @@ code {
   }
 }
 
+.desktop-only-header {
+  display: block;
+}
+
+.mobile-only-header {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .desktop-only-header {
+    display: none !important;
+  }
+  .mobile-only-header {
+    display: block !important;
+  }
+}
+
+
 
 

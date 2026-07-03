@@ -25,8 +25,8 @@ const CategoryChips = React.memo(function CategoryChips({
 
   if (loading && !categories.length) {
     return (
-      <div style={{ width: "100%" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "18px 0 10px", padding: "0 4px" }}>
+      <div className="home-category-chips-shell" style={{ width: "100%" }}>
+        <div className="home-category-inline-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "18px 0 10px", padding: "0 4px" }}>
           <h2 style={{ fontSize: "14px", fontWeight: 850, color: "var(--g9-blue)", margin: 0, textTransform: "uppercase", letterSpacing: "0.5px" }}>
             Browse by Category
           </h2>
@@ -45,8 +45,8 @@ const CategoryChips = React.memo(function CategoryChips({
   }
 
   return (
-    <div style={{ width: "100%" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "18px 0 10px", padding: "0 4px" }}>
+    <div className="home-category-chips-shell" style={{ width: "100%" }}>
+      <div className="home-category-inline-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "18px 0 10px", padding: "0 4px" }}>
         <h2 style={{ fontSize: "14px", fontWeight: 850, color: "var(--g9-blue)", margin: 0, textTransform: "uppercase", letterSpacing: "0.5px" }}>
           Browse by Category
         </h2>

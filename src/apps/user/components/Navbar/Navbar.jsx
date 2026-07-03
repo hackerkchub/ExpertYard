@@ -18,8 +18,10 @@ import {
   HeaderMobileLocation,
   HeaderMenuButton,
   HeaderActions,
+  HeaderDesktopIconButton,
   HeaderProfileButton,
   HeaderSearch,
+  HeaderWalletPill,
   AuthButton,
   LanguageIcon,
   MobileLanguageButton,
@@ -52,6 +54,8 @@ import {
   FiShare2,
   FiSearch,
   FiArrowLeft,
+  FiBell,
+  FiSliders,
 } from "react-icons/fi";
 import { FaWallet } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -343,8 +347,20 @@ const Navbar = () => {
           </HeaderCategoryMenuShell>
 
           <HeaderSearch>
-            <GlobalSearchBar className="navbar-global-search" />
+            <GlobalSearchBar
+              className="navbar-global-search"
+              placeholder="Search experts, services, categories..."
+            />
           </HeaderSearch>
+
+          <HeaderDesktopIconButton
+            type="button"
+            onClick={() => handleNav("/user/search")}
+            aria-label="Open search filters"
+            title="Filters"
+          >
+            <FiSliders />
+          </HeaderDesktopIconButton>
 
           <div className="desktop-only-location" style={{ marginLeft: "12px", marginRight: "12px" }}>
             <LocationSelector onLocationSelect={(loc) => {
@@ -375,6 +391,26 @@ const Navbar = () => {
           )}
 
           <HeaderActions className={showMobileBack ? "common-mobile-hidden" : undefined}>
+            <HeaderDesktopIconButton
+              type="button"
+              className="desktop-notification-button"
+              onClick={() => handleNav("/user/notifications")}
+              aria-label="Notifications"
+              title="Notifications"
+            >
+              <FiBell />
+            </HeaderDesktopIconButton>
+
+            <HeaderWalletPill
+              type="button"
+              onClick={() => handleNav("/user/wallet")}
+              aria-label="Wallet"
+              title="Wallet"
+            >
+              <FaWallet />
+              <span>Rs {Math.floor(Number(balance || 0))}</span>
+            </HeaderWalletPill>
+
             <LanguageSwitcher aria-label={t("common.language")}>
               <LanguageIcon aria-hidden="true">
                 <FiGlobe />

@@ -25,7 +25,7 @@ const emptyResults = {
   subcategories: [],
 };
 
-const GlobalSearchBar = ({ className = "", onSearch }) => {
+const GlobalSearchBar = ({ className = "", onSearch, placeholder = "Search doctors, lawyers, astrologers, career experts..." }) => {
   const navigate = useNavigate();
   const rootRef = useRef(null);
   const inputRef = useRef(null);
@@ -197,7 +197,7 @@ const GlobalSearchBar = ({ className = "", onSearch }) => {
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Search doctors, lawyers, astrologers, career experts..."
+          placeholder={placeholder}
           aria-label="Search experts, categories, and services"
           aria-expanded={showDropdown}
           aria-autocomplete="list"

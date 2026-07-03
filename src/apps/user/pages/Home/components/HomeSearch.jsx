@@ -15,8 +15,8 @@ const HomeSearch = React.memo(function HomeSearch({ onSearch, selectedCategoryNa
       <input
         value={value}
         onChange={(event) => setValue(event.target.value)}
-        placeholder="Search experts, services, categories"
-        aria-label="Search experts, services, categories"
+        placeholder="Search experts, services, categories..."
+        aria-label="Search experts, services, categories..."
       />
       {selectedCategoryName ? <span>{selectedCategoryName}</span> : null}
       <button type="submit" aria-label="Search">

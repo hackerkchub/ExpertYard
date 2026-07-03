@@ -24,19 +24,19 @@ export default function Hero() {
 
   const featureCards = [
     {
-      title: "Chat with Expert",
+      title: "Chat",
       icon: "\uD83D\uDCAC",
       tone: "chat",
       url: "/user/call-chat?page=1&mode=chat",
     },
     {
-      title: "Talk to Expert",
+      title: "Talk",
       icon: "\u260E\uFE0F",
       tone: "talk",
       url: "/user/call-chat?page=1&mode=call",
     },
     {
-      title: "Expert Services",
+      title: "Book Services",
       icon: "\u2728",
       tone: "services",
       url: "/user/all-services",

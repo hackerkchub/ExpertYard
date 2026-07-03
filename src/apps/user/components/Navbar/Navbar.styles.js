@@ -29,6 +29,29 @@ export const Nav = styled.nav`
     opacity: 0.9;
   }
 
+  @media (min-width: 769px) {
+    background: #ffffff;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.92);
+    box-shadow: 0 8px 26px rgba(15, 23, 42, 0.045);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+
+    &::before {
+      display: none;
+    }
+
+    .desktop-only-location {
+      flex: 0 0 210px;
+      min-width: 0;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+    }
+
+    .desktop-only-location .g9-location-selector-container {
+      width: 100%;
+    }
+  }
+
   @media (max-width: 768px) {
     &.user-common-mobile-header {
       background: rgba(255, 255, 255, 0.96);
@@ -58,6 +81,13 @@ export const Container = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: clamp(8px, 1.5vw, 16px);
+
+  @media (min-width: 769px) {
+    max-width: 1440px;
+    height: 84px;
+    padding: 0 28px;
+    gap: 14px;
+  }
 
   @media (max-width: 768px) {
     height: 64px;
@@ -246,6 +276,10 @@ export const HeaderCategoryButton = styled.button`
 export const HeaderCategoryMenuShell = styled.div`
   position: relative;
   flex: 0 0 auto;
+
+  @media (min-width: 769px) {
+    display: none;
+  }
 
   @media (max-width: 768px) {
     display: none;
@@ -461,24 +495,31 @@ export const HeaderSearch = styled.div`
   min-width: 150px;
   max-width: 520px;
 
+  @media (min-width: 769px) {
+    max-width: none;
+    min-width: 280px;
+  }
+
   .navbar-global-search .g9-global-search__form {
-    min-height: 46px;
-    height: 46px;
-    padding: 4px 5px 4px 10px;
-    border-radius: 16px;
-    box-shadow: 0 10px 24px rgba(0, 0, 128, 0.08);
+    min-height: 52px;
+    height: 52px;
+    padding: 6px 7px 6px 14px;
+    border-radius: 18px;
+    background: #f8fafc;
+    border-color: rgba(203, 213, 225, 0.92);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.64);
   }
 
   .navbar-global-search .g9-global-search__icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 11px;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
   }
 
   .navbar-global-search .g9-global-search__submit {
-    height: 36px;
-    min-width: 82px;
-    border-radius: 12px;
+    height: 38px;
+    min-width: 86px;
+    border-radius: 13px;
     font-size: 0.84rem;
   }
 
@@ -1021,6 +1062,104 @@ export const HeaderActions = styled.div`
       padding: 0 5px !important;
       font-size: 10px !important;
     }
+  }
+`;
+
+export const HeaderDesktopIconButton = styled.button`
+  position: relative;
+  width: 46px;
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 128, 0.1);
+  border-radius: 16px;
+  background: #ffffff;
+  color: #334155;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(0, 0, 128, 0.06);
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 128, 0.07);
+    color: ${NAVY};
+    border-color: rgba(0, 0, 128, 0.18);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(0, 0, 128, 0.1);
+  }
+
+  &.desktop-notification-button::after {
+    content: "";
+    position: absolute;
+    top: 9px;
+    right: 10px;
+    width: 8px;
+    height: 8px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    background: #ef4444;
+  }
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+export const HeaderWalletPill = styled.button`
+  min-width: 128px;
+  height: 46px;
+  padding: 0 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 193, 7, 0.48);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fff7d6, rgba(255, 255, 255, 0.94));
+  color: #172033;
+  cursor: pointer;
+  box-shadow: 0 12px 24px rgba(255, 193, 7, 0.13);
+  font-size: 13px;
+  font-weight: 850;
+  white-space: nowrap;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    color: ${NAVY};
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 193, 7, 0.7);
+    box-shadow: 0 16px 28px rgba(255, 193, 7, 0.18);
+  }
+
+  @media (max-width: 1120px) {
+    min-width: 42px;
+    padding: 0;
+
+    span {
+      display: none;
+    }
+  }
+
+  @media (max-width: 768px) {
+    display: none;
   }
 `;
 

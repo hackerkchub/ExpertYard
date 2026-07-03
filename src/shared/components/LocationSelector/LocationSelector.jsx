@@ -16,7 +16,7 @@ const GLOBAL_LOCATION = {
   longitude: null
 };
 
-export default function LocationSelector({ onLocationSelect, currentSelected }) {
+export default function LocationSelector({ onLocationSelect, currentSelected, fallbackText }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -240,7 +240,7 @@ export default function LocationSelector({ onLocationSelect, currentSelected }) 
       >
         <FiMapPin className="pin-icon" />
         <span className="location-name truncate">
-          {selectedLoc && selectedLoc.type !== "global" ? selectedLoc.displayName : "Set Location"}
+          {selectedLoc && selectedLoc.type !== "global" ? selectedLoc.displayName : (fallbackText || "Set Location")}
         </span>
         {selectedLoc && selectedLoc.type !== "global" && (
           <span className="clear-icon" onClick={handleClearLocation} aria-label="Clear location">

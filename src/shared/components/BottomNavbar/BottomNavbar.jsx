@@ -1,31 +1,19 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
-  BriefcaseBusiness,
   Home,
+  Film,
   MessageCircle,
-  PhoneCall,
-  Sparkles,
-  Wallet,
+  UserRound,
 } from 'lucide-react';
 import "./BottomNavbar.css";
 
 const BottomNavbar = () => {
   const menuItems = [
     { name: 'Home', path: '/user', icon: <Home size={21} />, end: true },
-    { name: 'Services', path: '/user/all-services', icon: <BriefcaseBusiness size={21} /> },
-    { name: 'Category', path: '/user/categories', icon: <Sparkles size={24} />, featured: true },
-    { name: 'Wallet', path: '/user/wallet', icon: <Wallet size={21} /> },
-    {
-      name: 'Talk',
-      path: '/user/call-chat?page=1&mode=chat',
-      icon: (
-        <span className="chat-call-icon" aria-hidden="true">
-          <MessageCircle size={21} />
-          <PhoneCall size={12} />
-        </span>
-      )
-    },
+    { name: 'Reels', path: '/user/marketing', icon: <Film size={21} /> },
+    { name: 'Messages', path: '/user/chat-history', icon: <MessageCircle size={21} /> },
+    { name: 'Profile', path: '/user/user-profile', icon: <UserRound size={21} /> },
   ];
 
   return (
@@ -37,7 +25,6 @@ const BottomNavbar = () => {
           className={({ isActive }) =>
             [
               'nav-item',
-              item.featured ? 'nav-item--featured' : '',
               isActive ? 'active' : '',
             ].filter(Boolean).join(' ')
           }

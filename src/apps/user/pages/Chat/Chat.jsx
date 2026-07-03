@@ -1,37 +1,41 @@
-// src/apps/user/pages/chat/Chat.jsx - COMPLETE FIXED VERSION WITH UNIFIED ARCHITECTURE
+// src/apps/user/pages/chat/Chat.jsx - REDESIGNED WITH PREMIUM UI
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { FiPaperclip, FiImage, FiVideo, FiFile, FiX, FiClock } from "react-icons/fi";
+import { FiPaperclip, FiX, FiClock, FiCheck, FiSend, FiUser, FiMail, FiPhone } from "react-icons/fi";
 import { IoMdSend } from "react-icons/io";
 import {
   PageWrap,
-  Header,
-  ExpertInfo,
+  ChatLayout,
+  RightPanel,
+  UserHeader,
+  UserInfo,
   Avatar,
   AvatarPlaceholder,
-  AvatarWrapper,
-  MessagesArea,
-  MessageRow,
-  MessageBubble,
-  InputBar,
-  InputBox,
+  UserMeta,
+  ChatArea,
+  Messages,
+  Message,
+  Bubble,
+  ChatInputWrap,
+  ChatInput,
   SendButton,
-  MessageTime,
-  TypingIndicator,
-  FileUploadMenu,
-  UploadButton,
-  ChatGlobalStyle,
+  AttachButton,
+  NoChatSelected,
   LoadingSpinner,
   ErrorMessage,
-  EndChatButton,
   EmptyChatMessage,
+  TypingIndicator,
+  ImagePreview,
+  InputStack,
+  HeaderActions,
   TimerDisplay,
   UnlimitedBadge,
-  HeaderActions,
+  EndChatButton,
   PricingBadge,
+  StatusDot,
+  ChatGlobalStyle,
 } from "./Chat.styles";
-import BackButton from "../../components/BackButton/BackButton";
 
 import { socket } from "../../../../shared/api/socket";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
@@ -68,7 +72,6 @@ const Chat = () => {
   const [showEndPopup, setShowEndPopup] = useState(false);
   const [endTime, setEndTime] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [aiTyping, setAiTyping] = useState(false);
   const [peerTyping, setPeerTyping] = useState(false);
 
@@ -80,15 +83,15 @@ const Chat = () => {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
   
-  const scrollRef = useRef(null);
-  const messagesContainerRef = useRef(null);
+  const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
+  const inputWrapRef = useRef(null);
   
   const { user } = useAuth();
   const { experts, expertData } = useExpert();
 
-  // 7) FIX: Clean up preview URL on unmount
+  // Clean up preview URL on unmount
   useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -104,6 +107,86 @@ const Chat = () => {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  /* ------------------ BODY LOCK (SAFER FOR ALL BROWSERS) ------------------ */
+  useEffect(() => {
+    const topbar = document.querySelector(".main-app-topbar");
+    const sidebar =
+      document.querySelector("aside") ||
+      document.querySelector("[class*='Sidebar']");
+
+    if (topbar) topbar.style.display = "none";
+    if (sidebar) sidebar.style.display = "none";
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.height = "100%";
+
+    return () => {
+      if (topbar) topbar.style.display = "flex";
+      if (sidebar) sidebar.style.display = "flex";
+
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+      document.body.style.height = "";
+    };
+  }, []);
+
+  /* ------------------ VISUAL VIEWPORT MANAGEMENT ------------------ */
+  useEffect(() => {
+    const updateHeight = () => {
+      const height =
+        window.visualViewport?.height ||
+        window.innerHeight;
+
+      document.documentElement.style.setProperty(
+        "--chat-height",
+        `${height}px`
+      );
+
+      if (inputWrapRef.current) {
+        const inputHeight = inputWrapRef.current.offsetHeight;
+        document.documentElement.style.setProperty(
+          "--input-height",
+          `${inputHeight}px`
+        );
+      }
+
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({
+          block: "end"
+        });
+      });
+    };
+
+    updateHeight();
+
+    const viewport = window.visualViewport;
+    if (viewport) {
+      viewport.addEventListener("resize", updateHeight);
+      viewport.addEventListener("scroll", updateHeight);
+    }
+
+    window.addEventListener("resize", updateHeight);
+
+    return () => {
+      if (viewport) {
+        viewport.removeEventListener("resize", updateHeight);
+        viewport.removeEventListener("scroll", updateHeight);
+      }
+      window.removeEventListener("resize", updateHeight);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (inputWrapRef.current) {
+      const inputHeight = inputWrapRef.current.offsetHeight;
+      document.documentElement.style.setProperty(
+        "--input-height",
+        `${inputHeight}px`
+      );
+    }
+  }, [selectedImage, peerTyping, uploading]);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -129,7 +212,6 @@ const Chat = () => {
     };
   }, [room_id, navigate, chatData?.expert_id]);
 
-  // 5) FIX: Detect unlimited subscription correctly with fallback fields
   const getRemainingMinutes = useCallback(() => {
     return chatData?.remainingMinutes ?? chatData?.remaining_minutes;
   }, [chatData]);
@@ -142,7 +224,6 @@ const Chat = () => {
     );
   }, [chatData, getRemainingMinutes]);
 
-  // 4) FIX: Pricing label for header with fallback fields
   const pricingLabel = useMemo(() => {
     if (!chatData) return "";
 
@@ -166,7 +247,7 @@ const Chat = () => {
     return "";
   }, [chatData, getRemainingMinutes]);
 
-  // B) FETCH CHAT DETAILS - REMOVED AI room detection
+  // FETCH CHAT DETAILS
   const fetchChatDetails = useCallback(async () => {
     if (!room_id) {
       setError("Unable to load chat: missing room ID.");
@@ -230,7 +311,6 @@ const Chat = () => {
         setTimeout(() => markMessagesSeen(), 100);
       }
 
-      // C) FIX: endTime from session or location state
       if (session?.end_time) {
         setEndTime(session.end_time);
       } else if (location.state?.endTime) {
@@ -253,7 +333,6 @@ const Chat = () => {
     }
   }, [room_id, location.state?.endTime]);
 
-  // D) FIX: Auto end chat - unified
   const handleAutoEndChat = useCallback(() => {
     if (isUnlimited) {
       console.log("♾️ Unlimited subscription - no auto-end");
@@ -278,7 +357,6 @@ const Chat = () => {
     });
   }, [room_id, navigate, isUnlimited, chatData?.expert_id]);
 
-  // D) FIX: Manual end chat - unified
   const handleEndChat = useCallback(() => {
     if (!room_id) return;
 
@@ -302,7 +380,6 @@ const Chat = () => {
     });
   }, [room_id, navigate, chatData?.expert_id]);
 
-  // D) FIX: Handle back button - unified
   const handleBack = () => {
     navigate("/user/chat-history", {
       replace: true,
@@ -341,7 +418,6 @@ const Chat = () => {
     return secondsLeft <= 60 ? "#ef4444" : "#10b981";
   }, [isUnlimited, secondsLeft]);
 
-  // D) FIX: Handle go home - unified
   const handleGoHome = () => {
     setShowEndPopup(false);
     if (socket.connected) {
@@ -369,13 +445,12 @@ const Chat = () => {
     return `${backendHost}${data.imageUrl}`;
   };
 
-  // 7) FIX: IMAGE SELECT HANDLER with preview URL
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     
     if (file.size > 5 * 1024 * 1024) {
-      alert("Image size should be less than 5MB");
+      hotToast("error", "Image size should be less than 5MB");
       return;
     }
     
@@ -384,7 +459,6 @@ const Chat = () => {
     setPreviewUrl(url);
   };
 
-  // 10) FIX: Ensure socket connected before sending
   const ensureSocketConnected = useCallback(() => {
     if (!socket.connected) {
       socket.connect();
@@ -414,8 +488,9 @@ const Chat = () => {
     socket.emit(value ? "typing:start" : "typing:stop", { room_id });
   }, [room_id]);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = useCallback((e) => {
     setInput(e.target.value);
+
     emitTyping(true);
 
     if (typingTimeoutRef.current) {
@@ -425,16 +500,23 @@ const Chat = () => {
     typingTimeoutRef.current = setTimeout(() => {
       emitTyping(false);
     }, 1200);
-  };
+  }, [emitTyping]);
 
-  // G) FIX: sendMessage with unified payload
+  /* ------------------ SCROLL TO BOTTOM ------------------ */
+  const scrollToBottom = useCallback(() => {
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({
+        block: "end",
+        behavior: "auto",
+      });
+    });
+  }, []);
+
   const sendMessage = useCallback(async () => {
     if (!room_id || !sessionActive) return;
     if (uploading) return;
 
     emitTyping(false);
-
-    // Ensure socket is connected
     ensureSocketConnected();
 
     // TEXT MESSAGE ONLY
@@ -455,10 +537,8 @@ const Chat = () => {
         isTemp: true
       };
       
-      // Add to UI immediately
       setMessages(prev => [...prev, messageData]);
       
-      // G) FIX: Unified payload - no AI-specific fields
       const payload = {
         room_id: String(room_id),
         client_id: tempId,
@@ -469,18 +549,18 @@ const Chat = () => {
       socket.emit("sendMessage", payload);
 
       setInput("");
-      setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }), 100);
+      scrollToBottom();
+      setTimeout(() => inputRef.current?.focus(), 0);
       return;
     }
 
-    // 2) FIX: IMAGE MESSAGE with correct image_url key
+    // IMAGE MESSAGE
     if (selectedImage) {
       try {
         setUploading(true);
         
         const tempId = Date.now();
         
-        // Add to UI immediately with preview
         const messageData = {
           id: tempId,
           client_id: tempId,
@@ -497,19 +577,16 @@ const Chat = () => {
         };
         
         setMessages(prev => [...prev, messageData]);
-        setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }), 100);
+        scrollToBottom();
         
-        // Upload image
         const imageUrl = await uploadImage(selectedImage);
         
-        // Update the temporary message with real URL
         setMessages(prev => prev.map(msg => 
           msg.client_id === tempId 
             ? { ...msg, image_url: imageUrl, isTemp: false }
             : msg
         ));
         
-        // 2) FIX: Use image_url (not imageUrl)
         const payload = {
           room_id: String(room_id),
           client_id: tempId,
@@ -520,20 +597,21 @@ const Chat = () => {
 
         socket.emit("sendMessage", payload);
 
-        // Clear states
         setSelectedImage(null);
         setPreviewUrl(null);
         setInput("");
         
       } catch (err) {
         console.error("Upload failed:", err);
-        alert("Failed to upload image. Please try again.");
+        hotToast("error", "Failed to upload image");
         setMessages(prev => prev.filter(msg => !msg.isTemp));
       } finally {
         setUploading(false);
+        scrollToBottom();
+        setTimeout(() => inputRef.current?.focus(), 0);
       }
     }
-  }, [room_id, sessionActive, uploading, selectedImage, previewUrl, input, user?.id, ensureSocketConnected]);
+  }, [room_id, sessionActive, uploading, selectedImage, previewUrl, input, user?.id, ensureSocketConnected, scrollToBottom]);
 
   const handleKeyPress = useCallback((e) => {
     if (e.key === "Enter" && !e.shiftKey && !uploading) {
@@ -544,14 +622,13 @@ const Chat = () => {
 
   const isChatDisabled = sessionActive === false;
   
-  // 3) FIX: Detect AI chat with fallback values
   const isAIChat = useMemo(() => {
     return chatData?.is_ai_chat === true ||
       chatData?.is_ai_chat === 1 ||
       chatData?.is_ai_chat === "1";
   }, [chatData?.is_ai_chat]);
 
-  // Socket events - UNIFIED (removed AI-specific listeners)
+  // Socket events
   useEffect(() => {
     if (!room_id || !socket) return;
 
@@ -576,21 +653,18 @@ const Chat = () => {
     const handleNewMessage = (msgData) => {
       setAiTyping(false);
       
-      // Check room match
       const incomingRoomId = msgData.room_id || msgData.roomId;
       if (String(incomingRoomId) !== String(room_id)) {
         return;
       }
 
       setMessages(prev => {
-        // Check if message already exists (by id OR client_id)
         const exists = prev.some(
           m => m.id === msgData.id || 
           (msgData.client_id && m.client_id === msgData.client_id)
         );
         
         if (exists) {
-          // Update existing temporary message with real data
           return prev.map(m => {
             if (m.id === msgData.id || (msgData.client_id && m.client_id === msgData.client_id)) {
               return {
@@ -607,7 +681,6 @@ const Chat = () => {
           });
         }
 
-        // Add new message with safe time parsing
         return [...prev, {
           id: msgData.id,
           client_id: msgData.client_id,
@@ -631,9 +704,7 @@ const Chat = () => {
         markMessagesSeen();
       }
       
-      setTimeout(() => {
-        scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-      }, 100);
+      scrollToBottom();
     };
 
     const handleChatAccepted = (data) => {
@@ -657,7 +728,7 @@ const Chat = () => {
       if (String(data.room_id) === String(room_id) || !data.room_id) {
         setSessionActive(false);
         clearActiveChatSession();
-        void hotToast("success", "Chat ended", { id: "chat-ended" });
+        hotToast("success", "Chat ended", { id: "chat-ended" });
         navigate("/user/chat-history", {
           replace: true,
           state: {
@@ -668,7 +739,6 @@ const Chat = () => {
       }
     };
 
-    // 9) FIX: Safe AI typing handler
     const handleAITyping = (data = {}) => {
       setAiTyping(!!data.isTyping);
     };
@@ -706,7 +776,6 @@ const Chat = () => {
       )));
     };
 
-    // Listen to unified events
     socket.on("message", handleNewMessage);
     socket.on("message_sent", handleNewMessage);
     socket.on("chat_accepted", handleChatAccepted);
@@ -730,13 +799,11 @@ const Chat = () => {
       socket.off("connect", joinChatRoom);
       
       if (socket.connected) {
-        // F) FIX: Unified leave payload
         socket.emit("leave_room", { room_id });
       }
     };
-  }, [room_id, user?.id, fetchChatDetails, markMessagesSeen, navigate, chatData?.expert_id]);
+  }, [room_id, user?.id, fetchChatDetails, markMessagesSeen, navigate, chatData?.expert_id, scrollToBottom]);
 
-  // 6) FIX: Expert info from chatData using isAIChat
   const expertInfo = useMemo(() => {
     if (isAIChat) {
       return {
@@ -773,15 +840,10 @@ const Chat = () => {
     };
   }, [chatData?.expert_id, isAIChat, experts, expertData]);
 
-  // Scroll to bottom
+  // Scroll to bottom on messages change
   useLayoutEffect(() => {
-    if (!scrollRef.current) return;
-
-    scrollRef.current.scrollIntoView({
-      behavior: "smooth",
-      block: "end",
-    });
-  }, [messages.length]);
+    scrollToBottom();
+  }, [messages.length, scrollToBottom]);
 
   // Initial fetch
   useEffect(() => {
@@ -811,36 +873,6 @@ const Chat = () => {
     }
   }, [chatData, sessionActive, room_id, isAIChat, experts, expertData]);
 
-  // Mobile keyboard handling
-  useEffect(() => {
-    if (!isMobile) return;
-
-    let originalHeight = window.innerHeight;
-
-    const handleResize = () => {
-      const currentHeight = window.visualViewport?.height || window.innerHeight;
-      const keyboardOpen = currentHeight < originalHeight - 100;
-      
-      setIsKeyboardOpen(keyboardOpen);
-      
-      if (keyboardOpen && messagesContainerRef.current) {
-        setTimeout(() => {
-          scrollRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }, 100);
-      }
-    };
-
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleResize);
-    }
-
-    return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleResize);
-      }
-    };
-  }, [isMobile]);
-
   if (loading && !isInitialized) {
     return (
       <>
@@ -857,227 +889,216 @@ const Chat = () => {
       <Toaster position="top-center" />
       <ChatGlobalStyle />
       <PageWrap>
-        <Header>
-          <BackButton onClick={handleBack} iconOnly />
-          
-          {chatData && expertInfo ? (
-            <>
-              <ExpertInfo>
-                <AvatarWrapper>
-                  {expertInfo.avatar ? (
-                    <Avatar src={expertInfo.avatar} alt={expertInfo.name} />
-                  ) : (
-                    <AvatarPlaceholder>
-                      {getInitials(expertInfo.name)}
-                    </AvatarPlaceholder>
-                  )}
-                </AvatarWrapper>
-                <div className="expert-details">
-                  <div className="expert-name">
-                    {expertInfo.name}
-                    {expertInfo.position && (
-                      <span className="expert-position"> • {expertInfo.position}</span>
+        <ChatLayout>
+          <RightPanel>
+            {chatData && expertInfo ? (
+              <>
+                <UserHeader>
+                  <UserInfo>
+                    {expertInfo.avatar ? (
+                      <Avatar src={expertInfo.avatar} alt={expertInfo.name} />
+                    ) : (
+                      <AvatarPlaceholder>
+                        {getInitials(expertInfo.name)}
+                      </AvatarPlaceholder>
                     )}
-                  </div>
-                  <div className="status">
-                    {sessionActive === true ? '🟢 Active' : '🔴 Ended'}
-                  </div>
-                </div>
-              </ExpertInfo>
-              
-              <HeaderActions>
-                {/* O) FIX: Show pricing label
-                {pricingLabel && sessionActive === true && (
-                  <PricingBadge>
-                    <span>{pricingLabel}</span>
-                  </PricingBadge>
-                )} */}
 
-                {!isUnlimited && sessionActive === true && endTime && (
-                  <TimerDisplay $color={getTimerColor()}>
-                    <FiClock size={14} />
-                    <span>{formatted}</span>
-                  </TimerDisplay>
-                )}
+                    <UserMeta>
+                      <h4>{expertInfo.name}</h4>
+                      <div className="user-details">
+                        {sessionActive === true ? (
+                          <span className="status active">🟢 Active</span>
+                        ) : (
+                          <span className="status ended">🔴 Ended</span>
+                        )}
+                        {expertInfo.position && (
+                          <span className="detail-item">{expertInfo.position}</span>
+                        )}
+                      </div>
+                    </UserMeta>
+                  </UserInfo>
 
-                {isUnlimited && sessionActive === true && (
-                  <UnlimitedBadge>
-                    <span>♾️</span> Unlimited
-                  </UnlimitedBadge>
-                )}
+                  <HeaderActions>
+                    {!isUnlimited && sessionActive === true && endTime && (
+                      <TimerDisplay $color={getTimerColor()}>
+                        <FiClock size={14} />
+                        <span>{formatted}</span>
+                      </TimerDisplay>
+                    )}
 
-                <EndChatButton
-                  id="end-chat-button"
-                  onClick={handleEndChat}
-                  disabled={isChatDisabled}
-                  $active={!isChatDisabled}
-                >
-                  <FiX size={20} />
-                </EndChatButton>
-              </HeaderActions>
-            </>
-          ) : (
-            <div style={{ color: "#64748b", padding: "20px" }}>Loading expert info...</div>
-          )}
-        </Header>
+                    {isUnlimited && sessionActive === true && (
+                      <UnlimitedBadge>
+                        <span>♾️</span> Unlimited
+                      </UnlimitedBadge>
+                    )}
 
-        <MessagesArea ref={messagesContainerRef}>
-          {error && !showEndPopup ? (
-            <ErrorMessage>
-              <FiX size={48} />
-              <h3>{error}</h3>
-              <div className="chat-error-actions">
-                <button onClick={fetchChatDetails}>Retry</button>
-                <button className="secondary" onClick={() => navigate("/user/chat-history")}>
-                  Chat History
-                </button>
-              </div>
-            </ErrorMessage>
-          ) : messages.length === 0 ? (
-            <EmptyChatMessage>
-              💬 Chat connected! Start typing to chat with {expertInfo?.name || 'expert'}.
-            </EmptyChatMessage>
-          ) : (
-            messages.map((msg, index) => {
-              // J) FIX: Proper message alignment
-              const isMine = msg.sender_type === "user";
-              const isRight = isMine;
-              
-              return (
-                <MessageRow key={msg.id || index} $senderType={isRight ? "user" : "expert"}>
-                  <MessageBubble $senderType={isRight ? "user" : "expert"}>
-                    {/* IMAGE MESSAGE UI */}
-                    {msg.message_type === "image" && msg.image_url && (
-                      <img
-                        src={msg.image_url}
-                        alt="chat-img"
-                        style={{
-                          maxWidth: "200px",
-                          maxHeight: "200px",
-                          borderRadius: "10px",
-                          marginBottom: msg.message ? "6px" : "0",
-                          objectFit: "cover"
-                        }}
-                        onError={(e) => {
-                          if (msg.isTemp) {
-                            e.target.style.opacity = "0.5";
-                          } else {
-                            e.target.style.display = "none";
-                          }
-                        }}
+                    <EndChatButton
+                      onClick={handleEndChat}
+                      disabled={isChatDisabled}
+                      $active={!isChatDisabled}
+                    >
+                      <FiX size={20} />
+                    </EndChatButton>
+                  </HeaderActions>
+                </UserHeader>
+
+                <ChatArea>
+                  <Messages>
+                    {messages.length === 0 ? (
+                      <EmptyChatMessage>
+                        <span>💬</span>
+                        <span>Start your conversation</span>
+                        <span>Say hello to get started</span>
+                      </EmptyChatMessage>
+                    ) : (
+                      messages.map((msg) => {
+                        const isMine = msg.sender_type === "user";
+                        
+                        return (
+                          <Message key={msg.id} $expert={!isMine}>
+                            <Bubble $expert={!isMine} $hasText={!!msg.message}>
+                              {msg.message_type === "image" && msg.image_url && (
+                                <img
+                                  src={msg.image_url}
+                                  alt="chat-img"
+                                  onError={(e) => {
+                                    if (msg.isTemp) {
+                                      e.target.style.opacity = "0.5";
+                                    } else {
+                                      e.target.style.display = "none";
+                                    }
+                                  }}
+                                />
+                              )}
+                              
+                              {msg.message && (
+                                <div>{msg.message}</div>
+                              )}
+                              
+                              <span className="time">
+                                {msg.time}
+                                {msg.isTemp && " (sending...)"}
+                                {!msg.isTemp && isMine && (
+                                  <span className="seen-indicator">
+                                    {msg.is_seen ? (
+                                      <>
+                                        <FiCheck size={11} />
+                                        <span>Seen</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <FiCheck size={11} />
+                                        <span>Sent</span>
+                                      </>
+                                    )}
+                                  </span>
+                                )}
+                              </span>
+                            </Bubble>
+                          </Message>
+                        );
+                      })
+                    )}
+                    
+                    <div ref={messagesEndRef} />
+                  </Messages>
+
+                  <InputStack>
+                    {selectedImage && (
+                      <ImagePreview>
+                        <img
+                          src={previewUrl}
+                          alt="preview"
+                        />
+                        <span>{selectedImage.name}</span>
+                        <button 
+                          onClick={() => {
+                            setSelectedImage(null);
+                            setPreviewUrl(null);
+                          }}
+                          aria-label="Remove image"
+                        >
+                          <FiX size={18} />
+                        </button>
+                      </ImagePreview>
+                    )}
+
+                    {(aiTyping || peerTyping) && (
+                      <TypingIndicator>
+                        {aiTyping ? "AI Expert is typing..." : `${expertInfo?.name || "Expert"} is typing...`}
+                      </TypingIndicator>
+                    )}
+
+                    <ChatInputWrap ref={inputWrapRef}>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        ref={fileInputRef}
+                        onChange={handleImageSelect}
                       />
-                    )}
-                    
-                    {/* TEXT/CAPTION MESSAGE */}
-                    {msg.message && (
-                      <div className="message-text">{msg.message}</div>
-                    )}
-                    
-                    <MessageTime>
-                      {msg.time}
-                      {msg.isTemp && " (sending...)"}
-                      {!msg.isTemp && isMine && (
-                        <span> {msg.is_seen ? "🟢 Seen" : "✓ Sent"}</span>
+
+                      {!isAIChat && (
+                        <AttachButton
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isChatDisabled || uploading}
+                          aria-label="Attach image"
+                        >
+                          <FiPaperclip size={18} />
+                        </AttachButton>
                       )}
-                    </MessageTime>
-                  </MessageBubble>
-                </MessageRow>
-              );
-            })
-          )}
-          
-          <div ref={scrollRef} />
-        </MessagesArea>
 
-        {(aiTyping || peerTyping) && (
-          <TypingIndicator>
-            {aiTyping ? "AI Expert is typing..." : `${expertInfo?.name || "Expert"} is typing...`}
-          </TypingIndicator>
-        )}
+                      <ChatInput
+                        ref={inputRef}
+                        value={input}
+                        onFocus={scrollToBottom}
+                        onChange={handleInputChange}
+                        onBlur={() => emitTyping(false)}
+                        onKeyDown={handleKeyPress}
+                        placeholder={
+                          isChatDisabled 
+                            ? "Chat ended" 
+                            : (uploading ? "Uploading image..." : "Type a message...")
+                        }
+                        disabled={isChatDisabled || uploading}
+                        rows={1}
+                      />
 
-        {/* 7) FIX: Use previewUrl for image preview */}
-        {!isAIChat && previewUrl && (
-          <div style={{ 
-            padding: "10px", 
-            backgroundColor: "#f1f5f9",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            margin: "0 10px",
-            borderRadius: "12px"
-          }}>
-            <img
-              src={previewUrl}
-              alt="preview"
-              style={{ 
-                width: "50px", 
-                height: "50px", 
-                borderRadius: "8px",
-                objectFit: "cover"
-              }}
-            />
-            <span style={{ fontSize: "12px", color: "#64748b", flex: 1 }}>
-              {selectedImage?.name}
-            </span>
-            <button 
-              onClick={() => {
-                setSelectedImage(null);
-                setPreviewUrl(null);
-              }}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: "5px"
-              }}
-            >
-              <FiX size={18} />
-            </button>
-          </div>
-        )}
-
-        <InputBar $isKeyboardOpen={isKeyboardOpen}>
-          {/* HIDDEN FILE INPUT - only for non-AI chats */}
-          {!isAIChat && (
-            <input
-              type="file"
-              accept="image/*"
-              style={{ display: "none" }}
-              ref={fileInputRef}
-              onChange={handleImageSelect}
-            />
-          )}
-
-          {/* L) FIX: Hide upload button for AI chats */}
-          {!isAIChat && (
-            <UploadButton 
-              onClick={() => {
-                fileInputRef.current?.click();
-              }} 
-              disabled={isChatDisabled || uploading}
-            >
-              <FiPaperclip size={20} />
-            </UploadButton>
-          )}
-
-          <InputBox
-            ref={inputRef}
-            placeholder={isChatDisabled ? "Chat session ended" : (uploading ? "Uploading image..." : "Type your message...")}
-            value={input}
-            onChange={handleInputChange}
-            onBlur={() => emitTyping(false)}
-            onKeyDown={handleKeyPress}
-            disabled={isChatDisabled || uploading}
-            maxLength={1000}
-          />
-
-          <SendButton 
-            onClick={sendMessage} 
-            disabled={(uploading || (!input.trim() && !selectedImage)) || isChatDisabled}
-          >
-            {uploading ? "..." : <IoMdSend size={20} />}
-          </SendButton>
-        </InputBar>
+                      <SendButton
+                        onClick={sendMessage}
+                        disabled={(uploading || (!input.trim() && !selectedImage)) || isChatDisabled}
+                      >
+                        {uploading ? (
+                          <span style={{ fontSize: '12px', fontWeight: 'bold' }}>...</span>
+                        ) : (
+                          <IoMdSend />
+                        )}
+                      </SendButton>
+                    </ChatInputWrap>
+                  </InputStack>
+                </ChatArea>
+              </>
+            ) : error ? (
+              <ErrorMessage>
+                <FiX size={40} />
+                <h3>{error}</h3>
+                <p>Please try again or go back to dashboard</p>
+                <div className="chat-error-actions">
+                  <button onClick={fetchChatDetails}>Retry</button>
+                  <button className="secondary" onClick={() => navigate("/user/chat-history")}>
+                    Chat History
+                  </button>
+                </div>
+              </ErrorMessage>
+            ) : (
+              <NoChatSelected>
+                <FiClock size={48} />
+                <h3>No Chat Selected</h3>
+                <p>Select a conversation from the sidebar to start messaging</p>
+              </NoChatSelected>
+            )}
+          </RightPanel>
+        </ChatLayout>
 
         {/* Chat End Popup */}
         {showEndPopup && (

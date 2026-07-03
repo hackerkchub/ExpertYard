@@ -1,12 +1,137 @@
 /*********************************************************
-  ExpertYard - Stable WebRTC Voice Peer (FIXED VERSION)
-  FIXES: 
-  - Clean peer recreation with fresh ontrack handlers
-  - Proper state machine for connection lifecycle
-  - Track verification before assuming connected
-  - Debounced ICE restarts
+  ExpertYard - Stable WebRTC Voice Peer (PRODUCTION READY)
+  
+  PRODUCTION LOGS (with feature flags):
+  - Socket Connected/Disconnected/Reconnected
+  - TURN API Failed → STUN Fallback
+  - Relay Connected (with RTT) - once per connection
+  - ICE Failed / Restart (with reason & attempt count)
+  - Connection Timeout / Offer Timeout
+  - Voice Frozen / Recovered - once per connection
+  - Microphone Permission Denied
+  - Quality metrics - throttled to 15s per connection
+  - setRemote Failed / addIce Failed
 **********************************************************/
+import { getTurnCredentialsApi } from "../api/webrtc.api";
 
+// ----------------------------------------------------------------------
+// Constants
+// ----------------------------------------------------------------------
+const QUALITY_LOG_THROTTLE_MS = 15000; // FIXED: Added missing constant
+const DEFAULT_TTL = 300;
+const MAX_ICE_RESTART_ATTEMPTS = 3;
+
+// ----------------------------------------------------------------------
+// TURN Credential Cache with Promise Deduplication
+// ----------------------------------------------------------------------
+let cachedTurnResponse = null;
+let turnFetchPromise = null;
+let turnApiFailedLogged = false; // Prevent spam
+
+// Helper to clear TURN cache - needed for 401/403 responses
+export function clearTurnCache() {
+  cachedTurnResponse = null;
+  turnFetchPromise = null;
+  turnApiFailedLogged = false;
+  logDev("TURN", "Cache cleared");
+}
+
+async function getIceServers() {
+  // Return cached response if still valid
+  if (cachedTurnResponse && Date.now() < cachedTurnResponse.expireAt) {
+    return cachedTurnResponse.iceServers;
+  }
+
+  // If already fetching, return the existing promise
+  if (turnFetchPromise) {
+    try {
+      const response = await turnFetchPromise;
+      return response.iceServers;
+    } catch (error) {
+      // If the in-flight request failed, clear the promise and try again
+      turnFetchPromise = null;
+      return getIceServers();
+    }
+  }
+
+  // Create new fetch promise with deduplication
+  turnFetchPromise = (async () => {
+    try {
+      const turnData = await getTurnCredentialsApi();
+      
+      // Validate response structure
+      if (!turnData || typeof turnData !== 'object') {
+        throw new Error("Invalid TURN response format");
+      }
+
+      // Check for success flag if present
+      if (turnData.success === false) {
+        // If 401/403, clear cache
+        if (turnData.statusCode === 401 || turnData.statusCode === 403) {
+          clearTurnCache();
+        }
+        throw new Error(turnData.message || "TURN credentials fetch failed");
+      }
+
+      // Extract iceServers
+      const iceServers = turnData.iceServers || [];
+      
+      if (!Array.isArray(iceServers) || iceServers.length === 0) {
+        throw new Error("No ICE servers received");
+      }
+
+      // Get TTL from response or use default
+      const ttl = turnData.ttl || turnData.expiresIn || DEFAULT_TTL;
+      
+      // Cache entire response for future extensibility
+      cachedTurnResponse = {
+        iceServers,
+        ttl,
+        expireAt: Date.now() + (ttl * 1000),
+        ...(turnData.region && { region: turnData.region }),
+        ...(turnData.priority && { priority: turnData.priority }),
+        ...(turnData.refreshToken && { refreshToken: turnData.refreshToken }),
+      };
+      
+      // Reset fallback flag on success
+      turnApiFailedLogged = false;
+      
+      return iceServers;
+      
+    } catch (error) {
+      // Log TURN API failure only once
+      if (!turnApiFailedLogged) {
+        logError("TURN API Failed. Using Google STUN fallback.", error);
+        turnApiFailedLogged = true;
+      }
+      
+      // STUN fallback servers - NOT CACHED
+      const fallbackServers = [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+        { urls: "stun:stun2.l.google.com:19302" },
+        { urls: "stun:stun3.l.google.com:19302" },
+        { urls: "stun:stun4.l.google.com:19302" },
+      ];
+      
+      return fallbackServers;
+    } finally {
+      turnFetchPromise = null;
+    }
+  })();
+
+  try {
+    const result = await turnFetchPromise;
+    return result;
+  } catch (error) {
+    turnFetchPromise = null;
+    throw error;
+  }
+}
+
+// ----------------------------------------------------------------------
+// State variables
+// ----------------------------------------------------------------------
 let pc = null;
 let localStream = null;
 let remoteStream = null;
@@ -41,8 +166,17 @@ let remoteTrackAttached = false;
 let audioPlaybackStarted = false;
 let canInitiateIceRestart = false;
 
-// ICE restart debounce
+// ICE restart debounce and limit
 let lastIceRestartAt = 0;
+let iceRestartAttempts = 0;
+let lastIceRestartReason = "Unknown";
+let lastIceRestartRtt = 0;
+
+// Voice recovery logging
+let voiceRecoveredLogged = false;
+
+// Relay connected logging
+let relayLogged = false;
 
 // Store current peer reference for event handlers
 let currentPeer = null;
@@ -51,15 +185,16 @@ let currentPeer = null;
 let offerAnswerTimeout = null;
 
 // ----------------------------------------------------------------------
-// Logging helpers
+// Logging helpers - PRODUCTION READY
 // ----------------------------------------------------------------------
-const DEBUG = true;
+const DEBUG = import.meta.env?.DEV || import.meta.env?.VITE_DEBUG_WEBRTC === 'true' || false;
+const PROD_LOGS = import.meta.env?.VITE_WEBRTC_PROD_LOGS === 'true' || false;
 
-function log(type, message, data = null) {
-  if (!DEBUG) return;
-
+// Production logs - feature flagged
+function logProd(type, message, data = null) {
+  if (!PROD_LOGS) return;
+  
   const time = new Date().toLocaleTimeString();
-
   if (data) {
     console.log(`[${time}] [${type}] ${message}`, data);
   } else {
@@ -67,13 +202,41 @@ function log(type, message, data = null) {
   }
 }
 
+// Development-only logs
+function logDev(type, message, data = null) {
+  if (!DEBUG) return;
+  const time = new Date().toLocaleTimeString();
+  if (data) {
+    console.log(`[${time}] [${type}] ${message}`, data);
+  } else {
+    console.log(`[${time}] [${type}] ${message}`);
+  }
+}
+
+// Production errors - always log
 function logError(message, error = null) {
   const time = new Date().toLocaleTimeString();
-
   if (error) {
     console.error(`[${time}] [ERROR] ${message}`, error);
   } else {
     console.error(`[${time}] [ERROR] ${message}`);
+  }
+}
+
+// ----------------------------------------------------------------------
+// Socket emit helper with safety check
+// ----------------------------------------------------------------------
+function safeSocketEmit(event, data) {
+  if (!socketRef || !socketRef.connected) {
+    logDev("SOCKET", `Cannot emit ${event}: socket not connected`);
+    return false;
+  }
+  try {
+    socketRef.emit(event, data);
+    return true;
+  } catch (error) {
+    logDev("SOCKET", `Socket emit failed for ${event}`, error);
+    return false;
   }
 }
 
@@ -84,27 +247,9 @@ const AUDIO_CONSTRAINTS = {
   echoCancellation: true,
   noiseSuppression: true,
   autoGainControl: true,
-  // channelCount: { ideal: 1 },
-  // sampleRate: { ideal: 16000 },
-  // sampleSize: { ideal: 16 },
-  // volume: 1.0,
 };
 
 const RTC_CONFIG = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" },
-    {
-      urls: "turn:turn.expertyard.com:3478",
-      username: "expertyard",
-      credential: "securepass123",
-    },
-    {
-      urls: "turns:turn.expertyard.com:5349",
-      username: "expertyard",
-      credential: "securepass123",
-    },
-  ],
   iceTransportPolicy: "all",
   iceCandidatePoolSize: 10,
   bundlePolicy: "max-bundle",
@@ -136,38 +281,22 @@ function ensureRemoteStream() {
 }
 
 async function safePlayAudio(audioEl, reason = "unknown") {
-  if (!audioEl) {
-    return false;
-  }
+  if (!audioEl || !remoteTrackAttached) return false;
   
-  if (!remoteTrackAttached) {
-    return false;
-  }
-  
-  // Avoid interrupting already playing audio
-  if (!audioEl.paused) {
-    return true;
-  }
+  if (!audioEl.paused) return true;
   
   try {
     await audioEl.play();
     if (!audioPlaybackStarted) {
-      log("MEDIA", "Remote audio playing");
       audioPlaybackStarted = true;
     }
     return true;
   } catch (error) {
     if (playRetryTimer) clearTimeout(playRetryTimer);
     playRetryTimer = setTimeout(() => {
-      if (!audioEl?.srcObject) return;
-      if (!remoteTrackAttached) return;
+      if (!audioEl?.srcObject || !remoteTrackAttached) return;
       audioEl.play().then(
-        () => {
-          if (!audioPlaybackStarted) {
-            log("MEDIA", "Remote audio playing");
-            audioPlaybackStarted = true;
-          }
-        },
+        () => { audioPlaybackStarted = true; },
         () => {}
       );
     }, 600);
@@ -195,7 +324,6 @@ function bindAudioElement(audioRef) {
 
   if (remoteAudioEl && remoteStream && remoteAudioEl.srcObject !== remoteStream) {
     remoteAudioEl.srcObject = remoteStream;
-    
     if (remoteTrackAttached) {
       safePlayAudio(remoteAudioEl, "bind-audio-element");
     }
@@ -215,7 +343,18 @@ function cleanupRemoteAudioElement(fullCleanup = true) {
   remoteAudioEl = null;
 }
 
+// ----------------------------------------------------------------------
+// WebRTC Support Check
+// ----------------------------------------------------------------------
+function checkWebRTCSupport() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    throw new Error("WebRTC not supported in this browser");
+  }
+}
+
 async function acquireMicrophone(providedStream) {
+  checkWebRTCSupport();
+  
   if (providedStream && hasLiveLocalAudio(providedStream)) {
     return providedStream;
   }
@@ -223,8 +362,14 @@ async function acquireMicrophone(providedStream) {
   if (existingTrack && existingTrack.readyState === "live") {
     return localStream;
   }
-  const newStream = await navigator.mediaDevices.getUserMedia({ audio: AUDIO_CONSTRAINTS });
-  return newStream;
+  
+  try {
+    const newStream = await navigator.mediaDevices.getUserMedia({ audio: AUDIO_CONSTRAINTS });
+    return newStream;
+  } catch (error) {
+    logError("Microphone Permission Denied", error);
+    throw error;
+  }
 }
 
 function attachTrackRecovery(stream) {
@@ -233,6 +378,7 @@ function attachTrackRecovery(stream) {
       if (isGettingMic) return;
       isGettingMic = true;
       try {
+        checkWebRTCSupport();
         const newStream = await navigator.mediaDevices.getUserMedia({ audio: AUDIO_CONSTRAINTS });
         const newTrack = newStream.getAudioTracks()[0];
         attachTrackRecovery(newStream);
@@ -242,9 +388,9 @@ function attachTrackRecovery(stream) {
         }
         localStream?.getTracks().forEach(item => item.stop());
         localStream = newStream;
-        setTimeout(() => restartIceWithRenegotiation(), 500);
+        setTimeout(() => restartIceWithRenegotiation("Microphone recovery"), 500);
       } catch (error) {
-        logError("Microphone reacquire failed", error);
+        logDev("Microphone reacquire failed", error);
         if (onNetworkErrorCallback) onNetworkErrorCallback();
       } finally { isGettingMic = false; }
     };
@@ -263,14 +409,6 @@ async function ensureLocalAudioSender(stream) {
 
   track.enabled = true;
 
-  console.log("MIC TRACK DEBUG:", {
-    enabled: track.enabled,
-    muted: track.muted,
-    readyState: track.readyState,
-    label: track.label,
-    id: track.id
-  });
-
   const senders = pc?.getSenders() || [];
 
   const existingSender = senders.find(
@@ -281,31 +419,16 @@ async function ensureLocalAudioSender(stream) {
     try {
       await existingSender.replaceTrack(null);
     } catch (e) {}
-
     await existingSender.replaceTrack(track);
   } else {
     pc.addTrack(track, localStream);
   }
-
-  const finalSender = pc?.getSenders()?.find(
-    sender => sender.track?.kind === "audio"
-  );
-
-  console.log("AUDIO SENDER DEBUG:", {
-    senderExists: !!finalSender,
-    senderTrackEnabled: finalSender?.track?.enabled,
-    senderTrackMuted: finalSender?.track?.muted,
-    senderTrackReadyState: finalSender?.track?.readyState
-  });
-
-  log("MEDIA", "Local microphone attached");
 }
 
 function setupRemoteAudioLifecycle(audioRef) {
   const audioEl = bindAudioElement(audioRef);
   const stream = ensureRemoteStream();
   
-  // Clear old handlers before reassigning
   if (audioEl.onloadedmetadata) audioEl.onloadedmetadata = null;
   if (audioEl.oncanplay) audioEl.oncanplay = null;
   
@@ -325,7 +448,7 @@ function setupNetworkListener() {
   if (!navigator.connection || networkListenerAttached) return;
   navigator.connection.addEventListener("change", () => {
     if (pc && (pc.connectionState === "connected" || pc.connectionState === "disconnected")) {
-      restartIceWithRenegotiation();
+      restartIceWithRenegotiation("Network change");
     }
   });
   networkListenerAttached = true;
@@ -342,28 +465,25 @@ function setupVisibilityListener() {
     const track = localStream?.getAudioTracks?.()[0];
     if (!track || track.readyState === "ended") {
       try {
+        checkWebRTCSupport();
         const recoveredStream = await navigator.mediaDevices.getUserMedia({ audio: AUDIO_CONSTRAINTS });
         await ensureLocalAudioSender(recoveredStream);
-      } catch (error) { logError("Tab visibility mic recovery failed", error); }
+      } catch (error) { 
+        logDev("Tab visibility mic recovery failed", error); 
+      }
     }
     if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
-      restartIceWithRenegotiation();
+      restartIceWithRenegotiation("Visibility change");
     }
   });
   visibilityListenerAttached = true;
 }
 
-// Setup audio device change listener for Bluetooth/headphones
 function setupAudioDeviceListener() {
   if (!navigator.mediaDevices?.ondevicechange) return;
   if (audioDeviceListenerAttached) return;
   
   navigator.mediaDevices.addEventListener("devicechange", () => {
-    log("MEDIA", "Audio device changed", { 
-      hasRemoteTrack: remoteTrackAttached,
-      connectionState: pc?.connectionState 
-    });
-    
     if (remoteTrackAttached && remoteAudioEl) {
       setTimeout(() => {
         safePlayAudio(remoteAudioEl, "device-change");
@@ -378,19 +498,21 @@ setupVisibilityListener();
 setupAudioDeviceListener();
 
 // ----------------------------------------------------------------------
-// Soft cleanup (does NOT stop microphone)
+// Soft cleanup
 // ----------------------------------------------------------------------
 async function cleanupPeerOnly() {
   clearTimers();
-
-  // Clear stale candidates
   pendingIce = [];
-  
-  // Reset audio playback flag
   audioPlaybackStarted = false;
+  
+  // Reset all state flags
+  voiceRecoveredLogged = false;
+  relayLogged = false;
+  iceRestartAttempts = 0;
+  lastIceRestartReason = "Unknown";
+  lastIceRestartRtt = 0;
 
   if (pc) {
-    // Clear track event handlers to prevent memory leaks
     pc.getReceivers().forEach(receiver => {
       if (receiver.track) {
         receiver.track.onmute = null;
@@ -420,16 +542,12 @@ async function cleanupPeerOnly() {
   }
 
   if (remoteStream) {
-    // Clear tracks but keep the stream reference for reconnection
     remoteStream.getTracks().forEach(track => {
       remoteStream.removeTrack(track);
     });
-    // DON'T set remoteStream = null - allows audio continuity
   }
 
   remoteTrackAttached = false;
-
-  log("PEER", "Peer cleaned (soft)");
 }
 
 // ----------------------------------------------------------------------
@@ -452,12 +570,8 @@ export async function createPeer({ socket, callId, audioRef, stream }) {
   const currentAttemptId = ++connectionAttemptId;
   currentAttemptIdGlobal = currentAttemptId;
   
-  log("PEER", "Creating new peer", {
-    callId,
-    attemptId: currentAttemptId
-  });
+  checkWebRTCSupport();
   
-  // Use soft cleanup instead of full closePeer
   if (pc && !isClosing) {
     await cleanupPeerOnly();
   }
@@ -468,38 +582,37 @@ export async function createPeer({ socket, callId, audioRef, stream }) {
   canInitiateIceRestart = false;
   remoteTrackAttached = false;
   audioPlaybackStarted = false;
+  iceRestartAttempts = 0;
+  voiceRecoveredLogged = false;
+  relayLogged = false;
+  lastIceRestartReason = "Unknown";
+  lastIceRestartRtt = 0;
 
-  // Create fresh RTCPeerConnection
-  const peer = new RTCPeerConnection(RTC_CONFIG);
+  const iceServers = await getIceServers();
+
+  const peer = new RTCPeerConnection({
+    ...RTC_CONFIG,
+    iceServers,
+  });
+
   pc = peer;
   currentPeer = peer;
   
-  // Reset remote stream - preserve existing if available for continuity
   if (remoteAudioEl) {
     remoteAudioEl.srcObject = null;
   }
   
-  // Don't recreate remoteStream if it exists - preserve for continuity
   if (!remoteStream) {
     remoteStream = new MediaStream();
   } else {
-    // Clear tracks but keep the stream reference
     remoteStream.getTracks().forEach(track => {
       remoteStream.removeTrack(track);
     });
   }
 
-  // Setup ontrack
   peer.ontrack = (event) => {
-    if (currentAttemptId !== connectionAttemptId) {
-      return;
-    }
-    
+    if (currentAttemptId !== connectionAttemptId) return;
     if (event.track?.kind !== "audio") return;
-
-    log("MEDIA", "Remote audio track received", {
-      trackId: event.track.id
-    });
 
     setupRemoteAudioLifecycle(audioRef);
     const outputStream = ensureRemoteStream();
@@ -515,16 +628,14 @@ export async function createPeer({ socket, callId, audioRef, stream }) {
     }
 
     event.track.onunmute = () => {
-      log("MEDIA", "Remote track unmuted");
       remoteTrackAttached = true;
       safePlayAudio(remoteAudioEl, "remote-track-unmute");
     };
-    event.track.onmute = () => {
-      log("MEDIA", "Remote track muted");
-    };
+    event.track.onmute = () => {};
     event.track.onended = () => {
-      log("MEDIA", "Remote track ended");
       remoteTrackAttached = false;
+      // Reset recovery flag when track ends
+      voiceRecoveredLogged = false;
     };
 
     if (event.receiver) {
@@ -536,65 +647,56 @@ export async function createPeer({ socket, callId, audioRef, stream }) {
 
   peer.onicecandidate = (event) => {
     if (event.candidate) {
-      if (!socketRef || !callIdRef) return;
-      socketRef.emit("webrtc:ice", { 
+      if (!callIdRef) return;
+      safeSocketEmit("webrtc:ice", { 
         callId: callIdRef, 
         candidate: event.candidate,
         attemptId: currentAttemptId
       });
-    } else {
-      log("ICE", "ICE gathering complete");
     }
   };
 
-  peer.onnegotiationneeded = () => {
-    log("PEER", "Negotiation needed");
-  };
-  
-  peer.onicegatheringstatechange = () => {
-    log("ICE", `Gathering -> ${peer.iceGatheringState}`);
-  };
-  
   peer.onicecandidateerror = (e) => {
-    logError("ICE candidate error", {
+    // Filter out browser noise
+    // 701 = STUN timeout, 702 = TURN timeout, 703 = Safari noise
+    if (e.errorCode === 701 || e.errorCode === 702 || e.errorCode === 703) {
+      return;
+    }
+    logDev("ICE Candidate Error", {
+      code: e.errorCode,
+      text: e.errorText,
       url: e.url,
-      errorCode: e.errorCode,
-      errorText: e.errorText
     });
   };
   
   peer.onconnectionstatechange = () => {
-    log("PEER", `Connection -> ${peer.connectionState}`);
-    
     if (peer.connectionState === "connected") {
       if (disconnectTimer) clearTimeout(disconnectTimer);
       if (connectionTimeout) clearTimeout(connectionTimeout);
+      iceRestartAttempts = 0;
       if (remoteTrackAttached) {
         safePlayAudio(remoteAudioEl, "pc-connected");
       }
     }
     if (peer.connectionState === "disconnected") {
-      log("ICE", "Connection lost, waiting for recovery");
       if (disconnectTimer) clearTimeout(disconnectTimer);
       disconnectTimer = setTimeout(() => {
         if (peer !== currentPeer) return;
         if (peer.connectionState !== "connected") {
-          restartIceWithRenegotiation();
+          restartIceWithRenegotiation("Connection lost");
         }
       }, 4000);
     }
-    if (peer.connectionState === "failed" || peer.connectionState === "closed") {
-      log("MEDIA", "Connection failed/closed, resetting track attachment");
+    if (peer.connectionState === "failed") {
       remoteTrackAttached = false;
-      if (peer.connectionState === "failed" && onNetworkErrorCallback) {
-        onNetworkErrorCallback();
-      }
+      voiceRecoveredLogged = false;
+      relayLogged = false;
+      logError("ICE Failed");
+      if (onNetworkErrorCallback) onNetworkErrorCallback();
     }
   };
   
   peer.oniceconnectionstatechange = () => {
-    log("ICE", `ICE state -> ${peer.iceConnectionState}`);
-    
     if (peer.iceConnectionState === "checking") {
       if (iceTimeout) clearTimeout(iceTimeout);
       iceTimeout = setTimeout(() => {
@@ -606,52 +708,93 @@ export async function createPeer({ socket, callId, audioRef, stream }) {
     }
     if (peer.iceConnectionState === "connected" || peer.iceConnectionState === "completed") {
       if (iceTimeout) clearTimeout(iceTimeout);
-      log("ICE", "Connection recovered");
-      if (remoteTrackAttached) {
+      
+      // Check if TURN relay is being used (only once)
+      setTimeout(async () => {
+        if (peer !== currentPeer) return;
+        try {
+          const stats = await peer.getStats();
+          
+          stats.forEach(report => {
+            if (
+              report.type === "candidate-pair" &&
+              (report.selected || report.nominated || report.state === "succeeded")
+            ) {
+              // Get local and remote candidate types
+              const localTypes = new Map();
+              const remoteTypes = new Map();
+              
+              stats.forEach(r => {
+                if (r.type === "local-candidate") {
+                  localTypes.set(r.id, r.candidateType);
+                }
+                if (r.type === "remote-candidate") {
+                  remoteTypes.set(r.id, r.candidateType);
+                }
+              });
+              
+              const localType = localTypes.get(report.localCandidateId) || "unknown";
+              const remoteType = remoteTypes.get(report.remoteCandidateId) || "unknown";
+              
+              // Only log if TURN relay is used and not logged yet
+              if ((localType === "relay" || remoteType === "relay") && !relayLogged) {
+                logProd("Relay Connected", {
+                  protocol: localType,
+                  rtt: Math.round(report.currentRoundTripTime * 1000) + "ms"
+                });
+                relayLogged = true;
+              }
+            }
+          });
+        } catch (error) {
+          logDev("Failed to get ICE stats", error);
+        }
+      }, 2000);
+      
+      // Voice recovered - only once per connection
+      if (remoteTrackAttached && !voiceRecoveredLogged) {
+        logProd("Voice Recovered");
+        voiceRecoveredLogged = true;
         safePlayAudio(remoteAudioEl, "ice-connected");
       }
     }
     if (peer.iceConnectionState === "failed") {
-      logError("ICE failed");
       remoteTrackAttached = false;
+      voiceRecoveredLogged = false;
+      relayLogged = false;
+      logError("ICE Failed");
       if (onNetworkErrorCallback) onNetworkErrorCallback();
     }
   };
 
   setupRemoteAudioLifecycle(audioRef);
 
-  // Abort protection - check if still valid before microphone acquisition
   if (isClosing || peer !== currentPeer) {
-    log("PEER", "Aborting peer creation - cleanup in progress");
     return peer;
   }
 
   try {
     const nextStream = await acquireMicrophone(stream);
     
-    // Check again after async operation
     if (isClosing || peer !== currentPeer) {
-      log("PEER", "Aborting peer creation after mic - cleanup happened");
       return peer;
     }
     
     await ensureLocalAudioSender(nextStream);
     
-    // Check again after async operation
     if (isClosing || peer !== currentPeer) {
-      log("PEER", "Aborting peer creation after audio sender - cleanup happened");
       return peer;
     }
   } catch (error) {
-    logError("Microphone access denied", error);
-    throw new Error("Microphone access denied");
+    // Error already logged in acquireMicrophone
+    throw error;
   }
 
   clearTimers();
   connectionTimeout = setTimeout(() => {
     if (peer !== currentPeer) return;
     if (peer.connectionState !== "connected") {
-      logError("Connection timeout after 15s");
+      logError("Connection Timeout");
       if (onNetworkErrorCallback) onNetworkErrorCallback();
     }
   }, 15000);
@@ -662,49 +805,51 @@ export async function createPeer({ socket, callId, audioRef, stream }) {
 
 export async function createAndSendOffer() {
   if (!pc || !socketRef || !callIdRef) {
-    log("PEER", "Cannot create offer: missing pc, socket, or callId");
     return false;
   }
 
   if (pc.signalingState !== "stable") {
-    log("PEER", "Skipping offer - signaling not stable", { signalingState: pc.signalingState });
     return false;
   }
 
   try {
-    log("PEER", "Creating offer");
     const offer = await pc.createOffer({
       offerToReceiveAudio: true,
-      // offerToReceiveVideo: false,
     });
 
     await pc.setLocalDescription(offer);
     canInitiateIceRestart = true;
 
-    // Set timeout for answer
     if (offerAnswerTimeout) clearTimeout(offerAnswerTimeout);
     offerAnswerTimeout = setTimeout(() => {
       if (pc && pc.connectionState !== "connected") {
-        log("PEER", "No answer received within timeout, restarting ICE");
-        restartIceWithRenegotiation();
+        logError("Offer Timeout");
+        restartIceWithRenegotiation("Offer timeout");
       }
     }, 12000);
 
-    socketRef.emit("webrtc:offer", {
+    const emitted = safeSocketEmit("webrtc:offer", {
       callId: callIdRef,
       offer,
       attemptId: currentAttemptIdGlobal,
     });
 
-    log("PEER", "Offer created and sent", { attemptId: currentAttemptIdGlobal });
-    return true;
+    return emitted;
   } catch (error) {
-    logError("Failed to create and send offer", error);
+    logDev("Failed to create and send offer", error);
     return false;
   }
 }
 
-async function restartIceWithRenegotiation() {
+async function restartIceWithRenegotiation(reason = "Unknown") {
+  if (iceRestartAttempts >= MAX_ICE_RESTART_ATTEMPTS) {
+    logError("ICE Restart Failed", `Limit exceeded (${MAX_ICE_RESTART_ATTEMPTS})`);
+    if (onNetworkErrorCallback) {
+      onNetworkErrorCallback("ICE restart limit exceeded");
+    }
+    return;
+  }
+  
   if (isRestartingIce) return;
   if (!canInitiateIceRestart) return;
   
@@ -713,41 +858,69 @@ async function restartIceWithRenegotiation() {
   if (peer.signalingState !== "stable") return;
   
   const now = Date.now();
-  if (now - lastIceRestartAt < 8000) {
-    return;
-  }
+  if (now - lastIceRestartAt < 8000) return;
   lastIceRestartAt = now;
   
+  iceRestartAttempts++;
   isRestartingIce = true;
-  log("ICE", "Restarting ICE");
+  lastIceRestartReason = reason;
+  
+  // Get current RTT for debugging
+  try {
+    const stats = await peer.getStats();
+    const inboundRtp = stats.values().find(stat => stat.type === "inbound-rtp" && stat.kind === "audio");
+    lastIceRestartRtt = inboundRtp?.roundTripTime || 0;
+  } catch (error) {
+    lastIceRestartRtt = 0;
+  }
+  
+  const rttMsg = lastIceRestartRtt > 0 ? `, RTT: ${(lastIceRestartRtt * 1000).toFixed(0)}ms` : '';
+  logProd("ICE Restart", `Attempt ${iceRestartAttempts}/${MAX_ICE_RESTART_ATTEMPTS} (${reason}${rttMsg})`);
   
   try {
-    const offer = await peer.createOffer({ iceRestart: true, offerToReceiveAudio: true, offerToReceiveVideo: false });
+    const offer = await peer.createOffer({ 
+      iceRestart: true, 
+      offerToReceiveAudio: true 
+    });
     
     if (peer !== currentPeer) {
-      log("ICE", "Peer changed during ICE restart, aborting");
+      isRestartingIce = false;
       return;
     }
     
     await peer.setLocalDescription(offer);
     
-    if (peer !== currentPeer) return;
+    if (peer !== currentPeer) {
+      isRestartingIce = false;
+      return;
+    }
     
-    socketRef.emit("webrtc:offer", { 
+    // FIXED: Check if socket emit succeeded
+    const emitted = safeSocketEmit("webrtc:offer", { 
       callId: callIdRef, 
       offer,
       attemptId: currentAttemptIdGlobal
     });
-    log("ICE", "ICE restart offer sent", { attemptId: currentAttemptIdGlobal });
+    
+    if (!emitted) {
+      // Rollback attempt count if socket failed
+      iceRestartAttempts--;
+      logDev("ICE", "Restart offer failed to send, rolling back attempt");
+      return;
+    }
   } catch (error) { 
-    logError("ICE restart failed", error); 
+    logError("ICE Restart Failed", error);
+    // Rollback attempt count on error
+    iceRestartAttempts--;
   }
   finally { isRestartingIce = false; }
 }
 
 export async function createOffer() {
   if (!pc) return null;
-  const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: false });
+  const offer = await pc.createOffer({ 
+    offerToReceiveAudio: true 
+  });
   await pc.setLocalDescription(offer);
   return offer;
 }
@@ -761,11 +934,6 @@ export async function createAnswer() {
 
 export async function setRemote(description, attemptId = null) {
   if (!pc || !description) return false;
-  
-  // Relax attemptId check to avoid mismatch between independent client counters
-  // if (attemptId && attemptId !== currentAttemptIdGlobal) {
-  //   return false;
-  // }
   
   if (pc.remoteDescription && pc.remoteDescription.sdp === description.sdp) {
     return false;
@@ -782,13 +950,12 @@ export async function setRemote(description, attemptId = null) {
   
   try {
     await pc.setRemoteDescription(rtcDesc);
-    // Clear offer-answer timeout when answer is received
     if (!isOffer && offerAnswerTimeout) {
       clearTimeout(offerAnswerTimeout);
       offerAnswerTimeout = null;
     }
   } catch (error) {
-    logError("setRemote failed", error);
+    logError("setRemote Failed", error);
     return false;
   }
   
@@ -804,11 +971,6 @@ export async function setRemote(description, attemptId = null) {
 export async function addIce(candidate, attemptId = null) {
   if (!candidate) return;
   
-  // Relax attemptId check to avoid mismatch between independent client counters
-  // if (attemptId && attemptId !== currentAttemptIdGlobal) {
-  //   return;
-  // }
-  
   try {
     if (pc && pc.remoteDescription) {
       await pc.addIceCandidate(candidate);
@@ -817,7 +979,7 @@ export async function addIce(candidate, attemptId = null) {
     }
   } catch (error) { 
     if (error?.name !== "OperationError") {
-      logError("addIce failed", error);
+      logError("addIce Failed", error);
     }
   }
 }
@@ -833,14 +995,9 @@ export async function getStats() {
   
   try {
     const stats = await peer.getStats();
-    
     if (peer !== pc) return null;
     
     const report = [];
-    const localCandidates = new Map();
-    const remoteCandidates = new Map();
-    let selectedPair = null;
-    
     stats.forEach(stat => {
       if (stat.type === "inbound-rtp" && stat.kind === "audio") {
         report.push({ 
@@ -856,23 +1013,7 @@ export async function getStats() {
       if (stat.type === "outbound-rtp" && stat.kind === "audio") {
         report.push({ type: "outbound", packetsSent: stat.packetsSent });
       }
-      if (stat.type === "candidate-pair" && stat.selected) {
-        selectedPair = stat;
-      }
-      if (stat.type === "local-candidate") {
-        localCandidates.set(stat.id, stat.candidateType);
-      }
-      if (stat.type === "remote-candidate") {
-        remoteCandidates.set(stat.id, stat.candidateType);
-      }
     });
-    
-    if (selectedPair) {
-      const localType = localCandidates.get(selectedPair.localCandidateId);
-      const remoteType = remoteCandidates.get(selectedPair.remoteCandidateId);
-      log("ICE", `Selected candidate - Local: ${localType}, Remote: ${remoteType}`);
-    }
-    
     return report;
   } catch (error) { 
     return null; 
@@ -884,6 +1025,7 @@ function startQualityMonitoring(peer) {
   
   let lastBytesReceived = 0;
   let freezeCount = 0;
+  let lastQualityLog = 0; // PER-CONNECTION variable
   
   qualityInterval = setInterval(async () => {
     if (peer !== currentPeer) {
@@ -896,33 +1038,50 @@ function startQualityMonitoring(peer) {
     const inbound = stats?.find(item => item.type === "inbound");
     if (!inbound) return;
     
+    // Calculate lossPercent ONCE at the top
+    const total = inbound.packetsReceived + inbound.packetsLost;
+    const lossPercent = total > 0 ? inbound.packetsLost / total : 0;
+    
+    // RTP Freeze Detection
     if (
       inbound.bytesReceived === lastBytesReceived &&
       peer?.connectionState === "connected"
     ) {
       freezeCount++;
-      
-      log("RTP", `No data received (${freezeCount})`);
-      
       if (freezeCount >= 3) {
-        logError("MEDIA FROZEN");
-        restartIceWithRenegotiation();
+        logError("Voice Frozen");
+        voiceRecoveredLogged = false; // Reset so recovery logs on reconnect
+        restartIceWithRenegotiation(`Voice frozen (loss: ${(lossPercent * 100).toFixed(1)}%)`);
         freezeCount = 0;
       }
     } else {
       freezeCount = 0;
     }
-    
     lastBytesReceived = inbound.bytesReceived;
     
-    const total = inbound.packetsReceived + inbound.packetsLost;
-    if (!total) return;
-    const lossPercent = inbound.packetsLost / total;
-    if (lossPercent > 0.08 && onNetworkWeakCallback) {
-      onNetworkWeakCallback({ lossPercent, jitter: inbound.jitter, rtt: inbound.roundTripTime });
+    // Quality metrics with throttling (PER-CONNECTION)
+    const now = Date.now();
+    if (now - lastQualityLog >= QUALITY_LOG_THROTTLE_MS && total > 0) {
+      if (lossPercent > 0.08) {
+        logProd("Packet Loss", `${(lossPercent * 100).toFixed(1)}%`);
+      }
+      
+      if (inbound.roundTripTime > 1.5) {
+        logProd("High RTT", `${(inbound.roundTripTime * 1000).toFixed(0)}ms`);
+      }
+      
+      if (inbound.jitter > 0.1) {
+        logProd("High Jitter", `${(inbound.jitter * 1000).toFixed(0)}ms`);
+      }
+      
+      lastQualityLog = now;
     }
+    
+    // ICE restart triggers based on quality (use lossPercent from above)
     if (inbound.roundTripTime > 1.5 || lossPercent > 0.25) {
-      restartIceWithRenegotiation();
+      const rttMs = (inbound.roundTripTime * 1000).toFixed(0);
+      const lossPct = (lossPercent * 100).toFixed(1);
+      restartIceWithRenegotiation(`Quality: RTT=${rttMs}ms, Loss=${lossPct}%`);
     }
   }, 5000);
 }
@@ -935,12 +1094,10 @@ export function ensureAudioPlaying() {
 }
 
 export async function closePeer(fullCleanup = true) {
-  if (isClosing) {
-    return;
-  }
+  if (isClosing) return;
   
   isClosing = true;
-  log("PEER", "Destroying peer connection", { fullCleanup });
+  
   clearTimers();
   
   if (qualityInterval) {
@@ -950,6 +1107,11 @@ export async function closePeer(fullCleanup = true) {
   
   audioPlaybackStarted = false;
   pendingIce = [];
+  iceRestartAttempts = 0;
+  voiceRecoveredLogged = false;
+  relayLogged = false;
+  lastIceRestartReason = "Unknown";
+  lastIceRestartRtt = 0;
   
   if (pc) {
     pc.getReceivers().forEach(receiver => {
@@ -1000,7 +1162,6 @@ export async function closePeer(fullCleanup = true) {
     }
   }
   
-  // Only remove audio element on full cleanup
   cleanupRemoteAudioElement(fullCleanup);
   
   socketRef = null;
@@ -1015,8 +1176,12 @@ export async function closePeer(fullCleanup = true) {
 }
 
 export async function handleSocketReconnect() {
-  log("SOCKET", "Socket reconnected");
   connectionAttemptId++;
+  iceRestartAttempts = 0;
+  voiceRecoveredLogged = false;
+  relayLogged = false;
+  lastIceRestartReason = "Unknown";
+  lastIceRestartRtt = 0;
   await cleanupPeerOnly();
 }
 
@@ -1024,11 +1189,10 @@ export function getPeerConnection() {
   return pc;
 }
 
-// Document click/touchstart listener to bypass browser audio autoplay restrictions
+// Document click/touchstart listener
 if (typeof document !== "undefined") {
   const resumeAudioOnInteraction = () => {
     if (remoteAudioEl && remoteTrackAttached && remoteAudioEl.paused) {
-      log("MEDIA", "User interacted, attempting to play remote audio");
       safePlayAudio(remoteAudioEl, "user-interaction").then((success) => {
         if (success) {
           document.removeEventListener("click", resumeAudioOnInteraction);

@@ -35,7 +35,7 @@ import { FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube } from "react-icons/f
 
 const ContactUs = () => {
   // Web3Forms API Key
-  const WEB3_KEY = import.meta.env.VITE_WEB3FORMS_KEY;
+  const WEB3_KEY = "34db5865-862f-4175-b6ec-0297795e7107";
 
   const [formData, setFormData] = useState({
     name: '',

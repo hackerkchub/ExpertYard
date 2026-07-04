@@ -229,9 +229,11 @@ const UserAuth = () => {
       return showMessage("Password must be at least 6 characters long.", true);
     }
 
-    if (!verified.email || !verified.phone) {
-      return showMessage("Please verify both email and phone number first.", true);
-    }
+    // TEMPORARY: OTP verification disabled
+
+    // if (!verified.email || !verified.phone) {
+    //   return showMessage("Please verify both email and phone number first.", true);
+    // }
 
     try {
       setLoading(true);
@@ -582,7 +584,9 @@ const UserAuth = () => {
             </InputGroup>
 
             <InputGroup>
-              <InputWrap style={{ opacity: verified.phone ? 0.7 : 1 }}>
+              <InputWrap 
+              // style={{ opacity: verified.phone ? 0.7 : 1 }}
+              >
                 <InputIconCircle>
                   <FiPhone />
                 </InputIconCircle>
@@ -590,17 +594,22 @@ const UserAuth = () => {
                   placeholder="Phone Number *" 
                   value={form.phone} 
                   onChange={handleChange("phone")} 
-                  disabled={verified.phone}
+                  // disabled={verified.phone}
                   autoComplete="tel"
                 />
               </InputWrap>
+
+{/* temporary: OTP verification disabled 
               <VerifyBtn type="button" onClick={() => openOtp("phone")} disabled={verified.phone || loadingType === "phone"}>
                 {verified.phone ? <><FiCheckCircle /> Verified</> : loadingType === "phone" ? "Sending..." : "Verify"}
               </VerifyBtn>
+*/}
             </InputGroup>
 
             <InputGroup>
-              <InputWrap style={{ opacity: verified.email ? 0.7 : 1 }}>
+              <InputWrap 
+              // style={{ opacity: verified.email ? 0.7 : 1 }}
+              >
                 <InputIconCircle>
                   <FiMail />
                 </InputIconCircle>
@@ -608,13 +617,15 @@ const UserAuth = () => {
                   placeholder="Email Address *" 
                   value={form.email} 
                   onChange={handleChange("email")} 
-                  disabled={verified.email}
+                  // disabled={verified.email}
                   autoComplete="email"
                 />
               </InputWrap>
+              {/* temporary: OTP verification disabled 
               <VerifyBtn type="button" onClick={() => openOtp("email")} disabled={verified.email || loadingType === "email"}>
                 {verified.email ? <><FiCheckCircle /> Verified</> : loadingType === "email" ? "Sending..." : "Verify"}
               </VerifyBtn>
+*/}
             </InputGroup>
 
             <InputWrap>

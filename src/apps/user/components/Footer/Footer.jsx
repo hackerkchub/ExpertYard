@@ -22,13 +22,14 @@ import {
   TrustText,
 } from "./Footer.styles";
 import logoImg from "../../../../assets/logo.webp";
-import { FaFacebookF, FaTwitter, FaLinkedinIn, FaYoutube, FaInstagram } from "react-icons/fa";
+import { FaFacebookF, FaLinkedinIn, FaYoutube, FaInstagram } from "react-icons/fa";
 
 const COMPANY_LINKS = [
   { labelKey: "footer.aboutUs", path: "/user/about" },
   { labelKey: "footer.careers", path: "/user/careers" },
   { labelKey: "footer.privacyPolicy", path: "/user/privacy" },
   { labelKey: "footer.terms", path: "/user/terms" },
+  { labelKey: "Refund & Cancellation", path: "/user/refund-cancellation" },
 ];
 
 const CUSTOMER_LINKS = [
@@ -54,12 +55,29 @@ const SERVICE_LINKS = [
   { labelKey: "footer.healthWellness", path: "/user/categories" },
 ];
 
+// Updated social links with correct URLs
 const SOCIAL_LINKS = [
-  { icon: <FaFacebookF />, url: "https://www.facebook.com/", labelKey: "footer.social.facebook" },
-  { icon: <FaTwitter />, url: "https://twitter.com/", labelKey: "footer.social.twitter" },
-  { icon: <FaLinkedinIn />, url: "https://www.linkedin.com/", labelKey: "footer.social.linkedin" },
-  { icon: <FaInstagram />, url: "https://www.instagram.com/", labelKey: "footer.social.instagram" },
-  { icon: <FaYoutube />, url: "https://www.youtube.com/", labelKey: "footer.social.youtube" },
+  { 
+    icon: <FaInstagram />, 
+    url: "https://www.instagram.com/g9expert_/", 
+    labelKey: "footer.social.instagram" 
+  },
+  { 
+    icon: <FaLinkedinIn />, 
+    url: "https://www.linkedin.com/in/g9-experts-expert-464271408", 
+    labelKey: "footer.social.linkedin" 
+  },
+  { 
+    icon: <FaYoutube />, 
+    url: "https://www.youtube.com/@G9Experts", 
+    labelKey: "footer.social.youtube" 
+  },
+  { 
+    icon: <FaFacebookF />, 
+    url: "#", 
+    labelKey: "footer.social.facebook",
+    disabled: true // Facebook link not available
+  },
 ];
 
 const FooterColumn = ({ title, links, t }) => (
@@ -101,6 +119,11 @@ const Footer = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={t(social.labelKey)}
+                  style={social.disabled ? { 
+                    opacity: 0.4, 
+                    cursor: 'default',
+                    pointerEvents: 'none' 
+                  } : {}}
                 >
                   {social.icon}
                 </SocialIcon>

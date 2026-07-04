@@ -23,8 +23,6 @@ import {
   ContactDetail,
   SocialLinks,
   SocialLink,
-  MapContainer,
-  MapImage,
   PopupOverlay,
   Popup,
   PopupIcon,
@@ -33,9 +31,12 @@ import {
   CloseButton,
   LoadingSpinner
 } from './ContactUs.styles';
-import { FaFacebookF, FaTwitter, FaLinkedinIn, FaYoutube, FaInstagram } from "react-icons/fa";
+import { FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube } from "react-icons/fa";
 
 const ContactUs = () => {
+  // Web3Forms API Key
+  const WEB3_KEY = import.meta.env.VITE_WEB3FORMS_KEY;
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -47,19 +48,40 @@ const ContactUs = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // Form validation logic
+  // Form validation logic - Professional error messages
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    
+    // Name validation
+    if (!formData.name.trim()) {
+      newErrors.name = 'Full name is required';
+    } else if (formData.name.trim().length < 2) {
+      newErrors.name = 'Name must be at least 2 characters';
+    }
+    
+    // Email validation
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'Email address is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = 'Please enter a valid email address (e.g., name@domain.com)';
     }
-    if (formData.phone && !/^[\d\s-+()]{10,}$/.test(formData.phone)) {
-      newErrors.phone = 'Phone number is invalid';
+    
+    // Phone validation - Indian numbers
+    if (formData.phone && formData.phone.trim()) {
+      const cleanPhone = (formData.phone || "").replace(/\D/g, '');
+      if (cleanPhone.length === 0) {
+        newErrors.phone = 'Phone number cannot be empty';
+      } else if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+        newErrors.phone = 'Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9';
+      }
     }
-    if (!formData.message.trim()) newErrors.message = 'Message is required';
+    
+    // Message validation
+    if (!formData.message.trim()) {
+      newErrors.message = 'Message is required';
+    } else if (formData.message.trim().length < 10) {
+      newErrors.message = 'Message must be at least 10 characters';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -68,6 +90,7 @@ const ContactUs = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error for this field when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -75,50 +98,126 @@ const ContactUs = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    
+    // Validate form before proceeding
+    if (!validateForm()) {
+      // Scroll to the first error field
+      const firstErrorField = Object.keys(errors)[0];
+      if (firstErrorField) {
+        const element = document.querySelector(`[name="${firstErrorField}"]`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.focus();
+        }
+      }
+      return;
+    }
+
+    if (!WEB3_KEY) {
+      alert("Web3Forms API key is missing. Please check your environment configuration.");
+      return;
+    }
 
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    console.log('Form submitted:', formData);
-    setIsSubmitting(false);
-    setShowPopup(true);
 
-    setFormData({ 
-      name: '', 
-      email: '', 
-      phone: '', 
-      subject: '',
-      message: '' 
-    });
+    // Simplified payload - only essential fields for testing
+    const payload = {
+      access_key: WEB3_KEY,
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone || "",
+      subject: formData.subject || "New Contact Enquiry - G9 Experts",
+      message: formData.message,
+      // Custom fields for additional info
+      company: "Softmaxs Solution LLP",
+      platform: "G9 Experts"
+    };
+
+    try {
+      const response = await fetch(
+        "https://api.web3forms.com/submit",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.success) {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth"
+        });
+        
+        setShowPopup(true);
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          subject: "",
+          message: "",
+        });
+        setErrors({});
+      } else {
+        alert(result.message || "Unable to send your enquiry. Please try again.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong. Please try again later.");
+    }
+
+    setIsSubmitting(false);
   };
 
   const closePopup = () => setShowPopup(false);
 
   const contactInfo = {
-    phone: '+91 (810) 31-23106',
-    email: 'suraj.singh@guidexa.in',
-    address: '',
-    hours: 'Monday - Friday: 9:00 AM - 6:00 PM PST',
-    support: '24/7 Support Available'
+    phone: "+91 8103007446",
+    email: "support@g9expert.com",
+    address: `Nandan Bagh Colony,
+Kushwaha Nagar,
+Indore,
+Madhya Pradesh,
+India`,
+    hours: "Monday - Saturday | 10:00 AM - 7:00 PM (IST)",
+    support: "General Support • Expert Registration • Payment Assistance",
+    company: "Softmaxs Solution LLP",
+    platform: "G9 Expert",
+    website: "https://g9expert.com"
+  };
+
+  // Social media links with actual URLs
+  const socialLinks = {
+    instagram: "https://www.instagram.com/g9expert_/",
+    linkedin: "https://www.linkedin.com/in/g9-experts-expert-464271408",
+    youtube: "https://www.youtube.com/@G9Experts",
+    facebook: "#" // No Facebook link available - disabled
   };
 
   return (
     <PageContainer>
       <HeroSection>
         <HeroContent>
-          <HeroTitle>Get in Touch With Us</HeroTitle>
+          <HeroTitle>Contact G9 Experts</HeroTitle>
           <HeroSubtitle>
-            Have questions? We'd love to hear from you. Our team is here to help 
-            and typically responds within 24 hours.
+            Need help with your account, payments, expert registration, partnerships, or general enquiries?
+            <br />
+            Our support team is here to assist you during business hours.
           </HeroSubtitle>
         </HeroContent>
       </HeroSection>
 
       <MainContent>
         <FormContainer>
-          <FormTitle>Send us a Message</FormTitle>
+          <FormTitle>Contact Our Team</FormTitle>
           <FormSubtitle>
-            Fill out the form below and we'll get back to you as soon as possible.
+            Have a question or need assistance?
+            Fill in the details below and our team will get back to you as soon as possible.
           </FormSubtitle>
           
           <Form onSubmit={handleSubmit}>
@@ -129,10 +228,21 @@ const ContactUs = () => {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="John Doe"
+                placeholder="Raj Sharma"
+                autoComplete="name"
                 className={errors.name ? 'error' : ''}
+                style={errors.name ? { borderColor: '#e53e3e' } : {}}
               />
-              {errors.name && <span style={{ color: '#000080', fontSize: '14px', marginTop: '5px' }}>{errors.name}</span>}
+              {errors.name && (
+                <span style={{ 
+                  color: '#e53e3e', 
+                  fontSize: '14px', 
+                  marginTop: '5px',
+                  display: 'block'
+                }}>
+                  {errors.name}
+                </span>
+              )}
             </FormGroup>
 
             <FormGroup>
@@ -142,10 +252,21 @@ const ContactUs = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="john@example.com"
+                placeholder="your@email.com"
+                autoComplete="email"
                 className={errors.email ? 'error' : ''}
+                style={errors.email ? { borderColor: '#e53e3e' } : {}}
               />
-              {errors.email && <span style={{ color: '#000080', fontSize: '14px', marginTop: '5px' }}>{errors.email}</span>}
+              {errors.email && (
+                <span style={{ 
+                  color: '#e53e3e', 
+                  fontSize: '14px', 
+                  marginTop: '5px',
+                  display: 'block'
+                }}>
+                  {errors.email}
+                </span>
+              )}
             </FormGroup>
 
             <FormGroup>
@@ -155,10 +276,21 @@ const ContactUs = () => {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                placeholder="+1 (123) 456-7890"
+                placeholder="+91 9876543210"
+                autoComplete="tel"
                 className={errors.phone ? 'error' : ''}
+                style={errors.phone ? { borderColor: '#e53e3e' } : {}}
               />
-              {errors.phone && <span style={{ color: '#000080', fontSize: '14px', marginTop: '5px' }}>{errors.phone}</span>}
+              {errors.phone && (
+                <span style={{ 
+                  color: '#e53e3e', 
+                  fontSize: '14px', 
+                  marginTop: '5px',
+                  display: 'block'
+                }}>
+                  {errors.phone}
+                </span>
+              )}
             </FormGroup>
 
             <FormGroup>
@@ -168,7 +300,8 @@ const ContactUs = () => {
                 name="subject"
                 value={formData.subject}
                 onChange={handleChange}
-                placeholder="What's this regarding?"
+                placeholder="e.g. Expert Registration, Payment Issue, Partnership"
+                autoComplete="off"
               />
             </FormGroup>
 
@@ -178,32 +311,59 @@ const ContactUs = () => {
                 name="message"
                 value={formData.message}
                 onChange={handleChange}
-                placeholder="Tell us how we can help you..."
+                placeholder="Please describe your query in detail..."
                 className={errors.message ? 'error' : ''}
+                style={errors.message ? { borderColor: '#e53e3e' } : {}}
               />
-              {errors.message && <span style={{ color: '#e53e3e', fontSize: '14px', marginTop: '5px' }}>{errors.message}</span>}
+              {errors.message && (
+                <span style={{ 
+                  color: '#e53e3e', 
+                  fontSize: '14px', 
+                  marginTop: '5px',
+                  display: 'block'
+                }}>
+                  {errors.message}
+                </span>
+              )}
             </FormGroup>
 
-            <SubmitButton type="submit" disabled={isSubmitting}>
+            <SubmitButton 
+              type="submit" 
+              disabled={isSubmitting}
+              style={{ 
+                opacity: isSubmitting ? 0.7 : 1,
+                cursor: isSubmitting ? 'not-allowed' : 'pointer'
+              }}
+            >
               {isSubmitting ? (
                 <>
-                  <LoadingSpinner /> Sending Message...
+                  <LoadingSpinner /> Sending...
                 </>
               ) : (
                 'Send Message'
               )}
             </SubmitButton>
+
+            <div style={{ marginTop: '15px', fontSize: '13px', color: '#666', textAlign: 'center' }}>
+              By submitting this form you agree that G9 Experts may contact you 
+              regarding your enquiry using the information you have provided.
+            </div>
           </Form>
         </FormContainer>
 
         <InfoContainer>
           <InfoCard>
             <CardIcon>📞</CardIcon>
-            <CardTitle>Call Us</CardTitle>
+            <CardTitle>Phone Support</CardTitle>
             <CardContent>
-              <ContactDetail>{contactInfo.phone}</ContactDetail>
-              <ContactDetail>{contactInfo.hours}</ContactDetail>
-              <ContactDetail style={{ color: '#000080', fontWeight: '500' }}>
+              <ContactDetail>
+                <a href="tel:+918103007446" style={{ color: '#000080', textDecoration: 'none' }}>
+                  {contactInfo.phone}
+                </a>
+              </ContactDetail>
+              <ContactDetail>Monday - Saturday</ContactDetail>
+              <ContactDetail>10:00 AM – 7:00 PM (IST)</ContactDetail>
+              <ContactDetail style={{ color: '#000080', fontWeight: '500', marginTop: '10px' }}>
                 {contactInfo.support}
               </ContactDetail>
             </CardContent>
@@ -211,41 +371,85 @@ const ContactUs = () => {
 
           <InfoCard>
             <CardIcon>✉️</CardIcon>
-            <CardTitle>Email Us</CardTitle>
+            <CardTitle>Email Support</CardTitle>
             <CardContent>
-              <ContactDetail>{contactInfo.email}</ContactDetail>
-              <ContactDetail>careers@G9Expert.com</ContactDetail>
-              <ContactDetail>support@G9Expert.com</ContactDetail>
+              <ContactDetail>
+                <a href="mailto:support@g9expert.com" style={{ color: '#000080', textDecoration: 'none' }}>
+                  {contactInfo.email}
+                </a>
+              </ContactDetail>
+              <ContactDetail>General, Business & Partnership Enquiries</ContactDetail>
             </CardContent>
           </InfoCard>
 
-     
+          <InfoCard>
+            <CardIcon>🏢</CardIcon>
+            <CardTitle>Company Information</CardTitle>
+            <CardContent>
+              <ContactDetail style={{ fontWeight: 'bold' }}>
+                {contactInfo.company}
+              </ContactDetail>
+              <ContactDetail>Platform: {contactInfo.platform}</ContactDetail>
+              <ContactDetail>
+                Website:{' '}
+                <a 
+                  href={contactInfo.website} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  style={{ color: '#000080', textDecoration: 'none' }}
+                >
+                  g9expert.com
+                </a>
+              </ContactDetail>
+              <ContactDetail style={{ marginTop: '10px' }}>
+                Registered Office:
+              </ContactDetail>
+              <ContactDetail>Nandan Bagh Colony</ContactDetail>
+              <ContactDetail>Kushwaha Nagar</ContactDetail>
+              <ContactDetail>Indore, Madhya Pradesh</ContactDetail>
+              <ContactDetail>India</ContactDetail>
+            </CardContent>
+          </InfoCard>
 
           <InfoCard>
             <CardTitle>Connect With Us</CardTitle>
             <CardContent>
-              Follow us on social media for updates and news.
-              
-              {/* --- New Section Added Below --- */}
-              <div style={{ marginTop: '20px', padding: '15px 0', borderTop: '1px solid #eee' }}>
-                <div style={{ marginBottom: '12px' }}>
-                  <p style={{ margin: '0', fontWeight: 'bold', color: '#333', fontSize: '15px' }}>Suraj Singh Goud</p>
-                  <p style={{ margin: '0', color: '#000080', fontSize: '14px' }}>📞 8103123106</p>
-                </div>
-                <div>
-                  <p style={{ margin: '0', fontWeight: 'bold', color: '#333', fontSize: '15px' }}>Himanshu Dhote</p>
-                  <p style={{ margin: '0', color: '#000080', fontSize: '14px' }}>📞 8103007446</p>
-                </div>
-              </div>
-              {/* --------------------------------- */}
-
+              <p style={{ margin: '0 0 15px 0', color: '#555' }}>
+                Follow us on social media for updates and news.
+              </p>
             </CardContent>
             <SocialLinks>
-              <SocialLink href="#" target="_blank"><FaFacebookF /></SocialLink>
-              <SocialLink href="#" target="_blank"><FaTwitter /></SocialLink>
-              <SocialLink href="#" target="_blank"><FaInstagram /></SocialLink>
-              <SocialLink href="#" target="_blank"><FaLinkedinIn /></SocialLink>
-              <SocialLink href="#" target="_blank"><FaYoutube /></SocialLink>
+              <SocialLink 
+                href={socialLinks.instagram} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+              >
+                <FaInstagram />
+              </SocialLink>
+              <SocialLink 
+                href={socialLinks.linkedin} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                aria-label="LinkedIn"
+              >
+                <FaLinkedinIn />
+              </SocialLink>
+              <SocialLink 
+                href={socialLinks.youtube} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                aria-label="YouTube"
+              >
+                <FaYoutube />
+              </SocialLink>
+              <SocialLink 
+                href="#" 
+                style={{ cursor: 'default', opacity: 0.4 }}
+                aria-label="Facebook (Coming Soon)"
+              >
+                <FaFacebookF />
+              </SocialLink>
             </SocialLinks>
           </InfoCard>
         </InfoContainer>
@@ -255,11 +459,15 @@ const ContactUs = () => {
         <PopupOverlay onClick={closePopup}>
           <Popup onClick={e => e.stopPropagation()}>
             <PopupIcon>✓</PopupIcon>
-            <PopupTitle>Message Sent!</PopupTitle>
+            <PopupTitle>Message Received</PopupTitle>
             <PopupMessage>
-              Thank you for reaching out to us! Our team has received your message 
-              and will get back to you within 24-48 hours. We appreciate your 
-              interest in G9Expert.
+              Thank you for contacting G9 Experts.
+              <br /><br />
+              Your enquiry has been successfully received.
+              <br />
+              Your enquiry has been successfully recorded.
+              <br /><br />
+              Our support team will get back to you as soon as possible during business hours.
             </PopupMessage>
             <CloseButton onClick={closePopup}>Got it, thanks!</CloseButton>
           </Popup>

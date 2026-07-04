@@ -70,7 +70,7 @@ export const reportReelApi = async (id, data) => {
 
 // Create new reel (Multipart Form Data)
 export const createExpertReelApi = async (formData) => {
-  return api.post("/reels/expert", formData, {
+  return api.post("/expert/reels", formData, {
     headers: {
       "Content-Type": "multipart/form-data"
     }
@@ -79,17 +79,17 @@ export const createExpertReelApi = async (formData) => {
 
 // Get all expert's reels
 export const getExpertReelsApi = async () => {
-  return api.get("/reels/expert/list");
+  return api.get("/expert/reels");
 };
 
 // Get single reel detail for expert
 export const getExpertReelByIdApi = async (id) => {
-  return api.get(`/reels/expert/${id}`);
+  return api.get(`/expert/reels/${id}`);
 };
 
 // Update reel (Multipart Form Data)
 export const updateExpertReelApi = async (id, formData) => {
-  return api.put(`/reels/expert/${id}`, formData, {
+  return api.put(`/expert/reels/${id}`, formData, {
     headers: {
       "Content-Type": "multipart/form-data"
     }
@@ -98,12 +98,12 @@ export const updateExpertReelApi = async (id, formData) => {
 
 // Delete reel
 export const deleteExpertReelApi = async (id) => {
-  return api.delete(`/reels/expert/${id}`);
+  return api.delete(`/expert/reels/${id}`);
 };
 
 // Submit reel for admin approval
 export const submitExpertReelApi = async (id) => {
-  return api.post(`/reels/expert/${id}/submit`);
+  return api.post(`/expert/reels/${id}/submit`);
 };
 
 /* =====================================================

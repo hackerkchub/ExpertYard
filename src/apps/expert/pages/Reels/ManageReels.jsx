@@ -84,19 +84,50 @@ export default function ManageReels() {
   const loadData = async () => {
     if (!expertData?.expertId) return;
     setLoading(true);
+
+    // 1. Fetch Reels
     try {
-      // Load expert reels
       const res = await getExpertReelsApi();
       if (res.data && res.data.success) {
         setReels(res.data.data || []);
+      } else {
+        setReels([]);
       }
+    } catch (err) {
+      console.error("Error loading expert reels:", err);
+      const is404 = err?.includes?.("404") || (err?.response && err.response.status === 404) || err?.message?.includes?.("404");
+      if (is404) {
+        Swal.fire({
+          title: "API Not Available",
+          text: "Reels API not available. Please check backend route.",
+          icon: "warning",
+          toast: true,
+          position: "top-end",
+          timer: 5000,
+          showConfirmButton: false
+        });
+      } else {
+        Swal.fire({
+          title: "Error loading reels",
+          text: typeof err === "string" ? err : err.message || "Failed to load Reels.",
+          icon: "error",
+          toast: true,
+          position: "top-end",
+          timer: 3000,
+          showConfirmButton: false
+        });
+      }
+      setReels([]);
+    }
 
-      // Load expert services to link
+    // 2. Fetch Services
+    try {
       const servicesRes = await getServicesByExpert(expertData.expertId);
       const sData = Array.isArray(servicesRes.data) ? servicesRes.data : servicesRes.data.data || [];
       setServices(sData);
     } catch (err) {
-      console.error("Error loading expert reels/services:", err);
+      console.error("Error loading expert services for reels:", err);
+      setServices([]);
     } finally {
       setLoading(false);
     }

@@ -29,6 +29,7 @@ const MyServices = lazy(() => import("../pages/services/MyServices"));
 const ExpertBookings = lazy(() => import("../pages/services/ExpertBookings"));
 const SubscriptionPlan = lazy(() => import("../pages/register/SubscriptionPlan"));
 const G9Plan = lazy(() => import("../pages/GuidexaExpertPlan/GuidexaExpertPlan"));
+const ManageReels = lazy(() => import("../pages/Reels/ManageReels"));
 
 const withLazyRoute = (node) => <LazyRoute>{node}</LazyRoute>;
 
@@ -133,6 +134,16 @@ export default function ExpertAppRoutes() {
             <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
               <LazyRoute>
                 <MyContent />
+              </LazyRoute>
+            </ProtectedExpertRoute>
+          }
+        />
+        <Route
+          path="reels"
+          element={
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <LazyRoute>
+                <ManageReels />
               </LazyRoute>
             </ProtectedExpertRoute>
           }

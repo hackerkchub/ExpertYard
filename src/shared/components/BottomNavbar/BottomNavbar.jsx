@@ -11,7 +11,7 @@ import "./BottomNavbar.css";
 const BottomNavbar = () => {
   const menuItems = [
     { name: 'Home', path: '/user', icon: <Home size={21} />, end: true },
-    { name: 'Reels', path: '/user/marketing', icon: <Film size={21} /> },
+    { name: 'Reels', path: '/user/reels', icon: <Film size={21} /> },
     { name: 'Messages', path: '/user/chat-history', icon: <MessageCircle size={21} /> },
     { name: 'Profile', path: '/user/user-profile', icon: <UserRound size={21} /> },
   ];

@@ -16,8 +16,9 @@ const PayoutManagement = lazy(() => import("../pages/PayoutManagement"));
 const ExpertDetail = lazy(() => import("../pages/ExpertDetail"));
 const MembershipPlan = lazy(() => import("../pages/mebership-plan"));
 const FinanceDashboard = lazy(() => import("../pages/FinanceDashboard"));
-const BannerManagement =lazy(() => import("../pages/BannerManagement"));
+const BannerManagement = lazy(() => import("../pages/BannerManagement"));
 const DeletedExperts = lazy(() => import("../pages/DeletedExperts"));
+const ReelsManagement = lazy(() => import("../pages/ReelsManagement"));
 
 const withLazyRoute = (node) => <LazyRoute>{node}</LazyRoute>;
 
@@ -44,6 +45,7 @@ export default function AdminAppRoutes() {
           <Route path="membership-plan" element={withLazyRoute(<MembershipPlan/>)}/>
           <Route path="finance" element={withLazyRoute(<FinanceDashboard/>)}/>
           <Route path="banner" element={withLazyRoute(<BannerManagement/>)}/>
+          <Route path="reels-management" element={withLazyRoute(<ReelsManagement/>)}/>
         </Route>
       </Route>
 

@@ -358,6 +358,7 @@ export default function HomePage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [homeReels, setHomeReels] = useState([]);
   const requestIdRef = useRef(0);
   const loadMoreRef = useRef(null);
 
@@ -450,6 +451,16 @@ export default function HomePage() {
 
     window.addEventListener("g9-location-changed", handleLocationChange);
     return () => window.removeEventListener("g9-location-changed", handleLocationChange);
+  }, []);
+
+  useEffect(() => {
+    axiosInstance.get("/reels/feed?limit=8", { skipLoader: true })
+      .then(res => {
+        if (res.data && res.data.success) {
+          setHomeReels(res.data.data || []);
+        }
+      })
+      .catch(err => console.error("Error loading home reels:", err));
   }, []);
 
   useEffect(() => {
@@ -915,6 +926,32 @@ export default function HomePage() {
               </div>
             </section>
 
+            {/* Expert Reels Section */}
+            {homeReels && homeReels.length > 0 && (
+              <section className="marketplace-section reels-home-section">
+                <div className="marketplace-section-header">
+                  <h2>Expert Reels</h2>
+                  <button type="button" onClick={() => navigate("/user/reels")}>View All Reels</button>
+                </div>
+                <div className="home-reels-slider">
+                  {homeReels.map((reel) => (
+                    <div 
+                      key={reel.id} 
+                      className="home-reel-thumbnail-card clickable-card"
+                      onClick={() => navigate(`/user/reels/${reel.slug}`)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <img src={reel.thumbnail_url || "https://placehold.co/180x320/121214/ffffff?text=Reel"} alt={reel.title} />
+                      <div className="home-reel-card-overlay">
+                        <span className="reel-title">{reel.title}</span>
+                        <span className="expert-name">by {reel.expert_name}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* Section 4: Available Experts */}
             <section className="marketplace-section experts-section">
               <div className="marketplace-section-header">
@@ -1144,6 +1181,39 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
+
+            {/* Mobile Expert Reels Section */}
+            {homeReels && homeReels.length > 0 && (
+              <div className="mobile-reels-section">
+                <div className="home-section-heading">
+                  <div>
+                    <h2>Expert Reels</h2>
+                    <span className="mobile-section-hint">Knowledge bytes from G9Experts</span>
+                  </div>
+                  <div className="mobile-section-right">
+                    <button type="button" className="mobile-view-all-btn" onClick={() => navigate("/user/reels")}>
+                      View all
+                    </button>
+                  </div>
+                </div>
+                <div className="home-reels-slider">
+                  {homeReels.map((reel) => (
+                    <div 
+                      key={reel.id} 
+                      className="home-reel-thumbnail-card clickable-card"
+                      onClick={() => navigate(`/user/reels/${reel.slug}`)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <img src={reel.thumbnail_url || "https://placehold.co/180x320/121214/ffffff?text=Reel"} alt={reel.title} />
+                      <div className="home-reel-card-overlay">
+                        <span className="reel-title">{reel.title}</span>
+                        <span className="expert-name">by {reel.expert_name}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* 3. Available Experts Section */}
             <div className="home-section-heading">

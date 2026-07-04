@@ -96,6 +96,11 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
           label: "Approvals",
           
         },
+        { 
+          path: "/admin/reels-management", 
+          icon: FiCheckCircle, 
+          label: "Reels Mod",
+        },
       ]
     },
    {

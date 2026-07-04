@@ -31,6 +31,7 @@ import {
   FiBell,
   FiLogOut,
   FiUser,
+  FiVideo,
 } from "react-icons/fi";
 
 import { useNavigate } from "react-router-dom";
@@ -75,6 +76,7 @@ export default function ExpertSidebar() {
   const menuItems = [
     { path: "/expert", icon: FiHome, label: "Dashboard", exact: true },
     { path: "/expert/my-content", icon: FiFileText, label: "My Content" },
+    { path: "/expert/reels", icon: FiVideo, label: "Manage Reels" },
     { path: "/expert/chat-history", icon: FiMessageSquare, label: "Chat History" },
     { path: "/expert/leads", icon: FiUsers, label: "Leads" },
     { path: "/expert/earnings", icon: FiBarChart2, label: "Earnings" },
@@ -84,17 +86,12 @@ export default function ExpertSidebar() {
 
   return (
     <>
-      {/* <MenuToggle onClick={() => setIsOpen(!isOpen)}>
-        {isOpen ? '✕' : '☰'}
-      </MenuToggle> */}
-
       <SidebarWrap className={isOpen ? 'open' : ''}>
         {/* Premium Badge */}
         <PremiumBadge>PRO</PremiumBadge>
 
         {/* Premium Logo with Icon */}
         <Logo onClick={() => navigate("/expert")}>
-         
           <div>
             <span>Expert</span>-Panel
           </div>
@@ -131,7 +128,6 @@ export default function ExpertSidebar() {
             Profile
           </NavItem>
 
-          
           <NavItem as="div" onClick={handleLogout} style={{ cursor: 'pointer' }}>
             <IconWrap>
               <FiLogOut />

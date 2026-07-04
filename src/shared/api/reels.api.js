@@ -1,4 +1,6 @@
 import api from "./axiosInstance";
+import expertApi from "./expertapi/axiosInstance";
+import adminApi from "./admin/axiosInstance";
 
 /* =====================================================
    📌 USER APIS
@@ -70,7 +72,7 @@ export const reportReelApi = async (id, data) => {
 
 // Create new reel (Multipart Form Data)
 export const createExpertReelApi = async (formData) => {
-  return api.post("/expert/reels", formData, {
+  return expertApi.post("/expert/reels", formData, {
     headers: {
       "Content-Type": "multipart/form-data"
     }
@@ -79,17 +81,17 @@ export const createExpertReelApi = async (formData) => {
 
 // Get all expert's reels
 export const getExpertReelsApi = async () => {
-  return api.get("/expert/reels");
+  return expertApi.get("/expert/reels");
 };
 
 // Get single reel detail for expert
 export const getExpertReelByIdApi = async (id) => {
-  return api.get(`/expert/reels/${id}`);
+  return expertApi.get(`/expert/reels/${id}`);
 };
 
 // Update reel (Multipart Form Data)
 export const updateExpertReelApi = async (id, formData) => {
-  return api.put(`/expert/reels/${id}`, formData, {
+  return expertApi.put(`/expert/reels/${id}`, formData, {
     headers: {
       "Content-Type": "multipart/form-data"
     }
@@ -98,12 +100,12 @@ export const updateExpertReelApi = async (id, formData) => {
 
 // Delete reel
 export const deleteExpertReelApi = async (id) => {
-  return api.delete(`/expert/reels/${id}`);
+  return expertApi.delete(`/expert/reels/${id}`);
 };
 
 // Submit reel for admin approval
 export const submitExpertReelApi = async (id) => {
-  return api.post(`/expert/reels/${id}/submit`);
+  return expertApi.post(`/expert/reels/${id}/submit`);
 };
 
 /* =====================================================
@@ -112,35 +114,35 @@ export const submitExpertReelApi = async (id) => {
 
 // Get all reels
 export const getAdminReelsApi = async () => {
-  return api.get("/reels/admin/list");
+  return adminApi.get("/reels/admin/list");
 };
 
 // Get pending reels
 export const getPendingReelsApi = async () => {
-  return api.get("/reels/admin/pending");
+  return adminApi.get("/reels/admin/pending");
 };
 
 // Approve reel
 export const approveReelApi = async (id) => {
-  return api.put(`/reels/admin/${id}/approve`);
+  return adminApi.put(`/reels/admin/${id}/approve`);
 };
 
 // Reject reel
 export const rejectReelApi = async (id, data) => {
-  return api.put(`/reels/admin/${id}/reject`, data);
+  return adminApi.put(`/reels/admin/${id}/reject`, data);
 };
 
 // Block reel
 export const blockReelApi = async (id) => {
-  return api.put(`/reels/admin/${id}/block`);
+  return adminApi.put(`/reels/admin/${id}/block`);
 };
 
 // Get reported reels
 export const getReportedReelsApi = async () => {
-  return api.get("/reels/admin/reports/list");
+  return adminApi.get("/reels/admin/reports/list");
 };
 
 // Resolve report
 export const resolveReportApi = async (id) => {
-  return api.put(`/reels/admin/reports/${id}/resolve`);
+  return adminApi.put(`/reels/admin/reports/${id}/resolve`);
 };

@@ -96,7 +96,19 @@ export default function ManageReels() {
     } catch (err) {
       console.error("Error loading expert reels:", err);
       const is404 = err?.includes?.("404") || (err?.response && err.response.status === 404) || err?.message?.includes?.("404");
-      if (is404) {
+      const is403 = err?.includes?.("403") || (err?.response && err.response.status === 403) || err?.message?.includes?.("403") || err === "Forbidden" || err === "Access denied";
+      
+      if (is403) {
+        Swal.fire({
+          title: "Access Denied",
+          text: "Access denied. Please login as expert.",
+          icon: "error",
+          toast: true,
+          position: "top-end",
+          timer: 5000,
+          showConfirmButton: false
+        });
+      } else if (is404) {
         Swal.fire({
           title: "API Not Available",
           text: "Reels API not available. Please check backend route.",

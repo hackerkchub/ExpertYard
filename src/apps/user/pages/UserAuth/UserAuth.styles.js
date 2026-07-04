@@ -31,6 +31,14 @@ export const PageWrap = styled.div`
       box-sizing: border-box;
     }
   }
+
+  @media (min-width: 1024px) {
+    background:
+      radial-gradient(circle at 8% 0%, rgba(0, 0, 128, 0.08), transparent 30%),
+      radial-gradient(circle at 92% 8%, rgba(255, 213, 74, 0.16), transparent 28%),
+      #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
 `;
 
 export const AuthBackWrap = styled.div`
@@ -74,6 +82,14 @@ export const Card = styled.div`
     max-width: 100%;
     padding: 6px 2px 14px;
   }
+
+  @media (min-width: 1024px) {
+    max-width: 620px;
+    border-radius: 22px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.075);
+  }
 `;
 
 export const BrandMark = styled.img`
@@ -114,6 +130,13 @@ export const Caption = styled.h1`
 
   @media (max-width: 480px) {
     font-size: clamp(21px, 6.2vw, 24px);
+  }
+
+  @media (min-width: 1024px) {
+    color: #111827;
+    font-size: clamp(30px, 2.2vw, 36px);
+    font-weight: 900;
+    letter-spacing: -0.02em;
   }
 `;
 
@@ -161,6 +184,13 @@ export const SubCaption = styled.p`
   @media (max-width: 480px) {
     font-size: 12.5px;
     margin-bottom: 10px;
+  }
+
+  @media (min-width: 1024px) {
+    color: #64748b;
+    font-size: 15px;
+    font-weight: 650;
+    line-height: 1.6;
   }
 `;
 

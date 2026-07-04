@@ -24,12 +24,25 @@ export const PageWrap = styled.div`
   @media (max-width: 640px) {
     padding: 18px 12px 34px;
   }
+
+  @media (min-width: 1024px) {
+    background:
+      radial-gradient(circle at 8% 0%, rgba(0, 0, 128, 0.08), transparent 30%),
+      radial-gradient(circle at 92% 8%, rgba(255, 213, 74, 0.14), transparent 28%),
+      #f8fafc;
+    padding: 28px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
 `;
 
 export const WalletBox = styled.div`
   width: 100%;
   max-width: 1180px;
   animation: ${fadeIn} 0.45s ease;
+
+  @media (min-width: 1024px) {
+    max-width: none;
+  }
 
   .wallet-safety-card {
     display: flex;
@@ -64,6 +77,14 @@ export const HeaderRow = styled.div`
     font-size: clamp(1.35rem, 2vw, 2rem);
     font-weight: 900;
     letter-spacing: -0.03em;
+  }
+
+  @media (min-width: 1024px) {
+    .page-title {
+      font-size: clamp(30px, 2.45vw, 38px);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
   }
 
   .user-badge {
@@ -102,6 +123,18 @@ export const BalanceCard = styled.div`
   box-shadow: 0 24px 54px rgba(0, 0, 128, 0.22);
   margin-bottom: 18px;
   border: 1px solid rgba(255, 255, 255, 0.12);
+
+  @media (min-width: 1024px) {
+    color: #ffffff !important;
+
+    :where(h3, p, small, strong, span:not(.stat-label), svg) {
+      color: inherit !important;
+    }
+
+    .stat-label {
+      color: rgba(255, 255, 255, 0.78) !important;
+    }
+  }
 
   &::before {
     content: "";

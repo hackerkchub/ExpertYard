@@ -36,6 +36,13 @@ export const PageContainer = styled.div`
     radial-gradient(circle at 8% 0%, rgba(0, 0, 128, 0.08), transparent 30%),
     radial-gradient(circle at 90% 12%, rgba(244, 197, 66, 0.14), transparent 28%),
     linear-gradient(180deg, #f7f8fc 0%, #f8fafc 44%, #ffffff 100%);
+
+  @media (min-width: 1024px) {
+    background:
+      radial-gradient(circle at 8% 0%, rgba(0, 0, 128, 0.08), transparent 30%),
+      radial-gradient(circle at 92% 8%, rgba(255, 213, 74, 0.14), transparent 28%),
+      #f8fafc;
+  }
 `;
 
 export const PageLayout = styled.div`
@@ -53,6 +60,13 @@ export const PageLayout = styled.div`
     align-items: start;
     gap: 16px;
     padding: 18px 16px 68px;
+  }
+
+  @media (min-width: 1024px) {
+    max-width: none;
+    grid-template-columns: minmax(260px, 292px) minmax(0, 1fr);
+    gap: 22px;
+    padding: 28px;
   }
 `;
 
@@ -1094,6 +1108,18 @@ export const CategoryDetailHero = styled.section`
   box-shadow: 0 18px 42px rgba(0, 0, 128, 0.18);
   box-sizing: border-box;
 
+  @media (min-width: 1024px) {
+    width: 100%;
+    margin-top: 0;
+    border-radius: 22px;
+    box-shadow: 0 20px 48px rgba(0, 0, 128, 0.18);
+    color: ${colors.white} !important;
+
+    :where(h1, p, small, strong, svg) {
+      color: inherit !important;
+    }
+  }
+
   @media (max-width: 767px) {
     width: calc(100% - 20px);
     margin-top: 10px;
@@ -1169,6 +1195,12 @@ export const SectionCard = styled.section`
   background: ${colors.white};
   box-shadow: 0 12px 30px rgba(16, 24, 40, 0.07);
   box-sizing: border-box;
+
+  @media (min-width: 1024px) {
+    width: 100%;
+    border-radius: 18px;
+    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.075);
+  }
 
   @media (max-width: 767px) {
     width: calc(100% - 20px);
@@ -1284,6 +1316,10 @@ export const SubcategoryName = styled.span`
 export const ExpertArea = styled.section`
   width: min(calc(100% - 28px), 1440px);
   margin: 16px auto 0;
+
+  @media (min-width: 1024px) {
+    width: 100%;
+  }
 
   @media (max-width: 767px) {
     width: calc(100% - 20px);

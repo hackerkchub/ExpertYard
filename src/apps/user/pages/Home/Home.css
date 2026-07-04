@@ -6539,7 +6539,7 @@ img {
 /* =====================================================
    DESKTOP ONLY SHARED LAYOUT & RESPONSIVENESS OVERRIDES
    ===================================================== */
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   /* Expand center column in no-right-sidebar layout */
   .home-desktop-shell.layout--full-content {
     grid-template-columns: minmax(0, 1fr) !important;
@@ -6595,5 +6595,205 @@ img {
   .search-page-section,
   .search-page-recommendations {
     width: 100% !important;
+  }
+
+  /* Desktop-only visual consistency for user module pages */
+  .home-desktop-shell.layout--full-content .home-center-column {
+    font-family: var(--g9-font) !important;
+    color: var(--g9-text) !important;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column > *,
+  .home-desktop-shell.layout--full-content .home-center-column > * > * {
+    width: 100% !important;
+    max-width: none !important;
+    box-sizing: border-box !important;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column > * {
+    background-color: #f8fafc !important;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column :where(h1, h2, h3) {
+    color: var(--g9-text) !important;
+    letter-spacing: -0.02em !important;
+    line-height: 1.16 !important;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column :where(h1, .page-title) {
+    font-size: clamp(30px, 2.45vw, 38px) !important;
+    font-weight: 900 !important;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column :where(h2) {
+    font-size: clamp(22px, 1.65vw, 28px) !important;
+    font-weight: 850 !important;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column :where(h3) {
+    font-size: 18px !important;
+    font-weight: 850 !important;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column :where(p, li, input, textarea, select) {
+    font-size: 15px !important;
+    line-height: 1.6 !important;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column :where(p, small, span, label, .meta-item, .stat-label, .price-label, .expert-position, .search-page-card__meta, .message-time) {
+    color: inherit;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column :where(.page-subtitle, .subtitle, .SubTitle, .stat-label, .price-label, .expert-position, .search-page-card__meta, .message-time, .expert-meta, .meta-item, .wallet-safety-card p) {
+    color: #64748b !important;
+    font-weight: 650 !important;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column :where(.expert-listing-page, .expert-profile-page, .call-chat-expert-page, .category-page, .subcategory-page, .all-services-page, .service-detail-page, .search-page) {
+    padding-left: clamp(18px, 1.8vw, 28px) !important;
+    padding-right: clamp(18px, 1.8vw, 28px) !important;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column :where(
+    .expert-listing-page,
+    .call-chat-expert-page,
+    .category-page,
+    .subcategory-page,
+    .all-services-page,
+    .service-detail-page,
+    .search-page,
+    .premium-card,
+    .wallet-safety-card,
+    .search-page-card,
+    .search-page-state,
+    .search-page-skeleton,
+    .search-page-recommendation-section,
+    .search-page-chip-section
+  ) {
+    border-color: var(--g9-line) !important;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column :where(
+    article,
+    section,
+    .premium-card,
+    .search-page-card,
+    .wallet-safety-card,
+    .summary-stat,
+    .meta-item,
+    .expert-badge,
+    .session-number,
+    .status-badge,
+    .pricing-badge,
+    .tab,
+    .user-badge
+  ) {
+    box-sizing: border-box !important;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column :where(
+    .premium-card,
+    .search-page-card,
+    .wallet-safety-card,
+    .user-badge,
+    .summary-stat,
+    .expert-badge,
+    .service-card,
+    .category-card,
+    .booking-card,
+    .empty-state
+  ) {
+    background: #ffffff !important;
+    border: 1px solid var(--g9-line) !important;
+    border-radius: 18px !important;
+    box-shadow: var(--g9-shadow) !important;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column :where(
+    .premium-card,
+    .search-page-card,
+    .wallet-safety-card,
+    .summary-stat,
+    .service-card,
+    .category-card,
+    .booking-card
+  ) {
+    padding: 20px !important;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column :where(button, .premium-btn, .details-btn, .search-page-submit, .search-page-card__action, .expert-profile-btn, .consult-btn, .book-service-btn) {
+    min-height: 42px !important;
+    border-radius: 13px !important;
+    font-family: var(--g9-font) !important;
+    font-size: 14px !important;
+    font-weight: 850 !important;
+    line-height: 1.2 !important;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column :where(.premium-btn, .details-btn, .search-page-submit, .expert-profile-btn, .book-service-btn) {
+    background: var(--g9-blue) !important;
+    color: #ffffff !important;
+    border-color: var(--g9-blue) !important;
+    box-shadow: 0 12px 26px rgba(0, 0, 128, 0.18) !important;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column :where(.tab.active, .search-page-tab--active, .pricing-badge, .status-badge.completed, .status-badge.confirmed) {
+    background: var(--g9-blue-soft) !important;
+    color: var(--g9-blue) !important;
+    border-color: rgba(0, 0, 128, 0.12) !important;
+    font-weight: 850 !important;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column :where(.search-page-form, input, textarea, select) {
+    border-color: var(--g9-line) !important;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column :where(.search-page-form, .tab-group, .tab-container) {
+    background: #ffffff !important;
+    border: 1px solid var(--g9-line) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.045) !important;
+  }
+}
+
+/* Desktop-only contrast guards for blue/gradient user-module banners. */
+@media (min-width: 1024px) {
+  .home-desktop-shell.layout--full-content .home-center-column :where(
+    .expert-profile-page > div:first-child,
+    .call-chat-expert-page > header:first-of-type,
+    .category-page > section:first-of-type,
+    .category-page section:last-of-type,
+    .subcategory-page > section:first-of-type,
+    .all-services-page > section:first-of-type,
+    .all-services-page section:last-of-type,
+    .wallet-safety-card
+  ) {
+    color: #ffffff !important;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column :where(
+    .expert-profile-page > div:first-child,
+    .call-chat-expert-page > header:first-of-type,
+    .category-page > section:first-of-type,
+    .category-page section:last-of-type,
+    .subcategory-page > section:first-of-type,
+    .all-services-page > section:first-of-type,
+    .all-services-page section:last-of-type,
+    .wallet-safety-card
+  ) :where(h1, h2, h3, p, small, strong, svg) {
+    color: inherit !important;
+  }
+
+  .home-desktop-shell.layout--full-content .home-center-column :where(
+    .expert-profile-page > div:first-child .expert-profile-header-tag,
+    .expert-profile-page > div:first-child .expert-profile-header-tag *,
+    .expert-profile-page > div:first-child button,
+    .expert-profile-page > div:first-child button *,
+    .all-services-page > section:first-of-type button,
+    .all-services-page > section:first-of-type button *,
+    .all-services-page > section:first-of-type label,
+    .all-services-page > section:first-of-type label *
+  ) {
+    color: #000080 !important;
   }
 }

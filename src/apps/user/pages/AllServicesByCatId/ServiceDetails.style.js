@@ -11,6 +11,15 @@ export const PageWrapper = styled.div`
   padding: 20px;
   font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
+  @media (min-width: 1024px) {
+    padding: 28px;
+    background:
+      radial-gradient(circle at 8% 0%, rgba(0, 0, 128, 0.08), transparent 30%),
+      radial-gradient(circle at 92% 8%, rgba(255, 213, 74, 0.14), transparent 28%),
+      #f8fafc;
+    color: #111827;
+  }
+
   @media (max-width: 1024px) {
     padding: 16px;
   }
@@ -35,6 +44,11 @@ export const PageWrapper = styled.div`
 export const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
+
+  @media (min-width: 1024px) {
+    width: 100%;
+    max-width: none;
+  }
 
   @media (max-width: 767px) {
     width: 100%;
@@ -82,6 +96,12 @@ export const HorizontalLayout = styled.div`
   gap: 30px;
   align-items: flex-start;
 
+  @media (min-width: 1024px) {
+    display: grid;
+    grid-template-columns: minmax(320px, 0.85fr) minmax(0, 1.15fr);
+    gap: 24px;
+  }
+
   @media (max-width: 992px) {
     flex-direction: column;
   }
@@ -112,6 +132,12 @@ export const HeroImage = styled.img`
   border-radius: 12px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.1);
   border: 4px solid white;
+
+  @media (min-width: 1024px) {
+    border: 0;
+    border-radius: 18px;
+    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.075);
+  }
 
   @media (max-width: 1024px) {
     display: block;
@@ -168,6 +194,13 @@ export const MainInfoCard = styled.div`
   padding: 30px;
   border: 1px solid #e0e0e0;
 
+  @media (min-width: 1024px) {
+    border-color: #e5e7eb;
+    border-radius: 18px;
+    padding: 28px;
+    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.075);
+  }
+
   @media (max-width: 1024px) {
     width: 100%;
   }
@@ -193,6 +226,21 @@ export const TitleSection = styled.div`
     font-size: 14px;
     color: #666;
     .rating { color: #f59e0b; font-weight: 700; display: flex; align-items: center; gap: 4px; }
+  }
+
+  @media (min-width: 1024px) {
+    h1 {
+      color: #111827;
+      font-size: clamp(30px, 2.45vw, 38px);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      line-height: 1.16;
+    }
+
+    .meta-stats {
+      color: #64748b;
+      font-weight: 650;
+    }
   }
 
   @media (max-width: 767px) {
@@ -235,6 +283,21 @@ export const DescriptionBox = styled.div`
   p { line-height: 1.6; color: #555; font-size: 15px; }
   .formatted h4 { margin: 14px 0 6px; color: #111827; font-size: 16px; }
   .formatted li { margin-left: 18px; line-height: 1.6; color: #475569; }
+
+  @media (min-width: 1024px) {
+    h3 {
+      color: #111827;
+      font-size: 22px;
+      font-weight: 850;
+    }
+
+    p,
+    .formatted li {
+      color: #334155;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+  }
 
   @media (max-width: 767px) {
     order: 3;
@@ -294,6 +357,18 @@ export const PriceBlock = styled.div`
   .label { font-size: 12px; color: #666; font-weight: 600; text-transform: uppercase; }
   .price-val { font-size: 34px; color: #0a66c2; font-weight: 800; margin: 0; }
   .price-val small { color: #94a3b8; text-decoration: line-through; font-size: 18px; margin-right: 8px; }
+
+  @media (min-width: 1024px) {
+    .label {
+      color: #64748b;
+      font-weight: 850;
+    }
+
+    .price-val {
+      color: #000080;
+      font-weight: 900;
+    }
+  }
 
   @media (max-width: 767px) {
     flex: 1 1 130px;

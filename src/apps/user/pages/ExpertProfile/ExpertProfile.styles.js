@@ -25,6 +25,23 @@ export const PageWrap = styled.div`
   animation: ${fadeIn} 0.5s ease-out;
   color: #111827;
 
+  @media (min-width: 1024px) {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 28px;
+    background:
+      radial-gradient(circle at 8% 0%, rgba(0, 0, 128, 0.08), transparent 30%),
+      radial-gradient(circle at 92% 8%, rgba(255, 213, 74, 0.14), transparent 28%),
+      #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+    .expert-profile-content-grid {
+      grid-template-columns: minmax(280px, 330px) minmax(0, 1fr);
+      gap: 22px;
+    }
+  }
+
   .expert-profile-content-grid {
     display: grid;
     grid-template-columns: minmax(270px, 320px) minmax(0, 1fr);
@@ -398,6 +415,28 @@ export const ProfileCard = styled.div`
   margin-bottom: 18px;
   box-shadow: 0 24px 62px rgba(0, 0, 128, 0.22);
 
+  @media (min-width: 1024px) {
+    border-radius: 22px;
+    box-shadow: 0 20px 48px rgba(0, 0, 128, 0.18);
+
+    .expert-profile-hero-inner,
+    .expert-profile-hero-info,
+    .expert-profile-identity,
+    .expert-profile-pricing-summary {
+      color: #ffffff !important;
+    }
+
+    .expert-profile-hero-info :where(h1, p, small, strong, svg),
+    .expert-profile-pricing-summary :where(span, strong, small) {
+      color: inherit !important;
+    }
+
+    .expert-profile-header-tag,
+    .expert-profile-header-tag * {
+      color: #000080 !important;
+    }
+  }
+
   > div {
     display: grid !important;
     grid-template-columns: 190px minmax(0, 1fr);
@@ -495,8 +534,25 @@ export const LeftImage = styled.img`
   height: 150px;
   border-radius: 50%;
   object-fit: cover;
+  object-position: center;
+  overflow: hidden;
   border: 4px solid rgba(255, 255, 255, 0.9);
   box-shadow: 0 18px 42px rgba(0,0,0,0.28);
+
+  @media (min-width: 1024px) {
+    width: 150px;
+    height: 150px;
+    max-width: 150px;
+    min-width: 150px;
+    max-height: 150px;
+    min-height: 150px;
+    aspect-ratio: 1 / 1;
+    display: block;
+    flex: 0 0 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: center;
+  }
   
   @media (max-width: 768px) {
     width: 78px;
@@ -531,6 +587,19 @@ export const AvatarFallback = styled.div`
   border: 4px solid #fff;
   color: #000080;
   box-shadow: 0 18px 42px rgba(0,0,0,0.28);
+
+  @media (min-width: 1024px) {
+    width: 160px;
+    height: 160px;
+    max-width: 160px;
+    min-width: 160px;
+    max-height: 160px;
+    min-height: 160px;
+    aspect-ratio: 1 / 1;
+    flex: 0 0 160px;
+    border-radius: 50%;
+    overflow: hidden;
+  }
 
   @media (max-width: 768px) {
     width: 78px;
@@ -854,6 +923,14 @@ export const Section = styled.div`
   margin-bottom: 16px;
   scroll-margin-top: 96px;
   box-shadow: 0 14px 34px rgba(16, 24, 40, 0.08);
+
+  @media (min-width: 1024px) {
+    border-radius: 18px;
+    border-color: #e5e7eb;
+    padding: 24px;
+    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.075);
+  }
+
   @media (max-width: 768px) {
     width: 100%;
     max-width: 100%;
@@ -871,6 +948,13 @@ export const SectionTitle = styled.h2`
   margin-bottom: 16px;
   color: #000080;
 
+  @media (min-width: 1024px) {
+    color: #111827;
+    font-size: clamp(22px, 1.65vw, 28px);
+    font-weight: 850;
+    letter-spacing: -0.02em;
+  }
+
   @media (max-width: 768px) {
     margin-bottom: 10px;
     font-size: 17px;
@@ -882,6 +966,12 @@ export const SectionBody = styled.div`
   font-size: 15px;
   line-height: 1.7;
   color: #344054;
+
+  @media (min-width: 1024px) {
+    color: #334155;
+    font-size: 15px;
+    font-weight: 550;
+  }
 
   @media (max-width: 768px) {
     font-size: 14px;

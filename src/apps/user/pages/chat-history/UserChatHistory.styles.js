@@ -20,6 +20,14 @@ export const PremiumContainer = styled.div`
     background: #f8fafc;
     overflow-x: hidden;
   }
+
+  @media (min-width: 1024px) {
+    background:
+      radial-gradient(circle at 8% 0%, rgba(0, 0, 128, 0.08), transparent 30%),
+      radial-gradient(circle at 92% 8%, rgba(255, 213, 74, 0.14), transparent 28%),
+      #f8fafc;
+    color: #111827;
+  }
 `;
 
 export const PageContainer = styled.div`
@@ -35,6 +43,12 @@ export const PageContainer = styled.div`
 
   @media (max-width: 480px) {
     padding: 16px 12px 4px;
+  }
+
+  @media (min-width: 1024px) {
+    width: 100%;
+    max-width: none;
+    padding: 28px;
   }
 `;
 
@@ -61,6 +75,14 @@ export const Title = styled.h1`
   @media (max-width: 480px) {
     font-size: 20px;
   }
+
+  @media (min-width: 1024px) {
+    color: #111827;
+    font-size: clamp(30px, 2.45vw, 38px);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1.16;
+  }
 `;
 
 export const ResponsiveGrid = styled.div`
@@ -86,6 +108,16 @@ export const TabContainer = styled.div`
   @media (max-width: 480px) {
     gap: 8px;
     margin: 16px 0 12px;
+  }
+
+  @media (min-width: 1024px) {
+    gap: 10px;
+    width: fit-content;
+    padding: 6px;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.045);
   }
 `;
 
@@ -128,6 +160,16 @@ export const TabButton = styled.button`
       width: 14px;
       height: 14px;
     }
+  }
+
+  @media (min-width: 1024px) {
+    min-height: 42px;
+    border-radius: 13px;
+    font-size: 14px;
+    font-weight: 850;
+    color: ${props => props.active ? '#ffffff' : '#111827'};
+    background: ${props => props.active ? '#000080' : '#ffffff'};
+    box-shadow: ${props => props.active ? '0 12px 26px rgba(0, 0, 128, 0.18)' : 'none'};
   }
 `;
 
@@ -226,6 +268,28 @@ export const SummaryCard = styled.div`
     display: flex;
     align-items: center;
     gap: 4px;
+  }
+
+  @media (min-width: 1024px) {
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.075);
+
+    .summary-header {
+      color: #000080;
+      font-weight: 850;
+    }
+
+    .stat-value {
+      color: #111827;
+      font-weight: 900;
+    }
+
+    .stat-label,
+    .summary-meta {
+      color: #64748b;
+      font-weight: 650;
+    }
   }
 `;
 
@@ -331,6 +395,28 @@ export const StatCard = styled.div`
 
     @media (max-width: 480px) {
       font-size: 11px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.075);
+
+    .stat-icon {
+      background: #eef2ff;
+      color: #000080;
+    }
+
+    .stat-value {
+      color: #111827;
+      font-weight: 900;
+    }
+
+    .stat-label {
+      color: #64748b;
+      font-size: 14px;
+      font-weight: 650;
     }
   }
 `;
@@ -448,11 +534,22 @@ export const HistoryItem = styled.div`
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   }
 
+  @media (min-width: 1024px) {
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.075);
+  }
+
   .expanded-content {
     padding: 24px;
     background: #FAF9F7;
     border-radius: 0 0 16px 16px;
     border-top: 1px solid #E9E5DF;
+
+    @media (min-width: 1024px) {
+      background: #f8fafc;
+      border-top-color: #e5e7eb;
+    }
 
     @media (max-width: 768px) {
       padding: 16px;

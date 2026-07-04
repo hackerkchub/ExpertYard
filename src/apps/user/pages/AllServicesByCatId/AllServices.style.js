@@ -17,6 +17,15 @@ export const PageContainer = styled.div`
   padding: 28px 0 52px;
   color: #111827;
 
+  @media (min-width: 1024px) {
+    padding: 28px;
+    background:
+      radial-gradient(circle at 8% 0%, rgba(0, 0, 128, 0.08), transparent 30%),
+      radial-gradient(circle at 92% 8%, rgba(255, 213, 74, 0.14), transparent 28%),
+      #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
   @media (max-width: 767px) {
     width: 100%;
     max-width: 100%;
@@ -44,6 +53,11 @@ export const ContentWrapper = styled.div`
   width: min(1180px, calc(100% - 36px));
   margin: 0 auto;
   animation: ${fadeIn} 0.45s ease;
+
+  @media (min-width: 1024px) {
+    width: 100%;
+    max-width: none;
+  }
 
   @media (max-width: 640px) {
     width: calc(100% - 20px);
@@ -75,6 +89,20 @@ export const HeaderSection = styled.section`
     linear-gradient(135deg, ${NAVY} 0%, #080866 54%, #020229 100%);
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 24px 54px rgba(0, 0, 128, 0.2);
+
+  @media (min-width: 1024px) {
+    border-radius: 22px;
+    box-shadow: 0 20px 48px rgba(0, 0, 128, 0.18);
+    color: #ffffff !important;
+
+    .title-area :where(h2, p, small, strong, svg) {
+      color: inherit !important;
+    }
+
+    .eyebrow {
+      color: #ffd23f !important;
+    }
+  }
 
   &::before {
     content: "";
@@ -288,6 +316,11 @@ export const ServicesToolbar = styled.div`
   border: 1px solid #e5e7eb;
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
 
+  @media (min-width: 1024px) {
+    border-radius: 18px;
+    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.075);
+  }
+
   div {
     color: #1f2937;
     font-weight: 900;
@@ -322,6 +355,10 @@ export const ServiceGrid = styled.div`
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
 
+  @media (min-width: 1440px) {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
   @media (max-width: 1024px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -355,6 +392,11 @@ export const ServiceCard = styled.article`
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   display: flex;
   flex-direction: column;
+
+  @media (min-width: 1024px) {
+    border-radius: 18px;
+    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.075);
+  }
 
   &:hover {
     transform: translateY(-5px);
@@ -870,6 +912,14 @@ export const CtaSection = styled.section`
   p {
     margin: 8px 0 0;
     color: rgba(255, 255, 255, 0.76);
+  }
+
+  @media (min-width: 1024px) {
+    color: #ffffff !important;
+
+    :where(h2, p, small, strong, svg) {
+      color: inherit !important;
+    }
   }
 
   button {

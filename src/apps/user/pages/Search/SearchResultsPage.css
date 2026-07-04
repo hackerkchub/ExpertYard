@@ -420,6 +420,68 @@
   font-weight: 800;
 }
 
+@media (min-width: 1024px) {
+  .search-page {
+    width: 100%;
+    max-width: none;
+    min-height: 100vh;
+    padding: 28px;
+    background:
+      radial-gradient(circle at 8% 0%, rgba(0, 0, 128, 0.08), transparent 30%),
+      radial-gradient(circle at 92% 8%, rgba(255, 213, 74, 0.14), transparent 28%),
+      #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  .search-page-hero,
+  .search-page-tabs,
+  .search-page-section,
+  .search-page-recommendations,
+  .search-page-state,
+  .search-page-pagination {
+    width: 100%;
+    max-width: none;
+  }
+
+  .search-page-hero h1 {
+    font-size: clamp(30px, 2.45vw, 38px);
+    font-weight: 900;
+  }
+
+  .search-page-form,
+  .search-page-section,
+  .search-page-recommendation-section,
+  .search-page-chip-section,
+  .search-page-state {
+    border-color: #e5e7eb;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.075);
+  }
+
+  .search-page-section__top h2 {
+    font-size: 18px;
+    font-weight: 850;
+  }
+
+  .search-page-card {
+    min-height: 88px;
+    padding: 16px 18px;
+  }
+
+  .search-page-card__body strong {
+    font-size: 16px;
+    font-weight: 850;
+  }
+
+  .search-page-card__body small,
+  .search-page-card__meta {
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 650;
+  }
+}
+
 @keyframes search-page-pulse {
   to {
     background-position: -200% 0;

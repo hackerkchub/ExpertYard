@@ -9,6 +9,19 @@ export const PageWrap = styled.div`
   margin: 28px auto 70px;
   padding: 0 clamp(14px, 3vw, 24px);
 
+  @media (min-width: 1024px) {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 28px;
+    background:
+      radial-gradient(circle at 8% 0%, rgba(0, 0, 128, 0.08), transparent 30%),
+      radial-gradient(circle at 92% 8%, rgba(255, 213, 74, 0.14), transparent 28%),
+      #f8fafc;
+    color: #111827;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
   @media (max-width: 768px) {
     margin: 30px auto 40px;
   }
@@ -32,6 +45,12 @@ export const PageTitle = styled.h1`
   color: #0f172a;
   letter-spacing: -0.02em;
   line-height: 1.18;
+
+  @media (min-width: 1024px) {
+    font-size: clamp(30px, 2.45vw, 38px);
+    font-weight: 900;
+    color: #111827;
+  }
 `;
 
 export const PageSubtitle = styled.p`
@@ -39,6 +58,12 @@ export const PageSubtitle = styled.p`
   font-size: 15px;
   line-height: 1.6;
   margin-top: 6px;
+
+  @media (min-width: 1024px) {
+    opacity: 1;
+    color: #64748b;
+    font-weight: 650;
+  }
 `;
 
 /* ------------------------------------------
@@ -48,6 +73,11 @@ export const Layout = styled.div`
   display: grid;
   grid-template-columns: 260px 1fr;
   gap: 26px;
+
+  @media (min-width: 1024px) {
+    grid-template-columns: minmax(250px, 280px) minmax(0, 1fr);
+    gap: 22px;
+  }
 
   @media (max-width: 960px) {
     grid-template-columns: 1fr;
@@ -68,6 +98,12 @@ export const LeftSidebar = styled.aside`
   position: sticky;
   top: 90px;
   height: max-content;
+
+  @media (min-width: 1024px) {
+    border-color: #e5e7eb;
+    border-radius: 18px;
+    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.075);
+  }
 
   @media (max-width: 960px) {
     position: static;
@@ -188,6 +224,10 @@ export const ExpertsGrid = styled.div`
   @media (max-width: 899px) {
     grid-template-columns: 1fr;
   }
+
+  @media (min-width: 1280px) {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
 `;
 
 export const ExpertCard = styled.div`
@@ -203,6 +243,14 @@ export const ExpertCard = styled.div`
 
   cursor: pointer;
   transition: 0.2s ease;
+
+  @media (min-width: 1024px) {
+    padding: 20px;
+    border-color: #e5e7eb;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.075);
+  }
 
   &:hover {
     transform: translateY(-3px);
@@ -237,6 +285,12 @@ export const ExpertName = styled.h3`
   font-weight: 700;
   color: #172033;
   line-height: 1.3;
+
+  @media (min-width: 1024px) {
+    color: #111827;
+    font-size: 18px;
+    font-weight: 850;
+  }
 `;
 
 export const StatusPill = styled.div`
@@ -266,6 +320,12 @@ export const MetaRow = styled.div`
   line-height: 1.5;
   opacity: 0.85;
   color: #64748b;
+
+  @media (min-width: 1024px) {
+    opacity: 1;
+    font-size: 14px;
+    font-weight: 650;
+  }
 `;
 
 export const Rating = styled.span`

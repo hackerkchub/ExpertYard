@@ -4,23 +4,60 @@ export const PageContainer = styled.div`
   background-color: #f3f2ef;
   min-height: 100vh;
   padding: 40px 20px;
+
+  @media (min-width: 1024px) {
+    background:
+      radial-gradient(circle at 8% 0%, rgba(0, 0, 128, 0.08), transparent 30%),
+      radial-gradient(circle at 92% 8%, rgba(255, 213, 74, 0.14), transparent 28%),
+      #f8fafc;
+    color: #111827;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 28px;
+  }
 `;
 
 export const ContentWrapper = styled.div`
   max-width: 800px;
   margin: 0 auto;
+
+  @media (min-width: 1024px) {
+    width: 100%;
+    max-width: none;
+  }
 `;
 
 export const Header = styled.div`
   margin-bottom: 24px;
   h1 { font-size: 24px; color: rgba(0,0,0,0.9); font-weight: 600; }
   p { font-size: 14px; color: rgba(0,0,0,0.6); }
+
+  @media (min-width: 1024px) {
+    margin-bottom: 28px;
+
+    h1 {
+      color: #111827;
+      font-size: clamp(30px, 2.45vw, 38px);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      color: #64748b;
+      font-size: 15px;
+      font-weight: 650;
+      line-height: 1.6;
+    }
+  }
 `;
 
 export const BookingList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
+
+  @media (min-width: 1024px) {
+    gap: 18px;
+  }
 `;
 
 export const BookingCard = styled.div`
@@ -37,6 +74,13 @@ export const BookingCard = styled.div`
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   }
 
+  @media (min-width: 1024px) {
+    border-radius: 18px;
+    border: 1px solid #e5e7eb;
+    padding: 20px;
+    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.075);
+  }
+
   @media (max-width: 600px) {
     flex-direction: column;
     align-items: flex-start;
@@ -49,6 +93,12 @@ export const ServiceImage = styled.img`
   border-radius: 8px;
   object-fit: cover;
   background: #f8f8f8;
+
+  @media (min-width: 1024px) {
+    width: 112px;
+    height: 112px;
+    border-radius: 16px;
+  }
 `;
 
 export const BookingInfo = styled.div`
@@ -69,6 +119,26 @@ export const BookingInfo = styled.div`
     .price-label { font-size: 13px; color: #666; }
     .amount { font-size: 16px; font-weight: 700; color: #0a66c2; }
   }
+
+  @media (min-width: 1024px) {
+    .top-row h3 {
+      color: #111827;
+      font-size: 18px;
+      font-weight: 850;
+    }
+
+    .price-row .price-label {
+      color: #64748b;
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    .price-row .amount {
+      color: #000080;
+      font-size: 18px;
+      font-weight: 900;
+    }
+  }
 `;
 
 export const MetaGrid = styled.div`
@@ -82,6 +152,20 @@ export const MetaGrid = styled.div`
     font-size: 13px;
     color: #666;
     svg { color: #0a66c2; }
+  }
+
+  @media (min-width: 1024px) {
+    gap: 14px;
+
+    .meta-item {
+      color: #64748b;
+      font-size: 14px;
+      font-weight: 650;
+
+      svg {
+        color: #000080;
+      }
+    }
   }
 `;
 
@@ -121,6 +205,19 @@ export const ActionArea = styled.div`
     align-items: center;
     gap: 4px;
     &:hover { background: rgba(10,102,194,0.1); }
+  }
+
+  @media (min-width: 1024px) {
+    .details-btn {
+      min-height: 42px;
+      border-color: #000080;
+      border-radius: 13px;
+      background: #000080;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 850;
+      box-shadow: 0 12px 26px rgba(0, 0, 128, 0.18);
+    }
   }
 `;
 

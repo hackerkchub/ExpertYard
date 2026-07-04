@@ -33,6 +33,15 @@ export const PageContainer = styled.div`
   font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   overflow-x: hidden;
 
+  @media (min-width: 1024px) {
+    background:
+      radial-gradient(circle at 8% 0%, rgba(0, 0, 128, 0.08), transparent 30%),
+      radial-gradient(circle at 92% 8%, rgba(255, 213, 74, 0.14), transparent 28%),
+      #f8fafc;
+    color: #111827;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
   ${media.mobile} {
     min-height: auto;
     background: ${colors.white};
@@ -47,6 +56,12 @@ export const Breadcrumb = styled.div`
   align-items: center;
   gap: 8px;
   font-size: 0.86rem;
+
+  @media (min-width: 1024px) {
+    width: 100%;
+    color: #64748b;
+    font-weight: 650;
+  }
 
   ${media.mobile} {
     display: none;
@@ -82,6 +97,17 @@ export const HeroSection = styled.section`
     radial-gradient(circle at 10% 0%, rgba(96, 165, 250, 0.24), transparent 28%),
     linear-gradient(145deg, ${colors.primary} 0%, #02005c 72%, ${colors.primaryDeep} 100%);
   box-shadow: 0 24px 58px rgba(0, 0, 128, 0.2);
+
+  @media (min-width: 1024px) {
+    width: 100%;
+    border-radius: 22px;
+    box-shadow: 0 20px 48px rgba(0, 0, 128, 0.18);
+    color: #ffffff !important;
+
+    :where(h1, p, small, strong, svg) {
+      color: inherit !important;
+    }
+  }
 
   &::after {
     content: "";
@@ -275,6 +301,11 @@ export const MainContent = styled.main`
   margin: 0 auto;
   padding: 0 20px 46px;
 
+  @media (min-width: 1024px) {
+    width: 100%;
+    padding: 0 0 46px;
+  }
+
   ${media.tablet} {
     padding: 0 16px 20px;
   }
@@ -320,6 +351,13 @@ export const HeaderTitle = styled.h2`
   font-size: 1.18rem;
   line-height: 1.25;
   font-weight: 800;
+
+  @media (min-width: 1024px) {
+    color: #111827;
+    font-size: clamp(22px, 1.65vw, 28px);
+    font-weight: 850;
+    letter-spacing: -0.02em;
+  }
 
   .count {
     display: inline-flex;
@@ -782,6 +820,14 @@ export const CtaBlock = styled.section`
     margin: 7px 0 0;
     color: rgba(255, 255, 255, 0.78);
     line-height: 1.5;
+  }
+
+  @media (min-width: 1024px) {
+    color: #ffffff !important;
+
+    :where(h2, p, small, strong, svg) {
+      color: inherit !important;
+    }
   }
 
   ${media.sm} {

@@ -5,26 +5,61 @@ import styled from "styled-components";
 export const PageWrap = styled.div`
   background: #f4f7fb;
   padding: 40px 16px;
+
+  @media (min-width: 1024px) {
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 8% 0%, rgba(0, 0, 128, 0.08), transparent 30%),
+      radial-gradient(circle at 92% 8%, rgba(255, 213, 74, 0.14), transparent 28%),
+      #f8fafc;
+    padding: 28px;
+    color: #111827;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
 `;
 
 export const Container = styled.div`
   max-width: 1200px;
   margin: auto;
+
+  @media (min-width: 1024px) {
+    width: 100%;
+    max-width: none;
+  }
 `;
 
 /* SECTION */
 export const Section = styled.div`
   margin-bottom: 48px;
+
+  @media (min-width: 1024px) {
+    margin-bottom: 36px;
+  }
 `;
 
 export const Title = styled.h2`
   font-size: 24px;
   font-weight: 700;
+
+  @media (min-width: 1024px) {
+    color: #111827;
+    font-size: clamp(24px, 1.8vw, 30px);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1.16;
+  }
 `;
 
 export const SubTitle = styled.p`
   color: #6b7280;
   margin-bottom: 20px;
+
+  @media (min-width: 1024px) {
+    color: #64748b;
+    font-size: 15px;
+    font-weight: 650;
+    line-height: 1.6;
+  }
 `;
 
 /* FOLLOWING */
@@ -36,6 +71,12 @@ export const FollowingRow = styled.div`
   border-radius: 16px;
   box-shadow: 0 10px 28px rgba(0,0,0,0.08);
   overflow-x: auto;
+
+  @media (min-width: 1024px) {
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.075);
+  }
 `;
 
 export const FollowAvatar = styled.div`
@@ -65,6 +106,11 @@ export const Grid = styled.div`
   grid-template-columns: repeat(2, 1fr);
   gap: 26px;
 
+  @media (min-width: 1280px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+  }
+
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
   }
@@ -82,6 +128,13 @@ export const Card = styled.div`
   &:hover {
     border-color: rgba(79,124,255,0.4);
     box-shadow: 0 20px 50px rgba(0,0,0,0.12);
+  }
+
+  @media (min-width: 1024px) {
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.075);
   }
 `;
 

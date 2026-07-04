@@ -32,6 +32,17 @@ export const PageWrap = styled.div`
   scroll-behavior: smooth;
   overflow-x: hidden;
 
+  @media (min-width: 1024px) {
+    max-width: none;
+    margin: 0;
+    padding: 28px;
+    background:
+      radial-gradient(circle at 8% 0%, rgba(0, 0, 128, 0.08), transparent 30%),
+      radial-gradient(circle at 92% 8%, rgba(255, 213, 74, 0.14), transparent 28%),
+      #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
   .trust-badges {
     display: flex;
     flex-wrap: wrap;
@@ -442,6 +453,14 @@ export const HeaderSection = styled.header`
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: 0 24px 58px rgba(0, 0, 128, 0.2);
 
+  @media (min-width: 1024px) {
+    color: #ffffff !important;
+
+    :where(h1, p, small, strong, svg) {
+      color: inherit !important;
+    }
+  }
+
   @media (max-width: 768px) {
     padding: 20px 16px;
     border-radius: 22px;
@@ -558,6 +577,11 @@ export const Layout = styled.div`
   gap: 18px;
   align-items: start;
 
+  @media (min-width: 1024px) {
+    grid-template-columns: minmax(260px, 292px) minmax(0, 1fr);
+    gap: 22px;
+  }
+
   @media (max-width: 1024px) {
     grid-template-columns: minmax(0, 1fr);
     gap: 14px;
@@ -575,6 +599,12 @@ export const FilterWrap = styled.aside`
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(0, 0, 128, 0.08);
   box-shadow: 0 16px 36px rgba(16, 24, 40, 0.08);
+
+  @media (min-width: 1024px) {
+    border-color: ${border};
+    border-radius: 18px;
+    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.075);
+  }
 
   @media (max-width: 1024px) {
     display: none;
@@ -763,6 +793,13 @@ export const ExpertsWrap = styled.section`
   border: 1px solid rgba(0, 0, 128, 0.08);
   box-shadow: 0 16px 36px rgba(16, 24, 40, 0.08);
 
+  @media (min-width: 1024px) {
+    border-color: ${border};
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.075);
+  }
+
   @media (max-width: 768px) {
     padding: 0;
     border: 0;
@@ -782,6 +819,10 @@ export const Grid = styled.div`
   grid-auto-rows: 1fr;
   align-items: stretch;
   gap: 18px;
+
+  @media (min-width: 1280px) {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
 
   > div {
     min-width: 0;

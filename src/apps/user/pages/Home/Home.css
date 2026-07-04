@@ -6535,3 +6535,29 @@ img {
   overflow-wrap: anywhere !important;
   white-space: normal !important;
 }
+
+/* =====================================================
+   DESKTOP ONLY SHARED LAYOUT & RESPONSIVENESS OVERRIDES
+   ===================================================== */
+@media (min-width: 768px) {
+  /* Expand center column in no-right-sidebar layout */
+  .home-desktop-shell.layout--full-content {
+    grid-template-columns: 260px minmax(0, 1fr) !important;
+  }
+
+  /* Override fixed max-width limits on user module pages to fill available center area */
+  .expert-listing-page,
+  .expert-profile-page,
+  .call-chat-expert-page,
+  .service-detail-page,
+  .subcategory-page,
+  .category-page,
+  .search-page,
+  .all-services-page {
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}

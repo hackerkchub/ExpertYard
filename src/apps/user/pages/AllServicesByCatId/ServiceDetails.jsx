@@ -200,7 +200,7 @@ const ServiceDetail = () => {
   if (!service) return <S.ErrorState>Service not found.</S.ErrorState>;
 
   return (
-    <S.PageWrapper>
+    <S.PageWrapper className="service-detail-page">
       <S.Container>
         <S.TopBar>
           <S.FastTag><FiZap /> {isProductService ? "Digital Service" : "Instant Expert Connection"}</S.FastTag>

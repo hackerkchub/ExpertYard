@@ -173,7 +173,7 @@ export default function SubcategoryPage() {
 
   if (categoryMissing) {
     return (
-      <PageContainer>
+      <PageContainer className="subcategory-page">
         <EmptyStateBox>
           <EmptyStateTitle>Category not found</EmptyStateTitle>
           <EmptyStateText>The selected category is unavailable or has moved.</EmptyStateText>
@@ -186,7 +186,7 @@ export default function SubcategoryPage() {
   }
 
   return (
-    <PageContainer>
+    <PageContainer className="subcategory-page">
       <Breadcrumb>
         <BreadcrumbItem onClick={() => navigate("/user")}>Home</BreadcrumbItem>
         <BreadcrumbSeparator><FiChevronRight /></BreadcrumbSeparator>

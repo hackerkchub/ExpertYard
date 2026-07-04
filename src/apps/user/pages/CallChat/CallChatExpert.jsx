@@ -1212,7 +1212,7 @@ export default function UserExpertsPage() {
         }
       `}</style>
       
-      <PageWrap>
+      <PageWrap className="call-chat-expert-page">
         
 
         <TabsRow>

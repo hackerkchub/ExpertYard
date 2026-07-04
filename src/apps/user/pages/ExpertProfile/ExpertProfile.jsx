@@ -1184,7 +1184,7 @@ const ExpertProfilePage = () => {
         }
       `}</style>
       
-      <PageWrap>
+      <PageWrap className="expert-profile-page">
         <ProfileCard>
           <div className="expert-profile-hero-inner" style={{ display: 'flex', flexWrap: 'wrap' }}>
             <div className="expert-profile-hero-media" style={{ flex: '0 0 200px' }}>

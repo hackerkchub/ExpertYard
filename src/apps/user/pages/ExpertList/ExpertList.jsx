@@ -248,7 +248,7 @@ const ExpertListPage = () => {
   );
 
   return (
-    <PageWrap>
+    <PageWrap className="expert-listing-page">
       {/* ================= HEADER ================= */}
       <HeaderWrap>
         <PageTitle>

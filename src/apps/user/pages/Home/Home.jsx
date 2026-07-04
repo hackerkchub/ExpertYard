@@ -705,7 +705,7 @@ export default function HomePage() {
         </div>
       ) : null}
 
-      <div className="home-desktop-shell">
+      <div className="home-desktop-shell layout--with-right-sidebar">
         <HomeLeftSidebar
           isLoggedIn={isLoggedIn}
           user={user}

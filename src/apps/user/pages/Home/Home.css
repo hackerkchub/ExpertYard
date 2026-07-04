@@ -6542,7 +6542,17 @@ img {
 @media (min-width: 768px) {
   /* Expand center column in no-right-sidebar layout */
   .home-desktop-shell.layout--full-content {
-    grid-template-columns: 260px minmax(0, 1fr) !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .home-desktop-shell.layout--full-content > .home-center-column {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
   }
 
   /* Override fixed max-width limits on user module pages to fill available center area */
@@ -6554,10 +6564,36 @@ img {
   .category-page,
   .search-page,
   .all-services-page {
-    max-width: 100% !important;
+    max-width: none !important;
     width: 100% !important;
     box-sizing: border-box !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
+  }
+
+  .category-page > *,
+  .subcategory-page > *,
+  .all-services-page > *,
+  .service-detail-page > *,
+  .search-page-hero,
+  .search-page-tabs,
+  .search-page-section,
+  .search-page-recommendations {
+    max-width: none !important;
+    box-sizing: border-box !important;
+  }
+
+  .category-page > *,
+  .subcategory-page > *,
+  .all-services-page > *,
+  .service-detail-page > * {
+    width: 100% !important;
+  }
+
+  .search-page-hero,
+  .search-page-tabs,
+  .search-page-section,
+  .search-page-recommendations {
+    width: 100% !important;
   }
 }

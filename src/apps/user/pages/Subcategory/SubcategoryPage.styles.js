@@ -88,6 +88,26 @@ export const PageHeader = styled.header`
     radial-gradient(circle at 88% 20%, rgba(244, 197, 66, 0.28), transparent 24%),
     linear-gradient(135deg, #000080 0%, #03045e 55%, #020329 100%);
 
+  @media (min-width: 1024px) {
+    color: ${colors.white} !important;
+
+    :where(h1, h2, h3, h4, p, span, small, strong, div, label, svg) {
+      color: inherit !important;
+    }
+
+    input,
+    input *,
+    button,
+    button * {
+      color: ${colors.textMain} !important;
+    }
+
+    button,
+    button * {
+      color: ${colors.primary} !important;
+    }
+  }
+
   @media (max-width: 767px) {
     width: calc(100% - 20px);
     padding: 18px 0 20px;
@@ -835,6 +855,19 @@ export const CtaBanner = styled.div`
     linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark});
   box-shadow: 0 18px 42px rgba(0, 0, 128, 0.18);
   box-sizing: border-box;
+
+  @media (min-width: 1024px) {
+    color: ${colors.white} !important;
+
+    :where(h1, h2, h3, h4, p, span, small, strong, div, svg) {
+      color: inherit !important;
+    }
+
+    button,
+    button * {
+      color: ${colors.primary} !important;
+    }
+  }
 `;
 
 export const CtaTitle = styled.h2`

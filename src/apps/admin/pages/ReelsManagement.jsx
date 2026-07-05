@@ -4,18 +4,13 @@ import {
   getPendingReelsApi,
   approveReelApi,
   rejectReelApi,
-  blockReelApi,
-  getReportedReelsApi,
-  resolveReportApi
+  blockReelApi
 } from "../../../shared/api/reels.api";
 
 import {
   FiCheck,
   FiX,
   FiAlertOctagon,
-  FiAlertCircle,
-  FiTrash,
-  FiPlay
 } from "react-icons/fi";
 import Swal from "sweetalert2";
 
@@ -33,16 +28,33 @@ import {
   ReelCaption,
   ActionsRow,
   Button,
-  ReportsTable,
-  ReportReason,
   SpinnerWrapper,
   Spinner
 } from "./ReelsManagement.styles";
 
+const STATUS_CODES = {
+  draft: -1,
+  pending: 0,
+  approved: 1,
+  rejected: 2,
+  blocked: 3,
+};
+
+const normalizeStatus = (reel) => {
+  if (typeof reel.status === "string") return reel.status;
+  const code = Number(reel.status_code ?? reel.status);
+  return Object.keys(STATUS_CODES).find((key) => STATUS_CODES[key] === code) || "draft";
+};
+
+const statusLabel = (reel) => {
+  const status = normalizeStatus(reel);
+  if (status === "pending") return "Pending Approval";
+  return status.charAt(0).toUpperCase() + status.slice(1);
+};
+
 export default function ReelsManagement() {
   const [activeTab, setActiveTab] = useState("pending");
   const [reels, setReels] = useState([]);
-  const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Load active tab data
@@ -54,25 +66,16 @@ export default function ReelsManagement() {
         if (res.data && res.data.success) {
           setReels(res.data.data || []);
         }
-      } else if (activeTab === "approved") {
-        const res = await getAdminReelsApi();
-        if (res.data && res.data.success) {
-          const list = res.data.data || [];
-          setReels(list.filter(r => r.status === 1));
-        }
-      } else if (activeTab === "reports") {
-        const res = await getReportedReelsApi();
-        if (res.data && res.data.success) {
-          setReports(res.data.data || []);
-        }
       } else {
-        const res = await getAdminReelsApi();
+        const params = activeTab === "all" ? { status: "all" } : { status: activeTab };
+        const res = await getAdminReelsApi(params);
         if (res.data && res.data.success) {
           setReels(res.data.data || []);
         }
       }
     } catch (err) {
       console.error("Error loading admin Reels data:", err);
+      Swal.fire("Error", "Failed to load reels", "error");
     } finally {
       setLoading(false);
     }
@@ -141,18 +144,6 @@ export default function ReelsManagement() {
     }
   };
 
-  // Resolve Report
-  const handleResolveReport = async (reportId) => {
-    try {
-      await resolveReportApi(reportId);
-      Swal.fire("Resolved", "Report resolved", "success");
-      loadData();
-    } catch (err) {
-      console.error("Resolve report error:", err);
-      Swal.fire("Error", "Failed to resolve report", "error");
-    }
-  };
-
   return (
     <Container>
       <Title>Expert Reels Moderation</Title>
@@ -164,8 +155,11 @@ export default function ReelsManagement() {
         <TabButton active={activeTab === "approved"} onClick={() => setActiveTab("approved")}>
           Approved Reels
         </TabButton>
-        <TabButton active={activeTab === "reports"} onClick={() => setActiveTab("reports")}>
-          Reported Reels
+        <TabButton active={activeTab === "rejected"} onClick={() => setActiveTab("rejected")}>
+          Rejected Reels
+        </TabButton>
+        <TabButton active={activeTab === "blocked"} onClick={() => setActiveTab("blocked")}>
+          Blocked Reels
         </TabButton>
         <TabButton active={activeTab === "all"} onClick={() => setActiveTab("all")}>
           All Reels
@@ -176,58 +170,6 @@ export default function ReelsManagement() {
         <SpinnerWrapper>
           <Spinner />
         </SpinnerWrapper>
-      ) : activeTab === "reports" ? (
-        reports.length === 0 ? (
-          <p style={{ textAlign: "center", color: "#6b7280" }}>No reports to moderate.</p>
-        ) : (
-          <div style={{ overflowX: "auto" }}>
-            <ReportsTable>
-              <thead>
-                <tr>
-                  <th>Reel Title</th>
-                  <th>Expert Name</th>
-                  <th>Reporter</th>
-                  <th>Reason</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reports.map((report) => (
-                  <tr key={report.id}>
-                    <td>
-                      <a href={report.video_url} target="_blank" rel="noopener noreferrer" style={{ color: "#000080", fontWeight: "600", textDecoration: "underline" }}>
-                        {report.reel_title}
-                      </a>
-                    </td>
-                    <td>{report.expert_name}</td>
-                    <td>{report.reporter_name || "User"}</td>
-                    <td>
-                      <ReportReason>{report.reason}</ReportReason>
-                    </td>
-                    <td>
-                      <span style={{ fontWeight: "700", color: report.status === 1 ? "#10b981" : "#ef4444" }}>
-                        {report.status === 1 ? "Resolved" : "Pending"}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ display: "flex", gap: "6px" }}>
-                        {report.status === 0 && (
-                          <Button variant="success" onClick={() => handleResolveReport(report.id)}>
-                            <FiCheck /> Resolve
-                          </Button>
-                        )}
-                        <Button variant="danger" onClick={() => handleBlock(report.reel_id)}>
-                          <FiAlertOctagon /> Take Down Reel
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </ReportsTable>
-          </div>
-        )
       ) : reels.length === 0 ? (
         <p style={{ textAlign: "center", color: "#6b7280" }}>No reels found in this tab.</p>
       ) : (
@@ -243,14 +185,19 @@ export default function ReelsManagement() {
                   <div>
                     <span className="name">{reel.expert_name}</span>
                     {reel.category_name && <span className="category">{reel.category_name}</span>}
+                    {reel.linked_service_title && <span className="category">{reel.linked_service_title}</span>}
                   </div>
                 </MetaRow>
 
                 <ReelTitle>{reel.title}</ReelTitle>
                 {reel.caption && <ReelCaption>{reel.caption}</ReelCaption>}
+                <p style={{ fontSize: "12px", color: "#6b7280", margin: "0 0 10px" }}>
+                  Status: {statusLabel(reel)}
+                  {reel.submitted_at ? ` - Submitted: ${new Date(reel.submitted_at).toLocaleDateString()}` : ""}
+                </p>
 
                 <ActionsRow>
-                  {reel.status === 0 && (
+                  {normalizeStatus(reel) === "pending" && (
                     <>
                       <Button variant="success" onClick={() => handleApprove(reel.id)}>
                         <FiCheck /> Approve
@@ -260,14 +207,14 @@ export default function ReelsManagement() {
                       </Button>
                     </>
                   )}
-                  {reel.status === 1 && (
+                  {normalizeStatus(reel) === "approved" && (
                     <Button variant="danger" onClick={() => handleBlock(reel.id)}>
                       <FiAlertOctagon /> Block Reel
                     </Button>
                   )}
-                  {reel.status !== 0 && reel.status !== 1 && (
+                  {!["pending", "approved"].includes(normalizeStatus(reel)) && (
                     <span style={{ fontSize: "12px", fontWeight: "700", color: "#ef4444", textTransform: "uppercase" }}>
-                      {reel.status === 2 ? "Rejected" : "Blocked"}
+                      {statusLabel(reel)}
                     </span>
                   )}
                 </ActionsRow>

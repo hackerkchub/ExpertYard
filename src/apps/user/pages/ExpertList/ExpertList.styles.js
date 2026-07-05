@@ -199,6 +199,14 @@ export const PillButton = styled.button`
       box-shadow: 0 8px 24px rgba(14, 165, 233, 0.45);
     `}
 
+  @media (min-width: 1024px) {
+    ${({ $active }) =>
+      $active &&
+      css`
+        color: #ffffff;
+      `}
+  }
+
   &:hover {
     opacity: 0.95;
   }

@@ -104,8 +104,20 @@ export const HeroSection = styled.section`
     box-shadow: 0 20px 48px rgba(0, 0, 128, 0.18);
     color: #ffffff !important;
 
-    :where(h1, p, small, strong, svg) {
+    :where(h1, h2, h3, h4, p, span, small, strong, div, label, svg) {
       color: inherit !important;
+    }
+
+    input,
+    input *,
+    button,
+    button * {
+      color: ${colors.textMain} !important;
+    }
+
+    button,
+    button * {
+      color: ${colors.primaryDeep} !important;
     }
   }
 
@@ -825,8 +837,13 @@ export const CtaBlock = styled.section`
   @media (min-width: 1024px) {
     color: #ffffff !important;
 
-    :where(h2, p, small, strong, svg) {
+    :where(h1, h2, h3, h4, p, span, small, strong, div, svg) {
       color: inherit !important;
+    }
+
+    button,
+    button * {
+      color: ${colors.primaryDeep} !important;
     }
   }
 

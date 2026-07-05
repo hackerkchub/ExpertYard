@@ -57,6 +57,32 @@ import {
   InlineSpinner
 } from "./ManageReels.styles";
 
+const getApiErrorStatus = (err) => err?.response?.status || null;
+
+const getApiErrorMessage = (err, fallback) => (
+  err?.response?.data?.message ||
+  err?.response?.data?.error ||
+  err?.message ||
+  (typeof err === "string" ? err : null) ||
+  fallback
+);
+
+const showReelsApiError = (err, fallback) => {
+  const status = getApiErrorStatus(err);
+
+  if (status === 403) {
+    Swal.fire("Access Denied", "Access denied. Please login as expert.", "error");
+    return;
+  }
+
+  if (status === 404) {
+    Swal.fire("API Not Found", "Reels API endpoint not found. Please check backend route.", "error");
+    return;
+  }
+
+  Swal.fire("Error", getApiErrorMessage(err, fallback), "error");
+};
+
 export default function ManageReels() {
   const { expertData } = useExpert();
   const { categories } = useCategory();
@@ -95,10 +121,9 @@ export default function ManageReels() {
       }
     } catch (err) {
       console.error("Error loading expert reels:", err);
-      const is404 = err?.includes?.("404") || (err?.response && err.response.status === 404) || err?.message?.includes?.("404");
-      const is403 = err?.includes?.("403") || (err?.response && err.response.status === 403) || err?.message?.includes?.("403") || err === "Forbidden" || err === "Access denied";
+      const status = getApiErrorStatus(err);
       
-      if (is403) {
+      if (status === 403) {
         Swal.fire({
           title: "Access Denied",
           text: "Access denied. Please login as expert.",
@@ -108,10 +133,10 @@ export default function ManageReels() {
           timer: 5000,
           showConfirmButton: false
         });
-      } else if (is404) {
+      } else if (status === 404) {
         Swal.fire({
           title: "API Not Available",
-          text: "Reels API not available. Please check backend route.",
+          text: "Reels API endpoint not found. Please check backend route.",
           icon: "warning",
           toast: true,
           position: "top-end",
@@ -121,7 +146,7 @@ export default function ManageReels() {
       } else {
         Swal.fire({
           title: "Error loading reels",
-          text: typeof err === "string" ? err : err.message || "Failed to load Reels.",
+          text: getApiErrorMessage(err, "Failed to load Reels."),
           icon: "error",
           toast: true,
           position: "top-end",
@@ -216,7 +241,7 @@ export default function ManageReels() {
       loadData();
     } catch (err) {
       console.error("Submit reel error:", err);
-      Swal.fire("Error", err.message || "Failed to submit reel", "error");
+      showReelsApiError(err, "Failed to save reel");
     } finally {
       setSubmitting(false);
     }
@@ -240,7 +265,7 @@ export default function ManageReels() {
         loadData();
       } catch (err) {
         console.error("Delete reel error:", err);
-        Swal.fire("Error", "Failed to delete reel", "error");
+        showReelsApiError(err, "Failed to delete reel");
       }
     }
   };
@@ -253,13 +278,34 @@ export default function ManageReels() {
       loadData();
     } catch (err) {
       console.error("Submit approval error:", err);
-      Swal.fire("Error", "Failed to submit for approval", "error");
+      showReelsApiError(err, "Failed to submit for approval");
     }
   };
 
   // Subcategories logic
   const selectedCatObj = categories.find(c => c.id === parseInt(categoryId));
   const subcategoriesList = selectedCatObj?.subcategories || [];
+  const getReelStatus = (reel) => {
+    if (typeof reel.status === "string") return reel.status;
+    const statusCode = Number(reel.status_code ?? reel.status);
+    if (statusCode === 1) return "approved";
+    if (statusCode === 0) return "pending";
+    if (statusCode === 2) return "rejected";
+    if (statusCode === 3) return "blocked";
+    return "draft";
+  };
+  const getReelStatusCode = (reel) => {
+    const status = getReelStatus(reel);
+    if (status === "approved") return 1;
+    if (status === "pending") return 0;
+    if (status === "rejected") return 2;
+    if (status === "blocked") return 3;
+    return -1;
+  };
+  const getReelStatusLabel = (reel) => {
+    const status = getReelStatus(reel);
+    return status === "pending" ? "Pending Approval" : status.charAt(0).toUpperCase() + status.slice(1);
+  };
 
   return (
     <PageContainer>
@@ -277,7 +323,7 @@ export default function ManageReels() {
       ) : reels.length === 0 ? (
         <div style={{ textAlign: "center", padding: "40px", background: "#f9fafb", borderRadius: "16px", border: "1px dashed #d1d5db" }}>
           <FiUploadCloud size={48} color="#9ca3af" style={{ marginBottom: "12px" }} />
-          <h3>No Reels Uploaded Yet</h3>
+          <h3>No reels created yet.</h3>
           <p style={{ color: "#6b7280" }}>Short videos help double your client consultations! Upload your first reel now.</p>
         </div>
       ) : (
@@ -286,8 +332,8 @@ export default function ManageReels() {
             <ReelCard key={reel.id}>
               <VideoPreviewWrapper>
                 <CardThumbnail src={reel.thumbnail_url || "https://placehold.co/360x640/121214/ffffff?text=Video+Reel"} alt={reel.title} />
-                <StatusBadge status={reel.status}>
-                  {reel.status === 1 ? "Approved" : reel.status === 0 ? "Pending" : reel.status === 2 ? "Rejected" : reel.status === 3 ? "Blocked" : "Draft"}
+                <StatusBadge status={getReelStatusCode(reel)}>
+                  {getReelStatusLabel(reel)}
                 </StatusBadge>
               </VideoPreviewWrapper>
 
@@ -295,7 +341,7 @@ export default function ManageReels() {
                 <ReelTitle>{reel.title}</ReelTitle>
                 {reel.caption && <ReelCaption>{reel.caption}</ReelCaption>}
 
-                {reel.status === 2 && reel.rejected_reason && (
+                {getReelStatus(reel) === "rejected" && reel.rejected_reason && (
                   <RejectedReasonBox>
                     <strong>Reason:</strong> {reel.rejected_reason}
                   </RejectedReasonBox>
@@ -333,7 +379,7 @@ export default function ManageReels() {
                   </ActionButton>
                 </ActionsRow>
 
-                {(reel.status === -1 || reel.status === 2) && (
+                {["draft", "rejected"].includes(getReelStatus(reel)) && (
                   <ActionButton
                     variant="primary"
                     style={{ marginTop: "8px", width: "100%" }}

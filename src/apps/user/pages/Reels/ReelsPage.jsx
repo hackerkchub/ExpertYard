@@ -12,9 +12,12 @@ import {
   FiPhone,
   FiMessageSquare,
   FiCalendar,
-  FiUser
+  FiUser,
+  FiPlay,
+  FiPause
 } from "react-icons/fi";
 import Swal from "sweetalert2";
+import { APP_CONFIG } from "../../../../config/appConfig";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import useChatRequest from "../../../../shared/hooks/useChatRequest";
 import {
@@ -25,6 +28,7 @@ import {
   unlikeReelApi,
   addCommentApi,
   getReelCommentsApi,
+  deleteReelCommentApi,
   saveReelApi,
   unsaveReelApi,
   logReelShareApi,
@@ -32,6 +36,7 @@ import {
 } from "../../../../shared/api/reels.api";
 
 import {
+  ReelsPageGlobalStyle,
   Container,
   ReelsFeed,
   ReelWrapper,
@@ -42,6 +47,7 @@ import {
   MobileOverlayContent,
   ExpertMeta,
   Avatar,
+  AvatarFallback,
   NameText,
   CategoryTag,
   TitleText,
@@ -64,12 +70,80 @@ import {
   CommentInputRow,
   CommentInput,
   CommentSubmitButton,
+  MobileCommentsBackdrop,
+  MobileCommentsPanel,
+  MobileCommentsHeader,
   CtaRow,
   CtaButton,
+  PlayToggleOverlay,
   SoundToggle,
   LoadingOverlay,
   Spinner
 } from "./ReelsPage.styles";
+
+const API_ORIGIN = APP_CONFIG.API_BASE_URL.replace(/\/api\/?$/, "");
+
+const getOrCreateReelSessionId = () => {
+  const key = "g9_reels_session_id";
+  let value = localStorage.getItem(key);
+  if (!value) {
+    value = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    localStorage.setItem(key, value);
+  }
+  return value;
+};
+
+const getErrorMessage = (err, fallback) => {
+  if (typeof err === "string") return err;
+  return err?.response?.data?.message || err?.message || fallback;
+};
+
+const getExpertProfileRouteId = (reel) => (
+  reel?.expert_slug ||
+  reel?.expert_profile_slug ||
+  reel?.profile_slug ||
+  reel?.expert_user_id ||
+  reel?.expert_id ||
+  null
+);
+
+const getInitials = (name) => {
+  const parts = String(name || "G9")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  return (parts[0]?.[0] || "G").toUpperCase() + (parts[1]?.[0] || "9").toUpperCase();
+};
+
+const resolveExpertAvatar = (reel) => {
+  const raw =
+    reel?.expert_profile_photo ||
+    reel?.expert_profile_image ||
+    reel?.expert_image ||
+    reel?.profile_image ||
+    reel?.profile_photo ||
+    reel?.avatar ||
+    reel?.expert?.avatar ||
+    reel?.expert?.profile_image ||
+    reel?.expert?.profile_photo ||
+    reel?.user?.profile_image ||
+    "";
+  const value = String(raw || "").trim();
+  if (!value) return "";
+  if (/^(https?:)?\/\//i.test(value) || value.startsWith("data:") || value.startsWith("blob:")) {
+    return value;
+  }
+  if (value.startsWith("/uploads/")) {
+    return `${API_ORIGIN}${value}`;
+  }
+  if (value.startsWith("uploads/")) {
+    return `${API_ORIGIN}/${value}`;
+  }
+  if (value.startsWith("/")) {
+    return `${API_ORIGIN}${value}`;
+  }
+  return `${API_ORIGIN}/uploads/${value}`;
+};
 
 export default function ReelsPage() {
   const { slug } = useParams();
@@ -85,9 +159,44 @@ export default function ReelsPage() {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentsReelId, setCommentsReelId] = useState(null);
+  const [pendingActions, setPendingActions] = useState({});
+  const [manualPausedReelIds, setManualPausedReelIds] = useState(() => new Set());
+  const [playFeedback, setPlayFeedback] = useState(null);
+  const [failedAvatarKeys, setFailedAvatarKeys] = useState(() => new Set());
 
   const containerRef = useRef(null);
   const videoRefs = useRef({});
+  const viewedReelsRef = useRef(new Set());
+  const viewTimersRef = useRef({});
+  const snapTimerRef = useRef(null);
+  const snapLockRef = useRef(false);
+  const playFeedbackTimerRef = useRef(null);
+
+  useEffect(() => {
+    document.body.classList.add("g9-reels-page-active");
+    document.documentElement.classList.add("g9-reels-page-active");
+
+    return () => {
+      document.body.classList.remove("g9-reels-page-active");
+      document.documentElement.classList.remove("g9-reels-page-active");
+      if (snapTimerRef.current) {
+        window.clearTimeout(snapTimerRef.current);
+      }
+      if (playFeedbackTimerRef.current) {
+        window.clearTimeout(playFeedbackTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    setManualPausedReelIds(new Set());
+    setPlayFeedback(null);
+    if (playFeedbackTimerRef.current) {
+      window.clearTimeout(playFeedbackTimerRef.current);
+    }
+  }, [activeIdx]);
 
   // 1. Fetch Reels Feed / Single Reel
   useEffect(() => {
@@ -125,52 +234,187 @@ export default function ReelsPage() {
     fetchReels();
   }, [slug, user?.id]);
 
+  const snapToReel = useCallback((index, behavior = "smooth") => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const target = container.querySelector(`[data-index="${index}"]`);
+    if (!target) return;
+
+    snapLockRef.current = true;
+    target.scrollIntoView({ block: "start", behavior });
+    window.setTimeout(() => {
+      snapLockRef.current = false;
+    }, 420);
+  }, []);
+
+  const snapToNearestReel = useCallback(() => {
+    const container = containerRef.current;
+    if (!container || snapLockRef.current) return;
+
+    const slides = Array.from(container.querySelectorAll(".reel-slide"));
+    if (!slides.length) return;
+
+    const containerRect = container.getBoundingClientRect();
+    let bestIndex = activeIdx;
+    let bestVisible = 0;
+
+    slides.forEach((slide) => {
+      const rect = slide.getBoundingClientRect();
+      const visible = Math.max(
+        0,
+        Math.min(rect.bottom, containerRect.bottom) - Math.max(rect.top, containerRect.top)
+      );
+      if (visible > bestVisible) {
+        bestVisible = visible;
+        bestIndex = Number(slide.getAttribute("data-index") || 0);
+      }
+    });
+
+    setActiveIdx(bestIndex);
+    snapToReel(bestIndex);
+  }, [activeIdx, snapToReel]);
+
+  const handleReelsScroll = useCallback(() => {
+    if (snapTimerRef.current) {
+      window.clearTimeout(snapTimerRef.current);
+    }
+
+    snapTimerRef.current = window.setTimeout(() => {
+      snapToNearestReel();
+    }, 110);
+  }, [snapToNearestReel]);
+
+  const showPlayFeedback = useCallback((reelId, type, autoHide = true) => {
+    if (playFeedbackTimerRef.current) {
+      window.clearTimeout(playFeedbackTimerRef.current);
+    }
+
+    setPlayFeedback({ reelId, type, key: Date.now() });
+    if (autoHide) {
+      playFeedbackTimerRef.current = window.setTimeout(() => {
+        setPlayFeedback((current) => (
+          current?.reelId === reelId ? null : current
+        ));
+      }, 520);
+    }
+  }, []);
+
+  const handleVideoToggle = useCallback((event, reel, index) => {
+    event.stopPropagation();
+    if (index !== activeIdx) return;
+
+    const video = videoRefs.current[index];
+    if (!video) return;
+
+    const currentlyPaused = video.paused || manualPausedReelIds.has(reel.id);
+    if (currentlyPaused) {
+      setManualPausedReelIds((prev) => {
+        const next = new Set(prev);
+        next.delete(reel.id);
+        return next;
+      });
+      video.play()
+        .then(() => showPlayFeedback(reel.id, "play"))
+        .catch(() => {
+          setManualPausedReelIds((prev) => new Set(prev).add(reel.id));
+          showPlayFeedback(reel.id, "play", false);
+        });
+    } else {
+      video.pause();
+      setManualPausedReelIds((prev) => new Set(prev).add(reel.id));
+      showPlayFeedback(reel.id, "pause", false);
+    }
+  }, [activeIdx, manualPausedReelIds, showPlayFeedback]);
+
   // 2. IntersectionObserver to track visible video and play/pause
   useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return undefined;
+
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const index = parseInt(entry.target.getAttribute("data-index"), 10);
-            setActiveIdx(index);
-          }
-        });
+        const visibleEntries = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+        if (visibleEntries[0]) {
+          const index = parseInt(visibleEntries[0].target.getAttribute("data-index"), 10);
+          setActiveIdx(index);
+        }
       },
-      { threshold: 0.6 }
+      {
+        root: container,
+        threshold: [0.55, 0.7, 0.85, 0.95],
+      }
     );
 
-    const elements = document.querySelectorAll(".reel-slide");
+    const elements = container.querySelectorAll(".reel-slide");
     elements.forEach((el) => observer.observe(el));
 
     return () => {
       elements.forEach((el) => observer.unobserve(el));
+      observer.disconnect();
     };
   }, [reels]);
 
-  // Handle play/pause, view log based on active index
+  const updateReelById = useCallback((reelId, updater) => {
+    setReels((prev) => prev.map((item) => (
+      Number(item.id) === Number(reelId) ? updater(item) : item
+    )));
+  }, []);
+
+  const fetchComments = useCallback(async (reelId) => {
+    setLoadingComments(true);
+    try {
+      const res = await getReelCommentsApi(reelId);
+      if (res.data && res.data.success) {
+        setComments(res.data.data || []);
+      }
+    } catch (err) {
+      Swal.fire("Error", getErrorMessage(err, "Failed to load comments"), "error");
+    } finally {
+      setLoadingComments(false);
+    }
+  }, []);
+
+  const openComments = useCallback((reel) => {
+    setCommentsOpen(true);
+    setCommentsReelId(reel.id);
+    fetchComments(reel.id);
+  }, [fetchComments]);
+
+  const logMeaningfulView = useCallback(async (reel, watchTime, percentageWatched) => {
+    if (!reel || viewedReelsRef.current.has(reel.id)) return;
+    viewedReelsRef.current.add(reel.id);
+
+    try {
+      const res = await logReelViewApi(reel.id, {
+        user_id: user?.id || null,
+        session_id: getOrCreateReelSessionId(),
+        watch_time: watchTime,
+        percentage_watched: percentageWatched
+      });
+
+      if (res.data?.success && res.data?.data?.counted) {
+        updateReelById(reel.id, (item) => ({
+          ...item,
+          views_count: res.data.data.views_count ?? item.views_count
+        }));
+      }
+    } catch (err) {
+      viewedReelsRef.current.delete(reel.id);
+      console.error("View count error:", err);
+    }
+  }, [updateReelById, user?.id]);
+
+  // Handle play/pause and meaningful view count based on active index
   useEffect(() => {
     if (reels.length === 0) return;
 
-    // Log view for the active reel
     const activeReel = reels[activeIdx];
-    if (activeReel) {
-      logReelViewApi(activeReel.id, {
-        user_id: user?.id || null,
-        watch_time: 0,
-        percentage_watched: 0
-      }).catch(console.error);
-
-      // Fetch comments for active reel
-      setLoadingComments(true);
-      getReelCommentsApi(activeReel.id)
-        .then((res) => {
-          if (res.data && res.data.success) {
-            setComments(res.data.data || []);
-          }
-        })
-        .catch(console.error)
-        .finally(() => setLoadingComments(false));
-    }
+    Object.values(viewTimersRef.current).forEach(clearTimeout);
+    viewTimersRef.current = {};
 
     // Play active video, pause others
     Object.keys(videoRefs.current).forEach((key) => {
@@ -178,14 +422,44 @@ export default function ReelsPage() {
       const video = videoRefs.current[key];
       if (video) {
         if (idx === activeIdx) {
-          video.play().catch((err) => console.log("Auto-play blocked:", err));
+          const isManuallyPaused = activeReel && manualPausedReelIds.has(activeReel.id);
+          if (isManuallyPaused) {
+            video.pause();
+            return;
+          }
+
+          video.play().catch(() => {});
+          if (activeReel && !viewedReelsRef.current.has(activeReel.id)) {
+            viewTimersRef.current[activeReel.id] = setTimeout(() => {
+              const duration = Number(video.duration || 0);
+              const currentTime = Number(video.currentTime || 3);
+              const percent = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 50;
+              logMeaningfulView(activeReel, Math.max(3, currentTime), percent);
+            }, 3000);
+          }
         } else {
           video.pause();
           video.currentTime = 0;
         }
       }
     });
-  }, [activeIdx, reels, user?.id]);
+
+    return () => {
+      Object.values(viewTimersRef.current).forEach(clearTimeout);
+      viewTimersRef.current = {};
+    };
+  }, [activeIdx, reels, logMeaningfulView, manualPausedReelIds]);
+
+  const handleVideoTimeUpdate = (reel, video) => {
+    if (!video || viewedReelsRef.current.has(reel.id)) return;
+    const duration = Number(video.duration || 0);
+    if (!duration) return;
+    const watchTime = Number(video.currentTime || 0);
+    const percentageWatched = Math.min(100, (watchTime / duration) * 100);
+    if (watchTime >= 3 || percentageWatched >= 50) {
+      logMeaningfulView(reel, watchTime, percentageWatched);
+    }
+  };
 
   // 3. Reels Interactivity (Like, Save, Share, Comment, Report)
   const handleLike = async (reel, index) => {
@@ -193,23 +467,33 @@ export default function ReelsPage() {
       navigate("/user/auth", { state: { from: location } });
       return;
     }
+    const actionKey = `like-${reel.id}`;
+    if (pendingActions[actionKey]) return;
 
-    const updated = [...reels];
-    const item = updated[index];
+    const previous = reels;
+    const item = reels[index];
+    const nextLiked = !item.is_liked;
 
+    setPendingActions((prev) => ({ ...prev, [actionKey]: true }));
+    updateReelById(item.id, (current) => ({
+      ...current,
+      is_liked: nextLiked,
+      likes_count: nextLiked
+        ? Number(current.likes_count || 0) + 1
+        : Math.max(0, Number(current.likes_count || 0) - 1)
+    }));
     try {
-      if (item.is_liked) {
-        item.is_liked = 0;
-        item.likes_count = Math.max(0, item.likes_count - 1);
-        await unlikeReelApi(item.id, { user_id: user.id });
-      } else {
-        item.is_liked = 1;
-        item.likes_count = item.likes_count + 1;
-        await likeReelApi(item.id, { user_id: user.id });
+      const res = nextLiked
+        ? await likeReelApi(item.id, { user_id: user.id })
+        : await unlikeReelApi(item.id, { user_id: user.id });
+      if (res.data?.data) {
+        updateReelById(item.id, (current) => ({ ...current, ...res.data.data }));
       }
-      setReels(updated);
     } catch (err) {
-      console.error("Like error:", err);
+      setReels(previous);
+      Swal.fire("Error", getErrorMessage(err, "Failed to update like"), "error");
+    } finally {
+      setPendingActions((prev) => ({ ...prev, [actionKey]: false }));
     }
   };
 
@@ -218,23 +502,33 @@ export default function ReelsPage() {
       navigate("/user/auth", { state: { from: location } });
       return;
     }
+    const actionKey = `save-${reel.id}`;
+    if (pendingActions[actionKey]) return;
 
-    const updated = [...reels];
-    const item = updated[index];
+    const previous = reels;
+    const item = reels[index];
+    const nextSaved = !item.is_saved;
 
+    setPendingActions((prev) => ({ ...prev, [actionKey]: true }));
+    updateReelById(item.id, (current) => ({
+      ...current,
+      is_saved: nextSaved,
+      saves_count: nextSaved
+        ? Number(current.saves_count || 0) + 1
+        : Math.max(0, Number(current.saves_count || 0) - 1)
+    }));
     try {
-      if (item.is_saved) {
-        item.is_saved = 0;
-        item.saves_count = Math.max(0, item.saves_count - 1);
-        await unsaveReelApi(item.id, { user_id: user.id });
-      } else {
-        item.is_saved = 1;
-        item.saves_count = item.saves_count + 1;
-        await saveReelApi(item.id, { user_id: user.id });
+      const res = nextSaved
+        ? await saveReelApi(item.id, { user_id: user.id })
+        : await unsaveReelApi(item.id, { user_id: user.id });
+      if (res.data?.data) {
+        updateReelById(item.id, (current) => ({ ...current, ...res.data.data }));
       }
-      setReels(updated);
     } catch (err) {
-      console.error("Save error:", err);
+      setReels(previous);
+      Swal.fire("Error", getErrorMessage(err, "Failed to update save"), "error");
+    } finally {
+      setPendingActions((prev) => ({ ...prev, [actionKey]: false }));
     }
   };
 
@@ -249,15 +543,17 @@ export default function ReelsPage() {
         });
       } else {
         await navigator.clipboard.writeText(shareUrl);
-        Swal.fire({
-          title: "Link Copied!",
-          text: "Reel link copied to clipboard.",
-          icon: "success",
-          timer: 1500,
-          showConfirmButton: false
-        });
       }
-      await logReelShareApi(reel.id, { user_id: user?.id || null, platform: "web_share" });
+      const res = await logReelShareApi(reel.id, { user_id: user?.id || null, platform: navigator.share ? "web_share" : "clipboard" });
+      if (res.data?.data) {
+        updateReelById(reel.id, (item) => ({ ...item, ...res.data.data }));
+      }
+      Swal.fire({
+        title: navigator.share ? "Shared successfully" : "Reel link copied",
+        icon: "success",
+        timer: 1200,
+        showConfirmButton: false
+      });
     } catch (err) {
       console.error("Share error:", err);
     }
@@ -272,16 +568,32 @@ export default function ReelsPage() {
     if (!newComment.trim()) return;
 
     try {
-      await addCommentApi(reelId, { user_id: user.id, comment: newComment });
+      const res = await addCommentApi(reelId, { user_id: user.id, comment: newComment });
       setNewComment("");
-
-      // Refresh comments
-      const res = await getReelCommentsApi(reelId);
-      if (res.data && res.data.success) {
-        setComments(res.data.data || []);
+      if (res.data?.success && res.data?.data) {
+        if (res.data.data.comment) {
+          setComments((prev) => [res.data.data.comment, ...prev]);
+        }
+        updateReelById(reelId, (item) => ({
+          ...item,
+          comments_count: res.data.data.comments_count ?? Number(item.comments_count || 0) + 1
+        }));
       }
     } catch (err) {
-      console.error("Comment submit error:", err);
+      Swal.fire("Error", getErrorMessage(err, "Failed to add comment"), "error");
+    }
+  };
+
+  const handleDeleteComment = async (commentId, reelId) => {
+    try {
+      const res = await deleteReelCommentApi(reelId, commentId);
+      setComments((prev) => prev.filter((comment) => comment.id !== commentId));
+      updateReelById(reelId, (item) => ({
+        ...item,
+        comments_count: res.data?.data?.comments_count ?? Math.max(0, Number(item.comments_count || 0) - 1)
+      }));
+    } catch (err) {
+      Swal.fire("Error", getErrorMessage(err, "Failed to delete comment"), "error");
     }
   };
 
@@ -329,8 +641,36 @@ export default function ReelsPage() {
     navigate(`/user/voice-call/${expertId}`);
   };
 
-  const handleProfileCTA = (expertId) => {
-    navigate(`/user/experts/${expertId}`);
+  const handleProfileCTA = (reel, state) => {
+    const routeId = getExpertProfileRouteId(reel);
+    if (!routeId) {
+      Swal.fire("Error", "Expert profile is not available for this reel.", "error");
+      return;
+    }
+    navigate(`/user/experts/${routeId}`, state ? { state } : undefined);
+  };
+
+  const renderExpertAvatar = (reel, extraProps = {}) => {
+    const avatarSrc = resolveExpertAvatar(reel);
+    const avatarKey = `${reel?.id || "reel"}-${avatarSrc || "fallback"}`;
+    if (!avatarSrc || failedAvatarKeys.has(avatarKey)) {
+      return (
+        <AvatarFallback {...extraProps} aria-label={reel?.expert_name || "Expert"}>
+          {getInitials(reel?.expert_name)}
+        </AvatarFallback>
+      );
+    }
+
+    return (
+      <Avatar
+        {...extraProps}
+        src={avatarSrc}
+        alt={reel?.expert_name || "Expert"}
+        onError={() => {
+          setFailedAvatarKeys((prev) => new Set(prev).add(avatarKey));
+        }}
+      />
+    );
   };
 
   // SEO details for active reel
@@ -338,6 +678,7 @@ export default function ReelsPage() {
 
   return (
     <Container>
+      <ReelsPageGlobalStyle />
       {ChatPopups}
       {currentReel && (
         <Helmet>
@@ -392,16 +733,19 @@ export default function ReelsPage() {
           <p>Please check back later.</p>
         </div>
       ) : (
-        <ReelsFeed ref={containerRef}>
+        <ReelsFeed ref={containerRef} onScroll={handleReelsScroll}>
           {reels.map((reel, index) => (
             <ReelWrapper key={reel.id} data-index={index} className="reel-slide">
               {/* VIDEO SECTION */}
               <PlayerSection>
-                <SoundToggle onClick={() => setIsMuted(!isMuted)}>
+                <SoundToggle onClick={(event) => {
+                  event.stopPropagation();
+                  setIsMuted(!isMuted);
+                }}>
                   {isMuted ? <FiVolumeX size={20} /> : <FiVolume2 size={20} />}
                 </SoundToggle>
 
-                <VideoContainer>
+                <VideoContainer onClick={(event) => handleVideoToggle(event, reel, index)}>
                   <VideoElement
                     ref={(el) => {
                       if (el) videoRefs.current[index] = el;
@@ -412,13 +756,26 @@ export default function ReelsPage() {
                     loop
                     muted={isMuted}
                     playsInline
+                    preload={index === activeIdx || index === activeIdx + 1 ? "metadata" : "none"}
+                    onTimeUpdate={(event) => handleVideoTimeUpdate(reel, event.currentTarget)}
                   />
+
+                  <PlayToggleOverlay
+                    $visible={manualPausedReelIds.has(reel.id) || playFeedback?.reelId === reel.id}
+                    $persistent={manualPausedReelIds.has(reel.id)}
+                    aria-hidden="true"
+                  >
+                    {manualPausedReelIds.has(reel.id) || playFeedback?.type === "play" ? <FiPlay /> : <FiPause />}
+                  </PlayToggleOverlay>
 
                   {/* Mobile Only Overlay */}
                   <VideoOverlay>
-                    <MobileOverlayContent>
-                      <ExpertMeta onClick={() => handleProfileCTA(reel.expert_id)}>
-                        <Avatar src={reel.expert_profile_photo || "https://placehold.co/100x100"} alt={reel.expert_name} />
+                    <MobileOverlayContent onClick={(event) => event.stopPropagation()}>
+                      <ExpertMeta onClick={(event) => {
+                        event.stopPropagation();
+                        handleProfileCTA(reel);
+                      }}>
+                        {renderExpertAvatar(reel)}
                         <div>
                           <NameText>{reel.expert_name}</NameText>
                           {reel.category_name && <CategoryTag>{reel.category_name}</CategoryTag>}
@@ -431,49 +788,72 @@ export default function ReelsPage() {
                   </VideoOverlay>
 
                   {/* Floating Action Column (Mobile Only) */}
-                  <ActionColumn>
-                    <ActionButton active={reel.is_liked} onClick={() => handleLike(reel, index)}>
+                  <ActionColumn className="reel-actions-overlay" onClick={(event) => event.stopPropagation()}>
+                    <ActionButton active={reel.is_liked} disabled={pendingActions[`like-${reel.id}`]} onClick={(event) => {
+                      event.stopPropagation();
+                      handleLike(reel, index);
+                    }}>
                       <FiHeart />
                     </ActionButton>
                     <ActionLabel>{reel.likes_count}</ActionLabel>
 
-                    <ActionButton onClick={() => {
-                      // Trigger comments modal or scroll on desktop
-                      const element = document.getElementById(`comments-input-${index}`);
-                      if (element) element.focus();
+                    <ActionButton onClick={(event) => {
+                      event.stopPropagation();
+                      openComments(reel);
                     }}>
                       <FiMessageCircle />
                     </ActionButton>
                     <ActionLabel>{reel.comments_count}</ActionLabel>
 
-                    <ActionButton active={reel.is_saved} onClick={() => handleSave(reel, index)}>
+                    <ActionButton active={reel.is_saved} disabled={pendingActions[`save-${reel.id}`]} onClick={(event) => {
+                      event.stopPropagation();
+                      handleSave(reel, index);
+                    }}>
                       <FiBookmark />
                     </ActionButton>
                     <ActionLabel>{reel.saves_count}</ActionLabel>
 
-                    <ActionButton onClick={() => handleShare(reel)}>
+                    <ActionButton onClick={(event) => {
+                      event.stopPropagation();
+                      handleShare(reel);
+                    }}>
                       <FiShare2 />
                     </ActionButton>
                     <ActionLabel>Share</ActionLabel>
 
-                    <ActionButton onClick={() => handleReport(reel)}>
+                    <ActionButton onClick={(event) => {
+                      event.stopPropagation();
+                      handleReport(reel);
+                    }}>
                       <FiAlertTriangle />
                     </ActionButton>
                     <ActionLabel>Report</ActionLabel>
                   </ActionColumn>
 
                   {/* CTA Buttons (Mobile Only) */}
-                  <CtaRow>
-                    <CtaButton variant="primary" onClick={() => handleChatCTA(reel.expert_id)}>
+                  <CtaRow onClick={(event) => event.stopPropagation()}>
+                    <CtaButton variant="primary" onClick={(event) => {
+                      event.stopPropagation();
+                      handleChatCTA(reel.expert_id);
+                    }}>
                       <FiMessageSquare /> Chat
                     </CtaButton>
-                    <CtaButton variant="primary" onClick={() => handleCallCTA(reel.expert_id)}>
+                    <CtaButton variant="primary" onClick={(event) => {
+                      event.stopPropagation();
+                      handleCallCTA(reel.expert_id);
+                    }}>
                       <FiPhone /> Call
                     </CtaButton>
-                    <CtaButton onClick={() => handleProfileCTA(reel.expert_id)}>
+                    <CtaButton onClick={(event) => {
+                      event.stopPropagation();
+                      handleProfileCTA(reel);
+                    }}>
                       <FiUser /> Profile
                     </CtaButton>
-                    <CtaButton onClick={() => handleProfileCTA(reel.expert_id)}>
+                    <CtaButton onClick={(event) => {
+                      event.stopPropagation();
+                      handleProfileCTA(reel, { scrollToBooking: true });
+                    }}>
                       <FiCalendar /> Book
                     </CtaButton>
                   </CtaRow>
@@ -483,35 +863,40 @@ export default function ReelsPage() {
               {/* DESKTOP ONLY SIDEBAR */}
               <DesktopSidebar>
                 <DesktopHeader>
-                  <Avatar src={reel.expert_profile_photo || "https://placehold.co/100x100"} alt={reel.expert_name} />
+                  {renderExpertAvatar(reel, { onClick: () => handleProfileCTA(reel) })}
                   <div>
-                    <NameText>{reel.expert_name}</NameText>
+                    <NameText onClick={() => handleProfileCTA(reel)}>{reel.expert_name}</NameText>
                     {reel.category_name && <CategoryTag>{reel.category_name}</CategoryTag>}
                   </div>
                 </DesktopHeader>
 
                 <DesktopInfo>
                   <TitleText>{reel.title}</TitleText>
-                  {reel.caption && <CaptionText style={{ WebkitLineClamp: "initial", overflow: "visible" }}>{reel.caption}</CaptionText>}
+                  {reel.caption && <CaptionText>{reel.caption}</CaptionText>}
                 </DesktopInfo>
 
                 <SectionDivider />
 
                 {/* Inline Action Counts for Desktop */}
-                <ActionColumn>
-                  <ActionButton active={reel.is_liked} onClick={() => handleLike(reel, index)}>
+                <ActionColumn className="reel-actions-sidebar">
+                  <ActionButton active={reel.is_liked} disabled={pendingActions[`like-${reel.id}`]} onClick={() => handleLike(reel, index)}>
                     <FiHeart />
-                    <span>{reel.is_liked ? "Liked" : "Like"}</span>
+                    <span>{reel.is_liked ? "Liked" : "Like"} ({reel.likes_count || 0})</span>
                   </ActionButton>
 
-                  <ActionButton active={reel.is_saved} onClick={() => handleSave(reel, index)}>
+                  <ActionButton onClick={() => openComments(reel)}>
+                    <FiMessageCircle />
+                    <span>Comments ({reel.comments_count || 0})</span>
+                  </ActionButton>
+
+                  <ActionButton active={reel.is_saved} disabled={pendingActions[`save-${reel.id}`]} onClick={() => handleSave(reel, index)}>
                     <FiBookmark />
-                    <span>{reel.is_saved ? "Saved" : "Save"}</span>
+                    <span>{reel.is_saved ? "Saved" : "Save"} ({reel.saves_count || 0})</span>
                   </ActionButton>
 
                   <ActionButton onClick={() => handleShare(reel)}>
                     <FiShare2 />
-                    <span>Share</span>
+                    <span>Share ({reel.shares_count || 0})</span>
                   </ActionButton>
 
                   <ActionButton onClick={() => handleReport(reel)}>
@@ -524,9 +909,11 @@ export default function ReelsPage() {
 
                 {/* Comments Listing */}
                 <CommentsSection>
-                  <CommentsHeader>Comments ({comments.length})</CommentsHeader>
+                  <CommentsHeader>Comments ({reel.comments_count || 0})</CommentsHeader>
                   <CommentsList>
-                    {loadingComments ? (
+                    {commentsReelId !== reel.id ? (
+                      <p style={{ color: "#71717a", fontSize: "13px", textAlign: "center" }}>Open comments to join the conversation.</p>
+                    ) : loadingComments ? (
                       <Spinner style={{ margin: "20px auto", width: "24px", height: "24px" }} />
                     ) : comments.length === 0 ? (
                       <p style={{ color: "#71717a", fontSize: "13px", textAlign: "center" }}>No comments yet. Start the conversation!</p>
@@ -540,22 +927,33 @@ export default function ReelsPage() {
                           <CommentContent>
                             <CommentName>{comment.user_name || comment.expert_name || "User"}</CommentName>
                             <CommentText>{comment.comment}</CommentText>
+                            {Number(comment.user_id) === Number(user?.id) && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteComment(comment.id, reel.id)}
+                                style={{ background: "none", border: 0, color: "#a1a1aa", padding: 0, textAlign: "left", cursor: "pointer", fontSize: "12px" }}
+                              >
+                                Delete
+                              </button>
+                            )}
                           </CommentContent>
                         </CommentRow>
                       ))
                     )}
                   </CommentsList>
 
-                  <CommentInputRow onSubmit={(e) => handleCommentSubmit(e, reel.id)}>
-                    <CommentInput
-                      id={`comments-input-${index}`}
-                      type="text"
-                      placeholder="Add a comment..."
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                    />
-                    <CommentSubmitButton type="submit">Post</CommentSubmitButton>
-                  </CommentInputRow>
+                  {commentsReelId === reel.id && (
+                    <CommentInputRow onSubmit={(e) => handleCommentSubmit(e, reel.id)}>
+                      <CommentInput
+                        id={`comments-input-${index}`}
+                        type="text"
+                        placeholder="Add a comment..."
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                      />
+                      <CommentSubmitButton type="submit">Post</CommentSubmitButton>
+                    </CommentInputRow>
+                  )}
                 </CommentsSection>
 
                 <SectionDivider />
@@ -568,10 +966,10 @@ export default function ReelsPage() {
                   <CtaButton variant="primary" onClick={() => handleCallCTA(reel.expert_id)}>
                     <FiPhone /> Call Now
                   </CtaButton>
-                  <CtaButton onClick={() => handleProfileCTA(reel.expert_id)}>
+                  <CtaButton onClick={() => handleProfileCTA(reel)}>
                     <FiUser /> View Full Profile
                   </CtaButton>
-                  <CtaButton onClick={() => handleProfileCTA(reel.expert_id)}>
+                  <CtaButton onClick={() => handleProfileCTA(reel, { scrollToBooking: true })}>
                     <FiCalendar /> Book Consultation
                   </CtaButton>
                 </CtaRow>
@@ -579,6 +977,55 @@ export default function ReelsPage() {
             </ReelWrapper>
           ))}
         </ReelsFeed>
+      )}
+
+      {commentsOpen && currentReel && (
+        <MobileCommentsBackdrop onClick={() => setCommentsOpen(false)}>
+          <MobileCommentsPanel onClick={(event) => event.stopPropagation()}>
+            <MobileCommentsHeader>
+              <strong>Comments ({currentReel.comments_count || 0})</strong>
+              <button type="button" onClick={() => setCommentsOpen(false)}>Close</button>
+            </MobileCommentsHeader>
+            <CommentsList>
+              {loadingComments ? (
+                <Spinner style={{ margin: "20px auto", width: "24px", height: "24px" }} />
+              ) : comments.length === 0 ? (
+                <p style={{ color: "#71717a", fontSize: "13px", textAlign: "center" }}>No comments yet. Start the conversation!</p>
+              ) : (
+                comments.map((comment) => (
+                  <CommentRow key={comment.id}>
+                    <CommentAvatar
+                      src={comment.user_profile_photo || "https://placehold.co/100x100"}
+                      alt={comment.user_name || "User"}
+                    />
+                    <CommentContent>
+                      <CommentName>{comment.user_name || "User"}</CommentName>
+                      <CommentText>{comment.comment}</CommentText>
+                      {Number(comment.user_id) === Number(user?.id) && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteComment(comment.id, currentReel.id)}
+                          style={{ background: "none", border: 0, color: "#a1a1aa", padding: 0, textAlign: "left", cursor: "pointer", fontSize: "12px" }}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </CommentContent>
+                  </CommentRow>
+                ))
+              )}
+            </CommentsList>
+            <CommentInputRow onSubmit={(e) => handleCommentSubmit(e, currentReel.id)}>
+              <CommentInput
+                type="text"
+                placeholder="Add a comment..."
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+              />
+              <CommentSubmitButton type="submit">Post</CommentSubmitButton>
+            </CommentInputRow>
+          </MobileCommentsPanel>
+        </MobileCommentsBackdrop>
       )}
     </Container>
   );

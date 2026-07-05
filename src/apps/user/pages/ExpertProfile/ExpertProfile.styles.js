@@ -540,8 +540,8 @@ export const LeftImage = styled.img`
   box-shadow: 0 18px 42px rgba(0,0,0,0.28);
 
   @media (min-width: 1024px) {
-    width: 150px;
-    height: 150px;
+    width: 150px !important;
+    height: 150px !important;
     max-width: 150px;
     min-width: 150px;
     max-height: 150px;
@@ -549,9 +549,10 @@ export const LeftImage = styled.img`
     aspect-ratio: 1 / 1;
     display: block;
     flex: 0 0 150px;
-    border-radius: 50%;
-    object-fit: cover;
-    object-position: center;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    object-position: center center !important;
+    overflow: hidden;
   }
   
   @media (max-width: 768px) {
@@ -589,15 +590,15 @@ export const AvatarFallback = styled.div`
   box-shadow: 0 18px 42px rgba(0,0,0,0.28);
 
   @media (min-width: 1024px) {
-    width: 160px;
-    height: 160px;
+    width: 160px !important;
+    height: 160px !important;
     max-width: 160px;
     min-width: 160px;
     max-height: 160px;
     min-height: 160px;
     aspect-ratio: 1 / 1;
     flex: 0 0 160px;
-    border-radius: 50%;
+    border-radius: 50% !important;
     overflow: hidden;
   }
 
@@ -1737,6 +1738,14 @@ export const SubscriptionCard = styled.div`
   margin-top: 20px;
   color: white;
 
+  @media (min-width: 1024px) {
+    color: #ffffff !important;
+
+    :where(h1, h2, h3, h4, p, span, small, strong, div, li, svg) {
+      color: inherit !important;
+    }
+  }
+
   @media (max-width: 768px) {
     grid-column: 1 / -1;
     margin-top: 8px;
@@ -2060,6 +2069,20 @@ export const PricingOptionCard = styled.div`
   &:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  }
+
+  @media (min-width: 1024px) {
+    ${props => props.$featured && `
+      color: #ffffff !important;
+
+      :where(h1, h2, h3, h4, p, span, small, strong, div, li, svg) {
+        color: inherit !important;
+      }
+
+      button {
+        color: #667eea !important;
+      }
+    `}
   }
 `;
 

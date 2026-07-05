@@ -95,12 +95,22 @@ export const HeaderSection = styled.section`
     box-shadow: 0 20px 48px rgba(0, 0, 128, 0.18);
     color: #ffffff !important;
 
-    .title-area :where(h2, p, small, strong, svg) {
+    .title-area :where(h1, h2, h3, h4, p, span, small, strong, div, label, svg) {
       color: inherit !important;
     }
 
     .eyebrow {
       color: #ffd23f !important;
+    }
+
+    label,
+    label *,
+    input {
+      color: #111827 !important;
+    }
+
+    label svg {
+      color: ${NAVY} !important;
     }
   }
 
@@ -917,8 +927,13 @@ export const CtaSection = styled.section`
   @media (min-width: 1024px) {
     color: #ffffff !important;
 
-    :where(h2, p, small, strong, svg) {
+    :where(h1, h2, h3, h4, p, span, small, strong, div, svg) {
       color: inherit !important;
+    }
+
+    button,
+    button * {
+      color: #111827 !important;
     }
   }
 

@@ -3,7 +3,7 @@ import React, { useCallback, useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { 
-  FiPhoneCall, FiMessageSquare, FiMapPin, FiZap, FiClock, 
+  FiPhoneCall, FiMessageSquare, FiMapPin, FiZap, FiClock, FiVideo,
   FiUsers, FiStar, FiAward, FiTrendingUp, FiShield, 
   FiCheckCircle, FiHeart, FiShare2
 } from "react-icons/fi";
@@ -12,6 +12,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
 import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/leadTracking";
+import VideoCallButton from "../../../../shared/components/VideoCallButton";
+import { normalizeVideoCallPrice } from "../../../../shared/utils/normalizeExpertPrice";
 
 import {
   Card,
@@ -78,6 +80,7 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
   // DIRECT DATA FROM API
   const callPrice = data.call_per_minute || 0;
   const chatPrice = data.chat_per_minute || 0;
+  const videoCallPrice = normalizeVideoCallPrice(data) || 0;
   const sessionPrice = data.session_price || 0;
   const sessionDuration = data.session_duration || 30;
 
@@ -227,7 +230,7 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
   }, [data.category_id, data.categoryId, data.subcategory_id, data.subcategoryId, expertId, user]);
 
   // PRICING LOGIC
-  const hasPerMinute = callPrice > 0 || chatPrice > 0;
+  const hasPerMinute = callPrice > 0 || chatPrice > 0 || videoCallPrice > 0;
   const hasSession = sessionPrice > 0;
   const hasSubscriptionOffer = Boolean(hasSubscription && hasPerMinute);
   const hasPricingBadge = Boolean(hasPerMinute || hasSession || hasSubscription);
@@ -523,6 +526,31 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
               </PricingBadges>
             )}
 
+            {hasPerMinute && (
+              <PricingSection $callChat={isCallChatCard}>
+                <PriceRow $callChat={isCallChatCard} $fullWidth>
+                  {chatPrice > 0 && (
+                    <div>
+                      <PriceLabel $callChat={isCallChatCard}><FiMessageSquare size={12} /> Chat</PriceLabel>
+                      <PriceTag><PriceValue $callChat={isCallChatCard}>₹{chatPrice}/min</PriceValue></PriceTag>
+                    </div>
+                  )}
+                  {callPrice > 0 && (
+                    <div>
+                      <PriceLabel $callChat={isCallChatCard}><FiPhoneCall size={12} /> Call</PriceLabel>
+                      <PriceTag><PriceValue $callChat={isCallChatCard}>₹{callPrice}/min</PriceValue></PriceTag>
+                    </div>
+                  )}
+                  {videoCallPrice > 0 && (
+                    <div>
+                      <PriceLabel $callChat={isCallChatCard}><FiVideo size={12} /> Video</PriceLabel>
+                      <PriceTag><PriceValue $callChat={isCallChatCard}>₹{videoCallPrice}/min</PriceValue></PriceTag>
+                    </div>
+                  )}
+                </PriceRow>
+              </PricingSection>
+            )}
+
            
 
             {/* Subscription Hint */}
@@ -544,6 +572,12 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
                 {mode === "chat" ? <FiMessageSquare size={16} /> : <FiPhoneCall size={16} />}
                 {getButtonText()}
               </PrimaryBtn>
+              <VideoCallButton
+                expert={data}
+                expertId={expertId}
+                sourceContext={isCallChatCard ? "call_chat_listing" : "expert_listing"}
+                compact
+              />
               <GhostBtn $callChat={isCallChatCard} onClick={handleViewProfile} whileTap={{ scale: 0.97 }}>
                 {t("expertCard.profile")}
               </GhostBtn>
@@ -637,6 +671,7 @@ const areExpertCardPropsEqual = (prev, next) => {
     prevData.isOnline === nextData.isOnline &&
     prevData.call_per_minute === nextData.call_per_minute &&
     prevData.chat_per_minute === nextData.chat_per_minute &&
+    normalizeVideoCallPrice(prevData) === normalizeVideoCallPrice(nextData) &&
     prevData.show_chat_button === nextData.show_chat_button &&
     prevData.show_call_button === nextData.show_call_button &&
     prevData.can_chat === nextData.can_chat &&

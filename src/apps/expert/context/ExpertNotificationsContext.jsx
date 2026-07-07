@@ -26,7 +26,7 @@ const Ctx = createContext(null);
 
 const FINAL_STATES = ["missed", "rejected", "ended", "low_balance", "cancelled", "accepted", "connected", "taken"];
 const CALL_FINAL_STATES = new Set(FINAL_STATES);
-const CALL_TYPES = new Set(["voice_call", "incoming_call"]);
+const CALL_TYPES = new Set(["voice_call", "incoming_call", "video_call"]);
 const CHAT_TYPES = new Set(["chat_request", "chat_message", "chat_accepted", "chat_rejected", "chat_cancelled", "chat_timeout"]);
 
 const parseMeta = (meta) => {
@@ -73,6 +73,7 @@ const buildTargetUrl = (n, meta) => {
       "/expert/chat",
       "/expert/chat-history",
       "/expert/voice-call",
+      "/expert/video-call",
       "/expert/profile",
     ].some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
   };
@@ -103,6 +104,9 @@ const buildTargetUrl = (n, meta) => {
       if (type === "missed_call" || type === "call_rejected" || type === "call_cancelled" || type === "call_ended") {
         return "/expert/notifications";
       }
+      if (type === "video_call") {
+        return `/expert/video-call/${encodeURIComponent(callId)}`;
+      }
       return `/expert/voice-call/${encodeURIComponent(callId)}`;
     }
     return "/expert/notifications";
@@ -113,8 +117,8 @@ const buildTargetUrl = (n, meta) => {
 
 const localKeyFor = (n, meta) => {
   const type = n.type || meta.type || "system";
-  if ((type === "voice_call" || type === "incoming_call" || type === "missed_call") && (meta.callId || meta.call_id || n.related_id)) {
-    return `call:${meta.callId || meta.call_id || n.related_id}`;
+  if ((type === "voice_call" || type === "incoming_call" || type === "missed_call" || type === "video_call") && (meta.callId || meta.call_id || n.related_id)) {
+    return `${type === "video_call" ? "video-call" : "call"}:${meta.callId || meta.call_id || n.related_id}`;
   }
   if (CHAT_TYPES.has(type) && (meta.request_id || meta.chat_id || n.related_id)) {
     return `chat:${meta.request_id || meta.chat_id || n.related_id}:${type}`;
@@ -128,13 +132,14 @@ const normalizeNotification = (raw = {}) => {
   const senderName = getSenderName(raw, meta);
   const targetUrl = buildTargetUrl({ ...raw, type }, meta);
   const notificationId = raw.notification_id || meta.notification_id || raw.id || `${type}:${Date.now()}`;
-  const status = raw.status || (type === "chat_request" ? "pending" : type === "voice_call" ? "ringing" : "info");
+  const status = raw.status || (type === "chat_request" ? "pending" : CALL_TYPES.has(type) ? "ringing" : "info");
 
   const defaultMessage =
     type === "follow" ? `${senderName} started following you` :
     type === "like" ? `${senderName} liked your post` :
     type === "comment" ? `${senderName} commented on your post` :
     type === "voice_call" ? `${senderName} is calling you` :
+    type === "video_call" ? `${senderName} is video calling you` :
     type === "missed_call" ? `${senderName} called you. You missed the call.` :
     raw.message || raw.body || meta.body || "";
 
@@ -320,7 +325,7 @@ export function ExpertNotificationsProvider({ children }) {
     setNotifications((prev) => upsertById(prev, notification));
 
     if (playSound && document.visibilityState === "visible") {
-      if (notification.type === "voice_call" && notification.status === "ringing") {
+      if ((notification.type === "voice_call" || notification.type === "video_call") && notification.status === "ringing") {
         soundManager.play(SOUNDS.INCOMING_CALL, { loop: true, volume: 1 });
       } else {
         soundManager.play(SOUNDS.NOTIFICATION);
@@ -350,9 +355,9 @@ export function ExpertNotificationsProvider({ children }) {
             url: notification.targetUrl,
             click_action: notification.targetUrl,
           },
-          requireInteraction: notification.type === "voice_call",
-          renotify: notification.type === "voice_call",
-          vibrate: notification.type === "voice_call" ? [200, 100, 200, 100, 400] : [80, 40, 80],
+          requireInteraction: notification.type === "voice_call" || notification.type === "video_call",
+          renotify: notification.type === "voice_call" || notification.type === "video_call",
+          vibrate: notification.type === "voice_call" || notification.type === "video_call" ? [200, 100, 200, 100, 400] : [80, 40, 80],
         });
       }).catch(() => {});
     }
@@ -434,6 +439,27 @@ export function ExpertNotificationsProvider({ children }) {
       addNotification(notification, { showSystem: true });
     };
 
+    const handleIncomingVideoCall = (data = {}) => {
+      const callId = data.callId || data.call_id;
+      const notification = normalizeNotification({
+        id: data.notification_id || callId,
+        notification_id: data.notification_id || `video-call:${callId}`,
+        type: "video_call",
+        title: `Incoming video call from ${data.user_name || data.callerName || `User #${data.userId || data.user_id || ""}`}`,
+        message: data.price_per_minute ? `Rs ${data.price_per_minute}/min` : "Tap to answer",
+        related_id: callId,
+        related_type: "video_call",
+        target_url: `/expert/video-call/${callId}`,
+        status: data.status || "ringing",
+        meta: {
+          ...data,
+          callId,
+          user_name: data.user_name || data.callerName,
+        },
+      });
+      addNotification(notification, { showSystem: true });
+    };
+
     const handleIncomingChat = (data = {}) => {
       const notification = normalizeNotification({
         id: data.notification_id || data.request_id,
@@ -453,11 +479,13 @@ export function ExpertNotificationsProvider({ children }) {
     const handleIncomingChatEvent = (event) => handleIncomingChat(event.detail || {});
 
     socket.on("call:incoming", handleIncomingCall);
+    socket.on("video-call:incoming", handleIncomingVideoCall);
     socket.on("incoming_chat_request", handleIncomingChat);
     window.addEventListener("incoming_chat_request", handleIncomingChatEvent);
 
     return () => {
       socket.off("call:incoming", handleIncomingCall);
+      socket.off("video-call:incoming", handleIncomingVideoCall);
       socket.off("incoming_chat_request", handleIncomingChat);
       window.removeEventListener("incoming_chat_request", handleIncomingChatEvent);
     };
@@ -520,6 +548,11 @@ export function ExpertNotificationsProvider({ children }) {
     socket.on("call:cancelled", cancelled);
     socket.on("call:connected", connected);
     socket.on("call:taken", taken);
+    socket.on("video-call:missed", missed);
+    socket.on("video-call:ended", ended);
+    socket.on("video-call:cancelled", cancelled);
+    socket.on("video-call:connected", connected);
+    socket.on("video-call:taken", taken);
     socket.on("chat_cancelled", chatCancelled);
     socket.on("chat_rejected", chatRejected);
     socket.on("chat_ended", chatEnded);
@@ -531,6 +564,11 @@ export function ExpertNotificationsProvider({ children }) {
       socket.off("call:cancelled", cancelled);
       socket.off("call:connected", connected);
       socket.off("call:taken", taken);
+      socket.off("video-call:missed", missed);
+      socket.off("video-call:ended", ended);
+      socket.off("video-call:cancelled", cancelled);
+      socket.off("video-call:connected", connected);
+      socket.off("video-call:taken", taken);
       socket.off("chat_cancelled", chatCancelled);
       socket.off("chat_rejected", chatRejected);
       socket.off("chat_ended", chatEnded);
@@ -549,9 +587,9 @@ export function ExpertNotificationsProvider({ children }) {
     if (!notification) return;
     await markNotificationAsRead(notification.id);
 
-    if (notification.type === "voice_call" && notification.payload?.callId && notification.status === "ringing") {
+    if ((notification.type === "voice_call" || notification.type === "video_call") && notification.payload?.callId && notification.status === "ringing") {
       markCallFinal(notification.payload.callId, "accepted");
-      navigate(`/expert/voice-call/${notification.payload.callId}`);
+      navigate(notification.type === "video_call" ? `/expert/video-call/${notification.payload.callId}` : `/expert/voice-call/${notification.payload.callId}`);
       return;
     }
 
@@ -568,6 +606,16 @@ export function ExpertNotificationsProvider({ children }) {
       soundManager.stopAll();
       window.dispatchEvent(new CustomEvent("go_to_call_page", { detail: callId }));
       navigate(`/expert/voice-call/${callId}`);
+      markNotificationAsRead(notification.id);
+      return;
+    }
+
+    if (notification.type === "video_call") {
+      const callId = notification.payload?.callId || getNotificationCallId(notification);
+      if (!callId) return;
+      markCallFinal(callId, "accepted");
+      soundManager.stopAll();
+      navigate(`/expert/video-call/${callId}`);
       markNotificationAsRead(notification.id);
       return;
     }
@@ -598,6 +646,20 @@ export function ExpertNotificationsProvider({ children }) {
         status: "rejected",
       }).catch(() => {});
       socket.emit("call:reject", { callId });
+      updateLocalStatus((n) => n.id === notification.id, "rejected");
+    }
+
+    if (notification.type === "video_call") {
+      const callId = notification.payload?.callId || getNotificationCallId(notification);
+      if (callId && finalCallStatesRef.current.has(String(callId))) return;
+      markCallFinal(callId, "rejected");
+      soundManager.stopAll();
+      updateNotificationStatus({
+        requestId: callId,
+        type: "video_call",
+        status: "rejected",
+      }).catch(() => {});
+      socket.emit("video-call:decline", { callId });
       updateLocalStatus((n) => n.id === notification.id, "rejected");
     }
 
@@ -642,7 +704,7 @@ export function ExpertNotificationsProvider({ children }) {
     [notifications]
   );
   const callUnreadCount = useMemo(
-    () => notifications.filter((n) => n.type === "voice_call" && n.unread && !FINAL_STATES.includes(n.status)).length,
+    () => notifications.filter((n) => (n.type === "voice_call" || n.type === "video_call") && n.unread && !FINAL_STATES.includes(n.status)).length,
     [notifications]
   );
 

@@ -79,6 +79,10 @@ const getNotificationUrl = (data = {}) => {
     }
 
     const voiceCallId = data.callId || data.call_id || data.related_id;
+    if (type === "video_call" && voiceCallId) {
+      return `/expert/video-call/${encodeURIComponent(voiceCallId)}`;
+    }
+
     if ((type.includes("call") || type === "voice_call" || type === "incoming_call") && voiceCallId) {
       if (type === "missed_call" || type === "call_rejected" || type === "call_cancelled" || type === "call_ended") {
         return "/expert/notifications";
@@ -107,6 +111,9 @@ const getNotificationTag = (data = {}) => {
   if (type === "chat_message" || type === "chat_request") {
     return `chat:${conversationId}:${messageId}`;
   }
+  if (type === "video_call") {
+    return `video-call:${callId}`;
+  }
   if (type === "voice_call" || type === "incoming_call" || type === "missed_call") {
     return `call:${callId}`;
   }
@@ -124,7 +131,7 @@ const getNotificationTag = (data = {}) => {
 
 const buildNotificationOptions = (data = {}) => {
   const type = data.type;
-  const isCall = type === "voice_call" || type === "incoming_call";
+  const isCall = type === "voice_call" || type === "incoming_call" || type === "video_call";
 
   return {
     body: data.body || "",

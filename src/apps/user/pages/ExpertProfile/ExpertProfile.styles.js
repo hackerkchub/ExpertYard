@@ -75,6 +75,19 @@ export const PageWrap = styled.div`
     gap: 10px;
   }
 
+  .consult-options .expert-profile-consult-video-btn {
+    width: 100% !important;
+    min-height: 56px !important;
+    justify-content: center !important;
+    border-radius: 18px !important;
+    padding: 10px 12px !important;
+    background: linear-gradient(135deg, #2563eb, #000080) !important;
+    color: #ffffff !important;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.18) !important;
+    white-space: normal !important;
+    text-align: center !important;
+  }
+
   .consult-option {
     width: 100%;
     display: grid;
@@ -218,8 +231,8 @@ export const PageWrap = styled.div`
       bottom: calc(var(--nav-height, 72px) + 8px + env(safe-area-inset-bottom, 0px));
       z-index: 10005;
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
       padding: 0;
       border: 0;
       border-radius: 0;
@@ -231,29 +244,47 @@ export const PageWrap = styled.div`
       pointer-events: none;
     }
 
-    .mobile-profile-actions button {
+    .mobile-profile-actions button,
+    .mobile-profile-actions .video-call-button {
       min-width: 0;
-      min-height: 48px;
+      width: 100% !important;
+      min-height: 50px !important;
       border: none;
       border-radius: 999px;
-      font-size: 13.5px;
+      padding: 8px 8px !important;
+      font-size: 12.5px !important;
       line-height: 1.2;
       font-weight: 800;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 5px;
       cursor: pointer;
-      white-space: nowrap;
+      white-space: normal !important;
       touch-action: manipulation;
       box-shadow: 0 12px 24px rgba(15, 23, 42, 0.18);
       pointer-events: auto;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .mobile-profile-actions button svg,
+    .mobile-profile-actions .video-call-button svg {
+      width: 16px;
+      height: 16px;
+      flex: 0 0 auto;
     }
 
     .mobile-profile-actions button strong {
-      font-size: 12px;
+      display: block;
+      width: 100%;
+      font-size: 10.5px;
       font-weight: 900;
       opacity: 0.94;
+    }
+
+    .mobile-profile-actions button span {
+      min-width: 0;
     }
 
     .mobile-message-btn {
@@ -265,6 +296,21 @@ export const PageWrap = styled.div`
       background: linear-gradient(135deg, #ffd23f, #ffc107);
       color: #000080;
       box-shadow: 0 12px 24px rgba(255, 193, 7, 0.24);
+    }
+
+    .mobile-video-call-btn {
+      background: linear-gradient(135deg, #2563eb, #000080) !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(255, 255, 255, 0.22) !important;
+      box-shadow: 0 12px 24px rgba(37, 99, 235, 0.26) !important;
+    }
+
+    .mobile-video-call-btn:disabled {
+      background: #e5e7eb !important;
+      color: #475569 !important;
+      border-color: #cbd5e1 !important;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12) !important;
+      opacity: 1 !important;
     }
 
     .subscription-plans-modal {
@@ -371,19 +417,21 @@ export const PageWrap = styled.div`
     .mobile-profile-actions {
       left: 8px;
       right: 8px;
-      gap: 8px;
+      gap: 6px;
       padding: 0;
       border-radius: 16px;
     }
 
-    .mobile-profile-actions button {
-      min-height: 48px;
-      font-size: 13px;
-      gap: 5px;
+    .mobile-profile-actions button,
+    .mobile-profile-actions .video-call-button {
+      min-height: 48px !important;
+      font-size: 11.5px !important;
+      gap: 4px;
+      padding: 7px 5px !important;
     }
 
     .mobile-profile-actions button strong {
-      font-size: 11px;
+      font-size: 9.5px;
     }
   }
 
@@ -429,6 +477,19 @@ export const ProfileCard = styled.div`
     .expert-profile-hero-info :where(h1, p, small, strong, svg),
     .expert-profile-pricing-summary :where(span, strong, small) {
       color: inherit !important;
+    }
+
+    .expert-profile-follow-wrap,
+    .expert-profile-follow-wrap *,
+    .expert-profile-hero-top,
+    .expert-profile-hero-top span,
+    .expert-profile-hero-top strong {
+      color: #ffffff !important;
+    }
+
+    .expert-profile-hero-top .expert-profile-header-tag,
+    .expert-profile-hero-top .expert-profile-header-tag * {
+      color: #000080 !important;
     }
 
     .expert-profile-header-tag,
@@ -481,6 +542,22 @@ export const ProfileCard = styled.div`
       text-align: center;
     }
 
+    .expert-profile-hero-media > img,
+    .expert-profile-hero-media > div:first-child {
+      width: 78px !important;
+      height: 78px !important;
+      min-width: 78px !important;
+      max-width: 78px !important;
+      min-height: 78px !important;
+      max-height: 78px !important;
+      aspect-ratio: 1 / 1 !important;
+      border-radius: 50% !important;
+      object-fit: cover !important;
+      object-position: center !important;
+      overflow: hidden !important;
+      flex: 0 0 78px !important;
+    }
+
     .expert-profile-follow-wrap {
       width: 100%;
       display: flex;
@@ -525,6 +602,17 @@ export const ProfileCard = styled.div`
 
     .expert-profile-hero-media {
       width: 74px;
+    }
+
+    .expert-profile-hero-media > img,
+    .expert-profile-hero-media > div:first-child {
+      width: 72px !important;
+      height: 72px !important;
+      min-width: 72px !important;
+      max-width: 72px !important;
+      min-height: 72px !important;
+      max-height: 72px !important;
+      flex-basis: 72px !important;
     }
   }
 `;
@@ -824,10 +912,48 @@ export const Tag = styled.span`
 // --- Buttons & Price ---
 export const CallToAction = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin-top: 15px;
-  max-width: 560px;
+  width: min(100%, 760px);
+
+  .expert-profile-action-item {
+    min-width: 0;
+  }
+
+  .expert-profile-video-call-btn {
+    width: 100% !important;
+    min-height: 42px !important;
+    border-color: rgba(147, 197, 253, 0.55) !important;
+    background: linear-gradient(135deg, #2563eb, #000080) !important;
+    color: #ffffff !important;
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22) !important;
+    white-space: normal !important;
+    line-height: 1.15 !important;
+  }
+
+  .expert-profile-video-call-btn,
+  .expert-profile-video-call-btn *,
+  .expert-profile-video-call-btn svg {
+    color: #ffffff !important;
+  }
+
+  .expert-profile-video-call-btn:disabled {
+    background: #e5e7eb !important;
+    color: #475569 !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.1) !important;
+    opacity: 1 !important;
+  }
+
+  @media (max-width: 1180px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    .expert-profile-video-action {
+      grid-column: 1 / -1;
+    }
+  }
+
   @media (max-width: 768px) { 
     display: none;
   }
@@ -899,8 +1025,17 @@ export const FollowButton = styled.button`
 
   &:hover {
     transform: translateY(-1px);
-    background-color: rgba(255, 255, 255, 0.88);
-    color: #000080;
+    background-color: ${props => props.$active ? "rgba(255, 255, 255, 0.28)" : "rgba(255, 255, 255, 0.92)"};
+    color: ${props => props.$active ? "#ffffff" : "#000080"};
+  }
+
+  @media (min-width: 1024px) {
+    ${props => props.$active && css`
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.72);
+      background: rgba(255, 255, 255, 0.18);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+    `}
   }
 
   @media (max-width: 768px) {

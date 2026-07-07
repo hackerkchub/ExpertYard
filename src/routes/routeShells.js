@@ -2,11 +2,13 @@ const USER_IMMERSIVE_PREFIXES = [
   "/user/auth",
   "/user/chat",
   "/user/voice-call",
+  "/user/video-call",
 ];
 
 const EXPERT_IMMERSIVE_PREFIXES = [
   "/expert/register",
   "/expert/voice-call",
+  "/expert/video-call",
 ];
 
 export function isKnownAppRoute(pathname) {

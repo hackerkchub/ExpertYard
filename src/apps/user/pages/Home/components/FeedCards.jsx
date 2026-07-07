@@ -27,6 +27,7 @@ import {
   InlineInput,
   SendBtn,
 } from "../../ExpertProfile/ExpertProfile.styles";
+import { normalizeVideoCallPrice } from "../../../../../shared/utils/normalizeExpertPrice";
 
 const money = (value) => {
   const numeric = Number(value);
@@ -129,6 +130,7 @@ function FeedCtas({ data }) {
 export const ExpertProfileFeedCard = React.memo(function ExpertProfileFeedCard({ item }) {
   const data = item.data || {};
   const promoted = item.type === "promoted_expert";
+  const videoCallPrice = normalizeVideoCallPrice(data);
 
   if (promoted) {
     return (
@@ -179,6 +181,7 @@ export const ExpertProfileFeedCard = React.memo(function ExpertProfileFeedCard({
           <div className="expert-price-grid" style={{ marginTop: "12px" }}>
             <span><small>Chat</small>{money(data.chat_per_minute)}/min</span>
             <span><small>Call</small>{money(data.call_per_minute)}/min</span>
+            {videoCallPrice > 0 && <span><small>Video</small>{money(videoCallPrice)}/min</span>}
           </div>
         </Link>
         <FeedCtas data={data} />
@@ -213,6 +216,7 @@ export const ExpertProfileFeedCard = React.memo(function ExpertProfileFeedCard({
         <div className="expert-price-grid">
           <span><small>Chat</small>{money(data.chat_per_minute)}/min</span>
           <span><small>Call</small>{money(data.call_per_minute)}/min</span>
+          {videoCallPrice > 0 && <span><small>Video</small>{money(videoCallPrice)}/min</span>}
         </div>
       </Link>
       <FeedCtas data={data} />

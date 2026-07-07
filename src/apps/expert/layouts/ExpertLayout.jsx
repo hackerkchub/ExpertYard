@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 
 import ExpertSidebar from "../components/ExpertSidebar";
@@ -32,7 +32,10 @@ function ExpertLayoutInner() {
   const location = useLocation();
   const { expertData } = useExpert();
 
-  const isOnCallPage = location.pathname.startsWith("/expert/voice-call/");
+  const isOnCallPage =
+    location.pathname.startsWith("/expert/voice-call/") ||
+    location.pathname.startsWith("/expert/video-call/");
+  const [incomingVideoCall, setIncomingVideoCall] = useState(null);
 
   const {
     notifications,
@@ -209,6 +212,41 @@ function ExpertLayoutInner() {
     return () => socket.off("chat_started", handleChatStarted);
   }, [navigate]);
 
+  useEffect(() => {
+    if (!expertId) return;
+
+    const handleIncomingVideo = (payload = {}) => {
+      const callId = payload.callId || payload.call_id;
+      if (!callId || isOnCallPage) return;
+      setIncomingVideoCall({
+        callId,
+        name: payload.callerName || payload.user_name || "User",
+        avatar: payload.user_avatar || payload.callerAvatar || "",
+        title: "Incoming Video Call",
+        price: payload.price_per_minute,
+      });
+    };
+
+    const closeVideoCall = ({ callId } = {}) => {
+      if (callId && incomingVideoCall?.callId && String(callId) !== String(incomingVideoCall.callId)) return;
+      setIncomingVideoCall(null);
+    };
+
+    socket.on("video-call:incoming", handleIncomingVideo);
+    socket.on("video-call:cancelled", closeVideoCall);
+    socket.on("video-call:missed", closeVideoCall);
+    socket.on("video-call:ended", closeVideoCall);
+    socket.on("video-call:taken", closeVideoCall);
+
+    return () => {
+      socket.off("video-call:incoming", handleIncomingVideo);
+      socket.off("video-call:cancelled", closeVideoCall);
+      socket.off("video-call:missed", closeVideoCall);
+      socket.off("video-call:ended", closeVideoCall);
+      socket.off("video-call:taken", closeVideoCall);
+    };
+  }, [expertId, incomingVideoCall?.callId, isOnCallPage]);
+
  useEffect(() => {
   const handleCancelled = ({ callId }) => {
     window.dispatchEvent(
@@ -286,6 +324,21 @@ function ExpertLayoutInner() {
           activeIncomingCall &&
           rejectNotification(activeIncomingCall)
         }
+      />
+
+      <IncomingCallPopup
+        caller={incomingVideoCall}
+        callType="video"
+        onAccept={() => {
+          const callId = incomingVideoCall?.callId;
+          setIncomingVideoCall(null);
+          if (callId) navigate(`/expert/video-call/${callId}`);
+        }}
+        onReject={() => {
+          const callId = incomingVideoCall?.callId;
+          if (callId) socket.emit("video-call:decline", { callId });
+          setIncomingVideoCall(null);
+        }}
       />
     </LayoutWrapper>
   );

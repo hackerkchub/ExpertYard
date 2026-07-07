@@ -20,6 +20,8 @@ const Chat = lazy(() => import("../pages/Chat/Chat"));
 const UserChatHistory = lazy(() => import("../pages/chat-history/UserChatHistory"));
 const MyOffer = lazy(() => import("../pages/MyOffers/MyOffer"));
 const VoiceCall = lazy(() => import("../pages/voice-call/VoiceCall"));
+const VideoCall = lazy(() => import("../pages/video-call/VideoCall"));
+const VideoMediaTestPage = lazy(() => import("../../../shared/components/VideoMediaTestPage"));
 const Categories = lazy(() => import("../pages/Category/Categories"));
 const SubcategoryPage = lazy(() => import("../pages/Subcategory/SubcategoryPage"));
 const AboutUs = lazy(() => import("../pages/About-Us/AboutUs"));
@@ -150,6 +152,20 @@ export default function UserAppRoutes() {
                   </LazyRoute>
                 </ProtectedRoute>
               }
+            />
+            <Route
+              path="video-call/:expertId"
+              element={
+                <ProtectedRoute>
+                  <LazyRoute>
+                    <VideoCall />
+                  </LazyRoute>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="video-media-test"
+              element={withLazyRoute(<VideoMediaTestPage role="user-diagnostic" />)}
             />
             <Route
               path="chat"

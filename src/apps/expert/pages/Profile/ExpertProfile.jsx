@@ -32,6 +32,7 @@ import {
   FiX,
   FiCamera,
   FiPhoneCall,
+  FiVideo,
   FiMessageCircle,
   FiUser,
   FiMail,
@@ -302,6 +303,7 @@ state: expertData.profile.state || "",
 country: expertData.profile.country || "",
 pincode: expertData.profile.pincode || "",
       callRate: expertPrice?.call || 0,
+      videoCallRate: expertPrice?.video_call?.per_minute || expertPrice?.video_call_per_minute || 0,
       chatRate: expertPrice?.chat || 0,
       documents: {
         photo: expertData.profile_photo || DEFAULT_AVATAR,
@@ -681,6 +683,7 @@ if (draft.documents.aadhar_cardFile) {
         expert_id: expertId,
         pricing_modes: pricingModes,
         call_per_minute: pricingModes.includes("per_minute") ? draft.callRate : null,
+        video_call_per_minute: pricingModes.includes("per_minute") ? draft.videoCallRate : null,
         chat_per_minute: pricingModes.includes("per_minute") ? draft.chatRate : null,
         session_price: pricingModes.includes("session") ? sessionPrice : null,
         session_duration: pricingModes.includes("session") ? sessionDuration : null,
@@ -1292,6 +1295,29 @@ if (draft.documents.aadhar_cardFile) {
                     max="500"
                     value={draft.callRate}
                     onChange={e => setDraft({ ...draft, callRate: Number(e.target.value) })}
+                  />
+                </S.PricingSlider>
+              )}
+            </S.PricingCard>
+
+            <S.PricingCard gradient="call">
+              <S.PricingIconWrapper gradient="call">
+                <FiVideo />
+              </S.PricingIconWrapper>
+              <S.PricingContent>
+                <S.PricingLabel>Video Call Rate</S.PricingLabel>
+                <S.PricingValue>₹{draft.videoCallRate}</S.PricingValue>
+                <S.PricingPeriod>per minute</S.PricingPeriod>
+              </S.PricingContent>
+              {edit && (
+                <S.PricingSlider>
+                  <S.SliderLabel>Adjust rate: ₹{draft.videoCallRate}</S.SliderLabel>
+                  <S.PremiumSlider
+                    type="range"
+                    min="10"
+                    max="500"
+                    value={draft.videoCallRate}
+                    onChange={e => setDraft({ ...draft, videoCallRate: Number(e.target.value) })}
                   />
                 </S.PricingSlider>
               )}

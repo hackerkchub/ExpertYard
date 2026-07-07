@@ -1,4 +1,5 @@
 import React from "react";
+import { normalizeVideoCallPrice } from "../../../../../shared/utils/normalizeExpertPrice";
 
 export default function RecommendedExperts({
 
@@ -38,7 +39,9 @@ View All
 
 {
 
-experts.map(expert=>(
+experts.map(expert=>{
+const videoCallPrice = normalizeVideoCallPrice(expert);
+return (
 
 <div
 
@@ -146,6 +149,17 @@ Call
 
 </div>
 
+{videoCallPrice > 0 && (
+<div>
+<strong>
+₹{videoCallPrice}
+</strong>
+<small>
+Video
+</small>
+</div>
+)}
+
 </div>
 
 <button
@@ -160,7 +174,8 @@ View Profile
 
 </div>
 
-))
+);
+})
 
 }
 

@@ -1,12 +1,15 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Star, BadgeCheck, Phone, MessageCircle } from "lucide-react";
+import { normalizeVideoCallPrice } from "../../../../../shared/utils/normalizeExpertPrice";
 
 // ============================================
 // FEATURED EXPERT CARD COMPONENT
 // ============================================
 
 const FeaturedExpertCard = React.memo(({ expert }) => {
+  const videoCallPrice = normalizeVideoCallPrice(expert);
+
   return (
     <div className="featured-card home-card">
       <div className="featured-top">
@@ -38,6 +41,13 @@ const FeaturedExpertCard = React.memo(({ expert }) => {
           <small>Call</small>
           <strong>₹{expert.call_price || expert.call_rate || 0}/min</strong>
         </div>
+
+        {videoCallPrice > 0 && (
+          <div>
+            <small>Video</small>
+            <strong>₹{videoCallPrice}/min</strong>
+          </div>
+        )}
       </div>
 
       <div className="featured-status">

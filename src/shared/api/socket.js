@@ -24,7 +24,7 @@ const getSocketBaseUrl = () => {
     apiUrl.hash = "";
     return apiUrl.origin;
   } catch {
-    return "http://localhost:5000";
+    return "http://10.47.91.234:5000";
   }
 };
 

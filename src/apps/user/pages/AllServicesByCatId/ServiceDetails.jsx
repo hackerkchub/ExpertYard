@@ -23,6 +23,7 @@ import { deductWalletApi } from "../../../../shared/api/userApi/walletApi";
 import api from "../../../../shared/api/axiosInstance";
 import * as S from "./ServiceDetails.style";
 import { APP_CONFIG } from "../../../../config/appConfig";
+import VideoCallButton from "../../../../shared/components/VideoCallButton";
 
 const DEFAULT_SERVICE_IMAGE = "https://via.placeholder.com/800x450?text=Service+Image";
 const productTypes = new Set(["digital_product", "digital_package", "course", "custom"]);
@@ -264,6 +265,13 @@ const ServiceDetail = () => {
               </S.ButtonGroup>
 
               <S.SecondaryActionRow>
+                <VideoCallButton
+                  expert={service}
+                  expertId={service.expert_id}
+                  sourceContext="service_detail"
+                  sourceRefId={service.id}
+                  compact
+                />
                 <button type="button" onClick={() => navigate(`/user/experts/${service.expert_slug || service.expert_id}`)}>
                   <FiMessageCircle /> Chat
                 </button>

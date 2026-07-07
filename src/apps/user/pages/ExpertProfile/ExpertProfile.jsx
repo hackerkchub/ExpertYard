@@ -168,6 +168,8 @@ import {
 } from "../../../../shared/api/userApi/subscription.api";
 import useChatRequest from "../../../../shared/hooks/useChatRequest";
 import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/leadTracking";
+import VideoCallButton from "../../../../shared/components/VideoCallButton";
+import { normalizeVideoCallPrice } from "../../../../shared/utils/normalizeExpertPrice";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/300?img=12";
 const MIN_CHAT_MINUTES = 5;
@@ -349,6 +351,7 @@ const ExpertProfilePage = () => {
       hasSession: false,
       hasSubscription: false,
       callPrice: 0,
+      videoCallPrice: 0,
       chatPrice: 0,
       sessionPrice: 0,
       sessionDuration: 0
@@ -357,6 +360,7 @@ const ExpertProfilePage = () => {
     if (pricingModes.includes('per_minute')) {
       prices.hasPerMinute = true;
       prices.callPrice = Number(expertPrice?.call || 0);
+      prices.videoCallPrice = normalizeVideoCallPrice(expertPrice) || normalizeVideoCallPrice(expertData) || normalizeVideoCallPrice(profile) || 0;
       prices.chatPrice = Number(expertPrice?.chat || 0);
     }
 
@@ -371,7 +375,7 @@ const ExpertProfilePage = () => {
     }
 
     return prices;
-  }, [pricingModes, expertPrice, plans]);
+  }, [pricingModes, expertPrice, expertData, profile, plans]);
 
   const hasActiveSubscription = useMemo(() => {
     if (!activeSubscription) return false;
@@ -1239,7 +1243,7 @@ const ExpertProfilePage = () => {
                   </PricingModeTabs>
                   <PricingInfo>
                     {selectedPricingMode === "per_minute" && (
-                      <span>💬 Chat: ₹{displayPrices.chatPrice}/min | 📞 Call: ₹{displayPrices.callPrice}/min</span>
+                      <span>💬 Chat: ₹{displayPrices.chatPrice}/min | 📞 Call: ₹{displayPrices.callPrice}/min{displayPrices.videoCallPrice > 0 ? ` | 🎥 Video: ₹${displayPrices.videoCallPrice}/min` : ""}</span>
                     )}
                     {selectedPricingMode === "session" && (
                       <span>🎯 Session: ₹{displayPrices.sessionPrice} for {displayPrices.sessionDuration} minutes</span>
@@ -1275,7 +1279,17 @@ const ExpertProfilePage = () => {
 
               {/* Action Buttons based on selected pricing mode */}
               <CallToAction>
-                <div>
+                <div className="expert-profile-action-item expert-profile-video-action">
+                  <PriceTag style={{ background: "#2563eb", color: "white" }}><FiVideo /> {displayPrices.videoCallPrice > 0 ? `₹${displayPrices.videoCallPrice}/min` : "Video"}</PriceTag>
+                  <VideoCallButton
+                    expert={expertData || profile}
+                    expertId={numericExpertId}
+                    sourceContext="expert_profile"
+                    sourceRefId={numericExpertId}
+                    className="expert-profile-video-call-btn"
+                  />
+                </div>
+                <div className="expert-profile-action-item">
                   {hasActiveSubscription && canShowUserCallButton ? (
                     <>
                       <PriceTag style={{ background: "#10b981", color: "white" }}><FiUnlock /> Active Subscription</PriceTag>
@@ -1303,7 +1317,7 @@ const ExpertProfilePage = () => {
                     </>
                   ) : null}
                 </div>
-                <div>
+                <div className="expert-profile-action-item">
                   {hasActiveSubscription && canShowUserChatButton ? (
                     <>
                       <PriceTag style={{ background: "#10b981", color: "white" }}><FiUnlock /> Active Subscription</PriceTag>
@@ -1354,6 +1368,15 @@ const ExpertProfilePage = () => {
             <Section className="consult-card">
               <SectionTitle>{t("expertProfile.consultWithMe")}</SectionTitle>
               <div className="consult-options">
+                <VideoCallButton
+                  expert={expertData || profile}
+                  expertId={numericExpertId}
+                  sourceContext="expert_profile"
+                  sourceRefId={numericExpertId}
+                  className="expert-profile-consult-video-btn"
+                  compact
+                  compactLabel="Video Call"
+                />
                 <button type="button" className="consult-option consult-call" disabled={!canShowUserCallButton} onClick={() => handleStart("call")}>
                   <FiPhoneCall />
                   <span>Call</span>
@@ -1414,7 +1437,7 @@ const ExpertProfilePage = () => {
                     <InfoItem>
                       <InfoLabel>Price Details</InfoLabel>
                       <InfoValue>
-                        {displayPrices.hasPerMinute && <div><strong>Call:</strong> ₹{displayPrices.callPrice}/min | <strong>Chat:</strong> ₹{displayPrices.chatPrice}/min</div>}
+                        {displayPrices.hasPerMinute && <div><strong>Call:</strong> ₹{displayPrices.callPrice}/min | <strong>Chat:</strong> ₹{displayPrices.chatPrice}/min{displayPrices.videoCallPrice > 0 ? <> | <strong>Video Call:</strong> ₹{displayPrices.videoCallPrice}/min</> : null}</div>}
                         {displayPrices.hasSession && <div><strong>Session:</strong> ₹{displayPrices.sessionPrice} for {displayPrices.sessionDuration} min</div>}
                         {displayPrices.hasSubscription && <div><strong>Subscriptions:</strong> Available (click View Plans)</div>}
                         {price.reason_for_price && <div><strong>Reason:</strong> {price.reason_for_price}</div>}
@@ -1579,6 +1602,15 @@ const ExpertProfilePage = () => {
             <span>Chat</span>
             <strong>{hasActiveSubscription ? "Free" : `₹${currentPricingInfo.price}/min`}</strong>
           </button>
+          <VideoCallButton
+            expert={expertData || profile}
+            expertId={numericExpertId}
+            sourceContext="expert_profile"
+            sourceRefId={numericExpertId}
+            className="mobile-video-call-btn"
+            compact
+            compactLabel="Video Call"
+          />
           <button type="button" className="mobile-call-btn" disabled={!canShowUserCallButton} onClick={() => handleStart("call")}>
             <FiPhoneCall />
             <span>Call</span>

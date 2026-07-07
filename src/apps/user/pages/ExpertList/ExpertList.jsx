@@ -45,6 +45,7 @@ import { getExpertsBySubCategoryApi } from "../../../../shared/api/expertapi/aut
 import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 import NeedHelpForm from "../../components/NeedHelpForm/NeedHelpForm";
 import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/leadTracking";
+import { normalizeVideoCallPrice } from "../../../../shared/utils/normalizeExpertPrice";
 
 /* ---------------- QUERY ---------------- */
 const useQuery = () => {
@@ -329,6 +330,7 @@ const ExpertListPage = () => {
                 const name = exp.expert_name || exp.name || "Verified Expert";
                 const avatar = exp.profile_image || exp.profile_photo;
                 const price = exp.call_per_minute || 0;
+                const videoCallPrice = normalizeVideoCallPrice(exp);
                 return (
                   <ExpertCard
                     key={exp.expert_id}
@@ -358,6 +360,12 @@ const ExpertListPage = () => {
                         <Price>₹{price}</Price>
                         <PerMinute>/min</PerMinute>
                       </PriceRow>
+                      {videoCallPrice > 0 && (
+                        <PriceRow>
+                          <Price>Video &#8377;{videoCallPrice}</Price>
+                          <PerMinute>/min</PerMinute>
+                        </PriceRow>
+                      )}
                     </ExpertBody>
                   </ExpertCard>
                 );

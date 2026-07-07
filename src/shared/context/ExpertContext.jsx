@@ -86,6 +86,8 @@ const DEFAULT_STATE = {
 const DEFAULT_PRICE = {
   pricing_modes: [],
   call: 0,
+  video_call: 0,
+  video_call_per_minute: 0,
   chat: 0,
   session: null,
   reason_for_price: "",
@@ -316,6 +318,8 @@ export const ExpertProvider = ({ children }) => {
       setExpertPrice({
         pricing_modes: priceData.pricing_modes || [],
         call: priceData.call?.per_minute || 0,
+        video_call: priceData.video_call?.per_minute || priceData.video_call_per_minute || 0,
+        video_call_per_minute: priceData.video_call?.per_minute || priceData.video_call_per_minute || 0,
         chat: priceData.chat?.per_minute || 0,
         session: priceData.session || null,
         reason_for_price: priceData.reason_for_price || "",

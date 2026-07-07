@@ -50,6 +50,7 @@ export default function StepPricing() {
   
   // Per-minute pricing
   const [pricePerMinute, setPricePerMinute] = useState("");
+  const [videoCallPrice, setVideoCallPrice] = useState("");
   const [chatPrice, setChatPrice] = useState("");
   
   // Session pricing
@@ -117,6 +118,9 @@ export default function StepPricing() {
           if (priceRes.data.call?.per_minute) {
             setPricePerMinute(priceRes.data.call.per_minute.toString());
           }
+          if (priceRes.data.video_call?.per_minute || priceRes.data.video_call_per_minute) {
+            setVideoCallPrice((priceRes.data.video_call?.per_minute || priceRes.data.video_call_per_minute).toString());
+          }
           if (priceRes.data.chat?.per_minute) {
             setChatPrice(priceRes.data.chat.per_minute.toString());
           }
@@ -170,6 +174,7 @@ export default function StepPricing() {
     
     if (selectedModes.includes("per_minute")) {
       setPricePerMinute(smartPrice.call.toString());
+      setVideoCallPrice(smartPrice.call.toString());
       setChatPrice(smartPrice.chat.toString());
     }
     
@@ -200,6 +205,7 @@ export default function StepPricing() {
     // Validate per-minute pricing
     if (nonSubscriptionModes.includes("per_minute")) {
       const call = Number(pricePerMinute);
+      const video = Number(videoCallPrice);
       const chat = Number(chatPrice);
 
       if (isNaN(call) || call < 10) {
@@ -212,6 +218,11 @@ export default function StepPricing() {
         errors.chat = "Chat rate must be at least ₹5";
       } else if (chat > 10000) {
         errors.chat = "Chat rate cannot exceed ₹10,000 per minute";
+      }
+      if (isNaN(video) || video < 10) {
+        errors.videoCall = "Video call rate must be at least ₹10";
+      } else if (video > 10000) {
+        errors.videoCall = "Video call rate cannot exceed ₹10,000 per minute";
       }
     }
 
@@ -241,14 +252,14 @@ export default function StepPricing() {
     setValidationErrors(errors);
     setBackendErrors(backendErrs);
     return Object.keys(errors).length === 0 && Object.keys(backendErrs).length === 0;
-  }, [selectedModes, pricePerMinute, chatPrice, sessionPrice, sessionDuration, reasonForPrice]);
+  }, [selectedModes, pricePerMinute, videoCallPrice, chatPrice, sessionPrice, sessionDuration, reasonForPrice]);
 
   // Real-time validation
   useEffect(() => {
-    if (pricePerMinute || chatPrice || sessionPrice || sessionDuration || selectedModes.length > 0) {
+    if (pricePerMinute || videoCallPrice || chatPrice || sessionPrice || sessionDuration || selectedModes.length > 0) {
       validateForm();
     }
-  }, [pricePerMinute, chatPrice, sessionPrice, sessionDuration, selectedModes, reasonForPrice, validateForm]);
+  }, [pricePerMinute, videoCallPrice, chatPrice, sessionPrice, sessionDuration, selectedModes, reasonForPrice, validateForm]);
 
   // Handle mode toggle
   const handleModeToggle = (mode) => {
@@ -427,7 +438,7 @@ export default function StepPricing() {
       isValid = nonSubscriptionModes.length > 0 && reasonForPrice.trim().length > 0;
       
       if (nonSubscriptionModes.includes("per_minute")) {
-        isValid = isValid && Number(pricePerMinute) >= 10 && Number(chatPrice) >= 5;
+        isValid = isValid && Number(pricePerMinute) >= 10 && Number(videoCallPrice) >= 10 && Number(chatPrice) >= 5;
       }
       
       if (nonSubscriptionModes.includes("session")) {
@@ -459,6 +470,7 @@ export default function StepPricing() {
         // Add per-minute pricing if enabled
         if (nonSubscriptionModes.includes("per_minute")) {
           payload.call_per_minute = Number(pricePerMinute);
+          payload.video_call_per_minute = Number(videoCallPrice);
           payload.chat_per_minute = Number(chatPrice);
         }
 
@@ -621,6 +633,28 @@ if (!isSuccess) {
               {validationErrors.call && (
                 <small style={{ color: "#ef4444", fontSize: 12, marginTop: 4, display: "block" }}>
                   {validationErrors.call}
+                </small>
+              )}
+            </Field>
+
+            <Field style={{ flex: 1, marginRight: 16 }}>
+              <Label>Video Call Rate <span style={{ color: "#ef4444" }}>*</span></Label>
+              <PriceInputRow>
+                <Input
+                  type="number"
+                  min="10"
+                  max="10000"
+                  step="5"
+                  value={videoCallPrice}
+                  onChange={e => setVideoCallPrice(e.target.value)}
+                  placeholder="60"
+                  disabled={saving || savingPlans || deletingPlan}
+                />
+                <span style={{ color: "#64748b" }}>₹ per minute</span>
+              </PriceInputRow>
+              {validationErrors.videoCall && (
+                <small style={{ color: "#ef4444", fontSize: 12, marginTop: 4, display: "block" }}>
+                  {validationErrors.videoCall}
                 </small>
               )}
             </Field>
@@ -962,7 +996,7 @@ if (!isSuccess) {
             <div>
               <strong>Ready to go live!</strong>
               <p style={{ margin: "4px 0 0", fontSize: 14, color: "#10b981" }}>
-                {selectedModes.includes("per_minute") && `You'll earn ₹${Number(pricePerMinute)}/min for calls and ₹${Number(chatPrice)}/min for chats`}
+                {selectedModes.includes("per_minute") && `You'll earn ₹${Number(pricePerMinute)}/min for calls, ₹${Number(videoCallPrice)}/min for video calls and ₹${Number(chatPrice)}/min for chats`}
                 {selectedModes.includes("per_minute") && selectedModes.includes("session") && " • "}
                 {selectedModes.includes("session") && `Sessions: ₹${Number(sessionPrice)} for ${Number(sessionDuration)} mins`}
                 {selectedModes.includes("subscription") && subscriptionPlans.length > 0 && ` • ${subscriptionPlans.length} subscription plan(s) available`}

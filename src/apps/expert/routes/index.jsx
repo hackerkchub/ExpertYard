@@ -19,6 +19,8 @@ const MyContent = lazy(() => import("../pages/MyContent/MyContent"));
 const ExpertChat = lazy(() => import("../pages/chat/ExpertChat"));
 const ExpertChatHistory = lazy(() => import("../pages/chat-history/ExpertChatHistory"));
 const ExpertVoiceCall = lazy(() => import("../pages/voice-call/ExpertVoiceCall"));
+const ExpertVideoCall = lazy(() => import("../pages/video-call/ExpertVideoCall"));
+const VideoMediaTestPage = lazy(() => import("../../../shared/components/VideoMediaTestPage"));
 const ExpertNotificationPage = lazy(() => import("../pages/notification/ExpertNotificationPage"));
 const EarningDashboard = lazy(() => import("../pages/earnings/ExpertEarningsDashboard"));
 const ExpertLeads = lazy(() => import("../pages/leads/ExpertLeads"));
@@ -259,6 +261,22 @@ export default function ExpertAppRoutes() {
             </LazyRoute>
           </ProtectedExpertRoute>
         }
+      />
+
+      <Route
+        path="video-call/:callId"
+        element={
+          <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+            <LazyRoute>
+              <ExpertVideoCall />
+            </LazyRoute>
+          </ProtectedExpertRoute>
+        }
+      />
+
+      <Route
+        path="video-media-test"
+        element={withLazyRoute(<VideoMediaTestPage role="expert-diagnostic" />)}
       />
 
       <Route path="register" element={<MobileBackShell>{withLazyRoute(<StepAccount />)}</MobileBackShell>} />

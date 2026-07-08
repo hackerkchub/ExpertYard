@@ -5317,12 +5317,31 @@ button.book-service-desktop {
   gap: 16px !important;
 }
 
-/* Services section specific grid (3 columns) */
+/* Services section horizontal scroll */
 .services-grid {
-  grid-template-columns: repeat(3, 1fr) !important;
+  display: flex !important;
+  grid-template-columns: none !important;
+  gap: 16px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scroll-snap-type: x mandatory !important;
+  scroll-behavior: smooth !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding: 4px 2px 14px !important;
+  margin: 0 -2px !important;
+  scrollbar-width: none !important;
+  overscroll-behavior-x: contain !important;
+}
+
+.services-grid::-webkit-scrollbar {
+  display: none !important;
 }
 
 .marketplace-service-card {
+  flex: 0 0 260px !important;
+  width: 260px !important;
+  min-width: 260px !important;
+  scroll-snap-align: start !important;
   background: #ffffff !important;
   border: 1px solid #f1f5f9 !important;
   border-radius: 16px !important;
@@ -5711,6 +5730,11 @@ button.book-service-desktop {
   font-weight: 600 !important;
 }
 
+.posts-section .post-stats,
+.mobile-posts-list .mobile-post-stats {
+  display: none !important;
+}
+
 .consult-btn {
   height: 28px !important;
   background: #fef3c7 !important;
@@ -5726,6 +5750,103 @@ button.book-service-desktop {
 
 .consult-btn:hover {
   background: #fde68a !important;
+}
+
+.tip-post-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin-top: 10px !important;
+  padding-top: 10px !important;
+  border-top: 1px solid #f1f5f9 !important;
+}
+
+.tip-post-action-btn {
+  min-height: 34px !important;
+  padding: 6px 10px !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 999px !important;
+  background: #ffffff !important;
+  color: #475569 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+}
+
+.tip-post-action-btn.liked {
+  color: #dc2626 !important;
+  border-color: rgba(220, 38, 38, 0.22) !important;
+  background: #fef2f2 !important;
+}
+
+.tip-post-action-btn:disabled {
+  opacity: 0.65 !important;
+  cursor: wait !important;
+}
+
+.tip-post-comments {
+  margin-top: 10px !important;
+  padding: 10px !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  background: #f8fafc !important;
+}
+
+.tip-post-comment-list {
+  display: grid !important;
+  gap: 6px !important;
+  max-height: 130px !important;
+  overflow-y: auto !important;
+  margin-bottom: 8px !important;
+}
+
+.tip-post-comment,
+.tip-post-comment-empty {
+  margin: 0 !important;
+  color: #475569 !important;
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+}
+
+.tip-post-comment {
+  padding: 7px 8px !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  border: 1px solid #eef2f7 !important;
+}
+
+.tip-post-comment-form {
+  display: flex !important;
+  gap: 8px !important;
+  align-items: center !important;
+}
+
+.tip-post-comment-form input {
+  min-width: 0 !important;
+  flex: 1 !important;
+  height: 36px !important;
+  border: 1px solid #dbe3ef !important;
+  border-radius: 10px !important;
+  padding: 0 10px !important;
+  font-size: 12px !important;
+  outline: none !important;
+  background: #ffffff !important;
+}
+
+.tip-post-comment-form button {
+  height: 36px !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  padding: 0 12px !important;
+  background: #000080 !important;
+  color: #ffffff !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
 }
 
 /* Categories section override */

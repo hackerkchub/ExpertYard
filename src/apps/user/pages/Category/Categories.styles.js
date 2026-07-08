@@ -315,7 +315,7 @@ export const MainContent = styled.main`
 
   @media (min-width: 1024px) {
     width: 100%;
-    padding: 0 0 46px;
+    padding: 0 0 56px;
   }
 
   ${media.tablet} {
@@ -326,11 +326,11 @@ export const MainContent = styled.main`
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
-    padding: 12px 12px 0;
+    padding: 12px 12px var(--mobile-bottom-nav-reserved-space, 92px);
   }
 
   ${media.sm} {
-    padding: 12px 12px 0;
+    padding: 12px 12px var(--mobile-bottom-nav-reserved-space, 92px);
   }
 `;
 
@@ -492,25 +492,25 @@ export const SortSelect = styled.select`
 
 export const CategoriesGrid = styled.div`
   display: grid;
-  gap: 14px;
+  gap: 18px;
   grid-template-columns: ${(props) =>
-    props.$view === "grid" ? "repeat(5, minmax(0, 1fr))" : "1fr"};
+    props.$view === "grid" ? "repeat(4, minmax(0, 1fr))" : "1fr"};
 
-  ${media.lg} {
-    grid-template-columns: ${(props) =>
-      props.$view === "grid" ? "repeat(3, minmax(0, 1fr))" : "1fr"};
-  }
-
-  ${media.tablet} {
+  @media (min-width: 1025px) {
     grid-template-columns: ${(props) =>
       props.$view === "grid" ? "repeat(4, minmax(0, 1fr))" : "1fr"};
-    gap: 12px;
+  }
+
+  @media (min-width: 768px) and (max-width: 1024px) {
+    grid-template-columns: ${(props) =>
+      props.$view === "grid" ? "repeat(3, minmax(0, 1fr))" : "1fr"};
+    gap: 14px;
   }
 
   ${media.mobile} {
     grid-template-columns: ${(props) =>
-      props.$view === "grid" ? "repeat(3, minmax(0, 1fr))" : "1fr"};
-    gap: ${(props) => (props.$view === "grid" ? "10px 8px" : "10px")};
+      props.$view === "grid" ? "repeat(2, minmax(0, 1fr))" : "1fr"};
+    gap: ${(props) => (props.$view === "grid" ? "12px" : "10px")};
     width: 100%;
     max-width: 100%;
     overflow: visible;
@@ -518,8 +518,8 @@ export const CategoriesGrid = styled.div`
 
   ${media.sm} {
     grid-template-columns: ${(props) =>
-      props.$view === "grid" ? "repeat(3, minmax(0, 1fr))" : "1fr"};
-    gap: ${(props) => (props.$view === "grid" ? "10px 8px" : "10px")};
+      props.$view === "grid" ? "repeat(2, minmax(0, 1fr))" : "1fr"};
+    gap: ${(props) => (props.$view === "grid" ? "10px" : "10px")};
   }
 
   ${media.xs} {
@@ -530,13 +530,13 @@ export const CategoriesGrid = styled.div`
 
 export const CategoryCard = styled.div`
   min-width: 0;
-  min-height: ${(props) => (props.$view === "list" ? "132px" : "248px")};
+  min-height: ${(props) => (props.$view === "list" ? "132px" : "238px")};
   border: 1px solid ${colors.border};
-  border-radius: 20px;
+  border-radius: 16px;
   background:
-    radial-gradient(circle at top right, rgba(244, 197, 66, 0.1), transparent 40%),
+    radial-gradient(circle at top right, rgba(244, 197, 66, 0.08), transparent 42%),
     ${colors.white};
-  box-shadow: 0 12px 28px rgba(10, 20, 60, 0.06);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.055);
   color: inherit;
   text-decoration: none;
   overflow: hidden;
@@ -545,19 +545,23 @@ export const CategoryCard = styled.div`
   transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
 
   &:hover {
-    transform: translateY(-4px);
+    transform: translateY(-3px);
     border-color: rgba(0, 0, 128, 0.18);
-    box-shadow: 0 20px 42px rgba(10, 20, 60, 0.11);
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.1);
+  }
+
+  @media (min-width: 768px) and (max-width: 1024px) {
+    min-height: ${(props) => (props.$view === "grid" ? "220px" : "124px")};
   }
 
   ${media.sm} {
-    min-height: ${(props) => (props.$view === "grid" ? "132px" : "96px")};
-    border-radius: 16px;
+    min-height: ${(props) => (props.$view === "grid" ? "150px" : "96px")};
+    border-radius: 14px;
     flex-direction: ${(props) => (props.$view === "grid" ? "column" : "row")};
     align-items: ${(props) => (props.$view === "grid" ? "center" : "center")};
     justify-content: ${(props) => (props.$view === "grid" ? "flex-start" : "center")};
-    padding: ${(props) => (props.$view === "grid" ? "10px 7px 12px" : "10px")};
-    box-shadow: 0 8px 18px rgba(10, 20, 60, 0.055);
+    padding: ${(props) => (props.$view === "grid" ? "12px 8px 13px" : "10px")};
+    box-shadow: 0 7px 16px rgba(15, 23, 42, 0.055);
     overflow: visible;
 
     &:hover {
@@ -573,7 +577,7 @@ export const CategoryCard = styled.div`
 
 export const CategoryImage = styled.img`
   width: ${(props) => (props.$view === "list" ? "118px" : "100%")};
-  height: ${(props) => (props.$view === "list" ? "118px" : "112px")};
+  height: ${(props) => (props.$view === "list" ? "118px" : "104px")};
   padding: ${(props) => (props.$view === "list" ? "12px" : "14px")};
   box-sizing: border-box;
   object-fit: contain;
@@ -588,9 +592,9 @@ export const CategoryImage = styled.img`
   }
 
   ${media.sm} {
-    width: ${(props) => (props.$view === "grid" ? "54px" : "66px")};
-    height: ${(props) => (props.$view === "grid" ? "54px" : "66px")};
-    padding: ${(props) => (props.$view === "grid" ? "7px" : "8px")};
+    width: ${(props) => (props.$view === "grid" ? "62px" : "66px")};
+    height: ${(props) => (props.$view === "grid" ? "62px" : "66px")};
+    padding: ${(props) => (props.$view === "grid" ? "8px" : "8px")};
     border-radius: ${(props) => (props.$view === "grid" ? "15px" : "16px")};
 
     ${CategoryCard}:hover & {
@@ -602,12 +606,12 @@ export const CategoryImage = styled.img`
 export const CategoryInfo = styled.div`
   min-width: 0;
   flex: 1;
-  padding: ${(props) => (props.$view === "list" ? "14px 16px" : "13px")};
+  padding: ${(props) => (props.$view === "list" ? "14px 16px" : "13px 14px 14px")};
   display: flex;
   flex-direction: column;
 
   ${media.sm} {
-    padding: ${(props) => (props.$view === "grid" ? "7px 0 0" : "0 8px 0 10px")};
+    padding: ${(props) => (props.$view === "grid" ? "9px 0 0" : "0 8px 0 10px")};
     align-items: ${(props) => (props.$view === "grid" ? "center" : "stretch")};
     text-align: ${(props) => (props.$view === "grid" ? "center" : "left")};
     width: 100%;
@@ -647,7 +651,7 @@ export const CategoryName = styled.h3`
 
   ${media.sm} {
     width: 100%;
-    font-size: ${(props) => (props.$view === "grid" ? "13px" : "15px")};
+    font-size: ${(props) => (props.$view === "grid" ? "13.5px" : "15px")};
     line-height: ${(props) => (props.$view === "grid" ? "1.25" : "1.35")};
     font-weight: 700;
     display: block;

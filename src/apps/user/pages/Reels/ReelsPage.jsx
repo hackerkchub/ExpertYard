@@ -98,14 +98,50 @@ const getErrorMessage = (err, fallback) => {
   return err?.response?.data?.message || err?.message || fallback;
 };
 
-const getExpertProfileRouteId = (reel) => (
-  reel?.expert_slug ||
-  reel?.expert_profile_slug ||
-  reel?.profile_slug ||
-  reel?.expert_user_id ||
+const getReelDisplayName = (reel) => {
+  const value =
+    reel?.expert_name ||
+    reel?.expertName ||
+    reel?.name ||
+    reel?.full_name ||
+    reel?.fullName ||
+    reel?.username ||
+    reel?.business_name ||
+    reel?.businessName ||
+    reel?.expert?.name ||
+    reel?.expert?.full_name ||
+    reel?.expert?.business_name ||
+    reel?.user?.name ||
+    reel?.user?.full_name ||
+    "";
+  const text = String(value || "").trim();
+  return text && !/^\d+$/.test(text) ? text : "Expert";
+};
+
+const getReelExpertId = (reel) => (
   reel?.expert_id ||
+  reel?.expertId ||
+  reel?.expert?.expert_id ||
+  reel?.expert?.id ||
+  reel?.expert_user_id ||
+  reel?.user_id ||
   null
 );
+
+const getExpertProfileRouteId = (reel) => {
+  const slug =
+    reel?.expert_slug ||
+    reel?.expertSlug ||
+    reel?.expert_profile_slug ||
+    reel?.expertProfileSlug ||
+    reel?.profile_slug ||
+    reel?.profileSlug ||
+    reel?.expert?.slug ||
+    "";
+  const cleanSlug = String(slug || "").trim();
+  if (cleanSlug) return cleanSlug;
+  return null;
+};
 
 const getInitials = (name) => {
   const parts = String(name || "G9")
@@ -118,20 +154,47 @@ const getInitials = (name) => {
 const resolveExpertAvatar = (reel) => {
   const raw =
     reel?.expert_profile_photo ||
-    reel?.expert_profile_image ||
-    reel?.expert_image ||
-    reel?.profile_image ||
+    reel?.profile_picture ||
+    reel?.profilePicture ||
     reel?.profile_photo ||
+    reel?.profilePhoto ||
+    reel?.profileImage ||
+    reel?.profile_image ||
     reel?.avatar ||
+    reel?.image ||
+    reel?.expert_profile_picture ||
+    reel?.expertProfilePicture ||
+    reel?.expertProfilePhoto ||
+    reel?.expert_profile_image ||
+    reel?.expertProfileImage ||
+    reel?.expert_image ||
+    reel?.expertImage ||
+    reel?.expert?.profile_picture ||
+    reel?.expert?.profilePicture ||
+    reel?.expert?.profile_photo ||
+    reel?.expert?.profilePhoto ||
     reel?.expert?.avatar ||
     reel?.expert?.profile_image ||
-    reel?.expert?.profile_photo ||
+    reel?.expert?.profileImage ||
+    reel?.expert?.image ||
+    reel?.user?.profile_picture ||
+    reel?.user?.profilePicture ||
+    reel?.user?.profile_photo ||
+    reel?.user?.profilePhoto ||
     reel?.user?.profile_image ||
+    reel?.user?.profileImage ||
+    reel?.user?.avatar ||
     "";
-  const value = String(raw || "").trim();
-  if (!value) return "";
+  const value = String(raw || "").trim().replace(/\\/g, "/");
+  if (!value || value === "null" || value === "undefined") return "";
   if (/^(https?:)?\/\//i.test(value) || value.startsWith("data:") || value.startsWith("blob:")) {
     return value;
+  }
+  if (value.startsWith("/api/uploads/")) {
+    return `${API_ORIGIN}${value.replace(/^\/api/, "")}`;
+  }
+  if (value.startsWith("api/uploads/")) {
+    return `${API_ORIGIN}/${value.replace(/^api\//, "")}`;
   }
   if (value.startsWith("/uploads/")) {
     return `${API_ORIGIN}${value}`;
@@ -653,10 +716,11 @@ export default function ReelsPage() {
   const renderExpertAvatar = (reel, extraProps = {}) => {
     const avatarSrc = resolveExpertAvatar(reel);
     const avatarKey = `${reel?.id || "reel"}-${avatarSrc || "fallback"}`;
+    const displayName = getReelDisplayName(reel);
     if (!avatarSrc || failedAvatarKeys.has(avatarKey)) {
       return (
-        <AvatarFallback {...extraProps} aria-label={reel?.expert_name || "Expert"}>
-          {getInitials(reel?.expert_name)}
+        <AvatarFallback {...extraProps} aria-label={displayName}>
+          {getInitials(displayName)}
         </AvatarFallback>
       );
     }
@@ -665,7 +729,7 @@ export default function ReelsPage() {
       <Avatar
         {...extraProps}
         src={avatarSrc}
-        alt={reel?.expert_name || "Expert"}
+        alt={displayName}
         onError={() => {
           setFailedAvatarKeys((prev) => new Set(prev).add(avatarKey));
         }}
@@ -736,6 +800,11 @@ export default function ReelsPage() {
         <ReelsFeed ref={containerRef} onScroll={handleReelsScroll}>
           {reels.map((reel, index) => (
             <ReelWrapper key={reel.id} data-index={index} className="reel-slide">
+              {(() => {
+                const displayName = getReelDisplayName(reel);
+                const expertId = getReelExpertId(reel);
+                return (
+                  <>
               {/* VIDEO SECTION */}
               <PlayerSection>
                 <SoundToggle onClick={(event) => {
@@ -777,7 +846,7 @@ export default function ReelsPage() {
                       }}>
                         {renderExpertAvatar(reel)}
                         <div>
-                          <NameText>{reel.expert_name}</NameText>
+                          <NameText>{displayName}</NameText>
                           {reel.category_name && <CategoryTag>{reel.category_name}</CategoryTag>}
                         </div>
                       </ExpertMeta>
@@ -789,6 +858,18 @@ export default function ReelsPage() {
 
                   {/* Floating Action Column (Mobile Only) */}
                   <ActionColumn className="reel-actions-overlay" onClick={(event) => event.stopPropagation()}>
+                    <ActionButton
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setIsMuted(!isMuted);
+                      }}
+                      aria-label={isMuted ? "Turn audio on" : "Turn audio off"}
+                    >
+                      {isMuted ? <FiVolumeX /> : <FiVolume2 />}
+                    </ActionButton>
+                    <ActionLabel>Audio</ActionLabel>
+
                     <ActionButton active={reel.is_liked} disabled={pendingActions[`like-${reel.id}`]} onClick={(event) => {
                       event.stopPropagation();
                       handleLike(reel, index);
@@ -834,13 +915,13 @@ export default function ReelsPage() {
                   <CtaRow onClick={(event) => event.stopPropagation()}>
                     <CtaButton variant="primary" onClick={(event) => {
                       event.stopPropagation();
-                      handleChatCTA(reel.expert_id);
+                      handleChatCTA(expertId);
                     }}>
                       <FiMessageSquare /> Chat
                     </CtaButton>
                     <CtaButton variant="primary" onClick={(event) => {
                       event.stopPropagation();
-                      handleCallCTA(reel.expert_id);
+                      handleCallCTA(expertId);
                     }}>
                       <FiPhone /> Call
                     </CtaButton>
@@ -865,7 +946,7 @@ export default function ReelsPage() {
                 <DesktopHeader>
                   {renderExpertAvatar(reel, { onClick: () => handleProfileCTA(reel) })}
                   <div>
-                    <NameText onClick={() => handleProfileCTA(reel)}>{reel.expert_name}</NameText>
+                    <NameText onClick={() => handleProfileCTA(reel)}>{displayName}</NameText>
                     {reel.category_name && <CategoryTag>{reel.category_name}</CategoryTag>}
                   </div>
                 </DesktopHeader>
@@ -960,10 +1041,10 @@ export default function ReelsPage() {
 
                 {/* Desktop CTA row */}
                 <CtaRow>
-                  <CtaButton variant="primary" onClick={() => handleChatCTA(reel.expert_id)}>
+                  <CtaButton variant="primary" onClick={() => handleChatCTA(expertId)}>
                     <FiMessageSquare /> Chat with Expert
                   </CtaButton>
-                  <CtaButton variant="primary" onClick={() => handleCallCTA(reel.expert_id)}>
+                  <CtaButton variant="primary" onClick={() => handleCallCTA(expertId)}>
                     <FiPhone /> Call Now
                   </CtaButton>
                   <CtaButton onClick={() => handleProfileCTA(reel)}>
@@ -974,6 +1055,9 @@ export default function ReelsPage() {
                   </CtaButton>
                 </CtaRow>
               </DesktopSidebar>
+                  </>
+                );
+              })()}
             </ReelWrapper>
           ))}
         </ReelsFeed>

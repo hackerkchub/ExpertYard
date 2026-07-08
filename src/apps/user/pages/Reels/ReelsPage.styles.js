@@ -869,18 +869,7 @@ export const SoundToggle = styled.button`
   }
 
   @media (max-width: 767px) {
-    top: calc(var(--reels-mobile-safe-top) + 18px);
-    right: 14px;
-    width: 42px;
-    height: 42px;
-    z-index: 30;
-    background: rgba(0, 0, 0, 0.58);
-    border-color: rgba(255, 255, 255, 0.22);
-
-    svg {
-      width: 20px;
-      height: 20px;
-    }
+    display: none;
   }
 
   @media (min-width: 768px) {

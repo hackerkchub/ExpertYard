@@ -13,11 +13,11 @@ import {
   LeftSidebar,
   FilterTitle,
   FiltersForm,
-  Field,
-  FieldLabel,
-  SearchInput,
-  PillsRow,
-  PillButton,
+  FilterSection,
+  SectionTitle,
+  OptionList,
+  OptionLabel,
+  RadioInput,
   RightPanel,
   ExpertsGrid,
   ExpertCard,
@@ -266,44 +266,50 @@ const ExpertListPage = () => {
           <FilterTitle>Filter & Sort</FilterTitle>
 
           <FiltersForm>
-            <Field>
-              <FieldLabel>Search</FieldLabel>
-              <SearchInput
-                placeholder="Search expert name"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </Field>
+            <FilterSection>
+              <SectionTitle>Sort By</SectionTitle>
+              <OptionList>
+                <OptionLabel $active={sortBy === "rating-high"}>
+                  <RadioInput
+                    type="radio"
+                    name="sortBy"
+                    checked={sortBy === "rating-high"}
+                    onChange={() => setSortBy("rating-high")}
+                  />
+                  Rating: High to Low
+                </OptionLabel>
 
-            <PillsRow>
-              <PillButton
-                $active={sortBy === "rating-high"}
-                onClick={() => setSortBy("rating-high")}
-              >
-                Rating High → Low
-              </PillButton>
+                <OptionLabel $active={sortBy === "rating-low"}>
+                  <RadioInput
+                    type="radio"
+                    name="sortBy"
+                    checked={sortBy === "rating-low"}
+                    onChange={() => setSortBy("rating-low")}
+                  />
+                  Rating: Low to High
+                </OptionLabel>
 
-              <PillButton
-                $active={sortBy === "rating-low"}
-                onClick={() => setSortBy("rating-low")}
-              >
-                Rating Low → High
-              </PillButton>
+                <OptionLabel $active={sortBy === "budget-low"}>
+                  <RadioInput
+                    type="radio"
+                    name="sortBy"
+                    checked={sortBy === "budget-low"}
+                    onChange={() => setSortBy("budget-low")}
+                  />
+                  Price: Low to High
+                </OptionLabel>
 
-              <PillButton
-                $active={sortBy === "budget-low"}
-                onClick={() => setSortBy("budget-low")}
-              >
-                Budget Low → High
-              </PillButton>
-
-              <PillButton
-                $active={sortBy === "budget-high"}
-                onClick={() => setSortBy("budget-high")}
-              >
-                Budget High → Low
-              </PillButton>
-            </PillsRow>
+                <OptionLabel $active={sortBy === "budget-high"}>
+                  <RadioInput
+                    type="radio"
+                    name="sortBy"
+                    checked={sortBy === "budget-high"}
+                    onChange={() => setSortBy("budget-high")}
+                  />
+                  Price: High to Low
+                </OptionLabel>
+              </OptionList>
+            </FilterSection>
           </FiltersForm>
         </LeftSidebar>
 

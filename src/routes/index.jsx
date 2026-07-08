@@ -1,9 +1,10 @@
-import { useEffect, lazy, useMemo } from "react";
+import { useCallback, useEffect, lazy, useMemo, useState } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 
 import { socket } from "../shared/api/socket";
 import BottomNavbar from "../shared/components/BottomNavbar/BottomNavbar";
 import NetworkStatus from "../shared/components/NetworkStatus/NetworkStatus";
+import SplashScreen from "../shared/components/SplashScreen";
 import { ExpertProvider } from "../shared/context/ExpertContext";
 import { useSoundInit } from "../shared/services/sound/useSoundInit";
 import MainLayout from "../apps/user/layouts/MainLayout";
@@ -30,14 +31,38 @@ const CONTENT_WRAPPER_STYLE = {
   overflowX: "hidden",
 };
 
+const isCallScreenPath = (pathname = "") => {
+  const normalizedPath = pathname.toLowerCase();
+  return (
+    normalizedPath.startsWith("/user/voice-call") ||
+    normalizedPath.startsWith("/user/video-call") ||
+    normalizedPath.startsWith("/expert/voice-call") ||
+    normalizedPath.startsWith("/expert/video-call")
+  );
+};
+
 export default function AppRouter() {
   useSoundInit();
   const location = useLocation();
+  const [showSplash, setShowSplash] = useState(
+    () =>
+      typeof window !== "undefined" && !isCallScreenPath(window.location.pathname)
+  );
 
   const showNavbar = useMemo(
     () => shouldShowBottomNavbar(location.pathname),
     [location.pathname]
   );
+
+  const hideSplash = useCallback(() => {
+    setShowSplash(false);
+  }, []);
+
+  useEffect(() => {
+    if (isCallScreenPath(location.pathname)) {
+      setShowSplash(false);
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     const handleVisibility = () => {
@@ -52,6 +77,10 @@ export default function AppRouter() {
 
   return (
     <div className="app-main-layout" style={APP_SHELL_STYLE}>
+      {showSplash && !isCallScreenPath(location.pathname) ? (
+        <SplashScreen onDone={hideSplash} />
+      ) : null}
+
       <NetworkStatus />
 
       <div

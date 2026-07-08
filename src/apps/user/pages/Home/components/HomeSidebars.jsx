@@ -4,6 +4,7 @@ import {
   Bell,
   BriefcaseBusiness,
   CreditCard,
+  Film,
   Grid3X3,
   Home,
   LogIn,
@@ -21,6 +22,7 @@ import { getAllServices } from "../../../../../shared/api/service.api";
 
 const navItems = [
   { label: "Home", to: "/user", icon: Home, end: true },
+  { label: "Reel", to: "/user/reels", icon: Film },
   { label: "Experts", to: "/user/call-chat?page=1", icon: Users },
   { label: "Services", to: "/user/all-services", icon: BriefcaseBusiness },
   { label: "Category", to: "/user/categories", icon: Grid3X3 },

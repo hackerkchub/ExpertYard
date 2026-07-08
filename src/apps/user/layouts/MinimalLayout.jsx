@@ -4,7 +4,11 @@ import { FiArrowLeft } from "react-icons/fi";
 export default function MinimalLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const showMobileBack = location.pathname !== "/user" && location.pathname !== "/user/auth";
+  const isCallPage =
+    location.pathname.startsWith("/user/voice-call/") ||
+    location.pathname.startsWith("/user/video-call/");
+  const showMobileBack =
+    !isCallPage && location.pathname !== "/user" && location.pathname !== "/user/auth";
 
   return (
     <>

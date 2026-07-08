@@ -1,11 +1,11 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
+  CirclePlus,
   Home, 
   BriefcaseBusiness, 
-  MessageSquare, 
-  TrendingUp, 
-  User 
+  Film,
+  Wallet,
 } from 'lucide-react';
 import "../../../shared/components/BottomNavbar/BottomNavbar.css";
 
@@ -22,28 +22,27 @@ const ExpertBottomNavbar = () => {
       isActive: () => currentPath === '/expert/home' || currentPath === '/expert' || currentPath === '/expert/'
     },
     { 
-      name: 'Services', 
-      path: '/expert/myservices', 
-      icon: <BriefcaseBusiness size={21} />,
-      isActive: () => currentPath.startsWith('/expert/myservices') || currentPath.startsWith('/expert/create-services') || currentPath.startsWith('/expert/mybookings')
-    },
-    { 
-      name: 'Messages', 
-      path: '/expert/chat-history', 
-      icon: <MessageSquare size={21} />,
-      isActive: () => currentPath.startsWith('/expert/chat-history') || currentPath.startsWith('/expert/chat')
-    },
-    { 
-      name: 'Earnings', 
-      path: '/expert/earnings', 
-      icon: <TrendingUp size={21} />,
+      name: 'Earning',
+      path: '/expert/earnings',
+      icon: <Wallet size={21} />,
       isActive: () => currentPath.startsWith('/expert/earnings')
     },
     { 
-      name: 'Profile', 
-      path: '/expert/profile', 
-      icon: <User size={21} />,
-      isActive: () => currentPath.startsWith('/expert/profile') || currentPath.startsWith('/expert/settings') || currentPath.startsWith('/expert/calendar')
+      name: 'Create Reel',
+      path: '/expert/reels',
+      icon: (
+        <span className="chat-call-icon" aria-hidden="true">
+          <Film />
+          <CirclePlus />
+        </span>
+      ),
+      isActive: () => currentPath.startsWith('/expert/reels')
+    },
+    { 
+      name: 'Create Service',
+      path: '/expert/create-services',
+      icon: <BriefcaseBusiness size={21} />,
+      isActive: () => currentPath.startsWith('/expert/create-services')
     },
   ];
 

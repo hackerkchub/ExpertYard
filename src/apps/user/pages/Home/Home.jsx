@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Bell,
   BriefcaseBusiness,
+  Heart,
   History,
   Grid3X3,
   Home as HomeIcon,
@@ -35,7 +36,14 @@ import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useCategory } from "../../../../shared/context/CategoryContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
 import { useSeo } from "../../../../shared/seo/useSeo";
-import { getHomeFeedApi } from "../../../../shared/api/userApi/home.api";
+import { getExpertTipsApi, getHomeFeedApi } from "../../../../shared/api/userApi/home.api";
+import {
+  addCommentApi,
+  getCommentsApi,
+  likePostApi,
+  unlikePostApi,
+} from "../../../../shared/api/expertapi/post.api";
+import { hotToast } from "../../../../shared/utils/lazyNotifications";
 import { buildUserSearchPath } from "../../components/search/searchUtils";
 import { getAllServices } from "../../../../shared/api/service.api";
 
@@ -87,6 +95,118 @@ function CpuIconFallback(props) {
 const money = (value, fallback = "Rs 0") => {
   const numeric = Number(value);
   return Number.isFinite(numeric) && numeric > 0 ? `Rs ${Math.round(numeric)}` : fallback;
+};
+
+const isNumericText = (value) => /^\d+$/.test(String(value || "").trim());
+
+const getPostText = (post) =>
+  post?.title ||
+  post?.caption ||
+  post?.description ||
+  post?.content ||
+  post?.text ||
+  post?.post_text ||
+  "";
+
+const getPostExpertName = (post) => {
+  const name =
+    post?.expert_name ||
+    post?.expertName ||
+    post?.name ||
+    post?.full_name ||
+    post?.fullName ||
+    post?.business_name ||
+    post?.businessName ||
+    post?.expert?.name ||
+    post?.expert?.full_name ||
+    "";
+  return name && !isNumericText(name) ? name : "Expert";
+};
+
+const getPostExpertAvatar = (post) =>
+  post?.expert_profile_picture ||
+  post?.expertProfilePicture ||
+  post?.profile_photo ||
+  post?.profilePhoto ||
+  post?.profile_picture ||
+  post?.profilePicture ||
+  post?.profile_image ||
+  post?.profileImage ||
+  post?.expert_avatar ||
+  post?.avatar ||
+  post?.expert?.profile_photo ||
+  "";
+
+const getPostMedia = (post) =>
+  post?.media_url ||
+  post?.mediaUrl ||
+  post?.image_url ||
+  post?.imageUrl ||
+  post?.thumbnail_url ||
+  post?.thumbnailUrl ||
+  post?.video_url ||
+  post?.videoUrl ||
+  post?.image ||
+  "";
+
+const getPostExpertRoute = (post) => {
+  const routeId =
+    post?.expert_slug ||
+    post?.expertSlug ||
+    post?.expert?.slug ||
+    post?.profile_slug ||
+    post?.profileSlug ||
+    post?.slug ||
+    "";
+  return routeId ? `/user/experts/${routeId}` : "";
+};
+
+const getPostId = (post) =>
+  post?.post_id ||
+  post?.postId ||
+  post?.id ||
+  post?.content_id ||
+  post?.contentId ||
+  null;
+
+const formatPostDate = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const normalizeExpertTipPost = (post = {}) => {
+  const expertName = getPostExpertName(post);
+  const text = getPostText(post);
+
+  return {
+    ...post,
+    displayText: text,
+    displayExpertName: expertName,
+    displayAvatar: getPostExpertAvatar(post),
+    displayMedia: getPostMedia(post),
+    displayCategory:
+      post?.category_name ||
+      post?.categoryName ||
+      post?.subcategory_name ||
+      post?.subcategoryName ||
+      post?.position ||
+      post?.expert?.position ||
+      "Verified Consultant",
+    displayDate: formatPostDate(post?.created_at || post?.createdAt),
+    displayLikes: Number(post?.likes_count ?? post?.likes ?? 0),
+    displayComments: Number(post?.comments_count ?? post?.comment_count ?? post?.comments ?? 0),
+    likes_count: Number(post?.likes_count ?? post?.likes ?? 0),
+    comments_count: Number(post?.comments_count ?? post?.comment_count ?? post?.comments ?? 0),
+    displayPostId: getPostId(post),
+    displayLiked: Boolean(post?.is_liked ?? post?.isLiked ?? post?.liked),
+    displayRoute: getPostExpertRoute(post),
+  };
 };
 
 const getCategoryText = (category) => {
@@ -359,6 +479,15 @@ export default function HomePage() {
   const [error, setError] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [homeReels, setHomeReels] = useState([]);
+  const [expertTipsPosts, setExpertTipsPosts] = useState([]);
+  const [expertTipsLoading, setExpertTipsLoading] = useState(true);
+  const [expertTipsError, setExpertTipsError] = useState("");
+  const [likedTips, setLikedTips] = useState({});
+  const [tipComments, setTipComments] = useState({});
+  const [commentTextByPost, setCommentTextByPost] = useState({});
+  const [activeCommentsPostId, setActiveCommentsPostId] = useState(null);
+  const [loadingCommentsByPost, setLoadingCommentsByPost] = useState({});
+  const [likeLockByPost, setLikeLockByPost] = useState({});
   const requestIdRef = useRef(0);
   const loadMoreRef = useRef(null);
 
@@ -464,6 +593,36 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    let active = true;
+
+    const loadExpertTips = async () => {
+      try {
+        setExpertTipsLoading(true);
+        setExpertTipsError("");
+        const response = await getExpertTipsApi({ user_id: user?.id || user?.user_id || "" });
+        const payload = response?.data?.data || response?.data?.posts || [];
+        if (active) {
+          setExpertTipsPosts(Array.isArray(payload) ? payload : []);
+        }
+      } catch (err) {
+        if (active) {
+          setExpertTipsPosts([]);
+          setExpertTipsError("Unable to load expert tips right now.");
+        }
+      } finally {
+        if (active) {
+          setExpertTipsLoading(false);
+        }
+      }
+    };
+
+    loadExpertTips();
+    return () => {
+      active = false;
+    };
+  }, [user?.id, user?.user_id]);
+
+  useEffect(() => {
     const anchor = loadMoreRef.current;
     if (!anchor || !nextCursor || loading || loadingMore) return undefined;
 
@@ -539,13 +698,9 @@ export default function HomePage() {
   }, [items]);
 
   const heroPost = useMemo(() => {
-    const fromFeed = items.find((item) => item.type === "tip_post")?.data;
+    const fromFeed = items.find((item) => item.type === "expert_post")?.data;
     if (fromFeed) return fromFeed;
-    return {
-      title: "Quick Tip: How to save 30% on your business taxes this financial year.",
-      expert_name: "CA Rajesh Mehta",
-      expert_avatar: "",
-    };
+    return null;
   }, [items]);
 
   const desktopServicesList = useMemo(() => {
@@ -597,10 +752,13 @@ export default function HomePage() {
   }, [items]);
 
   const desktopPostsList = useMemo(() => {
+    const directPosts = expertTipsPosts.map(normalizeExpertTipPost);
+    if (directPosts.length > 0) return directPosts;
+
     return items
-      .filter((item) => item.type === "tip_post")
-      .map((item) => item.data);
-  }, [items]);
+      .filter((item) => item.type === "expert_post")
+      .map((item) => normalizeExpertTipPost(item.data));
+  }, [expertTipsPosts, items]);
   const desktopCategories = useMemo(() => {
     const source = Array.isArray(categories) ? categories : [];
     const sorted = [...source].sort((a, b) => {
@@ -644,6 +802,139 @@ export default function HomePage() {
   const handleTargetCategorySelect = (category) => {
     handleCategorySelect(category);
   };
+
+  const updateTipPost = useCallback((postId, updater) => {
+    setExpertTipsPosts((current) =>
+      current.map((post) => {
+        const currentPostId = getPostId(post);
+        if (String(currentPostId) !== String(postId)) return post;
+        return updater(post);
+      })
+    );
+  }, []);
+
+  const requireLoginForTipAction = useCallback(() => {
+    if (isLoggedIn && user?.id) return false;
+    openLogin();
+    return true;
+  }, [isLoggedIn, openLogin, user?.id]);
+
+  const handleTipProfileClick = useCallback((event, post) => {
+    event.stopPropagation();
+    const route = post?.displayRoute;
+    if (!route) {
+      console.warn("Expert slug missing for expert tip post", post?.displayPostId);
+      return;
+    }
+    navigate(route);
+  }, [navigate]);
+
+  const handleTipLike = useCallback(async (event, post) => {
+    event.stopPropagation();
+    event.preventDefault();
+    if (requireLoginForTipAction()) return;
+
+    const postId = post.displayPostId;
+    if (!postId || likeLockByPost[postId]) return;
+
+    const wasLiked = Boolean(likedTips[postId] ?? post.displayLiked);
+    const delta = wasLiked ? -1 : 1;
+    setLikeLockByPost((current) => ({ ...current, [postId]: true }));
+    setLikedTips((current) => ({ ...current, [postId]: !wasLiked }));
+    updateTipPost(postId, (currentPost) => ({
+      ...currentPost,
+      likes: Math.max(0, Number(currentPost.likes || currentPost.likes_count || 0) + delta),
+      likes_count: Math.max(0, Number(currentPost.likes_count || currentPost.likes || 0) + delta),
+      is_liked: !wasLiked,
+      isLiked: !wasLiked,
+    }));
+
+    try {
+      if (wasLiked) {
+        await unlikePostApi({ post_id: postId, user_id: user.id });
+      } else {
+        await likePostApi({ post_id: postId, user_id: user.id });
+      }
+    } catch (err) {
+      setLikedTips((current) => ({ ...current, [postId]: wasLiked }));
+      updateTipPost(postId, (currentPost) => ({
+        ...currentPost,
+        likes: Math.max(0, Number(currentPost.likes || currentPost.likes_count || 0) - delta),
+        likes_count: Math.max(0, Number(currentPost.likes_count || currentPost.likes || 0) - delta),
+        is_liked: wasLiked,
+        isLiked: wasLiked,
+      }));
+      hotToast("error", err?.response?.data?.message || "Unable to update like");
+    } finally {
+      setLikeLockByPost((current) => ({ ...current, [postId]: false }));
+    }
+  }, [likeLockByPost, likedTips, requireLoginForTipAction, updateTipPost, user?.id]);
+
+  const handleTipCommentsToggle = useCallback(async (event, post) => {
+    event.stopPropagation();
+    event.preventDefault();
+
+    const postId = post.displayPostId;
+    if (!postId) return;
+
+    if (String(activeCommentsPostId) === String(postId)) {
+      setActiveCommentsPostId(null);
+      return;
+    }
+
+    setActiveCommentsPostId(postId);
+    if (tipComments[postId]) return;
+
+    try {
+      setLoadingCommentsByPost((current) => ({ ...current, [postId]: true }));
+      const response = await getCommentsApi(postId);
+      setTipComments((current) => ({
+        ...current,
+        [postId]: response?.data?.data || response?.data || [],
+      }));
+    } catch (err) {
+      hotToast("error", "Unable to load comments right now");
+    } finally {
+      setLoadingCommentsByPost((current) => ({ ...current, [postId]: false }));
+    }
+  }, [activeCommentsPostId, tipComments]);
+
+  const handleTipCommentSubmit = useCallback(async (event, post) => {
+    event.stopPropagation();
+    event.preventDefault();
+    if (requireLoginForTipAction()) return;
+
+    const postId = post.displayPostId;
+    const text = String(commentTextByPost[postId] || "").trim();
+    if (!postId || !text) return;
+
+    try {
+      const response = await addCommentApi({
+        post_id: postId,
+        expert_id: user.id,
+        comment: text,
+      });
+      const newComment = response?.data?.data || {
+        id: Date.now(),
+        post_id: postId,
+        expert_id: user.id,
+        comment: text,
+        created_at: new Date().toISOString(),
+      };
+
+      setTipComments((current) => ({
+        ...current,
+        [postId]: [...(current[postId] || []), newComment],
+      }));
+      setCommentTextByPost((current) => ({ ...current, [postId]: "" }));
+      updateTipPost(postId, (currentPost) => ({
+        ...currentPost,
+        comments_count: Number(currentPost.comments_count || 0) + 1,
+      }));
+    } catch (err) {
+      hotToast("error", err?.response?.data?.message || "Unable to add comment");
+    }
+  }, [commentTextByPost, requireLoginForTipAction, updateTipPost, user?.id]);
 
   return (
     <main className="home-feed-page">
@@ -893,7 +1184,7 @@ export default function HomePage() {
                 <button type="button" onClick={() => navigate("/user/all-services")}>View All Services</button>
               </div>
               <div className="marketplace-grid services-grid">
-                {desktopServicesList.slice(0, 3).map((svc, idx) => (
+                {desktopServicesList.map((svc, idx) => (
                   <div 
                     className="marketplace-service-card clickable-card" 
                     key={svc.id || svc.service_id || idx}
@@ -1012,31 +1303,42 @@ export default function HomePage() {
                 <h2>Expert Tips &amp; Guidance</h2>
                 <span>Latest insights from consultants</span>
               </div>
-              {desktopPostsList.length > 0 ? (
+              {expertTipsLoading && desktopPostsList.length === 0 ? (
+                <div className="marketplace-posts-empty" style={{ textAlign: "center", padding: "30px 20px", color: "#64748b", fontWeight: 700, fontSize: "13.5px" }}>
+                  Loading expert tips...
+                </div>
+              ) : expertTipsError && desktopPostsList.length === 0 ? (
+                <div className="marketplace-posts-empty" style={{ textAlign: "center", padding: "30px 20px", color: "#64748b", fontWeight: 700, fontSize: "13.5px" }}>
+                  {expertTipsError}
+                </div>
+              ) : desktopPostsList.length > 0 ? (
                 <div className="marketplace-grid posts-grid">
-                  {desktopPostsList.slice(0, 4).map((post, idx) => (
+                  {desktopPostsList.map((post, idx) => (
                     <div 
                       className="marketplace-post-card clickable-card" 
                       key={post.id || post.post_id || idx}
-                      onClick={() => navigate(post.expert_slug || post.slug || post.expert_id ? `/user/experts/${post.expert_slug || post.slug || post.expert_id}` : "/user/call-chat?page=1")}
+                      onClick={() => post.displayRoute && navigate(post.displayRoute)}
                       style={{ cursor: "pointer" }}
                     >
                       <div className="post-card-header">
-                        <div className="post-avatar">
-                          {post.expert_avatar ? (
-                            <img src={post.expert_avatar} alt="" />
+                        <div className="post-avatar" onClick={(event) => handleTipProfileClick(event, post)} role="button" tabIndex={0}>
+                          {post.displayAvatar ? (
+                            <img src={post.displayAvatar} alt={post.displayExpertName} />
                           ) : (
-                            <span>{String(post.expert_name || "GE").slice(0, 2).toUpperCase()}</span>
+                            <span>{String(post.displayExpertName || "GE").slice(0, 2).toUpperCase()}</span>
                           )}
                         </div>
                         <div className="post-author-info">
-                          <h4>{post.expert_name || "Expert Advisor"}</h4>
-                          <span>{post.category_name || "Verified Consultant"}</span>
+                          <h4 onClick={(event) => handleTipProfileClick(event, post)}>{post.displayExpertName}</h4>
+                          <span>
+                            {post.displayCategory}
+                            {post.displayDate ? ` • ${post.displayDate}` : ""}
+                          </span>
                         </div>
                       </div>
                       <div className="post-card-body">
-                        <p>{post.title || post.description}</p>
-                        {post.image && <img src={post.image} alt="" className="post-image" />}
+                        <p>{post.displayText}</p>
+                        {post.displayMedia && <img src={post.displayMedia} alt={post.displayText || "Expert tip"} className="post-image" />}
                       </div>
                       <div className="post-card-footer">
                         <div className="post-stats">
@@ -1050,6 +1352,56 @@ export default function HomePage() {
                           Consult Expert
                         </button>
                       </div>
+                      <div className="tip-post-actions" onClick={(event) => event.stopPropagation()}>
+                        <button
+                          type="button"
+                          className={`tip-post-action-btn ${(likedTips[post.displayPostId] ?? post.displayLiked) ? "liked" : ""}`}
+                          onClick={(event) => handleTipLike(event, post)}
+                          disabled={Boolean(likeLockByPost[post.displayPostId])}
+                        >
+                          <Heart size={16} fill={(likedTips[post.displayPostId] ?? post.displayLiked) ? "currentColor" : "none"} />
+                          <span>{post.likes_count || 0}</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="tip-post-action-btn"
+                          onClick={(event) => handleTipCommentsToggle(event, post)}
+                        >
+                          <MessageCircle size={16} />
+                          <span>{post.comments_count || 0}</span>
+                        </button>
+                      </div>
+                      {String(activeCommentsPostId) === String(post.displayPostId) && (
+                        <div className="tip-post-comments" onClick={(event) => event.stopPropagation()}>
+                          {loadingCommentsByPost[post.displayPostId] ? (
+                            <p className="tip-post-comment-empty">Loading comments...</p>
+                          ) : (tipComments[post.displayPostId] || []).length > 0 ? (
+                            <div className="tip-post-comment-list">
+                              {(tipComments[post.displayPostId] || []).map((comment) => (
+                                <p key={comment.id || `${post.displayPostId}-${comment.created_at || comment.comment}`} className="tip-post-comment">
+                                  {comment.comment}
+                                </p>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="tip-post-comment-empty">No comments yet.</p>
+                          )}
+                          <form className="tip-post-comment-form" onSubmit={(event) => handleTipCommentSubmit(event, post)}>
+                            <input
+                              type="text"
+                              value={commentTextByPost[post.displayPostId] || ""}
+                              onChange={(event) =>
+                                setCommentTextByPost((current) => ({
+                                  ...current,
+                                  [post.displayPostId]: event.target.value,
+                                }))
+                              }
+                              placeholder="Write a comment..."
+                            />
+                            <button type="submit">Send</button>
+                          </form>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1150,7 +1502,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="mobile-services-list">
-              {desktopServicesList.slice(0, 3).map((svc, idx) => (
+              {desktopServicesList.map((svc, idx) => (
                 <div 
                   className="mobile-service-row-card clickable-card" 
                   key={svc.id || svc.service_id || idx}
@@ -1280,30 +1632,41 @@ export default function HomePage() {
               </div>
             </div>
             <div className="mobile-posts-list">
-              {desktopPostsList.length > 0 ? (
-                desktopPostsList.slice(0, 3).map((post, idx) => (
+              {expertTipsLoading && desktopPostsList.length === 0 ? (
+                <div className="mobile-posts-empty">
+                  Loading expert tips...
+                </div>
+              ) : expertTipsError && desktopPostsList.length === 0 ? (
+                <div className="mobile-posts-empty">
+                  {expertTipsError}
+                </div>
+              ) : desktopPostsList.length > 0 ? (
+                desktopPostsList.map((post, idx) => (
                   <div 
                     className="mobile-post-row-card clickable-card" 
                     key={post.id || post.post_id || idx}
-                    onClick={() => navigate(post.expert_slug || post.slug || post.expert_id ? `/user/experts/${post.expert_slug || post.slug || post.expert_id}` : "/user/call-chat?page=1")}
+                    onClick={() => post.displayRoute && navigate(post.displayRoute)}
                     style={{ cursor: "pointer" }}
                   >
                     <div className="mobile-post-header">
-                      <div className="mobile-post-avatar">
-                        {post.expert_avatar ? (
-                          <img src={post.expert_avatar} alt="" />
+                      <div className="mobile-post-avatar" onClick={(event) => handleTipProfileClick(event, post)} role="button" tabIndex={0}>
+                        {post.displayAvatar ? (
+                          <img src={post.displayAvatar} alt={post.displayExpertName} />
                         ) : (
-                          <span>{String(post.expert_name || "GE").slice(0, 2).toUpperCase()}</span>
+                          <span>{String(post.displayExpertName || "GE").slice(0, 2).toUpperCase()}</span>
                         )}
                       </div>
                       <div className="mobile-post-author">
-                        <h4>{post.expert_name || "Expert Advisor"}</h4>
-                        <span>{post.category_name || "Verified Consultant"}</span>
+                        <h4 onClick={(event) => handleTipProfileClick(event, post)}>{post.displayExpertName}</h4>
+                        <span>
+                          {post.displayCategory}
+                          {post.displayDate ? ` - ${post.displayDate}` : ""}
+                        </span>
                       </div>
                     </div>
                     <div className="mobile-post-body">
-                      <p>{post.title || post.description}</p>
-                      {post.image && <img src={post.image} alt="" className="mobile-post-img" />}
+                      <p>{post.displayText}</p>
+                      {post.displayMedia && <img src={post.displayMedia} alt={post.displayText || "Expert tip"} className="mobile-post-img" />}
                     </div>
                     <div className="mobile-post-footer">
                       <div className="mobile-post-stats" onClick={(e) => e.stopPropagation()}>
@@ -1317,6 +1680,56 @@ export default function HomePage() {
                         Consult
                       </button>
                     </div>
+                    <div className="tip-post-actions mobile-tip-post-actions" onClick={(event) => event.stopPropagation()}>
+                      <button
+                        type="button"
+                        className={`tip-post-action-btn ${(likedTips[post.displayPostId] ?? post.displayLiked) ? "liked" : ""}`}
+                        onClick={(event) => handleTipLike(event, post)}
+                        disabled={Boolean(likeLockByPost[post.displayPostId])}
+                      >
+                        <Heart size={16} fill={(likedTips[post.displayPostId] ?? post.displayLiked) ? "currentColor" : "none"} />
+                        <span>{post.likes_count || 0}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="tip-post-action-btn"
+                        onClick={(event) => handleTipCommentsToggle(event, post)}
+                      >
+                        <MessageCircle size={16} />
+                        <span>{post.comments_count || 0}</span>
+                      </button>
+                    </div>
+                    {String(activeCommentsPostId) === String(post.displayPostId) && (
+                      <div className="tip-post-comments" onClick={(event) => event.stopPropagation()}>
+                        {loadingCommentsByPost[post.displayPostId] ? (
+                          <p className="tip-post-comment-empty">Loading comments...</p>
+                        ) : (tipComments[post.displayPostId] || []).length > 0 ? (
+                          <div className="tip-post-comment-list">
+                            {(tipComments[post.displayPostId] || []).map((comment) => (
+                              <p key={comment.id || `${post.displayPostId}-${comment.created_at || comment.comment}`} className="tip-post-comment">
+                                {comment.comment}
+                              </p>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="tip-post-comment-empty">No comments yet.</p>
+                        )}
+                        <form className="tip-post-comment-form" onSubmit={(event) => handleTipCommentSubmit(event, post)}>
+                          <input
+                            type="text"
+                            value={commentTextByPost[post.displayPostId] || ""}
+                            onChange={(event) =>
+                              setCommentTextByPost((current) => ({
+                                ...current,
+                                [post.displayPostId]: event.target.value,
+                              }))
+                            }
+                            placeholder="Write a comment..."
+                          />
+                          <button type="submit">Send</button>
+                        </form>
+                      </div>
+                    )}
                   </div>
                 ))
               ) : (

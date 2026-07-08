@@ -71,12 +71,13 @@ export const PageSubtitle = styled.p`
 ------------------------------------------- */
 export const Layout = styled.div`
   display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 26px;
+  grid-template-columns: 272px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
 
   @media (min-width: 1024px) {
-    grid-template-columns: minmax(250px, 280px) minmax(0, 1fr);
-    gap: 22px;
+    grid-template-columns: minmax(248px, 286px) minmax(0, 1fr);
+    gap: 24px;
   }
 
   @media (max-width: 960px) {
@@ -85,45 +86,146 @@ export const Layout = styled.div`
 `;
 
 /* ------------------------------------------
-   LEFT FILTER SIDEBAR (GLASS UI)
+   LEFT FILTER SIDEBAR
 ------------------------------------------- */
 export const LeftSidebar = styled.aside`
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid #d8e0eb;
-  border-radius: 24px;
-  padding: 18px 18px 20px;
-  backdrop-filter: blur(18px);
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
-
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   position: sticky;
   top: 90px;
   height: max-content;
-
-  @media (min-width: 1024px) {
-    border-color: #e5e7eb;
-    border-radius: 18px;
-    box-shadow: 0 16px 42px rgba(15, 23, 42, 0.075);
-  }
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
   @media (max-width: 960px) {
     position: static;
     width: 100%;
+    margin-bottom: 14px;
+    border-radius: 10px;
   }
 `;
 
 export const FilterTitle = styled.div`
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 14px;
-  color: #334155;
+  font-size: 17px;
+  font-weight: 700;
+  color: #111827;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 14px 16px 12px;
+  letter-spacing: 0;
+  background: #ffffff;
+
+  @media (max-width: 960px) {
+    padding: 12px 14px 10px;
+    font-size: 16px;
+  }
 `;
 
 export const FiltersForm = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 0;
+`;
+
+export const FilterSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 15px 16px 16px;
+  border-bottom: 1px solid #f3f4f6;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  @media (max-width: 960px) {
+    padding: 12px 14px 14px;
+  }
+`;
+
+export const SectionTitle = styled.h4`
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+  line-height: 1.25;
+`;
+
+export const OptionList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  @media (max-width: 960px) {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+`;
+
+export const OptionLabel = styled.label`
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 32px;
+  padding: 5px 4px;
+  border-radius: 6px;
+  font-size: 13.5px;
+  line-height: 1.35;
+  color: ${({ $active }) => ($active ? "#111827" : "#374151")};
+  font-weight: ${({ $active }) => ($active ? "650" : "450")};
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: #f9fafb;
+    color: #111827;
+  }
+
+  @media (max-width: 960px) {
+    min-height: 38px;
+    padding: 7px 10px;
+    border: 1px solid ${({ $active }) => ($active ? "rgba(37, 99, 235, 0.45)" : "#e5e7eb")};
+    background: ${({ $active }) => ($active ? "#eff6ff" : "#ffffff")};
+    font-size: 13px;
+  }
+`;
+
+export const RadioInput = styled.input`
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid #9ca3af;
+  border-radius: 50%;
+  outline: none;
+  background-color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+
+  &:checked {
+    border-color: #2563eb;
+    background-color: #ffffff;
+  }
+
+  &:checked::after {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background-color: #2563eb;
+    border-radius: 50%;
+    display: block;
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+  }
 `;
 
 export const Field = styled.div`

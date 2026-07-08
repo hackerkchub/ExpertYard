@@ -38,3 +38,14 @@ export const getHomeFeedApi = ({
     skipLoader: true,
   });
 };
+
+export const getExpertTipsApi = ({ limit = "", user_id = "" } = {}) => {
+  const params = new URLSearchParams();
+  if (limit) params.set("limit", String(limit));
+  if (user_id) params.set("user_id", String(user_id));
+
+  const query = params.toString();
+  return axios.get(`/expert-post${query ? `?${query}` : ""}`, {
+    skipLoader: true,
+  });
+};

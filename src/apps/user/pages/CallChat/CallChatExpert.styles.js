@@ -308,7 +308,7 @@ export const PageWrap = styled.div`
   }
 
   .mobile-callchat-card__cta {
-    min-width: 92px;
+    min-width: 112px;
     min-height: 40px;
     border: 0;
     border-radius: 999px;
@@ -667,6 +667,7 @@ export const FilterLabel = styled.div`
     line-height: 1.3;
     letter-spacing: 0.04em;
     font-weight: 700;
+    white-space: nowrap;
   }
 `;
 

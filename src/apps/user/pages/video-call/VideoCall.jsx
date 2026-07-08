@@ -194,7 +194,7 @@ export default function VideoCall() {
       const id = Number(connectedId || call_id || callIdRef.current);
       callIdRef.current = id;
       setCallId(id);
-      setStatus("Connected");
+      setStatus("");
       console.log("[VC_PEER_INIT_START]", { callId: id, role: "user", at: new Date().toISOString() });
       await createVideoPeer({
         socket,

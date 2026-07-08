@@ -274,9 +274,11 @@ export function HomeRightSidebar({ experts = [], services = [], balance = 0 }) {
                     <Link 
                       to={isReal ? `/user/call-chat?page=1&mode=call&expert_id=${exp.expert_id || exp.id}` : "/user/call-chat?page=1&mode=call"} 
                       className="call-btn-pill"
+                      aria-label="Start voice call"
+                      title="Start voice call"
                     >
                       <Phone size={11} fill="currentColor" />
-                      <span>Call</span>
+                      <span>{price || "--"}</span>
                     </Link>
                   </div>
                 </div>

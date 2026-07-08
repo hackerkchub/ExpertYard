@@ -1545,11 +1545,12 @@ export default function UserExpertsPage() {
                             type="button"
                             className="mobile-callchat-card__cta"
                             disabled={!exp.id || !allowedByAdmin}
-                            title={tab === "chat" ? "Start chat" : "Start call"}
+                            title={tab === "chat" ? "Start chat consultation" : "Start voice call"}
+                            aria-label={tab === "chat" ? "Start chat consultation" : "Start voice call"}
                             onClick={() => (tab === "chat" ? handleStartChat(exp.id) : handleStartCall(exp.id))}
                           >
                             {tab === "chat" ? <FiMessageSquare aria-hidden="true" /> : <FiPhoneCall aria-hidden="true" />}
-                            {tab === "chat" ? "Chat" : "Call"}
+                            {shownPrice > 0 ? `\u20B9${shownPrice}/min` : "--"}
                           </button>
                         </div>
                       </article>

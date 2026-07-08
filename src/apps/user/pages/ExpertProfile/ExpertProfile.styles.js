@@ -91,7 +91,7 @@ export const PageWrap = styled.div`
   .consult-option {
     width: 100%;
     display: grid;
-    grid-template-columns: 38px minmax(0, 1fr) auto;
+    grid-template-columns: 38px minmax(0, 1fr);
     align-items: center;
     gap: 10px;
     min-height: 56px;
@@ -124,9 +124,12 @@ export const PageWrap = styled.div`
   }
 
   .consult-option strong {
-    font-size: 12px;
+    font-size: 14px;
     color: #475467;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
   }
 
   .consult-call {
@@ -260,7 +263,7 @@ export const PageWrap = styled.div`
       justify-content: center;
       gap: 5px;
       cursor: pointer;
-      white-space: normal !important;
+      white-space: nowrap !important;
       touch-action: manipulation;
       box-shadow: 0 12px 24px rgba(15, 23, 42, 0.18);
       pointer-events: auto;
@@ -276,11 +279,15 @@ export const PageWrap = styled.div`
     }
 
     .mobile-profile-actions button strong {
-      display: block;
-      width: 100%;
-      font-size: 10.5px;
+      display: inline-block;
+      width: auto;
+      min-width: 0;
+      font-size: 11px;
       font-weight: 900;
       opacity: 0.94;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .mobile-profile-actions button span {
@@ -928,7 +935,7 @@ export const CallToAction = styled.div`
     background: linear-gradient(135deg, #2563eb, #000080) !important;
     color: #ffffff !important;
     box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22) !important;
-    white-space: normal !important;
+    white-space: nowrap !important;
     line-height: 1.15 !important;
   }
 
@@ -965,6 +972,7 @@ export const ActionButton = styled.button`
   align-items: center;
   justify-content: center;
   gap: 6px;
+  min-width: 0;
   min-height: 42px;
   padding: 10px 14px;
   border-radius: 999px;
@@ -975,8 +983,14 @@ export const ActionButton = styled.button`
   background: ${props => props.$primary ? "linear-gradient(135deg, #ffd23f, #ffc107)" : "rgba(255, 255, 255, 0.96)"};
   color: ${props => props.$primary ? "#000080" : "#000080"};
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   box-shadow: ${props => props.$primary ? "0 12px 24px rgba(255, 193, 7, 0.22)" : "0 10px 22px rgba(0, 0, 0, 0.12)"};
   transition: transform 180ms ease, box-shadow 180ms ease;
+
+  svg {
+    flex: 0 0 auto;
+  }
 
   &:hover {
     transform: translateY(-1px);

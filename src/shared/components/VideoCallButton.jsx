@@ -77,13 +77,18 @@ export default function VideoCallButton({
   };
 
   const label = loading
-    ? "Checking..."
+    ? "--"
     : enabled
-      ? compact
-        ? `${compactLabel}${pricePerMinute ? ` ₹${pricePerMinute}/min` : ""}`
-        : `Video Call${pricePerMinute ? ` ₹${pricePerMinute}/min` : ""}`
-      : status?.reason || "Video unavailable";
-  const finalLabel = !loading && enabled && !pricePerMinute ? "Price not set" : label;
+      ? pricePerMinute
+        ? `\u20B9${pricePerMinute}/min`
+        : "--"
+      : "--";
+  const finalLabel = label;
+  const titleLabel = loading
+    ? "Checking video call availability"
+    : enabled && pricePerMinute
+      ? `Start video call at \u20B9${pricePerMinute}/min`
+      : status?.reason || "Video call unavailable";
 
   return (
     <button
@@ -91,14 +96,15 @@ export default function VideoCallButton({
       className={`video-call-button ${className}`}
       onClick={handleClick}
       disabled={loading || !enabled || !pricePerMinute}
-      title={finalLabel}
+      title={titleLabel}
+      aria-label={titleLabel}
       style={{
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
         gap: 8,
-        minHeight: compact ? 36 : 42,
-        padding: compact ? "8px 12px" : "10px 16px",
+        minHeight: compact ? 38 : 42,
+        padding: compact ? "8px 11px" : "10px 14px",
         borderRadius: 999,
         border: "1px solid rgba(37,99,235,.28)",
         background: canStartVideoCall ? "#2563eb" : "#e5e7eb",
@@ -107,6 +113,8 @@ export default function VideoCallButton({
         fontWeight: 800,
         fontSize: compact ? 13 : 14,
         whiteSpace: "nowrap",
+        minWidth: compact ? 0 : 112,
+        lineHeight: 1,
       }}
     >
       <FiVideo />

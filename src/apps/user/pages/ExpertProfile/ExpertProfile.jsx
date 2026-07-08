@@ -407,6 +407,18 @@ const ExpertProfilePage = () => {
     return activeSubscription.status === 'active' && new Date(activeSubscription.end_date) > new Date();
   }, [activeSubscription]);
 
+  const getCompactActionPrice = useCallback((type) => {
+    if (hasActiveSubscription) return "Free";
+    if (selectedPricingMode === "session" && displayPrices.hasSession) return `\u20B9${displayPrices.sessionPrice}`;
+    if (type === "chat") {
+      return displayPrices.chatPrice > 0 ? `\u20B9${displayPrices.chatPrice}/min` : "--";
+    }
+    if (type === "call") {
+      return displayPrices.callPrice > 0 ? `\u20B9${displayPrices.callPrice}/min` : "--";
+    }
+    return displayPrices.videoCallPrice > 0 ? `\u20B9${displayPrices.videoCallPrice}/min` : "--";
+  }, [displayPrices, hasActiveSubscription, selectedPricingMode]);
+
   useEffect(() => {
     if (!numericExpertId || profileTrackedRef.current === numericExpertId) return;
     profileTrackedRef.current = numericExpertId;
@@ -1319,17 +1331,17 @@ const ExpertProfilePage = () => {
                   {hasActiveSubscription && canShowUserCallButton ? (
                     <>
                       <PriceTag style={{ background: "#10b981", color: "white" }}><FiUnlock /> Active Subscription</PriceTag>
-                      <ActionButton $primary onClick={() => handleStart("call")}><FiPhoneCall /> Call (Free)</ActionButton>
+                      <ActionButton $primary onClick={() => handleStart("call")} aria-label="Start voice call" title="Start voice call"><FiPhoneCall /> {getCompactActionPrice("call")}</ActionButton>
                     </>
                   ) : canShowUserCallButton && selectedPricingMode === "per_minute" && displayPrices.hasPerMinute ? (
                     <>
                       <PriceTag>₹{displayPrices.callPrice}/min</PriceTag>
-                      <ActionButton $primary onClick={() => handleStart("call")}><FiPhoneCall /> {t("expertProfile.startCall")}</ActionButton>
+                      <ActionButton $primary onClick={() => handleStart("call")} aria-label="Start voice call" title="Start voice call"><FiPhoneCall /> {getCompactActionPrice("call")}</ActionButton>
                     </>
                   ) : canShowUserCallButton && selectedPricingMode === "session" && displayPrices.hasSession ? (
                     <>
                       <PriceTag>₹{displayPrices.sessionPrice}</PriceTag>
-                      <ActionButton $primary onClick={() => handleStart("call")}><FiPhoneCall /> Book Session Call</ActionButton>
+                      <ActionButton $primary onClick={() => handleStart("call")} aria-label="Start voice call" title="Start voice call"><FiPhoneCall /> {getCompactActionPrice("call")}</ActionButton>
                     </>
                   ) : canShowUserCallButton && selectedPricingMode === "subscription" && displayPrices.hasSubscription ? (
                     <>
@@ -1339,12 +1351,12 @@ const ExpertProfilePage = () => {
                   ) : canShowUserCallButton ? (
                     <>
                       <PriceTag>Price not set</PriceTag>
-                      <ActionButton $primary onClick={() => handleStart("call")}><FiPhoneCall /> {t("expertProfile.startCall")}</ActionButton>
+                      <ActionButton $primary onClick={() => handleStart("call")} aria-label="Start voice call" title="Start voice call"><FiPhoneCall /> {getCompactActionPrice("call")}</ActionButton>
                     </>
                   ) : (
                     <>
                       <PriceTag>{callDisabledReason}</PriceTag>
-                      <ActionButton $primary disabled title={callDisabledReason}><FiPhoneCall /> {t("expertProfile.startCall")}</ActionButton>
+                      <ActionButton $primary disabled title={callDisabledReason} aria-label="Start voice call"><FiPhoneCall /> --</ActionButton>
                     </>
                   )}
                 </div>
@@ -1354,17 +1366,17 @@ const ExpertProfilePage = () => {
                   {hasActiveSubscription && canShowUserChatButton ? (
                     <>
                       <PriceTag style={{ background: "#10b981", color: "white" }}><FiUnlock /> Active Subscription</PriceTag>
-                      <ActionButton onClick={() => handleStart("chat")}><FiMessageSquare /> Chat (Free)</ActionButton>
+                      <ActionButton onClick={() => handleStart("chat")} aria-label="Start chat consultation" title="Start chat consultation"><FiMessageSquare /> {getCompactActionPrice("chat")}</ActionButton>
                     </>
                   ) : canShowUserChatButton && selectedPricingMode === "per_minute" && displayPrices.hasPerMinute ? (
                     <>
                       <PriceTag>₹{displayPrices.chatPrice}/min</PriceTag>
-                      <ActionButton onClick={() => handleStart("chat")}><FiMessageSquare /> {t("expertProfile.startChat")}</ActionButton>
+                      <ActionButton onClick={() => handleStart("chat")} aria-label="Start chat consultation" title="Start chat consultation"><FiMessageSquare /> {getCompactActionPrice("chat")}</ActionButton>
                     </>
                   ) : canShowUserChatButton && selectedPricingMode === "session" && displayPrices.hasSession ? (
                     <>
                       <PriceTag>₹{displayPrices.sessionPrice}</PriceTag>
-                      <ActionButton onClick={() => handleStart("chat")}><FiMessageSquare /> Book Session Chat</ActionButton>
+                      <ActionButton onClick={() => handleStart("chat")} aria-label="Start chat consultation" title="Start chat consultation"><FiMessageSquare /> {getCompactActionPrice("chat")}</ActionButton>
                     </>
                   ) : canShowUserChatButton && selectedPricingMode === "subscription" && displayPrices.hasSubscription ? (
                     <>
@@ -1374,12 +1386,12 @@ const ExpertProfilePage = () => {
                   ) : canShowUserChatButton ? (
                     <>
                       <PriceTag>Price not set</PriceTag>
-                      <ActionButton onClick={() => handleStart("chat")}><FiMessageSquare /> {t("expertProfile.startChat")}</ActionButton>
+                      <ActionButton onClick={() => handleStart("chat")} aria-label="Start chat consultation" title="Start chat consultation"><FiMessageSquare /> {getCompactActionPrice("chat")}</ActionButton>
                     </>
                   ) : (
                     <>
                       <PriceTag>{chatDisabledReason}</PriceTag>
-                      <ActionButton disabled title={chatDisabledReason}><FiMessageSquare /> {t("expertProfile.startChat")}</ActionButton>
+                      <ActionButton disabled title={chatDisabledReason} aria-label="Start chat consultation"><FiMessageSquare /> --</ActionButton>
                     </>
                   )}
                 </div>
@@ -1414,23 +1426,20 @@ const ExpertProfilePage = () => {
                   sourceRefId={numericExpertId}
                   className="expert-profile-consult-video-btn"
                   compact
-                  compactLabel="Video Call"
                 />
                 {showProfileCallButton && (
-                <button type="button" className="consult-option consult-call" disabled={!canShowUserCallButton} title={!canShowUserCallButton ? callDisabledReason : undefined} onClick={() => handleStart("call")}>
+                <button type="button" className="consult-option consult-call" disabled={!canShowUserCallButton} title={!canShowUserCallButton ? callDisabledReason : "Start voice call"} aria-label="Start voice call" onClick={() => handleStart("call")}>
                   <FiPhoneCall />
-                  <span>Call</span>
                   <strong>
-                    {!canShowUserCallButton ? callDisabledReason : hasActiveSubscription ? "Free" : selectedPricingMode === "session" && displayPrices.hasSession ? `₹${displayPrices.sessionPrice}` : `₹${displayPrices.callPrice}/min`}
+                    {!canShowUserCallButton ? "--" : getCompactActionPrice("call")}
                   </strong>
                 </button>
                 )}
                 {showProfileChatButton && (
-                <button type="button" className="consult-option consult-chat" disabled={!canShowUserChatButton} title={!canShowUserChatButton ? chatDisabledReason : undefined} onClick={() => handleStart("chat")}>
+                <button type="button" className="consult-option consult-chat" disabled={!canShowUserChatButton} title={!canShowUserChatButton ? chatDisabledReason : "Start chat consultation"} aria-label="Start chat consultation" onClick={() => handleStart("chat")}>
                   <FiMessageSquare />
-                  <span>Chat</span>
                   <strong>
-                    {!canShowUserChatButton ? chatDisabledReason : hasActiveSubscription ? "Free" : selectedPricingMode === "session" && displayPrices.hasSession ? `₹${displayPrices.sessionPrice}` : `₹${displayPrices.chatPrice}/min`}
+                    {!canShowUserChatButton ? "--" : getCompactActionPrice("chat")}
                   </strong>
                 </button>
                 )}
@@ -1641,10 +1650,9 @@ const ExpertProfilePage = () => {
 
         <div className="mobile-profile-actions">
           {showProfileChatButton && (
-          <button type="button" className="mobile-message-btn" disabled={!canShowUserChatButton} title={!canShowUserChatButton ? chatDisabledReason : undefined} onClick={() => handleStart("chat")}>
+          <button type="button" className="mobile-message-btn" disabled={!canShowUserChatButton} title={!canShowUserChatButton ? chatDisabledReason : "Start chat consultation"} aria-label="Start chat consultation" onClick={() => handleStart("chat")}>
             <FiMessageSquare />
-            <span>Chat</span>
-            <strong>{!canShowUserChatButton ? chatDisabledReason : hasActiveSubscription ? "Free" : `₹${currentPricingInfo.price}/min`}</strong>
+            <strong>{!canShowUserChatButton ? "--" : getCompactActionPrice("chat")}</strong>
           </button>
           )}
           <VideoCallButton
@@ -1654,13 +1662,11 @@ const ExpertProfilePage = () => {
             sourceRefId={numericExpertId}
             className="mobile-video-call-btn"
             compact
-            compactLabel="Video Call"
           />
           {showProfileCallButton && (
-          <button type="button" className="mobile-call-btn" disabled={!canShowUserCallButton} title={!canShowUserCallButton ? callDisabledReason : undefined} onClick={() => handleStart("call")}>
+          <button type="button" className="mobile-call-btn" disabled={!canShowUserCallButton} title={!canShowUserCallButton ? callDisabledReason : "Start voice call"} aria-label="Start voice call" onClick={() => handleStart("call")}>
             <FiPhoneCall />
-            <span>Call</span>
-            <strong>{!canShowUserCallButton ? callDisabledReason : hasActiveSubscription ? "Free" : `₹${currentPricingInfo.callPrice}/min`}</strong>
+            <strong>{!canShowUserCallButton ? "--" : getCompactActionPrice("call")}</strong>
           </button>
           )}
         </div>

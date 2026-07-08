@@ -113,15 +113,18 @@ function RatingLine({ data }) {
 }
 
 function FeedCtas({ data }) {
+  const chatPrice = data.chat_per_minute || data.chatPricePerMinute || data.chat_price || data.chat_rate || 0;
+  const callPrice = data.call_per_minute || data.callPricePerMinute || data.call_price || data.call_rate || 0;
+
   return (
     <div className="feed-ctas">
-      <Link to={chatPath(data)}>
+      <Link to={chatPath(data)} aria-label="Start chat consultation" title="Start chat consultation">
         <MessageCircle size={18} />
-        Chat
+        {chatPrice > 0 ? `\u20B9${chatPrice}/min` : "--"}
       </Link>
-      <Link to={callPath(data)}>
+      <Link to={callPath(data)} aria-label="Start voice call" title="Start voice call">
         <PhoneCall size={18} />
-        Call
+        {callPrice > 0 ? `\u20B9${callPrice}/min` : "--"}
       </Link>
     </div>
   );

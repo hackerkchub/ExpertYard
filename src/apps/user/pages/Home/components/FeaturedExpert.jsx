@@ -9,6 +9,8 @@ import { normalizeVideoCallPrice } from "../../../../../shared/utils/normalizeEx
 
 const FeaturedExpertCard = React.memo(({ expert }) => {
   const videoCallPrice = normalizeVideoCallPrice(expert);
+  const chatPrice = expert.chat_price || expert.chat_rate || expert.chat_per_minute || expert.chatPricePerMinute || 0;
+  const callPrice = expert.call_price || expert.call_rate || expert.call_per_minute || expert.callPricePerMinute || 0;
 
   return (
     <div className="featured-card home-card">
@@ -60,14 +62,14 @@ const FeaturedExpertCard = React.memo(({ expert }) => {
       </div>
 
       <div className="featured-buttons">
-        <Link to={`/user/chat/${expert.id}`} className="featured-chat-btn">
+        <Link to={`/user/chat/${expert.id}`} className="featured-chat-btn" aria-label="Start chat consultation" title="Start chat consultation">
           <MessageCircle size={18} />
-          Chat
+          {chatPrice > 0 ? `\u20B9${chatPrice}/min` : "--"}
         </Link>
 
-        <Link to={`/user/call/${expert.id}`} className="featured-call-btn">
+        <Link to={`/user/call/${expert.id}`} className="featured-call-btn" aria-label="Start voice call" title="Start voice call">
           <Phone size={18} />
-          Call
+          {callPrice > 0 ? `\u20B9${callPrice}/min` : "--"}
         </Link>
       </div>
     </div>

@@ -170,7 +170,7 @@ export default function ExpertVideoCall() {
       const id = Number(connectedId || call_id || callId);
       if (id !== Number(callId)) return;
       connectedRef.current = true;
-      setStatus("Connected");
+      setStatus("");
       attachVideoElements({ localVideoRef, remoteVideoRef });
     };
 

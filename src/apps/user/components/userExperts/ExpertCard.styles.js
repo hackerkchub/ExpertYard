@@ -636,7 +636,8 @@ export const ActionRow = styled.div`
   `}
   
   @media (max-width: 640px) {
-    flex-direction: ${({ $callChat }) => ($callChat ? "row" : "column")};
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: ${({ $callChat }) => ($callChat ? "8px" : "10px")};
   }
 
@@ -647,6 +648,7 @@ export const ActionRow = styled.div`
 
 export const PrimaryBtn = styled(motion.button)`
   flex: 1;
+  min-width: 0;
   border: none;
   border-radius: 40px;
   min-height: 38px;
@@ -662,6 +664,13 @@ export const PrimaryBtn = styled(motion.button)`
   color: #000080;
   box-shadow: 0 12px 22px rgba(255, 193, 7, 0.22);
   transition: transform 180ms ease, box-shadow 180ms ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  svg {
+    flex: 0 0 auto;
+  }
 
   ${({ $callChat }) => $callChat && css`
     min-width: 0;
@@ -686,7 +695,7 @@ export const PrimaryBtn = styled(motion.button)`
   
   @media (max-width: 640px) {
     min-height: ${({ $callChat }) => ($callChat ? "38px" : "38px")};
-    padding: ${({ $callChat }) => ($callChat ? "8px 10px" : "10px 16px")};
+    padding: ${({ $callChat }) => ($callChat ? "8px 10px" : "9px 12px")};
     font-size: ${({ $callChat }) => ($callChat ? "11px" : "12px")};
   }
 `;

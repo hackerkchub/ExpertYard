@@ -359,15 +359,15 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
 
   const getButtonText = () => {
     if (mode === "chat") {
-      if (hasPerMinute) return `Start Chat • ₹${chatPrice}/min`;
-      if (hasSession) return `Book Session • ₹${sessionPrice}`;
-      if (hasSubscription) return "View Membership Plans";
-      return "Contact Expert";
+      if (hasPerMinute && chatPrice > 0) return `\u20B9${chatPrice}/min`;
+      if (hasSession) return `\u20B9${sessionPrice}`;
+      if (hasSubscription) return "Free";
+      return "--";
     } else {
-      if (hasPerMinute) return `Call • ₹${callPrice}/min`;
-      if (hasSession) return `Session • ₹${sessionPrice}`;
-      if (hasSubscription) return "View Plans";
-      return "Contact Expert";
+      if (hasPerMinute && callPrice > 0) return `\u20B9${callPrice}/min`;
+      if (hasSession) return `\u20B9${sessionPrice}`;
+      if (hasSubscription) return "Free";
+      return "--";
     }
   };
 
@@ -568,6 +568,8 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
                 disabled={isButtonDisabled()}
                 onClick={mode === "chat" ? handleStartChatLocal : handleStartCallLocal}
                 whileTap={{ scale: 0.97 }}
+                title={mode === "chat" ? "Start chat consultation" : "Start voice call"}
+                aria-label={mode === "chat" ? "Start chat consultation" : "Start voice call"}
               >
                 {mode === "chat" ? <FiMessageSquare size={16} /> : <FiPhoneCall size={16} />}
                 {getButtonText()}

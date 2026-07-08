@@ -1696,6 +1696,7 @@ body {
 }
 
 .feed-ctas a {
+  min-width: 0;
   min-height: 44px;
   border-radius: 14px;
   display: inline-flex;
@@ -1707,7 +1708,14 @@ body {
   text-decoration: none;
   font-size: 14px;
   font-weight: 850;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   box-shadow: 0 10px 20px rgba(0, 0, 128, 0.1);
+}
+
+.feed-ctas a svg {
+  flex: 0 0 auto;
 }
 
 .feed-ctas a:first-child {
@@ -3133,6 +3141,7 @@ body {
 .call-btn-pill {
   display: inline-flex;
   align-items: center;
+  min-width: 0;
   gap: 4px;
   padding: 4px 10px;
   border-radius: 999px;
@@ -3140,6 +3149,7 @@ body {
   color: #ffffff;
   font-size: 11px;
   font-weight: 800;
+  white-space: nowrap;
   text-decoration: none;
   transition: background 0.2s ease;
 }

@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiVideo } from "react-icons/fi";
 import { getVideoCallStatusApi } from "../api/videoCall.api";
@@ -107,8 +107,8 @@ export default function VideoCallButton({
         padding: compact ? "8px 11px" : "10px 14px",
         borderRadius: 999,
         border: "1px solid rgba(37,99,235,.28)",
-        background: canStartVideoCall ? "#2563eb" : "#e5e7eb",
-        color: canStartVideoCall ? "#fff" : "#64748b",
+        background: canStartVideoCall ? "#2563eb" : "#94a3b8",
+        color: "#ffffff",
         cursor: loading || !enabled || !pricePerMinute ? "not-allowed" : "pointer",
         fontWeight: 800,
         fontSize: compact ? 13 : 14,

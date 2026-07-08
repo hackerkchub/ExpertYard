@@ -355,17 +355,6 @@ const ExpertListPage = () => {
                         {exp.location || `${exp.city || ""}${exp.state ? ", " + exp.state : ""}`}
                         {exp.distance_km != null && <span style={{ marginLeft: 8 }}>📍 {exp.distance_km} km</span>}
                       </MetaRow>
-
-                      <PriceRow>
-                        <Price>₹{price}</Price>
-                        <PerMinute>/min</PerMinute>
-                      </PriceRow>
-                      {videoCallPrice > 0 && (
-                        <PriceRow>
-                          <Price>Video &#8377;{videoCallPrice}</Price>
-                          <PerMinute>/min</PerMinute>
-                        </PriceRow>
-                      )}
                     </ExpertBody>
                   </ExpertCard>
                 );

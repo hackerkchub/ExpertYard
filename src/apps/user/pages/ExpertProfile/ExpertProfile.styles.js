@@ -313,8 +313,8 @@ export const PageWrap = styled.div`
     }
 
     .mobile-video-call-btn:disabled {
-      background: #e5e7eb !important;
-      color: #475569 !important;
+      background: #94a3b8 !important;
+      color: #ffffff !important;
       border-color: #cbd5e1 !important;
       box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12) !important;
       opacity: 1 !important;
@@ -738,8 +738,8 @@ export const Name = styled.h1`
 `;
 
 export const VerifiedBadge = styled.span`
-  background: rgba(255, 255, 255, 0.95);
-  color: #000080;
+  background: #000080;
+  color: #ffffff;
   font-size: 12px;
   padding: 5px 10px;
   border-radius: 999px;
@@ -932,8 +932,8 @@ export const CallToAction = styled.div`
     width: 100% !important;
     min-height: 42px !important;
     border-color: rgba(147, 197, 253, 0.55) !important;
-    background: linear-gradient(135deg, #2563eb, #000080) !important;
-    color: #ffffff !important;
+    background: #ffffff !important;
+    color: #000080 !important;
     box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22) !important;
     white-space: nowrap !important;
     line-height: 1.15 !important;
@@ -946,8 +946,8 @@ export const CallToAction = styled.div`
   }
 
   .expert-profile-video-call-btn:disabled {
-    background: #e5e7eb !important;
-    color: #475569 !important;
+    background: #94a3b8 !important;
+    color: #ffffff !important;
     border-color: #cbd5e1 !important;
     box-shadow: 0 8px 18px rgba(15, 23, 42, 0.1) !important;
     opacity: 1 !important;
@@ -1038,8 +1038,7 @@ export const FollowButton = styled.button`
   justify-content: center;
   gap: 7px;
   border: 1px solid rgba(255, 255, 255, 0.5);
-  background: ${props => props.$active ? "rgba(255, 255, 255, 0.2)" : "#ffffff"};
-  color: ${props => props.$active ? "#ffffff" : "#000080"};
+  color: ${props => props.$active ? "#ffffff" : "#ffffff"};
   border-radius: 999px;
   padding: 9px 18px;
   font-weight: 900;
@@ -1047,17 +1046,26 @@ export const FollowButton = styled.button`
   transition: 0.3s;
   margin-top: 16px;
 
+  ${props => props.$active && css`
+    color: #ffffff !important;
+    background:  rgba(255, 255, 255, 0.5) !important;
+    border-color: rgba(155, 155, 156, 0.5) !important;
+    svg, * {
+      color: #ffffff !important;
+    }
+  `}
+
   &:hover {
     transform: translateY(-1px);
     background-color: ${props => props.$active ? "rgba(255, 255, 255, 0.28)" : "rgba(255, 255, 255, 0.92)"};
-    color: ${props => props.$active ? "#ffffff" : "#000080"};
+    color: ${props => props.$active ? "#ffffff !important" : "#ffffff"};
   }
 
   @media (min-width: 1024px) {
     ${props => props.$active && css`
       color: #ffffff;
       border-color: rgba(255, 255, 255, 0.72);
-      background: rgba(255, 255, 255, 0.18);
+      background: #ffffff;
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
     `}
   }

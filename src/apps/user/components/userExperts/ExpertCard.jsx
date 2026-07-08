@@ -526,30 +526,7 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
               </PricingBadges>
             )}
 
-            {hasPerMinute && (
-              <PricingSection $callChat={isCallChatCard}>
-                <PriceRow $callChat={isCallChatCard} $fullWidth>
-                  {chatPrice > 0 && (
-                    <div>
-                      <PriceLabel $callChat={isCallChatCard}><FiMessageSquare size={12} /> Chat</PriceLabel>
-                      <PriceTag><PriceValue $callChat={isCallChatCard}>₹{chatPrice}/min</PriceValue></PriceTag>
-                    </div>
-                  )}
-                  {callPrice > 0 && (
-                    <div>
-                      <PriceLabel $callChat={isCallChatCard}><FiPhoneCall size={12} /> Call</PriceLabel>
-                      <PriceTag><PriceValue $callChat={isCallChatCard}>₹{callPrice}/min</PriceValue></PriceTag>
-                    </div>
-                  )}
-                  {videoCallPrice > 0 && (
-                    <div>
-                      <PriceLabel $callChat={isCallChatCard}><FiVideo size={12} /> Video</PriceLabel>
-                      <PriceTag><PriceValue $callChat={isCallChatCard}>₹{videoCallPrice}/min</PriceValue></PriceTag>
-                    </div>
-                  )}
-                </PriceRow>
-              </PricingSection>
-            )}
+
 
            
 

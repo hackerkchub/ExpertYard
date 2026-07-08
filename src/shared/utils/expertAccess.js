@@ -37,6 +37,16 @@ export const getExpertAccessFlags = (expert = {}) => {
     effective.can_view_contact ?? expert.can_view_contact ?? expert.canViewContact ?? expert.contact_enabled ?? expert.contactEnabled;
   const rawShowChat = effective.show_chat_button ?? expert.show_chat_button ?? expert.showChatButton;
   const rawShowCall = effective.show_call_button ?? expert.show_call_button ?? expert.showCallButton;
+  const rawShowChatOnProfilePage =
+    effective.show_chat_button_on_profile_page ??
+    effective.showChatButtonOnProfilePage ??
+    expert.show_chat_button_on_profile_page ??
+    expert.showChatButtonOnProfilePage;
+  const rawShowCallOnProfilePage =
+    effective.show_call_button_on_profile_page ??
+    effective.showCallButtonOnProfilePage ??
+    expert.show_call_button_on_profile_page ??
+    expert.showCallButtonOnProfilePage;
   const rawShowInUserModule = effective.show_in_user_module ?? expert.show_in_user_module ?? expert.showInUserModule;
   const rawShowOnListing = effective.show_on_listing ?? expert.show_on_listing ?? expert.showOnListing;
   const rawPublicProfile = effective.public_profile_enabled ?? expert.public_profile_enabled ?? expert.publicProfileEnabled;
@@ -60,6 +70,8 @@ export const getExpertAccessFlags = (expert = {}) => {
     canViewContact: isPaidExpert && (activePaidPlan || !hasValue(rawCanViewContact) || truthyFlag(rawCanViewContact)),
     showChatButton: canChat,
     showCallButton: canCall,
+    showChatButtonOnProfilePage: hasValue(rawShowChatOnProfilePage) ? truthyFlag(rawShowChatOnProfilePage) : true,
+    showCallButtonOnProfilePage: hasValue(rawShowCallOnProfilePage) ? truthyFlag(rawShowCallOnProfilePage) : true,
     showInUserModule: hasValue(rawShowInUserModule) ? truthyFlag(rawShowInUserModule) : true,
     showOnListing: hasValue(rawShowOnListing) ? truthyFlag(rawShowOnListing) : true,
     publicProfileEnabled: hasValue(rawPublicProfile) ? truthyFlag(rawPublicProfile) : true,
@@ -86,6 +98,8 @@ export const normalizeExpertAccess = (expert = {}) => {
     can_view_contact: access.canViewContact,
     show_chat_button: access.showChatButton,
     show_call_button: access.showCallButton,
+    show_chat_button_on_profile_page: access.showChatButtonOnProfilePage,
+    show_call_button_on_profile_page: access.showCallButtonOnProfilePage,
     show_in_user_module: access.showInUserModule,
     show_on_listing: access.showOnListing,
     public_profile_enabled: access.publicProfileEnabled,
@@ -98,6 +112,8 @@ export const normalizeExpertAccess = (expert = {}) => {
     canViewContact: access.canViewContact,
     showChatButton: access.showChatButton,
     showCallButton: access.showCallButton,
+    showChatButtonOnProfilePage: access.showChatButtonOnProfilePage,
+    showCallButtonOnProfilePage: access.showCallButtonOnProfilePage,
     showInUserModule: access.showInUserModule,
     showOnListing: access.showOnListing,
     publicProfileEnabled: access.publicProfileEnabled,

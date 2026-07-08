@@ -219,8 +219,15 @@ const truncateText = (text, maxLength = 200) => {
     ["public_profile_enabled", "Enable Public Profile"],
   ];
 
+  const profilePageAccessOptions = [
+    ["show_chat_button_on_profile_page", "Show Chat Button on Expert Profile Page"],
+    ["show_call_button_on_profile_page", "Show Call Button on Expert Profile Page"],
+  ];
+
   const handleAccessToggle = async (field) => {
-    const nextValue = !Boolean(accessSettings[field]);
+    const profilePageField = profilePageAccessOptions.some(([optionField]) => optionField === field);
+    const currentValue = profilePageField ? accessSettings[field] !== false : Boolean(accessSettings[field]);
+    const nextValue = !currentValue;
     try {
       setSavingAccess(true);
       setAccessSettings((prev) => ({ ...prev, [field]: nextValue }));
@@ -410,6 +417,26 @@ const truncateText = (text, maxLength = 200) => {
                     onChange={() => handleAccessToggle(field)}
                   />
                   <span>{accessSettings[field] ? "Enabled" : "Disabled"}</span>
+                </label>
+              </InfoItem>
+            ))}
+          </InfoGrid>
+          <h4 style={{ margin: "20px 0 10px", color: "#0f172a" }}>Expert Profile Page Controls</h4>
+          <p style={{ marginTop: 0, color: "#64748b", lineHeight: 1.5 }}>
+            These controls affect only the user-side Expert Profile page. Listing, search, home, and other pages keep using the existing global controls.
+          </p>
+          <InfoGrid>
+            {profilePageAccessOptions.map(([field, label]) => (
+              <InfoItem key={field}>
+                <strong>{label}</strong>
+                <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: savingAccess ? "wait" : "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={accessSettings[field] !== false}
+                    disabled={savingAccess}
+                    onChange={() => handleAccessToggle(field)}
+                  />
+                  <span>{accessSettings[field] !== false ? "Enabled" : "Disabled"}</span>
                 </label>
               </InfoItem>
             ))}

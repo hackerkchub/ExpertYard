@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
+﻿import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -179,6 +179,31 @@ const isEnabledFlag = (value) =>
   value === "1" ||
   String(value || "").toLowerCase() === "true";
 
+const firstDefined = (...values) =>
+  values.find((value) => value !== undefined && value !== null && value !== "");
+
+const resolveProfilePageButtonVisibility = (expertData, feature) => {
+  // Fix: We intentionally ignore `effective_access` here because visibility on the 
+  // profile page should depend ONLY on the Admin Expert Access Settings, 
+  // not on whether the expert has purchased a plan/subscription.
+  const rawValue =
+    feature === "chat"
+      ? firstDefined(
+          expertData?.show_chat_button_on_profile_page,
+          expertData?.showChatButtonOnProfilePage,
+          expertData?.profile?.show_chat_button_on_profile_page,
+          expertData?.profile?.showChatButtonOnProfilePage
+        )
+      : firstDefined(
+          expertData?.show_call_button_on_profile_page,
+          expertData?.showCallButtonOnProfilePage,
+          expertData?.profile?.show_call_button_on_profile_page,
+          expertData?.profile?.showCallButtonOnProfilePage
+        );
+
+  return rawValue === undefined ? true : isEnabledFlag(rawValue);
+};
+
 // Helper function to get post ID consistently
 const getPostId = (post) => post?.id || post?.post_id;
 
@@ -229,12 +254,12 @@ const ExpertProfilePage = () => {
   const displayCategoryName = primaryExpertise?.category_name || primaryExpertise?.group?.category_name || profile?.category_name;
   const displaySubcategoryName = primaryExpertise?.subcategory_name || primaryExpertise?.sub?.subcategory_name || profile?.subcategory_name;
   const numericExpertId = expertData?.expertId || null;
-  const canShowUserChatButton =
-    Boolean(numericExpertId) &&
-    isEnabledFlag(expertData?.effective_access?.show_chat_button ?? expertData?.effective_access?.can_chat ?? expertData?.show_chat_button ?? expertData?.showChatButton ?? expertData?.can_chat ?? expertData?.canChat);
-  const canShowUserCallButton =
-    Boolean(numericExpertId) &&
-    isEnabledFlag(expertData?.effective_access?.show_call_button ?? expertData?.effective_access?.can_call ?? expertData?.show_call_button ?? expertData?.showCallButton ?? expertData?.can_call ?? expertData?.canCall);
+  const showProfileChatButton = useMemo(() => resolveProfilePageButtonVisibility(expertData, "chat"), [expertData]);
+  const showProfileCallButton = useMemo(() => resolveProfilePageButtonVisibility(expertData, "call"), [expertData]);
+  const canShowUserChatButton = Boolean(numericExpertId) && showProfileChatButton;
+  const canShowUserCallButton = Boolean(numericExpertId) && showProfileCallButton;
+  const chatDisabledReason = "Expert unavailable";
+  const callDisabledReason = "Expert unavailable";
 
   // REMOVED: chatRequestId, showWaitingPopup, waitingText, showChatCancelled, chatRejectedMessage, requestingChat, requestIdRef
 
@@ -1170,7 +1195,7 @@ const ExpertProfilePage = () => {
   );
 
   if (profileLoading || priceLoading) {
-    return <div style={{ padding: 30, textAlign: "center" }}>Loading expert…</div>;
+    return <div style={{ padding: 30, textAlign: "center" }}>Loading expert...</div>;
   }
 
   if (!expertData?.profile) {
@@ -1289,6 +1314,7 @@ const ExpertProfilePage = () => {
                     className="expert-profile-video-call-btn"
                   />
                 </div>
+                {showProfileCallButton && (
                 <div className="expert-profile-action-item">
                   {hasActiveSubscription && canShowUserCallButton ? (
                     <>
@@ -1315,8 +1341,15 @@ const ExpertProfilePage = () => {
                       <PriceTag>Price not set</PriceTag>
                       <ActionButton $primary onClick={() => handleStart("call")}><FiPhoneCall /> {t("expertProfile.startCall")}</ActionButton>
                     </>
-                  ) : null}
+                  ) : (
+                    <>
+                      <PriceTag>{callDisabledReason}</PriceTag>
+                      <ActionButton $primary disabled title={callDisabledReason}><FiPhoneCall /> {t("expertProfile.startCall")}</ActionButton>
+                    </>
+                  )}
                 </div>
+                )}
+                {showProfileChatButton && (
                 <div className="expert-profile-action-item">
                   {hasActiveSubscription && canShowUserChatButton ? (
                     <>
@@ -1343,8 +1376,14 @@ const ExpertProfilePage = () => {
                       <PriceTag>Price not set</PriceTag>
                       <ActionButton onClick={() => handleStart("chat")}><FiMessageSquare /> {t("expertProfile.startChat")}</ActionButton>
                     </>
-                  ) : null}
+                  ) : (
+                    <>
+                      <PriceTag>{chatDisabledReason}</PriceTag>
+                      <ActionButton disabled title={chatDisabledReason}><FiMessageSquare /> {t("expertProfile.startChat")}</ActionButton>
+                    </>
+                  )}
                 </div>
+                )}
               </CallToAction>
 
               {/* Subscription CTA Button - Only show if expert has subscription pricing and user has no active subscription */}
@@ -1377,20 +1416,24 @@ const ExpertProfilePage = () => {
                   compact
                   compactLabel="Video Call"
                 />
-                <button type="button" className="consult-option consult-call" disabled={!canShowUserCallButton} onClick={() => handleStart("call")}>
+                {showProfileCallButton && (
+                <button type="button" className="consult-option consult-call" disabled={!canShowUserCallButton} title={!canShowUserCallButton ? callDisabledReason : undefined} onClick={() => handleStart("call")}>
                   <FiPhoneCall />
                   <span>Call</span>
                   <strong>
-                    {hasActiveSubscription ? "Free" : selectedPricingMode === "session" && displayPrices.hasSession ? `₹${displayPrices.sessionPrice}` : `₹${displayPrices.callPrice}/min`}
+                    {!canShowUserCallButton ? callDisabledReason : hasActiveSubscription ? "Free" : selectedPricingMode === "session" && displayPrices.hasSession ? `₹${displayPrices.sessionPrice}` : `₹${displayPrices.callPrice}/min`}
                   </strong>
                 </button>
-                <button type="button" className="consult-option consult-chat" disabled={!canShowUserChatButton} onClick={() => handleStart("chat")}>
+                )}
+                {showProfileChatButton && (
+                <button type="button" className="consult-option consult-chat" disabled={!canShowUserChatButton} title={!canShowUserChatButton ? chatDisabledReason : undefined} onClick={() => handleStart("chat")}>
                   <FiMessageSquare />
                   <span>Chat</span>
                   <strong>
-                    {hasActiveSubscription ? "Free" : selectedPricingMode === "session" && displayPrices.hasSession ? `₹${displayPrices.sessionPrice}` : `₹${displayPrices.chatPrice}/min`}
+                    {!canShowUserChatButton ? chatDisabledReason : hasActiveSubscription ? "Free" : selectedPricingMode === "session" && displayPrices.hasSession ? `₹${displayPrices.sessionPrice}` : `₹${displayPrices.chatPrice}/min`}
                   </strong>
                 </button>
+                )}
                 
               </div>
             </Section>
@@ -1597,11 +1640,13 @@ const ExpertProfilePage = () => {
         </div>
 
         <div className="mobile-profile-actions">
-          <button type="button" className="mobile-message-btn" disabled={!canShowUserChatButton} onClick={() => handleStart("chat")}>
+          {showProfileChatButton && (
+          <button type="button" className="mobile-message-btn" disabled={!canShowUserChatButton} title={!canShowUserChatButton ? chatDisabledReason : undefined} onClick={() => handleStart("chat")}>
             <FiMessageSquare />
             <span>Chat</span>
-            <strong>{hasActiveSubscription ? "Free" : `₹${currentPricingInfo.price}/min`}</strong>
+            <strong>{!canShowUserChatButton ? chatDisabledReason : hasActiveSubscription ? "Free" : `₹${currentPricingInfo.price}/min`}</strong>
           </button>
+          )}
           <VideoCallButton
             expert={expertData || profile}
             expertId={numericExpertId}
@@ -1611,11 +1656,13 @@ const ExpertProfilePage = () => {
             compact
             compactLabel="Video Call"
           />
-          <button type="button" className="mobile-call-btn" disabled={!canShowUserCallButton} onClick={() => handleStart("call")}>
+          {showProfileCallButton && (
+          <button type="button" className="mobile-call-btn" disabled={!canShowUserCallButton} title={!canShowUserCallButton ? callDisabledReason : undefined} onClick={() => handleStart("call")}>
             <FiPhoneCall />
             <span>Call</span>
-            <strong>{hasActiveSubscription ? "Free" : `₹${currentPricingInfo.callPrice}/min`}</strong>
+            <strong>{!canShowUserCallButton ? callDisabledReason : hasActiveSubscription ? "Free" : `₹${currentPricingInfo.callPrice}/min`}</strong>
           </button>
+          )}
         </div>
 
         {/* Subscription Plans Modal */}
@@ -1701,19 +1748,6 @@ const ExpertProfilePage = () => {
             onConfirm={handleProfileRechargeConfirm}
             createOrder={createOrder}
           />
-        )}
-
-        {false && showRecharge && (
-          <div className="expert-profile-recharge-modal" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 20060 }}>
-            <div className="expert-profile-recharge-modal__sheet" style={{ background: "#fff", padding: 28, borderRadius: 16, width: "min(90vw, 380px)", textAlign: "center" }}>
-              <h3 style={{ margin: 0, marginBottom: 12, color: "#0f172a" }}>Low Balance</h3>
-              <p style={{ margin: 0, marginBottom: 20, color: "#475569" }}>Need <strong>₹{requiredAmount.toFixed(2)}</strong> more.</p>
-              <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-                <ActionButton $primary onClick={() => navigate("/user/wallet")}>Recharge Now</ActionButton>
-                <ActionButton onClick={handleRechargeClose}>Cancel</ActionButton>
-              </div>
-            </div>
-          </div>
         )}
 
         {/* Unfollow Modal */}

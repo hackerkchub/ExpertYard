@@ -983,6 +983,16 @@ export const ActionButton = styled.button`
     box-shadow: ${props => props.$primary ? "0 16px 30px rgba(255, 193, 7, 0.3)" : "0 14px 28px rgba(0, 0, 0, 0.16)"};
   }
 
+  &:disabled {
+    cursor: not-allowed;
+    transform: none;
+    border-color: #cbd5e1;
+    background: #e5e7eb;
+    color: #475569;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.1);
+    opacity: 1;
+  }
+
   @media (max-width: 768px) {
     min-height: 44px;
     padding: 10px 12px;

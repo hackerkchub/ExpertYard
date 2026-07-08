@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -30,7 +30,10 @@ import {
   FiZap,
   FiInfo,
   FiVideo,
+  FiPlay,
 } from "react-icons/fi";
+
+import { APP_CONFIG } from "../../../../config/appConfig";
 
 import {
   PageWrap,
@@ -133,6 +136,14 @@ import {
   PricingModeTabs,
   PricingModeTab,
   PricingInfo,
+  ReelsGrid,
+  ReelGridCard,
+  ReelThumbnail,
+  ReelVideoPreview,
+  ReelOverlay,
+  ReelPlayIcon,
+  ReelMetaInfo,
+  ReelCaption,
 } from "./ExpertProfile.styles";
 
 import {
@@ -155,6 +166,7 @@ import {
   getCommentsApi,
   addCommentApi,
 } from "../../../../shared/api/expertapi/post.api";
+import { getPublicReelsByExpertIdApi } from "../../../../shared/api/reels.api";
 import { usePublicExpert as useExpert } from "../../context/PublicExpertContext";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
@@ -170,6 +182,33 @@ import useChatRequest from "../../../../shared/hooks/useChatRequest";
 import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/leadTracking";
 import VideoCallButton from "../../../../shared/components/VideoCallButton";
 import { normalizeVideoCallPrice } from "../../../../shared/utils/normalizeExpertPrice";
+
+const resolveMediaUrl = (url) => {
+  if (!url) return "";
+  const cleanUrl = String(url).trim().replace(/\\/g, "/");
+  if (/^(https?:)?\/\//i.test(cleanUrl) || cleanUrl.startsWith("data:") || cleanUrl.startsWith("blob:")) {
+    return cleanUrl;
+  }
+  const apiBase = APP_CONFIG?.API_BASE_URL || "http://localhost:5000/api";
+  const apiOrigin = apiBase.replace(/\/api\/?$/, "");
+  
+  if (cleanUrl.startsWith("/api/uploads/")) {
+    return `${apiOrigin}${cleanUrl.replace(/^\/api/, "")}`;
+  }
+  if (cleanUrl.startsWith("api/uploads/")) {
+    return `${apiOrigin}/${cleanUrl.replace(/^api\//, "")}`;
+  }
+  if (cleanUrl.startsWith("/uploads/")) {
+    return `${apiOrigin}${cleanUrl}`;
+  }
+  if (cleanUrl.startsWith("uploads/")) {
+    return `${apiOrigin}/${cleanUrl}`;
+  }
+  if (cleanUrl.startsWith("/")) {
+    return `${apiOrigin}${cleanUrl}`;
+  }
+  return `${apiOrigin}/uploads/${cleanUrl}`;
+};
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/300?img=12";
 const MIN_CHAT_MINUTES = 5;
@@ -288,6 +327,8 @@ const ExpertProfilePage = () => {
   const [posts, setPosts] = useState([]);
   const [loadingExperience, setLoadingExperience] = useState(false);
   const [loadingPosts, setLoadingPosts] = useState(false);
+  const [reels, setReels] = useState([]);
+  const [loadingReels, setLoadingReels] = useState(false);
   const [totalExperienceText, setTotalExperienceText] = useState("");
   
   // NEW: Pricing mode selection state
@@ -672,6 +713,25 @@ const ExpertProfilePage = () => {
     }
   }, [numericExpertId, userId]);
 
+  // Fetch reels
+  const fetchReels = useCallback(async () => {
+    if (!numericExpertId) return;
+
+    setLoadingReels(true);
+
+    try {
+      const response = await getPublicReelsByExpertIdApi(numericExpertId);
+
+      if (response.data?.success) {
+        setReels(response.data.data || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch reels:", error);
+    } finally {
+      setLoadingReels(false);
+    }
+  }, [numericExpertId]);
+
   const toggleLike = async (post) => {
     if (!isLoggedIn || !userId) return;
 
@@ -894,7 +954,8 @@ const ExpertProfilePage = () => {
 
   useEffect(() => {
     if (activeTab === "posts") fetchPosts();
-  }, [activeTab, fetchPosts]);
+    if (activeTab === "reels") fetchReels();
+  }, [activeTab, fetchPosts, fetchReels]);
 
   useEffect(() => {
     if (numericExpertId) {
@@ -923,6 +984,9 @@ const ExpertProfilePage = () => {
 
       if (activeTab === "posts") {
         fetchPosts();
+      }
+      if (activeTab === "reels") {
+        fetchReels();
       }
 
       fetchPlans();
@@ -1467,6 +1531,7 @@ const ExpertProfilePage = () => {
                 <TabButton $active={activeTab === "about"} onClick={() => setActiveTab("about")}><FiFileText /> {t("expertProfile.about")}</TabButton>
                 <TabButton $active={activeTab === "experience"} onClick={() => setActiveTab("experience")}><FiBriefcase /> {t("expertProfile.experience")}</TabButton>
                 <TabButton $active={activeTab === "posts"} onClick={() => setActiveTab("posts")}><FiImage /> {t("expertProfile.posts")}</TabButton>
+                <TabButton $active={activeTab === "reels"} onClick={() => setActiveTab("reels")}><FiVideo /> Reels</TabButton>
               </TabContainer>
 
               {activeTab === "about" && (
@@ -1605,6 +1670,44 @@ const ExpertProfilePage = () => {
                         );
                       })}
                     </PostGrid>
+                  )}
+                </TabContent>
+              )}
+
+              {activeTab === "reels" && (
+                <TabContent>
+                  {loadingReels ? (
+                    <LoadingReviews><Spinner /><p>Loading reels...</p></LoadingReviews>
+                  ) : reels.length === 0 ? (
+                    <NoReviews><FiVideo size={48} color="#d1d5db" /><h4>No reels uploaded yet</h4></NoReviews>
+                  ) : (
+                    <ReelsGrid>
+                      {reels.map((item) => {
+                        const reelId = item.reel_id || item.reelId || item.id || item.content_id || item.contentId;
+                        const caption = item.caption || item.title || item.description || item.content || item.text || "Untitled Reel";
+                        const thumbnail = resolveMediaUrl(item.thumbnail_url || item.thumbnailUrl || item.cover_image || item.coverImage || item.image_url || item.imageUrl || item.video_thumbnail || item.videoThumbnail || item.video_url || item.videoUrl);
+                        const likes = item.like_count ?? item.likeCount ?? item.likes_count ?? item.likesCount ?? 0;
+                        const comments = item.comment_count ?? item.commentCount ?? item.comments_count ?? item.commentsCount ?? 0;
+                        
+                        return (
+                          <ReelGridCard key={reelId} onClick={() => navigate(`/user/reels/${item.slug || reelId}`)}>
+                            {thumbnail ? (
+                              <ReelThumbnail src={thumbnail} alt={caption} />
+                            ) : (
+                              <div style={{ width: "100%", height: "100%", background: "#111" }} />
+                            )}
+                            <ReelPlayIcon><FiPlay size={20} fill="#fff" /></ReelPlayIcon>
+                            <ReelOverlay>
+                              <ReelCaption>{caption}</ReelCaption>
+                              <ReelMetaInfo>
+                                <span><FiHeart fill="#fff" size={12} /> {likes}</span>
+                                <span><FiMessageCircle size={12} /> {comments}</span>
+                              </ReelMetaInfo>
+                            </ReelOverlay>
+                          </ReelGridCard>
+                        );
+                      })}
+                    </ReelsGrid>
                   )}
                 </TabContent>
               )}

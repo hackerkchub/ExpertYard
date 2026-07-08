@@ -71,6 +71,11 @@ export const reportReelApi = async (id, data) => {
   return api.post(`/reels/${id}/report`, data);
 };
 
+// Get public reels by expert ID
+export const getPublicReelsByExpertIdApi = async (expertId, params) => {
+  return api.get(`/reels/expert/${expertId}`, { params });
+};
+
 /* =====================================================
    📌 EXPERT APIS
    ===================================================== */

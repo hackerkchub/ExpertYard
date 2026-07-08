@@ -2394,3 +2394,94 @@ export const PricingInfo = styled.div`
     padding: 1px 0;
   }
 `;
+
+export const ReelsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding-bottom: 60px;
+  }
+`;
+
+export const ReelGridCard = styled.div`
+  position: relative;
+  aspect-ratio: 9 / 16;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+`;
+
+export const ReelThumbnail = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;
+
+export const ReelVideoPreview = styled.video`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;
+
+export const ReelOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 60%, rgba(0, 0, 0, 0.75) 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 12px;
+  color: #fff;
+`;
+
+export const ReelPlayIcon = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  opacity: 0.85;
+  transition: opacity 0.2s, transform 0.2s;
+
+  ${ReelGridCard}:hover & {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+`;
+
+export const ReelMetaInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 4px;
+`;
+
+export const ReelCaption = styled.p`
+  font-size: 12px;
+  font-weight: 500;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #ffffff;
+`;

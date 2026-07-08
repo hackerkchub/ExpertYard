@@ -256,17 +256,19 @@ const ExpertEarningsDashboard = () => {
         totalEarnings: Number(summary.totalEarning || 0),
         totalMinutes:
           Number(summary.totalChatMinutes || 0) +
-          Number(summary.totalCallMinutes || 0),
+          Number(summary.totalCallMinutes || 0) +
+          Number(summary.totalVideoMinutes || 0),
 
         chatMinutes: Number(summary.totalChatMinutes || 0),
         callMinutes: Number(summary.totalCallMinutes || 0),
+        videoMinutes: Number(summary.totalVideoMinutes || 0),
 
         totalWithdrawn: Number(summary.totalWithdrawn || 0),
         availableBalance: Number(summary.availableBalance || 0),
 
         completedSessions:
           walletRes.data.data?.filter(
-            x => x.reference_type === "session_earning"
+            x => x.reference_type === "session_earning" || x.reference_type === "video_call_earning"
           ).length || 0,
       });
       
@@ -278,19 +280,25 @@ const ExpertEarningsDashboard = () => {
           let txnType = "other";
           let description = item.description || "Wallet Transaction";
           let minutes = 0;
-          let rate = 0;
+          let rate = null;
           let commission = 0;
 
-          if (item.reference_type === "session_earning") {
+          if (item.reference_type === "session_earning" || item.reference_type === "video_call_earning") {
             txnType = item.session_type || "session";
             minutes = parseInt(item.total_minutes || 0);
-            rate = parseFloat(item.rate_per_minute || 0);
+
+            const rawRate = item.rate_per_minute ?? item.ratePerMinute ?? item.price_per_minute ?? item.pricePerMinute ?? item.call_price;
+            rate = rawRate !== undefined && rawRate !== null ? parseFloat(rawRate) : null;
+
             commission = parseFloat(item.commission_amount || 0);
 
-            description =
-              item.session_type === "chat"
-                ? `Chat session • ${minutes} min`
-                : `Call session • ${minutes} min`;
+            let typeLabel = "Call session";
+            if (item.session_type === "chat") {
+              typeLabel = "Chat session";
+            } else if (item.session_type === "video_call" || item.session_type === "video") {
+              typeLabel = "Video call session";
+            }
+            description = `${typeLabel} • ${minutes} min`;
           }
 
           else if (item.reference_type === "referral_reward") {
@@ -308,10 +316,12 @@ const ExpertEarningsDashboard = () => {
             description = "Withdrawal";
           }
 
+          const amountValue = item.amount ?? item.net_amount ?? item.expert_earning ?? item.wallet_amount ?? 0;
+
           return {
             id: item.id || index + 1,
             type: txnType,
-            amount: parseFloat(item.amount || 0),
+            amount: parseFloat(amountValue),
             totalAmount: parseFloat(item.total_amount || 0),
             commission,
             minutes,
@@ -1486,10 +1496,15 @@ const ExpertEarningsDashboard = () => {
                             <div className="transaction-date">
                               {formatDate(transaction.date)}
                             </div>
-                            <TransactionMeta>
-                              <span>Rate: ₹{transaction.rate}/min</span>
-                              {/* <span>Commission: {formatCurrency(transaction.commission)}</span> */}
-                            </TransactionMeta>
+                            {["chat", "call", "video_call", "video"].includes(transaction.type) && (
+                              <TransactionMeta>
+                                <span>
+                                  {transaction.rate !== null && transaction.rate !== undefined
+                                    ? `Rate: ₹${transaction.rate}/min`
+                                    : "Rate not available"}
+                                </span>
+                              </TransactionMeta>
+                            )}
                           </div>
                           
                           <div className="transaction-amount">

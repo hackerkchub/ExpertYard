@@ -3460,12 +3460,13 @@ body {
 
   .home-hero-card {
     display: block !important;
-    background: linear-gradient(135deg, #020B5C 0%, #001B8F 50%, #0637D8 100%) !important;
+    background: #000080 !important;
     border-radius: 16px !important;
-    padding: 12px 14px 12px !important;
+    padding: 20px 18px !important;
     position: relative !important;
     height: auto !important;
-    min-height: 200px !important;
+    min-height: auto !important;
+    max-height: none !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
     margin-bottom: 14px !important;
@@ -3473,50 +3474,35 @@ body {
 
   @media (max-width: 360px) {
     .home-hero-card {
-      min-height: 190px !important;
-      max-height: 200px !important;
+      min-height: auto !important;
+      max-height: none !important;
     }
   }
   @media (min-width: 361px) and (max-width: 375px) {
     .home-hero-card {
-      min-height: 195px !important;
-      max-height: 205px !important;
+      min-height: auto !important;
+      max-height: none !important;
     }
   }
   @media (min-width: 376px) and (max-width: 390px) {
     .home-hero-card {
-      min-height: 200px !important;
-      max-height: 210px !important;
+      min-height: auto !important;
+      max-height: none !important;
     }
   }
   @media (min-width: 391px) {
     .home-hero-card {
-      min-height: 205px !important;
-      max-height: 215px !important;
+      min-height: auto !important;
+      max-height: none !important;
     }
   }
 
   .home-hero-card::before {
-    content: "" !important;
-    position: absolute !important;
-    top: -50px !important;
-    right: -50px !important;
-    width: 250px !important;
-    height: 250px !important;
-    background: radial-gradient(circle, rgba(6, 55, 216, 0.4) 0%, rgba(6, 55, 216, 0) 70%) !important;
-    z-index: 1 !important;
-    pointer-events: none !important;
+    display: none !important;
   }
 
   .home-hero-card::after {
-    content: "✦" !important;
-    position: absolute !important;
-    top: 30px !important;
-    right: 110px !important;
-    font-size: 11px !important;
-    color: rgba(255, 255, 255, 0.4) !important;
-    z-index: 1 !important;
-    pointer-events: none !important;
+    display: none !important;
   }
 
   .home-hero-copy {
@@ -5028,31 +5014,31 @@ button.book-service-desktop {
   .mobile-hero-badge {
     display: inline-flex !important;
     align-items: center !important;
-    gap: 4px !important;
-    background: rgba(0, 0, 0, 0.3) !important;
+    gap: 6px !important;
+    background: rgba(0, 0, 0, 0.25) !important;
     color: #ffffff !important;
-    padding: 4px 8px !important;
+    padding: 6px 12px !important;
     border-radius: 8px !important;
-    font-size: 9px !important;
+    font-size: 12px !important;
     font-weight: 600 !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    margin-bottom: 8px !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    margin-bottom: 10px !important;
   }
 
   .mobile-hero-title {
-    font-size: 21px !important;
-    font-weight: 850 !important;
+    font-size: 23px !important;
+    font-weight: 800 !important;
     color: #ffffff !important;
-    line-height: 1.15 !important;
-    margin: 0 0 6px 0 !important;
+    line-height: 1.25 !important;
+    margin: 0 0 8px 0 !important;
     text-align: left !important;
   }
 
   .mobile-hero-subtitle {
-    font-size: 11.5px !important;
-    color: #EAF0FF !important;
-    line-height: 1.35 !important;
-    margin: 0 0 12px 0 !important;
+    font-size: 14px !important;
+    color: rgba(255, 255, 255, 0.85) !important;
+    line-height: 1.45 !important;
+    margin: 0 0 14px 0 !important;
     text-align: left !important;
   }
 
@@ -5361,7 +5347,7 @@ button.book-service-desktop {
 
 .service-card-image {
   width: 100% !important;
-  height: 105px !important;
+  height: 200px !important;
   border-radius: 12px !important;
   overflow: hidden !important;
   background: #f8fafc !important;
@@ -5454,16 +5440,35 @@ button.book-service-desktop {
   background: #14532d !important;
 }
 
-/* Experts section grid (3 columns) */
+/* Available Experts horizontal scroll */
 .experts-grid {
-  grid-template-columns: repeat(3, 1fr) !important;
+  display: flex !important;
+  grid-template-columns: none !important;
+  gap: 18px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scroll-snap-type: x mandatory !important;
+  scroll-behavior: smooth !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding: 4px 2px 16px !important;
+  margin: 0 -2px !important;
+  scrollbar-width: none !important;
+  overscroll-behavior-x: contain !important;
+}
+
+.experts-grid::-webkit-scrollbar {
+  display: none !important;
 }
 
 .marketplace-expert-card {
+  flex: 0 0 292px !important;
+  width: 292px !important;
+  min-width: 292px !important;
+  scroll-snap-align: start !important;
   background: #ffffff !important;
   border: 1px solid #f1f5f9 !important;
   border-radius: 16px !important;
-  padding: 12px !important;
+  padding: 16px !important;
   display: flex !important;
   flex-direction: column !important;
   box-sizing: border-box !important;
@@ -5478,15 +5483,15 @@ button.book-service-desktop {
 
 .expert-card-top {
   display: flex !important;
-  gap: 10px !important;
+  gap: 14px !important;
   align-items: flex-start !important;
-  margin-bottom: 12px !important;
+  margin-bottom: 18px !important;
 }
 
 .expert-avatar-wrapper {
   position: relative !important;
-  width: 44px !important;
-  height: 44px !important;
+  width: 72px !important;
+  height: 72px !important;
   border-radius: 50% !important;
   background: #f1f5f9 !important;
   flex-shrink: 0 !important;
@@ -5495,7 +5500,7 @@ button.book-service-desktop {
   justify-content: center !important;
   font-weight: 800 !important;
   color: #1e293b !important;
-  font-size: 13px !important;
+  font-size: 18px !important;
   border: 1px solid #e2e8f0 !important;
 }
 
@@ -5537,16 +5542,18 @@ button.book-service-desktop {
 }
 
 .expert-info h3 {
-  font-size: 13px !important;
+  font-size: 16px !important;
   font-weight: 850 !important;
   color: #0f172a !important;
   margin: 0 !important;
-  white-space: nowrap !important;
+  white-space: normal !important;
   overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  text-overflow: initial !important;
   width: 100% !important;
   cursor: pointer !important;
-  display: inline-flex !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
   align-items: center !important;
   gap: 3px !important;
 }
@@ -5561,9 +5568,9 @@ button.book-service-desktop {
 }
 
 .expert-info .category {
-  font-size: 10.5px !important;
+  font-size: 13px !important;
   color: #64748b !important;
-  margin: 2px 0 4px 0 !important;
+  margin: 6px 0 8px 0 !important;
   font-weight: 600 !important;
   white-space: nowrap !important;
   overflow: hidden !important;
@@ -5575,7 +5582,7 @@ button.book-service-desktop {
   display: flex !important;
   align-items: center !important;
   gap: 6px !important;
-  font-size: 10.5px !important;
+  font-size: 12px !important;
   font-weight: 750 !important;
   color: #f59e0b !important;
 }
@@ -5589,12 +5596,13 @@ button.book-service-desktop {
   display: flex !important;
   justify-content: space-between !important;
   background: #f8fafc !important;
-  padding: 6px 10px !important;
-  border-radius: 8px !important;
-  font-size: 10px !important;
+  padding: 10px 12px !important;
+  border-radius: 12px !important;
+  font-size: 12px !important;
   font-weight: 750 !important;
   color: #020B5C !important;
-  margin-bottom: 12px !important;
+  margin-bottom: 16px !important;
+  gap: 8px !important;
 }
 
 .expert-card-actions {
@@ -5605,10 +5613,10 @@ button.book-service-desktop {
 }
 
 .expert-card-actions button {
-  height: 28px !important;
+  height: 42px !important;
   border: none !important;
-  border-radius: 6px !important;
-  font-size: 11px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
   font-weight: 800 !important;
   cursor: pointer !important;
   transition: background 0.15s ease !important;
@@ -5630,6 +5638,21 @@ button.book-service-desktop {
 
 .expert-action-call:hover {
   background: #2563eb !important;
+}
+
+.home-experts-empty {
+  flex: 0 0 100% !important;
+  width: 100% !important;
+  min-height: 120px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px dashed #cbd5e1 !important;
+  border-radius: 16px !important;
+  background: #ffffff !important;
+  color: #64748b !important;
+  font-size: 13.5px !important;
+  font-weight: 750 !important;
 }
 
 /* Posts section grid (2 columns) */
@@ -5707,7 +5730,7 @@ button.book-service-desktop {
 
 .post-image {
   width: 100% !important;
-  height: 120px !important;
+  height: 200px !important;
   object-fit: cover !important;
   border-radius: 10px !important;
   margin-bottom: 10px !important;
@@ -5725,7 +5748,7 @@ button.book-service-desktop {
 .post-stats {
   display: flex !important;
   gap: 12px !important;
-  font-size: 10.5px !important;
+  font-size: 12px !important;
   color: #64748b !important;
   font-weight: 600 !important;
 }
@@ -6038,9 +6061,7 @@ button.book-service-desktop {
 }
 
 .desktop-only-marketplace-sections .marketplace-post-card {
-  flex: 0 0 350px !important;
-  max-width: 350px !important;
-  white-space: normal !important;
+
 }
 
 /* ==================================================
@@ -6063,7 +6084,10 @@ button.book-service-desktop {
 }
 
 .experts-grid {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+  display: flex !important;
+  grid-template-columns: none !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
 }
 
 .desktop-hero-actions-container {
@@ -6101,7 +6125,6 @@ img {
     justify-content: space-between !important;
     align-items: flex-end !important;
     margin-bottom: 8px !important;
-    padding: 0 16px !important;
     box-sizing: border-box !important;
     margin-top: 16px !important;
   }
@@ -6114,9 +6137,9 @@ img {
   }
 
   .home-section-heading h2 {
-    font-size: 15px !important;
+    font-size: 18px !important;
     font-weight: 850 !important;
-    color: #0f172a !important;
+    color: #166534 !important;
     margin: 0 0 2px 0 !important;
     line-height: 1.2 !important;
   }
@@ -6239,8 +6262,6 @@ img {
     gap: 14px !important;
     overflow-x: auto !important;
     padding: 12px 16px !important;
-    margin-left: -16px !important;
-    margin-right: -16px !important;
     width: calc(100% + 32px) !important;
     white-space: nowrap !important;
     scroll-behavior: smooth !important;
@@ -6257,26 +6278,29 @@ img {
   }
 
   .mobile-service-row-card {
-    flex: 0 0 280px !important;
-    width: 280px !important;
+    flex: 0 0 clamp(292px, 82vw, 340px) !important;
+    width: clamp(292px, 82vw, 340px) !important;
+    min-height: auto !important;
     scroll-snap-align: start !important;
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
     border-radius: 16px !important;
-    padding: 10px !important;
+    padding: 16px !important;
     display: flex !important;
+    flex-direction: column !important;
     align-items: center !important;
-    gap: 12px !important;
+    justify-content: flex-start !important;
+    gap: 14px !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02) !important;
     box-sizing: border-box !important;
   }
 
   .mobile-service-img {
-    width: 64px !important;
-    height: 64px !important;
-    border-radius: 10px !important;
+    width: 100% !important;
+    height: 100px !important;
+    border-radius: 14px !important;
     overflow: hidden !important;
-    background: #f1f5f9 !important;
+    background: #f3f4f6 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -6286,7 +6310,9 @@ img {
   .mobile-service-img img {
     width: 100% !important;
     height: 100% !important;
-    object-fit: cover !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    background: #f3f4f6 !important;
   }
 
   .mobile-service-fallback-icon {
@@ -6296,75 +6322,93 @@ img {
   .mobile-service-info {
     flex: 1 !important;
     min-width: 0 !important;
+    width: 100% !important;
     text-align: left !important;
   }
 
   .mobile-service-info h3 {
-    font-size: 13px !important;
+    font-size: 15px !important;
     font-weight: 800 !important;
     color: #1e293b !important;
-    margin: 0 0 3px 0 !important;
-    line-height: 1.3 !important;
+    margin: 0 0 7px 0 !important;
+    line-height: 1.35 !important;
+    white-space: normal !important;
+    overflow: hidden !important;
+    text-overflow: initial !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+  }
+
+  .mobile-service-expert {
+    font-size: 14px !important;
+    color: #64748b !important;
+    margin: 0 0 10px 0 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
   }
 
-  .mobile-service-expert {
-    font-size: 11px !important;
-    color: #64748b !important;
-    margin: 0 0 4px 0 !important;
-  }
-
   .mobile-service-meta {
     display: flex !important;
     align-items: center !important;
-    gap: 8px !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    width: 100% !important;
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+    background: #f8fafc !important;
   }
 
   .mobile-rating {
-    font-size: 11px !important;
+    font-size: 13px !important;
     color: #d97706 !important;
     font-weight: 700 !important;
   }
 
   .mobile-price {
-    font-size: 12px !important;
+    font-size: 14px !important;
     color: #000080 !important;
     font-weight: 900 !important;
   }
 
   .mobile-service-book-btn {
-    background: #000080 !important;
+    background: #166534 !important;
     color: #ffffff !important;
     border: none !important;
-    border-radius: 10px !important;
-    padding: 6px 12px !important;
-    font-size: 11.5px !important;
+    border-radius: 12px !important;
+    padding: 10px 14px !important;
+    font-size: 14px !important;
     font-weight: 800 !important;
     cursor: pointer !important;
     flex-shrink: 0 !important;
+    width: 100% !important;
+    min-height: 44px !important;
+    margin-top: auto !important;
   }
 
   .mobile-expert-row-card {
-    flex: 0 0 280px !important;
-    width: 280px !important;
+    flex: 0 0 clamp(292px, 82vw, 340px) !important;
+    width: clamp(292px, 82vw, 340px) !important;
+    
     scroll-snap-align: start !important;
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
     border-radius: 16px !important;
-    padding: 10px !important;
+    padding: 16px !important;
     display: flex !important;
+    flex-direction: column !important;
     align-items: center !important;
-    gap: 12px !important;
+    justify-content: flex-start !important;
+    gap: 14px !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02) !important;
     box-sizing: border-box !important;
   }
 
   .mobile-expert-avatar-wrapper {
     position: relative !important;
-    width: 48px !important;
-    height: 48px !important;
+    width: 86px !important;
+    height: 86px !important;
     border-radius: 50% !important;
     overflow: visible !important;
     flex-shrink: 0 !important;
@@ -6386,30 +6430,33 @@ img {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    font-size: 14px !important;
+    font-size: 22px !important;
     font-weight: 800 !important;
   }
 
   .mobile-expert-info {
     flex: 1 !important;
     min-width: 0 !important;
-    text-align: left !important;
+    width: 100% !important;
+    text-align: center !important;
   }
 
   .mobile-expert-info h3 {
-    font-size: 13px !important;
+    font-size: 16px !important;
     font-weight: 800 !important;
     color: #1e293b !important;
-    margin: 0 0 2px 0 !important;
-    display: flex !important;
+    margin: 0 0 6px 0 !important;
+    display: inline-flex !important;
     align-items: center !important;
+    justify-content: center !important;
     gap: 4px !important;
+    max-width: 100% !important;
   }
 
   .mobile-expert-category {
-    font-size: 11px !important;
+    font-size: 13px !important;
     color: #64748b !important;
-    margin: 0 0 3px 0 !important;
+    margin: 0 0 8px 0 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
@@ -6417,29 +6464,34 @@ img {
 
   .mobile-expert-meta {
     display: flex !important;
-    gap: 6px !important;
-    font-size: 11px !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    font-size: 12px !important;
     color: #64748b !important;
     font-weight: 700 !important;
   }
 
   .mobile-expert-actions-btns {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 4px !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
     flex-shrink: 0 !important;
+    width: 100% !important;
+    margin-top: auto !important;
   }
 
   .mobile-expert-chat-btn,
   .mobile-expert-call-btn {
     border: none !important;
-    border-radius: 8px !important;
-    padding: 4px 10px !important;
-    font-size: 10.5px !important;
+    border-radius: 12px !important;
+    padding: 10px 12px !important;
+    font-size: 13px !important;
     font-weight: 850 !important;
     cursor: pointer !important;
     text-align: center !important;
-    width: 60px !important;
+    width: 100% !important;
+    min-height: 42px !important;
   }
 
   .mobile-expert-chat-btn {
@@ -6450,6 +6502,22 @@ img {
   .mobile-expert-call-btn {
     background: #fef3c7 !important;
     color: #d97706 !important;
+  }
+
+  .mobile-experts-empty {
+    flex: 0 0 calc(100vw - 32px) !important;
+    width: calc(100vw - 32px) !important;
+    min-height: 110px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 1px dashed #cbd5e1 !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+    color: #64748b !important;
+    font-size: 13px !important;
+    font-weight: 750 !important;
+    scroll-snap-align: start !important;
   }
 
   .mobile-post-row-card {
@@ -6495,14 +6563,14 @@ img {
   }
 
   .mobile-post-author h4 {
-    font-size: 12px !important;
+    font-size: 14px !important;
     font-weight: 800 !important;
     color: #1e293b !important;
     margin: 0 !important;
   }
 
   .mobile-post-author span {
-    font-size: 9.5px !important;
+    font-size: 12px !important;
     color: #64748b !important;
     display: block !important;
   }
@@ -6512,17 +6580,25 @@ img {
   }
 
   .mobile-post-body p {
-    font-size: 11.5px !important;
+    font-size: 14px !important;
     color: #334155 !important;
     margin: 0 0 6px 0 !important;
-    line-height: 1.4 !important;
+    line-height: 1.45 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    white-space: normal !important;
   }
 
   .mobile-post-img {
     width: 100% !important;
-    max-height: 180px !important;
+    height: 100px !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    background: #f3f4f6 !important;
     border-radius: 10px !important;
-    object-fit: cover !important;
+    display: block !important;
   }
 
   .mobile-post-footer {
@@ -6536,20 +6612,23 @@ img {
   .mobile-post-stats {
     display: flex !important;
     gap: 12px !important;
-    font-size: 11px !important;
+    font-size: 12px !important;
     color: #64748b !important;
     font-weight: 700 !important;
   }
 
   .mobile-post-consult-btn {
-    background: #000080 !important;
-    color: #ffffff !important;
-    border: none !important;
-    border-radius: 8px !important;
-    padding: 5px 12px !important;
-    font-size: 11px !important;
-    font-weight: 800 !important;
-    cursor: pointer !important;
+      background: #166534 !important;
+        color: #ffffff !important;
+        border: none !important;
+        border-radius: 12px !important;
+        padding: 10px 14px !important;
+        font-size: 14px !important;
+        font-weight: 800 !important;
+        cursor: pointer !important;
+        flex-shrink: 0 !important;
+        width: 100% !important;
+        margin-top: auto !important;
   }
 
   .mobile-posts-empty {

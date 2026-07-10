@@ -741,13 +741,6 @@ export default function HomePage() {
       return onlineB - onlineA;
     });
 
-    if (sorted.length === 0) {
-      return [
-        { id: 1, name: "Dr. Ananya Sharma", position: "Career & Relationship Advisor", avg_rating: 4.9, chat_per_minute: 20, call_per_minute: 40, online_status: "online", experience: 8 },
-        { id: 2, name: "CA Manoj Kumar", position: "Tax & Business Advisor", avg_rating: 4.8, chat_per_minute: 25, call_per_minute: 50, online_status: "online", experience: 10 },
-        { id: 3, name: "Adv. Sneha Iyer", position: "Legal & Startup Consultant", avg_rating: 4.7, chat_per_minute: 30, call_per_minute: 60, online_status: "offline", experience: 6 },
-      ];
-    }
     return sorted;
   }, [items]);
 
@@ -1250,7 +1243,7 @@ export default function HomePage() {
                 <button type="button" onClick={() => navigate("/user/call-chat?page=1")}>View All Experts</button>
               </div>
               <div className="marketplace-grid experts-grid">
-                {desktopExpertsList.slice(0, 3).map((exp, idx) => (
+                {desktopExpertsList.length > 0 ? desktopExpertsList.map((exp, idx) => (
                   <div 
                     className="marketplace-expert-card clickable-card" 
                     key={exp.id || exp.expert_id || idx}
@@ -1293,7 +1286,9 @@ export default function HomePage() {
                       }}>Call</button>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <div className="home-experts-empty">No experts available right now.</div>
+                )}
               </div>
             </section>
 
@@ -1443,7 +1438,6 @@ export default function HomePage() {
                 <span className="mobile-section-hint">Swipe to browse expert categories</span>
               </div>
               <div className="mobile-section-right">
-                <span className="mobile-swipe-text">Swipe &rarr;</span>
                 <button type="button" className="mobile-view-all-btn" onClick={() => navigate("/user/categories")}>
                   View all
                 </button>
@@ -1495,7 +1489,7 @@ export default function HomePage() {
                 <span className="mobile-section-hint">Swipe to book expert services</span>
               </div>
               <div className="mobile-section-right">
-                <span className="mobile-swipe-text">Swipe &rarr;</span>
+               
                 <button type="button" className="mobile-view-all-btn" onClick={() => navigate("/user/all-services")}>
                   View all
                 </button>
@@ -1574,14 +1568,14 @@ export default function HomePage() {
                 <span className="mobile-section-hint">Swipe to chat or call verified experts</span>
               </div>
               <div className="mobile-section-right">
-                <span className="mobile-swipe-text">Swipe &rarr;</span>
+               
                 <button type="button" className="mobile-view-all-btn" onClick={() => navigate("/user/call-chat?page=1")}>
                   View all
                 </button>
               </div>
             </div>
             <div className="mobile-experts-list">
-              {desktopExpertsList.slice(0, 3).map((exp, idx) => (
+              {desktopExpertsList.length > 0 ? desktopExpertsList.map((exp, idx) => (
                 <div 
                   className="mobile-expert-row-card clickable-card" 
                   key={exp.id || exp.expert_id || idx}
@@ -1618,7 +1612,9 @@ export default function HomePage() {
                     }}>Call</button>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="mobile-experts-empty">No experts available right now.</div>
+              )}
             </div>
 
             {/* 4. Expert Tips & Guidance Section */}
@@ -1628,7 +1624,7 @@ export default function HomePage() {
                 <span className="mobile-section-hint">Swipe to view expert posts and advice</span>
               </div>
               <div className="mobile-section-right">
-                <span className="mobile-swipe-text">Swipe &rarr;</span>
+              
               </div>
             </div>
             <div className="mobile-posts-list">
@@ -1745,9 +1741,7 @@ export default function HomePage() {
                 <h2>Ratings &amp; Reviews</h2>
                 <span className="mobile-section-hint">Swipe to read user feedback</span>
               </div>
-              <div className="mobile-section-right">
-                <span className="mobile-swipe-text">Swipe &rarr;</span>
-              </div>
+              
             </div>
             <HomeRatingsReviews isMobile={true} />
 

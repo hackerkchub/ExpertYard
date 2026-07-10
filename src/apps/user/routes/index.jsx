@@ -86,6 +86,16 @@ export default function UserAppRoutes() {
             <Route path="all-services" element={withLazyRoute(<AllServices />)} />
             <Route path="service-details/:slug" element={withLazyRoute(<ServiceDetails />)} />
             <Route path="my-booking/:id" element={withLazyRoute(<MyBookings />)} />
+            <Route
+              path="my-services"
+              element={
+                <ProtectedRoute>
+                  <LazyRoute>
+                    <MyBookings />
+                  </LazyRoute>
+                </ProtectedRoute>
+              }
+            />
             <Route path="reels" element={withLazyRoute(<ReelsPage />)} />
             <Route path="reels/:slug" element={withLazyRoute(<ReelsPage />)} />
             <Route

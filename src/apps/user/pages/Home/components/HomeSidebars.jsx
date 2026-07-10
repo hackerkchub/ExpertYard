@@ -28,6 +28,7 @@ const navItems = [
   { label: "Category", to: "/user/categories", icon: Grid3X3 },
   { label: "Wallet", to: "/user/wallet", icon: CreditCard },
   { label: "My Consultations", to: "/user/chat-history", icon: Sparkles },
+  { label: "My Services", to: "/user/my-services", icon: BriefcaseBusiness },
   { label: "Notifications", to: "/user/notifications", icon: Bell },
   { label: "Settings", to: "/user/user-profile", icon: Settings },
 ];

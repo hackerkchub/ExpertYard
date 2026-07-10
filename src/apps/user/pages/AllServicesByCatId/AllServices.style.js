@@ -506,7 +506,10 @@ export const ExpertIdentitySection = styled.div`
 `;
 
 export const ImageWrapper = styled.div`
-  height: 200px;
+  width: 300px;
+  height: 250px;
+  max-width: 100%;
+  margin: 0 auto;
   position: relative;
   overflow: hidden;
   cursor: pointer;
@@ -514,12 +517,14 @@ export const ImageWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 14px;
 
   img {
     width: 100%;
     height: 100%;
     object-fit: contain;
     object-position: center;
+    display: block;
     transition: transform 0.5s ease, filter 0.25s ease;
   }
 
@@ -529,7 +534,9 @@ export const ImageWrapper = styled.div`
   }
 
   @media (max-width: 767px) {
-    height: 170px;
+    width: min(300px, 100%);
+    height: 250px;
+    margin: 0 auto;
 
     &:hover img {
       transform: none;

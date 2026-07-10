@@ -51,15 +51,15 @@ const MyBookings = () => {
     <S.PageContainer>
       <S.ContentWrapper>
         <S.Header>
-          <h1>My Bookings</h1>
+          <h1>My Services</h1>
           <p>Track and manage your professional service requests</p>
         </S.Header>
 
         {bookings.length === 0 ? (
           <S.EmptyState>
             <div className="icon">📅</div>
-            <h3>No Bookings Found</h3>
-            <p>You haven't booked any services yet.</p>
+            <h3>No services found yet.</h3>
+            <p>You haven't purchased or booked any services yet.</p>
           </S.EmptyState>
         ) : (
           <S.BookingList>

@@ -44,8 +44,9 @@ export const Container = styled.div`
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   @media (max-width: 767px) {
-    height: calc(100dvh - var(--reels-header-offset, 56px));
-    min-height: calc(100dvh - var(--reels-header-offset, 56px));
+    --reels-header-offset: 0px;
+    height: calc(100dvh - var(--reels-header-offset, 0px));
+    min-height: calc(100dvh - var(--reels-header-offset, 0px));
   }
 
   @media (min-width: 768px) {

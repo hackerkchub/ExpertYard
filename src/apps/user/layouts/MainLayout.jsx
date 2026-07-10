@@ -89,11 +89,19 @@ export default function MainLayout() {
     );
   }
 
+  const isReelsPage = 
+    location.pathname.startsWith("/user/reels") || 
+    location.pathname === "/user/reels" ||
+    location.pathname.startsWith("/reels") || 
+    location.pathname === "/reels";
+
   return (
     <>
-      <div className="mobile-only-header">
-        <Navbar />
-      </div>
+      {!isReelsPage && (
+        <div className="mobile-only-header">
+          <Navbar />
+        </div>
+      )}
       <Outlet />
       <Footer />
     </>

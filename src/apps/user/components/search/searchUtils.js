@@ -3,6 +3,7 @@ import { getCategoryPath } from "../../../../shared/utils/categoryRoutes";
 export const SEARCH_GROUPS = [
   { key: "experts", label: "Experts" },
   { key: "categories", label: "Categories" },
+  { key: "services", label: "Services" },
   { key: "locations", label: "Locations" },
   { key: "subcategories", label: "Subcategories" },
 ];
@@ -50,6 +51,7 @@ export const asArray = (value) => {
   if (Array.isArray(value?.experts)) return value.experts;
   if (Array.isArray(value?.categories)) return value.categories;
   if (Array.isArray(value?.subcategories)) return value.subcategories;
+  if (Array.isArray(value?.services)) return value.services;
   return [];
 };
 
@@ -59,6 +61,7 @@ export const normalizeGlobalResults = (response) => {
   return {
     experts: asArray(payload.experts || payload.expert || payload.users),
     categories: asArray(payload.categories || payload.category),
+    services: asArray(payload.services || payload.service),
     locations: asArray(payload.locations || payload.location_suggestions || payload.places),
     subcategories: asArray(payload.subcategories || payload.sub_categories || payload.subcategory),
   };
@@ -103,8 +106,6 @@ export const getSubcategoryResultPath = (subcategory) => {
     return `/user/categories/${subcategory.category_slug || subcategory.parent_category_slug}`;
   }
 
-  // The app routes subcategory expert lists by category/subcategory query params.
-  // If the backend omits parent category identity, keep navigation on the stable expert list route.
   return subcategoryId
     ? `/user/experts?sub_category=${encodeURIComponent(subcategoryId)}`
     : "/user/categories";
@@ -122,6 +123,7 @@ export const flattenResults = (groups) =>
 export const getResultPath = (group, item) => {
   if (group === "experts") return getExpertPath(item);
   if (group === "categories") return getCategoryResultPath(item);
+  if (group === "services") return `/user/service-details/${item?.slug || item?.service_slug || item?.id}`;
   if (group === "locations") return buildUserSearchPath(getLocationDisplayName(item), "location");
   return getSubcategoryResultPath(item);
 };

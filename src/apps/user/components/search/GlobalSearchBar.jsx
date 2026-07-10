@@ -21,6 +21,7 @@ const SEARCH_DELAY = 400;
 const emptyResults = {
   experts: [],
   categories: [],
+  services: [],
   locations: [],
   subcategories: [],
 };

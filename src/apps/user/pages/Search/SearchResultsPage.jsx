@@ -295,11 +295,22 @@ const SearchResultsPage = () => {
           }
         }
 
+        const seenServices = new Set();
+        const uniqueServices = [];
+        for (const item of [...asArray(globalResults.services), ...servicesRef.current.filter((service) => matchesQuery(service, q))]) {
+          const id = item?.id || item?.service_id || item?.serviceId || item?.slug || item?.service_slug;
+          const key = id || item?.title || item?.name || JSON.stringify(item);
+          if (key && !seenServices.has(key)) {
+            seenServices.add(key);
+            uniqueServices.push(item);
+          }
+        }
+
         setResults({
           experts: uniqueExperts,
           categories: getList({ data: globalResults.categories }, "categories"),
           subcategories: getList({ data: globalResults.subcategories }, "subcategories"),
-          services: servicesRef.current.filter((service) => matchesQuery(service, q)).slice(0, 20),
+          services: uniqueServices.slice(0, 20),
           locations: asArray(globalResults.locations),
         });
 

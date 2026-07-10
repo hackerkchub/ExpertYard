@@ -41,6 +41,7 @@
     "@capacitor/ios": "^8.4.1",
     "@capacitor/network": "^8.0.1",
     "@capacitor/push-notifications": "^8.1.1",
+    "@cashfreepayments/cashfree-js": "^1.0.7",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^9.0.1",
@@ -48,7 +49,10 @@
     "@mui/x-date-pickers": "^9.5.0",
     "axios": "^1.15.0",
     "cashfree-pg": "^6.0.4",
+<<<<<<< HEAD
     "cross-env": "^10.1.0",
+=======
+>>>>>>> 87f0aa4f861e75b8b75c7690dfc9c16cc29281ae
     "date-fns": "^4.4.0",
     "firebase": "^12.7.0",
     "framer-motion": "^12.23.26",

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useState } from "react";
+import { load } from "@cashfreepayments/cashfree-js";
 
 import {
   Overlay,
@@ -13,30 +13,7 @@ import {
 
 const AddBalancePopup = ({ amountPreset, onClose, onConfirm, createOrder }) => {
   const [amount, setAmount] = useState(amountPreset || "");
-  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  /* ============================
-     Load Razorpay Script SAFELY
-  ============================== */
-  useEffect(() => {
-    if (window.Razorpay) {
-      setRazorpayLoaded(true);
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-
-    script.onload = () => setRazorpayLoaded(true);
-    script.onerror = () => {
-      alert("Razorpay SDK load failed");
-      setRazorpayLoaded(false);
-    };
-
-    document.body.appendChild(script);
-  }, []);
 
   /* ============================
      Amount Calculations
@@ -50,109 +27,56 @@ const AddBalancePopup = ({ amountPreset, onClose, onConfirm, createOrder }) => {
      PAY NOW HANDLER
   ============================== */
   const handlePayNow = async () => {
-if (!razorpayLoaded || !window.Razorpay) {
-  alert("Razorpay not loaded");
-  return;
-}
-
-if (!baseAmount || baseAmount < 1 || isNaN(baseAmount)) {
-  alert("Please enter valid amount");
-  return;
-}
-  try {
-    setLoading(true);
-
-    const orderResponse =
-      await createOrder(baseAmount);
-
-    if (!orderResponse?.success) {
-      throw new Error("Order creation failed");
+    if (!baseAmount || baseAmount < 1 || isNaN(baseAmount)) {
+      alert("Please enter valid amount");
+      return;
     }
 
-    const options = {
-      key: orderResponse.key_id,
+    try {
+      setLoading(true);
 
-      amount:
-        Math.round(orderResponse.amount * 100),
+      // STEP 1: Create order from backend
+      const orderResponse = await createOrder(baseAmount);
 
-      currency:
-        orderResponse.currency,
-
-      order_id:
-        orderResponse.order_id,
-
-      name: "Wallet Recharge",
-
-      description: "Add balance",
-
-        webview_intent: true,
-
-   method: {
-    upi: true,
-    card: true,
-    netbanking: true,
-    wallet: true,
-    emi: true
-  },
-  config: {
-    display: {
-      preferences: {
-        show_default_blocks: true
+      if (!orderResponse?.success) {
+        throw new Error(orderResponse?.message || "Order creation failed");
       }
+
+      // STEP 2: Load Cashfree SDK with environment from backend
+      const cashfree = await load({
+        mode: orderResponse.environment || "sandbox"
+      });
+
+      // STEP 3: Initialize Cashfree checkout
+      const result = await cashfree.checkout({
+        paymentSessionId: orderResponse.payment_session_id,
+        redirectTarget: "_modal"
+      });
+
+      // STEP 4: Handle checkout result
+      if (result?.error) {
+        throw new Error(result.error.message || "Payment failed");
+      }
+
+      // STEP 5: Payment successful - confirm with backend
+      const walletResult = await onConfirm({
+        order_id: orderResponse.order_id
+      });
+
+      if (!walletResult?.success) {
+        throw new Error(walletResult?.message || "Wallet update failed");
+      }
+
+      alert("Balance added successfully");
+      onClose();
+
+    } catch (err) {
+      console.error("Payment error:", err);
+      alert(err.message || "Payment failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
-  },
-
-
-      handler: async function (response) {
-
-        try {
-
-          const result = await onConfirm({
-  razorpay_payment_id: response.razorpay_payment_id,
-  razorpay_order_id: response.razorpay_order_id,
-  razorpay_signature: response.razorpay_signature
-});
-
-if (!result?.success) {
-  throw new Error(result?.message || "Wallet update failed");
-}
-
-alert("Balance added successfully");
-onClose();
-} catch (err) {
-
-          console.error(err);
-
-          alert(
-            "Payment completed but wallet credit failed"
-          );
-        } finally {
-
-          setLoading(false);
-        }
-      },
-
-      modal: {
-        ondismiss() {
-          setLoading(false);
-        }
-      }
-    };
-
-    const rzp =
-      new window.Razorpay(options);
-
-    rzp.open();
-
-  } catch (err) {
-
-    console.error(err);
-
-    alert(err.message);
-
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <Overlay>

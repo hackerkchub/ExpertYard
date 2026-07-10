@@ -17,26 +17,12 @@ const GuidexaExpertPlan = () => {
   const [hasActivePlan, setHasActivePlan] = useState(false);
   const [purchasing, setPurchasing] = useState(null);
   const [activeTab, setActiveTab] = useState(1);
-  const [isSdkReady, setIsSdkReady] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const tabsRef = useRef(null);
   const stickyPlaceholderRef = useRef(null);
 
   const expertId = expertData?.expertId || 132;
-
-  // Load Razorpay SDK
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-
-    script.onload = () => {
-      setIsSdkReady(true);
-    };
-
-    document.body.appendChild(script);
-  }, []);
 
   // Check screen size
   useEffect(() => {
@@ -241,70 +227,58 @@ const GuidexaExpertPlan = () => {
     if (expertId) fetchData();
   }, [expertId]);
 
+  // ✅ UPDATED: Cashfree payment handler
   const handlePurchase = async (planId) => {
     try {
-      if (!window.Razorpay || !isSdkReady) {
-        alert("Razorpay is loading, please wait...");
-        return;
-      }
-
       setPurchasing(planId);
 
+      // STEP 1: Create order from backend
       const response = await createExpertPlanOrderApi({
         plan_id: planId
       });
 
       const order = response.data;
 
-      const options = {
-        key: order.key_id,
-        amount: Math.round(order.amount * 100),
-        currency: "INR",
-        order_id: order.order_id,
-        name: "G9 Expert",
-        description: "Expert Membership",
-        prefill: {
-          name: expertData?.name || "",
-          email: expertData?.email || "",
-          contact: expertData?.phone || ""
-        },
-        theme: {
-          color: "#0a1628"
-        },
-        handler: async function (payment) {
-          try {
-            const verify = await verifyExpertPlanPaymentApi({
-              razorpay_payment_id: payment.razorpay_payment_id,
-              razorpay_order_id: payment.razorpay_order_id,
-              razorpay_signature: payment.razorpay_signature
-            });
+      if (!order.success) {
+        throw new Error(order.message || "Order creation failed");
+      }
 
-            if (verify.data.success) {
-              alert("Payment Successful");
-              window.location.reload();
-            }
-          } catch (err) {
-            alert(
-              err.response?.data?.message ||
-              "Payment verification failed"
-            );
-          }
-        },
-        modal: {
-          ondismiss() {
-            setPurchasing(null);
-          }
-        }
-      };
+      // STEP 2: Load Cashfree SDK dynamically
+      const { load } = await import("@cashfreepayments/cashfree-js");
+      
+      const cashfree = await load({
+        mode: order.environment || "sandbox"
+      });
 
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      // STEP 3: Initialize Cashfree checkout
+      const result = await cashfree.checkout({
+        paymentSessionId: order.payment_session_id,
+        redirectTarget: "_modal"
+      });
+
+      // STEP 4: Handle checkout result
+      if (result?.error) {
+        throw new Error(result.error.message || "Payment failed");
+      }
+
+      // STEP 5: Payment successful - confirm with backend
+      const verify = await verifyExpertPlanPaymentApi({
+        order_id: order.order_id
+      });
+
+      if (verify.data.success) {
+        alert("Payment Successful! Your plan is now active.");
+        window.location.reload();
+      } else {
+        throw new Error(verify.data.message || "Payment verification failed");
+      }
 
     } catch (err) {
-      console.log(err);
+      console.error("Purchase error:", err);
       alert(
+        err.message ||
         err.response?.data?.message ||
-        "Unable to create order"
+        "Unable to process payment. Please try again."
       );
     } finally {
       setPurchasing(null);
@@ -1446,7 +1420,7 @@ const GuidexaExpertPlan = () => {
                 <div className="detail-item">
                   <span className="label">Payment ID</span>
                   <span className="value">
-                    <span className="payment-id">{currentPlan.razorpay_payment_id || 'N/A'}</span>
+                    <span className="payment-id">{currentPlan.cashfree_payment_id || currentPlan.razorpay_payment_id || 'N/A'}</span>
                   </span>
                 </div>
                 <div className="detail-item">

@@ -379,15 +379,12 @@ export const ServiceGrid = styled.div`
   }
 
   @media (max-width: 767px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    grid-template-columns: 1fr;
+    gap: 18px;
     width: 100%;
     max-width: 100%;
     overflow: visible;
-  }
-
-  @media (max-width: 359px) {
-    grid-template-columns: minmax(0, 1fr);
+    padding-bottom: 90px;
   }
 `;
 
@@ -440,7 +437,7 @@ export const ExpertIdentitySection = styled.div`
     width: 38px;
     height: 38px;
     flex: 0 0 auto;
-    background: linear-gradient(135deg, ${NAVY}, #1515a8);
+    background: linear-gradient(135deg, #000080, #1515a8);
     border-radius: 14px;
     display: flex;
     align-items: center;
@@ -472,19 +469,19 @@ export const ExpertIdentitySection = styled.div`
   }
 
   @media (max-width: 767px) {
-    padding: 9px;
-    gap: 7px;
+    padding: 12px 16px;
+    gap: 10px;
     min-width: 0;
 
     .expert-avatar {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       border-radius: 10px;
       box-shadow: none;
 
       svg {
-        width: 15px;
-        height: 15px;
+        width: 16px;
+        height: 16px;
       }
     }
 
@@ -494,14 +491,14 @@ export const ExpertIdentitySection = styled.div`
     }
 
     .expert-info h4 {
-      font-size: 12px;
+      font-size: 14px;
       line-height: 1.25;
-      font-weight: 600;
+      font-weight: 700;
     }
 
     .expert-info span {
       margin-top: 1px;
-      font-size: 10.5px;
+      font-size: 12px;
       line-height: 1.2;
       font-weight: 500;
     }
@@ -509,26 +506,30 @@ export const ExpertIdentitySection = styled.div`
 `;
 
 export const ImageWrapper = styled.div`
-  height: 178px;
+  height: 200px;
   position: relative;
   overflow: hidden;
   cursor: pointer;
-  background: #e5e7eb;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    object-position: center;
     transition: transform 0.5s ease, filter 0.25s ease;
   }
 
   &:hover img {
-    transform: scale(1.05);
-    filter: saturate(1.06);
+    transform: scale(1.02);
+    filter: saturate(1.02);
   }
 
   @media (max-width: 767px) {
-    height: clamp(92px, 27vw, 126px);
+    height: 170px;
 
     &:hover img {
       transform: none;
@@ -558,12 +559,13 @@ export const PriceBadge = styled.div`
   }
 
   @media (max-width: 767px) {
-    top: 7px;
-    right: 7px;
-    padding: 4px 7px;
-    font-size: 12px;
-    line-height: 1;
-    font-weight: 700;
+    top: 10px;
+    right: 10px;
+    padding: 6px 12px;
+    font-size: 15px;
+    line-height: 1.2;
+    font-weight: 800;
+    border-radius: 12px;
     box-shadow: 0 8px 16px rgba(255, 193, 7, 0.18);
   }
 `;
@@ -586,12 +588,13 @@ export const TypeOverlay = styled.div`
   white-space: nowrap;
 
   @media (max-width: 767px) {
-    left: 7px;
-    top: 7px;
+    left: 10px;
+    top: 10px;
     max-width: calc(100% - 86px);
-    padding: 4px 7px;
-    font-size: 10px;
-    font-weight: 700;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 800;
+    border-radius: 12px;
   }
 `;
 
@@ -626,19 +629,27 @@ export const CardContent = styled.div`
   }
 
   @media (max-width: 767px) {
-    padding: 9px;
+    padding: 14px 16px;
     min-width: 0;
 
     h3 {
-      margin: 6px 0 0;
-      font-size: clamp(14px, 3.8vw, 16px);
-      line-height: 1.28;
-      font-weight: 600;
+      margin: 8px 0 6px;
+      font-size: 16px;
+      line-height: 1.35;
+      font-weight: 700;
       overflow-wrap: anywhere;
     }
 
     .description {
-      display: none;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin: 0 0 10px;
+      font-size: 13px;
+      line-height: 1.45;
+      color: #6b7280;
+      min-height: auto;
     }
   }
 `;
@@ -770,7 +781,7 @@ export const CardFooter = styled.div`
   @media (max-width: 767px) {
     grid-template-columns: 1fr;
     gap: 7px;
-    padding: 0 9px 9px;
+    padding: 0 16px 16px;
     border-top: 0;
   }
 
@@ -803,10 +814,10 @@ export const PrimaryButton = styled.button`
 
   @media (max-width: 767px) {
     min-width: 0;
-    min-height: 34px;
-    padding: 0 8px;
-    border-radius: 10px;
-    font-size: clamp(13px, 3.2vw, 14px);
+    min-height: 42px;
+    padding: 0 16px;
+    border-radius: 12px;
+    font-size: 14px;
     line-height: 1;
     font-weight: 700;
     white-space: nowrap;
@@ -842,10 +853,10 @@ export const SecondaryButton = styled.button`
 
   @media (max-width: 767px) {
     min-width: 0;
-    min-height: 32px;
-    padding: 0 8px;
-    border-radius: 10px;
-    font-size: clamp(12px, 3vw, 13px);
+    min-height: 42px;
+    padding: 0 16px;
+    border-radius: 12px;
+    font-size: 13px;
     line-height: 1;
     font-weight: 600;
     white-space: nowrap;

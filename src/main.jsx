@@ -21,8 +21,6 @@ import { theme } from "./shared/styles/theme";
 
 const isNativeApp = Capacitor.isNativePlatform();
 
-/* ================= APP BOOTSTRAP ================= */
-
 soundManager.preload();
 startReact();
 

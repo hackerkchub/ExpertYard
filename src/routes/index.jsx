@@ -12,9 +12,26 @@ import LazyRoute from "./LazyRoute";
 import RootRedirect from "./RootRedirect";
 import { shouldShowBottomNavbar } from "./routeShells";
 
-const UserAppRoutes = lazy(() => import("../apps/user/routes"));
-const ExpertAppRoutes = lazy(() => import("../apps/expert/routes"));
-const AdminAppRoutes = lazy(() => import("../apps/admin/routes"));
+import AppGuard from "../core/AppGuard";
+import { APP_CONFIG } from "../config/appConfig";
+
+import useNativeIncomingCall from "../shared/hooks/useNativeIncomingCall";
+
+const UserAppRoutes =
+  APP_CONFIG.APP_TYPE !== "expert"
+    ? lazy(() => import("../apps/user/routes"))
+    : null;
+
+const ExpertAppRoutes =
+  APP_CONFIG.APP_TYPE !== "user"
+    ? lazy(() => import("../apps/expert/routes"))
+    : null;
+
+const AdminAppRoutes =
+  APP_CONFIG.APP_TYPE === "web"
+    ? lazy(() => import("../apps/admin/routes"))
+    : null;
+
 const PublicCategoriesPage = lazy(() => import("../apps/user/pages/Category/Categories"));
 const PublicCategoryPage = lazy(() => import("../apps/user/pages/Subcategory/SubcategoryPage"));
 const PublicExpertListPage = lazy(() => import("../apps/user/pages/ExpertList/ExpertList"));
@@ -31,6 +48,7 @@ const CONTENT_WRAPPER_STYLE = {
 };
 
 export default function AppRouter() {
+  useNativeIncomingCall();
   useSoundInit();
   const location = useLocation();
 
@@ -58,96 +76,108 @@ export default function AppRouter() {
         className={`main-content-wrapper${showNavbar ? " has-mobile-bottom-nav" : ""}`}
         style={CONTENT_WRAPPER_STYLE}
       >
-        <Routes>
-          <Route path="/" element={<RootRedirect />} />
-          <Route element={<UserRouteBoundary />}>
-            <Route element={<MainLayout />}>
-              <Route
-                path="/categories"
-                element={
-                  <LazyRoute>
-                    <PublicCategoriesPage />
-                  </LazyRoute>
-                }
-              />
-              <Route
-                path="/category/:slug"
-                element={
-                  <LazyRoute>
-                    <PublicCategoryPage />
-                  </LazyRoute>
-                }
-              />
-              <Route
-                path="/category/:categoryId/subcategories"
-                element={
-                  <LazyRoute>
-                    <PublicCategoryPage />
-                  </LazyRoute>
-                }
-              />
-              <Route
-                path="/category/:slug/subcategory/:subcategoryId"
-                element={
-                  <LazyRoute>
-                    <PublicCategoryPage />
-                  </LazyRoute>
-                }
-              />
-              <Route
-                path="/experts/:categorySlug/:citySlug"
-                element={
-                  <LazyRoute>
-                    <PublicExpertListPage />
-                  </LazyRoute>
-                }
-              />
-              <Route
-                path="/experts/:categorySlug/:citySlug/:areaSlug"
-                element={
-                  <LazyRoute>
-                    <PublicExpertListPage />
-                  </LazyRoute>
-                }
-              />
-              <Route
-                path="/experts/:categorySlug/pincode/:pincode"
-                element={
-                  <LazyRoute>
-                    <PublicExpertListPage />
-                  </LazyRoute>
-                }
-              />
+        <AppGuard>
+          <Routes>
+            <Route path="/" element={<RootRedirect />} />
+            <Route element={<UserRouteBoundary />}>
+              <Route element={<MainLayout />}>
+                <Route
+                  path="/categories"
+                  element={
+                    <LazyRoute>
+                      <PublicCategoriesPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/category/:slug"
+                  element={
+                    <LazyRoute>
+                      <PublicCategoryPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/category/:categoryId/subcategories"
+                  element={
+                    <LazyRoute>
+                      <PublicCategoryPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/category/:slug/subcategory/:subcategoryId"
+                  element={
+                    <LazyRoute>
+                      <PublicCategoryPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/experts/:categorySlug/:citySlug"
+                  element={
+                    <LazyRoute>
+                      <PublicExpertListPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/experts/:categorySlug/:citySlug/:areaSlug"
+                  element={
+                    <LazyRoute>
+                      <PublicExpertListPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/experts/:categorySlug/pincode/:pincode"
+                  element={
+                    <LazyRoute>
+                      <PublicExpertListPage />
+                    </LazyRoute>
+                  }
+                />
+              </Route>
             </Route>
-          </Route>
-          <Route
-            path="/user/*"
-            element={
-              <LazyRoute variant="app">
-                <UserAppRoutes />
-              </LazyRoute>
-            }
-          />
-          <Route
-            path="/expert/*"
-            element={
-              <ExpertProvider>
-                <LazyRoute variant="app">
-                  <ExpertAppRoutes />
-                </LazyRoute>
-              </ExpertProvider>
-            }
-          />
-          <Route
-            path="/admin/*"
-            element={
-              <LazyRoute variant="app">
-                <AdminAppRoutes />
-              </LazyRoute>
-            }
-          />
-          <Route path="*" element={<RootRedirect />} />
-        </Routes>
+            
+            {UserAppRoutes && (
+              <Route
+                path="/user/*"
+                element={
+                  <LazyRoute variant="app">
+                    <UserAppRoutes />
+                  </LazyRoute>
+                }
+              />
+            )}
+            
+            {ExpertAppRoutes && (
+              <Route
+                path="/expert/*"
+                element={
+                  <ExpertProvider>
+                    <LazyRoute variant="app">
+                      <ExpertAppRoutes />
+                    </LazyRoute>
+                  </ExpertProvider>
+                }
+              />
+            )}
+            
+            {AdminAppRoutes && (
+              <Route
+                path="/admin/*"
+                element={
+                  <LazyRoute variant="app">
+                    <AdminAppRoutes />
+                  </LazyRoute>
+                }
+              />
+            )}
+            
+            <Route path="*" element={<RootRedirect />} />
+          </Routes>
+        </AppGuard>
       </div>
 
       {showNavbar && !location.pathname.toLowerCase().startsWith("/expert") ? <BottomNavbar /> : null}

@@ -1,0 +1,25 @@
+{
+  "appType": "web",
+  "appName": "G9Expert",
+  "environment": "production",
+
+  "api": {
+    "baseUrl": "https://softmaxs.com/api",
+    "socketUrl": "https://softmaxs.com/api"
+  },
+
+  "firebase": {
+    "project": "web"
+  },
+
+  "payment": {
+    "provider": "cashfree"
+  },
+
+  "features": {
+    "chat": true,
+    "voiceCall": true,
+    "videoCall": false,
+    "wallet": true
+  }
+}

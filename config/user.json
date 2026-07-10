@@ -1,0 +1,10 @@
+{
+  "appType": "user",
+  "appName": "G9Expert User",
+
+  "firebase": {
+    "project": "user"
+  },
+
+  "theme": "user"
+}

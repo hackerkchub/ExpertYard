@@ -6,7 +6,7 @@ import userApi from "../shared/api/userApi/axiosInstance";
 import { getMessagingClient } from "../shared/utils/lazyFirebase";
 
 const VAPID_KEY =
-  "BNIOigy0BfLG3gvoS4-MbUCVaSQG9DmTuKNjuGNTr8BwOf1zDoeemF4PgcbMSq7VZ24R8uN-EqK7tNId1KbwxyU";
+  "BCDEGMMYpD9F3BqYGjhkJvKvI_bd2kGVrmO6pProsTxPLLzRED3jqgHN_hr_6UeGLH4yX49mnwsRYt8cZicH030";
 
 export const generateToken = async (role) => {
   try {

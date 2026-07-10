@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { CALL_EVENTS } from "../../../../shared/constants/call.constants";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { useSocket } from "../../../../shared/hooks/useSocket";
-
+import { useLocation } from "react-router-dom";
 import {
   PageWrapper,
   CallCard,
@@ -63,7 +63,10 @@ const UserIcon = () => (
 export default function ExpertVoiceCall() {
   const { callId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const nativeCall = location.state?.native;
   const { expertData } = useExpert();
+  const nativeStartedRef = useRef(false);
 
   // Normalized callId for all checks
   const normalizedCallId = Number(callId);
@@ -79,7 +82,7 @@ export default function ExpertVoiceCall() {
   const reconnectAttemptsRef = useRef(0);
   const MAX_RECONNECT_ATTEMPTS = 5;
   
-  const [callState, setCallState] = useState("connecting");
+ const [callState, setCallState] = useState("connecting");
   const [seconds, setSeconds] = useState(0);
   const [muted, setMuted] = useState(false);
   const [reconnecting, setReconnecting] = useState(false);
@@ -98,6 +101,85 @@ export default function ExpertVoiceCall() {
     soundManager.stopAll();
   }, []);
 
+useEffect(() => {
+
+    if (!nativeCall)
+        return;
+
+    if (!socket?.connected)
+        return;
+
+    if (nativeStartedRef.current)
+    return;
+
+nativeStartedRef.current = true;
+
+    const startNativeCall = async () => {
+
+        try{
+
+            streamRef.current =
+                await navigator.mediaDevices.getUserMedia({
+                    audio:{
+ echoCancellation:true,
+ noiseSuppression:true,
+ autoGainControl:true,
+ channelCount:{ideal:1},
+ sampleRate:{ideal:16000}
+}
+                });
+                await createPeer({
+    socket,
+    callId: callIdRef.current,
+    audioRef,
+    stream: streamRef.current
+});
+
+
+            setCaller({
+                name:
+location.state?.callerName ||
+location.state?.caller_name ||
+"User",
+                role:"User"
+            });
+
+            if (callStartedRef.current)
+    return;
+
+callStartedRef.current = true;
+
+            socket.emit(
+                CALL_EVENTS.ACCEPT,
+                {
+                    callId:callIdRef.current
+                }
+            );
+            
+             setCallState("connecting");
+
+        }catch(err){
+
+    console.error(err);
+
+    setCallState("ended");
+
+    navigate("/expert/home",{
+        replace:true
+    });
+cleanupMedia(true);
+
+nativeStartedRef.current=false;
+}
+
+    };
+
+    startNativeCall();
+
+},[
+    nativeCall,
+    socket?.connected
+]);
   // Keep callState in sync with ref
   useEffect(() => {
     callStateRef.current = callState;
@@ -146,7 +228,12 @@ export default function ExpertVoiceCall() {
   // Auto-start mic on connecting state
   useEffect(() => {
     if (callState !== "connecting") return;
-    if (callStartedRef.current) return;
+
+    if (nativeCall)
+    return;
+
+   if (callStartedRef.current)
+    return;
 
     callStartedRef.current = true;
 
@@ -271,6 +358,7 @@ export default function ExpertVoiceCall() {
       callStartedRef.current = false;
       
       cleanupMedia(true);
+      nativeStartedRef.current = false;
       
       setTimeout(() => navigate("/expert/home", { replace: true }), 1000);
     };
@@ -280,6 +368,7 @@ export default function ExpertVoiceCall() {
       setCallState("ended");
       callStartedRef.current = false;
       cleanupMedia(true);
+      nativeStartedRef.current = false;
       
       setTimeout(() => {
         navigate("/expert/home", { replace: true });
@@ -350,6 +439,7 @@ export default function ExpertVoiceCall() {
         console.error("❌ Max reconnection attempts reached, ending call");
         setCallState("ended");
         cleanupMedia(true);
+        nativeStartedRef.current = false;
         return;
       }
       
@@ -539,6 +629,7 @@ export default function ExpertVoiceCall() {
     return () => {
       console.log("🧹 Expert cleanup on unmount");
       cleanupMedia(true);
+      nativeStartedRef.current = false;
     };
   }, [cleanupMedia]);
 
@@ -564,6 +655,7 @@ export default function ExpertVoiceCall() {
     socket.emit(CALL_EVENTS.REJECT, { callId: callIdRef.current });
     
     cleanupMedia(true);
+    nativeStartedRef.current = false;
     navigate("/expert/home", { replace: true });
   }, [socket, navigate, cleanupMedia]);
 
@@ -577,6 +669,7 @@ export default function ExpertVoiceCall() {
 
     setTimeout(() => {
       cleanupMedia(true);
+      nativeStartedRef.current = false;
       navigate("/expert/home", { replace: true });
       isCleaningUpRef.current = false;
     }, 200);

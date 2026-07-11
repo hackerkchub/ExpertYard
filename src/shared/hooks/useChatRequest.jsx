@@ -1,3 +1,4 @@
+import { APP_CONFIG } from "../../config/appConfig";
 // useChatRequest.js
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -855,6 +856,77 @@ setIsStartingAi(false);
       socket.off("ai_fallback_failed", aiFailed);
     };
   }, [navigate, userId]);
+
+  // Fallback polling for chat request status
+  useEffect(() => {
+    if (!showWaiting || !chatRequestId) return undefined;
+
+    const interval = setInterval(async () => {
+      try {
+        const token = localStorage.getItem("user_token");
+        const res = await fetch(`${APP_CONFIG.API_BASE_URL}/chat/requests/${chatRequestId}`, {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        if (data && data.status) {
+          console.log("Polled chat request status:", data.status);
+          
+          if (data.status === "accepted") {
+            clearInterval(interval);
+            setShowWaiting(false);
+            setChatRequestId(null);
+            setIsRequesting(false);
+            setShowAiOffer(false);
+            setAiOffer(null);
+            setAiError("");
+            setIsStartingAi(false);
+            
+            navigate(`/user/chat/${data.room_id}`, {
+              replace: true,
+              state: {
+                roomCandidates: [data.user_id, data.expert_id],
+                pricing_mode: data.pricing_mode,
+                pricePerMinute: data.pricePerMinute,
+                sessionPrice: data.sessionPrice,
+                sessionDuration: data.sessionDuration,
+                remainingMinutes: data.maxMinutes,
+                endTime: data.endTime,
+              },
+            });
+          } else if (data.status === "rejected" || data.status === "declined") {
+            clearInterval(interval);
+            setShowWaiting(false);
+            setRejectedMsg("Chat request was declined");
+            setIsRequesting(false);
+          } else if (data.status === "cancelled") {
+            clearInterval(interval);
+            setShowWaiting(false);
+            setShowCancelled(true);
+            setIsRequesting(false);
+          } else if (data.status === "pending_ai_offer") {
+            clearInterval(interval);
+            setShowWaiting(false);
+            setChatRequestId(null);
+            setAiOffer({
+              request_id: chatRequestId,
+              pricing_mode: "per_minute",
+              fallback_reason: "expert_rejected",
+            });
+            setShowAiOffer(true);
+            setIsRequesting(false);
+          }
+        }
+      } catch (err) {
+        console.error("Polling status error:", err);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [showWaiting, chatRequestId, navigate]);
 
   // Helper to get AI price display
   const getAiPriceDisplay = useCallback((offer) => {

@@ -2706,7 +2706,7 @@ body {
   .home-desktop-shell {
     grid-template-columns: minmax(0, 1fr) 360px !important;
     gap: 28px !important;
-    padding: 24px 28px 44px 308px !important;
+    padding: 1px 2px 3px 290px !important;
   }
 }
 
@@ -5705,7 +5705,7 @@ button.book-service-desktop {
 }
 
 .post-author-info h4 {
-  font-size: 12.5px !important;
+  font-size: 15px !important;
   font-weight: 800 !important;
   color: #0f172a !important;
   margin: 0 !important;
@@ -5722,7 +5722,7 @@ button.book-service-desktop {
 }
 
 .post-card-body p {
-  font-size: 12px !important;
+  font-size: 15px !important;
   color: #334155 !important;
   line-height: 1.45 !important;
   margin: 0 0 10px 0 !important;
@@ -6890,8 +6890,7 @@ img {
   }
 
   .home-desktop-shell.layout--full-content .home-center-column :where(.expert-listing-page, .expert-profile-page, .call-chat-expert-page, .category-page, .subcategory-page, .all-services-page, .service-detail-page, .search-page) {
-    padding-left: clamp(18px, 1.8vw, 28px) !important;
-    padding-right: clamp(18px, 1.8vw, 28px) !important;
+   
   }
 
   .home-desktop-shell.layout--full-content .home-center-column :where(

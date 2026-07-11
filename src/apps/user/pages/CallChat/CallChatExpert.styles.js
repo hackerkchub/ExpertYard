@@ -35,7 +35,6 @@ export const PageWrap = styled.div`
   @media (min-width: 1024px) {
     max-width: none;
     margin: 0;
-    padding: 28px;
     background:
       radial-gradient(circle at 8% 0%, rgba(0, 0, 128, 0.08), transparent 30%),
       radial-gradient(circle at 92% 8%, rgba(255, 213, 74, 0.14), transparent 28%),

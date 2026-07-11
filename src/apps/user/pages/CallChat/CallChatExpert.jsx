@@ -999,22 +999,7 @@ export default function UserExpertsPage() {
         )}
       </FilterHeader>
 
-      <FilterGroup>
-        <FilterLabel>Search</FilterLabel>
-        <div style={{ position: "relative" }}>
-          <SearchIcon><FiSearch size={16} /></SearchIcon>
-          <SearchInput
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search expert name or skill"
-          />
-          {searchInput && (
-            <ClearSearchBtn type="button" onClick={() => setSearchInput("")}>
-              <FiX size={14} />
-            </ClearSearchBtn>
-          )}
-        </div>
-      </FilterGroup>
+     
 
       {/* Category Filter - with loadSubCategories */}
       <FilterGroup>

@@ -969,13 +969,14 @@ export default function SubCategoryManagement() {
                 <Th>Sub-Category</Th>
                 <Th>Image</Th>
                 <Th>Category</Th>
+                <Th>Status</Th>
                 <Th>Actions</Th>
               </tr>
             </thead>
             <tbody>
               {filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan="5">
+                  <td colSpan="6">
                     <EmptyState>
                       <FaLayerGroup />
                       <h3>No sub-categories found</h3>
@@ -1036,6 +1037,33 @@ export default function SubCategoryManagement() {
                         <FaLayerGroup size={12} />
                         {r.category_name || "N/A"}
                       </CategoryBadge>
+                    </Td>
+                    <Td>
+                      <button
+                        onClick={() => handleToggleSubStatus(r)}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '20px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          fontWeight: 'bold',
+                          backgroundColor: r.is_active === 1 ? '#e1f5fe' : '#ffebee',
+                          color: r.is_active === 1 ? '#0288d1' : '#c62828',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                        disabled={loading}
+                      >
+                        <span style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor: r.is_active === 1 ? '#0288d1' : '#c62828'
+                        }} />
+                        {r.is_active === 1 ? "Active" : "Disabled"}
+                      </button>
                     </Td>
                     <Td>
                       {editingRow?.id === r.id ? (

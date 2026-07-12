@@ -34,6 +34,7 @@ import {
 } from "react-icons/fi";
 
 import { APP_CONFIG } from "../../../../config/appConfig";
+import InquiryModal from "./InquiryModal";
 
 import {
   PageWrap,
@@ -268,9 +269,17 @@ const formatRelativeTime = (dateString) => {
 };
 
 const ExpertProfilePage = () => {
+  const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
+  const routerLocation = useLocation();
+
+  useEffect(() => {
+    if (routerLocation.search.includes("open_inquiry=true")) {
+      setIsInquiryModalOpen(true);
+    }
+  }, [routerLocation.search]);
   const { slug } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
+
   const { t } = useTranslation();
   const { isLoggedIn, user } = useAuth();
   const userId = user?.id;
@@ -606,7 +615,7 @@ const ExpertProfilePage = () => {
     
     if (!isLoggedIn) {
       setShowPlansModal(false);
-      navigate("/user/auth", { state: { from: location } });
+      navigate("/user/auth", { state: { from: routerLocation } });
       return;
     }
 
@@ -648,7 +657,7 @@ const ExpertProfilePage = () => {
     } finally {
       setPurchasingPlan(null);
     }
-  }, [isLoggedIn, navigate, location, balance, hasActiveSubscription, fetchActiveSubscription, fetchWallet]);
+  }, [isLoggedIn, navigate, routerLocation, balance, hasActiveSubscription, fetchActiveSubscription, fetchWallet]);
 
   // Fetch experience data
   const fetchExperience = useCallback(async () => {
@@ -1063,7 +1072,7 @@ const ExpertProfilePage = () => {
     trackActionableLead();
 
     if (!isLoggedIn) {
-      navigate("/user/auth", { state: { from: location } });
+      navigate("/user/auth", { state: { from: routerLocation } });
       return;
     }
 
@@ -1156,11 +1165,11 @@ const ExpertProfilePage = () => {
         setShowRecharge(true);
       }
     }
-  }, [isLoggedIn, navigate, location, displayPrices, balance, userId, numericExpertId, canShowUserChatButton, canShowUserCallButton, hasActiveSubscription, currentPricingInfo, profile, expertData, startChat, user]);
+  }, [isLoggedIn, navigate, routerLocation, displayPrices, balance, userId, numericExpertId, canShowUserChatButton, canShowUserCallButton, hasActiveSubscription, currentPricingInfo, profile, expertData, startChat, user]);
 
   const handleFollowAction = useCallback(async () => {
     if (!isLoggedIn || !userId || !numericExpertId) {
-      navigate("/user/auth", { state: { from: location } });
+      navigate("/user/auth", { state: { from: routerLocation } });
       return;
     }
 
@@ -1189,7 +1198,7 @@ const ExpertProfilePage = () => {
     } finally {
       setShowUnfollowModal(false);
     }
-  }, [isLoggedIn, userId, numericExpertId, navigate, location, following]);
+  }, [isLoggedIn, userId, numericExpertId, navigate, routerLocation, following]);
 
   const handleSubmitReview = useCallback(async (e) => {
     e.preventDefault();
@@ -1282,6 +1291,15 @@ const ExpertProfilePage = () => {
     <>
       <style>{`
         html { scroll-behavior: smooth; }
+        @media (max-width: 768px) {
+          .mobile-inquiry-action-container {
+            display: flex !important;
+            margin-top: 16px;
+            margin-bottom: 8px;
+            padding: 0 4px;
+            width: 100%;
+          }
+        }
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes slideIn {
           from { transform: translateY(-20px); opacity: 0; }
@@ -1410,7 +1428,7 @@ const ExpertProfilePage = () => {
                   ) : canShowUserCallButton && selectedPricingMode === "subscription" && displayPrices.hasSubscription ? (
                     <>
                       <PriceTag style={{ background: "#8b5cf6", color: "white" }}><FiZap /> Subscribe</PriceTag>
-                      <ActionButton $primary onClick={() => setShowPlansModal(true)}><FiZap /> View Plans</ActionButton>
+                      <ActionButton className="expert-profile-green-action-btn" $primary onClick={() => setShowPlansModal(true)}><FiZap /> View Plans</ActionButton>
                     </>
                   ) : canShowUserCallButton ? (
                     <>
@@ -1445,7 +1463,7 @@ const ExpertProfilePage = () => {
                   ) : canShowUserChatButton && selectedPricingMode === "subscription" && displayPrices.hasSubscription ? (
                     <>
                       <PriceTag style={{ background: "#8b5cf6", color: "white" }}><FiZap /> Subscribe</PriceTag>
-                      <ActionButton onClick={() => setShowPlansModal(true)}><FiZap /> Subscribe Now</ActionButton>
+                      <ActionButton className="expert-profile-green-action-btn" onClick={() => setShowPlansModal(true)}><FiZap /> Subscribe Now</ActionButton>
                     </>
                   ) : canShowUserChatButton ? (
                     <>
@@ -1460,13 +1478,46 @@ const ExpertProfilePage = () => {
                   )}
                 </div>
                 )}
+                <div className="expert-profile-action-item">
+                  <PriceTag style={{ background: "#4f46e5", color: "white" }}><FiFileText /> Inquiry</PriceTag>
+                  <ActionButton onClick={() => setIsInquiryModalOpen(true)} aria-label="Send Inquiry" title="Send Inquiry">
+                    <FiSend /> Send Inquiry
+                  </ActionButton>
+                </div>
               </CallToAction>
+
+              {/* Send Inquiry for Mobile View */}
+              <div className="mobile-inquiry-action-container" style={{ display: 'none' }}>
+                <button
+                  type="button"
+                  className="mobile-inquiry-action-btn"
+                  onClick={() => setIsInquiryModalOpen(true)}
+                  style={{
+                    width: "100%",
+                    minHeight: 50,
+                    background: "linear-gradient(135deg, #000080, #2563eb)",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: 30,
+                    fontWeight: 700,
+                    fontSize: 14,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                    cursor: "pointer",
+                    boxShadow: "0 10px 20px rgba(0, 0, 128, 0.15)"
+                  }}
+                >
+                  <FiSend /> Send Inquiry
+                </button>
+              </div>
 
               {/* Subscription CTA Button - Only show if expert has subscription pricing and user has no active subscription */}
               {displayPrices.hasSubscription && !hasActiveSubscription && selectedPricingMode !== "subscription" && (
                 <div className="expert-profile-subscription-cta" style={{ marginTop: 16, textAlign: "center" }}>
                   <button className="expert-profile-subscription-cta-btn" onClick={() => setShowPlansModal(true)} style={{
-                    padding: "10px 24px", background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                    padding: "10px 24px", background:"#16a34a",
                     color: "white", border: "none", borderRadius: 12, fontWeight: 600, fontSize: 14,
                     cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
                   }}>
@@ -1731,7 +1782,7 @@ const ExpertProfilePage = () => {
                         {hasUserReview && <DeleteButton type="button" onClick={handleDeleteReview}><FiX />Delete Review</DeleteButton>}
                       </>
                     ) : (
-                      <LoginPrompt><p>Please login to leave a review</p><LoginButton onClick={() => navigate('/user/auth', { state: { from: location } })}><FiUserCheck />Login to Review</LoginButton></LoginPrompt>
+                      <LoginPrompt><p>Please login to leave a review</p><LoginButton onClick={() => navigate('/user/auth', { state: { from: routerLocation } })}><FiUserCheck />Login to Review</LoginButton></LoginPrompt>
                     )}
                   </FormActions>
                 </form>
@@ -1876,6 +1927,12 @@ const ExpertProfilePage = () => {
 
         {/* Chat Popups from hook */}
         <ChatPopups />
+        
+        <InquiryModal
+          isOpen={isInquiryModalOpen}
+          onClose={() => setIsInquiryModalOpen(false)}
+          expert={{ ...profile, id: numericExpertId }}
+        />
       </PageWrap>
     </>
   );

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import {
   FiBell,
@@ -7,6 +7,8 @@ import {
   FiPhone,
   FiSettings,
   FiTrash2,
+  FiMoreHorizontal,
+  FiCheck,
 } from "react-icons/fi";
 import { useExpertNotifications } from "./../../context/ExpertNotificationsContext";
 
@@ -20,55 +22,82 @@ const iconMap = {
 };
 
 const PageWrap = styled.main`
-  min-height: 100%;
+  min-height: 100vh;
   width: 100%;
   overflow-x: hidden;
-  background:
-    linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(241, 245, 249, 0.98)),
-    #f8fafc;
-  padding: 32px 24px 64px;
-
-  @media (min-width: 1440px) {
-    padding-top: 40px;
-  }
-
-  @media (max-width: 1024px) {
-    padding: 28px 20px 56px;
-  }
+  background-color: #f3f2ef; /* LinkedIn Gray */
+  padding: 24px 16px 64px;
 
   @media (max-width: 768px) {
-    padding: 22px 16px 44px;
-  }
-
-  @media (max-width: 390px) {
-    padding: 18px 12px 36px;
+    padding: 0 0 44px;
   }
 `;
 
-const Container = styled.section`
-  width: min(100%, 980px);
+const Container = styled.div`
+  max-width: 1128px;
   margin: 0 auto;
+  display: grid;
+  grid-template-columns: 225px 1fr;
+  gap: 24px;
 
-  @media (min-width: 1440px) {
-    width: min(100%, 1040px);
-  }
-
-  @media (max-width: 1024px) {
-    width: min(100%, 900px);
+  @media (max-width: 991px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 `;
 
-const Header = styled.header`
+const SidebarCard = styled.div`
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e0dfdc;
+  padding: 16px;
+  height: fit-content;
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 12px;
+
+  h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #191919;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: #666666;
+    line-height: 1.4;
+  }
+
+  @media (max-width: 991px) {
+    display: none;
+  }
+`;
+
+const MainContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const HeaderCard = styled.div`
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e0dfdc;
+  padding: 16px 24px;
+  display: flex;
   justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 18px;
+  align-items: center;
+  gap: 16px;
 
   @media (max-width: 768px) {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    padding: 16px;
     flex-direction: column;
     align-items: stretch;
-    gap: 14px;
   }
 `;
 
@@ -78,354 +107,320 @@ const TitleBlock = styled.div`
 
 const Title = styled.h1`
   margin: 0;
-  color: #0f172a;
-  font-size: 30px;
-  line-height: 1.2;
-  font-weight: 800;
-
-  @media (max-width: 768px) {
-    font-size: 24px;
-  }
-
-  @media (max-width: 360px) {
-    font-size: 22px;
-  }
+  color: #191919;
+  font-size: 20px;
+  font-weight: 600;
 `;
 
 const Sub = styled.p`
-  margin: 8px 0 0;
-  color: #64748b;
-  font-size: 14px;
-  line-height: 1.5;
-
-  @media (max-width: 360px) {
-    font-size: 13px;
-  }
+  margin: 4px 0 0;
+  color: #666666;
+  font-size: 13px;
 `;
 
 const MarkAllBtn = styled.button`
-  flex: 0 0 auto;
+  background: none;
+  border: none;
+  color: #0a66c2;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 9px 14px;
-  border: 1px solid #0f172a;
-  border-radius: 8px;
-  background: #0f172a;
-  color: #ffffff;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
 
   &:hover {
-    background: #1e293b;
-    border-color: #1e293b;
-    transform: translateY(-1px);
+    background-color: rgba(10, 102, 194, 0.08);
+    text-decoration: underline;
   }
 
   @media (max-width: 768px) {
-    width: 100%;
+    align-self: flex-start;
+    padding-left: 0;
   }
-`;
-
-const Count = styled.span`
-  min-width: 22px;
-  height: 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 7px;
-  border-radius: 999px;
-  background: #ef4444;
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 800;
 `;
 
 const FilterBar = styled.nav`
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
+  padding: 0 8px;
+
+  @media (max-width: 768px) {
+    padding: 0 16px;
+  }
 `;
 
-const FilterBtn = styled.button`
-  min-height: 36px;
-  padding: 8px 14px;
-  border: 1px solid ${({ $active }) => ($active ? "#2563eb" : "#dbe3ee")};
-  border-radius: 999px;
-  background: ${({ $active }) => ($active ? "#eff6ff" : "#ffffff")};
-  color: ${({ $active }) => ($active ? "#1d4ed8" : "#475569")};
+const FilterChip = styled.button`
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid ${({ $active }) => ($active ? "#057642" : "#5e5e5e")};
+  background: ${({ $active }) => ($active ? "#057642" : "#ffffff")};
+  color: ${({ $active }) => ($active ? "#ffffff" : "#5e5e5e")};
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0;
-  text-transform: uppercase;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  transition: all 0.2s;
+  text-transform: capitalize;
 
   &:hover {
-    background: #f8fafc;
-    border-color: #93c5fd;
-    color: #1d4ed8;
-  }
-
-  @media (max-width: 768px) {
-    flex: 1 1 calc(50% - 8px);
-  }
-
-  @media (max-width: 360px) {
-    padding-inline: 10px;
+    background: ${({ $active }) => ($active ? "#046237" : "#f3f2ef")};
+    color: ${({ $active }) => ($active ? "#ffffff" : "#191919")};
   }
 `;
 
-const List = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-`;
-
-const NotificationCard = styled.article`
-  position: relative;
-  display: grid;
-  grid-template-columns: 52px minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 14px;
-  padding: 16px 18px;
-  border: 1px solid ${({ $read }) => ($read ? "#e2e8f0" : "#bfdbfe")};
-  border-left: 4px solid ${({ $read }) => ($read ? "transparent" : "#2563eb")};
+const NotificationListCard = styled.div`
+  background: #ffffff;
   border-radius: 8px;
-  background: ${({ $read }) => ($read ? "#ffffff" : "#f8fbff")};
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
-  cursor: ${({ $clickable }) => ($clickable ? "pointer" : "default")};
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-  min-width: 0;
+  border: 1px solid #e0dfdc;
+  overflow: hidden;
+
+  @media (max-width: 768px) {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+`;
+
+const NotificationItem = styled.div`
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  gap: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e0dfdc;
+  background: ${({ $read }) => ($read ? "#ffffff" : "#f4f7f9")};
+  position: relative;
+  transition: background-color 0.2s;
+
+  &:last-child {
+    border-bottom: none;
+  }
 
   &:hover {
-    border-color: ${({ $read }) => ($read ? "#cbd5e1" : "#93c5fd")};
-    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.1);
-    transform: translateY(-1px);
+    background-color: ${({ $read }) => ($read ? "#f9f9f9" : "#eef3f8")};
   }
 
   @media (max-width: 768px) {
-    grid-template-columns: 44px minmax(0, 1fr);
+    padding: 12px 16px;
     gap: 12px;
-    padding: 14px;
-  }
-
-  @media (max-width: 390px) {
-    grid-template-columns: 40px minmax(0, 1fr);
-    padding: 12px;
-    gap: 10px;
-  }
-
-  @media (max-width: 360px) {
-    grid-template-columns: 1fr;
+    grid-template-columns: 40px 1fr auto;
   }
 `;
 
-const IconWrap = styled.div`
-  width: 44px;
-  height: 44px;
+const AvatarContainer = styled.div`
+  position: relative;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+  }
+`;
+
+const AvatarImg = styled.img`
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  background: ${({ $bg }) => $bg};
-  color: ${({ $color }) => $color};
+  object-fit: cover;
+  border: 1px solid #e0dfdc;
+`;
+
+const AvatarFallback = styled.div`
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: ${({ $bg }) => $bg || "#e2e8f0"};
+  color: ${({ $color }) => $color || "#475569"};
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 20px;
-  font-weight: 800;
-  flex: 0 0 auto;
 
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  @media (max-width: 390px) {
-    width: 38px;
-    height: 38px;
-    font-size: 17px;
+  @media (max-width: 768px) {
+    font-size: 16px;
   }
 `;
 
-const Content = styled.div`
+const BadgeIcon = styled.div`
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: ${({ $bg }) => $bg};
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+`;
+
+const ItemContent = styled.div`
   min-width: 0;
 `;
 
 const HeadingRow = styled.div`
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 8px;
-  min-width: 0;
+  flex-wrap: wrap;
 `;
 
 const Heading = styled.h2`
   margin: 0;
-  color: #0f172a;
-  font-size: 15px;
-  line-height: 1.35;
-  font-weight: 800;
-  overflow-wrap: anywhere;
+  color: #191919;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+`;
 
-  @media (max-width: 390px) {
+const TimeText = styled.span`
+  font-size: 12px;
+  color: #666666;
+`;
+
+const MessageText = styled.p`
+  margin: 4px 0 0;
+  color: #191919;
+  font-size: 13.5px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+`;
+
+const MetaRow = styled.div`
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+`;
+
+const StatusPill = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: #f3f2ef;
+  color: #666666;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+`;
+
+const ActionWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+`;
+
+const UnreadDot = styled.div`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #0a66c2;
+  flex-shrink: 0;
+`;
+
+const MenuButton = styled.button`
+  background: none;
+  border: none;
+  color: #666666;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+    color: #191919;
+  }
+`;
+
+const DropdownMenu = styled.div`
+  position: absolute;
+  right: 0;
+  top: 36px;
+  background: #ffffff;
+  border: 1px solid #e0dfdc;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 10;
+  min-width: 160px;
+  overflow: hidden;
+`;
+
+const DropdownItem = styled.button`
+  width: 100%;
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 13px;
+  color: ${({ $danger }) => ($danger ? "#d11a2a" : "#191919")};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #f3f2ef;
+  }
+
+  svg {
     font-size: 14px;
   }
 `;
 
-const UnreadDot = styled.span`
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: #2563eb;
-  flex: 0 0 auto;
-`;
-
-const Message = styled.p`
-  margin: 5px 0 0;
-  color: #475569;
-  font-size: 14px;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-
-  @media (max-width: 390px) {
-    font-size: 13px;
-  }
-`;
-
-const MetaRow = styled.div`
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-`;
-
-const Pill = styled.span`
-  display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: #f1f5f9;
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.2;
-`;
-
-const Side = styled.div`
+const EmptyState = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
-  min-width: 138px;
-
-  @media (max-width: 768px) {
-    grid-column: 2;
-    width: 100%;
-    min-width: 0;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  @media (max-width: 360px) {
-    grid-column: 1;
-  }
-`;
-
-const Time = styled.time`
-  color: #64748b;
-  font-size: 12px;
-  line-height: 1.35;
-  white-space: nowrap;
-`;
-
-const ActionRow = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
-
-  @media (max-width: 768px) {
-    justify-content: flex-start;
-  }
-
-  @media (max-width: 360px) {
-    width: 100%;
-  }
-`;
-
-const TextBtn = styled.button`
-  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  min-height: 32px;
-  padding: 6px 10px;
-  border: 1px solid ${({ $danger }) => ($danger ? "#fecaca" : "#bfdbfe")};
-  border-radius: 7px;
-  background: #ffffff;
-  color: ${({ $danger }) => ($danger ? "#dc2626" : "#2563eb")};
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 800;
-  white-space: nowrap;
-  transition: background 0.2s ease, border-color 0.2s ease;
-
-  &:hover {
-    background: ${({ $danger }) => ($danger ? "#fef2f2" : "#eff6ff")};
-    border-color: ${({ $danger }) => ($danger ? "#fca5a5" : "#93c5fd")};
-  }
-
-  @media (max-width: 390px) {
-    padding: 6px 8px;
-  }
-
-  @media (max-width: 360px) {
-    width: 100%;
-  }
-`;
-
-const EmptyState = styled.div`
-  display: grid;
-  place-items: center;
-  min-height: 260px;
-  padding: 32px 20px;
-  border: 1px dashed #cbd5e1;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #64748b;
+  padding: 48px 24px;
   text-align: center;
+  background: #ffffff;
 `;
 
 const EmptyIcon = styled.div`
-  width: 54px;
-  height: 54px;
-  margin: 0 auto 12px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: #eff6ff;
-  color: #2563eb;
+  background: #f3f2ef;
+  color: #666666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 24px;
+  margin-bottom: 16px;
 `;
 
-const EmptyTitle = styled.div`
-  color: #0f172a;
+const EmptyTitle = styled.h3`
+  margin: 0;
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 600;
+  color: #191919;
 `;
 
 const EmptyText = styled.p`
-  margin: 6px 0 0;
+  margin: 8px 0 0;
   font-size: 14px;
-  line-height: 1.5;
+  color: #666666;
+  max-width: 320px;
 `;
 
 const getIconKey = (type = "") => {
@@ -475,7 +470,20 @@ export default function ExpertNotificationPage() {
     removeById,
     markAllRead,
   } = useExpertNotifications();
+  
   const [filter, setFilter] = useState("all");
+  const [activeMenuId, setActiveMenuId] = useState(null);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setActiveMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
 
   const filtered = useMemo(() => {
     const rows = Array.isArray(notifications) ? notifications : [];
@@ -493,127 +501,148 @@ export default function ExpertNotificationPage() {
   return (
     <PageWrap>
       <Container>
-        <Header>
-          <TitleBlock>
-            <Title>Expert Notifications</Title>
-            <Sub>Stay updated with calls, chats, and account activity.</Sub>
-          </TitleBlock>
+        <SidebarCard>
+          <h3>Notifications settings</h3>
+          <p>You can customize notifications related to incoming calls, customer chats, and marketing campaigns in your settings panel.</p>
+        </SidebarCard>
 
-          {unreadCount > 0 && (
-            <MarkAllBtn onClick={markAllRead}>
-              <FiCheckCircle />
-              <span>Mark all read</span>
-              <Count>{unreadCount}</Count>
-            </MarkAllBtn>
-          )}
-        </Header>
+        <MainContent>
+          <HeaderCard>
+            <TitleBlock>
+              <Title>Notifications</Title>
+              <Sub>You have {unreadCount} unread notification{unreadCount === 1 ? "" : "s"}</Sub>
+            </TitleBlock>
 
-        <FilterBar aria-label="Notification filters">
-          {FILTERS.map((item) => (
-            <FilterBtn
-              key={item}
-              type="button"
-              $active={filter === item}
-              onClick={() => setFilter(item)}
-            >
-              {item}
-            </FilterBtn>
-          ))}
-        </FilterBar>
+            {unreadCount > 0 && (
+              <MarkAllBtn onClick={markAllRead}>
+                <FiCheckCircle size={16} />
+                <span>Mark all as read</span>
+              </MarkAllBtn>
+            )}
+          </HeaderCard>
 
-        <List>
-          {filtered.length === 0 ? (
-            <EmptyState>
-              <div>
+          <FilterBar aria-label="Notification filters">
+            {FILTERS.map((item) => (
+              <FilterChip
+                key={item}
+                type="button"
+                $active={filter === item}
+                onClick={() => setFilter(item)}
+              >
+                {item}
+              </FilterChip>
+            ))}
+          </FilterBar>
+
+          <NotificationListCard>
+            {filtered.length === 0 ? (
+              <EmptyState>
                 <EmptyIcon>
                   <FiBell />
                 </EmptyIcon>
                 <EmptyTitle>No notifications yet</EmptyTitle>
                 <EmptyText>
-                  New calls, chats, and updates will appear here.
+                  Incoming call updates, text messages, and alerts will appear here.
                 </EmptyText>
-              </div>
-            </EmptyState>
-          ) : (
-            filtered.map((notification) => {
-              const read = isRead(notification);
-              const iconKey = getIconKey(notification.type);
-              const iconConfig = iconMap[iconKey] || iconMap.default;
-              const title = notification.title || "Notification";
-              const message = getMessage(notification);
-              const time = formatTime(
-                notification.createdAt ||
-                  notification.time ||
-                  notification.created_at
-              );
+              </EmptyState>
+            ) : (
+              filtered.map((notification) => {
+                const read = isRead(notification);
+                const iconKey = getIconKey(notification.type);
+                const iconConfig = iconMap[iconKey] || iconMap.default;
+                const title = notification.title || "Alert Notification";
+                const message = getMessage(notification);
+                const time = formatTime(
+                  notification.createdAt ||
+                    notification.time ||
+                    notification.created_at
+                );
 
-              return (
-                <NotificationCard
-                  key={notification.id}
-                  $read={read}
-                  $clickable={Boolean(onNotificationTap)}
-                  onClick={() => onNotificationTap?.(notification)}
-                >
-                  <IconWrap $bg={iconConfig.bg} $color={iconConfig.color}>
-                    {notification.senderAvatar ? (
-                      <img src={notification.senderAvatar} alt="" />
-                    ) : (
-                      iconConfig.icon
-                    )}
-                  </IconWrap>
+                const isMenuOpen = activeMenuId === notification.id;
 
-                  <Content>
-                    <HeadingRow>
-                      <Heading>{title}</Heading>
-                      {!read && <UnreadDot aria-label="Unread" />}
-                    </HeadingRow>
-                    {message && <Message>{message}</Message>}
-
-                    <MetaRow>
-                      {notification.senderName && (
-                        <Pill>{notification.senderName}</Pill>
+                return (
+                  <NotificationItem
+                    key={notification.id}
+                    $read={read}
+                    onClick={() => onNotificationTap?.(notification)}
+                  >
+                    <AvatarContainer>
+                      {notification.senderAvatar ? (
+                        <AvatarImg src={notification.senderAvatar} alt="" />
+                      ) : (
+                        <AvatarFallback $bg={iconConfig.bg} $color={iconConfig.color}>
+                          {iconConfig.icon}
+                        </AvatarFallback>
                       )}
-                      {notification.status && <Pill>{notification.status}</Pill>}
-                    </MetaRow>
-                  </Content>
-
-                  <Side>
-                    {time && <Time dateTime={String(notification.createdAt || "")}>{time}</Time>}
-
-                    <ActionRow>
-                      {!read && (
-                        <TextBtn
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            markAsRead?.(notification.id);
-                          }}
-                        >
-                          <FiCheckCircle />
-                          <span>Read</span>
-                        </TextBtn>
+                      {notification.senderAvatar && (
+                        <BadgeIcon $bg={iconConfig.color}>
+                          {iconConfig.icon}
+                        </BadgeIcon>
                       )}
+                    </AvatarContainer>
 
-                      {removeById && (
-                        <TextBtn
-                          type="button"
-                          $danger
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            removeById(notification);
-                          }}
-                        >
-                          <FiTrash2 />
-                          <span>Delete</span>
-                        </TextBtn>
+                    <ItemContent>
+                      <HeadingRow>
+                        <Heading>{title}</Heading>
+                        <TimeText>• {time}</TimeText>
+                      </HeadingRow>
+                      {message && <MessageText>{message}</MessageText>}
+
+                      <MetaRow>
+                        {notification.senderName && (
+                          <StatusPill>{notification.senderName}</StatusPill>
+                        )}
+                        {notification.status && (
+                          <StatusPill>{notification.status}</StatusPill>
+                        )}
+                      </MetaRow>
+                    </ItemContent>
+
+                    <ActionWrapper onClick={(e) => e.stopPropagation()}>
+                      {!read && <UnreadDot />}
+                      <MenuButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMenuId(isMenuOpen ? null : notification.id);
+                        }}
+                      >
+                        <FiMoreHorizontal size={20} />
+                      </MenuButton>
+
+                      {isMenuOpen && (
+                        <DropdownMenu ref={dropdownRef}>
+                          {!read && markAsRead && (
+                            <DropdownItem
+                              onClick={() => {
+                                markAsRead(notification.id);
+                                setActiveMenuId(null);
+                              }}
+                            >
+                              <FiCheck />
+                              <span>Mark as read</span>
+                            </DropdownItem>
+                          )}
+                          {removeById && (
+                            <DropdownItem
+                              $danger
+                              onClick={() => {
+                                removeById(notification);
+                                setActiveMenuId(null);
+                              }}
+                            >
+                              <FiTrash2 />
+                              <span>Delete notification</span>
+                            </DropdownItem>
+                          )}
+                        </DropdownMenu>
                       )}
-                    </ActionRow>
-                  </Side>
-                </NotificationCard>
-              );
-            })
-          )}
-        </List>
+                    </ActionWrapper>
+                  </NotificationItem>
+                );
+              })
+            )}
+          </NotificationListCard>
+        </MainContent>
       </Container>
     </PageWrap>
   );

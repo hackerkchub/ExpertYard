@@ -16,6 +16,7 @@ import {
   Gift,
   X,
   Phone,
+  MessageSquare,
 } from "lucide-react";
 import logo from "../../../../../assets/logo.webp";
 import { getAllServices } from "../../../../../shared/api/service.api";
@@ -29,6 +30,7 @@ const navItems = [
   { label: "Wallet", to: "/user/wallet", icon: CreditCard },
   { label: "My Consultations", to: "/user/chat-history", icon: Sparkles },
   { label: "My Services", to: "/user/my-services", icon: BriefcaseBusiness },
+  { label: "My Inquiries", to: "/user/my-inquiries", icon: MessageSquare },
   { label: "Notifications", to: "/user/notifications", icon: Bell },
   { label: "Settings", to: "/user/user-profile", icon: Settings },
 ];

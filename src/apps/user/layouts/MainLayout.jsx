@@ -38,6 +38,25 @@ export default function MainLayout() {
 
   const isUserHome = location.pathname === "/user" || location.pathname === "/user/";
 
+  const isReelsPage = 
+    location.pathname.startsWith("/user/reels") || 
+    location.pathname === "/user/reels" ||
+    location.pathname.startsWith("/reels") || 
+    location.pathname === "/reels";
+
+  const isNoFooterPage = 
+    location.pathname.startsWith("/user/my-inquiries") || 
+    location.pathname === "/user/my-inquiries" ||
+    location.pathname.startsWith("/user/chat") ||
+    location.pathname === "/user/chat";
+
+  const isHideMobileHeader = 
+    isReelsPage || 
+    location.pathname.startsWith("/user/my-inquiries") || 
+    location.pathname === "/user/my-inquiries" ||
+    location.pathname.startsWith("/user/chat") ||
+    location.pathname === "/user/chat";
+
   const openLogin = () => {
     const redirectPath = `${location.pathname}${location.search}${location.hash}`;
     navigate(`/user/auth?redirect=${encodeURIComponent(redirectPath)}`, {
@@ -82,28 +101,24 @@ export default function MainLayout() {
             <Outlet />
           </main>
         </div>
-        <div className="home-footer-container">
-          <Footer />
-        </div>
+        {!isNoFooterPage && (
+          <div className="home-footer-container">
+            <Footer />
+          </div>
+        )}
       </div>
     );
   }
 
-  const isReelsPage = 
-    location.pathname.startsWith("/user/reels") || 
-    location.pathname === "/user/reels" ||
-    location.pathname.startsWith("/reels") || 
-    location.pathname === "/reels";
-
   return (
     <>
-      {!isReelsPage && (
+      {!isHideMobileHeader && (
         <div className="mobile-only-header">
           <Navbar />
         </div>
       )}
       <Outlet />
-      <Footer />
+      {!isNoFooterPage && <Footer />}
     </>
   );
 }

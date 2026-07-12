@@ -6,8 +6,8 @@ import api from "./axiosInstance";
 =========================== */
 export const getAllSubcategoriesApi = async (categoryId = null) => {
   const url = categoryId 
-    ? `/subcategory?category_id=${categoryId}` 
-    : "/subcategory";
+    ? `/subcategory?category_id=${categoryId}&admin=true` 
+    : "/subcategory?admin=true";
   const { data } = await api.get(url);
   return data;
 };

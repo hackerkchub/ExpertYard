@@ -71,7 +71,8 @@ import {
   getSubCategoriesApi,
   createCategoryApi,
   updateCategoryApi,
-  deleteCategoryApi
+  deleteCategoryApi,
+  updateCategoryStatusApi
 } from "../../../shared/api/admin/category.api";
 
 export default function CategoryManagement() {
@@ -103,7 +104,7 @@ export default function CategoryManagement() {
       acc + (cat.subcategories?.length || 0), 0
     );
     const categoriesWithImages = categories.filter(cat => cat.image_url || cat.image).length;
-    const activeCategories = categories.length; // You can add status field if needed
+    const activeCategories = categories.filter(cat => cat.is_active === 1).length;
 
     return {
       totalCategories,
@@ -112,6 +113,26 @@ export default function CategoryManagement() {
       activeCategories
     };
   }, [categories]);
+
+  const handleToggleStatus = async (category) => {
+    const newStatus = category.is_active === 1 ? 0 : 1;
+    const confirmMessage = newStatus === 0 
+      ? `Are you sure you want to disable category "${category.name}"? This will also disable all its subcategories and hide them from the user frontend.`
+      : `Are you sure you want to enable category "${category.name}"?`;
+      
+    if (window.confirm(confirmMessage)) {
+      try {
+        setLoading(true);
+        await updateCategoryStatusApi(category.id, newStatus === 1);
+        await fetchCategories();
+      } catch (error) {
+        console.error("Error updating category status:", error);
+        alert(error.response?.data?.message || "Failed to update category status");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
 
   // Image renderer
   const renderImage = useCallback((imageData, size = 40, isEditing = false, onClick) => {
@@ -457,6 +478,7 @@ export default function CategoryManagement() {
                   <th>Image</th>
                   <th>Category Name</th>
                   <th>Subcategories</th>
+                  <th>Status</th>
                   <th>Actions</th>
                 </TableRow>
               </TableHead>
@@ -533,8 +555,15 @@ export default function CategoryManagement() {
                               </div>
                             ) : cat.subcategories?.length > 0 ? (
                               cat.subcategories.map((sub, idx) => (
-                                <SubcategoryItem key={idx}>
-                                  <span>{sub.name || sub}</span>
+                                <SubcategoryItem key={idx} style={{ opacity: sub.is_active === 0 ? 0.6 : 1 }}>
+                                  <span>
+                                    {sub.name || sub}
+                                    {sub.is_active === 0 && (
+                                      <span style={{ fontSize: '11px', color: '#ef4444', marginLeft: '6px', fontWeight: 'bold' }}>
+                                        (Disabled)
+                                      </span>
+                                    )}
+                                  </span>
                                   <span>ID: {sub.id}</span>
                                 </SubcategoryItem>
                               ))
@@ -545,6 +574,35 @@ export default function CategoryManagement() {
                             )}
                           </SubcategoryList>
                         )}
+                      </TableCell>
+
+                      {/* Status */}
+                      <TableCell>
+                        <button
+                          onClick={() => handleToggleStatus(cat)}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '20px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontSize: '13px',
+                            fontWeight: 'bold',
+                            backgroundColor: cat.is_active === 1 ? '#e1f5fe' : '#ffebee',
+                            color: cat.is_active === 1 ? '#0288d1' : '#c62828',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                          disabled={loading}
+                        >
+                          <span style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: cat.is_active === 1 ? '#0288d1' : '#c62828'
+                          }} />
+                          {cat.is_active === 1 ? "Active" : "Disabled"}
+                        </button>
                       </TableCell>
 
                       {/* Actions */}
@@ -576,7 +634,7 @@ export default function CategoryManagement() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} style={{ textAlign: 'center', padding: '60px 20px' }}>
+                    <TableCell colSpan={6} style={{ textAlign: 'center', padding: '60px 20px' }}>
                       <EmptyState>
                         <FaFolder size={48} />
                         <h4>No categories found</h4>

@@ -43,6 +43,7 @@ const ServiceDetails = lazy(() => import("../pages/AllServicesByCatId/ServiceDet
 const MyBookings = lazy(() => import("../pages/AllServicesByCatId/MyBookings"));
 const UserProfile = lazy(() => import("../pages/user-profile/UserProfile"))
 const UserNotificationPage = lazy(() => import("../pages/notification/UserNotificationPage"));
+const UserInquiriesPage = lazy(() => import("../pages/Inquiry/UserInquiriesPage"));
 const ReelsPage = lazy(() => import("../pages/Reels/ReelsPage"));
 
 const withLazyRoute = (node) => <LazyRoute>{node}</LazyRoute>;
@@ -92,6 +93,16 @@ export default function UserAppRoutes() {
                 <ProtectedRoute>
                   <LazyRoute>
                     <MyBookings />
+                  </LazyRoute>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="my-inquiries"
+              element={
+                <ProtectedRoute>
+                  <LazyRoute>
+                    <UserInquiriesPage />
                   </LazyRoute>
                 </ProtectedRoute>
               }

@@ -11,13 +11,11 @@ import {
 } from "../styles/Dashboard.styles";
 import { useNavigate } from "react-router-dom";
 
-
 export default function QueueCard() {
-  const [activeTab, setActiveTab] = useState("chat");
+  const [activeTab, setActiveTab] = useState("call");
   const listRef = useRef(null);
   const prevCountRef = useRef(0);
-const navigate = useNavigate();
-  // force re-render for timeAgo
+  const navigate = useNavigate();
   const [, forceUpdate] = useState(0);
 
   useEffect(() => {
@@ -35,7 +33,6 @@ const navigate = useNavigate();
     removeById,
   } = useExpertNotifications();
 
-  /* ---------------- TIME AGO ---------------- */
   const getTimeAgo = (timestamp) => {
     const seconds = Math.floor((Date.now() - timestamp) / 1000);
 
@@ -51,7 +48,6 @@ const navigate = useNavigate();
     return `${days}d ago`;
   };
 
-  /* ---------------- STATUS COLOR ---------------- */
   const getStatusColor = (status) => {
     switch (status) {
       case "pending":
@@ -80,7 +76,6 @@ const navigate = useNavigate();
     }
   };
 
-  /* ---------------- SPLIT ---------------- */
   const chatRequests = useMemo(
     () =>
       notifications
@@ -97,9 +92,54 @@ const navigate = useNavigate();
     [notifications]
   );
 
-  const activeList = activeTab === "chat" ? chatRequests : callRequests;
+  const videoCallRequests = useMemo(
+    () =>
+      notifications
+        .filter((n) => n.type === "video_call")
+        .sort((a, b) => b.createdAt - a.createdAt),
+    [notifications]
+  );
 
-  /* ---------------- AUTO SCROLL ---------------- */
+  const queueTabs = [
+    {
+      key: "call",
+      label: "Call",
+      count: callRequests.length,
+      hasAlert: callRequests.some((c) => c.status === "ringing"),
+    },
+    {
+      key: "chat",
+      label: "Chat",
+      count: chatRequests.length,
+    },
+    {
+      key: "video",
+      label: "Video Call",
+      count: videoCallRequests.length,
+      hasAlert: videoCallRequests.some((c) => c.status === "ringing"),
+    },
+  ];
+
+  const linkTabs = [
+    { label: "Leads", path: "/expert/leads" },
+    { label: "Enquiry", path: "/expert/inquiries" },
+    { label: "My Booking", path: "/expert/mybookings" },
+  ];
+
+  const activeLists = {
+    chat: chatRequests,
+    call: callRequests,
+    video: videoCallRequests,
+  };
+
+  const emptyLabels = {
+    chat: "chat",
+    call: "call",
+    video: "video call",
+  };
+
+  const activeList = activeLists[activeTab] || [];
+
   useEffect(() => {
     if (activeList.length > prevCountRef.current) {
       listRef.current?.scrollTo({ top: 0, behavior: "smooth" });
@@ -109,29 +149,35 @@ const navigate = useNavigate();
 
   return (
     <QueueCardWrap>
-      {/* ---------------- TABS ---------------- */}
       <QueueTabs>
-        <button
-          className={activeTab === "chat" ? "active" : ""}
-          onClick={() => setActiveTab("chat")}
-        >
-          💬 Chat ({chatRequests.length})
-        </button>
+        {queueTabs.map((tab) => (
+          <button
+            key={tab.key}
+            className={activeTab === tab.key ? "active" : ""}
+            onClick={() => setActiveTab(tab.key)}
+            type="button"
+          >
+            {tab.label} ({tab.count})
+            {tab.hasAlert && <RedDot />}
+          </button>
+        ))}
 
-        <button
-          className={activeTab === "call" ? "active" : ""}
-          onClick={() => setActiveTab("call")}
-        >
-          📞 Calls ({callRequests.length})
-          {callRequests.some((c) => c.status === "ringing") && <RedDot />}
-        </button>
+        {linkTabs.map((tab) => (
+          <button
+            key={tab.path}
+            className="link-tab"
+            onClick={() => navigate(tab.path)}
+            type="button"
+          >
+            {tab.label}
+          </button>
+        ))}
       </QueueTabs>
 
-      {/* ---------------- LIST ---------------- */}
       <div ref={listRef} style={{ maxHeight: 400, overflowY: "auto" }}>
         {activeList.length === 0 ? (
           <div style={{ padding: 24, textAlign: "center", color: "#64748b" }}>
-            No pending {activeTab} requests
+            No pending {emptyLabels[activeTab] || "queue"} requests
           </div>
         ) : (
           activeList.map((req) => (
@@ -144,7 +190,7 @@ const navigate = useNavigate();
                 </StatusBadge>
 
                 <div style={{ fontSize: 12, color: "#6b7280" }}>
-                  {req.meta} •{" "}
+                  {req.meta} -{" "}
                   {req.status === "ringing"
                     ? "Ringing..."
                     : getTimeAgo(req.createdAt)}
@@ -152,18 +198,17 @@ const navigate = useNavigate();
               </div>
 
               <div style={{ display: "flex", gap: 8 }}>
-                {/* ACCEPT CHAT */}
-                {req.type === "chat_request" && (req.status === "pending" || req.status === "accepting") && (
-                  <ActionBtn
-                    className="accept"
-                    disabled={req.status === "accepting"}
-                    onClick={() => acceptNotification(req)}
-                  >
-                    {req.status === "accepting" ? "Accepting..." : "Accept"}
-                  </ActionBtn>
-                )}
+                {req.type === "chat_request" &&
+                  (req.status === "pending" || req.status === "accepting") && (
+                    <ActionBtn
+                      className="accept"
+                      disabled={req.status === "accepting"}
+                      onClick={() => acceptNotification(req)}
+                    >
+                      {req.status === "accepting" ? "Accepting..." : "Accept"}
+                    </ActionBtn>
+                  )}
 
-                {/* ACCEPT CALL */}
                 {req.type === "voice_call" && req.status === "ringing" && (
                   <ActionBtn
                     className="accept"
@@ -175,7 +220,17 @@ const navigate = useNavigate();
                   </ActionBtn>
                 )}
 
-                {/* DECLINE */}
+                {req.type === "video_call" && req.status === "ringing" && (
+                  <ActionBtn
+                    className="accept"
+                    onClick={() => {
+                      navigate(`/expert/video-call/${req.payload.callId}`);
+                    }}
+                  >
+                    Tap to Answer
+                  </ActionBtn>
+                )}
+
                 {(req.status === "pending" || req.status === "ringing") && (
                   <ActionBtn
                     className="decline"
@@ -185,7 +240,6 @@ const navigate = useNavigate();
                   </ActionBtn>
                 )}
 
-                {/* CLOSE */}
                 {["rejected", "cancelled", "ended", "missed", "low_balance"].includes(
                   req.status
                 ) && (

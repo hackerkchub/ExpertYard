@@ -219,7 +219,14 @@ export const PageWrap = styled.div`
       padding: 9px 12px !important;
       border-radius: 999px !important;
       font-size: 12.5px !important;
-      box-shadow: 0 10px 22px rgba(99, 102, 241, 0.24);
+      background: #16a34a !important;
+      color: #ffffff !important;
+      box-shadow: 0 10px 22px rgba(22, 163, 74, 0.24);
+    }
+
+    .expert-profile-subscription-cta-btn svg,
+    .expert-profile-subscription-cta-btn * {
+      color: #ffffff !important;
     }
 
     .expert-profile-main > *:last-child,
@@ -933,7 +940,7 @@ export const CallToAction = styled.div`
     min-height: 42px !important;
     border-color: rgba(147, 197, 253, 0.55) !important;
     background: #ffffff !important;
-    color: #000080 !important;
+    color: #ffffff !important;
     box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22) !important;
     white-space: nowrap !important;
     line-height: 1.15 !important;
@@ -1007,6 +1014,25 @@ export const ActionButton = styled.button`
     opacity: 1;
   }
 
+  &.expert-profile-green-action-btn {
+    border-color: #16a34a !important;
+    background: #16a34a !important;
+    color: #ffffff !important;
+    box-shadow: 0 12px 24px rgba(22, 163, 74, 0.22) !important;
+
+    svg,
+    * {
+      color: #ffffff !important;
+    }
+
+    &:hover {
+      background: #15803d !important;
+      border-color: #15803d !important;
+      color: #ffffff !important;
+      box-shadow: 0 16px 30px rgba(22, 163, 74, 0.28) !important;
+    }
+  }
+
   @media (max-width: 768px) {
     min-height: 44px;
     padding: 10px 12px;
@@ -1048,8 +1074,8 @@ export const FollowButton = styled.button`
 
   ${props => props.$active && css`
     color: #ffffff !important;
-    background:  rgba(255, 255, 255, 0.5) !important;
-    border-color: rgba(155, 155, 156, 0.5) !important;
+    background: #000080 !important;
+    border-color: #000080 !important;
     svg, * {
       color: #ffffff !important;
     }
@@ -1058,14 +1084,14 @@ export const FollowButton = styled.button`
   &:hover {
     transform: translateY(-1px);
     background-color: ${props => props.$active ? "rgba(255, 255, 255, 0.28)" : "rgba(255, 255, 255, 0.92)"};
-    color: ${props => props.$active ? "#ffffff !important" : "#ffffff"};
+    color: ${props => props.$active ? "#ffffff !important" : "#000080"};
   }
 
   @media (min-width: 1024px) {
     ${props => props.$active && css`
       color: #ffffff;
-      border-color: rgba(255, 255, 255, 0.72);
-      background: #ffffff;
+      border-color: #000080;
+      background: #000080;
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
     `}
   }
@@ -2343,9 +2369,9 @@ export const PricingModeTabs = styled.div`
 export const PricingModeTab = styled.button`
   padding: 8px 16px;
   border-radius: 999px;
-  border: 1px solid ${props => props.$active ? '#ffc107' : 'rgba(255, 255, 255, 0.28)'};
-  background: ${props => props.$active ? 'linear-gradient(135deg, #ffd23f, #ffc107)' : 'rgba(255, 255, 255, 0.12)'};
-  color: ${props => props.$active ? '#000080' : '#ffffff'};
+  border: 1px solid #15803d;
+  background: #15803d;
+  color: #ffffff;
   font-size: 13px;
   font-weight: 900;
   cursor: pointer;
@@ -2354,8 +2380,22 @@ export const PricingModeTab = styled.button`
   gap: 6px;
   transition: all 0.2s ease;
 
+  &&,
+  && svg,
+  && * {
+    color: #ffffff !important;
+  }
+
   &:hover {
-    border-color: #ffc107;
+    border-color: #15803d;
+    background: #15803d;
+    color: #ffffff;
+
+    &&,
+    && svg,
+    && * {
+      
+    }
   }
 
   @media (max-width: 768px) {
@@ -2365,7 +2405,7 @@ export const PricingModeTab = styled.button`
     justify-content: center;
     padding: 7px 8px;
     border-radius: 12px;
-    border-color: ${props => props.$active ? '#ffc107' : 'transparent'};
+    border-color: #16a34a;
     font-size: 11.5px;
     font-weight: 800;
     gap: 5px;

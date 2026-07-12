@@ -4,14 +4,20 @@ import api from "./axiosInstance";
    GET CATEGORIES
 =========================== */
 export const getCategoriesApi = async () => {
-  const { data } = await api.get("/category/list");
+  const { data } = await api.get("/category/list?admin=true");
   return data;
 };
 /* ===========================
    GET SUBCATEGORIES
 =========================== */
 export const getSubCategoriesApi = (categoryId) =>
-  api.get(`/subcategory?category_id=${categoryId}`);
+  api.get(`/subcategory?category_id=${categoryId}&admin=true`);
+
+/* ===========================
+   UPDATE CATEGORY STATUS
+=========================== */
+export const updateCategoryStatusApi = (categoryId, is_active) =>
+  api.patch(`/category/${categoryId}/status`, { is_active });
 
 /* ===========================
    CREATE CATEGORY

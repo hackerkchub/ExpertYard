@@ -322,7 +322,7 @@ export default function MyOffer() {
             {followingExperts.map((e) => (
               <FollowAvatar
                 key={e.expert_id}
-                onClick={() => handleExpertClick(e.expert_id)}
+                onClick={() => handleExpertClick(e.slug || e.expert_slug || e.expert_id)}
                 style={{ cursor: "pointer" }}
               >
                 <img src={e.profile_photo} alt={e.expert_name} />
@@ -350,7 +350,7 @@ export default function MyOffer() {
                         gap: "14px",
                         cursor: "pointer"
                       }}
-                      onClick={() => handleExpertClick(expertId)}
+                      onClick={() => handleExpertClick(post.expert_slug || post.slug || expertId)}
                     >
                       <Avatar src={post.expert.profile_photo} />
                       <NameWrap>

@@ -132,4 +132,35 @@ export const ContentWrapper = styled.main`
     height: 0px !important;
   }
   scrollbar-width: none; /* Firefox */
+
+  &.immersive-inquiry-layout {
+    @media (max-width: 991px) {
+      margin-top: 0;
+      margin-left: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: 0;
+    }
+
+    @media (max-width: 768px) {
+      margin-top: 0;
+      height: 100vh;
+      height: 100dvh;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: 0;
+    }
+
+    @media (max-width: 480px) {
+      margin-top: 0;
+      height: 100vh;
+      height: 100dvh;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: 0;
+    }
+  }
 `;

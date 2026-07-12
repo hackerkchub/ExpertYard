@@ -6,6 +6,7 @@ import {
   BriefcaseBusiness, 
   Film,
   Wallet,
+  Mail,
 } from 'lucide-react';
 import "../../../shared/components/BottomNavbar/BottomNavbar.css";
 
@@ -37,6 +38,12 @@ const ExpertBottomNavbar = () => {
         </span>
       ),
       isActive: () => currentPath.startsWith('/expert/reels')
+    },
+    { 
+      name: 'Inquiries',
+      path: '/expert/inquiries',
+      icon: <Mail size={21} />,
+      isActive: () => currentPath.startsWith('/expert/inquiries')
     },
     { 
       name: 'Create Service',

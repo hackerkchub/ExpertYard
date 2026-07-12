@@ -46,6 +46,54 @@ export const deletePostApi = (id) =>
 export const deleteExperienceApi = (id) =>
   adminApi.delete(`/expert/experience/${id}`);
 
+export const updateManagedExpertProfileApi = (id, formData) =>
+  adminApi.put(`/admin/experts/${id}/profile`, formData);
+
+export const createManagedExpertPostApi = (id, formData) =>
+  adminApi.post(`/admin/experts/${id}/posts`, formData);
+
+export const updateManagedExpertPostApi = (id, postId, formData) =>
+  adminApi.put(`/admin/experts/${id}/posts/${postId}`, formData);
+
+export const createManagedExpertServiceApi = (id, formData) =>
+  adminApi.post(`/admin/experts/${id}/services`, formData);
+
+export const updateManagedExpertServiceApi = (id, serviceId, formData) =>
+  adminApi.put(`/admin/experts/${id}/services/${serviceId}`, formData);
+
+export const deleteManagedExpertServiceApi = (id, serviceId) =>
+  adminApi.delete(`/admin/experts/${id}/services/${serviceId}`);
+
+export const updateManagedExpertPricingApi = (id, data) =>
+  adminApi.put(`/admin/experts/${id}/pricing`, data);
+
+export const createManagedExpertPlanApi = (id, data) =>
+  adminApi.post(`/admin/experts/${id}/plans`, data);
+
+export const updateManagedExpertPlanApi = (id, planId, data) =>
+  adminApi.put(`/admin/experts/${id}/plans/${planId}`, data);
+
+export const deleteManagedExpertPlanApi = (id, planId) =>
+  adminApi.delete(`/admin/experts/${id}/plans/${planId}`);
+
+export const createManagedExpertExperienceApi = (id, formData) =>
+  adminApi.post(`/admin/experts/${id}/experience`, formData);
+
+export const updateManagedExpertExperienceApi = (id, experienceId, formData) =>
+  adminApi.put(`/admin/experts/${id}/experience/${experienceId}`, formData);
+
+export const updateManagedExpertPasswordApi = (id, data) =>
+  adminApi.put(`/admin/experts/${id}/password`, data);
+
+export const createManagedExpertReelApi = (id, formData) =>
+  adminApi.post(`/admin/reels/expert/${id}`, formData);
+
+export const updateManagedExpertReelApi = (reelId, formData) =>
+  adminApi.put(`/admin/reels/${reelId}`, formData);
+
+export const deleteManagedExpertReelApi = (reelId) =>
+  adminApi.delete(`/admin/reels/${reelId}`);
+
 
 // =========================
 // EXPERT REGISTRATIONS

@@ -69,10 +69,31 @@ export default function AppRouter() {
       if (document.visibilityState === "visible" && !socket.connected) {
         socket.connect();
       }
+      reportVisibility();
     };
 
+    const reportVisibility = () => {
+      if (socket.connected) {
+        socket.emit("page_visibility", {
+          isVisible: document.visibilityState === "visible",
+        });
+      }
+    };
+
+    const handleConnect = () => {
+      reportVisibility();
+    };
+
+    socket.on("connect", handleConnect);
     document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
+
+    // Emit initial state if already connected
+    reportVisibility();
+
+    return () => {
+      socket.off("connect", handleConnect);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, []);
 
   return (

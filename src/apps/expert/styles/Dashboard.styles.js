@@ -114,25 +114,42 @@ export const QueueCardWrap = styled.div`
 
 export const QueueTabs = styled.div`
   display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
   border-bottom: 1px solid #dbdbdb;
-  padding: 0 8px;
+  padding: 8px;
   background: #fff;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   button {
     background: none;
     border: none;
-    padding: 16px 20px;
+    padding: 12px 14px;
     font-size: 14px;
     font-weight: 600;
     color: #737373;
     cursor: pointer;
     position: relative;
     transition: all 0.2s;
+    border-radius: 10px;
+    min-height: 42px;
+    white-space: nowrap;
+    flex: 1 1 128px;
 
-    &:hover { color: #000; }
+    &:hover {
+      color: #000;
+      background: #f8fafc;
+    }
 
     &.active {
       color: #000000;
+      background: #f3f4f6;
       &::after {
         content: '';
         position: absolute;
@@ -142,6 +159,22 @@ export const QueueTabs = styled.div`
         height: 2px;
         background: #000000; /* Active tab underline black */
       }
+    }
+
+    &.link-tab {
+      color: #334155;
+    }
+  }
+
+  @media (max-width: 768px) {
+    flex-wrap: nowrap;
+    padding: 8px 10px 10px;
+
+    button {
+      flex: 0 0 auto;
+      min-width: 108px;
+      padding: 11px 12px;
+      font-size: 13px;
     }
   }
 `;

@@ -36,6 +36,24 @@ function ExpertLayoutInner() {
     location.pathname.startsWith("/expert/voice-call/") ||
     location.pathname.startsWith("/expert/video-call/");
   const [incomingVideoCall, setIncomingVideoCall] = useState(null);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth <= 768;
+    }
+    return false;
+  });
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const isExpertInquiryPage = 
+    location.pathname.startsWith("/expert/inquiries") || 
+    location.pathname === "/expert/inquiries" ||
+    location.pathname.startsWith("/expert/chat") ||
+    location.pathname === "/expert/chat";
 
   const {
     notifications,
@@ -168,6 +186,24 @@ function ExpertLayoutInner() {
   useEffect(() => {
     if (!expertId) return;
 
+    const checkPendingChatRequests = () => {
+      socket.emit("check_pending_requests", { expert_id: expertId });
+    };
+
+    socket.on("connect", checkPendingChatRequests);
+
+    if (socket.connected) {
+      checkPendingChatRequests();
+    }
+
+    return () => {
+      socket.off("connect", checkPendingChatRequests);
+    };
+  }, [expertId]);
+
+  useEffect(() => {
+    if (!expertId) return;
+
     generateToken("expert");
   }, [expertId]);
 
@@ -294,15 +330,15 @@ function ExpertLayoutInner() {
 
   return (
     <LayoutWrapper>
-      <ExpertTopbar />
+      {!(isExpertInquiryPage && isMobile) && <ExpertTopbar />}
       <ExpertSidebar />
       <ContinueChatBanner />
 
-      <ContentWrapper>
+      <ContentWrapper className={isExpertInquiryPage ? "immersive-inquiry-layout" : ""}>
         <Outlet />
       </ContentWrapper>
 
-      <ExpertBottomNavbar />
+      {!(isExpertInquiryPage && isMobile) && <ExpertBottomNavbar />}
 
       <IncomingCallPopup
         caller={

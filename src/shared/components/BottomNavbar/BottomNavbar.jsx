@@ -5,6 +5,7 @@ import {
   Home,
   Film,
   MessageCircle,
+  Mail,
 } from 'lucide-react';
 import "./BottomNavbar.css";
 
@@ -30,6 +31,12 @@ const BottomNavbar = () => {
       path: '/user/all-services',
       icon: <BriefcaseBusiness size={21} />,
       isActive: () => currentPath.startsWith('/user/all-services') || currentPath.startsWith('/user/service-details'),
+    },
+    {
+      name: 'Inquiries',
+      path: '/user/my-inquiries',
+      icon: <Mail size={21} />,
+      isActive: () => currentPath.startsWith('/user/my-inquiries'),
     },
     {
       name: 'Talk',

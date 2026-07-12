@@ -32,6 +32,7 @@ import {
   FiLogOut,
   FiUser,
   FiVideo,
+  FiMail,
 } from "react-icons/fi";
 
 import { useNavigate } from "react-router-dom";
@@ -80,6 +81,7 @@ export default function ExpertSidebar() {
     { path: "/expert/chat-history", icon: FiMessageSquare, label: "Chat History" },
     { path: "/expert/leads", icon: FiUsers, label: "Leads" },
     { path: "/expert/earnings", icon: FiBarChart2, label: "Earnings" },
+    { path: "/expert/inquiries", icon: FiMail, label: "Inquiries" },
     { path: "/expert/myservices", icon: FiBell, label: "My Service" },
     { path: "/expert/g9-plan", icon: FiBell, label: "G9-Plan" },
   ];

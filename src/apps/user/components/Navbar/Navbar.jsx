@@ -56,6 +56,7 @@ import {
   FiArrowLeft,
   FiBell,
   FiSliders,
+  FiMail,
 } from "react-icons/fi";
 import { FaWallet } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -248,6 +249,7 @@ const Navbar = () => {
     { label: t("common.offers"), path: "/user/all-services", icon: FiGift },
     { label: t("common.categories"), path: "/user/categories", icon: FiGrid, mobileOnly: true },
     { label: t("common.history"), path: "/user/chat-history", icon: FiClock },
+    { label: "My Inquiries", path: "/user/my-inquiries", icon: FiMail },
   ];
 
   return (

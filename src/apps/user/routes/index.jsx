@@ -30,6 +30,7 @@ const Reviews = lazy(() => import("../pages/reviews/Reviews"));
 const ExpertGuidelines = lazy(() => import("../pages/Expert-Guideline/ExpertGuidelines"));
 const TermsAndConditions = lazy(() => import("../pages/T&C/T&C"));
 const PrivacyPolicy = lazy(() => import("../pages/Privacy-Policy/PrivacyPolicy"));
+const RefundCancellation = lazy(() => import("../pages/refund&cancellation/RefundCancellation"));
 const FAQ = lazy(() => import("../pages/FAQ/Faq"));
 const ContactUs = lazy(() => import("../pages/Contact-Us/ContactUs"));
 const Careers = lazy(() => import("../pages/Careers/Career"));
@@ -76,6 +77,7 @@ export default function UserAppRoutes() {
             <Route path="terms" element={withLazyRoute(<TermsAndConditions />)} />
             <Route path="subcategories/:categoryId" element={withLazyRoute(<SubcategoryPage />)} />
             <Route path="privacy" element={withLazyRoute(<PrivacyPolicy />)} />
+            <Route path="refund-cancellation" element={withLazyRoute(<RefundCancellation />)} />
             <Route path="faq" element={withLazyRoute(<FAQ />)} />
             <Route path="contact" element={withLazyRoute(<ContactUs />)} />
             <Route path="careers" element={withLazyRoute(<Careers />)} />

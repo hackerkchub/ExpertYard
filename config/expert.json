@@ -1,0 +1,10 @@
+{
+  "appType": "expert",
+  "appName": "G9Expert Expert",
+
+  "firebase": {
+    "project": "expert"
+  },
+
+  "theme": "expert"
+}

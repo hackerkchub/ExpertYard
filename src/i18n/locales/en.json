@@ -364,98 +364,118 @@
       "relatedPages": "Related Pages",
       "searchAria": "Search {{page}}"
     },
-    "about": {
-      "label": "Company",
-      "title": "About G9 Experts",
-      "subtitle": "G9 Experts connects users with verified professionals for instant guidance, online services, and trusted solutions across everyday and specialist needs.",
-      "description": "Learn about G9 Experts, a trusted platform for instant expert consultation, secure chat and call support, online services, and verified professional guidance.",
-      "keywords": "about G9 Experts, verified experts, online consultation platform, instant expert help",
-      "badges": {
-        "verifiedExperts": "Verified experts",
-        "secureChatCall": "Secure chat and call",
-        "walletPayments": "Wallet-based payments",
-        "multipleCategories": "Multiple categories"
-      },
-      "stats": {
-        "usersGuided": {
-          "value": "20K+",
-          "label": "Users guided"
+   "about": {
+  "label": "Company",
+  "title": "About G9 Experts",
+  "subtitle": "G9 Experts is a secure online consultation platform that connects users with experienced professionals through chat and audio consultations across multiple categories.",
+
+  "description": "Learn about G9 Experts, a trusted expert consultation platform by Softmaxs Solution LLP offering secure online consultations, verified experts, wallet payments, and technology-driven services.",
+
+  "keywords": "G9 Experts, online consultation platform, verified experts, secure consultations, Softmaxs Solution LLP",
+
+  "badges": {
+    "verifiedExperts": "Verified Experts",
+    "secureChatCall": "Secure Chat & Audio",
+    "walletPayments": "Secure Wallet Payments",
+    "multipleCategories": "Multiple Categories"
+  },
+
+  "stats": {
+  "usersGuided": {
+    "value": "Growing",
+    "label": "Community"
+  },
+  "verifiedProfessionals": {
+    "value": "24/7",
+    "label": "Platform Access"
+  },
+  "serviceCategories": {
+    "value": "Multi",
+    "label": "Expert Categories"
+  },
+  "onlineAccess": {
+    "value": "Secure",
+    "label": "Consultations"
+  }
+},
+
+  "sections": {
+    "mission": {
+      "title": "Who We Are",
+      "text": "G9 Experts, owned by Softmaxs Solution LLP, helps users connect with experienced professionals through secure digital consultations from anywhere.",
+
+      "items": {
+        "instantAccess": {
+          "title": "Easy Expert Access",
+          "text": "Connect with professionals through secure chat and audio consultations anytime."
         },
+
         "verifiedProfessionals": {
-          "value": "5K+",
-          "label": "Verified professionals"
+          "title": "Professional Experts",
+          "text": "Experts create detailed profiles, manage pricing, availability, and provide reliable consultation services."
         },
-        "serviceCategories": {
-          "value": "50+",
-          "label": "Service categories"
-        },
-        "onlineAccess": {
-          "value": "24/7",
-          "label": "Online access"
-        }
-      },
-      "sections": {
-        "mission": {
-          "title": "Our Mission",
-          "text": "Our mission is to make professional guidance easier to access.",
-          "items": {
-            "instantAccess": {
-              "title": "Instant Access",
-              "text": "Start a secure chat or call with available professionals in minutes."
-            },
-            "verifiedProfessionals": {
-              "title": "Verified Professionals",
-              "text": "Profiles, ratings, and platform checks help users choose with confidence."
-            },
-            "oneMarketplace": {
-              "title": "One Marketplace",
-              "text": "Consultation and online services are available across many useful categories."
-            }
-          }
-        },
-        "offer": {
-          "title": "What We Offer",
-          "text": "G9 Experts brings expert discovery, chat, call, payments, reviews, and service booking into one experience.",
-          "items": {
-            "categories": "Career, legal, business, finance, health, astrology, freelancing, and service guidance.",
-            "secureConsultation": "Secure chat and call consultation with transparent pricing.",
-            "trustSignals": "Expert ratings, profile details, followers, and reviews support informed decisions.",
-            "fastResponse": "Fast response options for users who need practical help right away."
-          }
-        },
-        "trust": {
-          "title": "Trust & Security",
-          "text": "Every product decision is built around user trust, payment clarity, and safe communication.",
-          "items": {
-            "privateConsultations": {
-              "title": "Private Consultations",
-              "text": "User conversations are designed to stay within secure platform workflows."
-            },
-            "transparentWallet": {
-              "title": "Transparent Wallet",
-              "text": "Wallet-based payments make consultation spending easier to track."
-            },
-            "reviewTrust": {
-              "title": "Review-led Trust",
-              "text": "Ratings and reviews help users identify reliable professionals faster."
-            }
-          }
-        }
-      },
-      "linksTitle": "Explore G9 Experts",
-      "links": {
-        "findExperts": "Find verified experts",
-        "howItWorks": "How it works",
-        "reviews": "Read reviews",
-        "careers": "Join our team"
-      },
-      "cta": {
-        "main": {
-          "title": "Need expert guidance today?",
-          "text": "Choose a category and connect with a verified professional through secure chat or call."
+
+        "oneMarketplace": {
+          "title": "One Digital Platform",
+          "text": "Consultations across multiple professional categories are available from one trusted platform."
         }
       }
     },
+
+    "offer": {
+      "title": "What We Offer",
+      "text": "Our platform combines consultation, secure payments, expert discovery, and modern technology into one seamless experience.",
+
+      "items": {
+        "categories": "Career, Business, Finance, Legal, Health, Astrology and many more professional categories.",
+
+        "secureConsultation": "Secure chat and audio consultations with transparent pricing and wallet support.",
+
+        "trustSignals": "Expert profiles, ratings, reviews and professional information help users choose confidently.",
+
+        "fastResponse": "Quick access to professional guidance without lengthy appointment processes."
+      }
+    },
+
+    "trust": {
+      "title": "Technology, Privacy & Trust",
+      "text": "We build every feature around security, transparency, and user privacy.",
+
+      "items": {
+        "privateConsultations": {
+          "title": "Secure Platform",
+          "text": "HTTPS, JWT authentication, OTP verification, encrypted communication, WebRTC and Socket.IO help protect every consultation."
+        },
+
+        "transparentWallet": {
+          "title": "Secure Payments",
+          "text": "Wallet payments and Razorpay integration provide safe and transparent payment processing."
+        },
+
+        "reviewTrust": {
+          "title": "Trusted Experience",
+          "text": "Privacy-focused policies, secure infrastructure and continuous platform improvements help build long-term trust."
+        }
+      }
+    }
+  },
+
+  "linksTitle": "Explore G9 Experts",
+
+  "links": {
+    "findExperts": "Find Experts",
+    "howItWorks": "How It Works",
+    "reviews": "Customer Reviews",
+    "careers": "Careers"
+  },
+
+  "cta": {
+    "main": {
+      "title": "Need Professional Guidance?",
+      "text": "Choose your category and connect with experienced experts through secure online consultations."
+    }
+  }
+},
     "careers": {
       "label": "Careers",
       "title": "Build the Future of Online Expert Guidance",
@@ -570,145 +590,347 @@
       }
     },
     "privacy": {
-      "label": "Legal",
-      "title": "Privacy Policy",
-      "subtitle": "A clear overview of how G9 Experts handles user information, consultation data, payments, account activity, and platform security.",
-      "description": "Read the G9 Experts Privacy Policy covering personal data, account information, consultation privacy, payments, cookies, and user rights.",
-      "keywords": "G9 Experts privacy policy, data protection, consultation privacy, user data",
-      "badges": {
-        "transparentData": "Transparent data use",
-        "securePayments": "Secure payments",
-        "privateWorkflows": "Private consultation workflows"
-      },
-      "linksTitle": "Related Legal Pages",
-      "links": {
-        "terms": "Terms & Conditions",
-        "support": "Support Center",
-        "faq": "FAQ"
-      },
-      "sections": {
-        "information": {
-          "title": "Information We Collect",
-          "text": "",
-          "items": {
-            "accountDetails": {
-              "title": "Account details",
-              "text": "We may collect name, mobile number, email address, profile details, and login information."
-            },
-            "consultationActivity": {
-              "title": "Consultation activity",
-              "text": "We process consultation, booking, chat, call, wallet, and transaction information required to deliver services."
-            },
-            "deviceUsage": {
-              "title": "Device and usage data",
-              "text": "We may collect browser, device, page, and performance information to protect and improve the platform."
-            }
-          }
+  "label": "Legal",
+  "title": "Privacy Policy",
+  "subtitle": "Learn how G9 Experts collects, uses, stores, and protects your personal information while providing secure expert consultation services.",
+  "description": "Read the G9 Experts Privacy Policy covering personal information, consultation data, payments, cookies, permissions, and your privacy rights.",
+  "keywords": "G9 Experts privacy policy, user privacy, data protection, secure consultation, wallet privacy",
+  "badges": {
+    "transparentData": "Transparent Data Practices",
+    "securePayments": "Secure Payments",
+    "protectedPrivacy": "Protected Privacy"
+  },
+  "linksTitle": "Related Legal Pages",
+  "links": {
+    "terms": "Terms & Conditions",
+    "support": "Support Center",
+    "faq": "FAQ"
+  },
+  "sections": {
+    "collection": {
+      "title": "Information We Collect",
+      "text": "We collect only the information necessary to provide our services.",
+      "items": {
+        "account": {
+          "title": "Account Information",
+          "text": "Name, email address, mobile number, profile details, and login credentials."
         },
-        "use": {
-          "title": "How We Use Information",
-          "text": "",
-          "items": {
-            "serviceDelivery": {
-              "title": "Service delivery",
-              "text": "Information is used to connect users with experts, manage profiles, process wallet activity, and provide support."
-            },
-            "trustSafety": {
-              "title": "Trust and safety",
-              "text": "We use relevant data to prevent misuse, review support issues, maintain security, and improve reliability."
-            },
-            "communication": {
-              "title": "Communication",
-              "text": "We may send service updates, support messages, transaction notices, and important account information."
-            }
-          }
+        "consultation": {
+          "title": "Consultation Data",
+          "text": "Booking history, chat and call activity, wallet transactions, and service usage."
         },
-        "rights": {
-          "title": "Your Choices",
-          "text": "",
-          "items": {
-            "accountUpdates": {
-              "title": "Account updates",
-              "text": "Users can update account information through available profile settings or support."
-            },
-            "supportRequests": {
-              "title": "Support requests",
-              "text": "For privacy questions or correction requests, contact the support team."
-            }
-          }
+        "technical": {
+          "title": "Technical Information",
+          "text": "Device, browser, IP address, cookies, and usage analytics to improve platform security and performance."
         }
       }
     },
+
+    "usage": {
+      "title": "How We Use Your Information",
+      "text": "Your information is used only to operate and improve G9 Experts.",
+      "items": {
+        "services": {
+          "title": "Provide Services",
+          "text": "Create your account, connect you with experts, process bookings, and manage wallet payments."
+        },
+        "security": {
+          "title": "Security & Fraud Prevention",
+          "text": "Protect accounts, detect suspicious activity, and maintain platform safety."
+        },
+        "communication": {
+          "title": "Notifications",
+          "text": "Send OTPs, payment updates, booking reminders, and important account notifications."
+        }
+      }
+    },
+
+    "sharing": {
+      "title": "Information Sharing",
+      "text": "Your personal information is never sold.",
+      "items": {
+        "partners": {
+          "title": "Trusted Partners",
+          "text": "Information may be shared with payment gateways and service providers only when required to deliver services."
+        },
+        "legal": {
+          "title": "Legal Compliance",
+          "text": "Information may be disclosed if required by applicable law or government authorities."
+        }
+      }
+    },
+
+    "security": {
+      "title": "Data Protection",
+      "text": "We apply industry-standard security practices to protect your information.",
+      "items": {
+        "encryption": {
+          "title": "Secure Systems",
+          "text": "Encrypted communication, secure authentication, and protected servers help safeguard your data."
+        },
+        "retention": {
+          "title": "Data Retention",
+          "text": "Information is retained only as long as necessary for legal, security, and business purposes."
+        }
+      }
+    },
+
+    "rights": {
+      "title": "Your Privacy Rights",
+      "text": "You remain in control of your personal information.",
+      "items": {
+        "manage": {
+          "title": "Manage Your Account",
+          "text": "You may update or correct your profile information through your account or by contacting support."
+        },
+        "permissions": {
+          "title": "Permissions & Cookies",
+          "text": "You can manage cookies, notifications, location, microphone, and camera permissions through your device settings."
+        },
+        "contact": {
+          "title": "Contact Us",
+          "text": "If you have any privacy-related questions or requests, please contact our support team."
+        }
+      }
+    }
+  }
+},
     "terms": {
-      "label": "Legal",
-      "title": "Terms & Conditions",
-      "subtitle": "These terms explain the basic rules for using G9 Experts, connecting with professionals, paying through wallet flows, and using online services.",
-      "description": "Read G9 Experts Terms and Conditions for consultation usage, wallet payments, expert services, account responsibilities, and platform rules.",
-      "keywords": "G9 Experts terms, user terms, consultation terms, expert marketplace rules",
-      "badges": {
-        "userResponsibilities": "User responsibilities",
-        "marketplaceRules": "Expert marketplace rules",
-        "paymentClarity": "Payment clarity"
-      },
-      "linksTitle": "Related Pages",
-      "links": {
-        "privacy": "Privacy Policy",
-        "guidelines": "Expert Guidelines",
-        "support": "Support Center"
-      },
-      "sections": {
-        "usage": {
-          "title": "Platform Usage",
-          "text": "",
-          "items": {
-            "eligibility": {
-              "title": "Eligibility",
-              "text": "Users must provide accurate information and use G9 Experts only for lawful consultation and service purposes."
-            },
-            "expertGuidance": {
-              "title": "Expert guidance",
-              "text": "Experts provide professional guidance based on information shared by users. Users remain responsible for final decisions."
-            },
-            "accountSafety": {
-              "title": "Account safety",
-              "text": "Users are responsible for keeping login details secure and reporting suspicious activity."
-            }
-          }
+  "label": "Legal",
+  "title": "Terms & Conditions",
+  "subtitle": "Please read these Terms & Conditions carefully before using G9 Experts. By accessing or using the platform, you agree to comply with these terms.",
+  "description": "Read the G9 Experts Terms & Conditions covering platform usage, payments, consultation policies, user responsibilities, expert obligations, and account rules.",
+  "keywords": "G9 Experts terms, terms and conditions, consultation policy, wallet terms, user agreement",
+
+  "badges": {
+    "userResponsibilities": "User Responsibilities",
+    "marketplaceRules": "Marketplace Rules",
+    "paymentClarity": "Transparent Payments"
+  },
+
+  "sections": {
+    "usage": {
+      "title": "Platform Usage",
+      "text": "Using G9 Experts means you agree to follow these Terms while accessing any consultation or online service.",
+      "items": {
+        "eligibility": {
+          "title": "Eligibility",
+          "text": "Users should provide accurate information and meet the platform eligibility requirements before creating an account."
         },
-        "payments": {
-          "title": "Payments and Wallet",
-          "text": "",
-          "items": {
-            "walletBilling": {
-              "title": "Wallet billing",
-              "text": "Chat, call, and service payments may use wallet balances, per-minute charges, or displayed prices."
-            },
-            "rechargeTransactions": {
-              "title": "Recharge and transactions",
-              "text": "Users should review wallet balance, pricing, and transaction details before paid consultations."
-            },
-            "refundReview": {
-              "title": "Refund review",
-              "text": "Refund or dispute requests are reviewed according to service status, usage, payment records, and policies."
-            }
-          }
+        "account": {
+          "title": "Account Security",
+          "text": "You are responsible for maintaining the confidentiality of your login credentials and activities performed using your account."
         },
-        "conduct": {
-          "title": "Conduct and Restrictions",
-          "text": "",
-          "items": {
-            "respectfulCommunication": {
-              "title": "Respectful communication",
-              "text": "Users and experts must communicate professionally and avoid abusive, misleading, illegal, or harmful behavior."
-            },
-            "noMisuse": {
-              "title": "No misuse",
-              "text": "Do not bypass platform payments, misuse chat or call systems, scrape data, or disrupt service availability."
-            }
-          }
+        "expertPlatform": {
+          "title": "Platform Nature",
+          "text": "G9 Experts is a technology platform connecting users with independent experts and does not itself provide professional consultation."
         }
       }
     },
+
+    "payments": {
+      "title": "Payments & Wallet",
+      "text": "Consultation charges, wallet transactions, and supported payment methods are governed by these Terms.",
+      "items": {
+        "wallet": {
+          "title": "Wallet Usage",
+          "text": "Wallet balance may be used only for eligible services available on the platform."
+        },
+        "consultationFees": {
+          "title": "Consultation Charges",
+          "text": "Experts independently decide their consultation pricing and charges are displayed before starting a session."
+        },
+        "refunds": {
+          "title": "Refund Policy",
+          "text": "Refund requests are handled according to the applicable Refund & Cancellation Policy."
+        }
+      }
+    },
+
+    "conduct": {
+      "title": "Acceptable Conduct",
+      "text": "Users and experts must maintain respectful communication and comply with all applicable laws.",
+      "items": {
+        "respect": {
+          "title": "Respectful Behaviour",
+          "text": "Harassment, abusive language, threats, or offensive behaviour are strictly prohibited."
+        },
+        "misuse": {
+          "title": "No Platform Misuse",
+          "text": "Users must not attempt unauthorized access, fraud, spam, impersonation, or any activity that disrupts platform operations."
+        },
+        "content": {
+          "title": "User Content",
+          "text": "Uploaded content should be lawful, original, and must not violate intellectual property or community guidelines."
+        }
+      }
+    },
+
+    "liability": {
+      "title": "Liability & Disclaimer",
+      "text": "The platform facilitates consultations but does not guarantee consultation outcomes.",
+      "items": {
+        "platformRole": {
+          "title": "Platform Responsibility",
+          "text": "G9 Experts only provides the technology platform and communication infrastructure."
+        },
+        "expertResponsibility": {
+          "title": "Expert Responsibility",
+          "text": "Experts remain solely responsible for the advice, consultation, and services they provide."
+        },
+        "serviceAvailability": {
+          "title": "Service Availability",
+          "text": "Platform availability may occasionally be interrupted due to maintenance, technical issues, or circumstances beyond reasonable control."
+        }
+      }
+    },
+
+    "termination": {
+      "title": "Account Suspension & Updates",
+      "text": "Accounts violating these Terms may be suspended or terminated without prior notice where necessary.",
+      "items": {
+        "accountSuspension": {
+          "title": "Account Suspension",
+          "text": "Accounts involved in fraud, abuse, illegal activity, or policy violations may be restricted or permanently terminated."
+        },
+        "changes": {
+          "title": "Changes to Terms",
+          "text": "These Terms may be updated periodically. Continued use of the platform indicates acceptance of revised Terms."
+        },
+        "contact": {
+          "title": "Need Assistance?",
+          "text": "If you have questions regarding these Terms & Conditions, please contact our support team."
+        }
+      }
+    }
+  },
+
+  "linksTitle": "Related Legal Pages",
+
+  "links": {
+    "privacy": "Privacy Policy",
+    "guidelines": "Expert Guidelines",
+    "support": "Support Center"
+  }
+},
+"refundCancellation": {
+  "label": "Legal",
+  "title": "Refund & Cancellation Policy",
+  "subtitle": "Understand how refunds, cancellations, wallet credits, payment disputes, and failed transactions are handled on G9 Experts.",
+  "description": "Read the G9 Experts Refund & Cancellation Policy covering refund eligibility, cancellations, wallet refunds, payment failures, duplicate transactions, and customer support.",
+  "keywords": "refund policy, cancellation policy, wallet refund, Razorpay refund, G9 Experts",
+
+  "badges": {
+    "fairRefunds": "Fair Refund Policy",
+    "securePayments": "Secure Payments",
+    "transparentProcess": "Transparent Process"
+  },
+
+  "sections": {
+    "overview": {
+      "title": "Policy Overview",
+      "text": "This policy explains how G9 Experts handles cancellations, refunds, wallet credits, payment failures, and refund requests.",
+      "items": {
+        "policyPurpose": {
+          "title": "Purpose",
+          "text": "Our goal is to provide a fair, transparent, and legally compliant refund process for all users and experts."
+        },
+        "eligibility": {
+          "title": "Applicability",
+          "text": "This policy applies to website users, mobile app users, experts, wallet transactions, Razorpay payments, and future payment methods."
+        },
+        "paymentMethods": {
+          "title": "Payment Methods",
+          "text": "Payments may be made using UPI, Credit Card, Debit Card, Net Banking, Razorpay, or Wallet Balance."
+        }
+      }
+    },
+
+    "refunds": {
+      "title": "Refund Eligibility",
+      "text": "Refunds are reviewed individually based on the circumstances of each transaction.",
+      "items": {
+        "eligibleRefunds": {
+          "title": "Eligible Refunds",
+          "text": "Refunds may be approved for verified platform failures, duplicate payments, payment errors, or other approved situations."
+        },
+        "nonRefundable": {
+          "title": "Non-Refundable Cases",
+          "text": "Refunds are generally not available after consultations are completed, for opinion disagreements, or issues caused by user devices or internet."
+        },
+        "walletRefunds": {
+          "title": "Wallet Refunds",
+          "text": "Approved refunds may be credited to the original payment method or your G9 Experts Wallet, depending on the transaction."
+        }
+      }
+    },
+
+    "cancellations": {
+      "title": "Cancellation Policy",
+      "text": "Cancellation rules depend on when the consultation is cancelled.",
+      "items": {
+        "userCancellation": {
+          "title": "User Cancellation",
+          "text": "Users may cancel before the consultation begins, subject to the cancellation rules shown on the platform."
+        },
+        "expertCancellation": {
+          "title": "Expert Cancellation",
+          "text": "If an expert cancels a confirmed consultation, users may receive a refund or be offered another available expert."
+        },
+        "technicalFailure": {
+          "title": "Technical Issues",
+          "text": "Verified platform-related technical failures may qualify for refunds after review."
+        }
+      }
+    },
+
+    "process": {
+      "title": "Refund Process",
+      "text": "Every refund request is carefully reviewed before a decision is made.",
+      "items": {
+        "refundRequest": {
+          "title": "Request Submission",
+          "text": "Provide your registered details, transaction ID, consultation information, and supporting evidence when requesting a refund."
+        },
+        "reviewProcess": {
+          "title": "Review Process",
+          "text": "We review payment records, consultation logs, wallet history, technical reports, and other relevant information."
+        },
+        "timeline": {
+          "title": "Processing Time",
+          "text": "Approved refunds are generally initiated within 7 working days, depending on banking and payment provider timelines."
+        }
+      }
+    },
+
+    "important": {
+      "title": "Important Information",
+      "text": "Additional rules apply to payment disputes, duplicate transactions, and fraud prevention.",
+      "items": {
+        "duplicatePayments": {
+          "title": "Duplicate Payments",
+          "text": "Verified duplicate payments will be reviewed and excess amounts refunded."
+        },
+        "fraudProtection": {
+          "title": "Fraud Prevention",
+          "text": "Fraudulent refund requests, false claims, or payment abuse may lead to account restrictions or termination."
+        },
+        "contactSupport": {
+          "title": "Need Help?",
+          "text": "For refund-related questions or requests, please contact the G9 Experts Support Team."
+        }
+      }
+    }
+  },
+
+  "linksTitle": "Related Legal Pages",
+
+  "links": {
+    "privacy": "Privacy Policy",
+    "terms": "Terms & Conditions",
+    "support": "Support Center"
+  }
+},
     "findExperts": {
       "label": "For Customers",
       "title": "Find Verified Experts Online",

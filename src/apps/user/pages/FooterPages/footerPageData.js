@@ -48,10 +48,50 @@ export const footerPages = {
     legal: true,
     badgeIds: ["transparentData", "securePayments", "privateWorkflows"],
     sections: [
-      { id: "information", type: "legal", items: ["accountDetails", "consultationActivity", "deviceUsage"] },
-      { id: "use", type: "legal", items: ["serviceDelivery", "trustSafety", "communication"] },
-      { id: "rights", type: "legal", items: ["accountUpdates", "supportRequests"] },
+  {
+    id: "collection",
+    type: "legal",
+    items: [
+      "account",
+      "consultation",
+      "technical",
     ],
+  },
+  {
+    id: "usage",
+    type: "legal",
+    items: [
+      "services",
+      "security",
+      "communication",
+    ],
+  },
+  {
+    id: "sharing",
+    type: "legal",
+    items: [
+      "partners",
+      "legal",
+    ],
+  },
+  {
+    id: "security",
+    type: "legal",
+    items: [
+      "encryption",
+      "retention",
+    ],
+  },
+  {
+    id: "rights",
+    type: "legal",
+    items: [
+      "manage",
+      "permissions",
+      "contact",
+    ],
+  },
+],
     links: [
       { id: "terms", to: "/user/terms" },
       { id: "support", to: "/user/support" },
@@ -59,21 +99,147 @@ export const footerPages = {
     ],
   },
   terms: {
-    path: "/user/terms",
-    key: "terms",
-    legal: true,
-    badgeIds: ["userResponsibilities", "marketplaceRules", "paymentClarity"],
-    sections: [
-      { id: "usage", type: "legal", items: ["eligibility", "expertGuidance", "accountSafety"] },
-      { id: "payments", type: "legal", items: ["walletBilling", "rechargeTransactions", "refundReview"] },
-      { id: "conduct", type: "legal", items: ["respectfulCommunication", "noMisuse"] },
-    ],
-    links: [
-      { id: "privacy", to: "/user/privacy" },
-      { id: "guidelines", to: "/user/guidelines" },
-      { id: "support", to: "/user/support" },
-    ],
-  },
+  path: "/user/terms",
+  key: "terms",
+  legal: true,
+  badgeIds: [
+    "userResponsibilities",
+    "marketplaceRules",
+    "paymentClarity"
+  ],
+  sections: [
+    {
+      id: "usage",
+      type: "legal",
+      items: [
+        "eligibility",
+        "account",
+        "expertPlatform"
+      ]
+    },
+    {
+      id: "payments",
+      type: "legal",
+      items: [
+        "wallet",
+        "consultationFees",
+        "refunds"
+      ]
+    },
+    {
+      id: "conduct",
+      type: "legal",
+      items: [
+        "respect",
+        "misuse",
+        "content"
+      ]
+    },
+    {
+      id: "liability",
+      type: "legal",
+      items: [
+        "platformRole",
+        "expertResponsibility",
+        "serviceAvailability"
+      ]
+    },
+    {
+      id: "termination",
+      type: "legal",
+      items: [
+        "accountSuspension",
+        "changes",
+        "contact"
+      ]
+    }
+  ],
+  links: [
+    {
+      id: "privacy",
+      to: "/user/privacy"
+    },
+    {
+      id: "guidelines",
+      to: "/user/guidelines"
+    },
+    {
+      id: "support",
+      to: "/user/support"
+    }
+  ]
+},
+refundCancellation: {
+  path: "/user/refund-cancellation",
+  key: "refundCancellation",
+  legal: true,
+  badgeIds: [
+    "fairRefunds",
+    "securePayments",
+    "transparentProcess"
+  ],
+  sections: [
+    {
+      id: "overview",
+      type: "legal",
+      items: [
+        "policyPurpose",
+        "eligibility",
+        "paymentMethods"
+      ]
+    },
+    {
+      id: "refunds",
+      type: "legal",
+      items: [
+        "eligibleRefunds",
+        "nonRefundable",
+        "walletRefunds"
+      ]
+    },
+    {
+      id: "cancellations",
+      type: "legal",
+      items: [
+        "userCancellation",
+        "expertCancellation",
+        "technicalFailure"
+      ]
+    },
+    {
+      id: "process",
+      type: "legal",
+      items: [
+        "refundRequest",
+        "reviewProcess",
+        "timeline"
+      ]
+    },
+    {
+      id: "important",
+      type: "legal",
+      items: [
+        "duplicatePayments",
+        "fraudProtection",
+        "contactSupport"
+      ]
+    }
+  ],
+  links: [
+    {
+      id: "privacy",
+      to: "/user/privacy"
+    },
+    {
+      id: "terms",
+      to: "/user/terms"
+    },
+    {
+      id: "support",
+      to: "/user/support"
+    }
+  ]
+},
   findExperts: {
     path: "/user/find-experts",
     key: "findExperts",

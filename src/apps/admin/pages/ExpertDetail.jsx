@@ -312,6 +312,7 @@ const truncateText = (text, maxLength = 200) => {
     ["my_content_enabled", "Enable My Content"],
     ["profile_edit_enabled", "Enable Profile Edit"],
     ["public_profile_enabled", "Enable Public Profile"],
+    ["show_user_contact_in_expert_emails", "Show User Email/Phone in Expert Emails"],
   ];
 
   const profilePageAccessOptions = [

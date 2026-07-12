@@ -3,11 +3,24 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+ 
   "scripts": {
-     "dev": "vite --host",
-    "build": "vite build && node -e \"require('fs').copyFileSync('.htaccess', 'dist/.htaccess')\"",
-    "lint": "eslint .",
+    "dev": "vite",
+
+    "build": "vite build",
+
+    "build:user": "vite build --mode user",
+
+    "build:expert": "vite build --mode expert",
+
     "preview": "vite preview",
+
+    "android:user": "npm run build:user && npx cap copy android && cd android && gradlew.bat assembleUserRelease",
+
+    "android:expert": "npm run build:expert && npx cap copy android && cd android && gradlew.bat assembleExpertRelease",
+
+    "lint": "eslint .",
+
     "make:page": "node scripts/makePage.js",
     "make:layout": "node scripts/makeLayout.js",
     "make:component": "node scripts/makeComponent.js",
@@ -21,19 +34,22 @@
     ]
   },
   "dependencies": {
-    "@capacitor/android": "^8.3.4",
+    "@capacitor/android": "^8.4.1",
     "@capacitor/app": "^8.1.0",
-    "@capacitor/cli": "^7.6.5",
-    "@capacitor/core": "^8.3.4",
-    "@capacitor/ios": "^8.4.0",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "@capacitor/ios": "^8.4.1",
     "@capacitor/network": "^8.0.1",
     "@capacitor/push-notifications": "^8.1.1",
+    "@cashfreepayments/cashfree-js": "^1.0.7",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^9.0.1",
     "@mui/material": "^9.0.1",
     "@mui/x-date-pickers": "^9.5.0",
     "axios": "^1.15.0",
+    "cashfree-pg": "^6.0.4",
+    "cross-env": "^10.1.0",
     "date-fns": "^4.4.0",
     "firebase": "^12.7.0",
     "framer-motion": "^12.23.26",

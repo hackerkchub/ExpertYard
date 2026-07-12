@@ -1,0 +1,22 @@
+{
+  "environment": "production",
+
+  "api": {
+    "baseUrl": "https://softmaxs.com/api",
+    "socketUrl": "https://softmaxs.com/api"
+  },
+
+  "network": {
+    "requestTimeout": 30000
+  },
+
+  "payment": {
+    "provider": "cashfree"
+  },
+
+  "features": {
+    "chat": true,
+    "voiceCall": true,
+    "wallet": true
+  }
+}

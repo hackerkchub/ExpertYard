@@ -1,11 +1,11 @@
 const firebaseConfig = {
-  apiKey: "AIzaSyDSPw3lTarBu6X0rTqM8KLNVh7Av6XgKXI",
-  authDomain: "expert-yard-f2d19.firebaseapp.com",
-  projectId: "expert-yard-f2d19",
-  storageBucket: "expert-yard-f2d19.firebasestorage.app",
-  messagingSenderId: "172378612980",
-  appId: "1:172378612980:web:2550393e0c0e155d76aaa1",
-  measurementId: "G-2XTQD0S6XD",
+  apiKey: "AIzaSyBnPeTT5da1EnNrXy2wALYD1b5El7JnIOI",
+  authDomain: "g9expert-6d619.firebaseapp.com",
+  projectId: "g9expert-6d619",
+  storageBucket: "g9expert-6d619.firebasestorage.app",
+  messagingSenderId: "369913155001",
+  appId: "1:369913155001:web:95ff907949435fe276ba68",
+  measurementId: "G-NP82QBDJEJ"
 };
 
 let messagingClientPromise;

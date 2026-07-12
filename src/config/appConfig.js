@@ -10,9 +10,6 @@ const getApiBaseUrl = () => {
       hostname === "127.0.0.1" ||
       hostname === "0.0.0.0";
 
-    // Mobile/LAN testing:
-    // Frontend: http://10.47.91.234:5173
-    // Backend:  http://10.47.91.234:5000/api
     if (!isLocalhost) {
       return `${protocol}//${hostname}:${BACKEND_PORT}/api`;
     }
@@ -25,6 +22,13 @@ const getApiBaseUrl = () => {
 export const APP_CONFIG = {
   API_BASE_URL: getApiBaseUrl(),
   REQUEST_TIMEOUT: 30000,
-};
 
-console.log("API BASE URL:", APP_CONFIG.API_BASE_URL);
+  APP_TYPE: import.meta.env.VITE_APP_TYPE || "web",
+
+  APP_NAME: import.meta.env.VITE_APP_NAME || "G9Expert",
+
+  API_BASE_URL:
+    import.meta.env.VITE_API_BASE_URL || "https://softmaxs.com/api",
+
+  REQUEST_TIMEOUT: Number(import.meta.env.VITE_REQUEST_TIMEOUT || 30000),
+};

@@ -20,7 +20,8 @@ import {
   MobileNavItem,
   MobileNavIcon,
   MobileSectionTitle,
-  ProfileDropdownContainer 
+  ProfileDropdownContainer,
+  MobileMenuCloseBtn
 } from "../styles/Topbar.styles";
 
 import { 
@@ -35,7 +36,8 @@ import {
   FiLogOut, 
   FiUser, 
   FiShare2,
-  FiUsers
+  FiUsers,
+  FiX
 } from "react-icons/fi";
 import Logo from "../../../assets/logo.webp";
 import ProfileDropdown from "./ProfileDropdown";
@@ -270,6 +272,9 @@ export default function ExpertTopbar() {
         <MobileMenuHeader>
           <MobileMenuTitle>Expert Panel</MobileMenuTitle>
           <MobileMenuSubtitle>{user.name}</MobileMenuSubtitle>
+          <MobileMenuCloseBtn onClick={() => setMobileMenuOpen(false)} aria-label="Close menu">
+            <FiX />
+          </MobileMenuCloseBtn>
         </MobileMenuHeader>
 
         {/* Main Navigation */}

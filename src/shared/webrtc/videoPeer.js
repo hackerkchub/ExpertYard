@@ -1,5 +1,6 @@
 import { getTurnCredentialsApi } from "../api/webrtc.api";
 import { stopMediaStream } from "./mediaPermissions";
+import Swal from "sweetalert2";
 
 let pc = null;
 let localStream = null;
@@ -9,6 +10,9 @@ let callIdRef = null;
 let localVideoEl = null;
 let remoteVideoEl = null;
 let pendingIce = [];
+
+let interactionListenersAttached = false;
+const activeElementsToResume = new Set();
 
 const RTC_CONFIG = {
   iceTransportPolicy: "all",
@@ -34,13 +38,62 @@ const emit = (event, payload) => {
   return true;
 };
 
+const resumeAllMediaOnInteraction = () => {
+  console.log("[VIDEO_CALL_WEBRTC] User interaction detected, attempting to resume remote video play...");
+  for (const element of activeElementsToResume) {
+    if (element && element.paused) {
+      element.play?.().catch((err) => {
+        console.warn("[VIDEO_CALL_WEBRTC] Failed to play video on interaction:", err.message);
+      });
+    }
+  }
+  
+  // Cleanup listeners
+  document.removeEventListener("click", resumeAllMediaOnInteraction);
+  document.removeEventListener("touchstart", resumeAllMediaOnInteraction);
+  interactionListenersAttached = false;
+};
+
+const setupInteractionListener = (element) => {
+  if (!element) return;
+  activeElementsToResume.add(element);
+  
+  if (!interactionListenersAttached) {
+    document.addEventListener("click", resumeAllMediaOnInteraction, { passive: true });
+    document.addEventListener("touchstart", resumeAllMediaOnInteraction, { passive: true });
+    interactionListenersAttached = true;
+  }
+};
+
 const bindVideo = (element, stream, muted = false) => {
   if (!element || !stream) return;
-  if (element.srcObject !== stream) element.srcObject = stream;
+  
+  const currentStream = element.srcObject;
+  const hasTracksChanged = currentStream 
+    ? currentStream.getTracks().length !== stream.getTracks().length 
+    : true;
+    
+  if (currentStream !== stream || hasTracksChanged) {
+    console.log(`[VIDEO_CALL_WEBRTC] Binding stream to video element (muted=${muted}). Track count: ${stream.getTracks().length}`);
+    element.srcObject = stream;
+  }
+  
   element.autoplay = true;
   element.playsInline = true;
   element.muted = muted;
-  element.play?.().catch(() => {});
+  
+  // Attempt playback
+  element.play?.()
+    .then(() => {
+      console.log(`[VIDEO_CALL_WEBRTC] Playback started successfully (muted=${muted})`);
+    })
+    .catch((err) => {
+      console.warn(`[VIDEO_CALL_WEBRTC] Playback blocked or failed (muted=${muted}):`, err.message);
+      if (!muted) {
+        // If it's the remote unmuted video, setup interaction listener to resume
+        setupInteractionListener(element);
+      }
+    });
 };
 
 export const getLocalVideoStream = () => localStream;
@@ -85,14 +138,33 @@ export const createVideoPeer = async ({
 
   pc = new RTCPeerConnection({ ...RTC_CONFIG, iceServers: await getIceServers() });
 
-  localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+  // Add tracks
+  localStream.getTracks().forEach((track) => {
+    pc.addTrack(track, localStream);
+    console.log(`[VIDEO_CALL_WEBRTC] Added local track to peer connection: ${track.kind}`);
+  });
 
   pc.ontrack = (event) => {
-    event.streams?.[0]?.getTracks?.().forEach((track) => {
-      if (!remoteStream.getTracks().some((existing) => existing.id === track.id)) {
-        remoteStream.addTrack(track);
+    console.log("[VIDEO_CALL_WEBRTC] ontrack event received:", {
+      trackId: event.track?.id,
+      trackKind: event.track?.kind,
+      streamsCount: event.streams?.length || 0
+    });
+
+    const track = event.track;
+    const remoteMediaStream = (event.streams && event.streams[0]) || new MediaStream();
+    
+    if (remoteMediaStream.getTracks().length === 0) {
+      remoteMediaStream.addTrack(track);
+    }
+
+    remoteMediaStream.getTracks().forEach((t) => {
+      if (!remoteStream.getTracks().some((existing) => existing.id === t.id)) {
+        remoteStream.addTrack(t);
+        console.log(`[VIDEO_CALL_WEBRTC] Added remote track (${t.kind}) to remoteStream`);
       }
     });
+
     bindVideo(remoteVideoEl, remoteStream, false);
     onRemoteStream?.(remoteStream);
   };
@@ -112,6 +184,16 @@ export const createVideoPeer = async ({
     });
     onConnectionState?.(pc.connectionState);
     if (pc.connectionState === "failed") restartVideoIce();
+  };
+
+  pc.oniceconnectionstatechange = () => {
+    console.log("[VIDEO_CALL_WEBRTC_STATE]", {
+      callId: callIdRef,
+      event: "ice_connection_state",
+      state: pc?.iceConnectionState,
+      at: new Date().toISOString(),
+    });
+    if (pc?.iceConnectionState === "failed") restartVideoIce();
   };
 
   return pc;
@@ -135,18 +217,32 @@ export const setVideoRemoteDescription = async (description) => {
   if (!pc || !description) return false;
   await pc.setRemoteDescription(new RTCSessionDescription(description));
   while (pendingIce.length) {
-    await pc.addIceCandidate(pendingIce.shift()).catch(() => {});
+    const candidate = pendingIce.shift();
+    await pc.addIceCandidate(candidate).catch((err) => {
+      console.warn("[VIDEO_CALL_WEBRTC] Failed to add pending ICE candidate:", err);
+    });
   }
   return true;
 };
 
 export const addVideoIceCandidate = async (candidate) => {
   if (!candidate) return;
+
+  let iceCandidate = null;
+  try {
+    iceCandidate = new RTCIceCandidate(candidate);
+  } catch (err) {
+    console.warn("[VIDEO_CALL_WEBRTC] Failed to construct RTCIceCandidate:", err);
+    iceCandidate = candidate;
+  }
+
   if (!pc?.remoteDescription) {
-    pendingIce.push(candidate);
+    pendingIce.push(iceCandidate);
     return;
   }
-  await pc.addIceCandidate(candidate).catch(() => {});
+  await pc.addIceCandidate(iceCandidate).catch((err) => {
+    console.warn("[VIDEO_CALL_WEBRTC] Failed to add ICE candidate:", err);
+  });
 };
 
 export const toggleVideoMute = (muted) => {
@@ -193,11 +289,21 @@ export const closeVideoPeer = async (stopTracks = true) => {
       at: new Date().toISOString(),
     });
   }
+  
+  // Cleanup interaction listeners
+  if (interactionListenersAttached) {
+    document.removeEventListener("click", resumeAllMediaOnInteraction);
+    document.removeEventListener("touchstart", resumeAllMediaOnInteraction);
+    interactionListenersAttached = false;
+  }
+  activeElementsToResume.clear();
+
   pendingIce = [];
   if (pc) {
     pc.ontrack = null;
     pc.onicecandidate = null;
     pc.onconnectionstatechange = null;
+    pc.oniceconnectionstatechange = null;
     pc.getSenders?.().forEach((sender) => sender.replaceTrack?.(null).catch(() => {}));
     pc.close();
     pc = null;

@@ -82,6 +82,34 @@ export default function ExpertVoiceCall() {
     const normalizedCallId = Number(callId);
     const socket = useSocket(expertData?.expertId, "expert");
     
+    const [socketConnected, setSocketConnected] = useState(socket?.connected || false);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleConnect = () => {
+            console.log("🟢 ExpertVoiceCall: Socket connected");
+            setSocketConnected(true);
+        };
+
+        const handleDisconnect = () => {
+            console.log("🔴 ExpertVoiceCall: Socket disconnected");
+            setSocketConnected(false);
+        };
+
+        socket.on("connect", handleConnect);
+        socket.on("disconnect", handleDisconnect);
+
+        if (socket.connected) {
+            setSocketConnected(true);
+        }
+
+        return () => {
+            socket.off("connect", handleConnect);
+            socket.off("disconnect", handleDisconnect);
+        };
+    }, [socket]);
+    
     // Refs for stability
     const streamRef = useRef(null);
     const callIdRef = useRef(normalizedCallId);
@@ -139,7 +167,10 @@ export default function ExpertVoiceCall() {
     // ============================================================
     useEffect(() => {
         if (!nativeCall) return;
-        if (!socket?.connected) return;
+        if (!socketConnected) {
+            console.log("⏳ ExpertVoiceCall: Socket not connected yet, waiting to start native call...");
+            return;
+        }
         if (nativeStartedRef.current) return;
 
         nativeStartedRef.current = true;
@@ -192,26 +223,12 @@ export default function ExpertVoiceCall() {
                 }
 
                 // ============================================================
-                // STEP 2: Check if native already sent ACCEPT
+                // STEP 2: Send ACCEPT socket event to server
                 // ============================================================
-                const nativeAcceptSent = isNativeAcceptSent(callIdRef.current);
-                
-                if (!Capacitor.isNativePlatform()) {
-                    // Web platform - always send ACCEPT
-                    console.log("📤 Web platform - sending voice accept");
-                    socket.emit(CALL_EVENTS.ACCEPT, {
-                        callId: callIdRef.current
-                    });
-                } else if (nativeAcceptSent) {
-                    // Native platform - Android already sent ACCEPT
-                    console.log("✅ Android already sent voice accept - skipping socket emit");
-                } else {
-                    // Native platform - Android didn't send ACCEPT (shouldn't happen)
-                    console.log("📤 React sending voice accept (fallback)");
-                    socket.emit(CALL_EVENTS.ACCEPT, {
-                        callId: callIdRef.current
-                    });
-                }
+                console.log("📤 Sending voice accept socket event from React");
+                socket.emit(CALL_EVENTS.ACCEPT, {
+                    callId: callIdRef.current
+                });
 
                 // Release lock
                 setCallState("connecting");
@@ -239,7 +256,7 @@ export default function ExpertVoiceCall() {
         };
 
         startNativeCall();
-    }, [nativeCall, socket, location.state, navigate]);
+    }, [nativeCall, socket, socketConnected, location.state, navigate]);
 
     // Keep callState in sync with ref
     useEffect(() => {
@@ -293,6 +310,10 @@ export default function ExpertVoiceCall() {
         if (callState !== "connecting") return;
         if (nativeCall) return; // Native calls handled separately
         if (callStartedRef.current) return;
+        if (!socketConnected) {
+            console.log("⏳ ExpertVoiceCall (autoStart): Socket not connected yet, waiting...");
+            return;
+        }
 
         callStartedRef.current = true;
 
@@ -313,26 +334,12 @@ export default function ExpertVoiceCall() {
                 });
 
                 // ============================================================
-                // STEP 3: Check if native already sent ACCEPT (web flow)
+                // STEP 3: Send ACCEPT socket event to server (web flow)
                 // ============================================================
-                const nativeAcceptSent = isNativeAcceptSent(callIdRef.current);
-                
-                if (!Capacitor.isNativePlatform()) {
-                    // Web platform - always send ACCEPT
-                    console.log("📤 Web platform - sending voice accept");
-                    socket.emit(CALL_EVENTS.ACCEPT, {
-                        callId: callIdRef.current
-                    });
-                } else if (nativeAcceptSent) {
-                    // Native platform - Android already sent ACCEPT
-                    console.log("✅ Android already sent voice accept - skipping socket emit");
-                } else {
-                    // Native platform - Android didn't send ACCEPT
-                    console.log("📤 React sending voice accept (web flow fallback)");
-                    socket.emit(CALL_EVENTS.ACCEPT, {
-                        callId: callIdRef.current
-                    });
-                }
+                console.log("📤 Sending voice accept socket event from React (autoStart)");
+                socket.emit(CALL_EVENTS.ACCEPT, {
+                    callId: callIdRef.current
+                });
 
             } catch (err) {
                 console.error("❌ Auto mic failed", err);
@@ -349,7 +356,7 @@ export default function ExpertVoiceCall() {
         };
 
         autoStart();
-    }, [callState, socket, nativeCall]);
+    }, [callState, socket, socketConnected, nativeCall]);
 
     // ============================================================
     // All other event handlers remain the same
@@ -741,26 +748,12 @@ export default function ExpertVoiceCall() {
         }
 
         // ============================================================
-        // STEP 4: Check if native already sent ACCEPT (user accept)
+        // STEP 4: Send ACCEPT socket event to server (user accept)
         // ============================================================
-        const nativeAcceptSent = isNativeAcceptSent(callIdRef.current);
-        
-        if (!Capacitor.isNativePlatform()) {
-            // Web platform - always send ACCEPT
-            console.log("📤 Web platform - sending voice accept");
-            socket.emit(CALL_EVENTS.ACCEPT, {
-                callId: callIdRef.current
-            });
-        } else if (nativeAcceptSent) {
-            // Native platform - Android already sent ACCEPT
-            console.log("✅ Android already sent voice accept - skipping socket emit");
-        } else {
-            // Native platform - Android didn't send ACCEPT
-            console.log("📤 React sending voice accept (user accept fallback)");
-            socket.emit(CALL_EVENTS.ACCEPT, {
-                callId: callIdRef.current
-            });
-        }
+        console.log("📤 Sending voice accept socket event from React (acceptCall)");
+        socket.emit(CALL_EVENTS.ACCEPT, {
+            callId: callIdRef.current
+        });
     }, [socket]);
 
     // REJECT CALL

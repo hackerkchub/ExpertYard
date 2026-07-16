@@ -421,7 +421,7 @@ if (!currentStream) {
     };
 
     const onWebRTCAnswer = async ({ callId: answerCallId, answer, attemptId }) => {
-      if (answerCallId !== callIdRef.current) return;
+      if (Number(answerCallId) !== Number(callIdRef.current)) return;
 
       try {
         const applied = await setRemote(answer, attemptId);
@@ -432,7 +432,7 @@ if (!currentStream) {
     };
 
     const onWebRTCIce = ({ callId: iceCallId, candidate, attemptId }) => {
-      if (iceCallId !== callIdRef.current) return;
+      if (Number(iceCallId) !== Number(callIdRef.current)) return;
       addIce(candidate, attemptId);
     };
 

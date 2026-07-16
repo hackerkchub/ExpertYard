@@ -2,135 +2,214 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { APP_CONFIG } from "../../config/appConfig";
 
-// ✅ FIX: Use Set for duplicate protection
+// Constants
+const NATIVE_EVENT = "g9:nativeIncomingCall";
+
+// Lock for preventing duplicate navigation
 let openingCall = false;
 const processedCalls = new Set();
 
+/**
+ * useNativeIncomingCall - Clean Hook
+ * 
+ * Responsibilities:
+ * - Read window.G9.native.pendingCall
+ * - Navigate to call page
+ * - Prevent duplicate navigation
+ * 
+ * DOES NOT:
+ * - Emit socket accept
+ * - Modify acceptSent
+ * - Clear CallStore
+ */
 export default function useNativeIncomingCall() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Helper function for navigation
-        const openVoiceCall = (call) => {
-            const base =
-                APP_CONFIG.APP_TYPE === "expert"
-                    ? "/expert"
-                    : "/user";
-
-            navigate(
-                `${base}/voice-call/${call.callId}`,
-                {
-                    replace: true,
-                    state: {
-                        native: true,
-                        callerName: call.callerName,
-                        callType: call.callType,
-                        target: call.targetUrl,
-                        userId: call.userId,
-                        expertId: call.expertId,
-                    },
-                }
-            );
+        // ============================================================
+        // Get call data from Android
+        // ============================================================
+        const getCallData = () => {
+            const call = window.G9?.native?.pendingCall;
+            if (call) {
+                console.log("📦 Found call in G9.native.pendingCall");
+                return call;
+            }
+            return null;
         };
 
-        const openCall = () => {
-            // ✅ Prevent concurrent navigation
-            if (openingCall) {
-                console.log("⏳ Navigation already in progress, ignoring");
-                return;
-            }
+        // ============================================================
+        // Navigate to call page
+        // ============================================================
+        const openCallPage = (call) => {
+            const base = APP_CONFIG.APP_TYPE === "expert" ? "/expert" : "/user";
+            const callId = String(call.callId);
 
-            const call = window.__NATIVE_INCOMING_CALL__;
-
-            // ✅ STEP 1: Better validation - normalize callId to string
-            const callId = String(call?.callId ?? "").trim();
+            const isVideo = call.callType === "video" || 
+                           call.callType === "video_call" || 
+                           call.callType === "video-call";
             
-            if (!callId) {
-                console.log("❌ Invalid native call payload", call);
+            const route = isVideo 
+                ? `${base}/video-call/${callId}`
+                : `${base}/voice-call/${callId}`;
+
+            console.log(`📞 Opening ${isVideo ? 'video' : 'voice'} call page:`, route);
+
+            navigate(route, {
+                replace: true,
+                state: {
+                    native: true,
+                    ...call,
+                },
+            });
+        };
+
+        // ============================================================
+        // Main handler
+        // ============================================================
+        const handleIncomingCall = () => {
+            if (openingCall) {
+                console.log("⏳ Navigation already in progress");
                 return;
             }
 
-            // ✅ Normalize callId to string for consistency
+            const call = getCallData();
+            if (!call) {
+                console.log("❌ No pending call found");
+                return;
+            }
+
+            const callId = String(call.callId ?? "").trim();
+            if (!callId) {
+                console.log("❌ Invalid callId");
+                return;
+            }
+
             call.callId = callId;
 
-            // ✅ Duplicate protection with Set
             if (processedCalls.has(callId)) {
-                console.log("🔄 Duplicate native call ignored:", callId);
+                console.log("🔄 Duplicate call ignored:", callId);
                 return;
             }
 
-            // ✅ Mark as processed immediately
             processedCalls.add(callId);
             openingCall = true;
 
-            console.log("📞 Native Incoming Call", call);
-            console.log("📞 Call ID:", callId);
-            console.log("📞 Caller:", call.callerName);
-            console.log("📞 Type:", call.callType);
+            console.log("========================================");
+            console.log("📞 NATIVE INCOMING CALL");
+            console.log("========================================");
+            console.log("CallId      :", callId);
+            console.log("Caller      :", call.callerName || call.caller || "Unknown");
+            console.log("Type        :", call.callType || "voice");
+            console.log("acceptSent  :", call.acceptSent === true);
+            console.log("========================================");
 
-            // ✅ Navigate to voice call
-            openVoiceCall(call);
+            openCallPage(call);
 
-            // ✅ STEP 2: Android acknowledgement via localStorage
-            // Clear the global object to prevent duplicate processing
-            window.__NATIVE_INCOMING_CALL__ = null;
-            
-            // Store acknowledgment in localStorage for native bridge
-            localStorage.setItem("native_call_ack", callId);
-            console.log("📱 Native call acknowledged via localStorage:", callId);
-
-            // ✅ REMOVED: requestAnimationFrame unlock
-            // Lock will be released when VoiceCall page mounts
+            // Release lock after navigation
+            openingCall = false;
         };
 
-        // Listen for native incoming call events
-        window.addEventListener("nativeIncomingCall", openCall);
+        // ============================================================
+        // Listen for native event
+        // ============================================================
+        window.addEventListener(NATIVE_EVENT, handleIncomingCall);
+        console.log("👂 Listening for event:", NATIVE_EVENT);
 
-        // ✅ Cold start support - next frame for reliability
-        if (window.__NATIVE_INCOMING_CALL__) {
-            console.log("🔵 Cold start - processing pending call");
-            requestAnimationFrame(openCall);
-        }
+        // ============================================================
+        // Cold start - check immediately
+        // ============================================================
+        const coldStartCheck = () => {
+            const call = getCallData();
+            if (call) {
+                console.log("🔵 Cold start - processing pending call");
+                handleIncomingCall();
+            }
+        };
 
+        coldStartCheck();
+        const timeoutId = setTimeout(coldStartCheck, 200);
+
+        // ============================================================
+        // Cleanup
+        // ============================================================
         return () => {
-            window.removeEventListener("nativeIncomingCall", openCall);
+            window.removeEventListener(NATIVE_EVENT, handleIncomingCall);
+            clearTimeout(timeoutId);
+            console.log("🧹 Cleaned up native call listeners");
         };
 
     }, [navigate]);
 }
 
-// ✅ EXPORT: Helper to release lock when VoiceCall mounts
+// ============================================================
+// EXPORTED HELPERS
+// ============================================================
+
 export function releaseNativeCallLock() {
     openingCall = false;
     console.log("🔓 Native call lock released");
 }
 
-// ✅ FIX 1: Helper to remove processed call (prevents memory leak)
 export function removeProcessedNativeCall(callId) {
-    if (!callId) {
-        console.log("⚠️ Cannot remove call: No callId provided");
-        return;
-    }
-
+    if (!callId) return;
     const deleted = processedCalls.delete(callId);
-    
     if (deleted) {
         console.log("🗑️ Native call removed from memory:", callId);
-    } else {
-        console.log("ℹ️ Call not found in processed set:", callId);
     }
-    
-    // Also release lock if it was held
     if (openingCall) {
         openingCall = false;
-        console.log("🔓 Lock released during cleanup");
     }
 }
 
-// ✅ EXPORT: Helper to clear processed calls (for logout/cleanup)
 export function clearProcessedNativeCalls() {
     const count = processedCalls.size;
     processedCalls.clear();
     openingCall = false;
     console.log(`🧹 Processed native calls cleared (${count} entries removed)`);
+}
+
+export function clearNativeCallData() {
+    if (window.G9?.native) {
+        window.G9.native.pendingCall = null;
+        console.log("🧹 Cleared G9.native.pendingCall");
+    }
+}
+
+export function isNativeCallProcessed(callId) {
+    if (!callId) return false;
+    return processedCalls.has(callId);
+}
+
+export function isNativeAcceptSent(callId) {
+    const call = window.G9?.native?.pendingCall;
+    if (!call) return false;
+    return String(call.callId) === String(callId) && call.acceptSent === true;
+}
+
+export function getNativeCallState() {
+    const call = window.G9?.native?.pendingCall;
+    if (!call) return null;
+    return {
+        callId: call.callId,
+        callType: call.callType,
+        caller: call.callerName || call.caller || "Unknown",
+        acceptSent: call.acceptSent === true,
+        rejectSent: call.rejectSent === true,
+        missedSent: call.missedSent === true,
+        reactReady: call.reactReady === true,
+        createdAt: call.createdAt || null,
+    };
+}
+
+export function triggerNativeCallProcessing() {
+    console.log("🔧 Manual trigger");
+    const event = new CustomEvent(NATIVE_EVENT);
+    window.dispatchEvent(event);
+}
+
+export function hasPendingNativeCall() {
+    const call = window.G9?.native?.pendingCall;
+    if (!call) return false;
+    return String(call.callId ?? "").trim().length > 0;
 }

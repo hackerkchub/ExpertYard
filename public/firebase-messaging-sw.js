@@ -11,25 +11,26 @@ importScripts("https://storage.googleapis.com/workbox-cdn/releases/6.5.4/workbox
 self.__WB_DISABLE_DEV_LOGS = true;
 
 /* ================= IMMEDIATE ACTIVATION (CRITICAL) ================= */
-// ⚡ BOTH are required for instant updates
-workbox.core.skipWaiting();      // Forces waiting SW to activate
-workbox.core.clientsClaim();      // Takes control of all clients immediately
+workbox.core.skipWaiting();
+workbox.core.clientsClaim();
+
+// Automatically remove old Workbox precaches
+workbox.precaching.cleanupOutdatedCaches();
 
 /* ================= CACHE VERSIONING ================= */
 
 const IMAGE_CACHE = 'images-cache-v2';
 const API_CACHE = 'api-cache-v2';
 const STATIC_CACHE = 'static-cache-v2';
-const PRECACHE_VERSION = 'v2';  // ⚡ Increment on every deploy (v1 → v2 → v3)
+const PAGE_CACHE = 'page-cache-v2';
 
-/* ================= PRECACHING (NO DUPLICATION) ================= */
-// ⚡ Only cache index.html, not root (prevents duplicate cache entries)
-
+/* ================= PRECACHING (AUTO-REVISION) ================= */
+// ✅ No manual BUILD_ID needed - Workbox auto-generates revisions
+// ✅ Assets rarely change, and SW update triggers cache refresh
 workbox.precaching.precacheAndRoute([
-  { url: '/index.html', revision: PRECACHE_VERSION },
-  { url: '/logo-192.png', revision: PRECACHE_VERSION },
-  { url: '/logo-512.png', revision: PRECACHE_VERSION },
-  { url: '/manifest.json', revision: PRECACHE_VERSION },
+  { url: '/logo-192.png' },
+  { url: '/logo-512.png' },
+  { url: '/manifest.json' },
 ]);
 
 /* ================= FIREBASE INITIALIZATION ================= */
@@ -135,7 +136,7 @@ const buildNotificationOptions = (data = {}) => {
 
   return {
     body: data.body || "",
-    icon: "/logo-192.png",
+    icon: data.icon || "/logo-192.png",
     badge: "/logo-192.png",
     tag: getNotificationTag(data),
     data: {
@@ -222,17 +223,23 @@ self.addEventListener("notificationclick", (event) => {
 });
 
 /* ================= SMART CACHE CLEANUP ON ACTIVATE ================= */
-// ⚡ Never delete Workbox precache (regardless of version naming)
 
 self.addEventListener('activate', (event) => {
-  const keepCaches = [IMAGE_CACHE, API_CACHE, STATIC_CACHE];
+  const keepCaches = [
+    IMAGE_CACHE,
+    API_CACHE,
+    STATIC_CACHE,
+    PAGE_CACHE
+  ];
 
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
         keys.map((key) => {
-          // ⚡ CRITICAL: Keep ANY cache that includes 'workbox-precache'
-          if (!keepCaches.includes(key) && !key.includes('workbox-precache')) {
+          if (
+            !keepCaches.includes(key) &&
+            !key.startsWith('workbox-precache')
+          ) {
             console.log(`[SW] Deleting old cache: ${key}`);
             return caches.delete(key);
           }
@@ -261,15 +268,14 @@ workbox.routing.registerRoute(
   })
 );
 
-// ---------- API CALLS (NetworkFirst – ONLY /api/* endpoints) ----------
-// ⚡ Supports both same-origin AND custom domain
+// ---------- API CALLS (NetworkFirst) ----------
 workbox.routing.registerRoute(
   ({ url }) =>
     (url.origin === self.location.origin || url.hostname.includes("softmaxs.com")) &&
     url.pathname.startsWith("/api"),
   new workbox.strategies.NetworkFirst({
     cacheName: API_CACHE,
-    networkTimeoutSeconds: 5,  // ⚡ 5 seconds for weak networks
+    networkTimeoutSeconds: 5,
     plugins: [
       new workbox.expiration.ExpirationPlugin({
         maxEntries: 20,
@@ -282,10 +288,9 @@ workbox.routing.registerRoute(
   })
 );
 
-// ---------- STATIC FILES (JS, CSS, HTML) – exclude dev files ----------
+// ---------- STATIC FILES (JS, CSS) ----------
 workbox.routing.registerRoute(
   ({ request, url }) => {
-    // Ignore development files (Vite, source maps, etc.)
     if (
       url.pathname.startsWith('/src') ||
       url.pathname.startsWith('/@vite') ||
@@ -295,8 +300,7 @@ workbox.routing.registerRoute(
     }
     return (
       request.destination === 'script' ||
-      request.destination === 'style' ||
-      request.destination === 'document'
+      request.destination === 'style'
     );
   },
   new workbox.strategies.StaleWhileRevalidate({
@@ -310,39 +314,67 @@ workbox.routing.registerRoute(
   })
 );
 
-/* ================= NAVIGATION ROUTE FIX (REACT ROUTER) ================= */
-// ⚡ Whitelist navigation, exclude API & dev routes
-
+/* ================= NAVIGATION ROUTE (INDEX.HTML) ================= */
 workbox.routing.registerRoute(
-  new workbox.routing.NavigationRoute(
-    workbox.precaching.createHandlerBoundToURL('/index.html'),
-    {
-      denylist: [
-        /^\/api/,
-        /^\/_vite/,
-        /^\/src/,
-        /^\/node_modules/,
-        /.*\.(?:js|css|png|jpg|jpeg|svg)$/
-      ],
-    }
-  )
+  ({ request }) => request.mode === "navigate",
+  new workbox.strategies.NetworkFirst({
+    cacheName: PAGE_CACHE,
+    networkTimeoutSeconds: 3,
+    plugins: [
+      new workbox.cacheableResponse.CacheableResponsePlugin({
+        statuses: [200],
+      }),
+      new workbox.expiration.ExpirationPlugin({
+        maxEntries: 2,
+        maxAgeSeconds: 60 * 60, // 1 hour
+      }),
+    ],
+  })
 );
-/* ================= STRONG OFFLINE FALLBACKS ================= */
-// ⚡ Handles missing cache scenarios gracefully
+
+/* ================= OFFLINE FALLBACKS ================= */
 
 workbox.routing.setCatchHandler(async ({ event }) => {
-  // Fallback for images: try cache first, then use default
+  // Fallback for images
   if (event.request.destination === 'image') {
     const cachedFallback = await caches.match('/logo-192.png');
     return cachedFallback || Response.error();
   }
 
-  // Fallback for navigation requests: serve the app shell (index.html)
+  // Fallback for navigation
   if (event.request.mode === 'navigate') {
-    const cachedIndex = await caches.match('/index.html');
-    return cachedIndex || Response.error();
+    try {
+      const cachedIndex = await caches.match('/index.html');
+      if (cachedIndex) {
+        return cachedIndex;
+      }
+      
+      return new Response(
+        `<!DOCTYPE html>
+        <html>
+          <head><title>Offline</title></head>
+          <body>
+            <h1>You're Offline</h1>
+            <p>Please check your internet connection.</p>
+          </body>
+        </html>`,
+        {
+          status: 503,
+          headers: { 'Content-Type': 'text/html' }
+        }
+      );
+    } catch {
+      return Response.error();
+    }
   }
 
-  // For everything else, return a generic error
   return Response.error();
+});
+
+/* ================= SKIP WAITING MESSAGE HANDLER ================= */
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });

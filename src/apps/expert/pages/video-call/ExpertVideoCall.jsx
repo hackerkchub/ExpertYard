@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { Capacitor } from "@capacitor/core";
 import VideoCallRoom from "../../../../shared/components/VideoCallRoom";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { useSocket } from "../../../../shared/hooks/useSocket";
@@ -15,6 +16,14 @@ import {
   toggleVideoMute,
 } from "../../../../shared/webrtc/videoPeer";
 import { requestExpertVideoCallMedia, stopMediaStream } from "../../../../shared/webrtc/mediaPermissions";
+
+// Import native call helpers
+import {
+  releaseNativeCallLock,
+  removeProcessedNativeCall,
+  clearNativeCallData,
+  isNativeAcceptSent
+} from "../../../../shared/hooks/useNativeIncomingCall";
 
 const EVENTS = {
   ACCEPT: "video-call:accept",
@@ -34,6 +43,7 @@ const EVENTS = {
 export default function ExpertVideoCall() {
   const { callId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { expertData } = useExpert();
   const socket = useSocket(expertData?.expertId, "expert");
   const localVideoRef = useRef(null);
@@ -49,6 +59,8 @@ export default function ExpertVideoCall() {
   const callFailureEmittedRef = useRef(false);
   const cleanupDoneRef = useRef(false);
   const cleanupTimerRef = useRef(null);
+  const nativeCleanupDoneRef = useRef(false);
+  const reactReadyNotifiedRef = useRef(false);
 
   const [status, setStatus] = useState("Accepting call");
   const [seconds, setSeconds] = useState(0);
@@ -58,6 +70,31 @@ export default function ExpertVideoCall() {
   const [billing, setBilling] = useState({});
   const [retryNonce, setRetryNonce] = useState(0);
 
+  // ============================================================
+  // STEP 1: Notify NativeBridgeManager when page mounts
+  // ============================================================
+  useEffect(() => {
+    if (!callId) return;
+    if (reactReadyNotifiedRef.current) return;
+    
+    // Check if this is a native call
+    const nativeCall = location.state?.native;
+    
+    // Only notify if this is a native call
+    if (nativeCall && Capacitor.isNativePlatform()) {
+      console.log("📹 Notifying NativeBridgeManager - Video call mounted:", callId);
+      
+      // Call the native bridge to confirm React is ready
+      if (window.NativeBridgeManager?.onReactReadyForCall) {
+        window.NativeBridgeManager.onReactReadyForCall(callId);
+      } else {
+        console.log("ℹ️ NativeBridgeManager not available in window");
+      }
+      
+      reactReadyNotifiedRef.current = true;
+    }
+  }, [callId, location.state]);
+
   const getMediaFailureReason = useCallback((errorCode) => {
     if (errorCode === "NotReadableError" || errorCode === "TrackStartError") return "expert_media_not_readable";
     if (errorCode === "NotAllowedError" || errorCode === "PermissionDeniedError" || errorCode === "SecurityError") return "expert_media_permission_denied";
@@ -65,6 +102,17 @@ export default function ExpertVideoCall() {
     if (errorCode === "OverconstrainedError" || errorCode === "ConstraintNotSatisfiedError") return "expert_media_constraints_failed";
     return "expert_media_failed";
   }, []);
+
+  // Native cleanup helper
+  const cleanupNativeState = useCallback(() => {
+    if (nativeCleanupDoneRef.current) return;
+    nativeCleanupDoneRef.current = true;
+    
+    console.log("🧹 Cleaning native state for video call:", callId);
+    releaseNativeCallLock();
+    removeProcessedNativeCall(String(callId));
+    clearNativeCallData();
+  }, [callId]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -102,12 +150,17 @@ export default function ExpertVideoCall() {
         socket?.emit(EVENTS.END, { callId: Number(callId), reason: "expert_left" });
       }
       cleanupMedia();
+      cleanupNativeState();
     }, 300);
-  }, [callId, cleanupMedia, socket]);
+  }, [callId, cleanupMedia, cleanupNativeState, socket]);
 
+  // ============================================================
+  // Main effect: Handle media and accept logic
+  // ============================================================
   useEffect(() => {
     pageActiveRef.current = true;
     cleanupDoneRef.current = false;
+    nativeCleanupDoneRef.current = false;
     if (cleanupTimerRef.current) {
       clearTimeout(cleanupTimerRef.current);
       cleanupTimerRef.current = null;
@@ -136,7 +189,31 @@ export default function ExpertVideoCall() {
         }
         console.log("[VC_MEDIA_SUCCESS]", { callId: Number(callId), role: "expert", ok: true, at: new Date().toISOString() });
         console.log("[VIDEO_CALL_ACCEPT]", { callId: Number(callId), expertId: expertData?.expertId, at: new Date().toISOString() });
-        socket.emit(EVENTS.ACCEPT, { callId: Number(callId) });
+
+        // ============================================================
+        // STEP 2: Check if native already sent ACCEPT
+        // ============================================================
+        const nativeAcceptSent = isNativeAcceptSent(callId);
+        
+        if (!Capacitor.isNativePlatform()) {
+          // Web platform - always send ACCEPT
+          console.log("📤 Web platform - sending video accept");
+          socket.emit(EVENTS.ACCEPT, { 
+            callId: Number(callId) 
+          });
+        } else if (nativeAcceptSent) {
+          // Native platform - Android already sent ACCEPT
+          console.log("✅ Android already sent video accept - skipping socket emit");
+        } else {
+          // Native platform - Android didn't send ACCEPT (shouldn't happen)
+          console.log("📤 React sending video accept (fallback)");
+          socket.emit(EVENTS.ACCEPT, { 
+            callId: Number(callId) 
+          });
+        }
+
+        // Release lock
+        releaseNativeCallLock();
         return;
       }
 
@@ -154,6 +231,7 @@ export default function ExpertVideoCall() {
         });
         console.log("[VC_CALL_FAIL_EMIT]", { callId: Number(callId), reason: getMediaFailureReason(media.errorCode) });
         socket.emit(EVENTS.FAILED, { callId: Number(callId), reason: getMediaFailureReason(media.errorCode) });
+        cleanupNativeState();
       }
     })();
 
@@ -161,8 +239,12 @@ export default function ExpertVideoCall() {
       pageActiveRef.current = false;
       scheduleUnmountCleanup();
     };
-  }, [callId, expertData?.expertId, getMediaFailureReason, retryNonce, scheduleUnmountCleanup, socket]);
+  }, [callId, expertData?.expertId, getMediaFailureReason, retryNonce, scheduleUnmountCleanup, socket, cleanupNativeState]);
 
+  // ============================================================
+  // All other event handlers remain the same
+  // ============================================================
+  
   useEffect(() => {
     if (!socket) return undefined;
 
@@ -198,6 +280,7 @@ export default function ExpertVideoCall() {
           callFailureEmittedRef.current = true;
           endedRef.current = true;
           socket.emit(EVENTS.FAILED, { callId: Number(callId), reason: "expert_webrtc_init_failed" });
+          cleanupNativeState();
         }
       }
     };
@@ -212,6 +295,7 @@ export default function ExpertVideoCall() {
       setBilling((prev) => ({ ...prev, summary: payload.summary || prev.summary }));
       endedRef.current = true;
       await cleanupMedia();
+      cleanupNativeState();
       setTimeout(() => navigate("/expert/home", { replace: true }), 1800);
     };
 
@@ -220,6 +304,7 @@ export default function ExpertVideoCall() {
         setStatus("Call answered on another device");
         endedRef.current = true;
         await cleanupMedia();
+        cleanupNativeState();
         navigate("/expert/home", { replace: true });
       }
     };
@@ -247,7 +332,7 @@ export default function ExpertVideoCall() {
       socket.off(EVENTS.LOW_BALANCE);
       socket.off(EVENTS.BILLING_FINALIZED);
     };
-  }, [callId, cleanupMedia, navigate, socket]);
+  }, [callId, cleanupMedia, cleanupNativeState, navigate, socket]);
 
   useEffect(() => {
     return () => {
@@ -260,12 +345,14 @@ export default function ExpertVideoCall() {
     endedRef.current = true;
     socket?.emit(EVENTS.END, { callId: Number(callId), reason: "expert_ended" });
     cleanupMedia();
+    cleanupNativeState();
     navigate("/expert/home", { replace: true });
   };
 
   const retryPermission = async () => {
     await cleanupMedia();
     cleanupDoneRef.current = false;
+    nativeCleanupDoneRef.current = false;
     acceptedRef.current = false;
     endedRef.current = false;
     connectedRef.current = false;

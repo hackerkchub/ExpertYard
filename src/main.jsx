@@ -72,6 +72,43 @@ if (!isNativeApp && "serviceWorker" in navigator) {
       }
 
       await navigator.serviceWorker.ready;
+
+      // Force browser to check for new SW
+      await registration.update();
+
+      // Listen for new Service Worker
+      registration.addEventListener("updatefound", () => {
+        const newWorker = registration.installing;
+
+        if (!newWorker) return;
+
+        newWorker.addEventListener("statechange", () => {
+          if (
+            newWorker.state === "installed" &&
+            navigator.serviceWorker.controller
+          ) {
+            console.log("🆕 New Service Worker found");
+
+            newWorker.postMessage({
+              type: "SKIP_WAITING",
+            });
+          }
+        });
+      });
+
+      // Reload only once after new SW becomes active
+      let refreshing = false;
+
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (refreshing) return;
+
+        refreshing = true;
+
+        console.log("♻️ Service Worker updated. Reloading...");
+
+        window.location.reload();
+      });
+
     } catch (err) {
       console.error("Service worker registration failed:", err);
     }

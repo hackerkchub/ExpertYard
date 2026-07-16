@@ -41,6 +41,27 @@ public class IncomingCallActivity extends AppCompatActivity {
     private CountDownTimer countDownTimer;
     private static final long CALL_TIMEOUT = 30000;
 
+    // ✅ Change 1: Helper constants and methods
+    private static final String TYPE_VOICE = "voice_call";
+    private static final String TYPE_VIDEO = "video_call";
+
+    private boolean isVideoCall(String type) {
+        if (type == null) return false;
+
+        type = type.trim().toLowerCase();
+
+        return type.equals("video")
+                || type.equals("video_call")
+                || type.equals("video-call")
+                || type.equals("video consultation");
+    }
+
+    private String getCallTitle(String type) {
+        return isVideoCall(type)
+                ? "Incoming Video Consultation"
+                : "Incoming Audio Consultation";
+    }
+
     private String getInitials(String name) {
         if (name == null) return "?";
         name = name.trim();
@@ -70,7 +91,16 @@ public class IncomingCallActivity extends AppCompatActivity {
             intent.putExtra("call_type", getIntent().getStringExtra("call_type"));
             intent.putExtra("target_url", getIntent().getStringExtra("target_url"));
             sendBroadcast(intent);
-            Log.d(TAG, "✅ Broadcast sent: " + action + " for callId: " + callId);
+            
+            // ✅ Change 7: Enhanced broadcast logging
+            Log.d(TAG, "==============================");
+            Log.d(TAG, "Broadcast Action");
+            Log.d(TAG, "Action     : " + action);
+            Log.d(TAG, "CallId     : " + callId);
+            Log.d(TAG, "Caller     : " + getIntent().getStringExtra("caller_name"));
+            Log.d(TAG, "Call Type  : " + getIntent().getStringExtra("call_type"));
+            Log.d(TAG, "Target Url : " + getIntent().getStringExtra("target_url"));
+            Log.d(TAG, "==============================");
         } catch (Exception e) {
             Log.e(TAG, "❌ Failed to send broadcast: " + action, e);
         }
@@ -92,6 +122,12 @@ public class IncomingCallActivity extends AppCompatActivity {
 
             @Override
             public void onFinish() {
+                // ✅ Change 6: Timeout logging
+                Log.d(TAG, "==============================");
+                Log.d(TAG, "CALL TIMEOUT");
+                Log.d(TAG, "CallId : " + callId);
+                Log.d(TAG, "==============================");
+
                 CallRingtoneManager.stop();
                 
                 if (avatarText != null) {
@@ -149,7 +185,7 @@ public class IncomingCallActivity extends AppCompatActivity {
             return;
         }
 
-        // ✅ Change 1: Check for duplicate activity before setting state
+        // ✅ Change 1: Duplicate check (commented out as per original)
         // if (CallStateManager.isIncomingVisible(this, callId)) {
         //     Log.d(TAG, "Duplicate IncomingCallActivity detected for callId: " + callId);
         //     finish();
@@ -195,20 +231,38 @@ public class IncomingCallActivity extends AppCompatActivity {
         String caller = getIntent().getStringExtra("caller_name");
         callerName.setText(caller == null ? "Customer" : caller);
         avatarText.setText(getInitials(caller));
-        callerSubtitle.setText("Customer Calling");
 
+        // ✅ Change 2: Enhanced call type handling with logging
         String type = getIntent().getStringExtra("call_type");
-        if ("video".equalsIgnoreCase(type)) {
-            callType.setText("Incoming Video Consultation");
-        } else {
-            callType.setText("Incoming Audio Consultation");
-        }
 
+        Log.d(TAG, "==============================");
+        Log.d(TAG, "Incoming Call UI");
+        Log.d(TAG, "CallId     : " + callId);
+        Log.d(TAG, "Caller     : " + caller);
+        Log.d(TAG, "Raw Type   : " + type);
+        Log.d(TAG, "Is Video   : " + isVideoCall(type));
+        Log.d(TAG, "==============================");
+
+        callType.setText(getCallTitle(type));
+
+        callerSubtitle.setText(
+                isVideoCall(type)
+                        ? "Customer wants to start a video consultation"
+                        : "Customer wants to start an audio consultation"
+        );
+
+        // ✅ Change 3: Accept Button with logging
         btnAccept.setOnClickListener(v -> {
             if (!handled.compareAndSet(false, true)) {
                 Log.d(TAG, "Accept already handled");
                 return;
             }
+
+            Log.d(TAG, "==============================");
+            Log.d(TAG, "ACCEPT BUTTON CLICKED");
+            Log.d(TAG, "CallId : " + callId);
+            Log.d(TAG, "Type   : " + getIntent().getStringExtra("call_type"));
+            Log.d(TAG, "==============================");
 
             if (countDownTimer != null) {
                 countDownTimer.cancel();
@@ -239,18 +293,26 @@ public class IncomingCallActivity extends AppCompatActivity {
 
             sendAction(IncomingCallReceiver.ACTION_ACCEPT_CALL);
 
-            // ✅ Change 2: Increased delay to 300ms for reliable broadcast
+            Log.d(TAG, "Waiting Receiver...");
+
+            // Increased delay to 300ms for reliable broadcast
             btnAccept.postDelayed(() -> {
                 finish();
                 overridePendingTransition(0, 0);
             }, 300);
         });
 
+        // ✅ Change 5: Ignore Button with logging
         btnIgnore.setOnClickListener(v -> {
             if (!handled.compareAndSet(false, true)) {
                 Log.d(TAG, "Ignore already handled");
                 return;
             }
+
+            Log.d(TAG, "==============================");
+            Log.d(TAG, "IGNORE BUTTON CLICKED");
+            Log.d(TAG, "CallId : " + callId);
+            Log.d(TAG, "==============================");
 
             if (countDownTimer != null) {
                 countDownTimer.cancel();
@@ -258,7 +320,6 @@ public class IncomingCallActivity extends AppCompatActivity {
 
             CallRingtoneManager.stop();
 
-            // ✅ Change 4: Cancel notification and reset state
             CallNotificationHelper.cancelIncomingCallNotification(this, callId);
             CallStateManager.setIncomingVisible(this, false, null);
 
@@ -266,11 +327,18 @@ public class IncomingCallActivity extends AppCompatActivity {
             overridePendingTransition(0, 0);
         });
 
+        // ✅ Change 4: Reject Button with logging
         btnReject.setOnClickListener(v -> {
             if (!handled.compareAndSet(false, true)) {
                 Log.d(TAG, "Reject already handled");
                 return;
             }
+
+            Log.d(TAG, "==============================");
+            Log.d(TAG, "REJECT BUTTON CLICKED");
+            Log.d(TAG, "CallId : " + callId);
+            Log.d(TAG, "Type   : " + getIntent().getStringExtra("call_type"));
+            Log.d(TAG, "==============================");
 
             if (countDownTimer != null) {
                 countDownTimer.cancel();
@@ -295,7 +363,9 @@ public class IncomingCallActivity extends AppCompatActivity {
 
             sendAction(IncomingCallReceiver.ACTION_REJECT_CALL);
 
-            // ✅ Change 3: Increased delay to 300ms
+            Log.d(TAG, "Waiting Receiver...");
+
+            // Increased delay to 300ms
             btnReject.postDelayed(() -> {
                 finish();
                 overridePendingTransition(0, 0);
@@ -339,6 +409,10 @@ public class IncomingCallActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        // ✅ Change 8: Enhanced onDestroy logging
+        Log.d(TAG, "IncomingCallActivity Destroyed");
+        Log.d(TAG, "CallId : " + callId);
+
         if (avatarText != null) {
             avatarText.clearAnimation();
         }
@@ -351,7 +425,7 @@ public class IncomingCallActivity extends AppCompatActivity {
         super.onDestroy();
         handled.set(true);
         
-        // ✅ Change 5: Only stop ringtone, let Receiver handle state
+        // Only stop ringtone, let Receiver handle state
         if (isFinishing()) {
             CallRingtoneManager.stop();
             // State is handled by IncomingCallReceiver

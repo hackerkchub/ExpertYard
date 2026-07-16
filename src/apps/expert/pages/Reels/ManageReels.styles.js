@@ -47,6 +47,10 @@ export const ReelsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
+
+  @media (min-width: 1025px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
 `;
 
 export const ReelCard = styled.div`

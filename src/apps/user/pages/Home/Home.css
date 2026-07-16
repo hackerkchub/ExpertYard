@@ -222,10 +222,13 @@ body {
   padding: 24px 28px 44px;
 }
 
-.home-left-sidebar,
-.home-right-sidebar {
+.home-left-sidebar {
   position: sticky;
   top: 96px;
+}
+
+.home-right-sidebar {
+  position: relative;
 }
 
 .home-left-sidebar {

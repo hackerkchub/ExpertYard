@@ -10,6 +10,120 @@ import {
   StatusBadge,
 } from "../styles/Dashboard.styles";
 import { useNavigate } from "react-router-dom";
+import { Phone, MessageSquare, Video, Users, Mail, Calendar, ChevronRight } from "lucide-react";
+import styled from "styled-components";
+
+const MobileGrid = styled.div`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 16px;
+    background: #ffffff;
+    border-bottom: 1px solid #efefef;
+  }
+`;
+
+const MobileCard = styled.button`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: ${props => props.$active ? 'linear-gradient(135deg, #ffffff 0%, #f4f6ff 100%)' : '#ffffff'};
+  border: 1.5px solid ${props => props.$active ? '#000080' : '#e2e8f0'};
+  border-radius: 16px;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: ${props => props.$active ? '0 8px 20px rgba(0, 0, 128, 0.08)' : '0 2px 6px rgba(0, 0, 0, 0.02)'};
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+  
+  &:active {
+    transform: scale(0.97);
+    background: #f8fafc;
+  }
+  
+  &:focus-visible {
+    outline: 2px solid #000080;
+    outline-offset: 2px;
+  }
+`;
+
+const CardTopRow = styled.div`
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+`;
+
+const IconContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: ${props => props.$bg || 'rgba(0, 0, 128, 0.06)'};
+  color: ${props => props.$color || '#000080'};
+  transition: all 0.2s ease;
+`;
+
+const Badge = styled.span`
+  background: ${props => props.$active ? '#000080' : '#f1f5f9'};
+  color: ${props => props.$active ? '#ffffff' : '#475569'};
+  font-weight: 700;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  min-width: 18px;
+  text-align: center;
+  display: inline-block;
+`;
+
+const CardLabel = styled.span`
+  font-size: 14px;
+  font-weight: 600;
+  color: ${props => props.$active ? '#000080' : '#334155'};
+  line-height: 1.2;
+`;
+
+const CardSubLabel = styled.span`
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 4px;
+`;
+
+const PulsingDot = styled.span`
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  animation: pulse 1.2s infinite;
+
+  @keyframes pulse {
+    0% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+    70% {
+      transform: scale(1);
+      box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+    }
+    100% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+  }
+`;
 
 export default function QueueCard() {
   const [activeTab, setActiveTab] = useState("call");
@@ -174,6 +288,64 @@ export default function QueueCard() {
         ))}
       </QueueTabs>
 
+      <MobileGrid>
+        {queueTabs.map((tab) => {
+          const isActive = activeTab === tab.key;
+          const icon = tab.key === "call" ? <Phone size={18} /> : tab.key === "chat" ? <MessageSquare size={18} /> : <Video size={18} />;
+          const iconBg = tab.key === "call" ? "rgba(59, 130, 246, 0.1)" : tab.key === "chat" ? "rgba(249, 115, 22, 0.1)" : "rgba(168, 85, 247, 0.1)";
+          const iconColor = tab.key === "call" ? "#3b82f6" : tab.key === "chat" ? "#f97316" : "#a855f7";
+
+          return (
+            <MobileCard
+              key={tab.key}
+              $active={isActive}
+              onClick={() => setActiveTab(tab.key)}
+              type="button"
+            >
+              <CardTopRow>
+                <IconContainer $bg={iconBg} $color={iconColor}>
+                  {icon}
+                </IconContainer>
+                {tab.hasAlert ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <PulsingDot />
+                    <Badge $active={isActive}>{tab.count}</Badge>
+                  </div>
+                ) : (
+                  <Badge $active={isActive}>{tab.count}</Badge>
+                )}
+              </CardTopRow>
+              <CardLabel $active={isActive}>{tab.label}</CardLabel>
+              <CardSubLabel>Pending ({tab.count})</CardSubLabel>
+            </MobileCard>
+          );
+        })}
+
+        {linkTabs.map((tab) => {
+          const icon = tab.label === "Leads" ? <Users size={18} /> : tab.label === "Enquiry" ? <Mail size={18} /> : <Calendar size={18} />;
+          const iconBg = tab.label === "Leads" ? "rgba(16, 185, 129, 0.1)" : tab.label === "Enquiry" ? "rgba(20, 184, 166, 0.1)" : "rgba(236, 72, 153, 0.1)";
+          const iconColor = tab.label === "Leads" ? "#10b981" : tab.label === "Enquiry" ? "#14b8a6" : "#ec4899";
+
+          return (
+            <MobileCard
+              key={tab.path}
+              $active={false}
+              onClick={() => navigate(tab.path)}
+              type="button"
+            >
+              <CardTopRow>
+                <IconContainer $bg={iconBg} $color={iconColor}>
+                  {icon}
+                </IconContainer>
+                <ChevronRight size={16} color="#94a3b8" />
+              </CardTopRow>
+              <CardLabel $active={false}>{tab.label}</CardLabel>
+              <CardSubLabel>View details</CardSubLabel>
+            </MobileCard>
+          );
+        })}
+      </MobileGrid>
+
       <div ref={listRef} style={{ maxHeight: 400, overflowY: "auto" }}>
         {activeList.length === 0 ? (
           <div style={{ padding: 24, textAlign: "center", color: "#64748b" }}>
@@ -182,22 +354,25 @@ export default function QueueCard() {
         ) : (
           activeList.map((req) => (
             <QueueItem key={req.id} className={req.status || "pending"}>
-              <div>
-                <strong>{req.title}</strong>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1, minWidth: 0, width: "100%" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, flexWrap: "wrap" }}>
+                  <strong style={{ fontSize: "15px", fontWeight: "600", color: "#1e293b", wordBreak: "break-word" }}>
+                    {req.title}
+                  </strong>
+                  <StatusBadge style={{ background: getStatusColor(req.status), color: "#ffffff", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", padding: "2px 8px", borderRadius: "6px" }}>
+                    {req.status}
+                  </StatusBadge>
+                </div>
 
-                <StatusBadge style={{ background: getStatusColor(req.status) }}>
-                  {req.status}
-                </StatusBadge>
-
-                <div style={{ fontSize: 12, color: "#6b7280" }}>
+                <div style={{ fontSize: "12px", color: "#64748b", wordBreak: "break-word" }}>
                   {req.meta} -{" "}
-                  {req.status === "ringing"
-                    ? "Ringing..."
-                    : getTimeAgo(req.createdAt)}
+                  <span style={{ fontWeight: "500", color: req.status === "ringing" ? "#ef4444" : "#64748b" }}>
+                    {req.status === "ringing" ? "Ringing..." : getTimeAgo(req.createdAt)}
+                  </span>
                 </div>
               </div>
 
-              <div style={{ display: "flex", gap: 8 }}>
+              <div className="queue-item-actions">
                 {req.type === "chat_request" &&
                   (req.status === "pending" || req.status === "accepting") && (
                     <ActionBtn

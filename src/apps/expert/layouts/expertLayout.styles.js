@@ -8,7 +8,8 @@ export const LayoutWrapper = styled.div`
   display: flex;
   width: 100%;
   min-height: 100vh;
-  overflow: hidden; /* Main window scroll block taaki dashboard smooth scroll ho */
+  min-height: 100dvh;
+  overflow-x: hidden; /* Prevent horizontal scroll, allow native vertical window scroll */
   background:
     radial-gradient(circle at top left, rgba(63, 81, 181, 0.08), transparent 28%),
     linear-gradient(180deg, #f7f9fc 0%, #eef3f8 100%);
@@ -51,19 +52,19 @@ export const ContentWrapper = styled.main`
   margin-left: ${SIDEBAR_WIDTH};
   width: calc(100% - ${SIDEBAR_WIDTH});
   
-  height: calc(100vh - ${TOPBAR_HEIGHT}); 
+  /* Let content grow and scroll naturally at body/window level */
   min-height: calc(100vh - ${TOPBAR_HEIGHT});
+  min-height: calc(100dvh - ${TOPBAR_HEIGHT});
+  height: auto;
   
   padding: clamp(16px, 2.2vw, 28px);
   box-sizing: border-box;
   background: transparent;
   color: #1D2226;
   
-  /* Smooth scrolling behaviour */
-  overflow-y: auto;
+  /* Standard overflow behavior */
+  overflow-y: visible;
   overflow-x: hidden;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch; 
   
   transition: all 0.3s ease-in-out;
 
@@ -85,16 +86,18 @@ export const ContentWrapper = styled.main`
   /* --- MOBILE VIEW (Up to 768px) --- */
   @media (max-width: 768px) {
     margin-top: 64px; /* Matches Topbar height exactly */
-    height: calc(100vh - 64px);
+    height: auto;
     min-height: calc(100vh - 64px);
+    min-height: calc(100dvh - 64px);
     padding: 16px 14px 88px;
   }
 
   /* --- SMALL MOBILE (Up to 480px) --- */
   @media (max-width: 480px) {
     margin-top: 64px;
-    height: calc(100vh - 64px);
+    height: auto;
     min-height: calc(100vh - 64px);
+    min-height: calc(100dvh - 64px);
     padding: 12px 12px 84px;
   }
 
@@ -134,6 +137,12 @@ export const ContentWrapper = styled.main`
   scrollbar-width: none; /* Firefox */
 
   &.immersive-inquiry-layout {
+    height: calc(100vh - ${TOPBAR_HEIGHT});
+    height: calc(100dvh - ${TOPBAR_HEIGHT});
+    min-height: calc(100vh - ${TOPBAR_HEIGHT});
+    min-height: calc(100dvh - ${TOPBAR_HEIGHT});
+    overflow-y: hidden;
+
     @media (max-width: 991px) {
       margin-top: 0;
       margin-left: 0;

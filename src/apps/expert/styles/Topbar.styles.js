@@ -236,6 +236,38 @@ export const MobileMenuHeader = styled.div`
   border-bottom: 1px solid #f0f0f0;
   background: #f9fafb;
   flex: 0 0 auto;
+  position: relative;
+`;
+
+export const MobileMenuCloseBtn = styled.button`
+  position: absolute;
+  top: 18px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease-in-out;
+  -webkit-tap-highlight-color: transparent;
+  
+  &:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+  }
+  
+  &:active {
+    background-color: #e2e8f0;
+  }
+  
+  svg {
+    width: 20px;
+    height: 20px;
+  }
 `;
 
 export const MobileMenuTitle = styled.div`

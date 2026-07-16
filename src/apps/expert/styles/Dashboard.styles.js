@@ -167,15 +167,7 @@ export const QueueTabs = styled.div`
   }
 
   @media (max-width: 768px) {
-    flex-wrap: nowrap;
-    padding: 8px 10px 10px;
-
-    button {
-      flex: 0 0 auto;
-      min-width: 108px;
-      padding: 11px 12px;
-      font-size: 13px;
-    }
+    display: none !important;
   }
 `;
 
@@ -186,6 +178,7 @@ export const QueueItem = styled.div`
   padding: 16px 20px;
   border-bottom: 1px solid #efefef;
   transition: background 0.2s;
+  gap: 16px;
 
   &:hover { background: #fafafa; }
   &:last-child { border-bottom: none; }
@@ -196,11 +189,21 @@ export const QueueItem = styled.div`
     text-decoration: line-through;
   }
 
-  @media (max-width: 480px) {
-    padding: 12px;
-    flex-direction: column; /* Mobile par stack ho jayega */
-    align-items: flex-start;
-    gap: 10px;
+  @media (max-width: 768px) {
+    padding: 14px 16px;
+    flex-direction: column; /* Stack on mobile screen widths <= 768px */
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .queue-item-actions {
+    display: flex;
+    gap: 8px;
+
+    @media (max-width: 768px) {
+      width: 100%;
+      justify-content: stretch;
+    }
   }
 `;
 
@@ -224,8 +227,9 @@ export const ActionBtn = styled.button`
     opacity: 0.7;
   }
 
-  @media (max-width: 480px) {
-    width: 100%; /* Mobile par full width */
+  @media (max-width: 768px) {
+    width: 100%; /* Expand to full width on mobile screens <= 768px */
+    flex: 1;
     text-align: center;
   }
 `;

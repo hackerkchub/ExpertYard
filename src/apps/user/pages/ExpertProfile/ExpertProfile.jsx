@@ -1802,6 +1802,7 @@ const ExpertProfilePage = () => {
           </main>
         </div>
 
+        {!isInquiryModalOpen && (
         <div className="mobile-profile-actions">
           {showProfileChatButton && (
           <button type="button" className="mobile-message-btn" disabled={!canShowUserChatButton} title={!canShowUserChatButton ? chatDisabledReason : "Start chat consultation"} aria-label="Start chat consultation" onClick={() => handleStart("chat")}>
@@ -1824,6 +1825,7 @@ const ExpertProfilePage = () => {
           </button>
           )}
         </div>
+        )}
 
         {/* Subscription Plans Modal */}
         {showPlansModal && (

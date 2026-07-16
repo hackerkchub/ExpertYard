@@ -30,6 +30,8 @@ const Overlay = styled.div`
   @media (max-width: 768px) {
     align-items: flex-end;
     padding: 0;
+    min-height: 100dvh;
+    z-index: 30000;
   }
 `;
 
@@ -46,8 +48,10 @@ const ModalContent = styled.div`
   max-height: 90vh;
 
   @media (max-width: 768px) {
-    max-height: 85vh;
+    height: min(92dvh, 760px);
+    max-height: 92dvh;
     border-radius: 24px 24px 0 0;
+    width: 100%;
   }
 `;
 
@@ -58,6 +62,11 @@ const Header = styled.div`
   align-items: center;
   justify-content: space-between;
   background: #f8fafc;
+  flex: 0 0 auto;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
 `;
 
 const Title = styled.h3`
@@ -89,9 +98,12 @@ const ScrollArea = styled.div`
   padding: 24px;
   overflow-y: auto;
   flex: 1;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
 
   @media (max-width: 768px) {
     padding: 20px 16px;
+    overscroll-behavior: contain;
   }
 `;
 
@@ -215,12 +227,32 @@ const Footer = styled.div`
   padding: 16px 24px;
   border-top: 1px solid #f1f5f9;
   display: flex;
+  flex-direction: column;
   gap: 12px;
-  justify-content: flex-end;
   background: #f8fafc;
+  flex: 0 0 auto;
 
   @media (max-width: 768px) {
     padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    box-shadow: 0 -12px 24px rgba(15, 23, 42, 0.08);
+  }
+`;
+
+const FooterActions = styled.div`
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+
+  @media (max-width: 768px) {
+    width: 100%;
+
+    button {
+      flex: 1;
+      justify-content: center;
+    }
   }
 `;
 
@@ -268,6 +300,11 @@ const ErrorMsg = styled.div`
   border-radius: 8px;
   font-size: 0.875rem;
   margin-bottom: 16px;
+`;
+
+const FooterErrorMsg = styled(ErrorMsg)`
+  margin: 0;
+  text-align: left;
 `;
 
 const SuccessOverlay = styled.div`
@@ -360,6 +397,20 @@ export default function InquiryModal({ isOpen, onClose, expert }) {
       }));
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    const previousTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.touchAction = previousTouchAction;
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -487,7 +538,7 @@ export default function InquiryModal({ isOpen, onClose, expert }) {
               </SubmitBtn>
             </SuccessOverlay>
           ) : (
-            <Form onSubmit={handleSubmit}>
+            <Form id="inquiry-form" onSubmit={handleSubmit}>
               <FormGroup>
                 <Label>Expert</Label>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px", background: "#f8fafc", borderRadius: "10px" }}>
@@ -630,11 +681,14 @@ export default function InquiryModal({ isOpen, onClose, expert }) {
 
         {isLoggedIn && !success && (
           <Footer>
-            <CancelBtn onClick={onClose}>Cancel</CancelBtn>
-            <SubmitBtn onClick={handleSubmit} disabled={loading}>
-              <FiSend size={14} />
-              {loading ? "Sending..." : "Send Inquiry"}
-            </SubmitBtn>
+            {error && <FooterErrorMsg role="alert">{error}</FooterErrorMsg>}
+            <FooterActions>
+              <CancelBtn type="button" onClick={onClose}>Cancel</CancelBtn>
+              <SubmitBtn type="submit" form="inquiry-form" disabled={loading}>
+                <FiSend size={14} />
+                {loading ? "Sending..." : "Send Inquiry"}
+              </SubmitBtn>
+            </FooterActions>
           </Footer>
         )}
       </ModalContent>

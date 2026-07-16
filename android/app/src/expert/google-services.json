@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "369913155001",
-    "project_id": "g9expert-6d619",
-    "storage_bucket": "g9expert-6d619.firebasestorage.app"
+    "project_number": "769544907226",
+    "project_id": "g9expert-852f3",
+    "storage_bucket": "g9expert-852f3.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:369913155001:android:964f353e44b0a58e76ba68",
+        "mobilesdk_app_id": "1:769544907226:android:131d515caff6ab1834b8e3",
         "android_client_info": {
-          "package_name": "com.g9expert.app"
+          "package_name": "com.g9expert.expert"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBn-MoVJE1FuUfnFrjunHiVye5apyHkOx4"
+          "current_key": "AIzaSyCg2OJGD_JqaNEMXLI1WzLCiUdoIDaNrcs"
         }
       ],
       "services": {
@@ -26,15 +26,15 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:369913155001:android:362bb0f6e9ce89c276ba68",
+        "mobilesdk_app_id": "1:769544907226:android:56692f60cc0a485234b8e3",
         "android_client_info": {
-          "package_name": "com.g9expert.expert"
+          "package_name": "com.g9expert.user"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBn-MoVJE1FuUfnFrjunHiVye5apyHkOx4"
+          "current_key": "AIzaSyCg2OJGD_JqaNEMXLI1WzLCiUdoIDaNrcs"
         }
       ],
       "services": {

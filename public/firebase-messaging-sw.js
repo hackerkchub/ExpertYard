@@ -36,12 +36,12 @@ workbox.precaching.precacheAndRoute([
 /* ================= FIREBASE INITIALIZATION ================= */
 
 firebase.initializeApp({
-  apiKey: "AIzaSyBnPeTT5da1EnNrXy2wALYD1b5El7JnIOI",
-  authDomain: "g9expert-6d619.firebaseapp.com",
-  projectId: "g9expert-6d619",
-  storageBucket: "g9expert-6d619.firebasestorage.app",
-  messagingSenderId: "369913155001",
-  appId: "1:369913155001:web:95ff907949435fe276ba68"
+  apiKey: "AIzaSyAeA1BsApn__fDctrvmmzloJqYrNvyBf3Y",
+  authDomain: "g9expert-852f3.firebaseapp.com",
+  projectId: "g9expert-852f3",
+  storageBucket: "g9expert-852f3.firebasestorage.app",
+  messagingSenderId: "769544907226",
+  appId: "1:769544907226:web:8913137a1827d58d34b8e3"
 });
 
 const messaging = firebase.messaging();

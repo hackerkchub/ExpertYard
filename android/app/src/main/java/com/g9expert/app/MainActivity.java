@@ -200,6 +200,22 @@ public class MainActivity extends BridgeActivity {
                    ", CallId: " + NativeBridgeManager.getPendingCallId() +
                    ", DispatchId: " + NativeBridgeManager.getDispatchId();
         }
+
+        /**
+         * Open Android system app settings for permission management
+         */
+        @JavascriptInterface
+        public void openAppSettings() {
+            Log.d(TAG, "📞 openAppSettings called from JS bridge");
+            try {
+                Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                intent.setData(android.net.Uri.parse("package:" + getPackageName()));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            } catch (Exception e) {
+                Log.e(TAG, "❌ Failed to open app settings from bridge", e);
+            }
+        }
     }
 
     /*

@@ -1,3 +1,5 @@
+import Swal from "sweetalert2";
+
 const AUDIO_CONSTRAINTS = {
   echoCancellation: true,
   noiseSuppression: true,
@@ -11,6 +13,63 @@ const PRIMARY_CONSTRAINTS = {
     width: { ideal: 640 },
     height: { ideal: 480 },
   },
+};
+
+export const ensureMediaPermissions = async ({ video = true, audio = true } = {}) => {
+  if (!isSecureMediaContext()) {
+    const error = new Error("Camera and microphone require HTTPS.");
+    error.name = "INSECURE_CONTEXT";
+    throw error;
+  }
+  if (!isMediaDevicesSupported()) {
+    const error = new Error("MediaDevices API is unavailable.");
+    error.name = "MEDIA_UNSUPPORTED";
+    throw error;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: audio ? AUDIO_CONSTRAINTS : false,
+      video: video ? PRIMARY_CONSTRAINTS.video : false,
+    });
+    stream.getTracks().forEach((track) => track.stop());
+    return true;
+  } catch (error) {
+    console.error("[ensureMediaPermissions] Pre-flight check failed:", error);
+    const name = error?.name || error?.code || "";
+    
+    if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+      const mediaName = video && audio ? "Camera and Microphone" : (video ? "Camera" : "Microphone");
+      const result = await Swal.fire({
+        title: "Permission Required",
+        text: `${mediaName} permission is required for calls. Please grant it in your app settings.`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#000080",
+        confirmButtonText: "Open Settings",
+        cancelButtonText: "Cancel"
+      });
+
+      if (result.isConfirmed) {
+        if (window.NativeBridgeManager && typeof window.NativeBridgeManager.openAppSettings === "function") {
+          window.NativeBridgeManager.openAppSettings();
+        } else {
+          Swal.fire({
+            title: "How to Enable?",
+            text: "Click the lock icon next to the URL bar and ensure Camera and Microphone are allowed.",
+            icon: "info"
+          });
+        }
+      }
+    } else {
+      Swal.fire({
+        title: "Media Error",
+        text: getMediaPermissionErrorMessage(error),
+        icon: "error"
+      });
+    }
+    return false;
+  }
 };
 
 const FALLBACK_CONSTRAINTS = {
@@ -315,6 +374,12 @@ export const requestVideoCallMedia = async (options = {}) => {
     });
 
     try {
+      const hasPermission = await ensureMediaPermissions({ video: true, audio: true });
+      if (!hasPermission) {
+        const error = new Error("Camera or microphone permission was denied.");
+        error.name = "NotAllowedError";
+        return makeErrorResult({ error, role, callId });
+      }
       const stream = await requestWithRetry({ callId, role });
       return validateStream({ stream, role, callId });
     } catch (error) {

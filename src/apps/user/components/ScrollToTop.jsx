@@ -8,11 +8,6 @@ const ScrollToTop = () => {
     window.scrollTo(0, 0);
   }, [pathname]);
 
-  window.scrollTo({
-  top: 0,
-  behavior: "smooth"
-});
-
   return null;
 };
 

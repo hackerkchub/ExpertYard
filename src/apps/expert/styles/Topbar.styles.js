@@ -6,20 +6,21 @@ export const TopbarWrap = styled.div`
   top: 0;
   left: 0;
   right: 0;
-  height: 70px;
+  height: calc(70px + env(safe-area-inset-top, 0px));
   background: rgba(255, 255, 255, 0.92);
   border-bottom: 1px solid #d8e0eb;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: env(safe-area-inset-top, 0px) 24px 0;
+  box-sizing: border-box;
   z-index: 2000;
   backdrop-filter: blur(18px);
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
 
   @media (max-width: 768px) {
-    height: 64px;
-    padding: 0 16px;
+    height: calc(64px + env(safe-area-inset-top, 0px));
+    padding: env(safe-area-inset-top, 0px) 16px 0;
   }
 `;
 
@@ -232,7 +233,7 @@ export const MobileMenu = styled.div`
 
 /* ✅ MISSING EXPORTS ADDED HERE */
 export const MobileMenuHeader = styled.div`
-  padding: 22px 20px 18px;
+  padding: calc(22px + env(safe-area-inset-top, 0px)) 20px 18px;
   border-bottom: 1px solid #f0f0f0;
   background: #f9fafb;
   flex: 0 0 auto;
@@ -241,7 +242,7 @@ export const MobileMenuHeader = styled.div`
 
 export const MobileMenuCloseBtn = styled.button`
   position: absolute;
-  top: 18px;
+  top: calc(18px + env(safe-area-inset-top, 0px));
   right: 16px;
   background: none;
   border: none;

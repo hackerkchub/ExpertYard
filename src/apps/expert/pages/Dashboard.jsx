@@ -101,11 +101,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      <StatsRow>
-        {stats.map((stat, index) => (
-          <StatsCard key={index} label={stat.label} value={stat.value} />
-        ))}
-      </StatsRow>
+
 
       {isLimited && (
         <StatsRow>

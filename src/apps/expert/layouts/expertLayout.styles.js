@@ -48,13 +48,13 @@ export const ContentWrapper = styled.main`
   flex-direction: column;
   
   /* Sidebar width ke hisaab se automatic margin aur width handle hogi */
-  margin-top: ${TOPBAR_HEIGHT};
+  margin-top: calc(${TOPBAR_HEIGHT} + env(safe-area-inset-top, 0px));
   margin-left: ${SIDEBAR_WIDTH};
   width: calc(100% - ${SIDEBAR_WIDTH});
   
   /* Let content grow and scroll naturally at body/window level */
-  min-height: calc(100vh - ${TOPBAR_HEIGHT});
-  min-height: calc(100dvh - ${TOPBAR_HEIGHT});
+  min-height: calc(100vh - (${TOPBAR_HEIGHT} + env(safe-area-inset-top, 0px)));
+  min-height: calc(100dvh - (${TOPBAR_HEIGHT} + env(safe-area-inset-top, 0px)));
   height: auto;
   
   padding: clamp(16px, 2.2vw, 28px);
@@ -80,25 +80,25 @@ export const ContentWrapper = styled.main`
   @media (max-width: 991px) {
     margin-left: 0; /* Sidebar niche overlay ya drawer me shift hoga */
     width: 100%;
-    padding: 18px 16px 88px;
+    padding: 18px 16px calc(88px + env(safe-area-inset-bottom, 0px));
   }
 
   /* --- MOBILE VIEW (Up to 768px) --- */
   @media (max-width: 768px) {
-    margin-top: 64px; /* Matches Topbar height exactly */
+    margin-top: calc(64px + env(safe-area-inset-top, 0px));
     height: auto;
-    min-height: calc(100vh - 64px);
-    min-height: calc(100dvh - 64px);
-    padding: 16px 14px 88px;
+    min-height: calc(100vh - (64px + env(safe-area-inset-top, 0px)));
+    min-height: calc(100dvh - (64px + env(safe-area-inset-top, 0px)));
+    padding: 16px 14px calc(88px + env(safe-area-inset-bottom, 0px));
   }
 
   /* --- SMALL MOBILE (Up to 480px) --- */
   @media (max-width: 480px) {
-    margin-top: 64px;
+    margin-top: calc(64px + env(safe-area-inset-top, 0px));
     height: auto;
-    min-height: calc(100vh - 64px);
-    min-height: calc(100dvh - 64px);
-    padding: 12px 12px 84px;
+    min-height: calc(100vh - (64px + env(safe-area-inset-top, 0px)));
+    min-height: calc(100dvh - (64px + env(safe-area-inset-top, 0px)));
+    padding: 12px 12px calc(84px + env(safe-area-inset-bottom, 0px));
   }
 
   /* Content inside children constraint */
@@ -137,10 +137,10 @@ export const ContentWrapper = styled.main`
   scrollbar-width: none; /* Firefox */
 
   &.immersive-inquiry-layout {
-    height: calc(100vh - ${TOPBAR_HEIGHT});
-    height: calc(100dvh - ${TOPBAR_HEIGHT});
-    min-height: calc(100vh - ${TOPBAR_HEIGHT});
-    min-height: calc(100dvh - ${TOPBAR_HEIGHT});
+    height: calc(100vh - (${TOPBAR_HEIGHT} + env(safe-area-inset-top, 0px)));
+    height: calc(100dvh - (${TOPBAR_HEIGHT} + env(safe-area-inset-top, 0px)));
+    min-height: calc(100vh - (${TOPBAR_HEIGHT} + env(safe-area-inset-top, 0px)));
+    min-height: calc(100dvh - (${TOPBAR_HEIGHT} + env(safe-area-inset-top, 0px)));
     overflow-y: hidden;
 
     @media (max-width: 991px) {
@@ -151,7 +151,7 @@ export const ContentWrapper = styled.main`
       height: 100dvh;
       min-height: 100vh;
       min-height: 100dvh;
-      padding: 0;
+      padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
     }
 
     @media (max-width: 768px) {
@@ -160,7 +160,7 @@ export const ContentWrapper = styled.main`
       height: 100dvh;
       min-height: 100vh;
       min-height: 100dvh;
-      padding: 0;
+      padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
     }
 
     @media (max-width: 480px) {
@@ -169,7 +169,7 @@ export const ContentWrapper = styled.main`
       height: 100dvh;
       min-height: 100vh;
       min-height: 100dvh;
-      padding: 0;
+      padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
     }
   }
 `;

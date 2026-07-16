@@ -26,11 +26,13 @@ export const ReelsPageGlobalStyle = createGlobalStyle`
 export const Container = styled.div`
   width: 100%;
   max-width: 100vw;
-  --reels-mobile-bottom-nav: 68px;
+  --reels-mobile-bottom-nav: 72px;
   --reels-mobile-safe-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--reels-mobile-bottom-nav));
   --reels-mobile-safe-top: env(safe-area-inset-top, 0px);
-  height: calc(100svh - var(--reels-header-offset, 56px));
-  min-height: calc(100svh - var(--reels-header-offset, 56px));
+  --reels-header-offset: 70px;
+  --reels-bottom-offset: 0px;
+  height: calc(100svh - var(--reels-header-offset) - var(--reels-bottom-offset));
+  min-height: calc(100svh - var(--reels-header-offset) - var(--reels-bottom-offset));
   background:
     radial-gradient(circle at 16% 0%, rgba(0, 61, 145, 0.28), transparent 32vw),
     linear-gradient(135deg, #05070f 0%, #09090b 52%, #07111f 100%);
@@ -44,13 +46,17 @@ export const Container = styled.div`
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   @media (max-width: 767px) {
-    --reels-header-offset: 0px;
-    height: calc(100dvh - var(--reels-header-offset, 0px));
-    min-height: calc(100dvh - var(--reels-header-offset, 0px));
+    --reels-header-offset: calc(64px + env(safe-area-inset-top, 0px));
+    --reels-bottom-offset: calc(72px + env(safe-area-inset-bottom, 0px));
+    height: calc(100dvh - var(--reels-header-offset) - var(--reels-bottom-offset));
+    min-height: calc(100dvh - var(--reels-header-offset) - var(--reels-bottom-offset));
   }
 
   @media (min-width: 768px) {
-    --reels-header-offset: 76px;
+    --reels-header-offset: calc(70px + env(safe-area-inset-top, 0px));
+    --reels-bottom-offset: 0px;
+    height: calc(100dvh - var(--reels-header-offset) - var(--reels-bottom-offset));
+    min-height: calc(100dvh - var(--reels-header-offset) - var(--reels-bottom-offset));
   }
 `;
 
@@ -252,21 +258,21 @@ export const MobileOverlayContent = styled.div`
   flex-direction: column;
   gap: 8px;
   max-width: min(74%, calc(100vw - 104px));
-  margin-bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+  margin-bottom: 82px;
 
   @media (max-width: 767px) {
-    margin-bottom: calc(var(--reels-mobile-safe-bottom) + 70px);
+    margin-bottom: 70px;
   }
 
   @media (max-width: 360px) {
     gap: 7px;
     max-width: calc(100vw - 98px);
-    margin-bottom: calc(var(--reels-mobile-safe-bottom) + 64px);
+    margin-bottom: 64px;
   }
 
   @media (min-width: 768px) and (max-width: 991px) {
     max-width: calc(100% - 118px);
-    margin-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    margin-bottom: 88px;
   }
 `;
 
@@ -469,7 +475,7 @@ export const SectionDivider = styled.hr`
 export const ActionColumn = styled.div`
   position: absolute;
   right: 12px;
-  bottom: calc(102px + env(safe-area-inset-bottom, 0px));
+  bottom: 102px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -482,17 +488,17 @@ export const ActionColumn = styled.div`
 
   @media (max-width: 360px) {
     right: 8px;
-    bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    bottom: 96px;
     gap: 10px;
   }
 
   @media (max-width: 767px) {
-    bottom: calc(var(--reels-mobile-safe-bottom) + 82px);
+    bottom: 82px;
   }
 
   @media (min-width: 768px) and (max-width: 991px) {
     right: 14px;
-    bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+    bottom: 112px;
   }
 
   @media (min-width: 992px) {
@@ -771,14 +777,14 @@ export const CtaRow = styled.div`
   position: absolute;
   left: 12px;
   right: 68px;
-  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  bottom: 14px;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
   z-index: 10;
 
   @media (max-width: 767px) {
-    bottom: calc(var(--reels-mobile-safe-bottom) + 12px);
+    bottom: 12px;
     left: 12px;
     right: 68px;
   }
@@ -786,7 +792,7 @@ export const CtaRow = styled.div`
   @media (min-width: 768px) and (max-width: 991px) {
     left: 24px;
     right: 92px;
-    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    bottom: 20px;
     gap: 10px;
   }
 

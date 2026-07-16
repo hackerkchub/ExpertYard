@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 import { CALL_EVENTS } from "../../../../shared/constants/call.constants";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { useSocket } from "../../../../shared/hooks/useSocket";
-import { useLocation } from "react-router-dom";
+import { ensureMediaPermissions } from "../../../../shared/webrtc/mediaPermissions";
 
 // Import native call helpers
 import {
@@ -148,6 +148,10 @@ export default function ExpertVoiceCall() {
             try {
                 // Get stream if not already available
                 if (!streamRef.current) {
+                    const hasPermission = await ensureMediaPermissions({ video: false, audio: true });
+                    if (!hasPermission) {
+                        throw new Error("MIC_PERMISSION_DENIED");
+                    }
                     streamRef.current = await navigator.mediaDevices.getUserMedia({
                         audio: {
                             echoCancellation: true,
@@ -294,6 +298,10 @@ export default function ExpertVoiceCall() {
 
         const autoStart = async () => {
             try {
+                const hasPermission = await ensureMediaPermissions({ video: false, audio: true });
+                if (!hasPermission) {
+                    throw new Error("MIC_PERMISSION_DENIED");
+                }
                 streamRef.current = await navigator.mediaDevices.getUserMedia({
                     audio: {
                         echoCancellation: true,
@@ -328,6 +336,15 @@ export default function ExpertVoiceCall() {
 
             } catch (err) {
                 console.error("❌ Auto mic failed", err);
+                if (socket && socket.connected) {
+                    socket.emit(CALL_EVENTS.REJECT, {
+                        callId: callIdRef.current,
+                        reason: "MIC_PERMISSION_DENIED"
+                    });
+                }
+                cleanupMedia(true);
+                setCallState("ended");
+                navigate("/expert/home", { replace: true });
             }
         };
 

@@ -8,6 +8,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -15,20 +16,16 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.view.View;
 
-import com.g9expert.app.CallRingtoneManager;
-import com.g9expert.app.call.CallStore;
-
 import androidx.appcompat.app.AppCompatActivity;
 
-import org.json.JSONObject;
-
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class IncomingCallActivity extends AppCompatActivity {
     private static final String TAG = "IncomingCall";
-    private boolean handled = false;
+    
+    private final AtomicBoolean handled = new AtomicBoolean(false);
 
-    // Step 1: Declare views
     private TextView logoText;
     private TextView avatarText;
     private TextView callerName;
@@ -37,8 +34,10 @@ public class IncomingCallActivity extends AppCompatActivity {
     private ImageButton btnAccept;
     private ImageButton btnReject;
     private TextView countdownText;
+    private ImageButton btnIgnore;
 
-    // Step 2: Timer variables
+    private String callId;
+
     private CountDownTimer countDownTimer;
     private static final long CALL_TIMEOUT = 30000;
 
@@ -59,15 +58,24 @@ public class IncomingCallActivity extends AppCompatActivity {
     private void disableButtons() {
         btnAccept.setEnabled(false);
         btnReject.setEnabled(false);
+        btnIgnore.setEnabled(false);
     }
 
-    // ✅ 2. Keep for future reconnect
-    private void enableButtons() {
-        btnAccept.setEnabled(true);
-        btnReject.setEnabled(true);
+    private void sendAction(String action) {
+        try {
+            Intent intent = new Intent(this, IncomingCallReceiver.class);
+            intent.setAction(action);
+            intent.putExtra("call_id", callId);
+            intent.putExtra("caller_name", getIntent().getStringExtra("caller_name"));
+            intent.putExtra("call_type", getIntent().getStringExtra("call_type"));
+            intent.putExtra("target_url", getIntent().getStringExtra("target_url"));
+            sendBroadcast(intent);
+            Log.d(TAG, "✅ Broadcast sent: " + action + " for callId: " + callId);
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Failed to send broadcast: " + action, e);
+        }
     }
 
-    // Step 5: Countdown timer method
     private void startCountdown() {
         countDownTimer = new CountDownTimer(CALL_TIMEOUT, 1000) {
             @Override
@@ -85,34 +93,23 @@ public class IncomingCallActivity extends AppCompatActivity {
             @Override
             public void onFinish() {
                 CallRingtoneManager.stop();
-
-                // Clear avatar animation on timeout
+                
                 if (avatarText != null) {
                     avatarText.clearAnimation();
                 }
 
-                CallStore.clear(IncomingCallActivity.this);
+                sendAction(IncomingCallReceiver.ACTION_TIMEOUT_CALL);
 
-                // ✅ 1. Use helper instead of direct manager.cancel()
-                CallNotificationHelper.cancelIncomingCallNotification(
-                        IncomingCallActivity.this,
-                        getIntent().getStringExtra("call_id")
-                );
-
-                // ✅ 2. Show Missed Call Notification
-                String callerNameText = callerName != null ? callerName.getText().toString() : "Someone";
-                CallNotificationHelper.showMissedCall(IncomingCallActivity.this, callerNameText);
-
-                // ✅ 4. Use finish() instead of finishAffinity()
-                finish();
-                overridePendingTransition(0, 0);
+                countdownText.postDelayed(() -> {
+                    finish();
+                    overridePendingTransition(0, 0);
+                }, 100);
             }
         };
 
         countDownTimer.start();
     }
 
-    // ✅ 6. Avatar pulse animation with null check
     private void startAvatarAnimation() {
         if (avatarText == null) return;
 
@@ -120,7 +117,6 @@ public class IncomingCallActivity extends AppCompatActivity {
         avatarText.startAnimation(pulse);
     }
 
-    // ✅ 5. Card entry animation with null check
     private void animateCard() {
         View card = findViewById(R.id.card);
         if (card == null) return;
@@ -139,18 +135,33 @@ public class IncomingCallActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.e("G9_ACTIVITY", "IncomingCallActivity CREATED");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_incoming_call);
 
-        // ✅ 5. Validate callId before anything else
-        String callId = getIntent().getStringExtra("call_id");
+        Log.d(TAG, "🚀 IncomingCallActivity onCreate STARTED");
+
+        callId = getIntent().getStringExtra("call_id");
         if (callId == null || callId.trim().isEmpty()) {
             Log.e(TAG, "Invalid callId. Finishing activity.");
+            CallStateManager.setIncomingVisible(this, false, null);
             finish();
             return;
         }
 
-        CallRingtoneManager.start(this);
+        // ✅ Change 1: Check for duplicate activity before setting state
+        // if (CallStateManager.isIncomingVisible(this, callId)) {
+        //     Log.d(TAG, "Duplicate IncomingCallActivity detected for callId: " + callId);
+        //     finish();
+        //     return;
+        // }
+
+        // Set state after duplicate check
+        // CallStateManager.setIncomingVisible(this, true, callId);
+
+        if (!CallRingtoneManager.isPlaying()) {
+            CallRingtoneManager.start(this);
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true);
@@ -169,7 +180,6 @@ public class IncomingCallActivity extends AppCompatActivity {
             );
         }
 
-        // Step 2: Initialize views
         logoText = findViewById(R.id.logoText);
         avatarText = findViewById(R.id.avatarText);
         callerName = findViewById(R.id.callerName);
@@ -177,9 +187,11 @@ public class IncomingCallActivity extends AppCompatActivity {
         callType = findViewById(R.id.callType);
         btnAccept = findViewById(R.id.btnAccept);
         btnReject = findViewById(R.id.btnReject);
+        btnIgnore = findViewById(R.id.btnIgnore);
         countdownText = findViewById(R.id.countdownText);
 
-        // Step 3: Bind caller data
+        countdownText.setVisibility(View.GONE);
+
         String caller = getIntent().getStringExtra("caller_name");
         callerName.setText(caller == null ? "Customer" : caller);
         avatarText.setText(getInitials(caller));
@@ -192,26 +204,23 @@ public class IncomingCallActivity extends AppCompatActivity {
             callType.setText("Incoming Audio Consultation");
         }
 
-        // Accept button
         btnAccept.setOnClickListener(v -> {
-            if (handled) return;
-            handled = true;
+            if (!handled.compareAndSet(false, true)) {
+                Log.d(TAG, "Accept already handled");
+                return;
+            }
 
-            // Step 7: Cancel timer on accept
             if (countDownTimer != null) {
                 countDownTimer.cancel();
             }
 
-            // Step 4: UI Updates on Accept
             disableButtons();
             
-            // Clear avatar animation on accept
             if (avatarText != null) {
                 avatarText.clearAnimation();
             }
             btnAccept.clearAnimation();
             
-            // Step 12: Accept button animation (tactile feel)
             btnAccept.animate()
                     .scaleX(0.85f)
                     .scaleY(0.85f)
@@ -228,71 +237,52 @@ public class IncomingCallActivity extends AppCompatActivity {
 
             CallRingtoneManager.stop();
 
-            // ✅ 1. Use helper instead of direct manager.cancel()
-            CallNotificationHelper.cancelIncomingCallNotification(
-                    this,
-                    getIntent().getStringExtra("call_id")
-            );
+            sendAction(IncomingCallReceiver.ACTION_ACCEPT_CALL);
 
-            boolean saved = false;
-
-            try {
-                JSONObject call = new JSONObject();
-                call.put("callId", getIntent().getStringExtra("call_id"));
-                call.put("callerName", getIntent().getStringExtra("caller_name"));
-                call.put("callType", getIntent().getStringExtra("call_type"));
-                call.put("targetUrl", getIntent().getStringExtra("target_url"));
-                call.put("userId", getIntent().getStringExtra("user_id"));
-                call.put("expertId", getIntent().getStringExtra("expert_id"));
-
-                CallStore.save(this, call);
-                saved = true;
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to save call", e);
-            }
-
-            if (saved) {
-                Intent launch = new Intent(IncomingCallActivity.this, MainActivity.class);
-                launch.putExtra("native_accept", true);
-                launch.addFlags(
-                        Intent.FLAG_ACTIVITY_NEW_TASK
-                                | Intent.FLAG_ACTIVITY_CLEAR_TOP
-                                | Intent.FLAG_ACTIVITY_SINGLE_TOP
-                );
-
-                startActivity(launch);
-                // ✅ 4. Use finish() instead of finishAffinity()
+            // ✅ Change 2: Increased delay to 300ms for reliable broadcast
+            btnAccept.postDelayed(() -> {
                 finish();
                 overridePendingTransition(0, 0);
-            } else {
-                // Save failed, close the activity
-                CallRingtoneManager.stop();
-                // ✅ 4. Use finish() instead of finishAffinity()
-                finish();
-                overridePendingTransition(0, 0);
-            }
+            }, 300);
         });
 
-        // Reject button
-        btnReject.setOnClickListener(v -> {
-            if (handled) return;
-            handled = true;
+        btnIgnore.setOnClickListener(v -> {
+            if (!handled.compareAndSet(false, true)) {
+                Log.d(TAG, "Ignore already handled");
+                return;
+            }
 
-            // Step 7: Cancel timer on reject
             if (countDownTimer != null) {
                 countDownTimer.cancel();
             }
 
-            // Step 5: UI Updates on Reject
+            CallRingtoneManager.stop();
+
+            // ✅ Change 4: Cancel notification and reset state
+            CallNotificationHelper.cancelIncomingCallNotification(this, callId);
+            CallStateManager.setIncomingVisible(this, false, null);
+
+            finish();
+            overridePendingTransition(0, 0);
+        });
+
+        btnReject.setOnClickListener(v -> {
+            if (!handled.compareAndSet(false, true)) {
+                Log.d(TAG, "Reject already handled");
+                return;
+            }
+
+            if (countDownTimer != null) {
+                countDownTimer.cancel();
+            }
+
             disableButtons();
             
-            // Clear avatar animation on reject
             if (avatarText != null) {
                 avatarText.clearAnimation();
             }
             btnReject.clearAnimation();
             
-            // Step 13: Reject button animation (shrink + fade)
             btnReject.animate()
                     .alpha(0.5f)
                     .scaleX(0.9f)
@@ -303,44 +293,35 @@ public class IncomingCallActivity extends AppCompatActivity {
 
             CallRingtoneManager.stop();
 
-            // ✅ 1. Use helper instead of direct manager.cancel()
-            CallNotificationHelper.cancelIncomingCallNotification(
-                    this,
-                    getIntent().getStringExtra("call_id")
-            );
+            sendAction(IncomingCallReceiver.ACTION_REJECT_CALL);
 
-            // Clear stored call data on reject
-            CallStore.clear(this);
-
-            // TODO: Send reject to backend via socket
-            // SocketManager.rejectCall(callId)
-            
-            // ✅ 4. Use finish() instead of finishAffinity()
-            finish();
-            overridePendingTransition(0, 0);
+            // ✅ Change 3: Increased delay to 300ms
+            btnReject.postDelayed(() -> {
+                finish();
+                overridePendingTransition(0, 0);
+            }, 300);
         });
 
-        // Step 6: Start countdown
         startCountdown();
-
-        // Step 4: Start avatar pulse animation (after countdown)
         startAvatarAnimation();
-
-        // Step 14: Animate card entry
         animateCard();
     }
 
-    // ✅ 7. Prevent resume of stale call
-    // @Override
-    // protected void onResume() {
-    //     super.onResume();
-        
-    //     // Check if call still exists in CallStore
-    //     if (!CallStore.hasPendingCall(this)) {
-    //         Log.d(TAG, "No pending call found, finishing activity");
-    //         finish();
-    //     }
-    // }
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_UP
+                || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+
+            if (!CallRingtoneManager.isMuted()) {
+                CallRingtoneManager.mute();
+                Log.d(TAG, "Ringtone muted");
+            }
+
+            return true;
+        }
+
+        return super.onKeyDown(keyCode, event);
+    }
 
     @Override
     public void onBackPressed() {
@@ -348,22 +329,32 @@ public class IncomingCallActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        
-        // ✅ 6. Set handled flag
-        handled = true;
-        
-        // Cancel timer
-        if (countDownTimer != null) {
-            countDownTimer.cancel();
+    protected void onStop() {
+        super.onStop();
+        if (isFinishing()) {
+            return;
         }
-        
-        // ✅ 3. Clear avatar animation
+        Log.d(TAG, "IncomingCallActivity stopped");
+    }
+
+    @Override
+    protected void onDestroy() {
         if (avatarText != null) {
             avatarText.clearAnimation();
         }
         
-        CallRingtoneManager.stop(); // Safe even if already stopped
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
+            countDownTimer = null;
+        }
+        
+        super.onDestroy();
+        handled.set(true);
+        
+        // ✅ Change 5: Only stop ringtone, let Receiver handle state
+        if (isFinishing()) {
+            CallRingtoneManager.stop();
+            // State is handled by IncomingCallReceiver
+        }
     }
 }

@@ -25,7 +25,7 @@ import {
 } from "../context/ExpertNotificationsContext";
 import { generateToken } from "../../../firebase/generateToken";
 import { APP_CONFIG } from "../../../config/appConfig";
-
+import { Capacitor } from "@capacitor/core";
 /* ===================================================== */
 function ExpertLayoutInner() {
   const navigate = useNavigate();
@@ -338,44 +338,61 @@ function ExpertLayoutInner() {
         <Outlet />
       </ContentWrapper>
 
-      {!(isExpertInquiryPage && isMobile) && <ExpertBottomNavbar />}
+      <ExpertBottomNavbar />
+{!Capacitor.isNativePlatform() && (
+  <>
+    <IncomingCallPopup
+      caller={
+        activeIncomingCall
+          ? {
+              name:
+                activeIncomingCall.payload?.user_name ||
+                activeIncomingCall.title?.replace(
+                  "Incoming call from ",
+                  ""
+                ),
+              callId:
+                activeIncomingCall.payload?.callId ||
+                activeIncomingCall.payload?.call_id,
+            }
+          : null
+      }
+      onAccept={() => {
+        if (activeIncomingCall) {
+          acceptNotification(activeIncomingCall);
+        }
+      }}
+      onReject={() => {
+        if (activeIncomingCall) {
+          rejectNotification(activeIncomingCall);
+        }
+      }}
+    />
 
-      <IncomingCallPopup
-        caller={
-          activeIncomingCall && {
-            name:
-              activeIncomingCall.payload?.user_name ||
-              activeIncomingCall.title?.replace(
-                "Incoming call from ",
-                ""
-              ),
-            callId: activeIncomingCall.payload?.callId,
-          }
-        }
-        onAccept={() =>
-          activeIncomingCall &&
-          acceptNotification(activeIncomingCall)
-        }
-        onReject={() =>
-          activeIncomingCall &&
-          rejectNotification(activeIncomingCall)
-        }
-      />
+    <IncomingCallPopup
+      caller={incomingVideoCall}
+      callType="video"
+      onAccept={() => {
+        const callId = incomingVideoCall?.callId;
 
-      <IncomingCallPopup
-        caller={incomingVideoCall}
-        callType="video"
-        onAccept={() => {
-          const callId = incomingVideoCall?.callId;
-          setIncomingVideoCall(null);
-          if (callId) navigate(`/expert/video-call/${callId}`);
-        }}
-        onReject={() => {
-          const callId = incomingVideoCall?.callId;
-          if (callId) socket.emit("video-call:decline", { callId });
-          setIncomingVideoCall(null);
-        }}
-      />
+        setIncomingVideoCall(null);
+
+        if (callId) {
+          navigate(`/expert/video-call/${callId}`);
+        }
+      }}
+      onReject={() => {
+        const callId = incomingVideoCall?.callId;
+
+        if (callId) {
+          socket.emit("video-call:decline", { callId });
+        }
+
+        setIncomingVideoCall(null);
+      }}
+    />
+  </>
+)}
     </LayoutWrapper>
   );
 }

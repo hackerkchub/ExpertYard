@@ -24,7 +24,7 @@ public class CallStore {
         prefs.edit()
                 .putString(KEY_PENDING_CALL, data.toString())
                 .putLong(KEY_TIMESTAMP, System.currentTimeMillis())
-                .apply();
+                .commit();
     }
 
     /**
@@ -74,7 +74,7 @@ public class CallStore {
         prefs.edit()
                 .remove(KEY_PENDING_CALL)
                 .remove(KEY_TIMESTAMP)
-                .apply();
+                .commit();
     }
 
     /**

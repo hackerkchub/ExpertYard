@@ -21,6 +21,27 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
+        <!-- ✅ Step 1: Ignore Button (Close/Cross) -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageButton
+                android:id="@+id/btnIgnore"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginTop="2dp"
+                android:layout_marginEnd="2dp"
+                android:background="@android:color/transparent"
+                android:padding="8dp"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:tint="#FFFFFF"
+                android:contentDescription="Ignore Call"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
         <TextView
             android:id="@+id/logoText"
             android:layout_width="wrap_content"
@@ -70,16 +91,13 @@
             android:textStyle="bold"
             android:textSize="15sp"
             android:layout_marginTop="18dp"/>
-
-        <TextView
-            android:id="@+id/countdownText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="00:30"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="#8CCFFF"
-            android:layout_marginTop="10dp"/>
+            <!-- ✅ Step 2: Timer hidden - Production UI -->
+<TextView
+    android:id="@+id/countdownText"
+    android:layout_width="0dp"
+    android:layout_height="0dp"
+    android:visibility="gone"/>
+        
 
         <LinearLayout
             android:id="@+id/actionContainer"
@@ -91,7 +109,6 @@
             android:weightSum="2">
 
             <!-- Reject -->
-
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -106,7 +123,8 @@
                     android:background="@drawable/reject_button"
                     android:src="@android:drawable/ic_menu_close_clear_cancel"
                     android:tint="#FFFFFF"
-                    android:padding="18dp"/>
+                    android:padding="18dp"
+                    android:contentDescription="Reject Call"/>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -119,7 +137,6 @@
             </LinearLayout>
 
             <!-- Accept -->
-
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -134,7 +151,8 @@
                     android:background="@drawable/accept_button"
                     android:src="@android:drawable/sym_action_call"
                     android:tint="#FFFFFF"
-                    android:padding="18dp"/>
+                    android:padding="18dp"
+                    android:contentDescription="Accept Call"/>
 
                 <TextView
                     android:layout_width="wrap_content"

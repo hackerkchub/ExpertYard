@@ -22,6 +22,10 @@ import { soundManager } from "../../../shared/services/sound/soundManager";
 import { SOUNDS } from "../../../shared/services/sound/soundRegistry";
 import { getMessagingClient } from "../../../shared/utils/lazyFirebase";
 
+import { Capacitor } from "@capacitor/core";
+
+const isAndroid = Capacitor.isNativePlatform();
+
 const Ctx = createContext(null);
 
 const FINAL_STATES = ["missed", "rejected", "ended", "low_balance", "cancelled", "accepted", "connected", "taken"];
@@ -324,8 +328,12 @@ export function ExpertNotificationsProvider({ children }) {
 
     setNotifications((prev) => upsertById(prev, notification));
 
-    if (playSound && document.visibilityState === "visible") {
-      if ((notification.type === "voice_call" || notification.type === "video_call") && notification.status === "ringing") {
+    if (
+    !isAndroid &&
+    playSound &&
+    document.visibilityState === "visible"
+) {
+      if (notification.type === "voice_call" && notification.status === "ringing") {
         soundManager.play(SOUNDS.INCOMING_CALL, { loop: true, volume: 1 });
       } else {
         soundManager.play(SOUNDS.NOTIFICATION);
@@ -333,6 +341,7 @@ export function ExpertNotificationsProvider({ children }) {
     }
 
     if (
+      !isAndroid &&
       showSystem &&
       document.visibilityState === "visible" &&
       "Notification" in window &&
@@ -420,6 +429,12 @@ export function ExpertNotificationsProvider({ children }) {
 
   useEffect(() => {
     const handleIncomingCall = (data = {}) => {
+
+        if (isAndroid) {
+           soundManager.stopAll();
+        console.log("Native Android -> Skip React popup");
+        return;
+    }
       const notification = normalizeNotification({
         id: data.notification_id || data.callId,
         notification_id: data.notification_id || `call:${data.callId}`,
@@ -499,10 +514,16 @@ export function ExpertNotificationsProvider({ children }) {
 
     getMessagingClient()
       .then((firebase) => {
+       
         if (!active || !firebase?.messaging) return;
 
         unsubscribe = firebase.onMessage(firebase.messaging, (payload) => {
           const notification = normalizeForegroundPayload(payload);
+           if (isAndroid && notification.type === "voice_call") {
+        console.log("Skip foreground voice notification on Android");
+        return;
+    }
+
           addNotification(notification, { showSystem: true });
 
           if (notification.type === "chat_request") {

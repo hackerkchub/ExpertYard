@@ -54,7 +54,14 @@ import {
   Select,
   SubmitButton,
   SpinnerWrapper,
-  InlineSpinner
+  InlineSpinner,
+  ModalBodyWrapper,
+  PreviewColumn,
+  FormColumn,
+  MediaPreviewContainer,
+  PlaceholderPreview,
+  FormFieldsWrapper,
+  UploadBox
 } from "./ManageReels.styles";
 
 const getApiErrorStatus = (err) => err?.response?.status || null;
@@ -105,6 +112,29 @@ export default function ManageReels() {
   const [linkedServiceId, setLinkedServiceId] = useState("");
   const [videoFile, setVideoFile] = useState(null);
   const [thumbnailFile, setThumbnailFile] = useState(null);
+
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState("");
+  const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState("");
+
+  useEffect(() => {
+    if (!videoFile) {
+      setVideoPreviewUrl("");
+      return;
+    }
+    const url = URL.createObjectURL(videoFile);
+    setVideoPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [videoFile]);
+
+  useEffect(() => {
+    if (!thumbnailFile) {
+      setThumbnailPreviewUrl("");
+      return;
+    }
+    const url = URL.createObjectURL(thumbnailFile);
+    setThumbnailPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [thumbnailFile]);
 
   // Load data
   const loadData = async () => {
@@ -406,101 +436,146 @@ export default function ManageReels() {
             </ModalHeader>
 
             <Form onSubmit={handleSubmit}>
-              <FormGroup>
-                <label>Title *</label>
-                <Input
-                  type="text"
-                  placeholder="e.g. 5 Investment Mistakes to Avoid"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                />
-              </FormGroup>
+              <ModalBodyWrapper>
+                <PreviewColumn>
+                  <label style={{ fontSize: "13px", fontWeight: "600", color: "#374151" }}>Reel Preview</label>
+                  <MediaPreviewContainer>
+                    {videoPreviewUrl ? (
+                      <video src={videoPreviewUrl} controls muted playsInline />
+                    ) : thumbnailPreviewUrl ? (
+                      <img src={thumbnailPreviewUrl} alt="Thumbnail Preview" />
+                    ) : editingReel ? (
+                      editingReel.video_url ? (
+                        <video src={editingReel.video_url} controls muted playsInline poster={editingReel.thumbnail_url} />
+                      ) : editingReel.thumbnail_url ? (
+                        <img src={editingReel.thumbnail_url} alt="Reel Thumbnail" />
+                      ) : (
+                        <PlaceholderPreview>
+                          <FiUploadCloud size={24} />
+                          <span>No media preview</span>
+                        </PlaceholderPreview>
+                      )
+                    ) : (
+                      <PlaceholderPreview>
+                        <FiUploadCloud size={24} />
+                        <span>Select video file</span>
+                      </PlaceholderPreview>
+                    )}
+                  </MediaPreviewContainer>
+                </PreviewColumn>
 
-              <FormGroup>
-                <label>Caption</label>
-                <Textarea
-                  placeholder="e.g. Learn how to grow your wealth with these simple rules..."
-                  value={caption}
-                  onChange={(e) => setCaption(e.target.value)}
-                />
-              </FormGroup>
+                <FormColumn>
+                  <FormFieldsWrapper>
+                    <FormGroup>
+                      <label>Title *</label>
+                      <Input
+                        type="text"
+                        placeholder="e.g. 5 Investment Mistakes to Avoid"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        required
+                      />
+                    </FormGroup>
 
-              <FormGroup>
-                <label>Description</label>
-                <Textarea
-                  placeholder="Additional background or tags..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-              </FormGroup>
+                    <FormGroup>
+                      <label>Caption</label>
+                      <Textarea
+                        placeholder="e.g. Learn how to grow your wealth with these simple rules..."
+                        value={caption}
+                        onChange={(e) => setCaption(e.target.value)}
+                      />
+                    </FormGroup>
 
-              <FormGroup>
-                <label>Category</label>
-                <Select
-                  value={categoryId}
-                  onChange={(e) => {
-                    setCategoryId(e.target.value);
-                    setSubcategoryId("");
-                  }}
-                >
-                  <option value="">Select Category</option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </Select>
-              </FormGroup>
+                    <FormGroup>
+                      <label>Description</label>
+                      <Textarea
+                        placeholder="Additional background or tags..."
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                      />
+                    </FormGroup>
 
-              {categoryId && subcategoriesList.length > 0 && (
-                <FormGroup>
-                  <label>Subcategory</label>
-                  <Select
-                    value={subcategoryId}
-                    onChange={(e) => setSubcategoryId(e.target.value)}
-                  >
-                    <option value="">Select Subcategory</option>
-                    {subcategoriesList.map((s) => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </Select>
-                </FormGroup>
-              )}
+                    <FormGroup>
+                      <label>Category</label>
+                      <Select
+                        value={categoryId}
+                        onChange={(e) => {
+                          setCategoryId(e.target.value);
+                          setSubcategoryId("");
+                        }}
+                      >
+                        <option value="">Select Category</option>
+                        {categories.map((c) => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </Select>
+                    </FormGroup>
 
-              <FormGroup>
-                <label>Link consultation service (Optional)</label>
-                <Select
-                  value={linkedServiceId}
-                  onChange={(e) => setLinkedServiceId(e.target.value)}
-                >
-                  <option value="">Do not link</option>
-                  {services.map((s) => (
-                    <option key={s.id} value={s.id}>{s.title}</option>
-                  ))}
-                </Select>
-              </FormGroup>
+                    {categoryId && subcategoriesList.length > 0 && (
+                      <FormGroup>
+                        <label>Subcategory</label>
+                        <Select
+                          value={subcategoryId}
+                          onChange={(e) => setSubcategoryId(e.target.value)}
+                        >
+                          <option value="">Select Subcategory</option>
+                          {subcategoriesList.map((s) => (
+                            <option key={s.id} value={s.id}>{s.name}</option>
+                          ))}
+                        </Select>
+                      </FormGroup>
+                    )}
 
-              <FormGroup>
-                <label>{editingReel ? "Replace video file (Optional)" : "Select Video file (MP4, MOV, WEBM) *"}</label>
-                <Input
-                  type="file"
-                  accept="video/*"
-                  onChange={(e) => setVideoFile(e.target.files[0])}
-                  required={!editingReel}
-                />
-              </FormGroup>
+                    <FormGroup>
+                      <label>Link consultation service (Optional)</label>
+                      <Select
+                        value={linkedServiceId}
+                        onChange={(e) => setLinkedServiceId(e.target.value)}
+                      >
+                        <option value="">Do not link</option>
+                        {services.map((s) => (
+                          <option key={s.id} value={s.id}>{s.title}</option>
+                        ))}
+                      </Select>
+                    </FormGroup>
 
-              <FormGroup>
-                <label>Upload Thumbnail/Cover (Optional)</label>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setThumbnailFile(e.target.files[0])}
-                />
-              </FormGroup>
+                    <FormGroup>
+                      <label>{editingReel ? "Replace video file (Optional)" : "Select Video file (MP4, MOV, WEBM) *"}</label>
+                      <input
+                        type="file"
+                        id="video-file-input"
+                        accept="video/*"
+                        onChange={(e) => setVideoFile(e.target.files[0])}
+                        required={!editingReel}
+                        style={{ display: "none" }}
+                      />
+                      <UploadBox onClick={() => document.getElementById("video-file-input").click()}>
+                        <FiUploadCloud size={24} color="#6b7280" />
+                        <span>{videoFile ? videoFile.name : editingReel ? "Choose Video to Replace" : "Choose Video"}</span>
+                      </UploadBox>
+                    </FormGroup>
 
-              <SubmitButton type="submit" disabled={submitting}>
-                {submitting ? "Uploading & saving..." : editingReel ? "Save Changes" : "Create Reel"}
-              </SubmitButton>
+                    <FormGroup>
+                      <label>Upload Thumbnail/Cover (Optional)</label>
+                      <input
+                        type="file"
+                        id="thumbnail-file-input"
+                        accept="image/*"
+                        onChange={(e) => setThumbnailFile(e.target.files[0])}
+                        style={{ display: "none" }}
+                      />
+                      <UploadBox onClick={() => document.getElementById("thumbnail-file-input").click()}>
+                        <FiUploadCloud size={24} color="#6b7280" />
+                        <span>{thumbnailFile ? thumbnailFile.name : editingReel ? "Choose Cover to Replace" : "Choose Cover Image"}</span>
+                      </UploadBox>
+                    </FormGroup>
+
+                    <SubmitButton type="submit" disabled={submitting}>
+                      {submitting ? "Uploading & saving..." : editingReel ? "Save Changes" : "Create Reel"}
+                    </SubmitButton>
+                  </FormFieldsWrapper>
+                </FormColumn>
+              </ModalBodyWrapper>
             </Form>
           </ModalContainer>
         </ModalBackdrop>

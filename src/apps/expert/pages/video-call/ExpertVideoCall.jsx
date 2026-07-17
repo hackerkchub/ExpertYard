@@ -191,12 +191,26 @@ export default function ExpertVideoCall() {
         console.log("[VIDEO_CALL_ACCEPT]", { callId: Number(callId), expertId: expertData?.expertId, at: new Date().toISOString() });
 
         // ============================================================
-        // STEP 2: Send ACCEPT socket event to server
+        // STEP 2: Check if native already sent ACCEPT
         // ============================================================
-        console.log("📤 Sending video accept socket event from React");
-        socket.emit(EVENTS.ACCEPT, { 
-          callId: Number(callId) 
-        });
+        const nativeAcceptSent = isNativeAcceptSent(callId);
+        
+        if (!Capacitor.isNativePlatform()) {
+          // Web platform - always send ACCEPT
+          console.log("📤 Web platform - sending video accept");
+          socket.emit(EVENTS.ACCEPT, { 
+            callId: Number(callId) 
+          });
+        } else if (nativeAcceptSent) {
+          // Native platform - Android already sent ACCEPT
+          console.log("✅ Android already sent video accept - skipping socket emit");
+        } else {
+          // Native platform - Android didn't send ACCEPT (shouldn't happen)
+          console.log("📤 React sending video accept (fallback)");
+          socket.emit(EVENTS.ACCEPT, { 
+            callId: Number(callId) 
+          });
+        }
 
         // Release lock
         releaseNativeCallLock();

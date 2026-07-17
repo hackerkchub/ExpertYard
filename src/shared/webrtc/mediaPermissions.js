@@ -1,4 +1,5 @@
 import Swal from "sweetalert2";
+import { Capacitor } from "@capacitor/core";
 
 const AUDIO_CONSTRAINTS = {
   echoCancellation: true,
@@ -25,6 +26,24 @@ export const ensureMediaPermissions = async ({ video = true, audio = true } = {}
     const error = new Error("MediaDevices API is unavailable.");
     error.name = "MEDIA_UNSUPPORTED";
     throw error;
+  }
+
+  // Optimize: Check if permission state is already granted to avoid double-call to getUserMedia
+  try {
+    if (navigator.permissions && typeof navigator.permissions.query === "function") {
+      const audioPermission = audio ? await navigator.permissions.query({ name: "microphone" }).catch(() => null) : null;
+      const videoPermission = video ? await navigator.permissions.query({ name: "camera" }).catch(() => null) : null;
+      
+      const audioGranted = !audio || (audioPermission && audioPermission.state === "granted");
+      const videoGranted = !video || (videoPermission && videoPermission.state === "granted");
+      
+      if (audioGranted && videoGranted) {
+        console.log("[ensureMediaPermissions] Permissions already granted. Skipping pre-flight stream.");
+        return true;
+      }
+    }
+  } catch (err) {
+    console.warn("[ensureMediaPermissions] Permissions query not supported:", err);
   }
 
   try {
@@ -374,15 +393,43 @@ export const requestVideoCallMedia = async (options = {}) => {
     });
 
     try {
-      const hasPermission = await ensureMediaPermissions({ video: true, audio: true });
-      if (!hasPermission) {
-        const error = new Error("Camera or microphone permission was denied.");
-        error.name = "NotAllowedError";
-        return makeErrorResult({ error, role, callId });
+      if (Capacitor.isNativePlatform()) {
+        const hasPermission = await ensureMediaPermissions({ video: true, audio: true });
+        if (!hasPermission) {
+          const error = new Error("Camera or microphone permission was denied.");
+          error.name = "NotAllowedError";
+          return makeErrorResult({ error, role, callId });
+        }
       }
       const stream = await requestWithRetry({ callId, role });
       return validateStream({ stream, role, callId });
     } catch (error) {
+      console.error("[requestVideoCallMedia] Failed to get media:", error);
+      const name = error?.name || error?.code || "";
+      if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+        const mediaName = "Camera and Microphone";
+        const result = await Swal.fire({
+          title: "Permission Required",
+          text: `${mediaName} permission is required for video calls. Please grant it in your settings.`,
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#000080",
+          confirmButtonText: "Open Settings",
+          cancelButtonText: "Cancel"
+        });
+
+        if (result.isConfirmed) {
+          if (window.NativeBridgeManager && typeof window.NativeBridgeManager.openAppSettings === "function") {
+            window.NativeBridgeManager.openAppSettings();
+          } else {
+            Swal.fire({
+              title: "How to Enable?",
+              text: "Click the lock icon next to the URL bar and ensure Camera and Microphone access are allowed.",
+              icon: "info"
+            });
+          }
+        }
+      }
       return makeErrorResult({ error, role, callId });
     }
   })();

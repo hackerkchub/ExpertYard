@@ -18,7 +18,7 @@ const getNotificationTag = (data = {}) => {
   if (type === "chat_message" || type === "chat_request") {
     return `chat:${conversationId}:${messageId}`;
   }
-  if (type === "voice_call" || type === "incoming_call" || type === "missed_call") {
+  if (type === "voice_call" || type === "incoming_call" || type === "video_call" || type === "video-call" || type === "missed_call") {
     return `call:${callId}`;
   }
   if (type === "like") {
@@ -75,7 +75,7 @@ const useFCM = (openCallPopup, expertId = null, setNotifications = null) => {
           }
         }
 
-        if (type === "voice_call" || type === "incoming_call") {
+        if (type === "voice_call" || type === "incoming_call" || type === "video_call" || type === "video-call") {
           if (window.__expertNotificationProviderActive) return;
 
           soundManager.play(SOUNDS.INCOMING_CALL, { loop: true, volume: 1 });
@@ -83,8 +83,9 @@ const useFCM = (openCallPopup, expertId = null, setNotifications = null) => {
 
           if (Notification.permission === "granted") {
             const registration = await navigator.serviceWorker.ready;
-            registration.showNotification(title || "Incoming Call", {
-              body: body || "User is calling you",
+            const isVideo = type === "video_call" || type === "video-call";
+            registration.showNotification(title || (isVideo ? "Incoming Video Call" : "Incoming Call"), {
+              body: body || (isVideo ? "User is video calling you" : "User is calling you"),
               icon: "/logo-192.png",
               badge: "/logo-192.png",
               data: {

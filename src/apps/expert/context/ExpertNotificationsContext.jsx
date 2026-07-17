@@ -30,7 +30,7 @@ const Ctx = createContext(null);
 
 const FINAL_STATES = ["missed", "rejected", "ended", "low_balance", "cancelled", "accepted", "connected", "taken"];
 const CALL_FINAL_STATES = new Set(FINAL_STATES);
-const CALL_TYPES = new Set(["voice_call", "incoming_call", "video_call"]);
+const CALL_TYPES = new Set(["voice_call", "incoming_call", "video_call", "video-call"]);
 const CHAT_TYPES = new Set(["chat_request", "chat_message", "chat_accepted", "chat_rejected", "chat_cancelled", "chat_timeout"]);
 
 const parseMeta = (meta) => {
@@ -121,8 +121,8 @@ const buildTargetUrl = (n, meta) => {
 
 const localKeyFor = (n, meta) => {
   const type = n.type || meta.type || "system";
-  if ((type === "voice_call" || type === "incoming_call" || type === "missed_call" || type === "video_call") && (meta.callId || meta.call_id || n.related_id)) {
-    return `${type === "video_call" ? "video-call" : "call"}:${meta.callId || meta.call_id || n.related_id}`;
+  if ((type === "voice_call" || type === "incoming_call" || type === "missed_call" || type === "video_call" || type === "video-call") && (meta.callId || meta.call_id || n.related_id)) {
+    return `${(type === "video_call" || type === "video-call") ? "video-call" : "call"}:${meta.callId || meta.call_id || n.related_id}`;
   }
   if (CHAT_TYPES.has(type) && (meta.request_id || meta.chat_id || n.related_id)) {
     return `chat:${meta.request_id || meta.chat_id || n.related_id}:${type}`;
@@ -143,7 +143,7 @@ const normalizeNotification = (raw = {}) => {
     type === "like" ? `${senderName} liked your post` :
     type === "comment" ? `${senderName} commented on your post` :
     type === "voice_call" ? `${senderName} is calling you` :
-    type === "video_call" ? `${senderName} is video calling you` :
+    (type === "video_call" || type === "video-call") ? `${senderName} is video calling you` :
     type === "missed_call" ? `${senderName} called you. You missed the call.` :
     raw.message || raw.body || meta.body || "";
 
@@ -333,7 +333,7 @@ export function ExpertNotificationsProvider({ children }) {
     playSound &&
     document.visibilityState === "visible"
 ) {
-      if (notification.type === "voice_call" && notification.status === "ringing") {
+      if ((notification.type === "voice_call" || notification.type === "video_call" || notification.type === "video-call") && notification.status === "ringing") {
         soundManager.play(SOUNDS.INCOMING_CALL, { loop: true, volume: 1 });
       } else {
         soundManager.play(SOUNDS.NOTIFICATION);
@@ -364,9 +364,9 @@ export function ExpertNotificationsProvider({ children }) {
             url: notification.targetUrl,
             click_action: notification.targetUrl,
           },
-          requireInteraction: notification.type === "voice_call" || notification.type === "video_call",
-          renotify: notification.type === "voice_call" || notification.type === "video_call",
-          vibrate: notification.type === "voice_call" || notification.type === "video_call" ? [200, 100, 200, 100, 400] : [80, 40, 80],
+          requireInteraction: notification.type === "voice_call" || notification.type === "video_call" || notification.type === "video-call",
+          renotify: notification.type === "voice_call" || notification.type === "video_call" || notification.type === "video-call",
+          vibrate: notification.type === "voice_call" || notification.type === "video_call" || notification.type === "video-call" ? [200, 100, 200, 100, 400] : [80, 40, 80],
         });
       }).catch(() => {});
     }
@@ -519,10 +519,10 @@ export function ExpertNotificationsProvider({ children }) {
 
         unsubscribe = firebase.onMessage(firebase.messaging, (payload) => {
           const notification = normalizeForegroundPayload(payload);
-           if (isAndroid && notification.type === "voice_call") {
-        console.log("Skip foreground voice notification on Android");
-        return;
-    }
+          if (isAndroid && (notification.type === "voice_call" || notification.type === "video_call" || notification.type === "video-call")) {
+         console.log("Skip foreground call notification on Android");
+         return;
+     }
 
           addNotification(notification, { showSystem: true });
 
@@ -608,9 +608,9 @@ export function ExpertNotificationsProvider({ children }) {
     if (!notification) return;
     await markNotificationAsRead(notification.id);
 
-    if ((notification.type === "voice_call" || notification.type === "video_call") && notification.payload?.callId && notification.status === "ringing") {
+    if ((notification.type === "voice_call" || notification.type === "video_call" || notification.type === "video-call") && notification.payload?.callId && notification.status === "ringing") {
       markCallFinal(notification.payload.callId, "accepted");
-      navigate(notification.type === "video_call" ? `/expert/video-call/${notification.payload.callId}` : `/expert/voice-call/${notification.payload.callId}`);
+      navigate((notification.type === "video_call" || notification.type === "video-call") ? `/expert/video-call/${notification.payload.callId}` : `/expert/voice-call/${notification.payload.callId}`);
       return;
     }
 
@@ -631,7 +631,7 @@ export function ExpertNotificationsProvider({ children }) {
       return;
     }
 
-    if (notification.type === "video_call") {
+    if (notification.type === "video_call" || notification.type === "video-call") {
       const callId = notification.payload?.callId || getNotificationCallId(notification);
       if (!callId) return;
       markCallFinal(callId, "accepted");
@@ -670,14 +670,14 @@ export function ExpertNotificationsProvider({ children }) {
       updateLocalStatus((n) => n.id === notification.id, "rejected");
     }
 
-    if (notification.type === "video_call") {
+    if (notification.type === "video_call" || notification.type === "video-call") {
       const callId = notification.payload?.callId || getNotificationCallId(notification);
       if (callId && finalCallStatesRef.current.has(String(callId))) return;
       markCallFinal(callId, "rejected");
       soundManager.stopAll();
       updateNotificationStatus({
         requestId: callId,
-        type: "video_call",
+        type: notification.type,
         status: "rejected",
       }).catch(() => {});
       socket.emit("video-call:decline", { callId });

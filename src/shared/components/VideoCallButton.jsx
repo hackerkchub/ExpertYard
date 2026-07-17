@@ -33,8 +33,14 @@ export default function VideoCallButton({
       .then((res) => {
         if (mounted) setStatus(res?.data?.data || res?.data || null);
       })
-      .catch(() => {
-        if (mounted) setStatus({ enabled: false, reason: "Video call unavailable" });
+      .catch((err) => {
+        if (!mounted) return;
+        const isUnauthorized = err?.response?.status === 401;
+        if (isUnauthorized) {
+          setStatus({ enabled: true });
+        } else {
+          setStatus({ enabled: false, reason: "Video call unavailable" });
+        }
       })
       .finally(() => {
         if (mounted) setLoading(false);

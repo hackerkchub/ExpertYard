@@ -7,6 +7,13 @@ export const normalizeVideoCallPrice = (expert = {}) => {
     expert?.video_price_per_minute ??
     expert?.videoPricePerMinute ??
     expert?.video_call?.per_minute ??
+    expert?.videoCallPrice ??
+    expert?.video_call_price ??
+    expert?.videoPrice ??
+    expert?.video_price ??
+    expert?.price_per_minute ??
+    expert?.pricePerMinute ??
+    expert?.price ??
     null;
 
   if (raw === null || raw === undefined || raw === "") return null;

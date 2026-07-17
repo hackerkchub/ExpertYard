@@ -149,6 +149,8 @@ export default function VideoCall() {
       });
       socket.emit(EVENTS.START, {
         expertId: Number(expertId),
+        pricing_mode: location.state?.pricing_mode || "per_minute",
+        price_per_minute: Number(location.state?.price_per_minute || 0),
         source_context: location.state?.source_context || "expert_profile",
         source_ref_id: location.state?.source_ref_id || null,
       });
@@ -167,18 +169,23 @@ export default function VideoCall() {
     }
   }, [expertId, location.state, retryNonce, socket, user?.id]);
 
+  // Start call when component mounts or retry is clicked
+  useEffect(() => {
+    startCall();
+  }, [startCall, retryNonce]);
+
+  // Unmount cleanup lifecycle
   useEffect(() => {
     pageActiveRef.current = true;
     if (cleanupTimerRef.current) {
       clearTimeout(cleanupTimerRef.current);
       cleanupTimerRef.current = null;
     }
-    startCall();
     return () => {
       pageActiveRef.current = false;
       scheduleUnmountCleanup();
     };
-  }, [scheduleUnmountCleanup, startCall]);
+  }, [scheduleUnmountCleanup]);
 
   useEffect(() => {
     if (!socket) return undefined;

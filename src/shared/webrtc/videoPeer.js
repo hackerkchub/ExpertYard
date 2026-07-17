@@ -67,33 +67,11 @@ const setupInteractionListener = (element) => {
 
 const bindVideo = (element, stream, muted = false) => {
   if (!element || !stream) return;
-  
-  const currentStream = element.srcObject;
-  const hasTracksChanged = currentStream 
-    ? currentStream.getTracks().length !== stream.getTracks().length 
-    : true;
-    
-  if (currentStream !== stream || hasTracksChanged) {
-    console.log(`[VIDEO_CALL_WEBRTC] Binding stream to video element (muted=${muted}). Track count: ${stream.getTracks().length}`);
-    element.srcObject = stream;
-  }
-  
+  if (element.srcObject !== stream) element.srcObject = stream;
   element.autoplay = true;
   element.playsInline = true;
   element.muted = muted;
-  
-  // Attempt playback
-  element.play?.()
-    .then(() => {
-      console.log(`[VIDEO_CALL_WEBRTC] Playback started successfully (muted=${muted})`);
-    })
-    .catch((err) => {
-      console.warn(`[VIDEO_CALL_WEBRTC] Playback blocked or failed (muted=${muted}):`, err.message);
-      if (!muted) {
-        // If it's the remote unmuted video, setup interaction listener to resume
-        setupInteractionListener(element);
-      }
-    });
+  element.play?.().catch(() => {});
 };
 
 export const getLocalVideoStream = () => localStream;
@@ -217,32 +195,18 @@ export const setVideoRemoteDescription = async (description) => {
   if (!pc || !description) return false;
   await pc.setRemoteDescription(new RTCSessionDescription(description));
   while (pendingIce.length) {
-    const candidate = pendingIce.shift();
-    await pc.addIceCandidate(candidate).catch((err) => {
-      console.warn("[VIDEO_CALL_WEBRTC] Failed to add pending ICE candidate:", err);
-    });
+    await pc.addIceCandidate(pendingIce.shift()).catch(() => {});
   }
   return true;
 };
 
 export const addVideoIceCandidate = async (candidate) => {
   if (!candidate) return;
-
-  let iceCandidate = null;
-  try {
-    iceCandidate = new RTCIceCandidate(candidate);
-  } catch (err) {
-    console.warn("[VIDEO_CALL_WEBRTC] Failed to construct RTCIceCandidate:", err);
-    iceCandidate = candidate;
-  }
-
   if (!pc?.remoteDescription) {
-    pendingIce.push(iceCandidate);
+    pendingIce.push(candidate);
     return;
   }
-  await pc.addIceCandidate(iceCandidate).catch((err) => {
-    console.warn("[VIDEO_CALL_WEBRTC] Failed to add ICE candidate:", err);
-  });
+  await pc.addIceCandidate(candidate).catch(() => {});
 };
 
 export const toggleVideoMute = (muted) => {

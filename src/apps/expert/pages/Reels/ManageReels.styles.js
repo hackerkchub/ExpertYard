@@ -228,12 +228,20 @@ export const ModalContainer = styled.div`
   background: #ffffff;
   border-radius: 20px;
   width: 90%;
-  max-width: 550px;
+  max-width: 800px;
   max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+  overflow: hidden;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    height: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+    max-width: 100%;
+  }
 `;
 
 export const ModalHeader = styled.div`
@@ -267,10 +275,135 @@ export const CloseButton = styled.button`
 `;
 
 export const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+`;
+
+export const ModalBodyWrapper = styled.div`
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  overflow: hidden;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+`;
+
+export const PreviewColumn = styled.div`
+  width: 280px;
+  background: #f8fafc;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 24px;
+  gap: 16px;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 16px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+`;
+
+export const FormColumn = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+
+  @media (max-width: 768px) {
+    overflow-y: visible;
+    padding: 16px;
+    padding-bottom: 120px;
+  }
+`;
+
+export const MediaPreviewContainer = styled.div`
+  width: 100%;
+  aspect-ratio: 9/16;
+  max-width: 220px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0f172a;
+  position: relative;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+
+  video, img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  @media (max-width: 768px) {
+    max-width: 140px;
+  }
+`;
+
+export const PlaceholderPreview = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 13px;
+  text-align: center;
+  padding: 16px;
+  background: #1e293b;
+  aspect-ratio: 9/16;
+
+  span {
+    margin-top: 12px;
+    font-weight: 500;
+  }
+`;
+
+export const FormFieldsWrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
+`;
+
+export const UploadBox = styled.div`
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+  cursor: pointer;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease-in-out;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+
+  &:hover {
+    border-color: #ffd23f;
+    background: #fffdf5;
+    color: #000080;
+  }
+
+  svg {
+    transition: transform 0.2s;
+  }
+
+  &:hover svg {
+    transform: translateY(-2px);
+  }
 `;
 
 export const FormGroup = styled.div`

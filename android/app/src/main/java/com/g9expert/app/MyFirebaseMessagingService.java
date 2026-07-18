@@ -7,10 +7,10 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationManagerCompat;
 
-import com.google.firebase.messaging.FirebaseMessagingService;
+import com.capacitorjs.plugins.pushnotifications.MessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
-public class MyFirebaseMessagingService extends FirebaseMessagingService {
+public class MyFirebaseMessagingService extends MessagingService {
 
     private static final String TAG = "G9_FCM";
 
@@ -29,8 +29,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     @Override
     public void onMessageReceived(@NonNull RemoteMessage message) {
-        super.onMessageReceived(message);
-
         Log.d(TAG, "===============");
         Log.d(TAG, "MESSAGE RECEIVED");
         Log.d(TAG, "FROM : " + message.getFrom());
@@ -132,8 +130,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 break;
 
             default:
-                Log.d(TAG, "📨 General Notification");
-                CallNotificationHelper.showNotification(this, message.getData());
+                Log.d(TAG, "📨 General Notification forwarded to Capacitor");
+                super.onMessageReceived(message);
                 break;
         }
     }

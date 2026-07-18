@@ -103,6 +103,9 @@ public class MainActivity extends BridgeActivity {
         }
 
         try {
+            webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
+            Log.d(TAG, "✅ Disabled user gesture requirement for media playback");
+
             // Inject APP_TYPE
             String appType = getAppType();
             String js = "window.G9_APP_TYPE='" + appType + "';";

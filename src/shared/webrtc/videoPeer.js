@@ -71,6 +71,7 @@ const bindVideo = (element, stream, muted = false) => {
   element.autoplay = true;
   element.playsInline = true;
   element.muted = muted;
+  setupInteractionListener(element);
   element.play?.().catch(() => {});
 };
 
@@ -136,12 +137,7 @@ export const createVideoPeer = async ({
       remoteMediaStream.addTrack(track);
     }
 
-    remoteMediaStream.getTracks().forEach((t) => {
-      if (!remoteStream.getTracks().some((existing) => existing.id === t.id)) {
-        remoteStream.addTrack(t);
-        console.log(`[VIDEO_CALL_WEBRTC] Added remote track (${t.kind}) to remoteStream`);
-      }
-    });
+    remoteStream = remoteMediaStream;
 
     bindVideo(remoteVideoEl, remoteStream, false);
     onRemoteStream?.(remoteStream);

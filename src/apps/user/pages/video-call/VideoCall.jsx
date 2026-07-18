@@ -103,15 +103,28 @@ export default function VideoCall() {
     }, 300);
   }, [cleanup, socket]);
 
+  useEffect(() => {
+    const isIncoming = location.state?.native || location.state?.callId;
+    if (isIncoming) {
+      const id = Number(location.state.callId || expertId);
+      callIdRef.current = id;
+      setCallId(id);
+    }
+  }, [location.state, expertId]);
+
   const startCall = useCallback(async () => {
     if (!socket || !user?.id || !expertId || startedRef.current || permissionRequestInProgressRef.current) return;
     endedRef.current = false;
     callFailureEmittedRef.current = false;
     permissionRequestInProgressRef.current = true;
     setStatus("Checking camera and microphone...");
+
+    const isIncoming = location.state?.native || location.state?.callId;
+    const activeCallId = isIncoming ? Number(location.state.callId || expertId) : 0;
+
     try {
-      console.log("[VC_MEDIA_REQUEST_START]", { callId: 0, role: "user" });
-      const media = await requestVideoCallMedia({ callId: 0, role: "user", video: true });
+      console.log("[VC_MEDIA_REQUEST_START]", { callId: activeCallId, role: "user" });
+      const media = await requestVideoCallMedia({ callId: activeCallId, role: "user", video: true });
       permissionRequestInProgressRef.current = false;
 
       if (!pageActiveRef.current || endedRef.current) {
@@ -125,7 +138,7 @@ export default function VideoCall() {
         callFailureEmittedRef.current = true;
         console.log("[VC_MEDIA_FAILURE]", {
           role: "user",
-          callId: 0,
+          callId: activeCallId,
           errorCode: media.errorCode,
           message: media.message,
           at: new Date().toISOString(),
@@ -139,21 +152,34 @@ export default function VideoCall() {
         localVideoRef.current.play?.().catch(() => {});
       }
       startedRef.current = true;
-      setStatus("Ringing expert");
-      console.log("[VC_MEDIA_SUCCESS]", {
-        role: "user",
-        callId: 0,
-        audioTracks: localStreamRef.current.getAudioTracks().length,
-        videoTracks: localStreamRef.current.getVideoTracks().length,
-        at: new Date().toISOString(),
-      });
-      socket.emit(EVENTS.START, {
-        expertId: Number(expertId),
-        pricing_mode: location.state?.pricing_mode || "per_minute",
-        price_per_minute: Number(location.state?.price_per_minute || 0),
-        source_context: location.state?.source_context || "expert_profile",
-        source_ref_id: location.state?.source_ref_id || null,
-      });
+
+      if (!isIncoming) {
+        setStatus("Ringing expert");
+        console.log("[VC_MEDIA_SUCCESS]", {
+          role: "user",
+          callId: 0,
+          audioTracks: localStreamRef.current.getAudioTracks().length,
+          videoTracks: localStreamRef.current.getVideoTracks().length,
+          at: new Date().toISOString(),
+        });
+        socket.emit(EVENTS.START, {
+          expertId: Number(expertId),
+          pricing_mode: location.state?.pricing_mode || "per_minute",
+          price_per_minute: Number(location.state?.price_per_minute || 0),
+          source_context: location.state?.source_context || "expert_profile",
+          source_ref_id: location.state?.source_ref_id || null,
+        });
+      } else {
+        setStatus("Connecting...");
+        console.log("[VC_MEDIA_SUCCESS]", {
+          role: "user",
+          callId: activeCallId,
+          audioTracks: localStreamRef.current.getAudioTracks().length,
+          videoTracks: localStreamRef.current.getVideoTracks().length,
+          at: new Date().toISOString(),
+        });
+        socket.emit(EVENTS.CONNECTED, { callId: activeCallId });
+      }
     } catch (error) {
       permissionRequestInProgressRef.current = false;
       setStatus("Unable to access camera or microphone. Please check browser permissions and try again.");
@@ -161,7 +187,7 @@ export default function VideoCall() {
       callFailureEmittedRef.current = true;
       console.log("[VC_MEDIA_FAILURE]", {
         role: "user",
-        callId: 0,
+        callId: activeCallId,
         errorCode: error?.name || "UNKNOWN_ERROR",
         message: error?.message || "",
         at: new Date().toISOString(),

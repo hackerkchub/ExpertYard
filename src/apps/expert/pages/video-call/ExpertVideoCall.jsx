@@ -190,27 +190,10 @@ export default function ExpertVideoCall() {
         console.log("[VC_MEDIA_SUCCESS]", { callId: Number(callId), role: "expert", ok: true, at: new Date().toISOString() });
         console.log("[VIDEO_CALL_ACCEPT]", { callId: Number(callId), expertId: expertData?.expertId, at: new Date().toISOString() });
 
-        // ============================================================
-        // STEP 2: Check if native already sent ACCEPT
-        // ============================================================
-        const nativeAcceptSent = isNativeAcceptSent(callId);
-        
-        if (!Capacitor.isNativePlatform()) {
-          // Web platform - always send ACCEPT
-          console.log("📤 Web platform - sending video accept");
-          socket.emit(EVENTS.ACCEPT, { 
-            callId: Number(callId) 
-          });
-        } else if (nativeAcceptSent) {
-          // Native platform - Android already sent ACCEPT
-          console.log("✅ Android already sent video accept - skipping socket emit");
-        } else {
-          // Native platform - Android didn't send ACCEPT (shouldn't happen)
-          console.log("📤 React sending video accept (fallback)");
-          socket.emit(EVENTS.ACCEPT, { 
-            callId: Number(callId) 
-          });
-        }
+        console.log("📤 Sending video accept");
+        socket.emit(EVENTS.ACCEPT, { 
+          callId: Number(callId) 
+        });
 
         // Release lock
         releaseNativeCallLock();
@@ -247,6 +230,13 @@ export default function ExpertVideoCall() {
   
   useEffect(() => {
     if (!socket) return undefined;
+
+    const onReconnect = () => {
+      console.log("🔄 Socket reconnected - re-transmitting call acceptance");
+      if (acceptedRef.current && !endedRef.current) {
+        socket.emit(EVENTS.ACCEPT, { callId: Number(callId) });
+      }
+    };
 
     const onConnected = ({ callId: connectedId, call_id }) => {
       const id = Number(connectedId || call_id || callId);
@@ -309,6 +299,7 @@ export default function ExpertVideoCall() {
       }
     };
 
+    socket.on("connect", onReconnect);
     socket.on(EVENTS.CONNECTED, onConnected);
     socket.on("video-webrtc:offer", onOffer);
     socket.on("video-webrtc:ice-candidate", onIce);
@@ -321,6 +312,7 @@ export default function ExpertVideoCall() {
     socket.on(EVENTS.BILLING_FINALIZED, (summary) => setBilling((prev) => ({ ...prev, summary })));
 
     return () => {
+      socket.off("connect", onReconnect);
       socket.off(EVENTS.CONNECTED, onConnected);
       socket.off("video-webrtc:offer", onOffer);
       socket.off("video-webrtc:ice-candidate", onIce);

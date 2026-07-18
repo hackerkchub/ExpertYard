@@ -1,5 +1,7 @@
 import { useCallback, useEffect, lazy, useMemo, useState } from "react";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { PushNotifications } from "@capacitor/push-notifications";
+import { Capacitor } from "@capacitor/core";
 
 import { socket } from "../shared/api/socket";
 import BottomNavbar from "../shared/components/BottomNavbar/BottomNavbar";
@@ -62,6 +64,80 @@ export default function AppRouter() {
   useNativeIncomingCall();
   useSoundInit();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    PushNotifications.setPresentationOptions({
+      presentationOptions: ["badge", "sound", "alert"],
+    }).catch(err => console.error("Error setting presentation options:", err));
+
+    const clickListener = PushNotifications.addListener(
+      "pushNotificationActionPerformed",
+      async (action) => {
+        console.log("Push notification action performed:", action);
+        const data = action.notification?.data;
+        if (!data) return;
+
+        try {
+          await PushNotifications.removeAllDeliveredNotifications();
+        } catch (err) {
+          console.error("Failed to clear notifications:", err);
+        }
+
+        let url = data.target_url || data.url || data.click_action;
+        if (url) {
+          try {
+            if (url.startsWith("http")) {
+              const parsed = new URL(url);
+              url = parsed.pathname + parsed.search;
+            }
+          } catch (e) {
+            console.error("Error parsing target url:", e);
+          }
+          if (url) {
+            navigate(url);
+            return;
+          }
+        }
+
+        const type = data.type;
+        const callId = data.callId || data.call_id;
+        const chatId = data.chatId || data.chat_id || data.room_id || data.roomId;
+        const role = APP_CONFIG.APP_TYPE === "expert" ? "expert" : "user";
+
+        if (type === "incoming_call" || type === "voice_call") {
+          if (callId) {
+            navigate(`/${role}/voice-call/${callId}`, { replace: true });
+          }
+        } else if (type === "video_call") {
+          if (callId) {
+            navigate(`/${role}/video-call/${callId}`, { replace: true });
+          }
+        } else if (type === "chat_message" || type === "chat_request") {
+          if (chatId) {
+            navigate(`/${role}/chat/${chatId}`);
+          }
+        } else {
+          const relatedId = data.related_id;
+          const relatedType = data.related_type;
+
+          if (relatedType === "booking" && relatedId) {
+            navigate(`/${role}/bookings/${relatedId}`);
+          } else if (relatedType === "service" && relatedId) {
+            navigate(`/${role}/services/${relatedId}`);
+          } else {
+            navigate(`/${role}/notifications`);
+          }
+        }
+      }
+    );
+
+    return () => {
+      clickListener.remove();
+    };
+  }, [navigate]);
   const [showSplash, setShowSplash] = useState(
     () =>
       typeof window !== "undefined" && !isCallScreenPath(window.location.pathname)

@@ -6,6 +6,10 @@ export const PageContainer = styled.div`
   margin: 0 auto;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: #1f2937;
+
+  @media (max-width: 600px) {
+    padding: 16px;
+  }
 `;
 
 export const HeaderRow = styled.div`
@@ -13,6 +17,15 @@ export const HeaderRow = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 28px;
+  gap: 16px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
 `;
 
 export const Title = styled.h1`
@@ -33,6 +46,7 @@ export const UploadButton = styled.button`
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   box-shadow: 0 4px 14px rgba(244, 197, 66, 0.4);
   transition: transform 0.2s, box-shadow 0.2s;
@@ -40,6 +54,11 @@ export const UploadButton = styled.button`
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(244, 197, 66, 0.6);
+  }
+
+  @media (max-width: 600px) {
+    width: 100%;
+    padding: 14px;
   }
 `;
 
@@ -279,6 +298,10 @@ export const Form = styled.form`
   flex-direction: column;
   flex: 1;
   overflow: hidden;
+
+  @media (max-width: 768px) {
+    overflow-y: auto;
+  }
 `;
 
 export const ModalBodyWrapper = styled.div`
@@ -289,7 +312,7 @@ export const ModalBodyWrapper = styled.div`
 
   @media (max-width: 768px) {
     flex-direction: column;
-    overflow-y: auto;
+    overflow: visible;
   }
 `;
 
@@ -320,7 +343,7 @@ export const FormColumn = styled.div`
   padding: 24px;
 
   @media (max-width: 768px) {
-    overflow-y: visible;
+    overflow: visible;
     padding: 16px;
     padding-bottom: 120px;
   }
@@ -424,6 +447,8 @@ export const Input = styled.input`
   padding: 10px 14px;
   font-size: 14px;
   color: #111827;
+  width: 100%;
+  box-sizing: border-box;
 
   &:focus {
     outline: none;
@@ -439,6 +464,8 @@ export const Textarea = styled.textarea`
   color: #111827;
   min-height: 80px;
   resize: vertical;
+  width: 100%;
+  box-sizing: border-box;
 
   &:focus {
     outline: none;
@@ -453,6 +480,8 @@ export const Select = styled.select`
   font-size: 14px;
   color: #111827;
   background: #ffffff;
+  width: 100%;
+  box-sizing: border-box;
 
   &:focus {
     outline: none;
@@ -470,6 +499,8 @@ export const SubmitButton = styled.button`
   font-size: 14px;
   cursor: pointer;
   margin-top: 10px;
+  width: 100%;
+  box-sizing: border-box;
 
   &:disabled {
     opacity: 0.6;

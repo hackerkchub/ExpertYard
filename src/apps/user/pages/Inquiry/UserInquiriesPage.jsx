@@ -707,14 +707,13 @@ export default function UserInquiriesPage() {
     <PageBackground>
       <Container>
         <Sidebar $active={!!selectedInquiry}>
-          <MobileListHeader>
-            <BackBtn onClick={() => navigate("/user")}>
-              <FiArrowLeft size={20} />
-            </BackBtn>
-            <div style={{ fontWeight: 600, fontSize: "0.95rem", color: "#191919" }}>My Inquiries</div>
-          </MobileListHeader>
           <ListHeader>
-            <ListTitle>My Inquiries</ListTitle>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+              <BackBtn onClick={() => navigate("/user")}>
+                <FiArrowLeft size={20} />
+              </BackBtn>
+              <ListTitle style={{ margin: 0 }}>My Inquiries</ListTitle>
+            </div>
             <SearchContainer>
               <SearchIcon />
               <SearchInput 

@@ -342,7 +342,7 @@ export default function ManageReels() {
       <HeaderRow>
         <Title>Manage Expert Reels</Title>
         <UploadButton onClick={() => openModal()}>
-          <FiPlus /> New Reel
+          <FiPlus /> Upload New Reel
         </UploadButton>
       </HeaderRow>
 

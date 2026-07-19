@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import styled, { keyframes } from "styled-components";
 import { FiSend, FiInbox, FiX, FiCheck, FiArrowLeft, FiUser, FiInfo, FiCheckCircle, FiSearch, FiPhone, FiMail } from "react-icons/fi";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { APP_CONFIG } from "../../../../config/appConfig";
 
@@ -521,6 +521,7 @@ const EmptyState = styled.div`
 `;
 
 export default function ExpertInquiriesPage() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialId = searchParams.get("id");
 
@@ -713,14 +714,13 @@ export default function ExpertInquiriesPage() {
     <PageBackground>
       <Container>
         <Sidebar $active={!!selectedInquiry}>
-          <MobileListHeader>
-            <BackBtn onClick={() => navigate("/expert/home")}>
-              <FiArrowLeft size={20} />
-            </BackBtn>
-            <div style={{ fontWeight: 600, fontSize: "0.95rem", color: "#191919" }}>Inquiries</div>
-          </MobileListHeader>
           <ListHeader>
-            <ListTitle>Inquiries</ListTitle>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+              <BackBtn onClick={() => navigate("/expert/home")}>
+                <FiArrowLeft size={20} />
+              </BackBtn>
+              <ListTitle style={{ margin: 0 }}>Inquiries</ListTitle>
+            </div>
             <SearchContainer>
               <SearchIcon />
               <SearchInput 

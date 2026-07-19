@@ -72,7 +72,7 @@ public class IncomingCallForegroundService extends Service {
             return START_NOT_STICKY;
         }
 
-        // ✅ Check for duplicate incoming call
+        // Check for duplicate incoming call
         if (callId.equals(currentCallId)) {
             Log.d(TAG, "⚠️ Duplicate call detected: " + callId + " - ignoring");
             return START_NOT_STICKY;
@@ -96,7 +96,7 @@ public class IncomingCallForegroundService extends Service {
             }
         }
 
-        // Prepare call type (voice/video)
+        // Prepare call type (voice/video/chat)
         String callType = data.get("call_type");
         if (callType == null || callType.isEmpty()) {
             callType = data.get("type");
@@ -116,16 +116,30 @@ public class IncomingCallForegroundService extends Service {
                   ", Type: " + callType + 
                   ", TargetUrl: " + targetUrl);
 
-        // ✅ STEP 1: Start Foreground Service FIRST
-        startForegroundService();
+        // Check if it is a chat request
+        boolean isChat = "chat".equalsIgnoreCase(callType) || "incoming_chat".equalsIgnoreCase(callType) || "chat_request".equalsIgnoreCase(callType);
 
-        // ✅ STEP 2: Show notification
-        CallNotificationHelper.showIncomingCall(this, data);
+        // ✅ STEP 1: Start Foreground Service FIRST using the final fully-formed notification (no placeholder!)
+        startForegroundService(data);
 
-        // ✅ STEP 3: Launch Activity (with error handling)
-        launchIncomingCallActivity(callId, callerName, callType, targetUrl, data);
+        // ✅ STEP 2: Start continuous background ringtone
+        try {
+            if (!CallRingtoneManager.isPlaying()) {
+                CallRingtoneManager.start(this);
+                Log.d(TAG, "✅ Ringtone started by service");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Failed to start ringtone", e);
+        }
 
-        Log.d(TAG, "Foreground service started for call: " + callId);
+        // ✅ STEP 3: Launch FullScreen overlay Activity ONLY if it is not a chat request
+        if (!isChat) {
+            launchIncomingCallActivity(callId, callerName, callType, targetUrl, data);
+        } else {
+            Log.d(TAG, "💬 Chat request received - skipping IncomingCallActivity launch");
+        }
+
+        Log.d(TAG, "Foreground service started for request: " + callId);
         return START_NOT_STICKY;
     }
 
@@ -148,55 +162,42 @@ public class IncomingCallForegroundService extends Service {
         return data;
     }
 
-    private void startForegroundService() {
+    private void startForegroundService(Map<String, String> data) {
         CallNotificationHelper.createChannels(this);
 
-        // Silent foreground notification - just to keep service alive
-        Notification notification = new NotificationCompat.Builder(
-                this, 
-                CallNotificationHelper.CHANNEL_CALLS
-        )
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("Incoming Call")
-                .setContentText("Preparing incoming call...")
-                .setCategory(NotificationCompat.CATEGORY_SERVICE)
-                .setPriority(NotificationCompat.PRIORITY_MIN) // ✅ MIN priority
-                .setOnlyAlertOnce(true)
-                .setSilent(true)
-                .setOngoing(true)
-                .build();
+        // Build the final fully-formed notification directly
+        Notification notification = CallNotificationHelper.buildIncomingCallNotification(this, data, false);
+        if (notification == null) {
+            // Fallback placeholder if building failed
+            notification = new NotificationCompat.Builder(this, CallNotificationHelper.CHANNEL_CALLS)
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setContentTitle("Incoming Request")
+                    .setContentText("Preparing incoming request...")
+                    .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                    .setPriority(NotificationCompat.PRIORITY_MIN)
+                    .setOngoing(true)
+                    .build();
+        }
+
+        int notificationId = CallNotificationHelper.INCOMING_NOTIFICATION_ID;
 
         // Android 14+ requires foreground service type
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // Android 14
             try {
                 startForeground(
-                        FOREGROUND_NOTIFICATION_ID,
+                        notificationId,
                         notification,
                         android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
                 );
                 Log.d(TAG, "Foreground started with phone call type (Android 14+)");
             } catch (Exception e) {
                 Log.e(TAG, "Failed to start foreground with phone call type, falling back", e);
-                startForeground(FOREGROUND_NOTIFICATION_ID, notification);
-            }
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            try {
-                startForeground(
-                        FOREGROUND_NOTIFICATION_ID,
-                        notification
-                        // FOREGROUND_SERVICE_TYPE_DATA_SYNC commented for compatibility
-                );
-                Log.d(TAG, "Foreground started (Android 10+)");
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to start foreground, falling back", e);
-                startForeground(FOREGROUND_NOTIFICATION_ID, notification);
+                startForeground(notificationId, notification);
             }
         } else {
-            startForeground(FOREGROUND_NOTIFICATION_ID, notification);
-            Log.d(TAG, "Foreground started (pre Android 10)");
+            startForeground(notificationId, notification);
+            Log.d(TAG, "Foreground started");
         }
-
-        Log.d(TAG, "Foreground notification displayed");
     }
 
     private void launchIncomingCallActivity(String callId, String callerName, 

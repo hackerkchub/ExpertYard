@@ -61,10 +61,18 @@ export default function useNativeIncomingCall() {
             const isVideo = call.callType === "video" || 
                            call.callType === "video_call" || 
                            call.callType === "video-call";
+            const isChat = call.callType === "chat" ||
+                           call.callType === "incoming_chat" ||
+                           call.callType === "chat_request";
             
-            const route = isVideo 
-                ? `${base}/video-call/${callId}`
-                : `${base}/voice-call/${callId}`;
+            let route;
+            if (isChat) {
+                route = `${base}/chat/${callId}`;
+            } else if (isVideo) {
+                route = `${base}/video-call/${callId}`;
+            } else {
+                route = `${base}/voice-call/${callId}`;
+            }
 
             console.log(`📞 Opening ${isVideo ? 'video' : 'voice'} call page:`, route);
 

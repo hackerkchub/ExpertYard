@@ -49,7 +49,9 @@ public class MyFirebaseMessagingService extends MessagingService {
             case "incoming_call":
             case "voice_call":
             case "video_call":
-                // Step 1: Cleanup before showing incoming call
+            case "incoming_chat":
+            case "chat":
+                // Step 1: Cleanup before showing incoming call / request
                 CallNotificationHelper.cancelIncomingCallNotification(this, null);
                 NotificationManagerCompat.from(this)
                         .cancel(CallNotificationHelper.MISSED_NOTIFICATION_ID);

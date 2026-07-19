@@ -3,6 +3,7 @@ package com.g9expert.app;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Notification;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -85,15 +86,15 @@ public class CallNotificationHelper {
                 .notify((int) System.currentTimeMillis(), builder.build());
     }
 
-    public static void showIncomingCall(Context context, Map<String, String> data) {
+    public static Notification buildIncomingCallNotification(Context context, Map<String, String> data, boolean disableFullScreen) {
         // Get call details with proper fallbacks
         String callId = data.get("callId");
         if (callId == null || callId.isEmpty()) {
             Log.e(TAG, "❌ callId is null or empty - cannot show incoming call");
-            return;
+            return null;
         }
 
-        // ✅ Fix 3: Proper caller name with fallback
+        // Proper caller name with fallback
         String callerName = data.get("caller_name");
         if (callerName == null || callerName.isEmpty()) {
             callerName = data.get("sender_name");
@@ -102,7 +103,7 @@ public class CallNotificationHelper {
             }
         }
 
-        // ✅ Fix 2: Proper call type with fallback
+        // Proper call type with fallback
         String callType = data.get("call_type");
         if (callType == null || callType.isEmpty()) {
             callType = data.get("type");
@@ -116,17 +117,13 @@ public class CallNotificationHelper {
             targetUrl = data.get("targetUrl");
         }
 
-        // Get additional fields for future use
+        // Get additional fields
         String userId = data.get("userId");
         String expertId = data.get("expertId");
 
-        Log.d(TAG, "Showing incoming call - ID: " + callId + 
+        Log.d(TAG, "Building incoming notification - ID: " + callId + 
                   ", Caller: " + callerName + 
                   ", Type: " + callType);
-
-        // Cancel old notifications without resetting state
-        NotificationManagerCompat.from(context).cancel(INCOMING_NOTIFICATION_ID);
-        NotificationManagerCompat.from(context).cancel(MISSED_NOTIFICATION_ID);
 
         createChannels(context);
 
@@ -169,7 +166,7 @@ public class CallNotificationHelper {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
-        // ✅ Fix 12: Reject intent with all data
+        // Reject intent with all data
         Intent rejectIntent = new Intent(context, IncomingCallReceiver.class);
         rejectIntent.setAction(IncomingCallReceiver.ACTION_REJECT_CALL);
         rejectIntent.putExtra("call_id", callId);
@@ -192,83 +189,96 @@ public class CallNotificationHelper {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
+        boolean isVideo = "video".equalsIgnoreCase(callType) || "video_call".equalsIgnoreCase(callType) || "video-call".equalsIgnoreCase(callType) || "video consultation".equalsIgnoreCase(callType);
+        boolean isChat = "chat".equalsIgnoreCase(callType) || "incoming_chat".equalsIgnoreCase(callType) || "chat_request".equalsIgnoreCase(callType);
+
+        String titleText;
+        String contentText;
+        if (isChat) {
+            titleText = callerName + " sent a chat request";
+            contentText = "💬 Chat request";
+        } else {
+            titleText = callerName + " is calling...";
+            contentText = isVideo ? "📹 Video call" : "📞 Voice call";
+        }
+
         // Build notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_CALLS)
                 .setSmallIcon(R.mipmap.ic_launcher)
-                // ✅ Fix 11: Show caller name in title
-                .setContentTitle(callerName + " is calling...")
-                .setContentText(callType.equals("video") ? "📹 Video call" : "📞 Voice call")
-
+                .setContentTitle(titleText)
+                .setContentText(contentText)
                 .setCategory(NotificationCompat.CATEGORY_CALL)
                 .setPriority(NotificationCompat.PRIORITY_MAX)
-
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-
                 .setOngoing(true)
                 .setAutoCancel(false)
-
                 .setOnlyAlertOnce(false)
-
                 .setForegroundServiceBehavior(
                         NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
                 )
-
                 .setContentIntent(fullScreenIntent)
-
-                .setFullScreenIntent(fullScreenIntent, true)
-
                 .setDefaults(NotificationCompat.DEFAULT_VIBRATE)
-
                 .setVibrate(new long[]{0, 700, 600, 700})
-
                 .setTimeoutAfter(30000)
-
                 .addAction(
                         android.R.drawable.ic_menu_call,
                         "Accept",
                         acceptPendingIntent
                 )
-
                 .addAction(
                         android.R.drawable.ic_menu_close_clear_cancel,
                         "Reject",
                         rejectPendingIntent
                 );
 
-        // ✅ Fix 16: Colorized for Android 14+
+        if (!disableFullScreen) {
+            builder.setFullScreenIntent(fullScreenIntent, true);
+        }
+
+        // Colorized for Android 14+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             builder.setColorized(true);
             builder.setColor(android.graphics.Color.parseColor("#00C853")); // Green accent
-            Log.d(TAG, "✅ Colorized notification for Android 14+");
         }
 
-        // ✅ Fix 17: Try-catch for SecurityException
+        return builder.build();
+    }
+
+    public static void showIncomingCall(Context context, Map<String, String> data) {
+        Notification notification = buildIncomingCallNotification(context, data, false);
+        if (notification == null) return;
+
+        // Cancel old notifications without resetting state
+        NotificationManagerCompat.from(context).cancel(INCOMING_NOTIFICATION_ID);
+        NotificationManagerCompat.from(context).cancel(MISSED_NOTIFICATION_ID);
+
+        // Try-catch for SecurityException
         try {
             NotificationManagerCompat.from(context)
-                    .notify(INCOMING_NOTIFICATION_ID, builder.build());
+                    .notify(INCOMING_NOTIFICATION_ID, notification);
             Log.d(TAG, "✅ Notification posted (ID: " + INCOMING_NOTIFICATION_ID + ")");
         } catch (SecurityException e) {
             Log.e(TAG, "❌ SecurityException posting notification", e);
             // Fallback without fullscreen intent
             try {
-                builder.setFullScreenIntent(null, false);
+                Notification fallbackNotification = buildIncomingCallNotification(context, data, true);
                 NotificationManagerCompat.from(context)
-                        .notify(INCOMING_NOTIFICATION_ID, builder.build());
+                        .notify(INCOMING_NOTIFICATION_ID, fallbackNotification);
                 Log.d(TAG, "✅ Fallback notification posted without fullscreen");
             } catch (Exception ex) {
                 Log.e(TAG, "❌ Failed to post fallback notification", ex);
             }
+            // Log fullscreen intent availability on Android 10+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                NotificationManager nm = context.getSystemService(NotificationManager.class);
+                Log.d(TAG, "canUseFullScreenIntent = " + nm.canUseFullScreenIntent());
+            }
+
+            String callId = data.get("callId");
+            Log.d(TAG, "✅ Incoming call notification shown - CallId: " + callId);
         } catch (Exception e) {
             Log.e(TAG, "❌ Failed to post notification", e);
         }
-
-        // Log fullscreen intent availability on Android 10+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            NotificationManager nm = context.getSystemService(NotificationManager.class);
-            Log.d(TAG, "canUseFullScreenIntent = " + nm.canUseFullScreenIntent());
-        }
-
-        Log.d(TAG, "✅ Incoming call notification shown - CallId: " + callId);
     }
 
     // ✅ Fix 1: Only cancel notification, NO state reset

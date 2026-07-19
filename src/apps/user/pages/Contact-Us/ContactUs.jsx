@@ -177,7 +177,8 @@ const ContactUs = () => {
   const closePopup = () => setShowPopup(false);
 
   const contactInfo = {
-    phone: "+91 8103007446",
+    phone1: "+91 81031 23106",
+    phone2: "+91 8103007446",
     email: "support@g9expert.com",
     address: `Nandan Bagh Colony,
 Kushwaha Nagar,
@@ -356,9 +357,14 @@ India`,
             <CardIcon>📞</CardIcon>
             <CardTitle>Phone Support</CardTitle>
             <CardContent>
-              <ContactDetail>
+              <ContactDetail style={{ marginBottom: '6px' }}>
+                <a href="tel:+918103123106" style={{ color: '#000080', textDecoration: 'none' }}>
+                  {contactInfo.phone1}
+                </a>
+              </ContactDetail>
+              <ContactDetail style={{ marginBottom: '8px' }}>
                 <a href="tel:+918103007446" style={{ color: '#000080', textDecoration: 'none' }}>
-                  {contactInfo.phone}
+                  {contactInfo.phone2}
                 </a>
               </ContactDetail>
               <ContactDetail>Monday - Saturday</ContactDetail>

@@ -39,7 +39,10 @@ public class MainActivity extends BridgeActivity {
         // 2. Inject APP_TYPE and NativeBridge interface
         injectNativeBridgeInterface();
 
-        // 3. Dispatch pending call (state machine handles duplicate)
+        // 3. Handle incoming intent (e.g. from notification accept action)
+        handleIntent(getIntent());
+
+        // 4. Dispatch pending call (state machine handles duplicate)
         dispatchPendingCall();
 
         Log.d(TAG, "onCreate - MainActivity initialization complete");
@@ -60,8 +63,34 @@ public class MainActivity extends BridgeActivity {
         setIntent(intent);
         Log.d(TAG, "onNewIntent - New intent received");
         
+        // Handle incoming intent (e.g. from notification accept action)
+        handleIntent(intent);
+        
         // Dispatch pending call (state machine handles duplicate)
         dispatchPendingCall();
+    }
+
+    private void handleIntent(Intent intent) {
+        if (intent == null) return;
+        
+        String action = intent.getAction();
+        boolean nativeAccept = intent.getBooleanExtra("native_accept", false);
+        
+        Log.d(TAG, "handleIntent - Action: " + action + ", NativeAccept: " + nativeAccept);
+        
+        if ("ACTION_ACCEPT_CALL".equals(action) || nativeAccept) {
+            String callId = intent.getStringExtra("call_id");
+            String callerName = intent.getStringExtra("caller_name");
+            String callType = intent.getStringExtra("call_type");
+            String targetUrl = intent.getStringExtra("target_url");
+            String userId = intent.getStringExtra("user_id");
+            String expertId = intent.getStringExtra("expert_id");
+            
+            Log.d(TAG, "MainActivity handleIntent: ACTION_ACCEPT_CALL for CallId: " + callId);
+            
+            // Execute accept logic directly inside MainActivity context
+            IncomingCallReceiver.performAcceptLogic(this, callId, callerName, callType, targetUrl, userId, expertId);
+        }
     }
 
     @Override

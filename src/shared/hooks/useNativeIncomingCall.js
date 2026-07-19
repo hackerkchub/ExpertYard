@@ -42,6 +42,19 @@ export default function useNativeIncomingCall() {
         // Navigate to call page
         // ============================================================
         const openCallPage = (call) => {
+            const targetUrl = call.targetUrl;
+            if (targetUrl) {
+                console.log("📞 Target URL provided, navigating directly:", targetUrl);
+                navigate(targetUrl, {
+                    replace: true,
+                    state: {
+                        native: true,
+                        ...call,
+                    },
+                });
+                return;
+            }
+
             const base = APP_CONFIG.APP_TYPE === "expert" ? "/expert" : "/user";
             const callId = String(call.callId);
 

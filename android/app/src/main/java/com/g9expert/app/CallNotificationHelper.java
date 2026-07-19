@@ -146,17 +146,23 @@ public class CallNotificationHelper {
                         | Intent.FLAG_ACTIVITY_SINGLE_TOP
         );
 
-        // ✅ Fix 13: Accept intent with all data
-        Intent acceptIntent = new Intent(context, IncomingCallReceiver.class);
-        acceptIntent.setAction(IncomingCallReceiver.ACTION_ACCEPT_CALL);
+        // Accept intent targeting MainActivity directly to bring app to foreground
+        Intent acceptIntent = new Intent(context, MainActivity.class);
+        acceptIntent.setAction("ACTION_ACCEPT_CALL");
         acceptIntent.putExtra("call_id", callId);
         acceptIntent.putExtra("caller_name", callerName);
         acceptIntent.putExtra("call_type", callType);
         acceptIntent.putExtra("target_url", targetUrl);
         if (userId != null) acceptIntent.putExtra("user_id", userId);
         if (expertId != null) acceptIntent.putExtra("expert_id", expertId);
+        acceptIntent.putExtra("native_accept", true);
+        acceptIntent.addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK
+                        | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        | Intent.FLAG_ACTIVITY_SINGLE_TOP
+        );
 
-        PendingIntent acceptPendingIntent = PendingIntent.getBroadcast(
+        PendingIntent acceptPendingIntent = PendingIntent.getActivity(
                 context,
                 501 + requestCodeBase,
                 acceptIntent,

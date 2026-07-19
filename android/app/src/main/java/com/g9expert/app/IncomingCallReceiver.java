@@ -139,6 +139,61 @@ public class IncomingCallReceiver extends BroadcastReceiver {
      * 5. DO NOT call JS
      * 6. DO NOT dispatch event
      */
+    public static void performAcceptLogic(Context context, String callId, String callerName,
+                                          String callType, String targetUrl, String userId, String expertId) {
+        try {
+            Log.d("IncomingCallReceiver", "====================================");
+            Log.d("IncomingCallReceiver", "ACCEPT LOGIC START");
+            Log.d("IncomingCallReceiver", "====================================");
+            Log.d("IncomingCallReceiver", "CallId      : " + callId);
+            Log.d("IncomingCallReceiver", "CallType    : " + callType);
+            Log.d("IncomingCallReceiver", "UserId      : " + userId);
+            Log.d("IncomingCallReceiver", "ExpertId    : " + expertId);
+            Log.d("IncomingCallReceiver", "====================================");
+
+            // 1. Save call to CallStore
+            JSONObject call = new JSONObject();
+            call.put("callId", callId);
+            call.put("callerName", callerName != null ? callerName : "Unknown");
+            call.put("callType", callType != null ? callType : TYPE_VOICE);
+            call.put("targetUrl", targetUrl != null ? targetUrl : "");
+            call.put("userId", userId != null ? userId : "");
+            call.put("expertId", expertId != null ? expertId : "");
+            call.put("acceptedAt", System.currentTimeMillis());
+            call.put("callState", CallStore.STATE_ACCEPTED);
+            call.put("socketEvents", new JSONObject());
+
+            CallStore.save(context, call);
+            CallStore.markAcceptSent(context);
+
+            // 2. Stop ringtone
+            CallRingtoneManager.stop();
+
+            // 3. Cancel notification
+            CallNotificationHelper.cancelIncomingCallNotification(context, callId);
+
+            // 4. Update CallStateManager
+            CallStateManager.setIncomingVisible(context, false, null);
+            String normalized = callType != null ? callType.trim().toLowerCase() : "";
+            boolean isVideo = normalized.equals("video") ||
+                             normalized.equals("video_call") ||
+                             normalized.equals("video-call") ||
+                             normalized.equals("video consultation");
+            if (isVideo) {
+                CallStateManager.setInVideoCall(context, true);
+            } else {
+                CallStateManager.setInVoiceCall(context, true);
+            }
+
+            // 5. Reset NativeBridgeManager
+            NativeBridgeManager.reset();
+
+            Log.d("IncomingCallReceiver", "✅ ACCEPT LOGIC COMPLETE");
+        } catch (Exception e) {
+            Log.e("IncomingCallReceiver", "Exception in performAcceptLogic", e);
+        }
+    }
+
     private void handleAcceptCall(Context context, String callId, String callerName,
                                    String callType, String targetUrl, String userId, String expertId) {
         if (!processingAccept.compareAndSet(false, true)) {
@@ -153,77 +208,10 @@ public class IncomingCallReceiver extends BroadcastReceiver {
         }
 
         try {
-            Log.d(TAG_ACCEPT, "====================================");
-            Log.d(TAG_ACCEPT, "ACCEPT CALL");
-            Log.d(TAG_ACCEPT, "====================================");
-            Log.d(TAG_ACCEPT, "CallId      : " + callId);
-            Log.d(TAG_ACCEPT, "CallType    : " + callType);
-            Log.d(TAG_ACCEPT, "UserId      : " + userId);
-            Log.d(TAG_ACCEPT, "ExpertId    : " + expertId);
-            Log.d(TAG_ACCEPT, "Time        : " + getCurrentTime());
-            Log.d(TAG_ACCEPT, "====================================");
+            // Execute shared accept logic
+            performAcceptLogic(context, callId, callerName, callType, targetUrl, userId, expertId);
 
-            // ============================================================
-            // STEP 1: Save call to CallStore
-            // ============================================================
-            Log.d(TAG_ACCEPT, "[STEP 1] Saving call to CallStore");
-
-            JSONObject call = new JSONObject();
-            call.put("callId", callId);
-            call.put("callerName", callerName != null ? callerName : "Unknown");
-            call.put("callType", callType != null ? callType : TYPE_VOICE);
-            call.put("targetUrl", targetUrl != null ? targetUrl : "");
-            call.put("userId", userId != null ? userId : "");
-            call.put("expertId", expertId != null ? expertId : "");
-            call.put("acceptedAt", System.currentTimeMillis());
-            call.put("callState", CallStore.STATE_ACCEPTED);
-            call.put("socketEvents", new JSONObject());
-
-            CallStore.save(context, call);
-            CallStore.touch(context);
-            CallStore.logState(context);
-            Log.d(TAG_ACCEPT, "[STEP 1] ✅ Call saved to CallStore");
-
-            // ============================================================
-            // STEP 2: Mark acceptSent = true
-            // ============================================================
-            Log.d(TAG_ACCEPT, "[STEP 2] Marking acceptSent = true");
-            CallStore.markAcceptSent(context);
-            CallStore.touch(context);
-            CallStore.logState(context);
-            Log.d(TAG_ACCEPT, "[STEP 2] ✅ acceptSent marked");
-
-            // ============================================================
-            // STEP 3: Stop ringtone
-            // ============================================================
-            Log.d(TAG_ACCEPT, "[STEP 3] Stopping ringtone");
-            CallRingtoneManager.stop();
-            Log.d(TAG_ACCEPT, "[STEP 3] ✅ Ringtone stopped");
-
-            // ============================================================
-            // STEP 4: Cancel notification
-            // ============================================================
-            Log.d(TAG_ACCEPT, "[STEP 4] Canceling notification");
-            CallNotificationHelper.cancelIncomingCallNotification(context, callId);
-            Log.d(TAG_ACCEPT, "[STEP 4] ✅ Notification canceled");
-
-            // ============================================================
-            // STEP 5: Update CallStateManager
-            // ============================================================
-            Log.d(TAG_ACCEPT, "[STEP 5] Updating CallStateManager");
-            CallStateManager.setIncomingVisible(context, false, null);
-
-            if (isVideoCall(callType)) {
-                CallStateManager.setInVideoCall(context, true);
-                Log.d(TAG_ACCEPT, "[STEP 5] ✅ Video call state set");
-            } else {
-                CallStateManager.setInVoiceCall(context, true);
-                Log.d(TAG_ACCEPT, "[STEP 5] ✅ Voice call state set");
-            }
-
-            // ============================================================
-            // STEP 6: Launch MainActivity
-            // ============================================================
+            // Launch MainActivity
             Log.d(TAG_ACCEPT, "[STEP 6] Launching MainActivity");
 
             Intent launch = new Intent(context, MainActivity.class);
@@ -241,30 +229,7 @@ public class IncomingCallReceiver extends BroadcastReceiver {
                 Log.d(TAG_ACCEPT, "[STEP 6] ✅ MainActivity launched");
             } catch (Exception e) {
                 Log.e(TAG_ACCEPT, "[STEP 6] ❌ Failed to launch MainActivity", e);
-                processingAccept.set(false);
-                return;
             }
-
-            // ============================================================
-            // STEP 7: Reset NativeBridgeManager
-            // ============================================================
-            Log.d(TAG_ACCEPT, "[STEP 7] Resetting NativeBridgeManager");
-            NativeBridgeManager.reset();
-            Log.d(TAG_ACCEPT, "[STEP 7] ✅ NativeBridgeManager reset");
-
-            // ============================================================
-            // STEP 8: Done - DO NOT emit socket, DO NOT call JS, DO NOT dispatch
-            // ============================================================
-            Log.d(TAG_ACCEPT, "====================================");
-            Log.d(TAG_ACCEPT, "✅ ACCEPT COMPLETE");
-            Log.d(TAG_ACCEPT, "   - Call saved to CallStore");
-            Log.d(TAG_ACCEPT, "   - acceptSent = true");
-            Log.d(TAG_ACCEPT, "   - MainActivity launched");
-            Log.d(TAG_ACCEPT, "   - React will dispatch automatically");
-            Log.d(TAG_ACCEPT, "====================================");
-
-        } catch (Exception e) {
-            Log.e(TAG_ACCEPT, "Exception in handleAcceptCall", e);
         } finally {
             processingAccept.set(false);
         }

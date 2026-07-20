@@ -42,44 +42,37 @@ export default function useNativeIncomingCall() {
         // Navigate to call page
         // ============================================================
         const openCallPage = (call) => {
-            const targetUrl = call.targetUrl;
-            if (targetUrl) {
-                console.log("📞 Target URL provided, navigating directly:", targetUrl);
-                navigate(targetUrl, {
-                    replace: true,
-                    state: {
-                        native: true,
-                        ...call,
-                    },
-                });
-                return;
+            let targetUrl = call.targetUrl || call.target_url;
+
+            if (!targetUrl) {
+                const base = APP_CONFIG.APP_TYPE === "expert" ? "/expert" : "/user";
+                const callId = String(call.callId);
+
+                const isVideo = call.callType === "video" || 
+                               call.callType === "video_call" || 
+                               call.callType === "video-call";
+                const isChat = call.callType === "chat" ||
+                               call.callType === "incoming_chat" ||
+                               call.callType === "chat_request";
+                
+                if (isChat) {
+                    targetUrl = `${base}/chat/${callId}`;
+                } else if (isVideo) {
+                    targetUrl = `${base}/video-call/${callId}`;
+                } else {
+                    targetUrl = `${base}/voice-call/${callId}`;
+                }
             }
 
-            const base = APP_CONFIG.APP_TYPE === "expert" ? "/expert" : "/user";
-            const callId = String(call.callId);
+            console.log("⚡ Direct-to-Call: Navigating directly to targetUrl:", targetUrl);
 
-            const isVideo = call.callType === "video" || 
-                           call.callType === "video_call" || 
-                           call.callType === "video-call";
-            const isChat = call.callType === "chat" ||
-                           call.callType === "incoming_chat" ||
-                           call.callType === "chat_request";
-            
-            let route;
-            if (isChat) {
-                route = `${base}/chat/${callId}`;
-            } else if (isVideo) {
-                route = `${base}/video-call/${callId}`;
-            } else {
-                route = `${base}/voice-call/${callId}`;
-            }
-
-            console.log(`📞 Opening ${isVideo ? 'video' : 'voice'} call page:`, route);
-
-            navigate(route, {
+            navigate(targetUrl, {
                 replace: true,
                 state: {
                     native: true,
+                    autoAccept: true,
+                    acceptSent: true,
+                    action: "accept",
                     ...call,
                 },
             });
@@ -88,13 +81,13 @@ export default function useNativeIncomingCall() {
         // ============================================================
         // Main handler
         // ============================================================
-        const handleIncomingCall = () => {
+        const handleIncomingCall = (event) => {
             if (openingCall) {
                 console.log("⏳ Navigation already in progress");
                 return;
             }
 
-            const call = getCallData();
+            const call = event?.detail || getCallData();
             if (!call) {
                 console.log("❌ No pending call found");
                 return;
@@ -138,6 +131,57 @@ export default function useNativeIncomingCall() {
         console.log("👂 Listening for event:", NATIVE_EVENT);
 
         // ============================================================
+        // Resilient window polling for window.NativeBridgeManager
+        // ============================================================
+        let pollAttempts = 0;
+        const maxAttempts = 50; // 50 * 50ms = 2.5s window
+        const pollInterval = 50;
+        let pollTimer = null;
+
+        const registerNativeBridge = () => {
+            if (window.NativeBridgeManager) {
+                console.log(`🚀 Signaling native side that React is ready (Attempt ${pollAttempts})`);
+                try {
+                    if (typeof window.NativeBridgeManager.onReactReady === "function") {
+                        window.NativeBridgeManager.onReactReady();
+                    }
+                    if (typeof window.NativeBridgeManager.notifyReactReady === "function") {
+                        window.NativeBridgeManager.notifyReactReady();
+                    }
+                } catch (e) {
+                    console.error("Failed to signal native readiness:", e);
+                }
+                return;
+            }
+
+            // Fallback check directly for Java Interface NativeBridgeManager_Native
+            if (window.NativeBridgeManager_Native) {
+                console.log("⚡ Found NativeBridgeManager_Native directly, binding wrapper...");
+                window.NativeBridgeManager = {
+                    _native: window.NativeBridgeManager_Native,
+                    onReactReadyForCall: (callId) => window.NativeBridgeManager_Native.onReactReadyForCall(callId),
+                    notifyReactReady: () => window.NativeBridgeManager_Native.notifyReactReady(),
+                    onReactReady: () => window.NativeBridgeManager_Native.onReactReady(),
+                };
+                try {
+                    window.NativeBridgeManager.notifyReactReady();
+                } catch (e) {
+                    console.error("Failed to notify via NativeBridgeManager_Native:", e);
+                }
+                return;
+            }
+
+            pollAttempts++;
+            if (pollAttempts < maxAttempts) {
+                pollTimer = setTimeout(registerNativeBridge, pollInterval);
+            } else {
+                console.warn("⚠️ NativeBridgeManager not available after polling max attempts");
+            }
+        };
+
+        registerNativeBridge();
+
+        // ============================================================
         // Cold start - check immediately
         // ============================================================
         const coldStartCheck = () => {
@@ -157,6 +201,7 @@ export default function useNativeIncomingCall() {
         return () => {
             window.removeEventListener(NATIVE_EVENT, handleIncomingCall);
             clearTimeout(timeoutId);
+            if (pollTimer) clearTimeout(pollTimer);
             console.log("🧹 Cleaned up native call listeners");
         };
 

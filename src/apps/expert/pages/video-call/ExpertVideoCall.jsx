@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
+import styled from "styled-components";
 import VideoCallRoom from "../../../../shared/components/VideoCallRoom";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { useSocket } from "../../../../shared/hooks/useSocket";
@@ -62,6 +63,27 @@ export default function ExpertVideoCall() {
   const nativeCleanupDoneRef = useRef(false);
   const reactReadyNotifiedRef = useRef(false);
 
+  const [callState, setCallState] = useState(() => {
+    const isAutoAccept = (
+      location.state?.acceptSent === true ||
+      location.state?.acceptSent === "true" ||
+      location.state?.acceptSent === 1 ||
+      location.state?.acceptSent === "1" ||
+      location.state?.autoAccept === true ||
+      location.state?.autoAccept === "true" ||
+      location.state?.action === "accept" ||
+      location.state?.accepted === true ||
+      location.state?.accepted === "true" ||
+      location.state?.native === true ||
+      window.G9?.native?.pendingCall?.acceptSent === true ||
+      window.G9?.native?.pendingCall?.acceptSent === "true" ||
+      window.G9?.native?.pendingCall?.autoAccept === true
+    );
+    if (Capacitor.isNativePlatform() && location.state?.native && !isAutoAccept) {
+      return "incoming";
+    }
+    return "connecting";
+  });
   const [status, setStatus] = useState("Accepting call");
   const [seconds, setSeconds] = useState(0);
   const [muted, setMuted] = useState(false);
@@ -165,6 +187,13 @@ export default function ExpertVideoCall() {
       clearTimeout(cleanupTimerRef.current);
       cleanupTimerRef.current = null;
     }
+    
+    // If incoming state, wait for manual acceptance
+    if (callState === "incoming") {
+      setStatus("Incoming video call...");
+      return;
+    }
+
     if (!socket || !callId || acceptedRef.current || mediaRequestInProgressRef.current || mediaInitializedRef.current) return;
     mediaRequestInProgressRef.current = true;
     setStatus("Checking camera and microphone...");
@@ -222,7 +251,7 @@ export default function ExpertVideoCall() {
       pageActiveRef.current = false;
       scheduleUnmountCleanup();
     };
-  }, [callId, expertData?.expertId, getMediaFailureReason, retryNonce, scheduleUnmountCleanup, socket, cleanupNativeState]);
+  }, [callId, callState, expertData?.expertId, getMediaFailureReason, retryNonce, scheduleUnmountCleanup, socket, cleanupNativeState]);
 
   // ============================================================
   // All other event handlers remain the same
@@ -332,6 +361,42 @@ export default function ExpertVideoCall() {
     };
   }, [scheduleUnmountCleanup]);
 
+  const acceptCall = useCallback(() => {
+    console.log("⚡ Executing acceptCall() in ExpertVideoCall");
+    setCallState("connecting");
+  }, []);
+
+  // Direct Auto-Accept: Automatically call acceptCall() on mount if acceptSent or autoAccept flag is present
+  useEffect(() => {
+    const isAutoAccept = (
+      location.state?.acceptSent === true ||
+      location.state?.acceptSent === "true" ||
+      location.state?.acceptSent === 1 ||
+      location.state?.acceptSent === "1" ||
+      location.state?.autoAccept === true ||
+      location.state?.autoAccept === "true" ||
+      location.state?.action === "accept" ||
+      location.state?.accepted === true ||
+      location.state?.accepted === "true" ||
+      location.state?.native === true ||
+      window.G9?.native?.pendingCall?.acceptSent === true ||
+      window.G9?.native?.pendingCall?.acceptSent === "true" ||
+      window.G9?.native?.pendingCall?.autoAccept === true
+    );
+    if (isAutoAccept) {
+      console.log("⚡ Auto-accepting video call: Executing acceptCall()");
+      acceptCall();
+    }
+  }, [acceptCall, location.state]);
+
+  const rejectCall = () => {
+    setStatus("Call declined");
+    socket?.emit(EVENTS.DECLINE, { callId: Number(callId) });
+    cleanupMedia();
+    cleanupNativeState();
+    navigate("/expert/home", { replace: true });
+  };
+
   const endCall = () => {
     manualEndRef.current = true;
     endedRef.current = true;
@@ -356,6 +421,31 @@ export default function ExpertVideoCall() {
     setStatus("Checking camera and microphone...");
     setRetryNonce((value) => value + 1);
   };
+
+  if (callState === "incoming") {
+    const callerName = location.state?.callerName || location.state?.caller_name || "User";
+    const initialLetter = callerName.charAt(0).toUpperCase();
+
+    return (
+      <Overlay>
+        <CallerWrapper>
+          <AvatarRing>
+            <AvatarPlaceholder>{initialLetter}</AvatarPlaceholder>
+          </AvatarRing>
+          <CallerName>{callerName}</CallerName>
+          <CallTypeLabel>Incoming Video Call</CallTypeLabel>
+        </CallerWrapper>
+        <ActionRow>
+          <ActionBtn onClick={rejectCall} title="Decline">
+            ✕
+          </ActionBtn>
+          <ActionBtn $accept onClick={acceptCall} title="Accept">
+            ✓
+          </ActionBtn>
+        </ActionRow>
+      </Overlay>
+    );
+  }
 
   return (
     <VideoCallRoom
@@ -384,3 +474,99 @@ export default function ExpertVideoCall() {
     />
   );
 }
+
+const Overlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at top left, #1a1a2e, #162447);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  z-index: 9999;
+`;
+
+const CallerWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 3rem;
+  animation: pulse 2s infinite ease-in-out;
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+  }
+`;
+
+const AvatarRing = styled.div`
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px dashed rgba(0, 200, 83, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 0 20px rgba(0, 200, 83, 0.2);
+`;
+
+const AvatarPlaceholder = styled.div`
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00c853, #b2ff59);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #121212;
+  box-shadow: 0 10px 25px rgba(0, 200, 83, 0.4);
+`;
+
+const CallerName = styled.h2`
+  font-size: 1.8rem;
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+`;
+
+const CallTypeLabel = styled.span`
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+`;
+
+const ActionRow = styled.div`
+  display: flex;
+  gap: 2rem;
+`;
+
+const ActionBtn = styled.button`
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+
+  &:hover {
+    transform: translateY(-5px) scale(1.05);
+  }
+
+  background: ${props => props.$accept ? '#00C853' : '#FF1744'};
+  color: #fff;
+`;

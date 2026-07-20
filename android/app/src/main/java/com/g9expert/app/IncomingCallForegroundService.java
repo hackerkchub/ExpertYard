@@ -33,12 +33,42 @@ public class IncomingCallForegroundService extends Service {
         Log.d(TAG, "Foreground Service Created");
     }
 
+    private void startDummyForeground() {
+        try {
+            CallNotificationHelper.createChannels(this);
+            Notification dummyNotification = new NotificationCompat.Builder(this, CallNotificationHelper.CHANNEL_CALLS)
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setContentTitle("Processing Request")
+                    .setContentText("")
+                    .setPriority(NotificationCompat.PRIORITY_MIN)
+                    .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                    .build();
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                try {
+                    startForeground(
+                            FOREGROUND_NOTIFICATION_ID,
+                            dummyNotification,
+                            android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
+                    );
+                } catch (Exception e) {
+                    startForeground(FOREGROUND_NOTIFICATION_ID, dummyNotification);
+                }
+            } else {
+                startForeground(FOREGROUND_NOTIFICATION_ID, dummyNotification);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Failed to start dummy foreground", e);
+        }
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         if (intent == null) {
-            Log.w(TAG, "Intent is null, stopping service");
-            stopSelf();
+            Log.w(TAG, "Intent is null, stopping service (safety net triggered)");
+            startDummyForeground();
+            stopService();
             return START_NOT_STICKY;
         }
 
@@ -67,7 +97,8 @@ public class IncomingCallForegroundService extends Service {
         // Validate callId
         String callId = data.get("callId");
         if (callId == null || callId.isEmpty()) {
-            Log.e(TAG, "❌ callId is null or empty - cannot process call");
+            Log.e(TAG, "❌ callId is null or empty - stopping service with safety net dummy notification");
+            startDummyForeground();
             stopService();
             return START_NOT_STICKY;
         }

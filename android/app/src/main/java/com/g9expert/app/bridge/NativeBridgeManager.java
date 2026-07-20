@@ -59,6 +59,7 @@ public final class NativeBridgeManager {
     private static volatile String pendingCallType = null;
     private static volatile String dispatchId = null;
     private static volatile boolean isInitialized = false;
+    private static volatile boolean isReactReady = false;
 
     // ============================================================
     // Private Constructor
@@ -141,8 +142,19 @@ public final class NativeBridgeManager {
         pendingCallId = null;
         pendingCallType = null;
         dispatchId = null;
+        isReactReady = false;
 
         logState("INITIALIZE", "NativeBridgeManager initialized");
+    }
+
+    public interface HandshakeAckListener {
+        void onHandshakeAck(String callId);
+    }
+
+    private static volatile HandshakeAckListener handshakeAckListener = null;
+
+    public static void setHandshakeAckListener(HandshakeAckListener listener) {
+        handshakeAckListener = listener;
     }
 
     /**
@@ -159,6 +171,15 @@ public final class NativeBridgeManager {
         }
 
         logState("REACT_READY_FOR_CALL", "React confirmed call page - CallId: " + callId);
+
+        // Notify Handshake ACK listener (IncomingCallActivity)
+        if (handshakeAckListener != null) {
+            try {
+                handshakeAckListener.onHandshakeAck(callId);
+            } catch (Exception e) {
+                Log.e(TAG, "Error invoking handshakeAckListener", e);
+            }
+        }
 
         // Clear CallStore if callId matches
         if (context != null && callId != null) {
@@ -188,6 +209,11 @@ public final class NativeBridgeManager {
         // State machine guard
         if (state == DispatchState.DISPATCHED) {
             Log.d(TAG, "Already dispatched - CallId: " + pendingCallId);
+            return;
+        }
+
+        if (!isReactReady) {
+            logState("DISPATCH_PENDING", "React is NOT ready yet. Postponing dispatch.");
             return;
         }
 
@@ -309,6 +335,11 @@ public final class NativeBridgeManager {
             Log.d(TAG, "Time       : " + getCurrentTime());
             Log.d(TAG, "=====================================");
 
+            String targetUrl = callData.optString("targetUrl", "");
+            if (targetUrl.isEmpty()) {
+                targetUrl = callData.optString("target_url", "");
+            }
+
             // Build injection script
             String script =
                 "if (!window.G9) window.G9 = {};" +
@@ -317,9 +348,10 @@ public final class NativeBridgeManager {
                 "window.G9.native.dispatchId = '" + dispatchId + "';" +
                 "window.G9.native.dispatchTime = " + System.currentTimeMillis() + ";" +
                 "window.G9.native.callId = '" + pendingCallId + "';" +
+                "window.G9.native.targetUrl = '" + targetUrl + "';" +
                 "window.G9.native.receivedAt = Date.now();" +
-                "window.dispatchEvent(new CustomEvent('g9:nativeIncomingCall'));" +
-                (BuildConfig.DEBUG ? "console.log('[G9] Native call dispatched:', window.G9.native.callId, 'DispatchId:', window.G9.native.dispatchId);" : "");
+                "window.dispatchEvent(new CustomEvent('g9:nativeIncomingCall', { detail: " + payload + " }));" +
+                (BuildConfig.DEBUG ? "console.log('[G9] Native call dispatched:', window.G9.native.callId, 'TargetUrl:', window.G9.native.targetUrl, 'DispatchId:', window.G9.native.dispatchId);" : "");
 
             evaluateJavascript(script, value -> {
                 Log.d(TAG, "✅ Call injected successfully - CallId: " + pendingCallId +
@@ -347,6 +379,11 @@ public final class NativeBridgeManager {
     public static String getDispatchId() { return dispatchId; }
     public static boolean isDispatched() { return state == DispatchState.DISPATCHED; }
     public static boolean isIdle() { return state == DispatchState.IDLE; }
+    public static boolean isReactReady() { return isReactReady; }
+    public static synchronized void setReactReady(boolean ready) {
+        isReactReady = ready;
+        Log.d(TAG, "setReactReady: " + ready);
+    }
 
     public static boolean hasPendingCall() {
         return context != null && CallStore.hasPendingCall(context);

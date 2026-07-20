@@ -151,16 +151,33 @@ public class IncomingCallReceiver extends BroadcastReceiver {
             Log.d("IncomingCallReceiver", "ExpertId    : " + expertId);
             Log.d("IncomingCallReceiver", "====================================");
 
+            // Compute targetUrl fallback if not provided
+            if (targetUrl == null || targetUrl.isEmpty()) {
+                String normalized = callType != null ? callType.trim().toLowerCase() : "";
+                boolean isVideo = normalized.equals("video") || normalized.equals("video_call") || normalized.equals("video-call");
+                boolean isChat = normalized.equals("chat") || normalized.equals("incoming_chat") || normalized.equals("chat_request");
+                String base = "/expert";
+                if (isChat) {
+                    targetUrl = base + "/chat/" + callId;
+                } else if (isVideo) {
+                    targetUrl = base + "/video-call/" + callId;
+                } else {
+                    targetUrl = base + "/voice-call/" + callId;
+                }
+            }
+
             // 1. Save call to CallStore
             JSONObject call = new JSONObject();
             call.put("callId", callId);
             call.put("callerName", callerName != null ? callerName : "Unknown");
             call.put("callType", callType != null ? callType : TYPE_VOICE);
-            call.put("targetUrl", targetUrl != null ? targetUrl : "");
+            call.put("targetUrl", targetUrl);
+            call.put("target_url", targetUrl);
             call.put("userId", userId != null ? userId : "");
             call.put("expertId", expertId != null ? expertId : "");
             call.put("acceptedAt", System.currentTimeMillis());
             call.put("callState", CallStore.STATE_ACCEPTED);
+            call.put("autoAccept", true); // ✅ Automatically answer inside React UI
             call.put("socketEvents", new JSONObject());
 
             CallStore.save(context, call);
@@ -172,6 +189,15 @@ public class IncomingCallReceiver extends BroadcastReceiver {
             // 3. Cancel notification
             CallNotificationHelper.cancelIncomingCallNotification(context, callId);
 
+            // Stop the foreground service
+            try {
+                Intent stopIntent = new Intent(context, IncomingCallForegroundService.class);
+                stopIntent.setAction(IncomingCallForegroundService.ACTION_STOP);
+                context.startService(stopIntent);
+            } catch (Exception e) {
+                Log.e("IncomingCallReceiver", "Failed to stop foreground service on accept", e);
+            }
+
             // 4. Update CallStateManager
             CallStateManager.setIncomingVisible(context, false, null);
             String normalized = callType != null ? callType.trim().toLowerCase() : "";
@@ -179,9 +205,12 @@ public class IncomingCallReceiver extends BroadcastReceiver {
                              normalized.equals("video_call") ||
                              normalized.equals("video-call") ||
                              normalized.equals("video consultation");
+            boolean isChat = normalized.equals("chat") ||
+                             normalized.equals("incoming_chat") ||
+                             normalized.equals("chat_request");
             if (isVideo) {
                 CallStateManager.setInVideoCall(context, true);
-            } else {
+            } else if (!isChat) {
                 CallStateManager.setInVoiceCall(context, true);
             }
 
@@ -191,6 +220,61 @@ public class IncomingCallReceiver extends BroadcastReceiver {
             Log.d("IncomingCallReceiver", "✅ ACCEPT LOGIC COMPLETE");
         } catch (Exception e) {
             Log.e("IncomingCallReceiver", "Exception in performAcceptLogic", e);
+        }
+    }
+
+    /**
+     * Shared logic to view call without accepting or rejecting
+     */
+    public static void performViewLogic(Context context, String callId, String callerName,
+                                        String callType, String targetUrl, String userId, String expertId) {
+        try {
+            Log.d("IncomingCallReceiver", "====================================");
+            Log.d("IncomingCallReceiver", "VIEW LOGIC START");
+            Log.d("IncomingCallReceiver", "====================================");
+            Log.d("IncomingCallReceiver", "CallId      : " + callId);
+            Log.d("IncomingCallReceiver", "CallType    : " + callType);
+            Log.d("IncomingCallReceiver", "====================================");
+
+            // 1. Save call to CallStore with acceptSent = false and autoAccept = false
+            JSONObject call = new JSONObject();
+            call.put("callId", callId);
+            call.put("callerName", callerName != null ? callerName : "Unknown");
+            call.put("callType", callType != null ? callType : TYPE_VOICE);
+            call.put("targetUrl", targetUrl != null ? targetUrl : "");
+            call.put("userId", userId != null ? userId : "");
+            call.put("expertId", expertId != null ? expertId : "");
+            call.put("callState", "viewed");
+            call.put("acceptSent", false);
+            call.put("autoAccept", false); // ✅ Do NOT auto-accept on simple view action
+            call.put("socketEvents", new JSONObject());
+
+            CallStore.save(context, call);
+
+            // 2. Stop ringtone
+            CallRingtoneManager.stop();
+
+            // 3. Cancel notification
+            CallNotificationHelper.cancelIncomingCallNotification(context, callId);
+
+            // Stop the foreground service
+            try {
+                Intent stopIntent = new Intent(context, IncomingCallForegroundService.class);
+                stopIntent.setAction(IncomingCallForegroundService.ACTION_STOP);
+                context.startService(stopIntent);
+            } catch (Exception e) {
+                Log.e("IncomingCallReceiver", "Failed to stop foreground service on view", e);
+            }
+
+            // 4. Update CallStateManager
+            CallStateManager.setIncomingVisible(context, false, null);
+
+            // 5. Reset NativeBridgeManager
+            NativeBridgeManager.reset();
+
+            Log.d("IncomingCallReceiver", "✅ VIEW LOGIC COMPLETE");
+        } catch (Exception e) {
+            Log.e("IncomingCallReceiver", "Exception in performViewLogic", e);
         }
     }
 
@@ -223,6 +307,8 @@ public class IncomingCallReceiver extends BroadcastReceiver {
             launch.putExtra("native_accept", true);
             launch.putExtra("call_id", callId);
             launch.putExtra("call_type", callType);
+            launch.putExtra("target_url", targetUrl);
+            launch.putExtra("targetUrl", targetUrl);
 
             try {
                 context.startActivity(launch);
@@ -302,6 +388,15 @@ public class IncomingCallReceiver extends BroadcastReceiver {
             Log.d(TAG_REJECT, "[STEP 4] Canceling notification");
             CallNotificationHelper.cancelIncomingCallNotification(context, callId);
             Log.d(TAG_REJECT, "[STEP 4] ✅ Notification canceled");
+
+            // Stop the foreground service
+            try {
+                Intent stopIntent = new Intent(context, IncomingCallForegroundService.class);
+                stopIntent.setAction(IncomingCallForegroundService.ACTION_STOP);
+                context.startService(stopIntent);
+            } catch (Exception e) {
+                Log.e(TAG_REJECT, "Failed to stop foreground service on reject", e);
+            }
 
             // ============================================================
             // STEP 5: Clear CallStore
@@ -395,6 +490,15 @@ public class IncomingCallReceiver extends BroadcastReceiver {
             Log.d(TAG_TIMEOUT, "[STEP 4] Canceling notification");
             CallNotificationHelper.cancelIncomingCallNotification(context, callId);
             Log.d(TAG_TIMEOUT, "[STEP 4] ✅ Notification canceled");
+
+            // Stop the foreground service
+            try {
+                Intent stopIntent = new Intent(context, IncomingCallForegroundService.class);
+                stopIntent.setAction(IncomingCallForegroundService.ACTION_STOP);
+                context.startService(stopIntent);
+            } catch (Exception e) {
+                Log.e(TAG_TIMEOUT, "Failed to stop foreground service on timeout", e);
+            }
 
             // ============================================================
             // STEP 5: Show missed call notification

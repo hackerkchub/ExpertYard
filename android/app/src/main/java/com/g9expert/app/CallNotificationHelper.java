@@ -90,8 +90,20 @@ public class CallNotificationHelper {
         // Get call details with proper fallbacks
         String callId = data.get("callId");
         if (callId == null || callId.isEmpty()) {
-            Log.e(TAG, "❌ callId is null or empty - cannot show incoming call");
-            return null;
+            callId = data.get("request_id");
+            if (callId == null || callId.isEmpty()) {
+                callId = data.get("related_id");
+                if (callId == null || callId.isEmpty()) {
+                    callId = data.get("chatId");
+                    if (callId == null || callId.isEmpty()) {
+                        callId = data.get("notification_id");
+                        if (callId == null || callId.isEmpty()) {
+                            Log.e(TAG, "❌ callId and fallback IDs are null or empty - cannot show notification");
+                            return null;
+                        }
+                    }
+                }
+            }
         }
 
         // Proper caller name with fallback
@@ -115,6 +127,25 @@ public class CallNotificationHelper {
         String targetUrl = data.get("target_url");
         if (targetUrl == null || targetUrl.isEmpty()) {
             targetUrl = data.get("targetUrl");
+            if (targetUrl == null || targetUrl.isEmpty()) {
+                targetUrl = data.get("url");
+                if (targetUrl == null || targetUrl.isEmpty()) {
+                    targetUrl = data.get("click_action");
+                }
+            }
+        }
+
+        if (targetUrl == null || targetUrl.isEmpty()) {
+            boolean isVideo = "video".equalsIgnoreCase(callType) || "video_call".equalsIgnoreCase(callType) || "video-call".equalsIgnoreCase(callType);
+            boolean isChat = "chat".equalsIgnoreCase(callType) || "incoming_chat".equalsIgnoreCase(callType) || "chat_request".equalsIgnoreCase(callType);
+            String base = "/expert";
+            if (isChat) {
+                targetUrl = base + "/chat/" + callId;
+            } else if (isVideo) {
+                targetUrl = base + "/video-call/" + callId;
+            } else {
+                targetUrl = base + "/voice-call/" + callId;
+            }
         }
 
         // Get additional fields
@@ -123,7 +154,8 @@ public class CallNotificationHelper {
 
         Log.d(TAG, "Building incoming notification - ID: " + callId + 
                   ", Caller: " + callerName + 
-                  ", Type: " + callType);
+                  ", Type: " + callType +
+                  ", TargetUrl: " + targetUrl);
 
         createChannels(context);
 
@@ -135,6 +167,7 @@ public class CallNotificationHelper {
         intent.putExtra("caller_name", callerName);
         intent.putExtra("call_type", callType);
         intent.putExtra("target_url", targetUrl);
+        intent.putExtra("targetUrl", targetUrl);
         if (userId != null) intent.putExtra("user_id", userId);
         if (expertId != null) intent.putExtra("expert_id", expertId);
 
@@ -150,9 +183,11 @@ public class CallNotificationHelper {
         acceptIntent.putExtra("caller_name", callerName);
         acceptIntent.putExtra("call_type", callType);
         acceptIntent.putExtra("target_url", targetUrl);
+        acceptIntent.putExtra("targetUrl", targetUrl);
         if (userId != null) acceptIntent.putExtra("user_id", userId);
         if (expertId != null) acceptIntent.putExtra("expert_id", expertId);
         acceptIntent.putExtra("native_accept", true);
+        acceptIntent.putExtra("auto_accept", true); // ✅ Auto-accept calls instantly
         acceptIntent.addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK
                         | Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -179,6 +214,29 @@ public class CallNotificationHelper {
                 context,
                 502 + requestCodeBase,
                 rejectIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        // View intent to dismiss notification and route without accepting/rejecting
+        Intent viewIntent = new Intent(context, MainActivity.class);
+        viewIntent.setAction("ACTION_VIEW_CALL");
+        viewIntent.putExtra("call_id", callId);
+        viewIntent.putExtra("caller_name", callerName);
+        viewIntent.putExtra("call_type", callType);
+        viewIntent.putExtra("target_url", targetUrl);
+        if (userId != null) viewIntent.putExtra("user_id", userId);
+        if (expertId != null) viewIntent.putExtra("expert_id", expertId);
+        viewIntent.putExtra("native_view", true);
+        viewIntent.addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK
+                        | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        | Intent.FLAG_ACTIVITY_SINGLE_TOP
+        );
+
+        PendingIntent viewPendingIntent = PendingIntent.getActivity(
+                context,
+                503 + requestCodeBase,
+                viewIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
@@ -229,6 +287,11 @@ public class CallNotificationHelper {
                         android.R.drawable.ic_menu_close_clear_cancel,
                         "Reject",
                         rejectPendingIntent
+                )
+                .addAction(
+                        android.R.drawable.ic_menu_view,
+                        "View",
+                        viewPendingIntent
                 );
 
         if (!disableFullScreen) {

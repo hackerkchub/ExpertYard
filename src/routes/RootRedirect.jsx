@@ -9,6 +9,16 @@ export default function RootRedirect() {
     return <Navigate to={redirectedPath} replace />;
   }
 
+  // ✅ Direct-to-Call: If a pending native call exists with targetUrl, route directly to it without hitting Home page
+  const pendingCall = typeof window !== "undefined" ? window.G9?.native?.pendingCall : null;
+  if (pendingCall) {
+    const targetUrl = pendingCall.targetUrl || pendingCall.target_url;
+    if (targetUrl && targetUrl.startsWith("/")) {
+      console.log("⚡ Direct-to-Call (RootRedirect): Navigating directly to targetUrl:", targetUrl);
+      return <Navigate to={targetUrl} state={{ native: true, autoAccept: true, acceptSent: true, action: "accept", ...pendingCall }} replace />;
+    }
+  }
+
   const adminToken = localStorage.getItem("admin_token");
   const expertToken = localStorage.getItem("expert_token");
   const userToken = localStorage.getItem("user_token");

@@ -610,7 +610,9 @@ export function ExpertNotificationsProvider({ children }) {
 
     if ((notification.type === "voice_call" || notification.type === "video_call" || notification.type === "video-call") && notification.payload?.callId && notification.status === "ringing") {
       markCallFinal(notification.payload.callId, "accepted");
-      navigate((notification.type === "video_call" || notification.type === "video-call") ? `/expert/video-call/${notification.payload.callId}` : `/expert/voice-call/${notification.payload.callId}`);
+      const isVideo = notification.type === "video_call" || notification.type === "video-call";
+      const path = isVideo ? `/expert/video-call/${notification.payload.callId}` : `/expert/voice-call/${notification.payload.callId}`;
+      navigate(path, { state: { autoAccept: true, acceptSent: true, action: "accept" } });
       return;
     }
 
@@ -626,7 +628,9 @@ export function ExpertNotificationsProvider({ children }) {
       markCallFinal(callId, "accepted");
       soundManager.stopAll();
       window.dispatchEvent(new CustomEvent("go_to_call_page", { detail: callId }));
-      navigate(`/expert/voice-call/${callId}`);
+      navigate(`/expert/voice-call/${callId}`, {
+        state: { autoAccept: true, acceptSent: true, action: "accept" }
+      });
       markNotificationAsRead(notification.id);
       return;
     }
@@ -636,7 +640,9 @@ export function ExpertNotificationsProvider({ children }) {
       if (!callId) return;
       markCallFinal(callId, "accepted");
       soundManager.stopAll();
-      navigate(`/expert/video-call/${callId}`);
+      navigate(`/expert/video-call/${callId}`, {
+        state: { autoAccept: true, acceptSent: true, action: "accept" }
+      });
       markNotificationAsRead(notification.id);
       return;
     }

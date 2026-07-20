@@ -75,21 +75,40 @@ public class MainActivity extends BridgeActivity {
         
         String action = intent.getAction();
         boolean nativeAccept = intent.getBooleanExtra("native_accept", false);
+        boolean nativeView = intent.getBooleanExtra("native_view", false);
         
-        Log.d(TAG, "handleIntent - Action: " + action + ", NativeAccept: " + nativeAccept);
+        Log.d(TAG, "handleIntent - Action: " + action + ", NativeAccept: " + nativeAccept + ", NativeView: " + nativeView);
         
         if ("ACTION_ACCEPT_CALL".equals(action) || nativeAccept) {
             String callId = intent.getStringExtra("call_id");
             String callerName = intent.getStringExtra("caller_name");
             String callType = intent.getStringExtra("call_type");
             String targetUrl = intent.getStringExtra("target_url");
+            if (targetUrl == null || targetUrl.isEmpty()) {
+                targetUrl = intent.getStringExtra("targetUrl");
+            }
             String userId = intent.getStringExtra("user_id");
             String expertId = intent.getStringExtra("expert_id");
             
-            Log.d(TAG, "MainActivity handleIntent: ACTION_ACCEPT_CALL for CallId: " + callId);
+            Log.d(TAG, "MainActivity handleIntent: ACTION_ACCEPT_CALL for CallId: " + callId + ", TargetUrl: " + targetUrl);
             
             // Execute accept logic directly inside MainActivity context
             IncomingCallReceiver.performAcceptLogic(this, callId, callerName, callType, targetUrl, userId, expertId);
+        } else if ("ACTION_VIEW_CALL".equals(action) || nativeView) {
+            String callId = intent.getStringExtra("call_id");
+            String callerName = intent.getStringExtra("caller_name");
+            String callType = intent.getStringExtra("call_type");
+            String targetUrl = intent.getStringExtra("target_url");
+            if (targetUrl == null || targetUrl.isEmpty()) {
+                targetUrl = intent.getStringExtra("targetUrl");
+            }
+            String userId = intent.getStringExtra("user_id");
+            String expertId = intent.getStringExtra("expert_id");
+            
+            Log.d(TAG, "MainActivity handleIntent: ACTION_VIEW_CALL for CallId: " + callId + ", TargetUrl: " + targetUrl);
+            
+            // Execute view logic directly inside MainActivity context (stops ringtone and opens app)
+            IncomingCallReceiver.performViewLogic(this, callId, callerName, callType, targetUrl, userId, expertId);
         }
     }
 
@@ -135,32 +154,62 @@ public class MainActivity extends BridgeActivity {
             webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
             Log.d(TAG, "✅ Disabled user gesture requirement for media playback");
 
-            // Inject APP_TYPE
-            String appType = getAppType();
-            String js = "window.G9_APP_TYPE='" + appType + "';";
-            webView.evaluateJavascript(js, null);
-            Log.d(TAG, "✅ APP_TYPE injected: " + js);
-
-            // Add JavascriptInterface for NativeBridge
-            webView.addJavascriptInterface(new NativeBridgeInterface(), "NativeBridgeManager");
+            // Add JavascriptInterface for NativeBridge immediately
+            webView.addJavascriptInterface(new NativeBridgeInterface(), "NativeBridgeManager_Native");
             Log.d(TAG, "✅ NativeBridgeManager JavascriptInterface added");
 
-            // Also inject a JavaScript wrapper for backward compatibility
-            String wrapperJs = 
-                "if (!window.NativeBridgeManager) {" +
-                "  window.NativeBridgeManager = {" +
-                "    onReactReadyForCall: function(callId) {" +
-                "      if (window.NativeBridgeManager && window.NativeBridgeManager._native) {" +
-                "        window.NativeBridgeManager._native.onReactReadyForCall(callId);" +
-                "      }" +
-                "    }" +
-                "  };" +
-                "}";
-            webView.evaluateJavascript(wrapperJs, null);
-            Log.d(TAG, "✅ NativeBridgeManager JavaScript wrapper injected");
+            // Wrap BridgeWebViewClient to re-inject wrapper JS on page finished
+            webView.setWebViewClient(new com.getcapacitor.BridgeWebViewClient(getBridge()) {
+                @Override
+                public void onPageFinished(WebView view, String url) {
+                    super.onPageFinished(view, url);
+                    Log.d(TAG, "🌐 WebView onPageFinished - re-injecting NativeBridgeManager wrapper JS: " + url);
+                    performJsInjection(view);
+                    dispatchPendingCall();
+                }
+            });
+
+            // Perform initial JS injection
+            performJsInjection(webView);
 
         } catch (Exception e) {
             Log.e(TAG, "❌ Failed to inject NativeBridge interface", e);
+        }
+    }
+
+    private void performJsInjection(WebView webView) {
+        if (webView == null) return;
+        try {
+            String appType = getAppType();
+            String js = "window.G9_APP_TYPE='" + appType + "';";
+            webView.evaluateJavascript(js, null);
+
+            String wrapperJs = 
+                "if (!window.NativeBridgeManager) {" +
+                "  window.NativeBridgeManager = {" +
+                "    _native: window.NativeBridgeManager_Native," +
+                "    onReactReadyForCall: function(callId) {" +
+                "      if (window.NativeBridgeManager_Native) { window.NativeBridgeManager_Native.onReactReadyForCall(callId); }" +
+                "    }," +
+                "    notifyReactReady: function() {" +
+                "      if (window.NativeBridgeManager_Native) { window.NativeBridgeManager_Native.notifyReactReady(); }" +
+                "    }," +
+                "    onReactReady: function() {" +
+                "      if (window.NativeBridgeManager_Native) { window.NativeBridgeManager_Native.onReactReady(); }" +
+                "    }," +
+                "    getState: function() {" +
+                "      return window.NativeBridgeManager_Native ? window.NativeBridgeManager_Native.getState() : '';" +
+                "    }," +
+                "    openAppSettings: function() {" +
+                "      if (window.NativeBridgeManager_Native) { window.NativeBridgeManager_Native.openAppSettings(); }" +
+                "    }" +
+                "  };" +
+                "}" +
+                "console.log('[G9] NativeBridgeManager JS wrapper active');";
+            webView.evaluateJavascript(wrapperJs, null);
+            Log.d(TAG, "✅ NativeBridgeManager JavaScript wrapper injected into WebView");
+        } catch (Exception e) {
+            Log.e(TAG, "❌ performJsInjection error", e);
         }
     }
 
@@ -221,6 +270,36 @@ public class MainActivity extends BridgeActivity {
             
             // Delegate to NativeBridgeManager
             NativeBridgeManager.onReactReadyForCall(callId);
+        }
+
+        /**
+         * Called by React when app is fully mounted and ready to route (primary name)
+         */
+        @JavascriptInterface
+        public void onReactReady() {
+            Log.d(TAG, "=====================================");
+            Log.d(TAG, "🚀 React called onReactReady");
+            Log.d(TAG, "Thread: " + Thread.currentThread().getName());
+            Log.d(TAG, "=====================================");
+            
+            // Set React ready and trigger any deferred dispatch
+            NativeBridgeManager.setReactReady(true);
+            NativeBridgeManager.dispatchPendingCall();
+        }
+
+        /**
+         * Called by React when app is fully mounted and ready to route
+         */
+        @JavascriptInterface
+        public void notifyReactReady() {
+            Log.d(TAG, "=====================================");
+            Log.d(TAG, "🚀 React called notifyReactReady");
+            Log.d(TAG, "Thread: " + Thread.currentThread().getName());
+            Log.d(TAG, "=====================================");
+            
+            // Set React ready and trigger any deferred dispatch
+            NativeBridgeManager.setReactReady(true);
+            NativeBridgeManager.dispatchPendingCall();
         }
         
         /**

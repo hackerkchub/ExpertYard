@@ -293,13 +293,31 @@ public class IncomingCallActivity extends AppCompatActivity {
 
             sendAction(IncomingCallReceiver.ACTION_ACCEPT_CALL);
 
-            Log.d(TAG, "Waiting Receiver...");
+            Log.d(TAG, "Waiting for React Handshake ACK...");
 
-            // Increased delay to 300ms for reliable broadcast
-            btnAccept.postDelayed(() -> {
-                finish();
-                overridePendingTransition(0, 0);
-            }, 300);
+            final Runnable safetyTimeoutRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    Log.d(TAG, "⏳ Handshake safety timeout reached (15s) - finishing IncomingCallActivity");
+                    com.g9expert.app.bridge.NativeBridgeManager.setHandshakeAckListener(null);
+                    finish();
+                    overridePendingTransition(0, 0);
+                }
+            };
+
+            // Post safety fallback runnable (15 seconds generous window for cold start webview load)
+            btnAccept.postDelayed(safetyTimeoutRunnable, 15000);
+
+            // 🤝 Handshake ACK: Keep IncomingCallActivity alive until React frontend confirms takeover
+            com.g9expert.app.bridge.NativeBridgeManager.setHandshakeAckListener(ackCallId -> {
+                Log.d(TAG, "🤝 Handshake ACK received for call: " + ackCallId + " - finishing IncomingCallActivity immediately");
+                runOnUiThread(() -> {
+                    btnAccept.removeCallbacks(safetyTimeoutRunnable);
+                    com.g9expert.app.bridge.NativeBridgeManager.setHandshakeAckListener(null);
+                    finish();
+                    overridePendingTransition(0, 0);
+                });
+            });
         });
 
         // ✅ Change 5: Ignore Button with logging

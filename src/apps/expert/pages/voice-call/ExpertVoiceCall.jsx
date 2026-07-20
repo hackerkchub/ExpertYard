@@ -121,7 +121,27 @@ export default function ExpertVoiceCall() {
     const MAX_RECONNECT_ATTEMPTS = 5;
     const reactReadyNotifiedRef = useRef(false);
     
-    const [callState, setCallState] = useState("connecting");
+    const [callState, setCallState] = useState(() => {
+        const isAutoAccept = (
+            location.state?.acceptSent === true ||
+            location.state?.acceptSent === "true" ||
+            location.state?.acceptSent === 1 ||
+            location.state?.acceptSent === "1" ||
+            location.state?.autoAccept === true ||
+            location.state?.autoAccept === "true" ||
+            location.state?.action === "accept" ||
+            location.state?.accepted === true ||
+            location.state?.accepted === "true" ||
+            location.state?.native === true ||
+            window.G9?.native?.pendingCall?.acceptSent === true ||
+            window.G9?.native?.pendingCall?.acceptSent === "true" ||
+            window.G9?.native?.pendingCall?.autoAccept === true
+        );
+        if (Capacitor.isNativePlatform() && location.state?.native && !isAutoAccept) {
+            return "incoming";
+        }
+        return "connecting";
+    });
     const [seconds, setSeconds] = useState(0);
     const [muted, setMuted] = useState(false);
     const [reconnecting, setReconnecting] = useState(false);
@@ -130,9 +150,17 @@ export default function ExpertVoiceCall() {
     const audioRef = useRef(null);
     const timerRef = useRef(null);
 
-    const [caller, setCaller] = useState({
-        name: "Incoming Caller",
-        role: "User",
+    const [caller, setCaller] = useState(() => {
+        if (location.state?.callerName || location.state?.caller_name) {
+            return {
+                name: location.state.callerName || location.state.caller_name,
+                role: "User"
+            };
+        }
+        return {
+            name: "Incoming Caller",
+            role: "User",
+        };
     });
 
     // ============================================================
@@ -167,6 +195,10 @@ export default function ExpertVoiceCall() {
     // ============================================================
     useEffect(() => {
         if (!nativeCall) return;
+        if (callState !== "connecting") {
+            console.log("👀 Native call waiting in state:", callState);
+            return;
+        }
         if (!socketConnected) {
             console.log("⏳ ExpertVoiceCall: Socket not connected yet, waiting to start native call...");
             return;
@@ -231,7 +263,6 @@ export default function ExpertVoiceCall() {
                 });
 
                 // Release lock
-                setCallState("connecting");
                 releaseNativeCallLock();
 
             } catch (err) {
@@ -256,7 +287,7 @@ export default function ExpertVoiceCall() {
         };
 
         startNativeCall();
-    }, [nativeCall, socket, socketConnected, location.state, navigate]);
+    }, [nativeCall, callState, socket, socketConnected, location.state, navigate]);
 
     // Keep callState in sync with ref
     useEffect(() => {
@@ -736,12 +767,30 @@ export default function ExpertVoiceCall() {
     }, [cleanupMedia]);
 
     // ACCEPT CALL
-    const acceptCall = useCallback(() => {
-        if (callStateRef.current !== "incoming") return;
-
+    const acceptCall = useCallback(async () => {
+        console.log("⚡ Executing acceptCall() in ExpertVoiceCall", callIdRef.current);
         callStartedRef.current = true;
         setCallState("connecting");
         reconnectAttemptsRef.current = 0;
+
+        try {
+            if (!streamRef.current) {
+                const hasPermission = await ensureMediaPermissions({ video: false, audio: true });
+                if (hasPermission) {
+                    streamRef.current = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true,
+                            channelCount: { ideal: 1 },
+                            sampleRate: { ideal: 16000 },
+                        },
+                    });
+                }
+            }
+        } catch (err) {
+            console.error("Mic capture failed in acceptCall", err);
+        }
 
         if (audioRef.current) {
             audioRef.current.play().catch(() => {});
@@ -755,6 +804,29 @@ export default function ExpertVoiceCall() {
             callId: callIdRef.current
         });
     }, [socket]);
+
+    // Direct Auto-Accept: Automatically call acceptCall() on mount if acceptSent or autoAccept flag is present
+    useEffect(() => {
+        const isAutoAccept = (
+            location.state?.acceptSent === true ||
+            location.state?.acceptSent === "true" ||
+            location.state?.acceptSent === 1 ||
+            location.state?.acceptSent === "1" ||
+            location.state?.autoAccept === true ||
+            location.state?.autoAccept === "true" ||
+            location.state?.action === "accept" ||
+            location.state?.accepted === true ||
+            location.state?.accepted === "true" ||
+            location.state?.native === true ||
+            window.G9?.native?.pendingCall?.acceptSent === true ||
+            window.G9?.native?.pendingCall?.acceptSent === "true" ||
+            window.G9?.native?.pendingCall?.autoAccept === true
+        );
+        if (isAutoAccept) {
+            console.log("⚡ Auto-accepting voice call: Executing acceptCall()");
+            acceptCall();
+        }
+    }, [acceptCall, location.state]);
 
     // REJECT CALL
     const rejectCall = useCallback(() => {

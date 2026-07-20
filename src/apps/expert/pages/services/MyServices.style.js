@@ -1,43 +1,69 @@
 import styled from "styled-components";
 
 export const PageWrapper = styled.div`
-  background-color: #f3f2ef;
+  background-color: #f8fafc;
   min-height: 100vh;
-  padding: 20px 10px;
+  padding: 16px 12px;
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
   font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  
+  @media (max-width: 640px) {
+    padding: 12px 8px;
+  }
 `;
 
 export const Container = styled.div`
   max-width: 950px;
   margin: 0 auto;
+  width: 100%;
+`;
+
+export const StickyHeader = styled.div`
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 12px 16px;
+  margin: -16px -12px 16px -12px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 `;
 
 export const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 12px;
 
   .header-text {
     flex: 1;
-    min-width: 250px;
+    min-width: 200px;
   }
 
-  h1 { font-size: 24px; color: #1d1d1d; margin: 0; font-weight: 600; }
-  p { color: #666; font-size: 14px; margin-top: 4px; }
+  h1 { 
+    font-size: 22px; 
+    color: #0f172a; 
+    margin: 0; 
+    font-weight: 700; 
+    letter-spacing: -0.3px;
+  }
+  p { color: #64748b; font-size: 13px; margin-top: 2px; }
 `;
 
 export const ActionGroup = styled.div`
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
 
   @media (max-width: 500px) {
     width: 100%;
-    flex-direction: column;
-    button { width: 100%; justify-content: center; }
+    button { flex: 1; justify-content: center; }
   }
 `;
 
@@ -45,32 +71,114 @@ export const AddButton = styled.button`
   background-color: #0a66c2;
   color: white;
   border: none;
-  border-radius: 24px;
-  padding: 10px 20px;
+  border-radius: 12px;
+  min-height: 48px;
+  padding: 0 20px;
   font-weight: 600;
   font-size: 14px;
   display: flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  transition: 0.2s;
+  transition: transform 0.15s ease, background 0.2s ease;
+  
+  &:active {
+    transform: scale(0.97);
+  }
   &:hover { background-color: #004182; }
 `;
 
 export const BookingButton = styled.button`
-  background-color: transparent;
+  background-color: #f1f5f9;
   color: #0a66c2;
-  border: 1px solid #0a66c2;
-  border-radius: 24px;
-  padding: 10px 20px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  min-height: 48px;
+  padding: 0 20px;
   font-weight: 600;
   font-size: 14px;
   display: flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  transition: 0.2s;
-  &:hover { background-color: rgba(10, 102, 194, 0.1); }
+  transition: transform 0.15s ease, background 0.2s ease;
+  
+  &:active {
+    transform: scale(0.97);
+  }
+  &:hover { background-color: #e2e8f0; }
+`;
+
+export const SearchFilterBar = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+`;
+
+export const SearchInputWrapper = styled.div`
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  svg {
+    position: absolute;
+    left: 14px;
+    color: #94a3b8;
+    font-size: 18px;
+    pointer-events: none;
+  }
+
+  input {
+    width: 100%;
+    min-height: 48px;
+    padding: 0 14px 0 42px;
+    background: #f1f5f9;
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    font-size: 15px;
+    color: #0f172a;
+    transition: all 0.2s ease;
+
+    &:focus {
+      outline: none;
+      background: #ffffff;
+      border-color: #0a66c2;
+      box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.1);
+    }
+
+    &::placeholder {
+      color: #94a3b8;
+    }
+  }
+`;
+
+export const FilterPills = styled.div`
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+`;
+
+export const FilterPill = styled.button`
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid ${props => props.$active ? '#0a66c2' : '#cbd5e1'};
+  background: ${props => props.$active ? '#0a66c2' : '#ffffff'};
+  color: ${props => props.$active ? '#ffffff' : '#475569'};
+  cursor: pointer;
+  transition: transform 0.15s ease;
+
+  &:active {
+    transform: scale(0.96);
+  }
 `;
 
 export const ServiceList = styled.div`
@@ -80,13 +188,22 @@ export const ServiceList = styled.div`
 `;
 
 export const ServiceCard = styled.div`
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
   display: flex;
   overflow: hidden;
-  &:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-  @media (max-width: 650px) { flex-direction: column; }
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:active {
+    transform: scale(0.99);
+  }
+
+  @media (max-width: 650px) { 
+    flex-direction: column; 
+    border-radius: 14px;
+  }
 `;
 
 export const ServiceImage = styled.img`
@@ -171,68 +288,56 @@ export const LoadingBox = styled.div`text-align: center; padding: 40px; color: #
 export const ErrorBox = styled.div`text-align: center; padding: 20px; color: #cc1011; background: #f9eaea; border-radius: 8px;`;
 export const EmptyState = styled.div`text-align: center; padding: 60px; background: white; border-radius: 8px; h3 { margin-top: 16px; color: #333; }`;
 
-// Add these to your existing styles
-
 export const ModalOverlay = styled.div`
   position: fixed;
-  top: 80px;
+  top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  animation: fadeIn 0.2s ease;
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
 `;
 
 export const ModalContent = styled.div`
   background: white;
-  border-radius: 12px;
+  border-radius: 16px;
   width: 90%;
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  animation: slideUp 0.3s ease;
 
-  @keyframes slideUp {
-    from { transform: translateY(50px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+  @media (max-width: 640px) {
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 20px 20px 0 0;
   }
 `;
 
 export const DeleteConfirmModal = styled.div`
   background: white;
-  border-radius: 12px;
+  border-radius: 16px;
   width: 90%;
   max-width: 400px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  animation: slideUp 0.3s ease;
-
-  @keyframes slideUp {
-    from { transform: translateY(50px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
 `;
 
 export const ModalHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem;
+  padding: 1.25rem 1.5rem;
   border-bottom: 1px solid #e2e8f0;
 
   h2 {
     margin: 0;
-    font-size: 1.25rem;
-    color: #1a202c;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0f172a;
   }
 
   .close-btn {
@@ -243,11 +348,11 @@ export const ModalHeader = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 6px;
+    border-radius: 50%;
     transition: all 0.2s;
 
     &:hover {
-      background: #f7fafc;
+      background: #f1f5f9;
     }
   }
 `;
@@ -268,33 +373,53 @@ export const FormGroup = styled.div`
   gap: 0.5rem;
 
   label {
-    font-weight: 500;
-    color: #2d3748;
+    font-weight: 600;
+    color: #1e293b;
     font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
 
-  input, textarea, select {
-    padding: 0.625rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    font-size: 0.875rem;
-    transition: all 0.2s;
+  input, select {
+    min-height: 48px;
+    padding: 0 1rem;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    color: #0f172a;
+    background: #ffffff;
+    transition: all 0.2s ease;
 
     &:focus {
       outline: none;
-      border-color: #4299e1;
-      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+      border-color: #0a66c2;
+      box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.12);
     }
   }
 
   textarea {
+    min-height: 90px;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    color: #0f172a;
+    background: #ffffff;
     resize: vertical;
     font-family: inherit;
+    transition: all 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: #0a66c2;
+      box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.12);
+    }
   }
 
   small {
     font-size: 0.75rem;
-    color: #718096;
+    color: #64748b;
   }
 `;
 
@@ -438,29 +563,31 @@ export const ModalFooter = styled.div`
   border-top: 1px solid #e2e8f0;
 
   button {
-    padding: 0.625rem 1.25rem;
-    border-radius: 6px;
-    font-weight: 500;
+    min-height: 44px;
+    padding: 0 1.25rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.2s;
 
     &.cancel {
-      background: #f7fafc;
-      border: 1px solid #e2e8f0;
-      color: #4a5568;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      color: #475569;
 
       &:hover {
-        background: #edf2f7;
+        background: #e2e8f0;
       }
     }
 
     &.submit {
-      background: #4299e1;
+      background: #0a66c2;
       border: none;
       color: white;
 
       &:hover:not(:disabled) {
-        background: #3182ce;
+        background: #004182;
       }
 
       &:disabled {
@@ -470,12 +597,12 @@ export const ModalFooter = styled.div`
     }
 
     &.delete-confirm {
-      background: #e53e3e;
+      background: #dc2626;
       border: none;
       color: white;
 
       &:hover:not(:disabled) {
-        background: #c53030;
+        background: #b91c1c;
       }
 
       &:disabled {

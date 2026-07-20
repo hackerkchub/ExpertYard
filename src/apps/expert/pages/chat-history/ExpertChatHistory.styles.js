@@ -271,7 +271,7 @@ export const Avatar = styled.div`
   overflow: hidden;
   border: 2px solid #000080;
   flex-shrink: 0;
-  display: none; /* FIX: Image wapas dikhegi */
+  display: flex;
   align-items: center;
   justify-content: center;
 
@@ -279,7 +279,7 @@ export const Avatar = styled.div`
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: none; /* FIX: Image hidden nahi rahegi */
+    display: block;
   }
   @media (max-width: 480px) { width: 48px; height: 48px; }
 `;
@@ -382,14 +382,14 @@ export const ModalContent = styled.div`
   border-radius: 16px;
   width: 95%;
   max-width: 650px;
-  height: 80vh;
+  height: min(80vh, 700px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 
   @media (max-width: 480px) { 
     width: 100%; 
-    height: 92vh; 
+    height: var(--chat-height, 92dvh); 
     border-radius: 16px 16px 0 0; 
   }
 
@@ -400,6 +400,7 @@ export const ModalContent = styled.div`
     justify-content: space-between;
     align-items: center;
     background: #ffffff;
+    flex-shrink: 0;
     h3 { font-size: 18px; font-weight: 800; color: #000000; }
   }
 
@@ -413,9 +414,12 @@ export const ModalContent = styled.div`
 
 export const MessagesArea = styled.div`
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 16px;
-  background: #f8f9fa; /* Slight contrast for bubbles */
+  background: #f8f9fa;
   display: flex;
   flex-direction: column;
   gap: 16px;

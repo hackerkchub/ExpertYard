@@ -378,7 +378,9 @@ function ExpertLayoutInner() {
         setIncomingVideoCall(null);
 
         if (callId) {
-          navigate(`/expert/video-call/${callId}`);
+          navigate(`/expert/video-call/${callId}`, {
+            state: { autoAccept: true, acceptSent: true, action: "accept" }
+          });
         }
       }}
       onReject={() => {

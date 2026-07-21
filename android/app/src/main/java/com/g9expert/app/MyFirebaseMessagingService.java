@@ -54,14 +54,7 @@ public class MyFirebaseMessagingService extends MessagingService {
                 NotificationManagerCompat.from(this)
                         .cancel(CallNotificationHelper.MISSED_NOTIFICATION_ID);
 
-                // ✅ FIX 1: Check if user is already in a call with context
-                // if (CallStateManager.isBusy(this)) {
-                //     Log.d(TAG, "🔴 User is busy in another call → Notification only");
-                //     CallNotificationHelper.showNotification(this, message.getData());
-                //     return;
-                // }
-
-                // ✅ START FOREGROUND SERVICE INSTEAD OF DIRECT CALL
+                // ✅ START FOREGROUND SERVICE FOR VOICE / VIDEO CALLS
                 Log.d(TAG, "📞 Incoming Call: " + message.getData());
 
                 Intent serviceIntent = new Intent(this, IncomingCallForegroundService.class);
@@ -82,6 +75,19 @@ public class MyFirebaseMessagingService extends MessagingService {
                 } catch (Exception e) {
                     Log.e(TAG, "❌ Failed to start IncomingCallForegroundService", e);
                 }
+                break;
+
+            case "incoming_chat":
+            case "chat":
+            case "chat_request":
+                Log.d(TAG, "💬 Incoming Chat Request: " + message.getData());
+                // Step 1: Cleanup prior notifications
+                CallNotificationHelper.cancelIncomingCallNotification(this, null);
+                NotificationManagerCompat.from(this)
+                        .cancel(CallNotificationHelper.MISSED_NOTIFICATION_ID);
+
+                // Step 2: Post standard notification via NotificationManager to avoid Foreground Service crash
+                CallNotificationHelper.showIncomingCall(this, message.getData());
                 break;
 
             case "call_cancelled":

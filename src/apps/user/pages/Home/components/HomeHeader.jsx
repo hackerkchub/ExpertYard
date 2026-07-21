@@ -46,7 +46,7 @@ const HomeHeader = React.memo(function HomeHeader({
 
         <button type="button" className="home-header-icon home-header-notification" onClick={onNotificationOpen} aria-label="Open notifications">
           <Bell size={18} />
-          {user?.id && <span className="notification-badge-number">3</span>}
+          {/* {user?.id && <span className="notification-badge-number"></span>} */}
         </button>
 
         <button type="button" className="home-wallet-pill" onClick={onWalletOpen} aria-label="Open wallet">

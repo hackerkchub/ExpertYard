@@ -58,48 +58,53 @@ export function HomeLeftSidebar({ isLoggedIn = false, user, balance = 0, onLogin
 
   return (
     <aside className="home-left-sidebar" aria-label="Home navigation">
+      {/* LOGO - Fixed at Top */}
       <Link className="home-sidebar-logo" to="/user" aria-label="G9Expert home">
         <img src={logo} alt="G9Expert" />
       </Link>
 
-      <div className="home-sidebar-account">
-        <strong>{accountName}</strong>
-        <span>{accountSubtext}</span>
+      {/* SCROLLABLE MIDDLE SECTION */}
+      <div className="home-sidebar-scrollable">
+        <div className="home-sidebar-account">
+          <strong>{accountName}</strong>
+          <span>{accountSubtext}</span>
+        </div>
+
+        <div className="home-sidebar-card home-sidebar-card--nav">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink key={item.label} to={item.to} end={item.end}>
+                <Icon size={20} />
+                <span>{item.label}</span>
+              </NavLink>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="home-sidebar-card home-sidebar-card--nav">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <NavLink key={item.label} to={item.to} end={item.end}>
-              <Icon size={20} />
-              <span>{item.label}</span>
-            </NavLink>
-          );
-        })}
-
-        <div className="home-sidebar-divider" />
-
+      {/* BOTTOM FIXED SECTION - Login + Promo */}
+      <div className="home-sidebar-bottom">
         <button
           type="button"
           className="home-sidebar-auth"
           onClick={isLoggedIn ? onLogout : onLogin}
         >
           {isLoggedIn ? <LogOut size={20} /> : <LogIn size={20} />}
-          <span>{isLoggedIn ? "Logout" : "Login"}</span>
+          <span>{isLoggedIn ? "Logout" : "Login / Sign Up"}</span>
         </button>
-      </div>
 
-      <div className="home-sidebar-promo">
-        <span>
-          <Sparkles size={20} />
-        </span>
-        <strong>100% Verified Experts</strong>
-        <p>Safe. Secure. Trusted.</p>
-        <small>Consult with confidence.</small>
-        <Link to="/user/call-chat?page=1">
-          Learn More <span style={{ marginLeft: "4px" }}>→</span>
-        </Link>
+        <div className="home-sidebar-promo">
+          <span>
+            <Sparkles size={20} />
+          </span>
+          <strong>100% Verified Experts</strong>
+          <p>Safe. Secure. Trusted.</p>
+          <small>Consult with confidence.</small>
+          <Link to="/user/call-chat?page=1">
+            Learn More <span style={{ marginLeft: "4px" }}>→</span>
+          </Link>
+        </div>
       </div>
     </aside>
   );
@@ -306,7 +311,7 @@ export function HomeRightSidebar({ experts = [], services = [], balance = 0 }) {
         <div className="wallet-balance-display">
           <div className="balance-info-col">
             <span className="balance-label">Available Balance</span>
-            <strong className="balance-value">₹ {walletAmount || "2,450"}</strong>
+            <strong className="balance-value">₹ {walletAmount || 0}</strong>
           </div>
         </div>
 

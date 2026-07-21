@@ -3,24 +3,15 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
- 
   "scripts": {
     "dev": "vite",
-
     "build": "vite build",
-
     "build:user": "vite build --mode user",
-
     "build:expert": "vite build --mode expert",
-
     "preview": "vite preview",
-
     "android:user": "npm run build:user && npx cap copy android && cd android && gradlew.bat assembleUserRelease",
-
     "android:expert": "npm run build:expert && npx cap copy android && cd android && gradlew.bat assembleExpertRelease",
-
     "lint": "eslint .",
-
     "make:page": "node scripts/makePage.js",
     "make:layout": "node scripts/makeLayout.js",
     "make:component": "node scripts/makeComponent.js",
@@ -39,6 +30,7 @@
     "@capacitor/cli": "^8.4.1",
     "@capacitor/core": "^8.4.1",
     "@capacitor/ios": "^8.4.1",
+    "@capacitor/keyboard": "^8.0.5",
     "@capacitor/network": "^8.0.1",
     "@capacitor/push-notifications": "^8.1.1",
     "@cashfreepayments/cashfree-js": "^1.0.7",

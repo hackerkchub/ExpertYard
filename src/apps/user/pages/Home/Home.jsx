@@ -752,6 +752,7 @@ export default function HomePage() {
       .filter((item) => item.type === "expert_post")
       .map((item) => normalizeExpertTipPost(item.data));
   }, [expertTipsPosts, items]);
+  
   const desktopCategories = useMemo(() => {
     const source = Array.isArray(categories) ? categories : [];
     const sorted = [...source].sort((a, b) => {
@@ -768,6 +769,7 @@ export default function HomePage() {
 
     return sorted;
   }, [categories]);
+  
   const featuredExpert = suggestedExperts[0]?.data || {};
   const featuredService = trendingServices[0]?.data || {};
   const featuredExpertName = featuredExpert.name || featuredExpert.expert_name || "Dr. Ananya Sharma";
@@ -1011,6 +1013,7 @@ export default function HomePage() {
 
         <section className="home-center-column">
           <HomeSearch onSearch={handleSearch} selectedCategoryName={selectedCategoryName} />
+          
           <section className="home-hero-card" aria-label="G9Expert Marketplace Hero">
             {/* Desktop-specific layout */}
             <div className="desktop-hero-layout">
@@ -1026,7 +1029,6 @@ export default function HomePage() {
                   Chat, call, or book services from verified experts across 50+ categories.
                 </p>
                 
-                {/* Desktop Hero Quick Action Buttons */}
                 <div className="desktop-hero-actions-container">
                   <button type="button" className="desktop-hero-action-btn chat-btn" onClick={() => navigate("/user/call-chat?page=1&mode=chat")}>
                     <span className="action-btn-icon"><MessageCircle size={18} /></span>
@@ -1116,6 +1118,7 @@ export default function HomePage() {
               </div>
             </div>
           </section>
+
           {/* Desktop-only Structured Marketplace Sections */}
           <div className="desktop-only-marketplace-sections">
             
@@ -1769,8 +1772,12 @@ export default function HomePage() {
           balance={balance} 
         />
       </div>
+
+      {/* Footer with inner wrapper for proper width alignment */}
       <div className="home-footer-container">
-        <Footer />
+        <div className="home-footer-inner">
+          <Footer />
+        </div>
       </div>
     </main>
   );

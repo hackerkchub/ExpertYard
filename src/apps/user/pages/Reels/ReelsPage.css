@@ -1,0 +1,454 @@
+/* ========================================
+   REELS PAGE - PREMIUM DESKTOP STYLES
+   ======================================== */
+
+/* Desktop Expert Avatar with Online Indicator */
+.desktop-expert-avatar-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.desktop-online-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2px solid #1a1a2e;
+  z-index: 2;
+}
+
+/* Desktop Expert Meta Info */
+.desktop-expert-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.desktop-expert-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.desktop-expert-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #fbbf24;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.desktop-expert-exp {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #a1a1aa;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Statistics Row - Horizontal Cards */
+.desktop-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.desktop-stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.desktop-stat-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.desktop-stat-card .stat-icon {
+  font-size: 16px;
+  color: #a1a1aa;
+  margin-bottom: 2px;
+}
+
+.desktop-stat-card .stat-icon.liked {
+  color: #ef4444;
+}
+
+.desktop-stat-card .stat-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.desktop-stat-card .stat-label {
+  font-size: 10px;
+  color: #71717a;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Quick Actions Grid */
+.desktop-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.desktop-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  color: #a1a1aa;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-family: inherit;
+}
+
+.desktop-action-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.desktop-action-btn.active.liked {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.desktop-action-btn.active.saved {
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.desktop-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.desktop-action-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* CTA Grid - Full Width Buttons */
+.desktop-cta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.desktop-cta-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 8px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  border: none;
+}
+
+.desktop-cta-btn.primary {
+  background: linear-gradient(135deg, #ffffff 0%, #dbeafe 100%);
+  color: #000080;
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.12);
+}
+
+.desktop-cta-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.18);
+}
+
+.desktop-cta-btn.secondary {
+  background: rgba(255, 255, 255, 0.06);
+  color: #d4d4d8;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.desktop-cta-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.desktop-cta-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* Comments Toggle */
+.desktop-comments-toggle {
+  margin-top: 2px;
+}
+
+.desktop-comments-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  color: #d4d4d8;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  width: 100%;
+  font-family: inherit;
+}
+
+.desktop-comments-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.desktop-comments-toggle-btn svg:first-child {
+  color: #3b82f6;
+}
+
+/* Expanded Comments */
+.desktop-comments-expanded {
+  margin-top: 10px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.desktop-comments-expanded::-webkit-scrollbar {
+  width: 4px;
+}
+
+.desktop-comments-expanded::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+}
+
+.desktop-comments-expanded::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+.desktop-comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.desktop-comments-loading {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+}
+
+.desktop-comments-empty {
+  color: #71717a;
+  font-size: 13px;
+  text-align: center;
+  padding: 12px;
+}
+
+.desktop-comment-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 6px 0;
+}
+
+.desktop-comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.desktop-comment-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.desktop-comment-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #d4d4d8;
+}
+
+.desktop-comment-text {
+  font-size: 13px;
+  color: #a1a1aa;
+  margin: 2px 0 0;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.desktop-view-more-btn {
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 0;
+  font-family: inherit;
+  text-align: left;
+}
+
+.desktop-view-more-btn:hover {
+  text-decoration: underline;
+}
+
+/* Comment Form */
+.desktop-comment-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.desktop-comment-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
+  color: #ffffff;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.desktop-comment-input:focus {
+  border-color: #3b82f6;
+}
+
+.desktop-comment-input::placeholder {
+  color: #71717a;
+}
+
+.desktop-comment-submit {
+  padding: 8px 16px;
+  background: #3b82f6;
+  border: none;
+  border-radius: 99px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.desktop-comment-submit:hover {
+  opacity: 0.85;
+}
+
+/* Mobile Empty State */
+.reels-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #d4d4d8;
+}
+
+.reels-empty-state h3 {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.reels-empty-state p {
+  color: #71717a;
+  font-size: 14px;
+}
+
+/* ========================================
+   RESPONSIVE BREAKPOINTS
+   ======================================== */
+
+/* Tablet */
+@media (max-width: 1100px) {
+  .desktop-stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .desktop-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .desktop-cta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile - Hide all desktop-specific elements */
+@media (max-width: 991px) {
+  .desktop-stats-row,
+  .desktop-actions-grid,
+  .desktop-cta-grid,
+  .desktop-comments-toggle,
+  .desktop-comments-expanded,
+  .desktop-expert-meta {
+    display: none !important;
+  }
+}
+
+/* Dark mode support for all elements */
+@media (prefers-color-scheme: dark) {
+  .desktop-stat-card {
+    background: rgba(255, 255, 255, 0.03);
+  }
+  
+  .desktop-action-btn {
+    background: rgba(255, 255, 255, 0.03);
+  }
+  
+  .desktop-comments-toggle-btn {
+    background: rgba(255, 255, 255, 0.03);
+  }
+  
+  .desktop-comments-expanded {
+    background: rgba(255, 255, 255, 0.03);
+  }
+}

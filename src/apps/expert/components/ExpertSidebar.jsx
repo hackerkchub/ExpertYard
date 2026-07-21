@@ -6,12 +6,6 @@ import {
   NavList,
   NavItem,
   IconWrap,
-  SidebarStatus,
-  StatusHeader,
-  StatusLabel,
-  StatusText,
-  StatusSubtext,
-  StatusDot,
   Divider,
   PremiumBadge,
   NotificationBadge,
@@ -56,24 +50,25 @@ export default function ExpertSidebar() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
- const handleLogout = async () => {
-  try {
-    // 🔌 socket disconnect
-    disconnectSocket();
+  const handleLogout = async () => {
+    try {
+      // 🔌 socket disconnect
+      disconnectSocket();
 
-    // ✅ optional UI memory (allowed)
-    localStorage.setItem("last_panel", "expert");
+      // ✅ optional UI memory (allowed)
+      localStorage.setItem("last_panel", "expert");
 
-    // 🔥 MAIN LOGIC → context handle karega
-    await logoutExpert();
+      // 🔥 MAIN LOGIC → context handle karega
+      await logoutExpert();
 
-    // ✅ redirect
-    navigate("/expert/register", { replace: true });
+      // ✅ redirect
+      navigate("/expert/register", { replace: true });
 
-  } catch (err) {
-    console.error("Logout error:", err);
-  }
-};
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+  };
+
   const menuItems = [
     { path: "/expert", icon: FiHome, label: "Dashboard", exact: true },
     { path: "/expert/my-content", icon: FiFileText, label: "My Content" },
@@ -99,8 +94,8 @@ export default function ExpertSidebar() {
           </div>
         </Logo>
 
-        {/* Main Navigation */}
-        <NavList>
+        {/* Main Navigation - Scrollable */}
+        <NavList className="main-menu">
           {menuItems.map((item) => (
             <NavItem
               key={item.path}
@@ -121,8 +116,8 @@ export default function ExpertSidebar() {
 
         <Divider />
 
-        {/* Secondary Navigation */}
-        <NavList>
+        {/* Bottom Navigation - Fixed at bottom */}
+        <NavList className="bottom-menu">
           <NavItem to="/expert/profile">
             <IconWrap>
               <FiUser />

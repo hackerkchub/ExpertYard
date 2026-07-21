@@ -19,8 +19,28 @@ export const SidebarWrap = styled.aside`
   backdrop-filter: blur(20px);
   box-shadow: 14px 0 40px rgba(15, 23, 42, 0.04);
 
-  &::-webkit-scrollbar { width: 0px; }
-  scrollbar-width: none;
+  /* Scrollbar styling */
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
 
   @media (max-width: 1024px) {
     transform: translateX(-100%);
@@ -35,6 +55,7 @@ export const Logo = styled.div`
   gap: 12px;
   padding: 12px 12px 30px;
   cursor: pointer;
+  flex-shrink: 0;
   
   span {
     font-size: 22px;
@@ -52,12 +73,23 @@ export const LogoIcon = styled.div`
   img { width: 100%; height: 100%; object-fit: contain; }
 `;
 
-/* Navigation */
+/* Navigation - Updated with main-menu and bottom-menu classes */
 export const NavList = styled.nav`
   display: flex;
   flex-direction: column;
   gap: 4px;
-  flex: 1;
+
+  &.main-menu {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    padding-right: 4px;
+  }
+
+  &.bottom-menu {
+    flex-shrink: 0;
+    margin-top: auto;
+  }
 `;
 
 export const NavItem = styled(NavLink)`
@@ -102,10 +134,8 @@ export const IconWrap = styled.div`
   color: currentColor;
 `;
 
-/* ✅ FIXED: ALL MISSING EXPORTS ADDED BELOW */
-
 export const PremiumBadge = styled.div`
-  background: #000; /* Minimal Black Badge */
+  background: #000;
   color: #fff;
   font-size: 10px;
   font-weight: 700;
@@ -114,6 +144,7 @@ export const PremiumBadge = styled.div`
   text-transform: uppercase;
   margin-left: 8px;
   display: inline-block;
+  align-self: flex-start;
 `;
 
 export const NotificationBadge = styled.div`
@@ -130,9 +161,10 @@ export const Divider = styled.div`
   margin: 15px 0;
   height: 1px;
   background-color: #dbdbdb;
+  flex-shrink: 0;
 `;
 
-/* Status Section */
+/* Status Section - Keeping for potential future use */
 export const SidebarStatus = styled.div`
   margin-top: auto;
   padding: 16px 12px;

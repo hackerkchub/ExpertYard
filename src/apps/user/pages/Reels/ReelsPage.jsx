@@ -14,7 +14,13 @@ import {
   FiCalendar,
   FiUser,
   FiPlay,
-  FiPause
+  FiPause,
+  FiEye,
+  FiStar,
+  FiClock,
+  FiChevronDown,
+  FiChevronUp,
+  FiX
 } from "react-icons/fi";
 import Swal from "sweetalert2";
 import { APP_CONFIG } from "../../../../config/appConfig";
@@ -80,6 +86,8 @@ import {
   LoadingOverlay,
   Spinner
 } from "./ReelsPage.styles";
+
+import "./ReelsPage.css";
 
 const API_ORIGIN = APP_CONFIG.API_BASE_URL.replace(/\/api\/?$/, "");
 
@@ -228,6 +236,8 @@ export default function ReelsPage() {
   const [manualPausedReelIds, setManualPausedReelIds] = useState(() => new Set());
   const [playFeedback, setPlayFeedback] = useState(null);
   const [failedAvatarKeys, setFailedAvatarKeys] = useState(() => new Set());
+  const [showDesktopComments, setShowDesktopComments] = useState(false);
+  const [expandedCommentId, setExpandedCommentId] = useState(null);
 
   const containerRef = useRef(null);
   const videoRefs = useRef({});
@@ -261,7 +271,6 @@ export default function ReelsPage() {
     }
   }, [activeIdx]);
 
-  // 1. Fetch Reels Feed / Single Reel
   useEffect(() => {
     const fetchReels = async () => {
       setLoading(true);
@@ -270,18 +279,15 @@ export default function ReelsPage() {
         const params = { user_id: user?.id || null, limit: 15, offset: 0 };
 
         if (slug) {
-          // Fetch the shared reel first
           const singleRes = await getReelBySlugApi(slug, params);
           if (singleRes.data && singleRes.data.success && singleRes.data.data) {
             list.push(singleRes.data.data);
           }
         }
 
-        // Fetch general feed
         const feedRes = await getReelsFeedApi(params);
         if (feedRes.data && feedRes.data.success) {
           const feedList = feedRes.data.data || [];
-          // Filter out duplicate if slug-based reel was already added
           const filteredFeed = feedList.filter(item => !list.some(r => r.id === item.id));
           list = [...list, ...filteredFeed];
         }
@@ -390,7 +396,6 @@ export default function ReelsPage() {
     }
   }, [activeIdx, manualPausedReelIds, showPlayFeedback]);
 
-  // 2. IntersectionObserver to track visible video and play/pause
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return undefined;
@@ -404,6 +409,7 @@ export default function ReelsPage() {
         if (visibleEntries[0]) {
           const index = parseInt(visibleEntries[0].target.getAttribute("data-index"), 10);
           setActiveIdx(index);
+          setShowDesktopComments(false);
         }
       },
       {
@@ -447,6 +453,16 @@ export default function ReelsPage() {
     fetchComments(reel.id);
   }, [fetchComments]);
 
+  const toggleDesktopComments = useCallback((reel) => {
+    if (showDesktopComments && commentsReelId === reel.id) {
+      setShowDesktopComments(false);
+      return;
+    }
+    setShowDesktopComments(true);
+    setCommentsReelId(reel.id);
+    fetchComments(reel.id);
+  }, [fetchComments, showDesktopComments, commentsReelId]);
+
   const logMeaningfulView = useCallback(async (reel, watchTime, percentageWatched) => {
     if (!reel || viewedReelsRef.current.has(reel.id)) return;
     viewedReelsRef.current.add(reel.id);
@@ -471,7 +487,6 @@ export default function ReelsPage() {
     }
   }, [updateReelById, user?.id]);
 
-  // Handle play/pause and meaningful view count based on active index
   useEffect(() => {
     if (reels.length === 0) return;
 
@@ -479,7 +494,6 @@ export default function ReelsPage() {
     Object.values(viewTimersRef.current).forEach(clearTimeout);
     viewTimersRef.current = {};
 
-    // Play active video, pause others
     Object.keys(videoRefs.current).forEach((key) => {
       const idx = parseInt(key, 10);
       const video = videoRefs.current[key];
@@ -524,7 +538,6 @@ export default function ReelsPage() {
     }
   };
 
-  // 3. Reels Interactivity (Like, Save, Share, Comment, Report)
   const handleLike = async (reel, index) => {
     if (!isLoggedIn) {
       navigate("/user/auth", { state: { from: location } });
@@ -687,7 +700,6 @@ export default function ReelsPage() {
     }
   };
 
-  // 4. CTA Actions
   const handleChatCTA = (expertId) => {
     if (!isLoggedIn) {
       navigate("/user/auth", { state: { from: location } });
@@ -737,7 +749,6 @@ export default function ReelsPage() {
     );
   };
 
-  // SEO details for active reel
   const currentReel = reels[activeIdx];
 
   return (
@@ -750,20 +761,17 @@ export default function ReelsPage() {
           <meta name="description" content={currentReel.caption || currentReel.title} />
           <link rel="canonical" href={`${window.location.origin}/user/reels/${currentReel.slug}`} />
 
-          {/* Open Graph / Facebook */}
           <meta property="og:type" content="video.other" />
           <meta property="og:title" content={currentReel.title} />
           <meta property="og:description" content={currentReel.caption || currentReel.title} />
           <meta property="og:image" content={currentReel.thumbnail_url} />
           <meta property="og:url" content={`${window.location.origin}/user/reels/${currentReel.slug}`} />
 
-          {/* Twitter */}
           <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:title" content={currentReel.title} />
           <meta name="twitter:description" content={currentReel.caption || currentReel.title} />
           <meta name="twitter:image" content={currentReel.thumbnail_url} />
 
-          {/* JSON-LD VideoObject Structured Data */}
           <script type="application/ld+json">
             {JSON.stringify({
               "@context": "https://schema.org",
@@ -792,7 +800,7 @@ export default function ReelsPage() {
           <Spinner />
         </LoadingOverlay>
       ) : reels.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "20px" }}>
+        <div className="reels-empty-state">
           <h3>No Reels Available</h3>
           <p>Please check back later.</p>
         </div>
@@ -803,258 +811,308 @@ export default function ReelsPage() {
               {(() => {
                 const displayName = getReelDisplayName(reel);
                 const expertId = getReelExpertId(reel);
+                const rating = Number(reel?.expert_rating || reel?.avg_rating || 4.8).toFixed(1);
+                const experience = reel?.experience || reel?.expert_experience || "5+";
+                
                 return (
                   <>
-              {/* VIDEO SECTION */}
-              <PlayerSection>
-                <SoundToggle onClick={(event) => {
-                  event.stopPropagation();
-                  setIsMuted(!isMuted);
-                }}>
-                  {isMuted ? <FiVolumeX size={20} /> : <FiVolume2 size={20} />}
-                </SoundToggle>
-
-                <VideoContainer onClick={(event) => handleVideoToggle(event, reel, index)}>
-                  <VideoElement
-                    ref={(el) => {
-                      if (el) videoRefs.current[index] = el;
-                      else delete videoRefs.current[index];
-                    }}
-                    src={reel.video_url}
-                    poster={reel.thumbnail_url}
-                    loop
-                    muted={isMuted}
-                    playsInline
-                    preload={index === activeIdx || index === activeIdx + 1 ? "metadata" : "none"}
-                    onTimeUpdate={(event) => handleVideoTimeUpdate(reel, event.currentTarget)}
-                  />
-
-                  <PlayToggleOverlay
-                    $visible={manualPausedReelIds.has(reel.id) || playFeedback?.reelId === reel.id}
-                    $persistent={manualPausedReelIds.has(reel.id)}
-                    aria-hidden="true"
-                  >
-                    {manualPausedReelIds.has(reel.id) || playFeedback?.type === "play" ? <FiPlay /> : <FiPause />}
-                  </PlayToggleOverlay>
-
-                  {/* Mobile Only Overlay */}
-                  <VideoOverlay>
-                    <MobileOverlayContent onClick={(event) => event.stopPropagation()}>
-                      <ExpertMeta onClick={(event) => {
-                        event.stopPropagation();
-                        handleProfileCTA(reel);
-                      }}>
-                        {renderExpertAvatar(reel)}
-                        <div>
-                          <NameText>{displayName}</NameText>
-                          {reel.category_name && <CategoryTag>{reel.category_name}</CategoryTag>}
-                        </div>
-                      </ExpertMeta>
-
-                      <TitleText>{reel.title}</TitleText>
-                      {reel.caption && <CaptionText>{reel.caption}</CaptionText>}
-                    </MobileOverlayContent>
-                  </VideoOverlay>
-
-                  {/* Floating Action Column (Mobile Only) */}
-                  <ActionColumn className="reel-actions-overlay" onClick={(event) => event.stopPropagation()}>
-                    <ActionButton
-                      type="button"
-                      onClick={(event) => {
+                    {/* VIDEO SECTION - 55% width on desktop */}
+                    <PlayerSection>
+                      <SoundToggle onClick={(event) => {
                         event.stopPropagation();
                         setIsMuted(!isMuted);
-                      }}
-                      aria-label={isMuted ? "Turn audio on" : "Turn audio off"}
-                    >
-                      {isMuted ? <FiVolumeX /> : <FiVolume2 />}
-                    </ActionButton>
-                    <ActionLabel>Audio</ActionLabel>
+                      }}>
+                        {isMuted ? <FiVolumeX size={20} /> : <FiVolume2 size={20} />}
+                      </SoundToggle>
 
-                    <ActionButton active={reel.is_liked} disabled={pendingActions[`like-${reel.id}`]} onClick={(event) => {
-                      event.stopPropagation();
-                      handleLike(reel, index);
-                    }}>
-                      <FiHeart />
-                    </ActionButton>
-                    <ActionLabel>{reel.likes_count}</ActionLabel>
+                      <VideoContainer onClick={(event) => handleVideoToggle(event, reel, index)}>
+                        <VideoElement
+                          ref={(el) => {
+                            if (el) videoRefs.current[index] = el;
+                            else delete videoRefs.current[index];
+                          }}
+                          src={reel.video_url}
+                          poster={reel.thumbnail_url}
+                          loop
+                          muted={isMuted}
+                          playsInline
+                          preload={index === activeIdx || index === activeIdx + 1 ? "metadata" : "none"}
+                          onTimeUpdate={(event) => handleVideoTimeUpdate(reel, event.currentTarget)}
+                        />
 
-                    <ActionButton onClick={(event) => {
-                      event.stopPropagation();
-                      openComments(reel);
-                    }}>
-                      <FiMessageCircle />
-                    </ActionButton>
-                    <ActionLabel>{reel.comments_count}</ActionLabel>
+                        <PlayToggleOverlay
+                          $visible={manualPausedReelIds.has(reel.id) || playFeedback?.reelId === reel.id}
+                          $persistent={manualPausedReelIds.has(reel.id)}
+                          aria-hidden="true"
+                        >
+                          {manualPausedReelIds.has(reel.id) || playFeedback?.type === "play" ? <FiPlay /> : <FiPause />}
+                        </PlayToggleOverlay>
 
-                    <ActionButton active={reel.is_saved} disabled={pendingActions[`save-${reel.id}`]} onClick={(event) => {
-                      event.stopPropagation();
-                      handleSave(reel, index);
-                    }}>
-                      <FiBookmark />
-                    </ActionButton>
-                    <ActionLabel>{reel.saves_count}</ActionLabel>
+                        {/* Mobile Only Overlay */}
+                        <VideoOverlay>
+                          <MobileOverlayContent onClick={(event) => event.stopPropagation()}>
+                            <ExpertMeta onClick={(event) => {
+                              event.stopPropagation();
+                              handleProfileCTA(reel);
+                            }}>
+                              {renderExpertAvatar(reel)}
+                              <div>
+                                <NameText>{displayName}</NameText>
+                                {reel.category_name && <CategoryTag>{reel.category_name}</CategoryTag>}
+                              </div>
+                            </ExpertMeta>
 
-                    <ActionButton onClick={(event) => {
-                      event.stopPropagation();
-                      handleShare(reel);
-                    }}>
-                      <FiShare2 />
-                    </ActionButton>
-                    <ActionLabel>Share</ActionLabel>
+                            <TitleText>{reel.title}</TitleText>
+                            {reel.caption && <CaptionText>{reel.caption}</CaptionText>}
+                          </MobileOverlayContent>
+                        </VideoOverlay>
 
-                    <ActionButton onClick={(event) => {
-                      event.stopPropagation();
-                      handleReport(reel);
-                    }}>
-                      <FiAlertTriangle />
-                    </ActionButton>
-                    <ActionLabel>Report</ActionLabel>
-                  </ActionColumn>
+                        {/* Floating Action Column (Mobile Only) */}
+                        <ActionColumn className="reel-actions-overlay" onClick={(event) => event.stopPropagation()}>
+                          <ActionButton
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setIsMuted(!isMuted);
+                            }}
+                            aria-label={isMuted ? "Turn audio on" : "Turn audio off"}
+                          >
+                            {isMuted ? <FiVolumeX /> : <FiVolume2 />}
+                          </ActionButton>
+                          <ActionLabel>Audio</ActionLabel>
 
-                  {/* CTA Buttons (Mobile Only) */}
-                  <CtaRow onClick={(event) => event.stopPropagation()}>
-                    <CtaButton variant="primary" onClick={(event) => {
-                      event.stopPropagation();
-                      handleChatCTA(expertId);
-                    }}>
-                      <FiMessageSquare /> Chat
-                    </CtaButton>
-                    <CtaButton variant="primary" onClick={(event) => {
-                      event.stopPropagation();
-                      handleCallCTA(expertId);
-                    }}>
-                      <FiPhone /> Call
-                    </CtaButton>
-                    <CtaButton onClick={(event) => {
-                      event.stopPropagation();
-                      handleProfileCTA(reel);
-                    }}>
-                      <FiUser /> Profile
-                    </CtaButton>
-                    <CtaButton onClick={(event) => {
-                      event.stopPropagation();
-                      handleProfileCTA(reel, { scrollToBooking: true });
-                    }}>
-                      <FiCalendar /> Book
-                    </CtaButton>
-                  </CtaRow>
-                </VideoContainer>
-              </PlayerSection>
+                          <ActionButton active={reel.is_liked} disabled={pendingActions[`like-${reel.id}`]} onClick={(event) => {
+                            event.stopPropagation();
+                            handleLike(reel, index);
+                          }}>
+                            <FiHeart />
+                          </ActionButton>
+                          <ActionLabel>{reel.likes_count}</ActionLabel>
 
-              {/* DESKTOP ONLY SIDEBAR */}
-              <DesktopSidebar>
-                <DesktopHeader>
-                  {renderExpertAvatar(reel, { onClick: () => handleProfileCTA(reel) })}
-                  <div>
-                    <NameText onClick={() => handleProfileCTA(reel)}>{displayName}</NameText>
-                    {reel.category_name && <CategoryTag>{reel.category_name}</CategoryTag>}
-                  </div>
-                </DesktopHeader>
+                          <ActionButton onClick={(event) => {
+                            event.stopPropagation();
+                            openComments(reel);
+                          }}>
+                            <FiMessageCircle />
+                          </ActionButton>
+                          <ActionLabel>{reel.comments_count}</ActionLabel>
 
-                <DesktopInfo>
-                  <TitleText>{reel.title}</TitleText>
-                  {reel.caption && <CaptionText>{reel.caption}</CaptionText>}
-                </DesktopInfo>
+                          <ActionButton active={reel.is_saved} disabled={pendingActions[`save-${reel.id}`]} onClick={(event) => {
+                            event.stopPropagation();
+                            handleSave(reel, index);
+                          }}>
+                            <FiBookmark />
+                          </ActionButton>
+                          <ActionLabel>{reel.saves_count}</ActionLabel>
 
-                <SectionDivider />
+                          <ActionButton onClick={(event) => {
+                            event.stopPropagation();
+                            handleShare(reel);
+                          }}>
+                            <FiShare2 />
+                          </ActionButton>
+                          <ActionLabel>Share</ActionLabel>
 
-                {/* Inline Action Counts for Desktop */}
-                <ActionColumn className="reel-actions-sidebar">
-                  <ActionButton active={reel.is_liked} disabled={pendingActions[`like-${reel.id}`]} onClick={() => handleLike(reel, index)}>
-                    <FiHeart />
-                    <span>{reel.is_liked ? "Liked" : "Like"} ({reel.likes_count || 0})</span>
-                  </ActionButton>
+                          <ActionButton onClick={(event) => {
+                            event.stopPropagation();
+                            handleReport(reel);
+                          }}>
+                            <FiAlertTriangle />
+                          </ActionButton>
+                          <ActionLabel>Report</ActionLabel>
+                        </ActionColumn>
 
-                  <ActionButton onClick={() => openComments(reel)}>
-                    <FiMessageCircle />
-                    <span>Comments ({reel.comments_count || 0})</span>
-                  </ActionButton>
+                        {/* CTA Buttons (Mobile Only) */}
+                        <CtaRow onClick={(event) => event.stopPropagation()}>
+                          <CtaButton variant="primary" onClick={(event) => {
+                            event.stopPropagation();
+                            handleChatCTA(expertId);
+                          }}>
+                            <FiMessageSquare /> Chat
+                          </CtaButton>
+                          <CtaButton variant="primary" onClick={(event) => {
+                            event.stopPropagation();
+                            handleCallCTA(expertId);
+                          }}>
+                            <FiPhone /> Call
+                          </CtaButton>
+                          <CtaButton onClick={(event) => {
+                            event.stopPropagation();
+                            handleProfileCTA(reel);
+                          }}>
+                            <FiUser /> Profile
+                          </CtaButton>
+                          <CtaButton onClick={(event) => {
+                            event.stopPropagation();
+                            handleProfileCTA(reel, { scrollToBooking: true });
+                          }}>
+                            <FiCalendar /> Book
+                          </CtaButton>
+                        </CtaRow>
+                      </VideoContainer>
+                    </PlayerSection>
 
-                  <ActionButton active={reel.is_saved} disabled={pendingActions[`save-${reel.id}`]} onClick={() => handleSave(reel, index)}>
-                    <FiBookmark />
-                    <span>{reel.is_saved ? "Saved" : "Save"} ({reel.saves_count || 0})</span>
-                  </ActionButton>
+                    {/* DESKTOP ONLY SIDEBAR - 45% width with premium glass effect */}
+                    <DesktopSidebar>
+                      {/* Section 1: Expert Info */}
+                      <DesktopHeader>
+                        <div className="desktop-expert-avatar-wrapper">
+                          {renderExpertAvatar(reel, { onClick: () => handleProfileCTA(reel) })}
+                          <span className="desktop-online-dot"></span>
+                        </div>
+                        <div className="desktop-expert-info">
+                          <NameText onClick={() => handleProfileCTA(reel)}>{displayName}</NameText>
+                          <div className="desktop-expert-meta">
+                            <span className="desktop-expert-rating">
+                              <FiStar size={14} fill="#FBBF24" color="#FBBF24" /> {rating}
+                            </span>
+                            <span className="desktop-expert-exp">
+                              <FiClock size={14} /> {experience} yrs
+                            </span>
+                          </div>
+                          {reel.category_name && <CategoryTag>{reel.category_name}</CategoryTag>}
+                        </div>
+                      </DesktopHeader>
 
-                  <ActionButton onClick={() => handleShare(reel)}>
-                    <FiShare2 />
-                    <span>Share ({reel.shares_count || 0})</span>
-                  </ActionButton>
+                      {/* Section 2: Video Details */}
+                      <DesktopInfo>
+                        <TitleText>{reel.title}</TitleText>
+                        {reel.caption && <CaptionText>{reel.caption}</CaptionText>}
+                      </DesktopInfo>
 
-                  <ActionButton onClick={() => handleReport(reel)}>
-                    <FiAlertTriangle />
-                    <span>Report</span>
-                  </ActionButton>
-                </ActionColumn>
+                      {/* Section 3: Statistics - Horizontal Cards */}
+                      <div className="desktop-stats-row">
+                        <div className="desktop-stat-card">
+                          <FiHeart className="stat-icon liked" />
+                          <span className="stat-value">{reel.likes_count || 0}</span>
+                          <span className="stat-label">Likes</span>
+                        </div>
+                        <div className="desktop-stat-card">
+                          <FiEye className="stat-icon" />
+                          <span className="stat-value">{reel.views_count || 0}</span>
+                          <span className="stat-label">Views</span>
+                        </div>
+                        <div className="desktop-stat-card">
+                          <FiMessageCircle className="stat-icon" />
+                          <span className="stat-value">{reel.comments_count || 0}</span>
+                          <span className="stat-label">Comments</span>
+                        </div>
+                        <div className="desktop-stat-card">
+                          <FiBookmark className="stat-icon" />
+                          <span className="stat-value">{reel.saves_count || 0}</span>
+                          <span className="stat-label">Saves</span>
+                        </div>
+                      </div>
 
-                <SectionDivider />
+                      <SectionDivider />
 
-                {/* Comments Listing */}
-                <CommentsSection>
-                  <CommentsHeader>Comments ({reel.comments_count || 0})</CommentsHeader>
-                  <CommentsList>
-                    {commentsReelId !== reel.id ? (
-                      <p style={{ color: "#71717a", fontSize: "13px", textAlign: "center" }}>Open comments to join the conversation.</p>
-                    ) : loadingComments ? (
-                      <Spinner style={{ margin: "20px auto", width: "24px", height: "24px" }} />
-                    ) : comments.length === 0 ? (
-                      <p style={{ color: "#71717a", fontSize: "13px", textAlign: "center" }}>No comments yet. Start the conversation!</p>
-                    ) : (
-                      comments.map((comment) => (
-                        <CommentRow key={comment.id}>
-                          <CommentAvatar
-                            src={comment.user_profile_photo || comment.expert_profile_photo || "https://placehold.co/100x100"}
-                            alt={comment.user_name || comment.expert_name}
-                          />
-                          <CommentContent>
-                            <CommentName>{comment.user_name || comment.expert_name || "User"}</CommentName>
-                            <CommentText>{comment.comment}</CommentText>
-                            {Number(comment.user_id) === Number(user?.id) && (
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteComment(comment.id, reel.id)}
-                                style={{ background: "none", border: 0, color: "#a1a1aa", padding: 0, textAlign: "left", cursor: "pointer", fontSize: "12px" }}
-                              >
-                                Delete
+                      {/* Section 4: Quick Actions - Buttons */}
+                      <div className="desktop-actions-grid">
+                        <button 
+                          className={`desktop-action-btn ${reel.is_liked ? 'active liked' : ''}`}
+                          disabled={pendingActions[`like-${reel.id}`]}
+                          onClick={() => handleLike(reel, index)}
+                        >
+                          <FiHeart fill={reel.is_liked ? "currentColor" : "none"} />
+                          <span>{reel.is_liked ? "Liked" : "Like"}</span>
+                        </button>
+                        <button 
+                          className={`desktop-action-btn ${reel.is_saved ? 'active saved' : ''}`}
+                          disabled={pendingActions[`save-${reel.id}`]}
+                          onClick={() => handleSave(reel, index)}
+                        >
+                          <FiBookmark fill={reel.is_saved ? "currentColor" : "none"} />
+                          <span>{reel.is_saved ? "Saved" : "Save"}</span>
+                        </button>
+                        <button className="desktop-action-btn" onClick={() => handleShare(reel)}>
+                          <FiShare2 />
+                          <span>Share</span>
+                        </button>
+                        <button className="desktop-action-btn" onClick={() => handleReport(reel)}>
+                          <FiAlertTriangle />
+                          <span>Report</span>
+                        </button>
+                      </div>
+
+                      <SectionDivider />
+
+                      {/* Section 5: CTA - Full width buttons */}
+                      <div className="desktop-cta-grid">
+                        <button className="desktop-cta-btn primary" onClick={() => handleChatCTA(expertId)}>
+                          <FiMessageSquare /> Chat with Expert
+                        </button>
+                        <button className="desktop-cta-btn primary" onClick={() => handleCallCTA(expertId)}>
+                          <FiPhone /> Call Now
+                        </button>
+                        <button className="desktop-cta-btn secondary" onClick={() => handleProfileCTA(reel)}>
+                          <FiUser /> View Profile
+                        </button>
+                        <button className="desktop-cta-btn secondary" onClick={() => handleProfileCTA(reel, { scrollToBooking: true })}>
+                          <FiCalendar /> Book Consultation
+                        </button>
+                      </div>
+
+                      <SectionDivider />
+
+                      {/* Comments - Toggle */}
+                      <div className="desktop-comments-toggle">
+                        <button 
+                          className="desktop-comments-toggle-btn"
+                          onClick={() => toggleDesktopComments(reel)}
+                        >
+                          <FiMessageCircle size={18} />
+                          <span>Comments ({reel.comments_count || 0})</span>
+                          {showDesktopComments && commentsReelId === reel.id ? 
+                            <FiChevronUp size={18} /> : 
+                            <FiChevronDown size={18} />
+                          }
+                        </button>
+                      </div>
+
+                      {showDesktopComments && commentsReelId === reel.id && (
+                        <div className="desktop-comments-expanded">
+                          <div className="desktop-comments-list">
+                            {loadingComments ? (
+                              <div className="desktop-comments-loading">
+                                <Spinner style={{ width: "24px", height: "24px" }} />
+                              </div>
+                            ) : comments.length === 0 ? (
+                              <p className="desktop-comments-empty">No comments yet. Start the conversation!</p>
+                            ) : (
+                              comments.slice(0, 3).map((comment) => (
+                                <div key={comment.id} className="desktop-comment-item">
+                                  <img 
+                                    src={comment.user_profile_photo || "https://placehold.co/40x40"} 
+                                    alt={comment.user_name || "User"}
+                                    className="desktop-comment-avatar"
+                                  />
+                                  <div className="desktop-comment-content">
+                                    <span className="desktop-comment-name">{comment.user_name || "User"}</span>
+                                    <p className="desktop-comment-text">{comment.comment}</p>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                            {comments.length > 3 && (
+                              <button className="desktop-view-more-btn" onClick={() => openComments(reel)}>
+                                View all {comments.length} comments
                               </button>
                             )}
-                          </CommentContent>
-                        </CommentRow>
-                      ))
-                    )}
-                  </CommentsList>
-
-                  {commentsReelId === reel.id && (
-                    <CommentInputRow onSubmit={(e) => handleCommentSubmit(e, reel.id)}>
-                      <CommentInput
-                        id={`comments-input-${index}`}
-                        type="text"
-                        placeholder="Add a comment..."
-                        value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                      />
-                      <CommentSubmitButton type="submit">Post</CommentSubmitButton>
-                    </CommentInputRow>
-                  )}
-                </CommentsSection>
-
-                <SectionDivider />
-
-                {/* Desktop CTA row */}
-                <CtaRow>
-                  <CtaButton variant="primary" onClick={() => handleChatCTA(expertId)}>
-                    <FiMessageSquare /> Chat with Expert
-                  </CtaButton>
-                  <CtaButton variant="primary" onClick={() => handleCallCTA(expertId)}>
-                    <FiPhone /> Call Now
-                  </CtaButton>
-                  <CtaButton onClick={() => handleProfileCTA(reel)}>
-                    <FiUser /> View Full Profile
-                  </CtaButton>
-                  <CtaButton onClick={() => handleProfileCTA(reel, { scrollToBooking: true })}>
-                    <FiCalendar /> Book Consultation
-                  </CtaButton>
-                </CtaRow>
-              </DesktopSidebar>
+                          </div>
+                          
+                          <form className="desktop-comment-form" onSubmit={(e) => handleCommentSubmit(e, reel.id)}>
+                            <input
+                              type="text"
+                              placeholder="Write a comment..."
+                              value={newComment}
+                              onChange={(e) => setNewComment(e.target.value)}
+                              className="desktop-comment-input"
+                            />
+                            <button type="submit" className="desktop-comment-submit">Post</button>
+                          </form>
+                        </div>
+                      )}
+                    </DesktopSidebar>
                   </>
                 );
               })()}
@@ -1063,12 +1121,15 @@ export default function ReelsPage() {
         </ReelsFeed>
       )}
 
+      {/* Mobile Comments Modal */}
       {commentsOpen && currentReel && (
         <MobileCommentsBackdrop onClick={() => setCommentsOpen(false)}>
           <MobileCommentsPanel onClick={(event) => event.stopPropagation()}>
             <MobileCommentsHeader>
               <strong>Comments ({currentReel.comments_count || 0})</strong>
-              <button type="button" onClick={() => setCommentsOpen(false)}>Close</button>
+              <button type="button" onClick={() => setCommentsOpen(false)}>
+                <FiX size={20} />
+              </button>
             </MobileCommentsHeader>
             <CommentsList>
               {loadingComments ? (

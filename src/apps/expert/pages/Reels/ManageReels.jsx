@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+// ManageReels.jsx - Updated with video playback - FIXED VERSION
+import React, { useState, useEffect, useRef } from "react";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { useCategory } from "../../../../shared/context/CategoryContext";
 import { getServicesByExpert } from "../../../../shared/api/service.api";
@@ -21,28 +22,40 @@ import {
   FiMessageCircle,
   FiBookmark,
   FiShare2,
-  FiUploadCloud
+  FiPlay,
+  FiPause,
+  FiAlertCircle
 } from "react-icons/fi";
 import Swal from "sweetalert2";
 
 import {
   PageContainer,
   HeaderRow,
+  HeaderLeft,
   Title,
+  Subtitle,
   UploadButton,
   ReelsGrid,
   ReelCard,
   VideoPreviewWrapper,
+  CardVideo,
   CardThumbnail,
+  ThumbnailOverlay,
+  PlayIcon,
   StatusBadge,
+  StatusDot,
   ReelContent,
   ReelTitle,
   ReelCaption,
+  MetaRow,
+  MetaTag,
   RejectedReasonBox,
   AnalyticsRow,
   AnalyticItem,
   ActionsRow,
   ActionButton,
+  SubmitButtonFull,
+  EmptyState,
   ModalBackdrop,
   ModalContainer,
   ModalHeader,
@@ -52,15 +65,13 @@ import {
   Input,
   Textarea,
   Select,
+  FileUploadArea,
+  FilePreview,
   SubmitButton,
+  CancelButton,
+  ModalFooter,
   SpinnerWrapper,
   InlineSpinner,
-  ModalBodyWrapper,
-  PreviewColumn,
-  FormColumn,
-  MediaPreviewContainer,
-  PlaceholderPreview,
-  FormFieldsWrapper,
   UploadBox
 } from "./ManageReels.styles";
 
@@ -97,6 +108,7 @@ export default function ManageReels() {
   const [reels, setReels] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [playingReelId, setPlayingReelId] = useState(null);
 
   // Form Modals
   const [showModal, setShowModal] = useState(false);
@@ -113,35 +125,16 @@ export default function ManageReels() {
   const [videoFile, setVideoFile] = useState(null);
   const [thumbnailFile, setThumbnailFile] = useState(null);
 
-  const [videoPreviewUrl, setVideoPreviewUrl] = useState("");
-  const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState("");
-
-  useEffect(() => {
-    if (!videoFile) {
-      setVideoPreviewUrl("");
-      return;
-    }
-    const url = URL.createObjectURL(videoFile);
-    setVideoPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [videoFile]);
-
-  useEffect(() => {
-    if (!thumbnailFile) {
-      setThumbnailPreviewUrl("");
-      return;
-    }
-    const url = URL.createObjectURL(thumbnailFile);
-    setThumbnailPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [thumbnailFile]);
+  // File input refs
+  const videoInputRef = useRef(null);
+  const thumbnailInputRef = useRef(null);
+  const videoRefs = useRef({});
 
   // Load data
   const loadData = async () => {
     if (!expertData?.expertId) return;
     setLoading(true);
 
-    // 1. Fetch Reels
     try {
       const res = await getExpertReelsApi();
       if (res.data && res.data.success) {
@@ -151,43 +144,9 @@ export default function ManageReels() {
       }
     } catch (err) {
       console.error("Error loading expert reels:", err);
-      const status = getApiErrorStatus(err);
-      
-      if (status === 403) {
-        Swal.fire({
-          title: "Access Denied",
-          text: "Access denied. Please login as expert.",
-          icon: "error",
-          toast: true,
-          position: "top-end",
-          timer: 5000,
-          showConfirmButton: false
-        });
-      } else if (status === 404) {
-        Swal.fire({
-          title: "API Not Available",
-          text: "Reels API endpoint not found. Please check backend route.",
-          icon: "warning",
-          toast: true,
-          position: "top-end",
-          timer: 5000,
-          showConfirmButton: false
-        });
-      } else {
-        Swal.fire({
-          title: "Error loading reels",
-          text: getApiErrorMessage(err, "Failed to load Reels."),
-          icon: "error",
-          toast: true,
-          position: "top-end",
-          timer: 3000,
-          showConfirmButton: false
-        });
-      }
       setReels([]);
     }
 
-    // 2. Fetch Services
     try {
       const servicesRes = await getServicesByExpert(expertData.expertId);
       const sData = Array.isArray(servicesRes.data) ? servicesRes.data : servicesRes.data.data || [];
@@ -203,6 +162,51 @@ export default function ManageReels() {
   useEffect(() => {
     loadData();
   }, [expertData?.expertId]);
+
+  // Cleanup videos on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(videoRefs.current).forEach(video => {
+        if (video) {
+          video.pause();
+        }
+      });
+    };
+  }, []);
+
+  // Handle video play/pause
+  const toggleVideoPlay = (reelId) => {
+    const video = videoRefs.current[reelId];
+    if (!video) return;
+
+    if (playingReelId === reelId) {
+      // Pause current video
+      video.pause();
+      setPlayingReelId(null);
+    } else {
+      // Pause any previously playing video
+      if (playingReelId && videoRefs.current[playingReelId]) {
+        videoRefs.current[playingReelId].pause();
+      }
+      
+      // Reset to beginning before playing
+      video.currentTime = 0;
+      
+      // Play new video
+      video.play().catch(err => {
+        console.error("Error playing video:", err);
+      });
+      setPlayingReelId(reelId);
+    }
+  };
+
+  // Handle video end
+  const handleVideoEnd = (reelId) => {
+    setPlayingReelId(null);
+    if (videoRefs.current[reelId]) {
+      videoRefs.current[reelId].currentTime = 0;
+    }
+  };
 
   // Handle open upload/edit modal
   const openModal = (reel = null) => {
@@ -228,6 +232,18 @@ export default function ManageReels() {
       setThumbnailFile(null);
     }
     setShowModal(true);
+  };
+
+  // Close modal with cleanup
+  const closeModal = () => {
+    setShowModal(false);
+    // Reset file inputs
+    if (videoInputRef.current) {
+      videoInputRef.current.value = "";
+    }
+    if (thumbnailInputRef.current) {
+      thumbnailInputRef.current.value = "";
+    }
   };
 
   // Submit form (Create / Update)
@@ -267,7 +283,7 @@ export default function ManageReels() {
         Swal.fire("Success", "Reel created as draft. You can now submit it for approval.", "success");
       }
 
-      setShowModal(false);
+      closeModal();
       loadData();
     } catch (err) {
       console.error("Submit reel error:", err);
@@ -312,9 +328,7 @@ export default function ManageReels() {
     }
   };
 
-  // Subcategories logic
-  const selectedCatObj = categories.find(c => c.id === parseInt(categoryId));
-  const subcategoriesList = selectedCatObj?.subcategories || [];
+  // Helper functions
   const getReelStatus = (reel) => {
     if (typeof reel.status === "string") return reel.status;
     const statusCode = Number(reel.status_code ?? reel.status);
@@ -324,6 +338,7 @@ export default function ManageReels() {
     if (statusCode === 3) return "blocked";
     return "draft";
   };
+
   const getReelStatusCode = (reel) => {
     const status = getReelStatus(reel);
     if (status === "approved") return 1;
@@ -332,17 +347,39 @@ export default function ManageReels() {
     if (status === "blocked") return 3;
     return -1;
   };
+
   const getReelStatusLabel = (reel) => {
     const status = getReelStatus(reel);
-    return status === "pending" ? "Pending Approval" : status.charAt(0).toUpperCase() + status.slice(1);
+    if (status === "pending") return "Pending Approval";
+    return status.charAt(0).toUpperCase() + status.slice(1);
   };
+
+  const getStatusDotPulsing = (reel) => {
+    const status = getReelStatus(reel);
+    return status === "pending";
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  };
+
+  // Subcategories logic
+  const selectedCatObj = categories.find(c => c.id === parseInt(categoryId));
+  const subcategoriesList = selectedCatObj?.subcategories || [];
 
   return (
     <PageContainer>
       <HeaderRow>
-        <Title>Manage Expert Reels</Title>
+        <HeaderLeft>
+          <Title>Manage Expert Reels</Title>
+          <Subtitle>
+            Upload and manage your short videos to increase visibility and consultation requests.
+          </Subtitle>
+        </HeaderLeft>
         <UploadButton onClick={() => openModal()}>
-          <FiPlus /> Upload New Reel
+          <FiPlus size={20} /> Upload New Reel
         </UploadButton>
       </HeaderRow>
 
@@ -351,231 +388,291 @@ export default function ManageReels() {
           <InlineSpinner />
         </SpinnerWrapper>
       ) : reels.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "40px", background: "#f9fafb", borderRadius: "16px", border: "1px dashed #d1d5db" }}>
-          <FiUploadCloud size={48} color="#9ca3af" style={{ marginBottom: "12px" }} />
-          <h3>No reels created yet.</h3>
-          <p style={{ color: "#6b7280" }}>Short videos help double your client consultations! Upload your first reel now.</p>
-        </div>
+        <EmptyState>
+          <span className="icon">🎬</span>
+          <h3>No Reels Yet</h3>
+          <p>
+            Create your first professional reel and submit it for admin approval.
+          </p>
+          <UploadButton onClick={() => openModal()} style={{ margin: '0 auto' }}>
+            <FiPlus size={20} /> Upload First Reel
+          </UploadButton>
+        </EmptyState>
       ) : (
         <ReelsGrid>
-          {reels.map((reel) => (
-            <ReelCard key={reel.id}>
-              <VideoPreviewWrapper>
-                <CardThumbnail src={reel.thumbnail_url || "https://placehold.co/360x640/121214/ffffff?text=Video+Reel"} alt={reel.title} />
-                <StatusBadge status={getReelStatusCode(reel)}>
-                  {getReelStatusLabel(reel)}
-                </StatusBadge>
-              </VideoPreviewWrapper>
+          {reels.map((reel) => {
+            const statusCode = getReelStatusCode(reel);
+            const statusLabel = getReelStatusLabel(reel);
+            const status = getReelStatus(reel);
+            const isPulsing = getStatusDotPulsing(reel);
+            const isPlaying = playingReelId === reel.id;
 
-              <ReelContent>
-                <ReelTitle>{reel.title}</ReelTitle>
-                {reel.caption && <ReelCaption>{reel.caption}</ReelCaption>}
+            return (
+              <ReelCard key={reel.id}>
+                <VideoPreviewWrapper onClick={() => toggleVideoPlay(reel.id)}>
+                  <CardVideo
+                    ref={el => {
+                      if (el) videoRefs.current[reel.id] = el;
+                    }}
+                    src={reel.video_url}
+                    poster={reel.thumbnail_url || "https://placehold.co/360x640/121214/ffffff?text=Video+Reel"}
+                    playsInline
+                    muted
+                    preload="metadata"
+                    onEnded={() => handleVideoEnd(reel.id)}
+                    playing={isPlaying}
+                  />
+                  <CardThumbnail 
+                    src={reel.thumbnail_url || "https://placehold.co/360x640/121214/ffffff?text=Video+Reel"} 
+                    alt={reel.title}
+                    playing={isPlaying}
+                  />
+                  <ThumbnailOverlay playing={isPlaying} />
+                  <PlayIcon playing={isPlaying}>
+                    {isPlaying ? <FiPause /> : <FiPlay />}
+                  </PlayIcon>
+                  <StatusBadge status={statusCode}>
+                    <StatusDot status={statusCode} pulsing={isPulsing} />
+                    {statusLabel}
+                  </StatusBadge>
+                </VideoPreviewWrapper>
 
-                {getReelStatus(reel) === "rejected" && reel.rejected_reason && (
-                  <RejectedReasonBox>
-                    <strong>Reason:</strong> {reel.rejected_reason}
-                  </RejectedReasonBox>
-                )}
+                <ReelContent>
+                  <ReelTitle>{reel.title}</ReelTitle>
+                  {reel.caption && <ReelCaption>{reel.caption}</ReelCaption>}
 
-                <AnalyticsRow>
-                  <AnalyticItem>
-                    <FiEye />
-                    <span className="count">{reel.views_count}</span>
-                  </AnalyticItem>
-                  <AnalyticItem>
-                    <FiHeart />
-                    <span className="count">{reel.likes_count}</span>
-                  </AnalyticItem>
-                  <AnalyticItem>
-                    <FiMessageCircle />
-                    <span className="count">{reel.comments_count}</span>
-                  </AnalyticItem>
-                  <AnalyticItem>
-                    <FiBookmark />
-                    <span className="count">{reel.saves_count}</span>
-                  </AnalyticItem>
-                  <AnalyticItem>
-                    <FiShare2 />
-                    <span className="count">{reel.shares_count}</span>
-                  </AnalyticItem>
-                </AnalyticsRow>
+                  <MetaRow>
+                    {reel.category_name && (
+                      <MetaTag>📂 <strong>{reel.category_name}</strong></MetaTag>
+                    )}
+                    {reel.subcategory_name && (
+                      <MetaTag>📎 <strong>{reel.subcategory_name}</strong></MetaTag>
+                    )}
+                    {reel.linked_service_title && (
+                      <MetaTag>🔗 <strong>{reel.linked_service_title}</strong></MetaTag>
+                    )}
+                  </MetaRow>
 
-                <ActionsRow>
-                  <ActionButton onClick={() => openModal(reel)}>
-                    <FiEdit /> Edit
-                  </ActionButton>
-                  <ActionButton variant="danger" onClick={() => handleDelete(reel.id)}>
-                    <FiTrash2 /> Delete
-                  </ActionButton>
-                </ActionsRow>
+                  {status === "rejected" && reel.rejected_reason && (
+                    <RejectedReasonBox>
+                      <strong><FiAlertCircle style={{ marginRight: '6px' }} /> Rejected</strong>
+                      {reel.rejected_reason}
+                    </RejectedReasonBox>
+                  )}
 
-                {["draft", "rejected"].includes(getReelStatus(reel)) && (
-                  <ActionButton
-                    variant="primary"
-                    style={{ marginTop: "8px", width: "100%" }}
-                    onClick={() => handleSubmitForApproval(reel.id)}
-                  >
-                    <FiCheckCircle /> Submit for Approval
-                  </ActionButton>
-                )}
-              </ReelContent>
-            </ReelCard>
-          ))}
+                  <AnalyticsRow>
+                    <AnalyticItem>
+                      <FiEye />
+                      <span className="count">{reel.views_count || 0}</span>
+                      <span className="label">Views</span>
+                    </AnalyticItem>
+                    <AnalyticItem>
+                      <FiHeart />
+                      <span className="count">{reel.likes_count || 0}</span>
+                      <span className="label">Likes</span>
+                    </AnalyticItem>
+                    <AnalyticItem>
+                      <FiMessageCircle />
+                      <span className="count">{reel.comments_count || 0}</span>
+                      <span className="label">Comments</span>
+                    </AnalyticItem>
+                    <AnalyticItem>
+                      <FiBookmark />
+                      <span className="count">{reel.saves_count || 0}</span>
+                      <span className="label">Saves</span>
+                    </AnalyticItem>
+                    <AnalyticItem>
+                      <FiShare2 />
+                      <span className="count">{reel.shares_count || 0}</span>
+                      <span className="label">Shares</span>
+                    </AnalyticItem>
+                  </AnalyticsRow>
+
+                  <ActionsRow>
+                    <ActionButton onClick={() => openModal(reel)}>
+                      <FiEdit /> Edit
+                    </ActionButton>
+                    <ActionButton variant="danger" onClick={() => handleDelete(reel.id)}>
+                      <FiTrash2 /> Delete
+                    </ActionButton>
+                  </ActionsRow>
+
+                  {["draft", "rejected"].includes(status) && (
+                    <SubmitButtonFull onClick={() => handleSubmitForApproval(reel.id)}>
+                      <FiCheckCircle /> Submit for Approval
+                    </SubmitButtonFull>
+                  )}
+                </ReelContent>
+              </ReelCard>
+            );
+          })}
         </ReelsGrid>
       )}
 
-      {/* FORM MODAL */}
+      {/* FORM MODAL - UPDATED TO USE CORRECT STYLED COMPONENTS */}
       {showModal && (
-        <ModalBackdrop>
-          <ModalContainer>
+        <ModalBackdrop onClick={closeModal}>
+          <ModalContainer onClick={(e) => e.stopPropagation()}>
             <ModalHeader>
-              <h2>{editingReel ? "Edit Reel" : "Upload New Reel"}</h2>
-              <CloseButton onClick={() => setShowModal(false)}>
-                <FiX size={20} />
+              <h2>{editingReel ? "✏️ Edit Reel" : "📤 Upload New Reel"}</h2>
+              <CloseButton onClick={closeModal}>
+                <FiX />
               </CloseButton>
             </ModalHeader>
 
             <Form onSubmit={handleSubmit}>
-              <ModalBodyWrapper>
-                <PreviewColumn>
-                  <label style={{ fontSize: "13px", fontWeight: "600", color: "#374151" }}>Reel Preview</label>
-                  <MediaPreviewContainer>
-                    {videoPreviewUrl ? (
-                      <video src={videoPreviewUrl} controls muted playsInline />
-                    ) : thumbnailPreviewUrl ? (
-                      <img src={thumbnailPreviewUrl} alt="Thumbnail Preview" />
-                    ) : editingReel ? (
-                      editingReel.video_url ? (
-                        <video src={editingReel.video_url} controls muted playsInline poster={editingReel.thumbnail_url} />
-                      ) : editingReel.thumbnail_url ? (
-                        <img src={editingReel.thumbnail_url} alt="Reel Thumbnail" />
-                      ) : (
-                        <PlaceholderPreview>
-                          <FiUploadCloud size={24} />
-                          <span>No media preview</span>
-                        </PlaceholderPreview>
-                      )
-                    ) : (
-                      <PlaceholderPreview>
-                        <FiUploadCloud size={24} />
-                        <span>Select video file</span>
-                      </PlaceholderPreview>
-                    )}
-                  </MediaPreviewContainer>
-                </PreviewColumn>
+              <FormGroup>
+                <label>Title <span className="required">*</span></label>
+                <Input
+                  type="text"
+                  placeholder="e.g. 5 Investment Mistakes to Avoid"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                />
+              </FormGroup>
 
-                <FormColumn>
-                  <FormFieldsWrapper>
-                    <FormGroup>
-                      <label>Title *</label>
-                      <Input
-                        type="text"
-                        placeholder="e.g. 5 Investment Mistakes to Avoid"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        required
-                      />
-                    </FormGroup>
+              <FormGroup>
+                <label>Caption</label>
+                <Textarea
+                  placeholder="e.g. Learn how to grow your wealth with these simple rules..."
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                />
+              </FormGroup>
 
-                    <FormGroup>
-                      <label>Caption</label>
-                      <Textarea
-                        placeholder="e.g. Learn how to grow your wealth with these simple rules..."
-                        value={caption}
-                        onChange={(e) => setCaption(e.target.value)}
-                      />
-                    </FormGroup>
+              <FormGroup>
+                <label>Description</label>
+                <Textarea
+                  placeholder="Additional background or tags..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </FormGroup>
 
-                    <FormGroup>
-                      <label>Description</label>
-                      <Textarea
-                        placeholder="Additional background or tags..."
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                      />
-                    </FormGroup>
+              <FormGroup>
+                <label>Category</label>
+                <Select
+                  value={categoryId}
+                  onChange={(e) => {
+                    setCategoryId(e.target.value);
+                    setSubcategoryId("");
+                  }}
+                >
+                  <option value="">Select Category</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </Select>
+              </FormGroup>
 
-                    <FormGroup>
-                      <label>Category</label>
-                      <Select
-                        value={categoryId}
-                        onChange={(e) => {
-                          setCategoryId(e.target.value);
-                          setSubcategoryId("");
-                        }}
-                      >
-                        <option value="">Select Category</option>
-                        {categories.map((c) => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                      </Select>
-                    </FormGroup>
+              {categoryId && subcategoriesList.length > 0 && (
+                <FormGroup>
+                  <label>Subcategory</label>
+                  <Select
+                    value={subcategoryId}
+                    onChange={(e) => setSubcategoryId(e.target.value)}
+                  >
+                    <option value="">Select Subcategory</option>
+                    {subcategoriesList.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </Select>
+                </FormGroup>
+              )}
 
-                    {categoryId && subcategoriesList.length > 0 && (
-                      <FormGroup>
-                        <label>Subcategory</label>
-                        <Select
-                          value={subcategoryId}
-                          onChange={(e) => setSubcategoryId(e.target.value)}
-                        >
-                          <option value="">Select Subcategory</option>
-                          {subcategoriesList.map((s) => (
-                            <option key={s.id} value={s.id}>{s.name}</option>
-                          ))}
-                        </Select>
-                      </FormGroup>
-                    )}
+              <FormGroup>
+                <label>
+                  {editingReel ? "Replace video file (Optional)" : "Video File "}
+                  <span className="required">{!editingReel ? "*" : ""}</span>
+                </label>
+                <FileUploadArea onClick={() => videoInputRef.current?.click()}>
+                  <span className="icon">⬆</span>
+                  <p className="upload-text">
+                    {videoFile ? videoFile.name : "Click to upload video"}
+                  </p>
+                  <p className="upload-hint">
+                    {videoFile 
+                      ? `${formatFileSize(videoFile.size)} • ${videoFile?.type?.split("/")?.[1]?.toUpperCase() || ""}`
+                      : "MP4 • MOV • WEBM (Max 100MB)"
+                    }
+                  </p>
+                  <input
+                    ref={videoInputRef}
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) => setVideoFile(e.target.files[0])}
+                    required={!editingReel}
+                  />
+                </FileUploadArea>
+                {videoFile && (
+                  <FilePreview>
+                    <span className="file-icon">🎬</span>
+                    <span className="file-name">{videoFile.name}</span>
+                    <span className="file-size">{formatFileSize(videoFile.size)}</span>
+                    <button 
+                      type="button" 
+                      className="remove-file"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setVideoFile(null);
+                        if (videoInputRef.current) videoInputRef.current.value = '';
+                      }}
+                    >
+                      <FiX size={16} />
+                    </button>
+                  </FilePreview>
+                )}
+              </FormGroup>
 
-                    <FormGroup>
-                      <label>Link consultation service (Optional)</label>
-                      <Select
-                        value={linkedServiceId}
-                        onChange={(e) => setLinkedServiceId(e.target.value)}
-                      >
-                        <option value="">Do not link</option>
-                        {services.map((s) => (
-                          <option key={s.id} value={s.id}>{s.title}</option>
-                        ))}
-                      </Select>
-                    </FormGroup>
+              <FormGroup>
+                <label>Upload Thumbnail/Cover (Optional)</label>
+                <FileUploadArea onClick={() => thumbnailInputRef.current?.click()}>
+                  <span className="icon">🖼️</span>
+                  <p className="upload-text">
+                    {thumbnailFile ? thumbnailFile.name : "Click to upload thumbnail"}
+                  </p>
+                  <p className="upload-hint">
+                    {thumbnailFile 
+                      ? `${formatFileSize(thumbnailFile.size)} • ${thumbnailFile?.type?.split("/")?.[1]?.toUpperCase() || ""}`
+                      : "JPG • PNG • WEBP (Max 5MB)"
+                    }
+                  </p>
+                  <input
+                    ref={thumbnailInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setThumbnailFile(e.target.files[0])}
+                  />
+                </FileUploadArea>
+                {thumbnailFile && (
+                  <FilePreview>
+                    <span className="file-icon">🖼️</span>
+                    <span className="file-name">{thumbnailFile.name}</span>
+                    <span className="file-size">{formatFileSize(thumbnailFile.size)}</span>
+                    <button 
+                      type="button" 
+                      className="remove-file"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setThumbnailFile(null);
+                        if (thumbnailInputRef.current) thumbnailInputRef.current.value = '';
+                      }}
+                    >
+                      <FiX size={16} />
+                    </button>
+                  </FilePreview>
+                )}
+              </FormGroup>
 
-                    <FormGroup>
-                      <label>{editingReel ? "Replace video file (Optional)" : "Select Video file (MP4, MOV, WEBM) *"}</label>
-                      <input
-                        type="file"
-                        id="video-file-input"
-                        accept="video/*"
-                        onChange={(e) => setVideoFile(e.target.files[0])}
-                        required={!editingReel}
-                        style={{ display: "none" }}
-                      />
-                      <UploadBox onClick={() => document.getElementById("video-file-input").click()}>
-                        <FiUploadCloud size={24} color="#6b7280" />
-                        <span>{videoFile ? videoFile.name : editingReel ? "Choose Video to Replace" : "Choose Video"}</span>
-                      </UploadBox>
-                    </FormGroup>
-
-                    <FormGroup>
-                      <label>Upload Thumbnail/Cover (Optional)</label>
-                      <input
-                        type="file"
-                        id="thumbnail-file-input"
-                        accept="image/*"
-                        onChange={(e) => setThumbnailFile(e.target.files[0])}
-                        style={{ display: "none" }}
-                      />
-                      <UploadBox onClick={() => document.getElementById("thumbnail-file-input").click()}>
-                        <FiUploadCloud size={24} color="#6b7280" />
-                        <span>{thumbnailFile ? thumbnailFile.name : editingReel ? "Choose Cover to Replace" : "Choose Cover Image"}</span>
-                      </UploadBox>
-                    </FormGroup>
-
-                    <SubmitButton type="submit" disabled={submitting}>
-                      {submitting ? "Uploading & saving..." : editingReel ? "Save Changes" : "Create Reel"}
-                    </SubmitButton>
-                  </FormFieldsWrapper>
-                </FormColumn>
-              </ModalBodyWrapper>
+              <ModalFooter>
+                <CancelButton type="button" onClick={closeModal}>
+                  Cancel
+                </CancelButton>
+                <SubmitButton type="submit" disabled={submitting}>
+                  {submitting ? "Saving..." : editingReel ? "Save Changes" : "Create Reel"}
+                </SubmitButton>
+              </ModalFooter>
             </Form>
           </ModalContainer>
         </ModalBackdrop>

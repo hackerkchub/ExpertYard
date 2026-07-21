@@ -17,10 +17,7 @@ const GuidexaExpertPlan = () => {
   const [hasActivePlan, setHasActivePlan] = useState(false);
   const [purchasing, setPurchasing] = useState(null);
   const [activeTab, setActiveTab] = useState(1);
-  const [isSticky, setIsSticky] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
-  const tabsRef = useRef(null);
-  const stickyPlaceholderRef = useRef(null);
 
   const expertId = expertData?.expertId || 132;
 
@@ -34,25 +31,6 @@ const GuidexaExpertPlan = () => {
     window.addEventListener('resize', checkScreenSize);
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
-
-  // Sticky tabs logic - only for desktop
-  useEffect(() => {
-    const handleScroll = () => {
-      if (isSmallScreen) {
-        setIsSticky(false);
-        return;
-      }
-      
-      if (tabsRef.current) {
-        const rect = tabsRef.current.getBoundingClientRect();
-        const shouldSticky = rect.top <= 80;
-        setIsSticky(shouldSticky);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [isSmallScreen]);
 
   // Feature mapping for different plan types
   const getPlanFeatures = (planName, durationYears) => {
@@ -227,12 +205,11 @@ const GuidexaExpertPlan = () => {
     if (expertId) fetchData();
   }, [expertId]);
 
-  // ✅ UPDATED: Cashfree payment handler
+  // Cashfree payment handler
   const handlePurchase = async (planId) => {
     try {
       setPurchasing(planId);
 
-      // STEP 1: Create order from backend
       const response = await createExpertPlanOrderApi({
         plan_id: planId
       });
@@ -243,25 +220,21 @@ const GuidexaExpertPlan = () => {
         throw new Error(order.message || "Order creation failed");
       }
 
-      // STEP 2: Load Cashfree SDK dynamically
       const { load } = await import("@cashfreepayments/cashfree-js");
       
       const cashfree = await load({
         mode: order.environment || "sandbox"
       });
 
-      // STEP 3: Initialize Cashfree checkout
       const result = await cashfree.checkout({
         paymentSessionId: order.payment_session_id,
         redirectTarget: "_modal"
       });
 
-      // STEP 4: Handle checkout result
       if (result?.error) {
         throw new Error(result.error.message || "Payment failed");
       }
 
-      // STEP 5: Payment successful - confirm with backend
       const verify = await verifyExpertPlanPaymentApi({
         order_id: order.order_id
       });
@@ -705,55 +678,13 @@ const GuidexaExpertPlan = () => {
           font-weight: 600;
         }
 
-        /* ===== STICKY TABS ===== */
-        .tabs-sticky-placeholder {
-          height: 0;
-          transition: height 0.3s ease;
-        }
-
-        .tabs-sticky-placeholder.active {
-          height: 82px;
-        }
-
+        /* ===== TABS SECTION - NO STICKY ===== */
         .tabs-wrapper {
-          margin-top: 8px;
-          transition: all 0.3s ease;
+          background: transparent;
+          width: 100%;
         }
 
-        .tabs-wrapper.sticky {
-          position: fixed;
-          top: 80px;
-          left: 0;
-          right: 0;
-          z-index: 1000;
-          background: #f0f4f8;
-          padding: 12px 32px;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-          animation: slideDown 0.3s ease;
-          max-width: 100%;
-        }
-
-        .tabs-wrapper.sticky .tabs-container {
-          max-width: 1400px;
-          margin: 0 auto;
-        }
-
-        .tabs-wrapper.sticky .tabs-header {
-          display: none;
-        }
-
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .tabs-wrapper .tabs-header {
+        .tabs-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -762,13 +693,13 @@ const GuidexaExpertPlan = () => {
           gap: 12px;
         }
 
-        .tabs-wrapper .tabs-header .tabs-title {
+        .tabs-header .tabs-title {
           font-size: 24px;
           font-weight: 700;
           color: #0a1628;
         }
 
-        .tabs-wrapper .tabs-header .tabs-subtitle {
+        .tabs-header .tabs-subtitle {
           color: #64748b;
           font-size: 14px;
         }
@@ -1130,10 +1061,6 @@ const GuidexaExpertPlan = () => {
           .g9-expert-plan-container {
             padding: 24px;
           }
-
-          .tabs-wrapper.sticky {
-            padding: 12px 24px;
-          }
         }
 
         @media (max-width: 768px) {
@@ -1200,24 +1127,6 @@ const GuidexaExpertPlan = () => {
             flex-direction: column;
             align-items: flex-start;
           }
-
-          /* Disable sticky on mobile */
-          .tabs-wrapper.sticky {
-            position: relative !important;
-            top: auto !important;
-            padding: 0 !important;
-            box-shadow: none !important;
-            animation: none !important;
-            background: transparent !important;
-          }
-
-          .tabs-wrapper.sticky .tabs-header {
-            display: flex !important;
-          }
-
-          .tabs-sticky-placeholder.active {
-            height: 0 !important;
-          }
         }
 
         @media (max-width: 480px) {
@@ -1266,35 +1175,6 @@ const GuidexaExpertPlan = () => {
             min-width: 80px;
             padding: 8px 14px;
             font-size: 12px;
-          }
-        }
-
-        /* Desktop only sticky */
-        @media (min-width: 769px) {
-          .tabs-wrapper.sticky {
-            position: fixed;
-            top: 80px;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            background: #f0f4f8;
-            padding: 12px 32px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            animation: slideDown 0.3s ease;
-            max-width: 100%;
-          }
-
-          .tabs-wrapper.sticky .tabs-container {
-            max-width: 1400px;
-            margin: 0 auto;
-          }
-
-          .tabs-wrapper.sticky .tabs-header {
-            display: none;
-          }
-
-          .tabs-sticky-placeholder.active {
-            height: 82px;
           }
         }
       `}</style>
@@ -1470,197 +1350,186 @@ const GuidexaExpertPlan = () => {
 
       {/* ===== ALL PLANS ===== */}
       {allPlans.length > 0 && (
-        <>
-          {/* Sticky Placeholder */}
-          <div 
-            ref={stickyPlaceholderRef} 
-            className={`tabs-sticky-placeholder ${isSticky ? 'active' : ''}`}
-          />
-
-          <div 
-            ref={tabsRef} 
-            className={`tabs-wrapper ${isSticky ? 'sticky' : ''}`}
-          >
-            <div className="tabs-header">
-              <div>
-                <h3 className="tabs-title">{hasActivePlan ? '🚀 Upgrade Your Plan' : '📋 Available Plans'}</h3>
-                <div className="tabs-subtitle">
-                  {hasActivePlan 
-                    ? 'Choose a higher plan to unlock more features' 
-                    : 'Select a plan to start your journey with G9 Expert'}
-                </div>
+        <div className="tabs-wrapper">
+          <div className="tabs-header">
+            <div>
+              <h3 className="tabs-title">{hasActivePlan ? '🚀 Upgrade Your Plan' : '📋 Available Plans'}</h3>
+              <div className="tabs-subtitle">
+                {hasActivePlan 
+                  ? 'Choose a higher plan to unlock more features' 
+                  : 'Select a plan to start your journey with G9 Expert'}
               </div>
             </div>
+          </div>
 
-            {/* Tabs - Scrollable on mobile */}
-            <div className="tabs-container">
-              {durationYears.map((years) => {
-                const plansForYear = plansByDuration[years] || [];
-                let maxSavings = 0;
-                plansForYear.forEach(plan => {
-                  const info = calculateDiscount(plan);
-                  if (info.savedAmount > maxSavings) maxSavings = info.savedAmount;
-                });
+          {/* Tabs - Scrollable on mobile */}
+          <div className="tabs-container">
+            {durationYears.map((years) => {
+              const plansForYear = plansByDuration[years] || [];
+              let maxSavings = 0;
+              plansForYear.forEach(plan => {
+                const info = calculateDiscount(plan);
+                if (info.savedAmount > maxSavings) maxSavings = info.savedAmount;
+              });
 
-                return (
-                  <button
-                    key={years}
-                    className={`tab-btn ${activeTab === years ? 'active' : ''}`}
-                    onClick={() => setActiveTab(years)}
-                  >
-                    {years} Year{years > 1 ? 's' : ''}
-                    <span className="tab-badge">
-                      {plansForYear.length} plan{plansForYear.length > 1 ? 's' : ''}
+              return (
+                <button
+                  key={years}
+                  className={`tab-btn ${activeTab === years ? 'active' : ''}`}
+                  onClick={() => setActiveTab(years)}
+                >
+                  {years} Year{years > 1 ? 's' : ''}
+                  <span className="tab-badge">
+                    {plansForYear.length} plan{plansForYear.length > 1 ? 's' : ''}
+                  </span>
+                  {maxSavings > 0 && (
+                    <span className="tab-savings">
+                      Save ₹{maxSavings.toLocaleString()}
                     </span>
-                    {maxSavings > 0 && (
-                      <span className="tab-savings">
-                        Save ₹{maxSavings.toLocaleString()}
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Plans Grid */}
+          <div className={`plans-grid ${hasActivePlan ? 'has-plan' : ''}`}>
+            {(plansByDuration[activeTab] || []).map((plan) => {
+              const isCurrentPlan = currentPlan && 
+                plan.plan_name === currentPlan.plan_name && 
+                plan.duration_years === currentPlan.duration_years;
+              
+              const discountInfo = calculateDiscount(plan);
+              const features = getPlanFeatures(plan.plan_name, plan.duration_years);
+              const isBestValue = recommendation?.bestValue?.id === plan.id;
+              const isPopular = recommendation?.popular?.id === plan.id;
+              
+              const plansForYear = plansByDuration[activeTab] || [];
+              let maxSavingsInYear = 0;
+              plansForYear.forEach(p => {
+                const info = calculateDiscount(p);
+                if (info.savedAmount > maxSavingsInYear) maxSavingsInYear = info.savedAmount;
+              });
+              const hasMostSavings = discountInfo.savedAmount === maxSavingsInYear && maxSavingsInYear > 0;
+              
+              const planTypeLabel = plan.plan_name.toLowerCase().includes('advanced') ? 'Premium' : 'Standard';
+
+              return (
+                <div key={plan.id} className={`plan-card ${(isBestValue && !isCurrentPlan) || (hasMostSavings && !isCurrentPlan) ? 'recommended' : ''}`}>
+                  {isCurrentPlan && (
+                    <div className="card-badge current">✓ Current</div>
+                  )}
+                  {!isCurrentPlan && isBestValue && (
+                    <div className="card-badge best-value">Best Value</div>
+                  )}
+                  {!isCurrentPlan && isPopular && !isBestValue && (
+                    <div className="card-badge popular">Popular</div>
+                  )}
+                  {!isCurrentPlan && hasMostSavings && !isBestValue && !isPopular && (
+                    <div className="card-badge most-savings">Max Savings</div>
+                  )}
+                  
+                  <div className="plan-name">{plan.plan_name}</div>
+                  <div className="plan-duration">
+                    {plan.duration_years} Year{plan.duration_years > 1 ? 's' : ''} Plan
+                    {!isCurrentPlan && (
+                      <span className="limited-badge" style={{ marginLeft: '10px' }}>
+                        ⏰ Limited Time
                       </span>
                     )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Plans Grid - 2 columns when expert has plan */}
-            <div className={`plans-grid ${hasActivePlan ? 'has-plan' : ''}`}>
-              {(plansByDuration[activeTab] || []).map((plan) => {
-                const isCurrentPlan = currentPlan && 
-                  plan.plan_name === currentPlan.plan_name && 
-                  plan.duration_years === currentPlan.duration_years;
-                
-                const discountInfo = calculateDiscount(plan);
-                const features = getPlanFeatures(plan.plan_name, plan.duration_years);
-                const isBestValue = recommendation?.bestValue?.id === plan.id;
-                const isPopular = recommendation?.popular?.id === plan.id;
-                
-                const plansForYear = plansByDuration[activeTab] || [];
-                let maxSavingsInYear = 0;
-                plansForYear.forEach(p => {
-                  const info = calculateDiscount(p);
-                  if (info.savedAmount > maxSavingsInYear) maxSavingsInYear = info.savedAmount;
-                });
-                const hasMostSavings = discountInfo.savedAmount === maxSavingsInYear && maxSavingsInYear > 0;
-                
-                const planTypeLabel = plan.plan_name.toLowerCase().includes('advanced') ? 'Premium' : 'Standard';
-
-                return (
-                  <div key={plan.id} className={`plan-card ${(isBestValue && !isCurrentPlan) || (hasMostSavings && !isCurrentPlan) ? 'recommended' : ''}`}>
-                    {isCurrentPlan && (
-                      <div className="card-badge current">✓ Current</div>
-                    )}
-                    {!isCurrentPlan && isBestValue && (
-                      <div className="card-badge best-value">Best Value</div>
-                    )}
-                    {!isCurrentPlan && isPopular && !isBestValue && (
-                      <div className="card-badge popular">Popular</div>
-                    )}
-                    {!isCurrentPlan && hasMostSavings && !isBestValue && !isPopular && (
-                      <div className="card-badge most-savings">Max Savings</div>
-                    )}
-                    
-                    <div className="plan-name">{plan.plan_name}</div>
-                    <div className="plan-duration">
-                      {plan.duration_years} Year{plan.duration_years > 1 ? 's' : ''} Plan
-                      {!isCurrentPlan && (
-                        <span className="limited-badge" style={{ marginLeft: '10px' }}>
-                          ⏰ Limited Time
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Original Price Banner */}
-                    {!isCurrentPlan && (
-                      <div className="original-banner">
-                        <div className="orig-label">💰 Original Price</div>
-                        <div className="orig-amount">₹{discountInfo.originalTotal.toLocaleString()}</div>
-                        <div className="save-highlight">
-                          🎉 You Save <span className="save-amount">₹{discountInfo.savedAmount.toLocaleString()}</span> 
-                          ({discountInfo.discountPercent}% OFF)
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="pricing-row">
-                      <span className="price-current">₹{discountInfo.discountedPrice.toLocaleString()}</span>
-                      <span className="price-label">/{plan.duration_years} Year{plan.duration_years > 1 ? 's' : ''}</span>
-                    </div>
-
-                    {/* Progressive Savings */}
-                    {!isCurrentPlan && plan.duration_years > 1 && discountInfo.savingsIncrease > 0 && (
-                      <div className="savings-compare">
-                        📈 <strong>₹{discountInfo.yearlySavings.toLocaleString()}</strong> saved per year • 
-                        <span className="inc"> +₹{discountInfo.savingsIncrease.toLocaleString()}</span> more than {plan.duration_years - 1}-year plan
-                      </div>
-                    )}
-
-                    {!isCurrentPlan && plan.duration_years === 1 && (
-                      <div className="offer-text">
-                        ⚡ <span className="hl">₹{discountInfo.savedAmount.toLocaleString()}</span> savings on 
-                        {planTypeLabel} Plan • Limited period offer
-                      </div>
-                    )}
-
-                    {!isCurrentPlan && plan.duration_years > 1 && (
-                      <div className="offer-text">
-                        ⚡ <span className="hl">₹{discountInfo.savedAmount.toLocaleString()}</span> total savings • 
-                        <span className="hl"> ₹{discountInfo.yearlySavings.toLocaleString()}</span>/year
-                      </div>
-                    )}
-                    
-                    <div className="monthly-cost">
-                      Just <strong>₹{discountInfo.monthlyCost}</strong>/month • 
-                      Save <strong>₹{discountInfo.savingsPerMonth}</strong> monthly
-                    </div>
-
-                    <ul className="features-list">
-                      {features.map((feature, idx) => (
-                        <li key={idx}>
-                          <span className="fi">{feature.icon}</span>
-                          {feature.name}
-                        </li>
-                      ))}
-                    </ul>
-
-                    {isCurrentPlan ? (
-                      <button className="btn-current" disabled>
-                        ✓ Current Plan
-                      </button>
-                    ) : (
-                      <button 
-                        className="btn-primary"
-                        onClick={() => handlePurchase(plan.id)}
-                        disabled={purchasing === plan.id}
-                      >
-                        {purchasing === plan.id ? 'Processing...' : (
-                          <>
-                            {hasActivePlan ? 'Upgrade Now' : 'Get Started'} 
-                            <span className="btn-save">
-                              (Save ₹{discountInfo.savedAmount.toLocaleString()})
-                            </span>
-                          </>
-                        )}
-                      </button>
-                    )}
                   </div>
-                );
-              })}
-            </div>
 
-            {/* No plans message */}
-            {(plansByDuration[activeTab] || []).length === 0 && (
-              <div style={{ 
-                textAlign: 'center', 
-                padding: '48px', 
-                background: 'white', 
-                borderRadius: '16px',
-                border: '1px solid #e8edf4'
-              }}>
-                <p style={{ color: '#64748b' }}>No plans available for {activeTab} year{activeTab > 1 ? 's' : ''}.</p>
-              </div>
-            )}
+                  {/* Original Price Banner */}
+                  {!isCurrentPlan && (
+                    <div className="original-banner">
+                      <div className="orig-label">💰 Original Price</div>
+                      <div className="orig-amount">₹{discountInfo.originalTotal.toLocaleString()}</div>
+                      <div className="save-highlight">
+                        🎉 You Save <span className="save-amount">₹{discountInfo.savedAmount.toLocaleString()}</span> 
+                        ({discountInfo.discountPercent}% OFF)
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="pricing-row">
+                    <span className="price-current">₹{discountInfo.discountedPrice.toLocaleString()}</span>
+                    <span className="price-label">/{plan.duration_years} Year{plan.duration_years > 1 ? 's' : ''}</span>
+                  </div>
+
+                  {/* Progressive Savings */}
+                  {!isCurrentPlan && plan.duration_years > 1 && discountInfo.savingsIncrease > 0 && (
+                    <div className="savings-compare">
+                      📈 <strong>₹{discountInfo.yearlySavings.toLocaleString()}</strong> saved per year • 
+                      <span className="inc"> +₹{discountInfo.savingsIncrease.toLocaleString()}</span> more than {plan.duration_years - 1}-year plan
+                    </div>
+                  )}
+
+                  {!isCurrentPlan && plan.duration_years === 1 && (
+                    <div className="offer-text">
+                      ⚡ <span className="hl">₹{discountInfo.savedAmount.toLocaleString()}</span> savings on 
+                      {planTypeLabel} Plan • Limited period offer
+                    </div>
+                  )}
+
+                  {!isCurrentPlan && plan.duration_years > 1 && (
+                    <div className="offer-text">
+                      ⚡ <span className="hl">₹{discountInfo.savedAmount.toLocaleString()}</span> total savings • 
+                      <span className="hl"> ₹{discountInfo.yearlySavings.toLocaleString()}</span>/year
+                    </div>
+                  )}
+                  
+                  <div className="monthly-cost">
+                    Just <strong>₹{discountInfo.monthlyCost}</strong>/month • 
+                    Save <strong>₹{discountInfo.savingsPerMonth}</strong> monthly
+                  </div>
+
+                  <ul className="features-list">
+                    {features.map((feature, idx) => (
+                      <li key={idx}>
+                        <span className="fi">{feature.icon}</span>
+                        {feature.name}
+                      </li>
+                    ))}
+                  </ul>
+
+                  {isCurrentPlan ? (
+                    <button className="btn-current" disabled>
+                      ✓ Current Plan
+                    </button>
+                  ) : (
+                    <button 
+                      className="btn-primary"
+                      onClick={() => handlePurchase(plan.id)}
+                      disabled={purchasing === plan.id}
+                    >
+                      {purchasing === plan.id ? 'Processing...' : (
+                        <>
+                          {hasActivePlan ? 'Upgrade Now' : 'Get Started'} 
+                          <span className="btn-save">
+                            (Save ₹{discountInfo.savedAmount.toLocaleString()})
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        </>
+
+          {/* No plans message */}
+          {(plansByDuration[activeTab] || []).length === 0 && (
+            <div style={{ 
+              textAlign: 'center', 
+              padding: '48px', 
+              background: 'white', 
+              borderRadius: '16px',
+              border: '1px solid #e8edf4'
+            }}>
+              <p style={{ color: '#64748b' }}>No plans available for {activeTab} year{activeTab > 1 ? 's' : ''}.</p>
+            </div>
+          )}
+        </div>
       )}
 
       {/* ===== ERROR ===== */}

@@ -36,20 +36,25 @@ export default function MainLayout() {
   const { balance } = useWallet();
   const isDesktop = useIsDesktop();
 
+  // Step 1: Home page check
   const isUserHome = location.pathname === "/user" || location.pathname === "/user/";
 
+  // Check if current page is Reels page
   const isReelsPage = 
     location.pathname.startsWith("/user/reels") || 
     location.pathname === "/user/reels" ||
     location.pathname.startsWith("/reels") || 
     location.pathname === "/reels";
 
-  const isNoFooterPage = 
-    location.pathname.startsWith("/user/my-inquiries") || 
+  // Step 2: No footer pages (includes Reels page)
+  const isNoFooterPage =
+    isReelsPage ||
+    location.pathname.startsWith("/user/my-inquiries") ||
     location.pathname === "/user/my-inquiries" ||
     location.pathname.startsWith("/user/chat") ||
     location.pathname === "/user/chat";
 
+  // Hide mobile header on Reels, My Inquiries, and Chat pages
   const isHideMobileHeader = 
     isReelsPage || 
     location.pathname.startsWith("/user/my-inquiries") || 
@@ -64,6 +69,7 @@ export default function MainLayout() {
     });
   };
 
+  // For Home page - render with its own layout (Home component handles its own footer)
   if (isUserHome) {
     return (
       <>
@@ -72,6 +78,7 @@ export default function MainLayout() {
     );
   }
 
+  // Desktop layout for non-home pages
   if (isDesktop) {
     return (
       <div className="desktop-layout-wrapper">
@@ -101,8 +108,9 @@ export default function MainLayout() {
             <Outlet />
           </main>
         </div>
+        {/* Step 3: Desktop Footer - hidden on Reels, My Inquiries, Chat pages */}
         {!isNoFooterPage && (
-          <div className="home-footer-container">
+          <div className="default-footer-container">
             <Footer />
           </div>
         )}
@@ -110,6 +118,7 @@ export default function MainLayout() {
     );
   }
 
+  // Mobile layout
   return (
     <>
       {!isHideMobileHeader && (
@@ -118,7 +127,12 @@ export default function MainLayout() {
         </div>
       )}
       <Outlet />
-      {!isNoFooterPage && <Footer />}
+      {/* Step 4: Mobile Footer - hidden on Reels, My Inquiries, Chat pages */}
+      {!isNoFooterPage && (
+        <div className="default-footer-container">
+          <Footer />
+        </div>
+      )}
     </>
   );
 }

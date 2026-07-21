@@ -3,6 +3,7 @@ import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "styled-components";
 import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
+import { Keyboard } from "@capacitor/keyboard";
 import { HelmetProvider } from "react-helmet-async";
 
 import "./i18n";
@@ -27,6 +28,11 @@ startReact();
 /* ================= NATIVE APP ONLY ================= */
 
 if (isNativeApp) {
+
+  Keyboard.setResizeMode({
+    mode: "none",
+  });
+
   App.addListener("backButton", () => {
     const path = window.location.pathname;
 

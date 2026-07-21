@@ -1,5 +1,6 @@
+// ExpertNotificationPage.jsx
 import React, { useMemo, useState, useEffect, useRef } from "react";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import {
   FiBell,
   FiCheckCircle,
@@ -9,174 +10,307 @@ import {
   FiTrash2,
   FiMoreHorizontal,
   FiCheck,
+  FiClock,
+  FiUser,
+  FiInbox,
+  FiMail,
+  FiAlertCircle,
+  FiX
 } from "react-icons/fi";
 import { useExpertNotifications } from "./../../context/ExpertNotificationsContext";
 
-const FILTERS = ["all", "call", "chat", "system"];
+const FILTERS = [
+  { id: "all", label: "All" },
+  { id: "call", label: "Calls" },
+  { id: "chat", label: "Chats" },
+  { id: "system", label: "System" }
+];
 
 const iconMap = {
-  call: { icon: <FiPhone />, color: "#16a34a", bg: "#dcfce7" },
-  chat: { icon: <FiMessageCircle />, color: "#2563eb", bg: "#dbeafe" },
-  system: { icon: <FiSettings />, color: "#d97706", bg: "#fef3c7" },
-  default: { icon: <FiBell />, color: "#475569", bg: "#e2e8f0" },
+  call: { icon: <FiPhone />, color: "#16a34a", bg: "#dcfce7", label: "Call" },
+  chat: { icon: <FiMessageCircle />, color: "#2563eb", bg: "#dbeafe", label: "Chat" },
+  system: { icon: <FiSettings />, color: "#d97706", bg: "#fef3c7", label: "System" },
+  default: { icon: <FiBell />, color: "#475569", bg: "#e2e8f0", label: "Notification" },
 };
+
+// ===== STYLED COMPONENTS =====
+
+const fadeInUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+const slideDown = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
 
 const PageWrap = styled.main`
   min-height: 100vh;
   width: 100%;
   overflow-x: hidden;
-  background-color: #f3f2ef; /* LinkedIn Gray */
-  padding: 24px 16px 64px;
+  background-color: #f8fafc;
+  padding: 24px 24px 80px;
 
   @media (max-width: 768px) {
-    padding: 0 0 44px;
+    padding: 0 0 80px;
   }
 `;
 
 const Container = styled.div`
   max-width: 1128px;
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: 225px 1fr;
-  gap: 24px;
 
-  @media (max-width: 991px) {
-    grid-template-columns: 1fr;
-    gap: 16px;
+  @media (max-width: 768px) {
+    padding: 0;
   }
 `;
 
-const SidebarCard = styled.div`
-  background: #ffffff;
-  border-radius: 8px;
-  border: 1px solid #e0dfdc;
-  padding: 16px;
-  height: fit-content;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-
-  h3 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: #191919;
-  }
-
-  p {
-    margin: 0;
-    font-size: 13px;
-    color: #666666;
-    line-height: 1.4;
-  }
-
-  @media (max-width: 991px) {
-    display: none;
-  }
-`;
-
-const MainContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-`;
-
-const HeaderCard = styled.div`
-  background: #ffffff;
-  border-radius: 8px;
-  border: 1px solid #e0dfdc;
-  padding: 16px 24px;
+// ===== HERO HEADER =====
+const HeroHeader = styled.div`
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 22px;
+  padding: 28px 32px;
+  margin-bottom: 24px;
+  box-shadow: 0 15px 35px rgba(15, 23, 42, 0.06);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
   gap: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.5);
 
   @media (max-width: 768px) {
     border-radius: 0;
-    border-left: none;
-    border-right: none;
-    padding: 16px;
+    padding: 20px 16px;
+    margin-bottom: 16px;
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
   }
 `;
 
-const TitleBlock = styled.div`
-  min-width: 0;
+const HeroLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
 `;
 
-const Title = styled.h1`
-  margin: 0;
-  color: #191919;
-  font-size: 20px;
-  font-weight: 600;
+const HeroIcon = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #000080, #1a1a6e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffd23f;
+  font-size: 24px;
+  flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
 `;
 
-const Sub = styled.p`
-  margin: 4px 0 0;
-  color: #666666;
-  font-size: 13px;
+const HeroContent = styled.div`
+  h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: #0a1628;
+    letter-spacing: -0.3px;
+
+    @media (max-width: 768px) {
+      font-size: 18px;
+    }
+  }
+
+  p {
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.5;
+
+    @media (max-width: 768px) {
+      font-size: 13px;
+    }
+  }
+`;
+
+const HeroActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    justify-content: flex-start;
+  }
 `;
 
 const MarkAllBtn = styled.button`
-  background: none;
+  background: #000080;
   border: none;
-  color: #0a66c2;
-  font-size: 14px;
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 128, 0.2);
 
   &:hover {
-    background-color: rgba(10, 102, 194, 0.08);
-    text-decoration: underline;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 128, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
   }
 
   @media (max-width: 768px) {
-    align-self: flex-start;
-    padding-left: 0;
+    padding: 8px 16px;
+    font-size: 12px;
+    width: 100%;
+    justify-content: center;
   }
 `;
 
+// ===== INFO CARD (Replaces Sidebar) =====
+const InfoCard = styled.div`
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  border: 1px solid #e8edf4;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 70px;
+
+  .icon {
+    font-size: 22px;
+    color: #000080;
+    flex-shrink: 0;
+  }
+
+  .info-content {
+    display: flex;
+    flex-direction: column;
+
+    .info-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #0a1628;
+    }
+
+    .info-desc {
+      font-size: 12px;
+      color: #64748b;
+      margin: 0;
+    }
+  }
+
+  @media (max-width: 768px) {
+    border-radius: 0;
+    margin-bottom: 12px;
+    padding: 12px 16px;
+    height: auto;
+  }
+`;
+
+// ===== FILTER CHIPS =====
 const FilterBar = styled.nav`
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
-  padding: 0 8px;
+  padding: 0 4px;
+  margin-bottom: 20px;
 
   @media (max-width: 768px) {
     padding: 0 16px;
+    gap: 8px;
+    margin-bottom: 16px;
   }
 `;
 
 const FilterChip = styled.button`
-  padding: 6px 12px;
-  border-radius: 16px;
+  padding: 10px 24px;
+  border-radius: 100px;
   font-size: 14px;
   font-weight: 600;
-  border: 1px solid ${({ $active }) => ($active ? "#057642" : "#5e5e5e")};
-  background: ${({ $active }) => ($active ? "#057642" : "#ffffff")};
-  color: ${({ $active }) => ($active ? "#ffffff" : "#5e5e5e")};
+  border: 2px solid ${({ $active }) => ($active ? "#000080" : "#e8edf4")};
+  background: ${({ $active }) => ($active ? "#000080" : "#f8fafc")};
+  color: ${({ $active }) => ($active ? "#ffffff" : "#64748b")};
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s ease;
   text-transform: capitalize;
+  letter-spacing: 0.2px;
 
   &:hover {
-    background: ${({ $active }) => ($active ? "#046237" : "#f3f2ef")};
-    color: ${({ $active }) => ($active ? "#ffffff" : "#191919")};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 128, 0.1);
+    border-color: ${({ $active }) => ($active ? "#000080" : "#cbd5e1")};
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  @media (max-width: 768px) {
+    padding: 8px 16px;
+    font-size: 12px;
+    flex: 1;
+    text-align: center;
+    min-width: 60px;
   }
 `;
 
+const FilterCount = styled.span`
+  display: inline-block;
+  background: ${({ $active }) => ($active ? "rgba(255,255,255,0.2)" : "#e8edf4")};
+  color: ${({ $active }) => ($active ? "#ffffff" : "#64748b")};
+  padding: 0 8px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 6px;
+  line-height: 20px;
+`;
+
+// ===== NOTIFICATION LIST =====
 const NotificationListCard = styled.div`
   background: #ffffff;
-  border-radius: 8px;
-  border: 1px solid #e0dfdc;
+  border-radius: 18px;
+  border: 1px solid #e8edf4;
   overflow: hidden;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
 
   @media (max-width: 768px) {
     border-radius: 0;
@@ -187,38 +321,47 @@ const NotificationListCard = styled.div`
 
 const NotificationItem = styled.div`
   display: grid;
-  grid-template-columns: 48px 1fr auto;
-  gap: 16px;
-  padding: 16px 24px;
-  border-bottom: 1px solid #e0dfdc;
-  background: ${({ $read }) => ($read ? "#ffffff" : "#f4f7f9")};
+  grid-template-columns: 56px 1fr auto;
+  gap: 20px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  background: ${({ $read }) => ($read ? "#ffffff" : "#f8faff")};
   position: relative;
-  transition: background-color 0.2s;
+  transition: all 0.25s ease;
+  animation: ${fadeInUp} 0.3s ease forwards;
+  animation-delay: ${({ $index }) => `${$index * 0.05}s`};
+  opacity: 0;
+  border-left: 4px solid ${({ $read }) => ($read ? "transparent" : "#000080")};
 
   &:last-child {
     border-bottom: none;
   }
 
   &:hover {
-    background-color: ${({ $read }) => ($read ? "#f9f9f9" : "#eef3f8")};
+    background-color: ${({ $read }) => ($read ? "#f8fafc" : "#f0f4ff")};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+    position: relative;
+    z-index: 1;
   }
 
   @media (max-width: 768px) {
-    padding: 12px 16px;
-    gap: 12px;
-    grid-template-columns: 40px 1fr auto;
+    padding: 16px;
+    gap: 14px;
+    grid-template-columns: 44px 1fr auto;
   }
 `;
 
+// ===== AVATAR =====
 const AvatarContainer = styled.div`
   position: relative;
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   flex-shrink: 0;
 
   @media (max-width: 768px) {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
   }
 `;
 
@@ -227,7 +370,8 @@ const AvatarImg = styled.img`
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid #e0dfdc;
+  border: 2px solid #f1f5f9;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
 `;
 
 const AvatarFallback = styled.div`
@@ -239,10 +383,12 @@ const AvatarFallback = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 22px;
+  border: 2px solid #f1f5f9;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
 
   @media (max-width: 768px) {
-    font-size: 16px;
+    font-size: 18px;
   }
 `;
 
@@ -250,72 +396,116 @@ const BadgeIcon = styled.div`
   position: absolute;
   bottom: -2px;
   right: -2px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  border-radius: 10px;
   background: ${({ $bg }) => $bg};
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
-  border: 1.5px solid #ffffff;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  font-size: 11px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+
+  @media (max-width: 768px) {
+    width: 18px;
+    height: 18px;
+    font-size: 9px;
+  }
 `;
 
+// ===== CONTENT =====
 const ItemContent = styled.div`
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 `;
 
 const HeadingRow = styled.div`
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
 `;
 
 const Heading = styled.h2`
   margin: 0;
-  color: #191919;
-  font-size: 14px;
-  font-weight: 600;
+  color: #0a1628;
+  font-size: 17px;
+  font-weight: 700;
   line-height: 1.4;
+  letter-spacing: -0.2px;
+
+  @media (max-width: 768px) {
+    font-size: 15px;
+  }
 `;
 
 const TimeText = styled.span`
-  font-size: 12px;
-  color: #666666;
+  font-size: 13px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 12px;
+  }
 `;
 
 const MessageText = styled.p`
-  margin: 4px 0 0;
-  color: #191919;
-  font-size: 13.5px;
-  line-height: 1.45;
+  margin: 0;
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.6;
   overflow-wrap: anywhere;
   word-break: break-word;
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+  }
 `;
 
+// ===== META ROW =====
 const MetaRow = styled.div`
-  margin-top: 8px;
+  margin-top: 4px;
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 `;
 
-const StatusPill = styled.span`
+const MetaPill = styled.span`
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  border-radius: 12px;
-  background: #f3f2ef;
-  color: #666666;
-  font-size: 11px;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  background: ${({ $bg }) => $bg || "#f1f5f9"};
+  color: ${({ $color }) => $color || "#475569"};
+  font-size: 12px;
   font-weight: 600;
   text-transform: capitalize;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 11px;
+    padding: 3px 10px;
+  }
 `;
 
+// ===== ACTION WRAPPER =====
 const ActionWrapper = styled.div`
   display: flex;
   align-items: center;
@@ -324,105 +514,147 @@ const ActionWrapper = styled.div`
 `;
 
 const UnreadDot = styled.div`
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background-color: #0a66c2;
+  background-color: #000080;
   flex-shrink: 0;
+  animation: pulse 2s infinite;
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  @media (max-width: 768px) {
+    width: 8px;
+    height: 8px;
+  }
 `;
 
 const MenuButton = styled.button`
   background: none;
   border: none;
-  color: #666666;
+  color: #94a3b8;
   cursor: pointer;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s, color 0.2s;
+  transition: all 0.25s ease;
 
   &:hover {
-    background-color: rgba(0, 0, 0, 0.06);
-    color: #191919;
+    background-color: #f1f5f9;
+    color: #0a1628;
+  }
+
+  @media (max-width: 768px) {
+    width: 36px;
+    height: 36px;
   }
 `;
 
+// ===== DROPDOWN =====
 const DropdownMenu = styled.div`
   position: absolute;
   right: 0;
-  top: 36px;
+  top: 44px;
   background: #ffffff;
-  border: 1px solid #e0dfdc;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  z-index: 10;
-  min-width: 160px;
+  border: 1px solid #e8edf4;
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+  z-index: 100;
+  min-width: 200px;
   overflow: hidden;
+  animation: ${slideDown} 0.2s ease;
+
+  @media (max-width: 768px) {
+    right: -10px;
+    min-width: 180px;
+  }
 `;
 
 const DropdownItem = styled.button`
   width: 100%;
-  padding: 10px 16px;
+  padding: 12px 16px;
   background: none;
   border: none;
   text-align: left;
   font-size: 13px;
-  color: ${({ $danger }) => ($danger ? "#d11a2a" : "#191919")};
+  font-weight: 500;
+  color: ${({ $danger }) => ($danger ? "#ef4444" : "#0a1628")};
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: background-color 0.2s;
+  gap: 10px;
+  transition: all 0.2s ease;
 
   &:hover {
-    background-color: #f3f2ef;
+    background-color: #f8fafc;
   }
 
   svg {
-    font-size: 14px;
+    font-size: 16px;
+    color: ${({ $danger }) => ($danger ? "#ef4444" : "#64748b")};
+  }
+
+  @media (max-width: 768px) {
+    padding: 10px 14px;
+    font-size: 12px;
   }
 `;
 
+// ===== EMPTY STATE =====
 const EmptyState = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 24px;
+  padding: 60px 24px;
   text-align: center;
   background: #ffffff;
+
+  .icon {
+    font-size: 56px;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #0a1628;
+  }
+
+  p {
+    margin: 8px 0 0;
+    font-size: 14px;
+    color: #64748b;
+    max-width: 360px;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 768px) {
+    padding: 40px 20px;
+
+    .icon {
+      font-size: 40px;
+    }
+
+    h3 {
+      font-size: 17px;
+    }
+
+    p {
+      font-size: 13px;
+    }
+  }
 `;
 
-const EmptyIcon = styled.div`
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #f3f2ef;
-  color: #666666;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  margin-bottom: 16px;
-`;
-
-const EmptyTitle = styled.h3`
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #191919;
-`;
-
-const EmptyText = styled.p`
-  margin: 8px 0 0;
-  font-size: 14px;
-  color: #666666;
-  max-width: 320px;
-`;
-
+// ===== HELPER FUNCTIONS =====
 const getIconKey = (type = "") => {
   const value = String(type).toLowerCase();
   if (value.includes("chat")) return "chat";
@@ -444,13 +676,13 @@ const formatTime = (value) => {
   const timestamp = typeof value === "number" ? value : new Date(value).getTime();
   if (!Number.isFinite(timestamp)) return "";
   const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
-  if (seconds < 60) return "just now";
+  if (seconds < 60) return "Just now";
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
+  if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`;
   return new Intl.DateTimeFormat("en", {
     month: "short",
     day: "numeric",
@@ -461,6 +693,7 @@ const formatTime = (value) => {
 const isRead = (notification) =>
   !notification?.unread || notification?.is_read === 1 || notification?.is_read === true;
 
+// ===== MAIN COMPONENT =====
 export default function ExpertNotificationPage() {
   const {
     notifications = [],
@@ -485,6 +718,20 @@ export default function ExpertNotificationPage() {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
+  // Get counts for each filter
+  const getFilterCount = (filterType) => {
+    const rows = Array.isArray(notifications) ? notifications : [];
+    if (filterType === "all") return rows.length;
+    
+    return rows.filter((notification) => {
+      const type = String(notification.type || "").toLowerCase();
+      if (filterType === "chat") return type.includes("chat");
+      if (filterType === "call") return type.includes("call");
+      if (filterType === "system") return !type.includes("chat") && !type.includes("call");
+      return type === filterType;
+    }).length;
+  };
+
   const filtered = useMemo(() => {
     const rows = Array.isArray(notifications) ? notifications : [];
     if (filter === "all") return rows;
@@ -501,148 +748,184 @@ export default function ExpertNotificationPage() {
   return (
     <PageWrap>
       <Container>
-        <SidebarCard>
-          <h3>Notifications settings</h3>
-          <p>You can customize notifications related to incoming calls, customer chats, and marketing campaigns in your settings panel.</p>
-        </SidebarCard>
+        {/* HERO HEADER */}
+        <HeroHeader>
+          <HeroLeft>
+            <HeroIcon>
+              <FiBell />
+            </HeroIcon>
+            <HeroContent>
+              <h1>Notifications</h1>
+              <p>
+                Stay updated with consultations, chat requests and important account alerts.
+              </p>
+            </HeroContent>
+          </HeroLeft>
+          <HeroActions>
+            <MarkAllBtn 
+              onClick={markAllRead} 
+              disabled={unreadCount === 0}
+            >
+              <FiCheckCircle size={16} />
+              <span>Mark all as read</span>
+            </MarkAllBtn>
+          </HeroActions>
+        </HeroHeader>
 
-        <MainContent>
-          <HeaderCard>
-            <TitleBlock>
-              <Title>Notifications</Title>
-              <Sub>You have {unreadCount} unread notification{unreadCount === 1 ? "" : "s"}</Sub>
-            </TitleBlock>
+        {/* INFO CARD - Replaces Sidebar */}
+        <InfoCard>
+          <span className="icon">⚙️</span>
+          <div className="info-content">
+            <span className="info-title">Notification Center</span>
+            <p className="info-desc">
+              Manage your calls, chats and system updates from one place.
+            </p>
+          </div>
+        </InfoCard>
 
-            {unreadCount > 0 && (
-              <MarkAllBtn onClick={markAllRead}>
-                <FiCheckCircle size={16} />
-                <span>Mark all as read</span>
-              </MarkAllBtn>
-            )}
-          </HeaderCard>
-
-          <FilterBar aria-label="Notification filters">
-            {FILTERS.map((item) => (
+        {/* FILTER CHIPS */}
+        <FilterBar>
+          {FILTERS.map((item) => {
+            const count = getFilterCount(item.id);
+            const isActive = filter === item.id;
+            return (
               <FilterChip
-                key={item}
+                key={item.id}
                 type="button"
-                $active={filter === item}
-                onClick={() => setFilter(item)}
+                $active={isActive}
+                onClick={() => setFilter(item.id)}
               >
-                {item}
+                {item.label}
+                <FilterCount $active={isActive}>{count}</FilterCount>
               </FilterChip>
-            ))}
-          </FilterBar>
+            );
+          })}
+        </FilterBar>
 
-          <NotificationListCard>
-            {filtered.length === 0 ? (
-              <EmptyState>
-                <EmptyIcon>
-                  <FiBell />
-                </EmptyIcon>
-                <EmptyTitle>No notifications yet</EmptyTitle>
-                <EmptyText>
-                  Incoming call updates, text messages, and alerts will appear here.
-                </EmptyText>
-              </EmptyState>
-            ) : (
-              filtered.map((notification) => {
-                const read = isRead(notification);
-                const iconKey = getIconKey(notification.type);
-                const iconConfig = iconMap[iconKey] || iconMap.default;
-                const title = notification.title || "Alert Notification";
-                const message = getMessage(notification);
-                const time = formatTime(
-                  notification.createdAt ||
-                    notification.time ||
-                    notification.created_at
-                );
+        {/* NOTIFICATION LIST */}
+        <NotificationListCard>
+          {filtered.length === 0 ? (
+            <EmptyState>
+              <span className="icon">🔔</span>
+              <h3>You're all caught up!</h3>
+              <p>
+                New chat requests, consultation alerts and account updates will appear here.
+              </p>
+            </EmptyState>
+          ) : (
+            filtered.map((notification, index) => {
+              const read = isRead(notification);
+              const iconKey = getIconKey(notification.type);
+              const iconConfig = iconMap[iconKey] || iconMap.default;
+              const title = notification.title || "Alert Notification";
+              const message = getMessage(notification);
+              const time = formatTime(
+                notification.createdAt ||
+                  notification.time ||
+                  notification.created_at
+              );
+              const isMenuOpen = activeMenuId === notification.id;
+              const senderName = notification.senderName || notification.sender_name;
+              const status = notification.status || notification.call_status;
 
-                const isMenuOpen = activeMenuId === notification.id;
+              return (
+                <NotificationItem
+                  key={notification.id}
+                  $read={read}
+                  $index={index}
+                  onClick={() => onNotificationTap?.(notification)}
+                >
+                  <AvatarContainer>
+                    {notification.senderAvatar ? (
+                      <AvatarImg src={notification.senderAvatar} alt="" />
+                    ) : (
+                      <AvatarFallback $bg={iconConfig.bg} $color={iconConfig.color}>
+                        {iconConfig.icon}
+                      </AvatarFallback>
+                    )}
+                    {notification.senderAvatar && (
+                      <BadgeIcon $bg={iconConfig.color}>
+                        {iconConfig.icon}
+                      </BadgeIcon>
+                    )}
+                  </AvatarContainer>
 
-                return (
-                  <NotificationItem
-                    key={notification.id}
-                    $read={read}
-                    onClick={() => onNotificationTap?.(notification)}
-                  >
-                    <AvatarContainer>
-                      {notification.senderAvatar ? (
-                        <AvatarImg src={notification.senderAvatar} alt="" />
-                      ) : (
-                        <AvatarFallback $bg={iconConfig.bg} $color={iconConfig.color}>
+                  <ItemContent>
+                    <HeadingRow>
+                      <Heading>{title}</Heading>
+                      <TimeText>
+                        <FiClock />
+                        {time}
+                      </TimeText>
+                    </HeadingRow>
+                    {message && <MessageText>{message}</MessageText>}
+
+                    <MetaRow>
+                      {senderName && (
+                        <MetaPill $bg="#e8edf4" $color="#0a1628">
+                          <FiUser size={12} />
+                          {senderName}
+                        </MetaPill>
+                      )}
+                      {status && (
+                        <MetaPill $bg={iconConfig.bg} $color={iconConfig.color}>
                           {iconConfig.icon}
-                        </AvatarFallback>
+                          {status}
+                        </MetaPill>
                       )}
-                      {notification.senderAvatar && (
-                        <BadgeIcon $bg={iconConfig.color}>
+                      {iconKey !== "default" && (
+                        <MetaPill $bg={iconConfig.bg} $color={iconConfig.color}>
                           {iconConfig.icon}
-                        </BadgeIcon>
+                          {iconConfig.label}
+                        </MetaPill>
                       )}
-                    </AvatarContainer>
+                    </MetaRow>
+                  </ItemContent>
 
-                    <ItemContent>
-                      <HeadingRow>
-                        <Heading>{title}</Heading>
-                        <TimeText>• {time}</TimeText>
-                      </HeadingRow>
-                      {message && <MessageText>{message}</MessageText>}
+                  <ActionWrapper onClick={(e) => e.stopPropagation()}>
+                    {!read && <UnreadDot />}
+                    <MenuButton
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveMenuId(isMenuOpen ? null : notification.id);
+                      }}
+                    >
+                      <FiMoreHorizontal size={20} />
+                    </MenuButton>
 
-                      <MetaRow>
-                        {notification.senderName && (
-                          <StatusPill>{notification.senderName}</StatusPill>
+                    {isMenuOpen && (
+                      <DropdownMenu ref={dropdownRef}>
+                        {!read && markAsRead && (
+                          <DropdownItem
+                            onClick={() => {
+                              markAsRead(notification.id);
+                              setActiveMenuId(null);
+                            }}
+                          >
+                            <FiCheck />
+                            <span>Mark as read</span>
+                          </DropdownItem>
                         )}
-                        {notification.status && (
-                          <StatusPill>{notification.status}</StatusPill>
+                        {removeById && (
+                          <DropdownItem
+                            $danger
+                            onClick={() => {
+                              removeById(notification);
+                              setActiveMenuId(null);
+                            }}
+                          >
+                            <FiTrash2 />
+                            <span>Delete notification</span>
+                          </DropdownItem>
                         )}
-                      </MetaRow>
-                    </ItemContent>
-
-                    <ActionWrapper onClick={(e) => e.stopPropagation()}>
-                      {!read && <UnreadDot />}
-                      <MenuButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveMenuId(isMenuOpen ? null : notification.id);
-                        }}
-                      >
-                        <FiMoreHorizontal size={20} />
-                      </MenuButton>
-
-                      {isMenuOpen && (
-                        <DropdownMenu ref={dropdownRef}>
-                          {!read && markAsRead && (
-                            <DropdownItem
-                              onClick={() => {
-                                markAsRead(notification.id);
-                                setActiveMenuId(null);
-                              }}
-                            >
-                              <FiCheck />
-                              <span>Mark as read</span>
-                            </DropdownItem>
-                          )}
-                          {removeById && (
-                            <DropdownItem
-                              $danger
-                              onClick={() => {
-                                removeById(notification);
-                                setActiveMenuId(null);
-                              }}
-                            >
-                              <FiTrash2 />
-                              <span>Delete notification</span>
-                            </DropdownItem>
-                          )}
-                        </DropdownMenu>
-                      )}
-                    </ActionWrapper>
-                  </NotificationItem>
-                );
-              })
-            )}
-          </NotificationListCard>
-        </MainContent>
+                      </DropdownMenu>
+                    )}
+                  </ActionWrapper>
+                </NotificationItem>
+              );
+            })
+          )}
+        </NotificationListCard>
       </Container>
     </PageWrap>
   );

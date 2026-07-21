@@ -566,7 +566,7 @@ const ExpertChat = () => {
 
       setSessionActive(false);
       clearActiveChatSession();
-      hotToast("success", "Chat ended", { id: "chat-ended" });
+      hotToast("success", "Chat ended", { id: "chat-ended" }, { duration: 3000 });
       navigate("/expert/chat-history", { replace: true });
     };
 

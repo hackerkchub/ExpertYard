@@ -257,10 +257,18 @@ public class CallNotificationHelper {
         }
 
         // Log fullscreen intent availability on Android 10+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            NotificationManager nm = context.getSystemService(NotificationManager.class);
+       // Log fullscreen intent availability
+if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // Android 14+
+    NotificationManager nm = context.getSystemService(NotificationManager.class);
+
+    if (nm != null) {
+        try {
             Log.d(TAG, "canUseFullScreenIntent = " + nm.canUseFullScreenIntent());
+        } catch (Throwable t) {
+            Log.w(TAG, "canUseFullScreenIntent() not available", t);
         }
+    }
+}
 
         Log.d(TAG, "✅ Incoming call notification shown - CallId: " + callId);
     }

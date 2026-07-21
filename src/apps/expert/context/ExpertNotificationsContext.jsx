@@ -259,6 +259,16 @@ export function ExpertNotificationsProvider({ children }) {
     }
   }, []);
 
+  const updateLocalStatus = useCallback((matcher, status) => {
+    setNotifications((prev) =>
+      prev.map((n) => {
+        if (!matcher(n)) return n;
+        return { ...n, status, unread: false };
+      })
+    );
+    if (FINAL_STATES.includes(status)) soundManager.stopAll();
+  }, []);
+
   const markCallFinal = useCallback((callId, status, { broadcast = true } = {}) => {
     if (!callId) return;
     const normalizedCallId = String(callId);
@@ -494,18 +504,54 @@ export function ExpertNotificationsProvider({ children }) {
 
     const handleIncomingChatEvent = (event) => handleIncomingChat(event.detail || {});
 
+    const handleCallCancelled = (data = {}) => {
+      const callId = data.callId || data.call_id;
+      console.log("📴 Call cancelled received in React:", callId);
+      updateLocalStatus((n) => String(n.related_id) === String(callId) && n.type === "voice_call", "cancelled");
+      soundManager.stopAll();
+      if (window.NativeBridgeManager?.terminateNativeSession) {
+        window.NativeBridgeManager.terminateNativeSession(String(callId));
+      }
+    };
+
+    const handleVideoCallCancelled = (data = {}) => {
+      const callId = data.callId || data.call_id;
+      console.log("📴 Video call cancelled received in React:", callId);
+      updateLocalStatus((n) => String(n.related_id) === String(callId) && (n.type === "video_call" || n.type === "video-call"), "cancelled");
+      soundManager.stopAll();
+      if (window.NativeBridgeManager?.terminateNativeSession) {
+        window.NativeBridgeManager.terminateNativeSession(String(callId));
+      }
+    };
+
+    const handleChatCancelled = (data = {}) => {
+      const requestId = data.request_id || data.requestId;
+      console.log("💬 Chat request cancelled received in React:", requestId);
+      updateLocalStatus((n) => String(n.related_id) === String(requestId) && n.type === "chat_request", "cancelled");
+      soundManager.stopAll();
+      if (window.NativeBridgeManager?.terminateNativeSession) {
+        window.NativeBridgeManager.terminateNativeSession(String(requestId));
+      }
+    };
+
     socket.on("call:incoming", handleIncomingCall);
     socket.on("video-call:incoming", handleIncomingVideoCall);
     socket.on("incoming_chat_request", handleIncomingChat);
+    socket.on("call:cancelled", handleCallCancelled);
+    socket.on("video-call:cancelled", handleVideoCallCancelled);
+    socket.on("chat_cancelled", handleChatCancelled);
     window.addEventListener("incoming_chat_request", handleIncomingChatEvent);
 
     return () => {
       socket.off("call:incoming", handleIncomingCall);
       socket.off("video-call:incoming", handleIncomingVideoCall);
       socket.off("incoming_chat_request", handleIncomingChat);
+      socket.off("call:cancelled", handleCallCancelled);
+      socket.off("video-call:cancelled", handleVideoCallCancelled);
+      socket.off("chat_cancelled", handleChatCancelled);
       window.removeEventListener("incoming_chat_request", handleIncomingChatEvent);
     };
-  }, [addNotification]);
+  }, [addNotification, updateLocalStatus]);
 
   useEffect(() => {
     if (!expertId) return;
@@ -540,15 +586,7 @@ export function ExpertNotificationsProvider({ children }) {
     };
   }, [expertId, addNotification]);
 
-  const updateLocalStatus = useCallback((matcher, status) => {
-    setNotifications((prev) =>
-      prev.map((n) => {
-        if (!matcher(n)) return n;
-        return { ...n, status, unread: false };
-      })
-    );
-    if (FINAL_STATES.includes(status)) soundManager.stopAll();
-  }, []);
+
 
   useEffect(() => {
     const byCallId = (callId) => (n) => n.payload?.callId && String(n.payload.callId) === String(callId);

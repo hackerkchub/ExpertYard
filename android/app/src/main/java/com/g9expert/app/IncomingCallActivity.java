@@ -26,6 +26,25 @@ public class IncomingCallActivity extends AppCompatActivity {
     
     private final AtomicBoolean handled = new AtomicBoolean(false);
 
+    private static IncomingCallActivity activeInstance = null;
+
+    public static IncomingCallActivity getActiveInstance() {
+        return activeInstance;
+    }
+
+    public static void finishActiveInstance() {
+        if (activeInstance != null) {
+            try {
+                Log.d("IncomingCall", "finishActiveInstance() called - finishing current IncomingCallActivity");
+                activeInstance.finish();
+                activeInstance.overridePendingTransition(0, 0);
+            } catch (Exception e) {
+                Log.e("IncomingCall", "Error finishing active instance", e);
+            }
+            activeInstance = null;
+        }
+    }
+
     private TextView logoText;
     private TextView avatarText;
     private TextView callerName;
@@ -172,6 +191,7 @@ public class IncomingCallActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.e("G9_ACTIVITY", "IncomingCallActivity CREATED");
+        activeInstance = this;
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_incoming_call);
 
@@ -441,6 +461,9 @@ public class IncomingCallActivity extends AppCompatActivity {
         }
         
         super.onDestroy();
+        if (activeInstance == this) {
+            activeInstance = null;
+        }
         handled.set(true);
         
         // Only stop ringtone, let Receiver handle state

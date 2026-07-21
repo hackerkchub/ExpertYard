@@ -361,8 +361,9 @@ public final class SocketEmitter {
                 emit("reject_chat_request", object, null);
             } else if (isVideo(callType)) {
                 Log.d(TAG, "Video call decline - CallId: " + callId);
-                emit("reject_video_call", object, callback);
+                emit("video-call:decline", object, callback);
                 emit("video-call:reject", object, null);
+                emit("reject_video_call", object, null);
             } else {
                 Log.d(TAG, "Voice call reject - CallId: " + callId);
                 emit("call:reject", object, callback);

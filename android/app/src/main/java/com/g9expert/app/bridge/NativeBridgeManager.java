@@ -313,7 +313,10 @@ public final class NativeBridgeManager {
                 stopIntent.setAction(com.g9expert.app.IncomingCallForegroundService.ACTION_STOP);
                 context.startService(stopIntent);
 
-                // 4. Clear store & state
+                // 4. Finish activity
+                com.g9expert.app.IncomingCallActivity.finishActiveInstance();
+
+                // 5. Clear store & state
                 com.g9expert.app.call.CallStore.clear(context);
                 com.g9expert.app.CallStateManager.reset(context);
             } catch (Exception e) {

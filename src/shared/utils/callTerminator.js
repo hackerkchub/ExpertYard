@@ -1,14 +1,16 @@
 import { socket } from "../api/socket";
 import { soundManager } from "../services/sound/soundManager";
+import { closePeer } from "../webrtc/voicePeer";
+import { closeVideoPeer } from "../webrtc/videoPeer";
 
 // Set to track terminating sessions and prevent duplicate termination execution
 const terminatingSessions = new Set();
 const rejectingSessions = new Set();
 
 /**
- * Global Call Termination Protocol - Centralized Kill Switch
+ * Global Call & Request Termination Protocol - Centralized Kill Switch
  * 
- * @param {string|number} callId - ID of the session to terminate
+ * @param {string|number} callId - ID of the session/request to terminate
  * @param {string} reason - Termination reason e.g., 'expert_hangup', 'user_hangup', 'timeout', 'error'
  * @param {object} options - Options e.g., { type: 'voice_call'|'video_call'|'chat_request', navigate: func, fallbackUrl: string }
  */
@@ -31,14 +33,17 @@ export async function terminateSession(callId, reason = "user_hangup", options =
   try {
     const sessionType = options.type || "voice_call";
 
-    // 2. LAYER 1: Socket.io - Notify backend & peer
+    // 2. LAYER 1: Socket.io - Notify backend & peer with both event name conventions
     if (socket && socket.connected) {
-      if (sessionType === "video_call" || sessionType === "video-call") {
+      if (sessionType === "video_call" || sessionType === "video-call" || sessionType === "video") {
         socket.emit("video-call:end", { callId: id, reason });
+        socket.emit("reject_video_call", { callId: id, reason });
       } else if (sessionType === "chat_request" || sessionType === "chat") {
-        socket.emit("end_chat", { request_id: id, reason });
+        socket.emit("end_chat", { request_id: id, requestId: id, reason });
+        socket.emit("reject_chat", { requestId: id, request_id: id, reason });
       } else {
         socket.emit("call:end", { callId: id, reason });
+        socket.emit("reject_call", { callId: id, reason });
       }
     }
 
@@ -57,7 +62,13 @@ export async function terminateSession(callId, reason = "user_hangup", options =
       window.G9.native.pendingCall = null;
     }
 
-    // 4. LAYER 3: Web Sound & Ringtone Cleanup
+    // 4. LAYER 3: Web Hardware, Stream & Sound Cleanup
+    try {
+      closePeer();
+      closeVideoPeer(true);
+    } catch (e) {
+      console.warn("WebRTC peer cleanup warning:", e);
+    }
     soundManager.stopAll();
 
     // 5. LAYER 4: React UI State - Dispatch global session_terminated event
@@ -84,8 +95,8 @@ export async function terminateSession(callId, reason = "user_hangup", options =
 }
 
 /**
- * Unified Rejection & Timeout Handler
- * Emits Socket Events to notify Server and Caller (User) so the User's phone stops ringing immediately.
+ * Unified Rejection & Timeout Handler for Chat, Voice, and Video Call Requests.
+ * Emits Socket Events to notify Server and Caller (User) so the User's UI updates immediately.
  * 
  * @param {string|number} callId - ID of call/chat
  * @param {string} callType - 'voice_call' | 'video_call' | 'chat_request'
@@ -112,19 +123,30 @@ export function rejectIncomingRequest(callId, callType = "voice_call", reason = 
         if (reason === "timeout") {
           socket.emit("video-call:missed", { callId: id, reason: "timeout" });
         } else {
+          socket.emit("reject_video_call", { callId: id, reason });
           socket.emit("video-call:reject", { callId: id, reason });
         }
       } else if (isChat) {
-        socket.emit("reject_chat_request", { request_id: id, reason });
+        socket.emit("reject_chat", { requestId: id, request_id: id, reason });
+        socket.emit("reject_chat_request", { request_id: id, requestId: id, reason });
       } else {
         if (reason === "timeout") {
           socket.emit("call:missed", { callId: id, reason: "timeout" });
         } else {
           socket.emit("call:reject", { callId: id, reason });
+          socket.emit("reject_call", { callId: id, reason });
         }
       }
       console.log(`📤 Socket event emitted successfully for ${callType} rejection (${reason})`);
     }
+
+    // Hardware & Audio Cleanup on rejection
+    try {
+      closePeer();
+      closeVideoPeer(true);
+    } catch (e) {}
+    soundManager.stopAll();
+
   } catch (e) {
     console.error("Failed to emit socket rejection event:", e);
   } finally {

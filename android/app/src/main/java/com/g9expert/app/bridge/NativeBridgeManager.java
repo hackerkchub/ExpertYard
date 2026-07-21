@@ -331,9 +331,9 @@ public final class NativeBridgeManager {
     }
 
     /**
-     * Dispatch rejection event to React WebView
+     * Dispatch rejection event to React WebView with dynamic callType
      */
-    public static void dispatchCallRejected(String callId) {
+    public static void dispatchCallRejected(String callId, String callType) {
         if (!isBridgeReady()) {
             Log.w(TAG, "Bridge not ready for call rejected dispatch");
             return;
@@ -342,15 +342,16 @@ public final class NativeBridgeManager {
         handler.post(() -> {
             try {
                 String safeCallId = callId != null ? callId : "";
+                String safeCallType = callType != null ? callType : "voice_call";
                 String script =
                     "if (!window.G9) window.G9 = {};" +
                     "if (!window.G9.native) window.G9.native = {};" +
                     "window.G9.native.pendingCall = null;" +
-                    "window.dispatchEvent(new CustomEvent('g9:nativeCallRejected', { detail: { callId: '" + safeCallId + "' } }));" +
-                    "console.log('[G9] Native call rejected dispatched:', '" + safeCallId + "');";
+                    "window.dispatchEvent(new CustomEvent('g9:nativeCallRejected', { detail: { callId: '" + safeCallId + "', callType: '" + safeCallType + "', type: '" + safeCallType + "' } }));" +
+                    "console.log('[G9] Native call rejected dispatched:', '" + safeCallId + "', 'Type:', '" + safeCallType + "');";
 
                 evaluateJavascript(script, value -> {
-                    Log.d(TAG, "✅ g9:nativeCallRejected dispatched to WebView for callId: " + safeCallId);
+                    Log.d(TAG, "✅ g9:nativeCallRejected dispatched to WebView for callId: " + safeCallId + ", callType: " + safeCallType);
                 });
             } catch (Exception e) {
                 Log.e(TAG, "Failed to dispatch call rejected event", e);
@@ -358,10 +359,14 @@ public final class NativeBridgeManager {
         });
     }
 
+    public static void dispatchCallRejected(String callId) {
+        dispatchCallRejected(callId, "voice_call");
+    }
+
     /**
-     * Dispatch call timeout event to React WebView
+     * Dispatch call timeout event to React WebView with dynamic callType
      */
-    public static void dispatchCallTimeout(String callId) {
+    public static void dispatchCallTimeout(String callId, String callType) {
         if (!isBridgeReady()) {
             Log.w(TAG, "Bridge not ready for call timeout dispatch");
             return;
@@ -370,15 +375,16 @@ public final class NativeBridgeManager {
         handler.post(() -> {
             try {
                 String safeCallId = callId != null ? callId : "";
+                String safeCallType = callType != null ? callType : "voice_call";
                 String script =
                     "if (!window.G9) window.G9 = {};" +
                     "if (!window.G9.native) window.G9.native = {};" +
                     "window.G9.native.pendingCall = null;" +
-                    "window.dispatchEvent(new CustomEvent('g9:nativeCallTimeout', { detail: { callId: '" + safeCallId + "' } }));" +
-                    "console.log('[G9] Native call timeout dispatched:', '" + safeCallId + "');";
+                    "window.dispatchEvent(new CustomEvent('g9:nativeCallTimeout', { detail: { callId: '" + safeCallId + "', callType: '" + safeCallType + "', type: '" + safeCallType + "' } }));" +
+                    "console.log('[G9] Native call timeout dispatched:', '" + safeCallId + "', 'Type:', '" + safeCallType + "');";
 
                 evaluateJavascript(script, value -> {
-                    Log.d(TAG, "✅ g9:nativeCallTimeout dispatched to WebView for callId: " + safeCallId);
+                    Log.d(TAG, "✅ g9:nativeCallTimeout dispatched to WebView for callId: " + safeCallId + ", callType: " + safeCallType);
                 });
             } catch (Exception e) {
                 Log.e(TAG, "Failed to dispatch call timeout event", e);
@@ -386,10 +392,14 @@ public final class NativeBridgeManager {
         });
     }
 
+    public static void dispatchCallTimeout(String callId) {
+        dispatchCallTimeout(callId, "voice_call");
+    }
+
     /**
-     * Dispatch call ended event to React WebView
+     * Dispatch call ended event to React WebView with dynamic callType
      */
-    public static void dispatchCallEnded(String callId) {
+    public static void dispatchCallEnded(String callId, String callType) {
         if (!isBridgeReady()) {
             Log.w(TAG, "Bridge not ready for call ended dispatch");
             return;
@@ -398,20 +408,25 @@ public final class NativeBridgeManager {
         handler.post(() -> {
             try {
                 String safeCallId = callId != null ? callId : "";
+                String safeCallType = callType != null ? callType : "voice_call";
                 String script =
                     "if (!window.G9) window.G9 = {};" +
                     "if (!window.G9.native) window.G9.native = {};" +
                     "window.G9.native.pendingCall = null;" +
-                    "window.dispatchEvent(new CustomEvent('g9:nativeCallEnded', { detail: { callId: '" + safeCallId + "' } }));" +
-                    "console.log('[G9] Native call ended dispatched:', '" + safeCallId + "');";
+                    "window.dispatchEvent(new CustomEvent('g9:nativeCallEnded', { detail: { callId: '" + safeCallId + "', callType: '" + safeCallType + "', type: '" + safeCallType + "' } }));" +
+                    "console.log('[G9] Native call ended dispatched:', '" + safeCallId + "', 'Type:', '" + safeCallType + "');";
 
                 evaluateJavascript(script, value -> {
-                    Log.d(TAG, "✅ g9:nativeCallEnded dispatched to WebView for callId: " + safeCallId);
+                    Log.d(TAG, "✅ g9:nativeCallEnded dispatched to WebView for callId: " + safeCallId + ", callType: " + safeCallType);
                 });
             } catch (Exception e) {
                 Log.e(TAG, "Failed to dispatch call ended event", e);
             }
         });
+    }
+
+    public static void dispatchCallEnded(String callId) {
+        dispatchCallEnded(callId, "voice_call");
     }
 
     /**

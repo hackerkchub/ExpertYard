@@ -4,6 +4,7 @@ import { socket } from "../api/socket";
 import { soundManager } from "../services/sound/soundManager";
 import { hotToast } from "../utils/lazyNotifications";
 import { closePeer } from "../webrtc/voicePeer";
+import { closeVideoPeer } from "../webrtc/videoPeer";
 import {
   releaseNativeCallLock,
   removeProcessedNativeCall,
@@ -84,7 +85,12 @@ export function useCallHandler() {
         clearNativeCallData();
 
         // 4. WEBRTC & SOUND CLEANUP
-        closePeer();
+        try {
+          closePeer();
+          closeVideoPeer(true);
+        } catch (e) {
+          console.warn("WebRTC cleanup warning:", e);
+        }
         soundManager.stopAll();
 
         // 5. GLOBAL REACT STATE RESET

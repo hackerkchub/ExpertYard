@@ -583,8 +583,17 @@ export function ExpertNotificationsProvider({ children }) {
     const handleNativeCallRejected = (event) => {
       const callData = event?.detail || {};
       const callId = callData.callId || callData.call_id;
-      const callType = callData.callType || callData.call_type || "voice_call";
-      console.log("✅ Native call rejected event received -> Cleared activeRequest state | CallId:", callId || "all");
+      
+      // Dynamic call type extraction
+      const matchingNotif = notificationsRef.current.find((n) => n.payload?.callId && String(n.payload.callId) === String(callId));
+      const callType = callData.callType || 
+                       callData.call_type || 
+                       callData.type || 
+                       window.G9?.native?.pendingCall?.callType || 
+                       matchingNotif?.type || 
+                       "voice_call";
+
+      console.log("✅ Native call rejected event received -> CallId:", callId || "all", "| Extracted Type:", callType);
 
       // 1. Emit socket rejection event to notify server & caller (stop user ringing)
       if (callId) {
@@ -611,15 +620,22 @@ export function ExpertNotificationsProvider({ children }) {
       }
 
       // 5. Dispatch global clear event for any active overlay modals or banners
-      window.dispatchEvent(new CustomEvent("clear_active_request", { detail: { callId } }));
+      window.dispatchEvent(new CustomEvent("clear_active_request", { detail: { callId, callType } }));
     };
 
     // ⏳ Native Android Timeout (Missed Call) Event Listener
     const handleNativeCallTimeout = (event) => {
       const callData = event?.detail || {};
       const callId = callData.callId || callData.call_id;
-      const callType = callData.callType || callData.call_type || "voice_call";
-      console.log("⏳ Native call timeout event received -> Emitting missed call socket | CallId:", callId || "all");
+      const matchingNotif = notificationsRef.current.find((n) => n.payload?.callId && String(n.payload.callId) === String(callId));
+      const callType = callData.callType || 
+                       callData.call_type || 
+                       callData.type || 
+                       window.G9?.native?.pendingCall?.callType || 
+                       matchingNotif?.type || 
+                       "voice_call";
+
+      console.log("⏳ Native call timeout event received -> Emitting missed call socket | CallId:", callId || "all", "| Extracted Type:", callType);
 
       // 1. Emit socket missed event to notify server & caller (user phone shows Expert Unavailable)
       if (callId) {

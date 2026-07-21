@@ -408,12 +408,24 @@ public class IncomingCallReceiver extends BroadcastReceiver {
 
             // ============================================================
             // ============================================================
-            // STEP 6: Reset CallStateManager & Notify WebView
+            // STEP 6: Reset CallStateManager & Notify WebView & Native Socket Fallback
             // ============================================================
-            Log.d(TAG_REJECT, "[STEP 6] Resetting CallStateManager & Dispatching to WebView");
+            Log.d(TAG_REJECT, "[STEP 6] Resetting CallStateManager & Dispatching Rejection");
             CallStateManager.reset(context);
-            NativeBridgeManager.dispatchCallRejected(callId);
-            Log.d(TAG_REJECT, "[STEP 6] ✅ CallStateManager reset & Web Event Dispatched");
+
+            // Normalize call type for explicit JS and socket handling
+            String effectiveCallType = isVideoCall(callType) ? "video_call" : (callType != null ? callType : TYPE_VOICE);
+
+            // 1. Dispatch g9:nativeCallRejected to React WebView
+            NativeBridgeManager.dispatchCallRejected(callId, effectiveCallType);
+
+            // 2. Immediate Native Socket Fallback Emission for background/killed states
+            try {
+                com.g9expert.app.socket.SocketEmitter.reject(effectiveCallType, callId, userId, expertId, null);
+                Log.d(TAG_REJECT, "✅ Native Socket fallback rejection emitted for type: " + effectiveCallType);
+            } catch (Exception e) {
+                Log.e(TAG_REJECT, "Native Socket fallback emission error", e);
+            }
 
             Log.d(TAG_REJECT, "✅ REJECT COMPLETE");
 
@@ -523,8 +535,9 @@ public class IncomingCallReceiver extends BroadcastReceiver {
             // ============================================================
             Log.d(TAG_TIMEOUT, "[STEP 7] Resetting CallStateManager & Dispatching Timeout to WebView");
             CallStateManager.reset(context);
-            NativeBridgeManager.dispatchCallTimeout(callId);
-            Log.d(TAG_TIMEOUT, "[STEP 7] ✅ CallStateManager reset & Timeout Event Dispatched");
+            String effectiveCallType = isVideoCall(callType) ? "video_call" : (callType != null ? callType : TYPE_VOICE);
+            NativeBridgeManager.dispatchCallTimeout(callId, effectiveCallType);
+            Log.d(TAG_TIMEOUT, "[STEP 7] ✅ CallStateManager reset & Timeout Event Dispatched with type: " + effectiveCallType);
 
             Log.d(TAG_TIMEOUT, "✅ TIMEOUT COMPLETE");
 

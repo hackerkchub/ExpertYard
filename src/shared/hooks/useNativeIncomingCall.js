@@ -66,6 +66,24 @@ export default function useNativeIncomingCall() {
 
             console.log("⚡ Direct-to-Call: Navigating directly to targetUrl:", targetUrl);
 
+            // 1. Clear window.G9.native.pendingCall so cold-start timers don't re-read stale data
+            if (window.G9?.native) {
+                window.G9.native.pendingCall = null;
+            }
+
+            // 2. Notify Native Android handshake listener
+            if (window.NativeBridgeManager?.onReactReadyForCall) {
+                try {
+                    window.NativeBridgeManager.onReactReadyForCall(call.callId);
+                } catch (e) {
+                    console.error("Failed to notify NativeBridgeManager onReactReadyForCall:", e);
+                }
+            }
+
+            // 3. Dispatch event to clear active incoming banners & ringtone in React
+            window.dispatchEvent(new CustomEvent("native_call_accepted", { detail: call }));
+
+            // 4. Perform direct router navigation
             navigate(targetUrl, {
                 replace: true,
                 state: {
@@ -76,38 +94,55 @@ export default function useNativeIncomingCall() {
                     ...call,
                 },
             });
+
+            // 5. Release opening lock
+            setTimeout(() => {
+                openingCall = false;
+            }, 500);
         };
 
         // ============================================================
         // Main handler
         // ============================================================
         const handleIncomingCall = (event) => {
-            if (openingCall) {
-                console.log("⏳ Navigation already in progress");
-                return;
-            }
-
             const call = event?.detail || getCallData();
             if (!call) {
-                console.log("❌ No pending call found");
                 return;
             }
 
             const callId = String(call.callId ?? "").trim();
             if (!callId) {
-                console.log("❌ Invalid callId");
                 return;
             }
 
             call.callId = callId;
 
+            // Check if user is ALREADY on the target call screen
+            const currentPath = window.location.pathname;
+            if (currentPath.includes(callId)) {
+                console.log("📍 Already on target call page:", currentPath);
+                if (window.G9?.native) window.G9.native.pendingCall = null;
+                return;
+            }
+
             if (processedCalls.has(callId)) {
+                // If pendingCall is still present, force navigation execution
+                if (window.G9?.native?.pendingCall) {
+                    console.log("⚡ Found pendingCall despite duplicate lock. Executing navigation for callId:", callId);
+                    openCallPage(call);
+                    return;
+                }
                 console.log("🔄 Duplicate call ignored:", callId);
                 return;
             }
 
             processedCalls.add(callId);
             openingCall = true;
+
+            // Allow callId re-processing after 10 seconds
+            setTimeout(() => {
+                processedCalls.delete(callId);
+            }, 10000);
 
             console.log("========================================");
             console.log("📞 NATIVE INCOMING CALL");
@@ -119,9 +154,6 @@ export default function useNativeIncomingCall() {
             console.log("========================================");
 
             openCallPage(call);
-
-            // Release lock after navigation
-            openingCall = false;
         };
 
         // ============================================================

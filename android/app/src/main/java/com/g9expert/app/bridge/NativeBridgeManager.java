@@ -293,6 +293,128 @@ public final class NativeBridgeManager {
     }
 
     /**
+     * Terminate native session (Foreground service, ringtone, notification, CallStore)
+     */
+    public static synchronized void terminateNativeSession(String callId) {
+        logState("TERMINATE_SESSION", "Terminating native session for callId: " + callId);
+        
+        if (context != null) {
+            try {
+                // 1. Stop ringtone
+                com.g9expert.app.CallRingtoneManager.stop();
+
+                // 2. Cancel notification
+                if (callId != null && !callId.isEmpty()) {
+                    com.g9expert.app.CallNotificationHelper.cancelIncomingCallNotification(context, callId);
+                }
+
+                // 3. Stop foreground service
+                android.content.Intent stopIntent = new android.content.Intent(context, com.g9expert.app.IncomingCallForegroundService.class);
+                stopIntent.setAction(com.g9expert.app.IncomingCallForegroundService.ACTION_STOP);
+                context.startService(stopIntent);
+
+                // 4. Clear store & state
+                com.g9expert.app.call.CallStore.clear(context);
+                com.g9expert.app.CallStateManager.reset(context);
+            } catch (Exception e) {
+                Log.e(TAG, "Error terminating native session", e);
+            }
+        }
+
+        state = DispatchState.IDLE;
+        pendingCallId = null;
+        pendingCallType = null;
+        dispatchId = null;
+
+        // Dispatch call ended event to WebView
+        dispatchCallEnded(callId);
+    }
+
+    /**
+     * Dispatch rejection event to React WebView
+     */
+    public static void dispatchCallRejected(String callId) {
+        if (!isBridgeReady()) {
+            Log.w(TAG, "Bridge not ready for call rejected dispatch");
+            return;
+        }
+
+        handler.post(() -> {
+            try {
+                String safeCallId = callId != null ? callId : "";
+                String script =
+                    "if (!window.G9) window.G9 = {};" +
+                    "if (!window.G9.native) window.G9.native = {};" +
+                    "window.G9.native.pendingCall = null;" +
+                    "window.dispatchEvent(new CustomEvent('g9:nativeCallRejected', { detail: { callId: '" + safeCallId + "' } }));" +
+                    "console.log('[G9] Native call rejected dispatched:', '" + safeCallId + "');";
+
+                evaluateJavascript(script, value -> {
+                    Log.d(TAG, "✅ g9:nativeCallRejected dispatched to WebView for callId: " + safeCallId);
+                });
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to dispatch call rejected event", e);
+            }
+        });
+    }
+
+    /**
+     * Dispatch call timeout event to React WebView
+     */
+    public static void dispatchCallTimeout(String callId) {
+        if (!isBridgeReady()) {
+            Log.w(TAG, "Bridge not ready for call timeout dispatch");
+            return;
+        }
+
+        handler.post(() -> {
+            try {
+                String safeCallId = callId != null ? callId : "";
+                String script =
+                    "if (!window.G9) window.G9 = {};" +
+                    "if (!window.G9.native) window.G9.native = {};" +
+                    "window.G9.native.pendingCall = null;" +
+                    "window.dispatchEvent(new CustomEvent('g9:nativeCallTimeout', { detail: { callId: '" + safeCallId + "' } }));" +
+                    "console.log('[G9] Native call timeout dispatched:', '" + safeCallId + "');";
+
+                evaluateJavascript(script, value -> {
+                    Log.d(TAG, "✅ g9:nativeCallTimeout dispatched to WebView for callId: " + safeCallId);
+                });
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to dispatch call timeout event", e);
+            }
+        });
+    }
+
+    /**
+     * Dispatch call ended event to React WebView
+     */
+    public static void dispatchCallEnded(String callId) {
+        if (!isBridgeReady()) {
+            Log.w(TAG, "Bridge not ready for call ended dispatch");
+            return;
+        }
+
+        handler.post(() -> {
+            try {
+                String safeCallId = callId != null ? callId : "";
+                String script =
+                    "if (!window.G9) window.G9 = {};" +
+                    "if (!window.G9.native) window.G9.native = {};" +
+                    "window.G9.native.pendingCall = null;" +
+                    "window.dispatchEvent(new CustomEvent('g9:nativeCallEnded', { detail: { callId: '" + safeCallId + "' } }));" +
+                    "console.log('[G9] Native call ended dispatched:', '" + safeCallId + "');";
+
+                evaluateJavascript(script, value -> {
+                    Log.d(TAG, "✅ g9:nativeCallEnded dispatched to WebView for callId: " + safeCallId);
+                });
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to dispatch call ended event", e);
+            }
+        });
+    }
+
+    /**
      * Destroy - cleanup references
      * NEVER clear CallStore here
      */

@@ -407,11 +407,13 @@ public class IncomingCallReceiver extends BroadcastReceiver {
             Log.d(TAG_REJECT, "[STEP 5] ✅ CallStore cleared");
 
             // ============================================================
-            // STEP 6: Reset CallStateManager
             // ============================================================
-            Log.d(TAG_REJECT, "[STEP 6] Resetting CallStateManager");
+            // STEP 6: Reset CallStateManager & Notify WebView
+            // ============================================================
+            Log.d(TAG_REJECT, "[STEP 6] Resetting CallStateManager & Dispatching to WebView");
             CallStateManager.reset(context);
-            Log.d(TAG_REJECT, "[STEP 6] ✅ CallStateManager reset");
+            NativeBridgeManager.dispatchCallRejected(callId);
+            Log.d(TAG_REJECT, "[STEP 6] ✅ CallStateManager reset & Web Event Dispatched");
 
             Log.d(TAG_REJECT, "✅ REJECT COMPLETE");
 
@@ -517,11 +519,12 @@ public class IncomingCallReceiver extends BroadcastReceiver {
             Log.d(TAG_TIMEOUT, "[STEP 6] ✅ CallStore cleared");
 
             // ============================================================
-            // STEP 7: Reset CallStateManager
+            // STEP 7: Reset CallStateManager & Notify WebView
             // ============================================================
-            Log.d(TAG_TIMEOUT, "[STEP 7] Resetting CallStateManager");
+            Log.d(TAG_TIMEOUT, "[STEP 7] Resetting CallStateManager & Dispatching Timeout to WebView");
             CallStateManager.reset(context);
-            Log.d(TAG_TIMEOUT, "[STEP 7] ✅ CallStateManager reset");
+            NativeBridgeManager.dispatchCallTimeout(callId);
+            Log.d(TAG_TIMEOUT, "[STEP 7] ✅ CallStateManager reset & Timeout Event Dispatched");
 
             Log.d(TAG_TIMEOUT, "✅ TIMEOUT COMPLETE");
 

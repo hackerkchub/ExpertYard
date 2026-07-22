@@ -26,6 +26,7 @@ import {
   FiCheckCircle,
   FiZap,
   FiBookOpen,
+  FiArrowLeft,
 } from "react-icons/fi";
 import { HiUsers } from "react-icons/hi";
 import { BsChatLeftText, BsLightningCharge, BsTelephone } from "react-icons/bs";
@@ -72,6 +73,7 @@ import {
   MobileSummaryToggle,
   ResponsiveGrid,
   AvatarFallback,
+  StickyHeaderBar,
 } from "./UserChatHistory.styles";
 
 import { useAuth } from "../../../../shared/context/UserAuthContext";
@@ -862,16 +864,14 @@ export const UserChatHistory = () => {
         <MobileDetailPage>
           <MobileDetailHeader>
             <MobileBackButton type="button" onClick={() => navigate("/user/chat-history")}>
-              <FiChevronRight />
+              <FiArrowLeft size={20} />
             </MobileBackButton>
-            <div className="detail-title-block">
-              <h1>Chat History</h1>
-              <MobileDetailMeta>
-                <span>{selectedSession?.expert_name || "Expert"}</span>
-                {selectedSession?.end_time && <span>{formatDate(selectedSession.end_time)}</span>}
-                {selectedSession?.duration_minutes && (
-                  <span>{formatTime(selectedSession.duration_minutes)} duration</span>
-                )}
+            <div className="detail-title-block" style={{ flex: 1 }}>
+              <h1 style={{ fontSize: "1rem", fontWeight: 600, margin: 0, color: "#111827" }}>
+                {selectedSession?.expert_name || "Expert"}
+              </h1>
+              <MobileDetailMeta style={{ fontSize: "0.76rem", color: "#64748b" }}>
+                <span>{selectedSession?.end_time ? formatDate(selectedSession.end_time) : "Past Session"}</span>
               </MobileDetailMeta>
             </div>
           </MobileDetailHeader>
@@ -947,6 +947,12 @@ export const UserChatHistory = () => {
 
   return (
     <PremiumContainer>
+      <StickyHeaderBar>
+        <button className="header-back-btn" onClick={() => navigate("/user")} title="Back">
+          <FiArrowLeft size={22} />
+        </button>
+        <h2 className="header-page-title">Chat History</h2>
+      </StickyHeaderBar>
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }

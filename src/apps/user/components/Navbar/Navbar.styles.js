@@ -1220,6 +1220,17 @@ export const HeaderProfileButton = styled.button`
 
     svg {
       width: 17px;
+      height: 18px;
+    }
+  }
+
+  @media (max-width: 420px) {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+
+    svg {
+      width: 17px;
       height: 17px;
     }
   }
@@ -1267,42 +1278,24 @@ export const MobileMenu = styled.div`
   position: fixed;
   top: 0;
   left: 0;
-  width: min(360px, calc(100vw - 30px));
+  width: min(320px, 84vw);
   height: 100vh;
-  display: grid;
-  align-content: start;
-  gap: 9px;
-  padding: 16px;
-  border: 1px solid rgba(0, 0, 128, 0.12);
-  border-radius: 0 24px 24px 0;
-  background:
-    radial-gradient(circle at top left, rgba(255, 193, 7, 0.14), transparent 34%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 249, 255, 0.98)),
-    #ffffff;
-  box-shadow: 0 28px 58px rgba(0, 0, 128, 0.18);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  display: flex;
+  flex-direction: column;
+  padding: max(16px, env(safe-area-inset-top, 0px)) 0 max(20px, calc(16px + env(safe-area-inset-bottom, 0px)));
+  background: #ffffff;
+  border-radius: 0 16px 16px 0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
   z-index: 10001;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
 
   @media (max-width: 768px) {
-    width: min(86vw, 340px);
-    max-width: calc(100vw - 20px);
+    width: min(310px, 84vw);
     height: 100dvh;
     max-height: 100dvh;
-    padding: 14px 14px calc(18px + env(safe-area-inset-bottom, 0px));
-    border-radius: 0 22px 22px 0;
     overscroll-behavior: contain;
-  }
-
-  @media (max-width: 480px) {
-    width: min(88vw, 318px);
-    border-radius: 0 20px 20px 0;
-  }
-
-  @media (max-width: 340px) {
-    width: calc(100vw - 16px);
-    padding: 12px 12px calc(16px + env(safe-area-inset-bottom, 0px));
   }
 `;
 
@@ -1310,7 +1303,7 @@ export const MobileMenuOverlay = styled.div`
   position: fixed;
   inset: 0;
   z-index: 10000;
-  background: rgba(15, 23, 42, 0.28);
+  background: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(2px);
 `;
 
@@ -1319,49 +1312,50 @@ export const MobileMenuHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 50px;
-  margin-bottom: 8px;
+  min-height: 56px;
+  padding: 12px 16px 16px 20px;
+  border-bottom: 1px solid #e9edef;
+  flex-shrink: 0;
 
   button {
-    width: 38px;
-    height: 38px;
-    border: 1px solid rgba(0, 0, 128, 0.12);
-    border-radius: 13px;
-    background: rgba(255, 255, 255, 0.9);
-    color: ${NAVY};
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #54656f;
     cursor: pointer;
-  }
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 
-  @media (max-width: 768px) {
-    button {
-      min-width: 44px;
-      width: 44px;
-      height: 44px;
+    &:hover {
+      background: #f0f2f5;
     }
-  }
-
-  @media (max-width: 420px) {
-    gap: 8px;
   }
 `;
 
 export const MobileMenuSection = styled.div`
-  display: grid;
-  gap: 8px;
-  padding: 10px 0;
-  border-top: 1px solid rgba(0, 0, 128, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e9edef;
 `;
 
 export const MobileMenuTitle = styled.div`
-  color: #667085;
-  font-size: 0.74rem;
-  font-weight: 900;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+  padding: 12px 20px 6px;
 `;
 
 export const MobileMenuFooter = styled(MobileMenuSection)`
   margin-top: auto;
+  border-bottom: none;
   padding-bottom: 0;
 `;
 
@@ -1369,53 +1363,40 @@ export const MenuWalletValue = styled.span`
   margin-left: auto;
   color: ${NAVY};
   font-size: 0.82rem;
-  font-weight: 900;
+  font-weight: 700;
 `;
 
 export const MobileItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 11px;
-  min-height: 46px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(248, 250, 255, 0.9);
-  color: #1f2937;
-  font-size: 14px;
-  font-weight: 760;
+  gap: 16px;
+  min-height: 48px;
+  padding: 10px 16px 10px 20px;
+  border-radius: 0 24px 24px 0;
+  margin-right: 12px;
+  color: #475569;
+  font-size: 0.9rem;
+  font-weight: 500;
   cursor: pointer;
-  border: 1px solid rgba(0, 0, 128, 0.08);
-  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  transition: all 0.15s ease-in-out;
   -webkit-tap-highlight-color: transparent;
 
   svg {
     flex: 0 0 auto;
-    font-size: 18px;
-    color: ${NAVY};
+    font-size: 20px;
+    color: inherit;
   }
 
   &:hover,
   &:active {
-    background: rgba(0, 0, 128, 0.07);
-    border-color: rgba(0, 0, 128, 0.16);
+    background: #eef2ff;
     color: ${NAVY};
-    transform: translateX(2px);
+    font-weight: 600;
   }
 
   @media (min-width: 769px) {
     &.mobile-only-menu-item {
       display: none;
     }
-  }
-
-  @media (max-width: 768px) {
-    min-height: 48px;
-  }
-
-  @media (max-width: 360px) {
-    gap: 9px;
-    min-height: 46px;
-    padding: 11px 12px;
-    font-size: 13px;
   }
 `;

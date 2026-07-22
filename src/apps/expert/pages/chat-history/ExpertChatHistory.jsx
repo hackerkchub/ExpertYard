@@ -21,6 +21,7 @@ import {
   FiCheckCircle,
   FiZap,
   FiBookOpen,
+  FiArrowLeft,
 } from "react-icons/fi";
 import { HiUsers } from "react-icons/hi";
 import { BsChatLeftText, BsTelephone } from "react-icons/bs";
@@ -59,6 +60,7 @@ import {
   ResponsiveGrid,
   StatusBadge,
   PricingBadge,
+  StickyHeaderBar,
 } from "./ExpertChatHistory.styles";
 
 import { useExpert } from "../../../../shared/context/ExpertContext";
@@ -617,6 +619,12 @@ const ExpertChatHistory = () => {
 
   return (
     <PremiumContainer>
+      <StickyHeaderBar>
+        <button className="header-back-btn" onClick={() => navigate("/expert/home")} title="Back">
+          <FiArrowLeft size={22} />
+        </button>
+        <h2 className="header-page-title">Chat History</h2>
+      </StickyHeaderBar>
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }

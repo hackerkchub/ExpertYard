@@ -1051,12 +1051,6 @@ export default function ExpertInquiriesPage() {
                     <CardRow>
                       <span>Name:</span> <strong>{selectedInquiry.user_name_snapshot}</strong>
                     </CardRow>
-                    <CardRow>
-                      <span>Phone:</span> <strong>{selectedInquiry.user_mobile_snapshot || "Masked"}</strong>
-                    </CardRow>
-                    <CardRow>
-                      <span>Email:</span> <strong>{selectedInquiry.user_email_snapshot || "Masked"}</strong>
-                    </CardRow>
                   </ModernCard>
 
                   <ModernCard>
@@ -1150,6 +1144,8 @@ export default function ExpertInquiriesPage() {
               />
               <SendTextButton
                 type="submit"
+                onMouseDown={(e) => e.preventDefault()}
+                onTouchStart={(e) => e.preventDefault()}
                 disabled={selectedInquiry.status === "closed" || selectedInquiry.status === "rejected" || !replyText.trim() || loading}
               >
                 <FiSend size={15} style={{ marginRight: 6 }} />

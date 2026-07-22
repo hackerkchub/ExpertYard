@@ -32,17 +32,33 @@ const MobileCard = styled.button`
   align-items: flex-start;
   justify-content: space-between;
   padding: 14px 16px;
-  background: ${props => props.$active ? 'linear-gradient(135deg, #ffffff 0%, #f4f6ff 100%)' : '#ffffff'};
-  border: 1.5px solid ${props => props.$active ? '#000080' : '#e2e8f0'};
+  background: ${props => props.$highlighted ? 'linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%)' : props.$active ? 'linear-gradient(135deg, #ffffff 0%, #f4f6ff 100%)' : '#ffffff'};
+  border: ${props => props.$highlighted ? '2.5px solid #10b981' : props.$active ? '1.5px solid #000080' : '1.5px solid #e2e8f0'};
   border-radius: 16px;
   cursor: pointer;
   width: 100%;
   box-sizing: border-box;
   text-align: left;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: ${props => props.$active ? '0 8px 20px rgba(0, 0, 128, 0.08)' : '0 2px 6px rgba(0, 0, 0, 0.02)'};
+  box-shadow: ${props => props.$highlighted ? '0 0 14px rgba(16, 185, 129, 0.45)' : props.$active ? '0 8px 20px rgba(0, 0, 128, 0.08)' : '0 2px 6px rgba(0, 0, 0, 0.02)'};
+  animation: ${props => props.$highlighted ? 'subtleGreenPulse 2s infinite ease-in-out' : 'none'};
   position: relative;
   -webkit-tap-highlight-color: transparent;
+
+  @keyframes subtleGreenPulse {
+    0% {
+      box-shadow: 0 0 4px rgba(16, 185, 129, 0.4);
+      border-color: #10b981;
+    }
+    50% {
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.75);
+      border-color: #059669;
+    }
+    100% {
+      box-shadow: 0 0 4px rgba(16, 185, 129, 0.4);
+      border-color: #10b981;
+    }
+  }
   
   &:active {
     transform: scale(0.97);
@@ -145,6 +161,8 @@ export default function QueueCard() {
     acceptNotification,
     rejectNotification,
     removeById,
+    highlightedSections,
+    clearHighlight,
   } = useExpertNotifications();
 
   const getTimeAgo = (timestamp) => {
@@ -264,33 +282,50 @@ export default function QueueCard() {
   return (
     <QueueCardWrap>
       <QueueTabs>
-        {queueTabs.map((tab) => (
-          <button
-            key={tab.key}
-            className={activeTab === tab.key ? "active" : ""}
-            onClick={() => setActiveTab(tab.key)}
-            type="button"
-          >
-            {tab.label} ({tab.count})
-            {tab.hasAlert && <RedDot />}
-          </button>
-        ))}
+        {queueTabs.map((tab) => {
+          const isHighlighted = Boolean(highlightedSections?.[tab.key]);
+          return (
+            <button
+              key={tab.key}
+              className={[
+                activeTab === tab.key ? "active" : "",
+                isHighlighted ? "highlighted" : "",
+              ].filter(Boolean).join(" ")}
+              onClick={() => {
+                setActiveTab(tab.key);
+                if (clearHighlight) clearHighlight(tab.key);
+              }}
+              type="button"
+            >
+              {tab.label} ({tab.count})
+              {tab.hasAlert && <RedDot />}
+            </button>
+          );
+        })}
 
-        {linkTabs.map((tab) => (
-          <button
-            key={tab.path}
-            className="link-tab"
-            onClick={() => navigate(tab.path)}
-            type="button"
-          >
-            {tab.label}
-          </button>
-        ))}
+        {linkTabs.map((tab) => {
+          const sectionKey = tab.label === "Leads" ? "leads" : tab.label === "Enquiry" ? "inquiries" : "mybookings";
+          const isHighlighted = Boolean(highlightedSections?.[sectionKey]);
+          return (
+            <button
+              key={tab.path}
+              className={["link-tab", isHighlighted ? "highlighted" : ""].filter(Boolean).join(" ")}
+              onClick={() => {
+                if (clearHighlight) clearHighlight(sectionKey);
+                navigate(tab.path);
+              }}
+              type="button"
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </QueueTabs>
 
       <MobileGrid>
         {queueTabs.map((tab) => {
           const isActive = activeTab === tab.key;
+          const isHighlighted = Boolean(highlightedSections?.[tab.key]);
           const icon = tab.key === "call" ? <Phone size={18} /> : tab.key === "chat" ? <MessageSquare size={18} /> : <Video size={18} />;
           const iconBg = tab.key === "call" ? "rgba(59, 130, 246, 0.1)" : tab.key === "chat" ? "rgba(249, 115, 22, 0.1)" : "rgba(168, 85, 247, 0.1)";
           const iconColor = tab.key === "call" ? "#3b82f6" : tab.key === "chat" ? "#f97316" : "#a855f7";
@@ -299,7 +334,11 @@ export default function QueueCard() {
             <MobileCard
               key={tab.key}
               $active={isActive}
-              onClick={() => setActiveTab(tab.key)}
+              $highlighted={isHighlighted}
+              onClick={() => {
+                setActiveTab(tab.key);
+                if (clearHighlight) clearHighlight(tab.key);
+              }}
               type="button"
             >
               <CardTopRow>
@@ -322,6 +361,8 @@ export default function QueueCard() {
         })}
 
         {linkTabs.map((tab) => {
+          const sectionKey = tab.label === "Leads" ? "leads" : tab.label === "Enquiry" ? "inquiries" : "mybookings";
+          const isHighlighted = Boolean(highlightedSections?.[sectionKey]);
           const icon = tab.label === "Leads" ? <Users size={18} /> : tab.label === "Enquiry" ? <Mail size={18} /> : <Calendar size={18} />;
           const iconBg = tab.label === "Leads" ? "rgba(16, 185, 129, 0.1)" : tab.label === "Enquiry" ? "rgba(20, 184, 166, 0.1)" : "rgba(236, 72, 153, 0.1)";
           const iconColor = tab.label === "Leads" ? "#10b981" : tab.label === "Enquiry" ? "#14b8a6" : "#ec4899";
@@ -330,7 +371,11 @@ export default function QueueCard() {
             <MobileCard
               key={tab.path}
               $active={false}
-              onClick={() => navigate(tab.path)}
+              $highlighted={isHighlighted}
+              onClick={() => {
+                if (clearHighlight) clearHighlight(sectionKey);
+                navigate(tab.path);
+              }}
               type="button"
             >
               <CardTopRow>

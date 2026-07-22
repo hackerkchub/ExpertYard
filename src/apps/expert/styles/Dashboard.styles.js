@@ -161,6 +161,30 @@ export const QueueTabs = styled.div`
       }
     }
 
+    &.highlighted {
+      border: 2px solid #10b981 !important;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+      animation: subtleGreenPulse 2s infinite ease-in-out;
+      background: rgba(16, 185, 129, 0.08) !important;
+      color: #047857 !important;
+      font-weight: 700;
+    }
+
+    @keyframes subtleGreenPulse {
+      0% {
+        box-shadow: 0 0 4px rgba(16, 185, 129, 0.4);
+        border-color: #10b981;
+      }
+      50% {
+        box-shadow: 0 0 14px rgba(16, 185, 129, 0.75);
+        border-color: #059669;
+      }
+      100% {
+        box-shadow: 0 0 4px rgba(16, 185, 129, 0.4);
+        border-color: #10b981;
+      }
+    }
+
     &.link-tab {
       color: #334155;
     }

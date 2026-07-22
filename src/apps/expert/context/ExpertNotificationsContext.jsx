@@ -34,6 +34,21 @@ const CALL_FINAL_STATES = new Set(FINAL_STATES);
 const CALL_TYPES = new Set(["voice_call", "incoming_call", "video_call", "video-call"]);
 const CHAT_TYPES = new Set(["chat_request", "chat_message", "chat_accepted", "chat_rejected", "chat_cancelled", "chat_timeout"]);
 
+const mapNotificationTypeToSection = (type = "", raw = {}) => {
+  const t = String(type || "").toLowerCase();
+  const meta = parseMeta(raw.meta || raw.payload || raw.data || {});
+  const targetUrl = String(raw.targetUrl || raw.target_url || meta.target_url || meta.url || "").toLowerCase();
+
+  if (t === "voice_call" || t === "incoming_call" || t.includes("voice")) return "call";
+  if (t === "video_call" || t === "video-call" || t.includes("video")) return "video";
+  if (t === "chat_request" || t === "chat_message" || t.includes("chat")) return "chat";
+  if (t === "lead" || t.includes("lead") || targetUrl.includes("/leads")) return "leads";
+  if (t === "enquiry" || t === "inquiry" || t.includes("inquir") || targetUrl.includes("/inquiries")) return "inquiries";
+  if (t === "booking" || t.includes("booking") || targetUrl.includes("/mybookings")) return "mybookings";
+
+  return null;
+};
+
 const parseMeta = (meta) => {
   if (!meta) return {};
   if (typeof meta === "string") {
@@ -225,6 +240,22 @@ export function ExpertNotificationsProvider({ children }) {
   const lifecycleChannelRef = useRef(null);
   const [notifications, setNotifications] = useState([]);
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [highlightedSections, setHighlightedSections] = useState({
+    call: false,
+    chat: false,
+    video: false,
+    leads: false,
+    inquiries: false,
+    mybookings: false,
+  });
+
+  const clearHighlight = useCallback((sectionKey) => {
+    if (!sectionKey) return;
+    setHighlightedSections((prev) => {
+      if (!prev[sectionKey]) return prev;
+      return { ...prev, [sectionKey]: false };
+    });
+  }, []);
 
   useEffect(() => {
     window.__expertNotificationProviderActive = true;
@@ -312,6 +343,12 @@ export function ExpertNotificationsProvider({ children }) {
 
   const addNotification = useCallback((notification, { playSound = true, showSystem = false } = {}) => {
     if (!notification?.id) return;
+
+    // 🟢 Highlight section if a new request arrives in real-time
+    const sectionKey = mapNotificationTypeToSection(notification.type, notification);
+    if (sectionKey) {
+      setHighlightedSections((prev) => ({ ...prev, [sectionKey]: true }));
+    }
 
     const callId = getNotificationCallId(notification);
     if (CALL_TYPES.has(notification.type) && callId) {
@@ -792,6 +829,9 @@ export function ExpertNotificationsProvider({ children }) {
   const acceptNotification = useCallback((notification) => {
     if (!notification) return;
 
+    const sectionKey = mapNotificationTypeToSection(notification.type, notification);
+    if (sectionKey) clearHighlight(sectionKey);
+
     if (notification.type === "voice_call") {
       const callId = notification.payload?.callId || getNotificationCallId(notification);
       if (!callId) return;
@@ -827,7 +867,7 @@ export function ExpertNotificationsProvider({ children }) {
       socket.emit("accept_chat", { request_id: notification.payload?.request_id });
       markNotificationAsRead(notification.id);
     }
-  }, [markNotificationAsRead, markCallFinal, navigate, updateLocalStatus]);
+  }, [markNotificationAsRead, markCallFinal, navigate, updateLocalStatus, clearHighlight]);
 
   useEffect(() => {
     const handleNativeChatAccepted = (event) => {
@@ -866,6 +906,9 @@ export function ExpertNotificationsProvider({ children }) {
   const rejectNotification = useCallback((notification) => {
     if (!notification) return;
 
+    const sectionKey = mapNotificationTypeToSection(notification.type, notification);
+    if (sectionKey) clearHighlight(sectionKey);
+
     if (notification.type === "voice_call") {
       const callId = notification.payload?.callId || getNotificationCallId(notification);
       if (callId && finalCallStatesRef.current.has(String(callId))) return;
@@ -903,16 +946,28 @@ export function ExpertNotificationsProvider({ children }) {
       socket.emit("reject_chat", { request_id: notification.payload?.request_id });
       updateLocalStatus((n) => n.id === notification.id, "rejected");
     }
-  }, [markCallFinal, updateLocalStatus]);
+  }, [markCallFinal, updateLocalStatus, clearHighlight]);
 
   const removeById = useCallback(async (notification) => {
     if (!notification?.id) return;
+    const sectionKey = mapNotificationTypeToSection(notification.type, notification);
+    if (sectionKey) clearHighlight(sectionKey);
     setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
     soundManager.stopAll();
     if (expertId && notification.dbId) {
       await deleteNotification(notification.dbId, expertId, "expert").catch(() => {});
     }
-  }, [expertId]);
+  }, [expertId, clearHighlight]);
+
+  useEffect(() => {
+    const path = window.location.pathname.toLowerCase();
+    if (path.includes("/expert/leads")) clearHighlight("leads");
+    else if (path.includes("/expert/inquiries")) clearHighlight("inquiries");
+    else if (path.includes("/expert/mybookings")) clearHighlight("mybookings");
+    else if (path.includes("/expert/chat")) clearHighlight("chat");
+    else if (path.includes("/expert/voice-call")) clearHighlight("call");
+    else if (path.includes("/expert/video-call")) clearHighlight("video");
+  }, [clearHighlight, window.location.pathname]);
 
   const markAllAsRead = useCallback(async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, unread: false, is_read: true })));
@@ -944,6 +999,8 @@ export function ExpertNotificationsProvider({ children }) {
     unreadCount,
     chatUnreadCount,
     callUnreadCount,
+    highlightedSections,
+    clearHighlight,
     acceptNotification,
     rejectNotification,
     removeById,
@@ -958,6 +1015,8 @@ export function ExpertNotificationsProvider({ children }) {
     unreadCount,
     chatUnreadCount,
     callUnreadCount,
+    highlightedSections,
+    clearHighlight,
     acceptNotification,
     rejectNotification,
     removeById,

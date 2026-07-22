@@ -35,9 +35,17 @@ public class IncomingCallActivity extends AppCompatActivity {
     public static void finishActiveInstance() {
         if (activeInstance != null) {
             try {
-                Log.d("IncomingCall", "finishActiveInstance() called - finishing current IncomingCallActivity");
-                activeInstance.finish();
-                activeInstance.overridePendingTransition(0, 0);
+                Log.d("IncomingCall", "[INCOMING_ACTIVITY_FINISH_CALLED] finishing active IncomingCallActivity instance");
+                final IncomingCallActivity activity = activeInstance;
+                activity.runOnUiThread(() -> {
+                    try {
+                        android.widget.Toast.makeText(activity.getApplicationContext(), "Caller cancelled the call.", android.widget.Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        Log.e("IncomingCall", "Error showing toast on cancel", e);
+                    }
+                    activity.finish();
+                    activity.overridePendingTransition(0, 0);
+                });
             } catch (Exception e) {
                 Log.e("IncomingCall", "Error finishing active instance", e);
             }
@@ -462,9 +470,7 @@ public class IncomingCallActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        // ✅ Change 8: Enhanced onDestroy logging
-        Log.d(TAG, "IncomingCallActivity Destroyed");
-        Log.d(TAG, "CallId : " + callId);
+        Log.d(TAG, "[INCOMING_ACTIVITY_DESTROYED] IncomingCallActivity Destroyed | CallId : " + callId);
 
         if (avatarText != null) {
             avatarText.clearAnimation();

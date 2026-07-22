@@ -100,7 +100,7 @@ export default function VideoCall() {
       if (pageActiveRef.current || permissionRequestInProgressRef.current) return;
       const activeCallId = callIdRef.current;
       if (activeCallId && !endedRef.current && !callFailureEmittedRef.current) {
-        console.log("[VC_CALL_CANCEL_EMIT]", { callId: activeCallId, role: "user" });
+        console.log("[USER_CANCEL_SENT]", { callId: activeCallId, role: "user", event: EVENTS.CANCEL });
         socket?.emit(EVENTS.CANCEL, { callId: activeCallId });
       }
       cleanup({ markEnded: true });

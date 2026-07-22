@@ -505,32 +505,43 @@ export function ExpertNotificationsProvider({ children }) {
     const handleIncomingChatEvent = (event) => handleIncomingChat(event.detail || {});
 
     const handleCallCancelled = (data = {}) => {
-      const callId = data.callId || data.call_id;
-      console.log("📴 Call cancelled received in React:", callId);
+      const callId = data.callId || data.call_id || data.requestId || data.request_id || data.id;
+      console.log("[REACT_SOCKET_RECEIVED] Voice call cancelled received in React:", data);
       updateLocalStatus((n) => String(n.related_id) === String(callId) && n.type === "voice_call", "cancelled");
       soundManager.stopAll();
       if (window.NativeBridgeManager?.terminateNativeSession) {
-        window.NativeBridgeManager.terminateNativeSession(String(callId));
+        console.log("[NATIVE_BRIDGE_RECEIVED] Invoking terminateNativeSession for voice callId:", callId);
+        window.NativeBridgeManager.terminateNativeSession(String(callId || ""));
       }
     };
 
     const handleVideoCallCancelled = (data = {}) => {
-      const callId = data.callId || data.call_id;
-      console.log("📴 Video call cancelled received in React:", callId);
+      const callId = data.callId || data.call_id || data.requestId || data.request_id || data.id;
+      console.log("[REACT_SOCKET_RECEIVED] Video call cancelled received in React:", data);
       updateLocalStatus((n) => String(n.related_id) === String(callId) && (n.type === "video_call" || n.type === "video-call"), "cancelled");
       soundManager.stopAll();
       if (window.NativeBridgeManager?.terminateNativeSession) {
-        window.NativeBridgeManager.terminateNativeSession(String(callId));
+        console.log("[NATIVE_BRIDGE_RECEIVED] Invoking terminateNativeSession for video callId:", callId);
+        window.NativeBridgeManager.terminateNativeSession(String(callId || ""));
+      }
+    };
+
+    const handleVideoCallEnded = (data = {}) => {
+      console.log("[REACT_SOCKET_RECEIVED] Video call ended/cancelled event received in React:", data);
+      const reason = data.reason || "";
+      if (reason.includes("cancel") || reason.includes("user") || !reason) {
+        handleVideoCallCancelled(data);
       }
     };
 
     const handleChatCancelled = (data = {}) => {
-      const requestId = data.request_id || data.requestId;
-      console.log("💬 Chat request cancelled received in React:", requestId);
+      const requestId = data.request_id || data.requestId || data.callId || data.call_id;
+      console.log("[REACT_SOCKET_RECEIVED] Chat request cancelled received in React:", data);
       updateLocalStatus((n) => String(n.related_id) === String(requestId) && n.type === "chat_request", "cancelled");
       soundManager.stopAll();
       if (window.NativeBridgeManager?.terminateNativeSession) {
-        window.NativeBridgeManager.terminateNativeSession(String(requestId));
+        console.log("[NATIVE_BRIDGE_RECEIVED] Invoking terminateNativeSession for chat requestId:", requestId);
+        window.NativeBridgeManager.terminateNativeSession(String(requestId || ""));
       }
     };
 
@@ -539,6 +550,8 @@ export function ExpertNotificationsProvider({ children }) {
     socket.on("incoming_chat_request", handleIncomingChat);
     socket.on("call:cancelled", handleCallCancelled);
     socket.on("video-call:cancelled", handleVideoCallCancelled);
+    socket.on("video-call:cancel", handleVideoCallCancelled);
+    socket.on("video-call:ended", handleVideoCallEnded);
     socket.on("chat_cancelled", handleChatCancelled);
     window.addEventListener("incoming_chat_request", handleIncomingChatEvent);
 
@@ -548,6 +561,8 @@ export function ExpertNotificationsProvider({ children }) {
       socket.off("incoming_chat_request", handleIncomingChat);
       socket.off("call:cancelled", handleCallCancelled);
       socket.off("video-call:cancelled", handleVideoCallCancelled);
+      socket.off("video-call:cancel", handleVideoCallCancelled);
+      socket.off("video-call:ended", handleVideoCallEnded);
       socket.off("chat_cancelled", handleChatCancelled);
       window.removeEventListener("incoming_chat_request", handleIncomingChatEvent);
     };

@@ -91,19 +91,39 @@ public class MyFirebaseMessagingService extends MessagingService {
                 break;
 
             case "call_cancelled":
-                Log.d(TAG, "❌ Call Cancelled: " + message.getData());
-                CallNotificationHelper.cancelIncomingCallNotification(this, null);
+            case "video_call_cancelled":
+            case "chat_cancelled":
+            case "chat_request_cancelled":
+            case "session_terminated":
+                Log.d(TAG, "❌ Termination signal received: " + type + " - Data: " + message.getData());
+                
+                // 1. Stop ringtone
+                CallRingtoneManager.stop();
 
-                // Stop the foreground service
-                Intent stopIntent = new Intent(this, IncomingCallForegroundService.class);
-                stopIntent.setAction(IncomingCallForegroundService.ACTION_STOP);
-                startService(stopIntent);
-
-                // Update state if needed with callId awareness
+                // 2. Dismiss notification
                 String cancelCallId = message.getData().get("callId");
-                if (CallStateManager.isIncomingVisible(this, cancelCallId)) {
-                    CallStateManager.setIncomingVisible(this, false, null);
+                if (cancelCallId == null) {
+                    cancelCallId = message.getData().get("call_id");
                 }
+                if (cancelCallId == null) {
+                    cancelCallId = message.getData().get("request_id");
+                }
+                CallNotificationHelper.cancelIncomingCallNotification(this, cancelCallId);
+
+                // 3. Stop the foreground service
+                try {
+                    Intent stopIntent = new Intent(this, IncomingCallForegroundService.class);
+                    stopIntent.setAction(IncomingCallForegroundService.ACTION_STOP);
+                    startService(stopIntent);
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to stop foreground service", e);
+                }
+
+                // 4. Finish the activity screen instantly
+                IncomingCallActivity.finishActiveInstance();
+
+                // 5. Update state
+                CallStateManager.setIncomingVisible(this, false, null);
                 break;
 
             case "call_missed":

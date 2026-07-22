@@ -6,6 +6,8 @@ import { useExpert } from "../../../../shared/context/ExpertContext";
 import { useSocket } from "../../../../shared/hooks/useSocket";
 import { ensureMediaPermissions } from "../../../../shared/webrtc/mediaPermissions";
 
+import { useCallHandler } from "../../../../shared/hooks/useCallHandler";
+
 // Import native call helpers
 import {
     releaseNativeCallLock,
@@ -843,26 +845,38 @@ export default function ExpertVoiceCall() {
         navigate("/expert/home", { replace: true });
     }, [socket, navigate, cleanupMedia]);
 
-    // END CALL
+    const { endCall: executeEndCall } = useCallHandler();
+
+    // END CALL (Expert Initiated)
     const endCall = useCallback(() => {
         if (isCleaningUpRef.current) return;
         isCleaningUpRef.current = true;
 
-        console.log("🔚 Expert: Ending call", callIdRef.current);
-        socket.emit(CALL_EVENTS.END, { callId: callIdRef.current });
+        console.log("🔚 Expert: Ending call via useCallHandler", callIdRef.current);
+        
+        cleanupMedia(true);
+        nativeStartedRef.current = false;
 
-        setTimeout(() => {
-            cleanupMedia(true);
-            nativeStartedRef.current = false;
-            
-            removeProcessedNativeCall(String(callIdRef.current));
-            releaseNativeCallLock();
-            clearNativeCallData();
-            
-            navigate("/expert/home", { replace: true });
-            isCleaningUpRef.current = false;
-        }, 200);
-    }, [socket, navigate, cleanupMedia]);
+        executeEndCall(callIdRef.current, "expert", {
+            type: "voice_call",
+            fallbackUrl: "/expert/home",
+        });
+    }, [executeEndCall, cleanupMedia]);
+
+    // Unmount Cleanup: Ensures peer is closed, media released, and native layer reset on unexpected unmount
+    useEffect(() => {
+        return () => {
+            if (callIdRef.current) {
+                console.log("🧹 ExpertVoiceCall unmounting: Cleaning up WebRTC & Native locks");
+                cleanupMedia(true);
+                closePeer();
+                soundManager.stopAll();
+                removeProcessedNativeCall(String(callIdRef.current));
+                releaseNativeCallLock();
+                clearNativeCallData();
+            }
+        };
+    }, [cleanupMedia]);
 
     // MUTE TOGGLE
     const toggleMuteClick = useCallback(() => {

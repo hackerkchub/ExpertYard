@@ -77,11 +77,20 @@ public final class SocketEmitter {
     // ============================================================
     
     private static boolean isVideo(String callType) {
-        return TYPE_VIDEO.equalsIgnoreCase(callType);
+        if (callType == null) return false;
+        String normalized = callType.trim().toLowerCase();
+        return normalized.contains("video");
+    }
+
+    private static boolean isChat(String callType) {
+        if (callType == null) return false;
+        String normalized = callType.trim().toLowerCase();
+        return normalized.contains("chat");
     }
 
     private static boolean isVoice(String callType) {
-        return TYPE_VOICE.equalsIgnoreCase(callType);
+        if (callType == null) return true;
+        return !isVideo(callType) && !isChat(callType);
     }
 
     private static String getCurrentTime() {
@@ -338,19 +347,28 @@ public final class SocketEmitter {
         try {
             JSONObject object = new JSONObject();
             object.put("callId", callId);
+            object.put("requestId", callId);
+            object.put("request_id", callId);
             object.put("callType", callType != null ? callType : TYPE_VOICE);
+            object.put("reason", "expert_declined");
 
-            if (isVoice(callType)) {
-                if (userId != null) object.put("userId", userId);
-                if (expertId != null) object.put("expertId", expertId);
-                Log.d(TAG, "Voice call reject - CallId: " + callId);
-            } else {
+            if (userId != null) object.put("userId", userId);
+            if (expertId != null) object.put("expertId", expertId);
+
+            if (isChat(callType)) {
+                Log.d(TAG, "Chat request reject - RequestId: " + callId);
+                emit("reject_chat", object, callback);
+                emit("reject_chat_request", object, null);
+            } else if (isVideo(callType)) {
                 Log.d(TAG, "Video call decline - CallId: " + callId);
+                emit("video-call:decline", object, callback);
+                emit("video-call:reject", object, null);
+                emit("reject_video_call", object, null);
+            } else {
+                Log.d(TAG, "Voice call reject - CallId: " + callId);
+                emit("call:reject", object, callback);
+                emit("reject_call", object, null);
             }
-
-            String event = isVideo(callType) ? "video-call:decline" : "call:reject";
-            
-            emit(event, object, callback);
 
         } catch (Exception e) {
             Log.e(TAG, "Reject failed", e);

@@ -205,6 +205,9 @@ public class MainActivity extends BridgeActivity {
                 "    }," +
                 "    openAppSettings: function() {" +
                 "      if (window.NativeBridgeManager_Native) { window.NativeBridgeManager_Native.openAppSettings(); }" +
+                "    }," +
+                "    terminateNativeSession: function(callId) {" +
+                "      if (window.NativeBridgeManager_Native) { window.NativeBridgeManager_Native.terminateNativeSession(callId); }" +
                 "    }" +
                 "  };" +
                 "}" +
@@ -329,6 +332,15 @@ public class MainActivity extends BridgeActivity {
             } catch (Exception e) {
                 Log.e(TAG, "❌ Failed to open app settings from bridge", e);
             }
+        }
+
+        /**
+         * Terminate the native call session programmatically from React
+         */
+        @JavascriptInterface
+        public void terminateNativeSession(String callId) {
+            Log.d(TAG, "📞 terminateNativeSession called from JS bridge for callId: " + callId);
+            NativeBridgeManager.terminateNativeSession(callId);
         }
     }
 

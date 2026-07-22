@@ -64,15 +64,19 @@ export default function VideoCall() {
   const [connectionState, setConnectionState] = useState("connecting");
   const [billing, setBilling] = useState({});
   const [retryNonce, setRetryNonce] = useState(0);
+  const isConnectedRef = useRef(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      if (startedRef.current && !endedRef.current) setSeconds((value) => value + 1);
+      if (startedRef.current && !endedRef.current && isConnectedRef.current) {
+        setSeconds((value) => value + 1);
+      }
     }, 1000);
     return () => clearInterval(timer);
   }, []);
 
   const cleanup = useCallback(async ({ markEnded = true } = {}) => {
+    isConnectedRef.current = false;
     console.log("[VC_MEDIA_CLEANUP_START]", {
       callId: Number(callIdRef.current || 0),
       role: "user",
@@ -235,7 +239,13 @@ export default function VideoCall() {
         localVideoRef,
         remoteVideoRef,
         stream: localStreamRef.current,
-        onConnectionState: setConnectionState,
+        onConnectionState: (state) => {
+          setConnectionState(state);
+          if (state === "connected") {
+            isConnectedRef.current = true;
+            console.log("TIMER_STARTED: WebRTC connection established, billing can proceed");
+          }
+        },
       });
       attachVideoElements({ localVideoRef, remoteVideoRef });
       await createAndSendVideoOffer();
@@ -303,6 +313,7 @@ export default function VideoCall() {
     setCallId(null);
     startedRef.current = false;
     endedRef.current = false;
+    isConnectedRef.current = false;
     callFailureEmittedRef.current = false;
     permissionRequestInProgressRef.current = false;
     setConnectionState("connecting");

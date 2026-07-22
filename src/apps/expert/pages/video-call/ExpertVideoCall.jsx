@@ -136,9 +136,13 @@ export default function ExpertVideoCall() {
     clearNativeCallData();
   }, [callId]);
 
+  const isConnectedRef = useRef(false);
+
   useEffect(() => {
     const timer = setInterval(() => {
-      if (acceptedRef.current && !endedRef.current) setSeconds((value) => value + 1);
+      if (acceptedRef.current && !endedRef.current && isConnectedRef.current) {
+        setSeconds((value) => value + 1);
+      }
     }, 1000);
     return () => clearInterval(timer);
   }, []);
@@ -146,6 +150,7 @@ export default function ExpertVideoCall() {
   const cleanupMedia = useCallback(async () => {
     if (cleanupDoneRef.current) return;
     cleanupDoneRef.current = true;
+    isConnectedRef.current = false;
     console.log("[VC_MEDIA_CLEANUP_START]", {
       callId: Number(callId),
       role: "expert",
@@ -286,7 +291,13 @@ export default function ExpertVideoCall() {
           localVideoRef,
           remoteVideoRef,
           stream: localStreamRef.current,
-          onConnectionState: setConnectionState,
+          onConnectionState: (state) => {
+            setConnectionState(state);
+            if (state === "connected") {
+              isConnectedRef.current = true;
+              console.log("TIMER_STARTED: WebRTC connection established, billing can proceed");
+            }
+          },
         });
         attachVideoElements({ localVideoRef, remoteVideoRef });
         await setVideoRemoteDescription(offer);

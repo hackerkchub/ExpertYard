@@ -23,6 +23,7 @@ import { SOUNDS } from "../../../shared/services/sound/soundRegistry";
 import { getMessagingClient } from "../../../shared/utils/lazyFirebase";
 
 import { Capacitor } from "@capacitor/core";
+import { rejectIncomingRequest } from "../../../shared/utils/callTerminator";
 
 const isAndroid = Capacitor.isNativePlatform();
 
@@ -256,6 +257,16 @@ export function ExpertNotificationsProvider({ children }) {
     } catch {
       // BroadcastChannel is best effort only.
     }
+  }, []);
+
+  const updateLocalStatus = useCallback((matcher, status) => {
+    setNotifications((prev) =>
+      prev.map((n) => {
+        if (!matcher(n)) return n;
+        return { ...n, status, unread: false };
+      })
+    );
+    if (FINAL_STATES.includes(status)) soundManager.stopAll();
   }, []);
 
   const markCallFinal = useCallback((callId, status, { broadcast = true } = {}) => {
@@ -493,18 +504,54 @@ export function ExpertNotificationsProvider({ children }) {
 
     const handleIncomingChatEvent = (event) => handleIncomingChat(event.detail || {});
 
+    const handleCallCancelled = (data = {}) => {
+      const callId = data.callId || data.call_id;
+      console.log("📴 Call cancelled received in React:", callId);
+      updateLocalStatus((n) => String(n.related_id) === String(callId) && n.type === "voice_call", "cancelled");
+      soundManager.stopAll();
+      if (window.NativeBridgeManager?.terminateNativeSession) {
+        window.NativeBridgeManager.terminateNativeSession(String(callId));
+      }
+    };
+
+    const handleVideoCallCancelled = (data = {}) => {
+      const callId = data.callId || data.call_id;
+      console.log("📴 Video call cancelled received in React:", callId);
+      updateLocalStatus((n) => String(n.related_id) === String(callId) && (n.type === "video_call" || n.type === "video-call"), "cancelled");
+      soundManager.stopAll();
+      if (window.NativeBridgeManager?.terminateNativeSession) {
+        window.NativeBridgeManager.terminateNativeSession(String(callId));
+      }
+    };
+
+    const handleChatCancelled = (data = {}) => {
+      const requestId = data.request_id || data.requestId;
+      console.log("💬 Chat request cancelled received in React:", requestId);
+      updateLocalStatus((n) => String(n.related_id) === String(requestId) && n.type === "chat_request", "cancelled");
+      soundManager.stopAll();
+      if (window.NativeBridgeManager?.terminateNativeSession) {
+        window.NativeBridgeManager.terminateNativeSession(String(requestId));
+      }
+    };
+
     socket.on("call:incoming", handleIncomingCall);
     socket.on("video-call:incoming", handleIncomingVideoCall);
     socket.on("incoming_chat_request", handleIncomingChat);
+    socket.on("call:cancelled", handleCallCancelled);
+    socket.on("video-call:cancelled", handleVideoCallCancelled);
+    socket.on("chat_cancelled", handleChatCancelled);
     window.addEventListener("incoming_chat_request", handleIncomingChatEvent);
 
     return () => {
       socket.off("call:incoming", handleIncomingCall);
       socket.off("video-call:incoming", handleIncomingVideoCall);
       socket.off("incoming_chat_request", handleIncomingChat);
+      socket.off("call:cancelled", handleCallCancelled);
+      socket.off("video-call:cancelled", handleVideoCallCancelled);
+      socket.off("chat_cancelled", handleChatCancelled);
       window.removeEventListener("incoming_chat_request", handleIncomingChatEvent);
     };
-  }, [addNotification]);
+  }, [addNotification, updateLocalStatus]);
 
   useEffect(() => {
     if (!expertId) return;
@@ -539,15 +586,7 @@ export function ExpertNotificationsProvider({ children }) {
     };
   }, [expertId, addNotification]);
 
-  const updateLocalStatus = useCallback((matcher, status) => {
-    setNotifications((prev) =>
-      prev.map((n) => {
-        if (!matcher(n)) return n;
-        return { ...n, status, unread: false };
-      })
-    );
-    if (FINAL_STATES.includes(status)) soundManager.stopAll();
-  }, []);
+
 
   useEffect(() => {
     const byCallId = (callId) => (n) => n.payload?.callId && String(n.payload.callId) === String(callId);
@@ -578,6 +617,118 @@ export function ExpertNotificationsProvider({ children }) {
     socket.on("chat_rejected", chatRejected);
     socket.on("chat_ended", chatEnded);
 
+    // 📱 Native Android Rejection Event Listener
+    const handleNativeCallRejected = (event) => {
+      const callData = event?.detail || {};
+      const callId = callData.callId || callData.call_id;
+      
+      // Dynamic call type extraction
+      const matchingNotif = notificationsRef.current.find((n) => n.payload?.callId && String(n.payload.callId) === String(callId));
+      const callType = callData.callType || 
+                       callData.call_type || 
+                       callData.type || 
+                       window.G9?.native?.pendingCall?.callType || 
+                       matchingNotif?.type || 
+                       "voice_call";
+
+      console.log("✅ Native call rejected event received -> CallId:", callId || "all", "| Extracted Type:", callType);
+
+      // 1. Emit socket rejection event to notify server & caller (stop user ringing)
+      if (callId) {
+        rejectIncomingRequest(callId, callType, "expert_declined");
+      }
+
+      // 2. Stop ringtone sound immediately
+      soundManager.stopAll();
+
+      // 3. Clear window.G9.native.pendingCall object
+      if (window.G9?.native) {
+        window.G9.native.pendingCall = null;
+      }
+
+      // 4. Force close active call notifications and update state
+      if (callId) {
+        markCallFinal(callId, "rejected");
+      } else {
+        setNotifications((prev) =>
+          prev.map((n) =>
+            n.status === "ringing" || n.status === "pending" ? { ...n, status: "rejected", unread: false } : n
+          )
+        );
+      }
+
+      // 5. Dispatch global clear event for any active overlay modals or banners
+      window.dispatchEvent(new CustomEvent("clear_active_request", { detail: { callId, callType } }));
+    };
+
+    // ⏳ Native Android Timeout (Missed Call) Event Listener
+    const handleNativeCallTimeout = (event) => {
+      const callData = event?.detail || {};
+      const callId = callData.callId || callData.call_id;
+      const matchingNotif = notificationsRef.current.find((n) => n.payload?.callId && String(n.payload.callId) === String(callId));
+      const callType = callData.callType || 
+                       callData.call_type || 
+                       callData.type || 
+                       window.G9?.native?.pendingCall?.callType || 
+                       matchingNotif?.type || 
+                       "voice_call";
+
+      console.log("⏳ Native call timeout event received -> Emitting missed call socket | CallId:", callId || "all", "| Extracted Type:", callType);
+
+      // 1. Emit socket missed event to notify server & caller (user phone shows Expert Unavailable)
+      if (callId) {
+        rejectIncomingRequest(callId, callType, "timeout");
+      }
+
+      // 2. Stop ringtone sound
+      soundManager.stopAll();
+
+      if (window.G9?.native) {
+        window.G9.native.pendingCall = null;
+      }
+
+      // 3. Mark call status as missed
+      if (callId) {
+        markCallFinal(callId, "missed");
+      } else {
+        setNotifications((prev) =>
+          prev.map((n) =>
+            n.status === "ringing" || n.status === "pending" ? { ...n, status: "missed", unread: false } : n
+          )
+        );
+      }
+
+      window.dispatchEvent(new CustomEvent("clear_active_request", { detail: { callId } }));
+    };
+
+    // 🛑 Centralized Session Termination Listener
+    const handleSessionTerminated = (event) => {
+      const { callId, reason } = event?.detail || {};
+      console.log("🛑 Session Terminated Event Received in React Context:", callId, reason);
+
+      soundManager.stopAll();
+      if (window.G9?.native) {
+        window.G9.native.pendingCall = null;
+      }
+
+      if (callId) {
+        markCallFinal(callId, "ended");
+      } else {
+        setNotifications((prev) =>
+          prev.map((n) =>
+            n.status === "ringing" || n.status === "pending" ? { ...n, status: "ended", unread: false } : n
+          )
+        );
+      }
+
+      window.dispatchEvent(new CustomEvent("clear_active_request", { detail: { callId } }));
+    };
+
+    window.addEventListener("g9:nativeCallRejected", handleNativeCallRejected);
+    window.addEventListener("g9:nativeCallTimeout", handleNativeCallTimeout);
+    window.addEventListener("g9:nativeCallEnded", handleSessionTerminated);
+    window.addEventListener("session_terminated", handleSessionTerminated);
+
     return () => {
       socket.off("call:missed", missed);
       socket.off("call:rejected", rejected);
@@ -593,6 +744,10 @@ export function ExpertNotificationsProvider({ children }) {
       socket.off("chat_cancelled", chatCancelled);
       socket.off("chat_rejected", chatRejected);
       socket.off("chat_ended", chatEnded);
+      window.removeEventListener("g9:nativeCallRejected", handleNativeCallRejected);
+      window.removeEventListener("g9:nativeCallTimeout", handleNativeCallTimeout);
+      window.removeEventListener("g9:nativeCallEnded", handleSessionTerminated);
+      window.removeEventListener("session_terminated", handleSessionTerminated);
     };
   }, [markCallFinal, updateLocalStatus]);
 

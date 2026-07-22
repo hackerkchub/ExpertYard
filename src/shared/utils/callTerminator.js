@@ -120,11 +120,13 @@ export function rejectIncomingRequest(callId, callType = "voice_call", reason = 
       const isChat = callType === "chat_request" || callType === "chat";
 
       if (isVideo) {
+        const numId = Number(id) || id;
         if (reason === "timeout") {
-          socket.emit("video-call:missed", { callId: id, reason: "timeout" });
+          socket.emit("video-call:missed", { callId: numId, reason: "timeout" });
         } else {
-          socket.emit("reject_video_call", { callId: id, reason });
-          socket.emit("video-call:reject", { callId: id, reason });
+          socket.emit("video-call:decline", { callId: numId, reason });
+          socket.emit("video-call:reject", { callId: numId, reason });
+          socket.emit("reject_video_call", { callId: numId, reason });
         }
       } else if (isChat) {
         socket.emit("reject_chat", { requestId: id, request_id: id, reason });

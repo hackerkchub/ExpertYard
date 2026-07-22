@@ -281,7 +281,7 @@ public class CallNotificationHelper {
                 .addAction(
                         android.R.drawable.ic_menu_call,
                         "Accept",
-                        viewPendingIntent
+                        acceptPendingIntent
                 )
                 .addAction(
                         android.R.drawable.ic_menu_close_clear_cancel,

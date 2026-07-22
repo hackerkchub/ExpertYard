@@ -56,7 +56,7 @@ export default function useNativeIncomingCall() {
                                call.callType === "chat_request";
                 
                 if (isChat) {
-                    targetUrl = `${base}/chat/${callId}`;
+                    targetUrl = `${base}/home?from_notification=1&request_id=${callId}`;
                 } else if (isVideo) {
                     targetUrl = `${base}/video-call/${callId}`;
                 } else {
@@ -64,7 +64,44 @@ export default function useNativeIncomingCall() {
                 }
             }
 
-            console.log("⚡ Direct-to-Call: Navigating directly to targetUrl:", targetUrl);
+            console.log("⚡ Direct-to-Call: Processing targetUrl:", targetUrl);
+
+            const isChat = call.callType === "chat" ||
+                           call.callType === "incoming_chat" ||
+                           call.callType === "chat_request";
+            const isAutoAccept = call.autoAccept === true || 
+                                 call.acceptSent === true || 
+                                 call.action === "accept";
+
+            if (isChat && isAutoAccept) {
+                console.log("⚡ Native Chat Accept: Forwarding to acceptNotification flow for request_id:", call.callId);
+
+                // 1. Clear window.G9.native.pendingCall
+                if (window.G9?.native) {
+                    window.G9.native.pendingCall = null;
+                }
+
+                // 2. Notify Native Android handshake listener
+                if (window.NativeBridgeManager?.onReactReadyForCall) {
+                    try {
+                        window.NativeBridgeManager.onReactReadyForCall(call.callId);
+                    } catch (e) {
+                        console.error("Failed to notify NativeBridgeManager onReactReadyForCall:", e);
+                    }
+                }
+
+                // 3. Dispatch event to clear active incoming banners
+                window.dispatchEvent(new CustomEvent("native_call_accepted", { detail: call }));
+
+                // 4. Dispatch native_chat_accepted event to execute ExpertNotificationsContext acceptNotification flow
+                window.dispatchEvent(new CustomEvent("native_chat_accepted", { detail: call }));
+
+                // 5. Release opening lock
+                setTimeout(() => {
+                    openingCall = false;
+                }, 500);
+                return;
+            }
 
             // 1. Clear window.G9.native.pendingCall so cold-start timers don't re-read stale data
             if (window.G9?.native) {

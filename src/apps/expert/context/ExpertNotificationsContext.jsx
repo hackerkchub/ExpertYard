@@ -829,6 +829,40 @@ export function ExpertNotificationsProvider({ children }) {
     }
   }, [markNotificationAsRead, markCallFinal, navigate, updateLocalStatus]);
 
+  useEffect(() => {
+    const handleNativeChatAccepted = (event) => {
+      const callData = event?.detail || {};
+      const requestId = callData.callId || callData.request_id || callData.call_id;
+      if (!requestId) return;
+
+      console.log("💬 Native chat accept event received -> RequestId:", requestId);
+
+      const matchingNotif = notificationsRef.current.find(
+        (n) => n.type === "chat_request" && String(n.payload?.request_id || n.relatedId) === String(requestId)
+      );
+
+      const notificationObj = matchingNotif || {
+        id: `chat:${requestId}:chat_request`,
+        type: "chat_request",
+        payload: {
+          request_id: requestId,
+          ...callData,
+        },
+      };
+
+      acceptNotification(notificationObj);
+
+      if (window.NativeBridgeManager?.onReactReadyForCall) {
+        try {
+          window.NativeBridgeManager.onReactReadyForCall(requestId);
+        } catch (e) {}
+      }
+    };
+
+    window.addEventListener("native_chat_accepted", handleNativeChatAccepted);
+    return () => window.removeEventListener("native_chat_accepted", handleNativeChatAccepted);
+  }, [acceptNotification]);
+
   const rejectNotification = useCallback((notification) => {
     if (!notification) return;
 

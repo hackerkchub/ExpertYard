@@ -406,6 +406,9 @@ public class IncomingCallReceiver extends BroadcastReceiver {
                 Log.e(TAG_REJECT, "Failed to stop foreground service on reject", e);
             }
 
+            // Finish active IncomingCallActivity instance if open on screen
+            IncomingCallActivity.finishActiveInstance();
+
             // ============================================================
             // STEP 5: Clear CallStore
             // ============================================================

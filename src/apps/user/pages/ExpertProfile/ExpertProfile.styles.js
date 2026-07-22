@@ -1064,7 +1064,7 @@ export const FollowButton = styled.button`
   justify-content: center;
   gap: 7px;
   border: 1px solid rgba(255, 255, 255, 0.5);
-  color: ${props => props.$active ? "#ffffff" : "#ffffff"};
+  color: ${props => props.$active ? " #ffffff" : " #000080"};
   border-radius: 999px;
   padding: 9px 18px;
   font-weight: 900;
@@ -2164,6 +2164,7 @@ export const SubscriptionInfo = styled.div`
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
+  color: #065f46;
   
   div {
     display: flex;

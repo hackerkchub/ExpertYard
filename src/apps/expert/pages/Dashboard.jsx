@@ -145,24 +145,28 @@ export default function Dashboard() {
 
 // Reuseable inline styles
 const bannerStyle = {
-  background: "#fff",
-  border: "1px solid #e0e0e0",
-  borderRadius: "8px",
-  padding: "12px 20px",
+  background: "#ffffff",
+  border: "1px solid #e2e8f0",
+  borderRadius: "16px",
+  padding: "16px 20px",
   marginBottom: "20px",
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  boxShadow: "0 2px 4px rgba(0,0,0,0.05)"
+  boxShadow: "0 2px 8px rgba(15, 23, 42, 0.04)"
 };
 
 const buttonStyle = {
-  background: "none",
-  border: "none",
+  background: "#eef2ff",
+  border: "1px solid #000080",
   color: "#000080",
   fontWeight: "700",
   cursor: "pointer",
-  fontSize: "14px"
+  fontSize: "0.85rem",
+  padding: "8px 16px",
+  borderRadius: "20px",
+  transition: "all 0.15s ease",
+  whiteSpace: "nowrap"
 };
 
 const lockedGridStyle = {
@@ -174,11 +178,12 @@ const lockedGridStyle = {
 
 const lockedCardStyle = {
   border: "1px solid #e2e8f0",
-  borderRadius: "8px",
-  padding: "14px",
+  borderRadius: "16px",
+  padding: "16px",
   background: "#ffffff",
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
   gap: "12px",
+  boxShadow: "0 2px 6px rgba(15, 23, 42, 0.03)"
 };

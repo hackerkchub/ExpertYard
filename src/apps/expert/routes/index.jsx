@@ -37,18 +37,7 @@ const ExpertInquiriesPage = lazy(() => import("../pages/Inquiry/ExpertInquiriesP
 const withLazyRoute = (node) => <LazyRoute>{node}</LazyRoute>;
 
 const MobileBackShell = ({ children }) => {
-  const navigate = useNavigate();
-
-  return (
-    <>
-      <header className="mobile-route-back-header">
-        <button type="button" onClick={() => navigate(-1)} aria-label="Go back">
-          <FiArrowLeft />
-        </button>
-      </header>
-      {children}
-    </>
-  );
+  return <>{children}</>;
 };
 
 export default function ExpertAppRoutes() {

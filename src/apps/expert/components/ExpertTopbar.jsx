@@ -270,8 +270,36 @@ export default function ExpertTopbar() {
       {/* MOBILE MENU - Enhanced with complete sidebar navigation */}
       <MobileMenu open={mobileMenuOpen}>
         <MobileMenuHeader>
-          <MobileMenuTitle>Expert Panel</MobileMenuTitle>
-          <MobileMenuSubtitle>{user.name}</MobileMenuSubtitle>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', minWidth: 0 }}>
+            <div style={{
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #000080, #1e3a8a)',
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: '1rem',
+              overflow: 'hidden',
+              flexShrink: 0
+            }}>
+              {user.avatar ? (
+                <img src={user.avatar} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                (user.name || "E")[0].toUpperCase()
+              )}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
+              <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 700, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {user.name}
+              </h4>
+              <span style={{ fontSize: '0.76rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {user.role}
+              </span>
+            </div>
+          </div>
           <MobileMenuCloseBtn onClick={() => setMobileMenuOpen(false)} aria-label="Close menu">
             <FiX />
           </MobileMenuCloseBtn>

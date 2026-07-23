@@ -13,7 +13,7 @@ import "../../../shared/components/BottomNavbar/BottomNavbar.css";
 const ExpertBottomNavbar = () => {
   const location = useLocation();
   const currentPath = location.pathname.toLowerCase();
-  const isChatPage = currentPath === '/expert/chat' || currentPath.startsWith('/expert/chat/');
+  const isChatPage = currentPath.startsWith('/expert/chat') || currentPath.startsWith('/expert/inquiries');
 
   const menuItems = [
     { 

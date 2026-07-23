@@ -346,7 +346,14 @@ public final class SocketEmitter {
     ) {
         try {
             JSONObject object = new JSONObject();
-            object.put("callId", callId);
+            try {
+                long numericCallId = Long.parseLong(callId);
+                object.put("callId", numericCallId);
+                object.put("call_id", numericCallId);
+            } catch (Exception ignored) {
+                object.put("callId", callId);
+                object.put("call_id", callId);
+            }
             object.put("requestId", callId);
             object.put("request_id", callId);
             object.put("callType", callType != null ? callType : TYPE_VOICE);

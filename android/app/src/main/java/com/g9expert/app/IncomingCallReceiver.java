@@ -76,11 +76,19 @@ public class IncomingCallReceiver extends BroadcastReceiver {
 
                 String action = intent.getAction();
                 String callId = intent.getStringExtra("call_id");
+                if (callId == null || callId.isEmpty()) callId = intent.getStringExtra("request_id");
+                if (callId == null || callId.isEmpty()) callId = intent.getStringExtra("chat_id");
+                if (callId == null || callId.isEmpty()) callId = intent.getStringExtra("callId");
+
                 String callerName = intent.getStringExtra("caller_name");
                 String callType = intent.getStringExtra("call_type");
                 String targetUrl = intent.getStringExtra("target_url");
+
                 String userId = intent.getStringExtra("user_id");
+                if (userId == null || userId.isEmpty()) userId = intent.getStringExtra("userId");
+
                 String expertId = intent.getStringExtra("expert_id");
+                if (expertId == null || expertId.isEmpty()) expertId = intent.getStringExtra("expertId");
 
                 Log.d(TAG, "====================================");
                 Log.d(TAG, "CALL RECEIVER");
@@ -397,6 +405,9 @@ public class IncomingCallReceiver extends BroadcastReceiver {
             } catch (Exception e) {
                 Log.e(TAG_REJECT, "Failed to stop foreground service on reject", e);
             }
+
+            // Finish active IncomingCallActivity instance if open on screen
+            IncomingCallActivity.finishActiveInstance();
 
             // ============================================================
             // STEP 5: Clear CallStore

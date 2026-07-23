@@ -34,6 +34,21 @@ const CALL_FINAL_STATES = new Set(FINAL_STATES);
 const CALL_TYPES = new Set(["voice_call", "incoming_call", "video_call", "video-call"]);
 const CHAT_TYPES = new Set(["chat_request", "chat_message", "chat_accepted", "chat_rejected", "chat_cancelled", "chat_timeout"]);
 
+const mapNotificationTypeToSection = (type = "", raw = {}) => {
+  const t = String(type || "").toLowerCase();
+  const meta = parseMeta(raw.meta || raw.payload || raw.data || {});
+  const targetUrl = String(raw.targetUrl || raw.target_url || meta.target_url || meta.url || "").toLowerCase();
+
+  if (t === "voice_call" || t === "incoming_call" || t.includes("voice")) return "call";
+  if (t === "video_call" || t === "video-call" || t.includes("video")) return "video";
+  if (t === "chat_request" || t === "chat_message" || t.includes("chat")) return "chat";
+  if (t === "lead" || t.includes("lead") || targetUrl.includes("/leads")) return "leads";
+  if (t === "enquiry" || t === "inquiry" || t.includes("inquir") || targetUrl.includes("/inquiries")) return "inquiries";
+  if (t === "booking" || t.includes("booking") || targetUrl.includes("/mybookings")) return "mybookings";
+
+  return null;
+};
+
 const parseMeta = (meta) => {
   if (!meta) return {};
   if (typeof meta === "string") {
@@ -225,6 +240,22 @@ export function ExpertNotificationsProvider({ children }) {
   const lifecycleChannelRef = useRef(null);
   const [notifications, setNotifications] = useState([]);
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [highlightedSections, setHighlightedSections] = useState({
+    call: false,
+    chat: false,
+    video: false,
+    leads: false,
+    inquiries: false,
+    mybookings: false,
+  });
+
+  const clearHighlight = useCallback((sectionKey) => {
+    if (!sectionKey) return;
+    setHighlightedSections((prev) => {
+      if (!prev[sectionKey]) return prev;
+      return { ...prev, [sectionKey]: false };
+    });
+  }, []);
 
   useEffect(() => {
     window.__expertNotificationProviderActive = true;
@@ -312,6 +343,12 @@ export function ExpertNotificationsProvider({ children }) {
 
   const addNotification = useCallback((notification, { playSound = true, showSystem = false } = {}) => {
     if (!notification?.id) return;
+
+    // 🟢 Highlight section if a new request arrives in real-time
+    const sectionKey = mapNotificationTypeToSection(notification.type, notification);
+    if (sectionKey) {
+      setHighlightedSections((prev) => ({ ...prev, [sectionKey]: true }));
+    }
 
     const callId = getNotificationCallId(notification);
     if (CALL_TYPES.has(notification.type) && callId) {
@@ -505,32 +542,43 @@ export function ExpertNotificationsProvider({ children }) {
     const handleIncomingChatEvent = (event) => handleIncomingChat(event.detail || {});
 
     const handleCallCancelled = (data = {}) => {
-      const callId = data.callId || data.call_id;
-      console.log("📴 Call cancelled received in React:", callId);
+      const callId = data.callId || data.call_id || data.requestId || data.request_id || data.id;
+      console.log("[REACT_SOCKET_RECEIVED] Voice call cancelled received in React:", data);
       updateLocalStatus((n) => String(n.related_id) === String(callId) && n.type === "voice_call", "cancelled");
       soundManager.stopAll();
       if (window.NativeBridgeManager?.terminateNativeSession) {
-        window.NativeBridgeManager.terminateNativeSession(String(callId));
+        console.log("[NATIVE_BRIDGE_RECEIVED] Invoking terminateNativeSession for voice callId:", callId);
+        window.NativeBridgeManager.terminateNativeSession(String(callId || ""));
       }
     };
 
     const handleVideoCallCancelled = (data = {}) => {
-      const callId = data.callId || data.call_id;
-      console.log("📴 Video call cancelled received in React:", callId);
+      const callId = data.callId || data.call_id || data.requestId || data.request_id || data.id;
+      console.log("[REACT_SOCKET_RECEIVED] Video call cancelled received in React:", data);
       updateLocalStatus((n) => String(n.related_id) === String(callId) && (n.type === "video_call" || n.type === "video-call"), "cancelled");
       soundManager.stopAll();
       if (window.NativeBridgeManager?.terminateNativeSession) {
-        window.NativeBridgeManager.terminateNativeSession(String(callId));
+        console.log("[NATIVE_BRIDGE_RECEIVED] Invoking terminateNativeSession for video callId:", callId);
+        window.NativeBridgeManager.terminateNativeSession(String(callId || ""));
+      }
+    };
+
+    const handleVideoCallEnded = (data = {}) => {
+      console.log("[REACT_SOCKET_RECEIVED] Video call ended/cancelled event received in React:", data);
+      const reason = data.reason || "";
+      if (reason.includes("cancel") || reason.includes("user") || !reason) {
+        handleVideoCallCancelled(data);
       }
     };
 
     const handleChatCancelled = (data = {}) => {
-      const requestId = data.request_id || data.requestId;
-      console.log("💬 Chat request cancelled received in React:", requestId);
+      const requestId = data.request_id || data.requestId || data.callId || data.call_id;
+      console.log("[REACT_SOCKET_RECEIVED] Chat request cancelled received in React:", data);
       updateLocalStatus((n) => String(n.related_id) === String(requestId) && n.type === "chat_request", "cancelled");
       soundManager.stopAll();
       if (window.NativeBridgeManager?.terminateNativeSession) {
-        window.NativeBridgeManager.terminateNativeSession(String(requestId));
+        console.log("[NATIVE_BRIDGE_RECEIVED] Invoking terminateNativeSession for chat requestId:", requestId);
+        window.NativeBridgeManager.terminateNativeSession(String(requestId || ""));
       }
     };
 
@@ -539,6 +587,8 @@ export function ExpertNotificationsProvider({ children }) {
     socket.on("incoming_chat_request", handleIncomingChat);
     socket.on("call:cancelled", handleCallCancelled);
     socket.on("video-call:cancelled", handleVideoCallCancelled);
+    socket.on("video-call:cancel", handleVideoCallCancelled);
+    socket.on("video-call:ended", handleVideoCallEnded);
     socket.on("chat_cancelled", handleChatCancelled);
     window.addEventListener("incoming_chat_request", handleIncomingChatEvent);
 
@@ -548,6 +598,8 @@ export function ExpertNotificationsProvider({ children }) {
       socket.off("incoming_chat_request", handleIncomingChat);
       socket.off("call:cancelled", handleCallCancelled);
       socket.off("video-call:cancelled", handleVideoCallCancelled);
+      socket.off("video-call:cancel", handleVideoCallCancelled);
+      socket.off("video-call:ended", handleVideoCallEnded);
       socket.off("chat_cancelled", handleChatCancelled);
       window.removeEventListener("incoming_chat_request", handleIncomingChatEvent);
     };
@@ -777,6 +829,9 @@ export function ExpertNotificationsProvider({ children }) {
   const acceptNotification = useCallback((notification) => {
     if (!notification) return;
 
+    const sectionKey = mapNotificationTypeToSection(notification.type, notification);
+    if (sectionKey) clearHighlight(sectionKey);
+
     if (notification.type === "voice_call") {
       const callId = notification.payload?.callId || getNotificationCallId(notification);
       if (!callId) return;
@@ -812,10 +867,47 @@ export function ExpertNotificationsProvider({ children }) {
       socket.emit("accept_chat", { request_id: notification.payload?.request_id });
       markNotificationAsRead(notification.id);
     }
-  }, [markNotificationAsRead, markCallFinal, navigate, updateLocalStatus]);
+  }, [markNotificationAsRead, markCallFinal, navigate, updateLocalStatus, clearHighlight]);
+
+  useEffect(() => {
+    const handleNativeChatAccepted = (event) => {
+      const callData = event?.detail || {};
+      const requestId = callData.callId || callData.request_id || callData.call_id;
+      if (!requestId) return;
+
+      console.log("💬 Native chat accept event received -> RequestId:", requestId);
+
+      const matchingNotif = notificationsRef.current.find(
+        (n) => n.type === "chat_request" && String(n.payload?.request_id || n.relatedId) === String(requestId)
+      );
+
+      const notificationObj = matchingNotif || {
+        id: `chat:${requestId}:chat_request`,
+        type: "chat_request",
+        payload: {
+          request_id: requestId,
+          ...callData,
+        },
+      };
+
+      acceptNotification(notificationObj);
+
+      if (window.NativeBridgeManager?.onReactReadyForCall) {
+        try {
+          window.NativeBridgeManager.onReactReadyForCall(requestId);
+        } catch (e) {}
+      }
+    };
+
+    window.addEventListener("native_chat_accepted", handleNativeChatAccepted);
+    return () => window.removeEventListener("native_chat_accepted", handleNativeChatAccepted);
+  }, [acceptNotification]);
 
   const rejectNotification = useCallback((notification) => {
     if (!notification) return;
+
+    const sectionKey = mapNotificationTypeToSection(notification.type, notification);
+    if (sectionKey) clearHighlight(sectionKey);
 
     if (notification.type === "voice_call") {
       const callId = notification.payload?.callId || getNotificationCallId(notification);
@@ -854,16 +946,28 @@ export function ExpertNotificationsProvider({ children }) {
       socket.emit("reject_chat", { request_id: notification.payload?.request_id });
       updateLocalStatus((n) => n.id === notification.id, "rejected");
     }
-  }, [markCallFinal, updateLocalStatus]);
+  }, [markCallFinal, updateLocalStatus, clearHighlight]);
 
   const removeById = useCallback(async (notification) => {
     if (!notification?.id) return;
+    const sectionKey = mapNotificationTypeToSection(notification.type, notification);
+    if (sectionKey) clearHighlight(sectionKey);
     setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
     soundManager.stopAll();
     if (expertId && notification.dbId) {
       await deleteNotification(notification.dbId, expertId, "expert").catch(() => {});
     }
-  }, [expertId]);
+  }, [expertId, clearHighlight]);
+
+  useEffect(() => {
+    const path = window.location.pathname.toLowerCase();
+    if (path.includes("/expert/leads")) clearHighlight("leads");
+    else if (path.includes("/expert/inquiries")) clearHighlight("inquiries");
+    else if (path.includes("/expert/mybookings")) clearHighlight("mybookings");
+    else if (path.includes("/expert/chat")) clearHighlight("chat");
+    else if (path.includes("/expert/voice-call")) clearHighlight("call");
+    else if (path.includes("/expert/video-call")) clearHighlight("video");
+  }, [clearHighlight, window.location.pathname]);
 
   const markAllAsRead = useCallback(async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, unread: false, is_read: true })));
@@ -895,6 +999,8 @@ export function ExpertNotificationsProvider({ children }) {
     unreadCount,
     chatUnreadCount,
     callUnreadCount,
+    highlightedSections,
+    clearHighlight,
     acceptNotification,
     rejectNotification,
     removeById,
@@ -909,6 +1015,8 @@ export function ExpertNotificationsProvider({ children }) {
     unreadCount,
     chatUnreadCount,
     callUnreadCount,
+    highlightedSections,
+    clearHighlight,
     acceptNotification,
     rejectNotification,
     removeById,

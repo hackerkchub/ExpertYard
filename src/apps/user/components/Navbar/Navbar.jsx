@@ -483,7 +483,40 @@ const Navbar = () => {
             <MobileMenuOverlay onClick={() => setOpen(false)} />
             <MobileMenu>
               <MobileMenuHeader>
-                <BrandLogo src={logo} alt="G9Expert" />
+                {isLoggedIn && user ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', minWidth: 0 }}>
+                    <div style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #000080, #1e3a8a)',
+                      color: '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 700,
+                      fontSize: '1rem',
+                      overflow: 'hidden',
+                      flexShrink: 0
+                    }}>
+                      {user?.profile_photo || user?.avatar ? (
+                        <img src={user.profile_photo || user.avatar} alt={user.name || "User"} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        (user.name || "U")[0].toUpperCase()
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
+                      <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 700, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {user.name || "User"}
+                      </h4>
+                      <span style={{ fontSize: '0.76rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {user.email || user.mobile || "Logged In"}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <BrandLogo src={logo} alt="G9Expert" />
+                )}
                 <button type="button" onClick={() => setOpen(false)} aria-label="Close navigation menu">
                   <FiX />
                 </button>

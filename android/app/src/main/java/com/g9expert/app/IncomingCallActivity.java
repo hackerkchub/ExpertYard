@@ -35,9 +35,17 @@ public class IncomingCallActivity extends AppCompatActivity {
     public static void finishActiveInstance() {
         if (activeInstance != null) {
             try {
-                Log.d("IncomingCall", "finishActiveInstance() called - finishing current IncomingCallActivity");
-                activeInstance.finish();
-                activeInstance.overridePendingTransition(0, 0);
+                Log.d("IncomingCall", "[INCOMING_ACTIVITY_FINISH_CALLED] finishing active IncomingCallActivity instance");
+                final IncomingCallActivity activity = activeInstance;
+                activity.runOnUiThread(() -> {
+                    try {
+                        android.widget.Toast.makeText(activity.getApplicationContext(), "Caller cancelled the call.", android.widget.Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        Log.e("IncomingCall", "Error showing toast on cancel", e);
+                    }
+                    activity.finish();
+                    activity.overridePendingTransition(0, 0);
+                });
             } catch (Exception e) {
                 Log.e("IncomingCall", "Error finishing active instance", e);
             }
@@ -106,19 +114,29 @@ public class IncomingCallActivity extends AppCompatActivity {
             Intent intent = new Intent(this, IncomingCallReceiver.class);
             intent.setAction(action);
             intent.putExtra("call_id", callId);
+            intent.putExtra("request_id", callId);
+            intent.putExtra("chat_id", callId);
             intent.putExtra("caller_name", getIntent().getStringExtra("caller_name"));
             intent.putExtra("call_type", getIntent().getStringExtra("call_type"));
             intent.putExtra("target_url", getIntent().getStringExtra("target_url"));
+
+            String userId = getIntent().getStringExtra("user_id");
+            if (userId == null || userId.isEmpty()) userId = getIntent().getStringExtra("userId");
+            if (userId != null) intent.putExtra("user_id", userId);
+
+            String expertId = getIntent().getStringExtra("expert_id");
+            if (expertId == null || expertId.isEmpty()) expertId = getIntent().getStringExtra("expertId");
+            if (expertId != null) intent.putExtra("expert_id", expertId);
+
             sendBroadcast(intent);
             
-            // ✅ Change 7: Enhanced broadcast logging
             Log.d(TAG, "==============================");
-            Log.d(TAG, "Broadcast Action");
+            Log.d(TAG, "Broadcast Action Sent to Receiver");
             Log.d(TAG, "Action     : " + action);
             Log.d(TAG, "CallId     : " + callId);
-            Log.d(TAG, "Caller     : " + getIntent().getStringExtra("caller_name"));
+            Log.d(TAG, "UserId     : " + userId);
+            Log.d(TAG, "ExpertId   : " + expertId);
             Log.d(TAG, "Call Type  : " + getIntent().getStringExtra("call_type"));
-            Log.d(TAG, "Target Url : " + getIntent().getStringExtra("target_url"));
             Log.d(TAG, "==============================");
         } catch (Exception e) {
             Log.e(TAG, "❌ Failed to send broadcast: " + action, e);
@@ -198,6 +216,11 @@ public class IncomingCallActivity extends AppCompatActivity {
         Log.d(TAG, "🚀 IncomingCallActivity onCreate STARTED");
 
         callId = getIntent().getStringExtra("call_id");
+        if (callId == null || callId.isEmpty()) callId = getIntent().getStringExtra("request_id");
+        if (callId == null || callId.isEmpty()) callId = getIntent().getStringExtra("chat_id");
+        if (callId == null || callId.isEmpty()) callId = getIntent().getStringExtra("callId");
+        if (callId == null || callId.isEmpty()) callId = getIntent().getStringExtra("requestId");
+
         if (callId == null || callId.trim().isEmpty()) {
             Log.e(TAG, "Invalid callId. Finishing activity.");
             CallStateManager.setIncomingVisible(this, false, null);
@@ -447,9 +470,7 @@ public class IncomingCallActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        // ✅ Change 8: Enhanced onDestroy logging
-        Log.d(TAG, "IncomingCallActivity Destroyed");
-        Log.d(TAG, "CallId : " + callId);
+        Log.d(TAG, "[INCOMING_ACTIVITY_DESTROYED] IncomingCallActivity Destroyed | CallId : " + callId);
 
         if (avatarText != null) {
             avatarText.clearAnimation();

@@ -212,41 +212,42 @@ export const MobileMenu = styled.div`
   position: fixed;
   top: 0;
   left: 0;
-  width: min(320px, 88vw);
+  width: min(320px, 84vw);
   height: 100dvh;
-  background: #fff;
+  background: #ffffff;
   z-index: 2100;
   transform: translateX(${({ open }) => (open ? "0" : "-100%")});
-  transition: transform 0.3s ease-in-out;
-  box-shadow: 5px 0 15px rgba(0,0,0,0.1);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  border-radius: 0 16px 16px 0;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
 
   @media (max-width: 360px) {
-    width: min(304px, 90vw);
+    width: min(300px, 86vw);
   }
 `;
 
 /* ✅ MISSING EXPORTS ADDED HERE */
 export const MobileMenuHeader = styled.div`
-  padding: calc(22px + env(safe-area-inset-top, 0px)) 20px 18px;
-  border-bottom: 1px solid #f0f0f0;
-  background: #f9fafb;
+  padding: max(16px, env(safe-area-inset-top, 0px)) 16px 16px 20px;
+  border-bottom: 1px solid #e9edef;
+  background: #ffffff;
   flex: 0 0 auto;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 `;
 
 export const MobileMenuCloseBtn = styled.button`
-  position: absolute;
-  top: calc(18px + env(safe-area-inset-top, 0px));
-  right: 16px;
   background: none;
   border: none;
-  color: #64748b;
+  color: #54656f;
   cursor: pointer;
   padding: 6px;
   display: flex;
@@ -255,9 +256,10 @@ export const MobileMenuCloseBtn = styled.button`
   border-radius: 50%;
   transition: all 0.2s ease-in-out;
   -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
   
   &:hover {
-    background-color: #f1f5f9;
+    background-color: #f0f2f5;
     color: #0f172a;
   }
   
@@ -283,33 +285,39 @@ export const MobileMenuSubtitle = styled.div`
 `;
 
 export const MobileNavList = styled.div`
-  padding: 12px;
+  padding: 8px 0;
   flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 `;
 
 export const MobileNavItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   min-width: 0;
-  padding: 12px;
-  border-radius: 8px;
+  min-height: 48px;
+  padding: 10px 16px 10px 20px;
+  border-radius: 0 24px 24px 0;
+  margin-right: 12px;
   color: #475569;
+  font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  margin-bottom: 4px;
   line-height: 1.25;
-  overflow-wrap: anywhere;
+  transition: all 0.15s ease-in-out;
   -webkit-tap-highlight-color: transparent;
 
-  &:hover, &.active {
-    background: #f0f7ff;
+  &:hover {
+    background: #f8fafc;
     color: #000080;
   }
 
-  @media (max-width: 390px) {
-    padding: 11px 10px;
-    gap: 10px;
+  &.active {
+    background: #eef2ff;
+    color: #000080;
+    font-weight: 700;
   }
 `;
 
@@ -317,6 +325,7 @@ export const MobileNavIcon = styled.span`
   font-size: 20px;
   display: flex;
   flex: 0 0 auto;
+  color: inherit;
 `;
 
 export const MobileSectionTitle = styled.div`

@@ -97,13 +97,15 @@ export const NavItem = styled(NavLink)`
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 13px 14px;
-  border-radius: 14px;
-  font-size: 15px;
+  min-height: 48px;
+  padding: 10px 16px 10px 20px;
+  border-radius: 0 24px 24px 0;
+  margin-right: 8px;
+  font-size: 0.9rem;
   font-weight: 500;
-  color: #1f2937;
+  color: #475569;
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease-in-out;
 
   &:hover {
     background-color: #f8fafc;
@@ -112,17 +114,8 @@ export const NavItem = styled(NavLink)`
 
   &.active {
     font-weight: 700;
-    background: linear-gradient(135deg, rgba(63, 81, 181, 0.1), rgba(59, 130, 246, 0.08));
+    background: #eef2ff;
     color: #000080;
-    &::before {
-      content: '';
-      position: absolute;
-      left: -12px;
-      height: 24px;
-      width: 4px;
-      background-color: #000080;
-      border-radius: 0 4px 4px 0;
-    }
   }
 `;
 

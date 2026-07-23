@@ -287,11 +287,6 @@ public class CallNotificationHelper {
                         android.R.drawable.ic_menu_close_clear_cancel,
                         "Reject",
                         rejectPendingIntent
-                )
-                .addAction(
-                        android.R.drawable.ic_menu_view,
-                        "View",
-                        viewPendingIntent
                 );
 
         if (!disableFullScreen) {

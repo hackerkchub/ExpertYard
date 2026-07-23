@@ -7,48 +7,47 @@ const progressLiquid = keyframes`
 `;
 
 export const RegisterPageWrap = styled.div`
-  /* Fix: Use dvh for mobile browsers to account for address bars */
   min-height: 100vh;
   min-height: 100dvh; 
   width: 100%;
   display: flex;
   justify-content: center;
-  /* Changed from flex-start to center for better mobile alignment */
-  align-items: center; 
+  align-items: flex-start;
   background-color: #f4f2ee;
   position: relative;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   box-sizing: border-box;
-  overflow-y: auto; /* Allows scrolling if content is taller than screen */
+  overflow-y: auto;
+  padding: max(20px, env(safe-area-inset-top, 0px)) 16px max(28px, calc(16px + env(safe-area-inset-bottom, 0px)));
 
   @media (max-width: 480px) {
-    padding: ${({ hasNavbar }) => (hasNavbar ? "70px 12px 20px" : "20px 12px")};
-    align-items: flex-start; /* Stack from top on very small screens to avoid cutting off header */
+    padding: max(12px, env(safe-area-inset-top, 0px)) 12px max(24px, calc(12px + env(safe-area-inset-bottom, 0px)));
+    align-items: flex-start;
   }
 `;
 
 export const RegisterCard = styled.div`
   width: 100%;
   max-width: 760px;
-  border-radius: 12px;
-  padding: 44px 48px;
+  border-radius: 16px;
+  padding: 36px 40px;
   position: relative;
   background: #ffffff;
   border: 1px solid #e0e0e0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
-  margin: auto 0; /* Keeps it centered vertically */
+  margin: 12px 0;
 
   @media (max-width: 768px) {
-    padding: 32px 24px;
+    padding: 24px 20px;
     max-width: 100%;
+    margin: 4px 0;
   }
 
   @media (max-width: 480px) {
-    padding: 24px 16px;
-    border-radius: 8px;
-    border: none; /* Cleaner look on mobile */
-    box-shadow: none;
+    padding: 20px 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     background: #ffffff;
   }
 `;
@@ -148,19 +147,20 @@ export const Label = styled.label`
 `;
 
 export const Input = styled.input`
-  border-radius: 4px;
-  border: 1px solid rgba(0, 0, 0, 0.6);
-  padding: 10px 14px;
-  font-size: 16px; /* 16px prevents iOS zoom on focus */
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  padding: 12px 14px;
+  font-size: 16px;
   background: #ffffff;
-  transition: all 0.2s;
-  min-height: 44px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  min-height: 48px;
   box-sizing: border-box;
   width: 100%;
+  color: #0f172a;
 
   &:focus {
     border-color: #000080;
-    box-shadow: 0 0 0 1px #000080;
+    box-shadow: 0 0 0 2px rgba(0, 0, 128, 0.15);
     outline: none;
   }
 `;

@@ -510,13 +510,12 @@ export default function Auth() {
           isForgotMode ? "Secure your account" : mode === "login" ? "Log in to continue as expert" : "Start by creating your expert login"
         }
         step={1}
-        hasNavbar={true}
+        hasNavbar={false}
         tabs={!isForgotMode ? [
           { label: "Log In", active: mode === "login", onClick: () => resetAllViews("login") },
           { label: "Register", active: mode === "register", onClick: () => resetAllViews("register") },
         ] : []}
       >
-        
         {submitting && <Loader />} 
 
         {setupCompleted && !isForgotMode && (
@@ -545,7 +544,7 @@ export default function Auth() {
                 disabled={submitting || loading}
               />
             </Field>
-            
+
             <Field>
               <Label>Password</Label>
               <div style={{ position: "relative" }}>

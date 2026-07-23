@@ -1,15 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import styled, { keyframes } from "styled-components";
-import {
-  FiSend,
-  FiInbox,
-  FiArrowLeft,
-  FiUser,
-  FiInfo,
-  FiSearch,
-  FiClock,
-  FiTag,
-} from "react-icons/fi";
+import { FiSend, FiInbox, FiArrowLeft, FiMessageCircle, FiCheckCircle, FiSearch, FiClock, FiUser, FiTag, FiMail, FiPhone, FiInfo, FiBriefcase, FiCalendar, FiCheck, FiX } from "react-icons/fi";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { APP_CONFIG } from "../../../../config/appConfig";
 import { socket } from "../../../../shared/api/socket";
@@ -30,124 +21,237 @@ const shimmer = keyframes`
   100% { background-position: 200px 0; }
 `;
 
-/* ------------------ STYLED COMPONENTS ------------------ */
-const PageContainer = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: var(--chat-viewport-height, 100dvh);
-  max-height: var(--chat-viewport-height, 100dvh);
-  background-color: #efeae2; /* WhatsApp Wallpaper Background */
-  background-image: radial-gradient(#d1d7db 1px, transparent 1px);
-  background-size: 20px 20px;
+const slideIn = keyframes`
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+`;
+
+// Skeleton component
+const Skeleton = styled.div`
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200px 100%;
+  animation: ${shimmer} 1.5s infinite linear;
+  border-radius: 8px;
+  height: ${props => props.$height || "16px"};
+  width: ${props => props.$width || "100%"};
+  margin-bottom: ${props => props.$margin || "0"};
+`;
+
+const PageBackground = styled.div`
+  background: #f3f2ef;
+  min-height: calc(100vh - 72px);
+  padding: 24px 0;
+
+  @media (max-width: 768px) {
+    padding: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+`;
+
+const Container = styled.div`
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
   display: flex;
-  overflow: hidden;
-  box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  z-index: 999;
+  gap: 24px;
+  height: calc(100vh - 120px);
+
+  @media (max-width: 1024px) {
+    padding: 0 16px;
+    gap: 16px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 0;
+    gap: 0;
+    height: 100vh;
+    height: 100dvh;
+  }
 `;
 
 const Sidebar = styled.div`
-  width: 380px;
-  flex-shrink: 0;
+  flex: 0 0 400px;
   background: #ffffff;
-  border-right: 1px solid #e0dfdc;
+  border-radius: 12px;
+  border: 1px solid #e0dfdc;
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  z-index: 10;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+
+  @media (max-width: 1024px) {
+    flex: 0 0 340px;
+  }
 
   @media (max-width: 768px) {
-    width: 100%;
-    display: ${(props) => (props.$active ? "none" : "flex")};
+    flex: 1;
+    border-radius: 0;
+    border: none;
+    display: ${props => (props.$active ? "none" : "flex")};
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    animation: ${fadeIn} 0.3s ease-out;
   }
 `;
 
-const ListHeader = styled.div`
-  padding-top: max(14px, calc(10px + env(safe-area-inset-top, 0px)));
-  padding-bottom: 14px;
-  padding-left: 16px;
-  padding-right: 16px;
-  background: #f0f2f5;
-  border-bottom: 1px solid #e9edef;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  box-sizing: border-box;
+const SidebarHeader = styled.div`
+  padding: 20px 24px;
+  border-bottom: 1px solid #e0dfdc;
+  background: #ffffff;
+  flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    padding: 16px 20px;
+  }
 `;
 
-const ListHeaderTop = styled.div`
+const HeaderTop = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
+  margin-bottom: 16px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 12px;
+  }
+`;
+
+const BackButton = styled.button`
+  background: none;
+  border: none;
+  color: #191919;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #f3f2ef;
+  }
+
+  @media (min-width: 769px) {
+    display: none;
+  }
 `;
 
 const ListTitle = styled.h2`
   margin: 0;
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #111b21;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  span {
+    background: #eef3f8;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #5e5e5e;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+  }
 `;
 
-const SearchContainer = styled.div`
+const SearchWrapper = styled.div`
   position: relative;
-  width: 100%;
+  margin-bottom: 12px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 10px;
+  }
 `;
 
 const SearchInput = styled.input`
   width: 100%;
-  padding: 8px 12px 8px 36px;
+  padding: 10px 14px 10px 40px;
   border-radius: 8px;
-  border: none;
-  background: #ffffff;
+  border: 1px solid #e0dfdc;
+  background: #fafafa;
   font-size: 0.875rem;
   color: #111b21;
   outline: none;
   box-shadow: inset 0 0 0 1px #e9edef;
 
   &:focus {
-    box-shadow: inset 0 0 0 1.5px #00a884;
+    background: #ffffff;
+    border-color: #0a66c2;
+    box-shadow: 0 0 0 2px rgba(10, 102, 194, 0.1);
+  }
+
+  &::placeholder {
+    color: #848482;
+  }
+
+  @media (max-width: 768px) {
+    padding: 8px 12px 8px 36px;
+    font-size: 0.8rem;
   }
 `;
 
 const SearchIcon = styled(FiSearch)`
   position: absolute;
-  left: 10px;
+  left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #667781;
-  font-size: 0.95rem;
+  color: #5e5e5e;
+  font-size: 1.1rem;
+
+  @media (max-width: 768px) {
+    left: 12px;
+    font-size: 1rem;
+  }
 `;
 
-const FilterRow = styled.div`
+const FilterContainer = styled.div`
   display: flex;
   gap: 6px;
   overflow-x: auto;
   padding-bottom: 2px;
-
+  
   &::-webkit-scrollbar {
     display: none;
+  }
+
+  @media (max-width: 768px) {
+    gap: 6px;
   }
 `;
 
 const FilterChip = styled.button`
-  padding: 5px 12px;
-  border-radius: 16px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  border: 1px solid ${(props) => (props.$active ? "#00a884" : "#e9edef")};
-  background: ${(props) => (props.$active ? "#e7fce3" : "#ffffff")};
-  color: ${(props) => (props.$active ? "#007a5a" : "#54656f")};
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid ${props => props.$active ? "transparent" : "#d1d5db"};
+  background: ${props => props.$active ? "#0a66c2" : "#ffffff"};
+  color: ${props => props.$active ? "#ffffff" : "#5e5e5e"};
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.15s;
+  transition: all 0.2s;
+  flex-shrink: 0;
 
   &:hover {
-    background: ${(props) => (props.$active ? "#e7fce3" : "#f5f6f6")};
+    background: ${props => props.$active ? "#004182" : "#f3f2ef"};
+    border-color: ${props => props.$active ? "transparent" : "#9ca3af"};
+  }
+
+  @media (max-width: 768px) {
+    padding: 4px 12px;
+    font-size: 0.75rem;
   }
 `;
 
@@ -155,48 +259,60 @@ const InquiryList = styled.div`
   flex: 1;
   overflow-y: auto;
   background: #ffffff;
-  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+  }
 `;
 
 const InquiryItem = styled.div`
   padding: 12px 16px;
   border-bottom: 1px solid #f0f2f5;
   cursor: pointer;
-  background: ${(props) => (props.$selected ? "#f0f2f5" : "#ffffff")};
-  border-left: 4px solid ${(props) => (props.$selected ? "#00a884" : "transparent")};
-  transition: background 0.15s;
+  background: ${props => props.$selected ? "#f3f7f9" : "#ffffff"};
+  border-left: 4px solid ${props => props.$selected ? "#0a66c2" : "transparent"};
+  transition: all 0.2s;
   display: flex;
-  gap: 12px;
+  gap: 14px;
 
   &:hover {
-    background: #f5f6f6;
+    background: ${props => props.$selected ? "#eef3f8" : "#fafafa"};
+  }
+
+  @media (max-width: 768px) {
+    padding: 14px 16px;
+    gap: 12px;
   }
 `;
 
 const ClientAvatar = styled.div`
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #00a884 0%, #008069 100%);
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #057642, #046237);
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 1.05rem;
-  flex-shrink: 0;
-  position: relative;
-`;
+  font-size: 1.2rem;
+  border: 2px solid #e0dfdc;
 
-const OnlineDot = styled.span`
-  position: absolute;
-  bottom: 1px;
-  right: 1px;
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  background: #25d366;
-  border: 2px solid #ffffff;
+  @media (max-width: 768px) {
+    width: 44px;
+    height: 44px;
+    font-size: 1rem;
+  }
 `;
 
 const ItemContent = styled.div`
@@ -216,27 +332,30 @@ const ClientName = styled.h4`
   margin: 0;
   font-size: 0.92rem;
   font-weight: 600;
-  color: #111b21;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: #191919;
+
+  @media (max-width: 768px) {
+    font-size: 0.875rem;
+  }
 `;
 
 const StatusBadge = styled.span`
-  font-size: 0.68rem;
-  padding: 2px 7px;
-  border-radius: 10px;
-  font-weight: 700;
+  font-size: 0.7rem;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-weight: 600;
   text-transform: capitalize;
-  background: ${(props) => {
+  flex-shrink: 0;
+  background: ${props => {
     switch (props.$status) {
       case "new": return "#e7fce3";
       case "opened": return "#fff3e0";
       case "expert_replied": return "#dcf8c6";
       case "user_replied": return "#e3f2fd";
       case "converted": return "#f3e8ff";
-      case "closed": return "#f0f2f5";
-      default: return "#f0f2f5";
+      case "closed": return "#f3f2ef";
+      case "rejected": return "#fef2f2";
+      default: return "#f3f2ef";
     }
   }};
   color: ${(props) => {
@@ -246,20 +365,42 @@ const StatusBadge = styled.span`
       case "expert_replied": return "#007a5a";
       case "user_replied": return "#0288d1";
       case "converted": return "#6b21a8";
-      case "closed": return "#667781";
-      default: return "#667781";
+      case "closed": return "#5e5e5e";
+      case "rejected": return "#b91c1c";
+      default: return "#5e5e5e";
     }
   }};
+  border: 1px solid ${props => {
+    switch (props.$status) {
+      case "new": return "#cce5ff";
+      case "opened": return "#ffe0b2";
+      case "expert_replied": return "#c8e6c9";
+      case "user_replied": return "#cce5ff";
+      case "converted": return "#e9d5ff";
+      case "closed": return "#d1d5db";
+      case "rejected": return "#fecaca";
+      default: return "#d1d5db";
+    }
+  }};
+
+  @media (max-width: 768px) {
+    font-size: 0.6rem;
+    padding: 2px 8px;
+  }
 `;
 
 const SubjectText = styled.p`
   margin: 0 0 2px 0;
-  font-size: 0.84rem;
-  font-weight: 600;
-  color: #3b4a54;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #191919;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  @media (max-width: 768px) {
+    font-size: 0.8rem;
+  }
 `;
 
 const MessagePreview = styled.p`
@@ -269,43 +410,69 @@ const MessagePreview = styled.p`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  @media (max-width: 768px) {
+    font-size: 0.7rem;
+  }
 `;
 
-const DateText = styled.span`
-  font-size: 0.72rem;
-  color: #667781;
+const DateText = styled.div`
+  font-size: 0.7rem;
+  color: #848482;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: flex-end;
+
+  svg {
+    font-size: 0.6rem;
+  }
 `;
 
 /* ------------------ MAIN CHAT DISPLAY ------------------ */
 const MainContent = styled.div`
   flex: 1;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e0dfdc;
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  position: relative;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 
   @media (max-width: 768px) {
-    display: ${(props) => (props.$active ? "flex" : "none")};
+    display: ${props => props.$active ? "flex" : "none"};
+    border-radius: 0;
+    border: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 11;
+    background: #ffffff;
+    animation: ${slideIn} 0.3s ease-out;
   }
 `;
 
-/* ------------------ FIXED WHATSAPP HEADER (SAFE AREA COMPLIANT) ------------------ */
 const WhatsAppHeader = styled.div`
-  flex: 0 0 auto;
-  min-height: calc(60px + env(safe-area-inset-top, 0px));
-  background: #f0f2f5;
-  border-bottom: 1px solid #e9edef;
-  padding-top: max(8px, env(safe-area-inset-top, 0px));
-  padding-bottom: 8px;
-  padding-left: 12px;
-  padding-right: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  z-index: 20;
-  box-shadow: 0 1px 3px rgba(11, 20, 26, 0.08);
-  box-sizing: border-box;
+  padding: 12px 16px;
+  background: #f0f2f5;
+  border-bottom: 1px solid #e9edef;
+  flex-shrink: 0;
+  gap: 12px;
+  min-height: 60px;
+
+  @media (max-width: 768px) {
+    padding: 8px 12px;
+    min-height: 54px;
+    padding-top: max(8px, env(safe-area-inset-top, 0px));
+  }
 `;
 
 const HeaderLeft = styled.div`
@@ -313,19 +480,20 @@ const HeaderLeft = styled.div`
   align-items: center;
   gap: 10px;
   min-width: 0;
+  flex: 1;
 `;
 
 const HeaderBackBtn = styled.button`
   background: none;
   border: none;
-  color: #54656f;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: #191919;
   padding: 6px;
   cursor: pointer;
   border-radius: 50%;
-  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
 
   &:hover {
     background: #e9edef;
@@ -336,7 +504,7 @@ const HeaderAvatar = styled.div`
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #00a884 0%, #008069 100%);
+  background: linear-gradient(135deg, #057642, #046237);
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -345,41 +513,21 @@ const HeaderAvatar = styled.div`
   font-size: 1rem;
   flex-shrink: 0;
   cursor: pointer;
-`;
+  transition: transform 0.2s;
 
-const HeaderTitleGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  cursor: pointer;
-`;
-
-const HeaderName = styled.h3`
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #111b21;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const HeaderSubtext = styled.span`
-  font-size: 0.75rem;
-  color: #667781;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  &:hover {
+    transform: scale(1.05);
+  }
 `;
 
 const HeaderActions = styled.div`
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex-shrink: 0;
 
   @media (max-width: 480px) {
-    gap: 3px;
+    gap: 4px;
   }
 `;
 
@@ -387,93 +535,45 @@ const HeaderIconButton = styled.button`
   background: none;
   border: none;
   color: #54656f;
-  width: 36px;
-  height: 36px;
+  padding: 8px;
+  cursor: pointer;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.2s;
 
   &:hover {
     background: #e9edef;
-    color: #111b21;
   }
 `;
 
 const ActionPill = styled.button`
-  padding: 5px 10px;
+  padding: 4px 12px;
   border-radius: 16px;
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
+  border: 1px solid ${props => props.$primary ? "transparent" : "#d1d5db"};
+  background: ${props => props.$primary ? "#00a884" : "#ffffff"};
+  color: ${props => props.$primary ? "#ffffff" : "#54656f"};
+  transition: all 0.2s;
   white-space: nowrap;
-  border: 1px solid ${(props) => (props.$primary ? "transparent" : "#cbd5e1")};
-  background: ${(props) => (props.$primary ? "#00a884" : "#ffffff")};
-  color: ${(props) => (props.$primary ? "#ffffff" : "#334155")};
-  transition: all 0.15s;
 
   &:hover:not(:disabled) {
-    background: ${(props) => (props.$primary ? "#008069" : "#f1f5f9")};
+    background: ${props => props.$primary ? "#008069" : "#f3f2ef"};
+    border-color: ${props => props.$primary ? "transparent" : "#9ca3af"};
+    color: ${props => props.$primary ? "#ffffff" : "#191919"};
   }
 
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
-`;
 
-/* ------------------ COLLAPSIBLE MODERN INQUIRY CARDS ------------------ */
-const InfoCardsDrawer = styled.div`
-  flex: 0 0 auto;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-  padding: 12px 16px;
-  max-height: 45vh;
-  overflow-y: auto;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  animation: ${fadeIn} 0.2s ease-out;
-  z-index: 15;
-`;
-
-const CardsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 10px;
-`;
-
-const ModernCard = styled.div`
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
-`;
-
-const CardHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin-bottom: 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #f1f5f9;
-`;
-
-const CardRow = styled.div`
-  font-size: 0.78rem;
-  color: #475569;
-  margin-bottom: 4px;
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-
-  strong {
-    color: #0f172a;
-    font-weight: 600;
+  @media (max-width: 480px) {
+    padding: 3px 8px;
+    font-size: 0.65rem;
   }
 `;
 
@@ -487,6 +587,8 @@ const MessagesArea = styled.div`
   gap: 12px;
   -webkit-overflow-scrolling: touch;
   min-height: 0;
+  background: #e5ddd6;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d4c9c0' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 `;
 
 const DatePill = styled.div`
@@ -572,7 +674,7 @@ const Dot = styled.span`
   animation-delay: ${(props) => props.$delay || "0s"};
 `;
 
-/* ------------------ FIXED MESSAGING INPUT BAR (SAFE AREA COMPLIANT) ------------------ */
+/* ------------------ FIXED MESSAGING INPUT BAR ------------------ */
 const InputArea = styled.form`
   flex: 0 0 auto;
   width: 100%;
@@ -669,22 +771,132 @@ const EmptyStateContainer = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  padding: 40px 20px;
-  color: #667781;
+  gap: 12px;
+  padding: 60px 24px;
+  color: #5e5e5e;
   text-align: center;
   height: 100%;
-  background: #ffffff;
+
+  svg {
+    opacity: 0.6;
+  }
+
+  h3 {
+    margin: 0;
+    color: #191919;
+    font-weight: 500;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+    max-width: 320px;
+    color: #848482;
+  }
 `;
 
-/* ------------------ SKELETON ------------------ */
-const SkeletonBox = styled.div`
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-  background-size: 200px 100%;
-  animation: ${shimmer} 1.5s infinite linear;
-  border-radius: 8px;
-  height: ${(props) => props.$height || "60px"};
-  margin-bottom: 12px;
+const EmptyState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px;
+  color: #5e5e5e;
+  text-align: center;
+  height: 100%;
+
+  svg {
+    opacity: 0.6;
+  }
+
+  h3 {
+    margin: 0;
+    color: #191919;
+    font-weight: 500;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+    max-width: 320px;
+    color: #848482;
+  }
+`;
+
+const ErrorMessage = styled.div`
+  padding: 8px 24px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.85rem;
+  border-top: 1px solid #fecaca;
+  flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    padding: 6px 16px;
+    font-size: 0.8rem;
+  }
+`;
+
+const LoadingContainer = styled.div`
+  padding: 20px;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+`;
+
+/* ------------------ COLLAPSIBLE MODERN INQUIRY CARDS ------------------ */
+const InfoCardsDrawer = styled.div`
+  flex: 0 0 auto;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 12px 16px;
+  max-height: 45vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  animation: ${fadeIn} 0.2s ease-out;
+  z-index: 15;
+`;
+
+const CardsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+`;
+
+const ModernCard = styled.div`
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+`;
+
+const CardHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f1f5f9;
+`;
+
+const CardRow = styled.div`
+  font-size: 0.78rem;
+  color: #475569;
+  margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+
+  strong {
+    color: #0f172a;
+    font-weight: 600;
+  }
 `;
 
 /* ------------------ MAIN COMPONENT ------------------ */
@@ -700,7 +912,6 @@ export default function ExpertInquiriesPage() {
   const [loading, setLoading] = useState(false);
   const [listLoading, setListLoading] = useState(true);
   const [error, setError] = useState("");
-
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -784,6 +995,7 @@ export default function ExpertInquiriesPage() {
     setSelectedInquiry(inquiry);
     setMessages([]);
     setError("");
+    setShowInfoCards(false);
     try {
       const token = localStorage.getItem("expert_token");
       const res = await fetch(`${APP_CONFIG.API_BASE_URL}/inquiries/expert/${inquiry.id}`, {
@@ -810,6 +1022,7 @@ export default function ExpertInquiriesPage() {
     const messageContent = replyText.trim();
     setReplyText("");
     setLoading(true);
+    setError("");
 
     try {
       const token = localStorage.getItem("expert_token");
@@ -823,7 +1036,12 @@ export default function ExpertInquiriesPage() {
       });
       const data = await res.json();
       if (res.ok && data.data) {
-        setMessages((prev) => [...prev, data.data]);
+        // Ensure the new message has the correct sender type
+        const newMessage = {
+          ...data.data,
+          sender_type: "expert"
+        };
+        setMessages((prev) => [...prev, newMessage]);
         setInquiries((prev) =>
           prev.map((item) =>
             item.id === selectedInquiry.id ? { ...item, status: "expert_replied", message: messageContent } : item
@@ -859,6 +1077,7 @@ export default function ExpertInquiriesPage() {
         setInquiries((prev) =>
           prev.map((item) => (item.id === selectedInquiry.id ? { ...item, status: "rejected" } : item))
         );
+        setShowInfoCards(false);
       }
     } catch (err) {
       console.error(err);
@@ -884,6 +1103,7 @@ export default function ExpertInquiriesPage() {
         setInquiries((prev) =>
           prev.map((item) => (item.id === selectedInquiry.id ? { ...item, status: "closed" } : item))
         );
+        setShowInfoCards(false);
       }
     } catch (err) {
       console.error(err);
@@ -903,6 +1123,7 @@ export default function ExpertInquiriesPage() {
         setInquiries((prev) =>
           prev.map((item) => (item.id === selectedInquiry.id ? { ...item, status: "converted" } : item))
         );
+        setShowInfoCards(false);
         alert("Inquiry converted successfully!");
       }
     } catch (err) {
@@ -910,7 +1131,6 @@ export default function ExpertInquiriesPage() {
     }
   };
 
-  /* ------------------ FILTERED INQUIRIES ------------------ */
   const filteredInquiries = useMemo(() => {
     return inquiries.filter((item) => {
       const matchesSearch =
@@ -933,238 +1153,289 @@ export default function ExpertInquiriesPage() {
     return (words[0].charAt(0) + (words[1]?.charAt(0) || "")).toUpperCase();
   };
 
+  const getStatusCount = (status) => {
+    if (status === "all") return inquiries.length;
+    if (status === "active") return inquiries.filter(i => i.status !== "closed" && i.status !== "rejected").length;
+    if (status === "closed") return inquiries.filter(i => i.status === "closed").length;
+    if (status === "rejected") return inquiries.filter(i => i.status === "rejected").length;
+    return 0;
+  };
+
+  const isInactive = selectedInquiry?.status === "closed" || selectedInquiry?.status === "rejected";
+
+  // Get the display name for a message
+  const getMessageSenderName = (msg) => {
+    if (msg.sender_type === "expert") {
+      return "You";
+    }
+    // For user messages, use the inquiry's user_name_snapshot
+    return selectedInquiry?.user_name_snapshot || "User";
+  };
+
   return (
-    <PageContainer>
-      {/* ------------------ SIDEBAR (INQUIRY LIST) ------------------ */}
-      <Sidebar $active={!!selectedInquiry}>
-        <ListHeader>
-          <ListHeaderTop>
-            <HeaderBackBtn onClick={() => navigate("/expert/home")}>
-              <FiArrowLeft size={20} />
-            </HeaderBackBtn>
-            <ListTitle>Inquiries</ListTitle>
-          </ListHeaderTop>
-          <SearchContainer>
-            <SearchIcon />
-            <SearchInput
-              type="text"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              placeholder="Search by client or subject..."
-            />
-          </SearchContainer>
-          <FilterRow>
-            <FilterChip $active={statusFilter === "all"} onClick={() => setStatusFilter("all")}>
-              All
-            </FilterChip>
-            <FilterChip $active={statusFilter === "active"} onClick={() => setStatusFilter("active")}>
-              Active
-            </FilterChip>
-            <FilterChip $active={statusFilter === "closed"} onClick={() => setStatusFilter("closed")}>
-              Closed
-            </FilterChip>
-            <FilterChip $active={statusFilter === "rejected"} onClick={() => setStatusFilter("rejected")}>
-              Rejected
-            </FilterChip>
-          </FilterRow>
-        </ListHeader>
+    <PageBackground>
+      <Container>
+        {/* Sidebar */}
+        <Sidebar $active={!!selectedInquiry}>
+          <SidebarHeader>
+            <HeaderTop>
+              <BackButton onClick={() => navigate("/expert/home")}>
+                <FiArrowLeft size={20} />
+              </BackButton>
+              <ListTitle>
+                Inquiries
+                <span>{inquiries.length}</span>
+              </ListTitle>
+            </HeaderTop>
+            <SearchWrapper>
+              <SearchIcon />
+              <SearchInput 
+                type="text" 
+                value={searchText} 
+                onChange={e => setSearchText(e.target.value)}
+                placeholder="Search by client or subject..." 
+              />
+            </SearchWrapper>
+            <FilterContainer>
+              <FilterChip $active={statusFilter === "all"} onClick={() => setStatusFilter("all")}>
+                All ({getStatusCount("all")})
+              </FilterChip>
+              <FilterChip $active={statusFilter === "active"} onClick={() => setStatusFilter("active")}>
+                Active ({getStatusCount("active")})
+              </FilterChip>
+              <FilterChip $active={statusFilter === "closed"} onClick={() => setStatusFilter("closed")}>
+                Closed ({getStatusCount("closed")})
+              </FilterChip>
+              <FilterChip $active={statusFilter === "rejected"} onClick={() => setStatusFilter("rejected")}>
+                Rejected ({getStatusCount("rejected")})
+              </FilterChip>
+            </FilterContainer>
+          </SidebarHeader>
 
-        <InquiryList>
-          {listLoading ? (
-            <div style={{ padding: "16px" }}>
-              <SkeletonBox $height="64px" />
-              <SkeletonBox $height="64px" />
-              <SkeletonBox $height="64px" />
-            </div>
-          ) : filteredInquiries.length === 0 ? (
-            <EmptyStateContainer>
-              <FiInbox size={36} color="#8696a0" />
-              <p style={{ margin: 0, fontSize: "0.9rem" }}>No inquiries found.</p>
-            </EmptyStateContainer>
-          ) : (
-            filteredInquiries.map((item) => (
-              <InquiryItem
-                key={item.id}
-                $selected={selectedInquiry?.id === item.id}
-                onClick={() => handleSelectInquiry(item)}
-              >
-                <ClientAvatar>
-                  {getInitials(item.user_name_snapshot)}
-                  <OnlineDot />
-                </ClientAvatar>
-                <ItemContent>
-                  <ItemHeader>
-                    <ClientName>{item.user_name_snapshot}</ClientName>
-                    <StatusBadge $status={item.status}>{item.status}</StatusBadge>
-                  </ItemHeader>
-                  <SubjectText>{item.subject}</SubjectText>
-                  <MessagePreview>{item.message}</MessagePreview>
-                  <div style={{ marginTop: "4px", display: "flex", justifyContent: "flex-end" }}>
-                    <DateText>{new Date(item.last_message_at || item.created_at).toLocaleDateString()}</DateText>
-                  </div>
-                </ItemContent>
-              </InquiryItem>
-            ))
-          )}
-        </InquiryList>
-      </Sidebar>
-
-      {/* ------------------ MAIN CHAT DISPLAY (IMMERSIVE WHATSAPP LOOK) ------------------ */}
-      <MainContent $active={!!selectedInquiry}>
-        {selectedInquiry ? (
-          <>
-            {/* FIXED WHATSAPP HEADER (SAFE AREA TOP COMPLIANT) */}
-            <WhatsAppHeader>
-              <HeaderLeft>
-                <HeaderBackBtn onClick={() => setSelectedInquiry(null)}>
-                  <FiArrowLeft size={20} />
-                </HeaderBackBtn>
-                <HeaderAvatar onClick={() => setShowInfoCards((prev) => !prev)}>
-                  {getInitials(selectedInquiry.user_name_snapshot)}
-                </HeaderAvatar>
-              </HeaderLeft>
-
-              <HeaderActions>
-                <HeaderIconButton onClick={() => setShowInfoCards((prev) => !prev)} title="Inquiry Info">
-                  <FiInfo size={18} />
-                </HeaderIconButton>
-                {selectedInquiry.status !== "converted" && selectedInquiry.status !== "closed" && (
-                  <ActionPill $primary onClick={handleConvertInquiry}>
-                    Convert
-                  </ActionPill>
-                )}
-                {selectedInquiry.status !== "rejected" && selectedInquiry.status !== "closed" && (
-                  <ActionPill onClick={handleRejectInquiry}>Reject</ActionPill>
-                )}
-                {selectedInquiry.status !== "closed" && <ActionPill onClick={handleCloseInquiry}>Close</ActionPill>}
-              </HeaderActions>
-            </WhatsAppHeader>
-
-            {/* COLLAPSIBLE MODERN INQUIRY CARDS */}
-            {showInfoCards && (
-              <InfoCardsDrawer>
-                <CardsGrid>
-                  <ModernCard>
-                    <CardHeader>
-                      <FiUser color="#00a884" /> Client Overview
-                    </CardHeader>
-                    <CardRow>
-                      <span>Name:</span> <strong>{selectedInquiry.user_name_snapshot}</strong>
-                    </CardRow>
-                  </ModernCard>
-
-                  <ModernCard>
-                    <CardHeader>
-                      <FiTag color="#00a884" /> Service & Category
-                    </CardHeader>
-                    <CardRow>
-                      <span>Category:</span> <strong>{selectedInquiry.category_name || "Consultation"}</strong>
-                    </CardRow>
-                    <CardRow>
-                      <span>Subcategory:</span> <strong>{selectedInquiry.subcategory_name || "General"}</strong>
-                    </CardRow>
-                    <CardRow>
-                      <span>Subject:</span> <strong>{selectedInquiry.subject}</strong>
-                    </CardRow>
-                  </ModernCard>
-
-                  <ModernCard>
-                    <CardHeader>
-                      <FiClock color="#00a884" /> Preferences & Budget
-                    </CardHeader>
-                    <CardRow>
-                      <span>Budget:</span> <strong>{selectedInquiry.budget ? `Rs ${selectedInquiry.budget}` : "Standard"}</strong>
-                    </CardRow>
-                    <CardRow>
-                      <span>Contact Method:</span> <strong>{selectedInquiry.preferred_contact_method || "Chat"}</strong>
-                    </CardRow>
-                    <CardRow>
-                      <span>Preferred Time:</span> <strong>{selectedInquiry.preferred_contact_time || "Anytime"}</strong>
-                    </CardRow>
-                    <CardRow>
-                      <span>Created Date:</span> <strong>{new Date(selectedInquiry.created_at).toLocaleDateString()}</strong>
-                    </CardRow>
-                  </ModernCard>
-                </CardsGrid>
-              </InfoCardsDrawer>
+          <InquiryList>
+            {listLoading ? (
+              <LoadingContainer>
+                <Skeleton $height="76px" $margin="12px" />
+                <Skeleton $height="76px" $margin="12px" />
+                <Skeleton $height="76px" $margin="12px" />
+                <Skeleton $height="76px" $margin="12px" />
+              </LoadingContainer>
+            ) : filteredInquiries.length === 0 ? (
+              <EmptyState>
+                <FiInbox size={48} color="#848482" />
+                <h3>No inquiries found</h3>
+                <p>{searchText ? "Try adjusting your search or filters" : "You haven't received any inquiries yet"}</p>
+              </EmptyState>
+            ) : (
+              filteredInquiries.map(item => (
+                <InquiryItem
+                  key={item.id}
+                  $selected={selectedInquiry?.id === item.id}
+                  onClick={() => handleSelectInquiry(item)}
+                >
+                  <ClientAvatar>{getInitials(item.user_name_snapshot)}</ClientAvatar>
+                  <ItemContent>
+                    <ItemHeader>
+                      <ClientName>{item.user_name_snapshot}</ClientName>
+                      <StatusBadge $status={item.status}>{item.status}</StatusBadge>
+                    </ItemHeader>
+                    <SubjectText>{item.subject}</SubjectText>
+                    <MessagePreview>{item.message}</MessagePreview>
+                    <DateText>
+                      <FiClock size={12} />
+                      {new Date(item.last_message_at).toLocaleDateString("en-US", { 
+                        month: "short", 
+                        day: "numeric",
+                        year: "numeric"
+                      })}
+                    </DateText>
+                  </ItemContent>
+                </InquiryItem>
+              ))
             )}
+          </InquiryList>
+        </Sidebar>
 
-            {/* MESSAGES SCROLL AREA */}
-            <MessagesArea>
-              <DatePill>{new Date(selectedInquiry.created_at).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</DatePill>
+        {/* Main Content */}
+        <MainContent $active={!!selectedInquiry}>
+          {selectedInquiry ? (
+            <>
+              {/* WhatsApp Header */}
+              <WhatsAppHeader>
+                <HeaderLeft>
+                  <HeaderBackBtn onClick={() => setSelectedInquiry(null)}>
+                    <FiArrowLeft size={20} />
+                  </HeaderBackBtn>
+                  <HeaderAvatar onClick={() => setShowInfoCards((prev) => !prev)}>
+                    {getInitials(selectedInquiry.user_name_snapshot)}
+                  </HeaderAvatar>
+                  <div style={{ marginLeft: 4 }}>
+                    <div style={{ fontWeight: 600, fontSize: "0.95rem", color: "#111b21" }}>
+                      {selectedInquiry.user_name_snapshot}
+                    </div>
+                    <div style={{ fontSize: "0.72rem", color: "#667781" }}>
+                      {selectedInquiry.status}
+                    </div>
+                  </div>
+                </HeaderLeft>
 
-              {messages.map((msg) => {
-                const isMe = msg.sender_type === "expert";
-                const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-                return (
-                  <MessageGroup key={msg.id} $isMe={isMe}>
-                    <MessageBubble $isMe={isMe}>
-                      <MessageSenderName $isMe={isMe}>
-                        {isMe ? "You" : selectedInquiry.user_name_snapshot}
-                      </MessageSenderName>
-                      <div>{msg.message}</div>
-                      <MessageFooter>
-                        <TimeStamp>{timeStr}</TimeStamp>
-                        {isMe && <ReadStatus $seen={true}>✓✓</ReadStatus>}
-                      </MessageFooter>
-                    </MessageBubble>
-                  </MessageGroup>
-                );
-              })}
+                <HeaderActions>
+                  <HeaderIconButton onClick={() => setShowInfoCards((prev) => !prev)} title="Inquiry Info">
+                    <FiInfo size={18} />
+                  </HeaderIconButton>
+                  {selectedInquiry.status !== "converted" && selectedInquiry.status !== "closed" && selectedInquiry.status !== "rejected" && (
+                    <ActionPill $primary onClick={handleConvertInquiry}>
+                      Convert
+                    </ActionPill>
+                  )}
+                  {selectedInquiry.status !== "rejected" && selectedInquiry.status !== "closed" && (
+                    <ActionPill onClick={handleRejectInquiry}>Reject</ActionPill>
+                  )}
+                  {selectedInquiry.status !== "closed" && selectedInquiry.status !== "rejected" && (
+                    <ActionPill onClick={handleCloseInquiry}>Close</ActionPill>
+                  )}
+                </HeaderActions>
+              </WhatsAppHeader>
 
-              {isTyping && (
-                <TypingBubble>
-                  <Dot $delay="0s" />
-                  <Dot $delay="0.2s" />
-                  <Dot $delay="0.4s" />
-                </TypingBubble>
+              {/* Collapsible Modern Inquiry Cards */}
+              {showInfoCards && (
+                <InfoCardsDrawer>
+                  <CardsGrid>
+                    <ModernCard>
+                      <CardHeader>
+                        <FiUser color="#00a884" /> Client Overview
+                      </CardHeader>
+                      <CardRow>
+                        <span>Name:</span> <strong>{selectedInquiry.user_name_snapshot}</strong>
+                      </CardRow>
+                      <CardRow>
+                        <span>Email:</span> <strong>{selectedInquiry.user_email_snapshot || "N/A"}</strong>
+                      </CardRow>
+                      <CardRow>
+                        <span>Phone:</span> <strong>{selectedInquiry.user_mobile_snapshot || "N/A"}</strong>
+                      </CardRow>
+                    </ModernCard>
+
+                    <ModernCard>
+                      <CardHeader>
+                        <FiTag color="#00a884" /> Service & Category
+                      </CardHeader>
+                      <CardRow>
+                        <span>Category:</span> <strong>{selectedInquiry.category_name || "Consultation"}</strong>
+                      </CardRow>
+                      <CardRow>
+                        <span>Subcategory:</span> <strong>{selectedInquiry.subcategory_name || "General"}</strong>
+                      </CardRow>
+                      <CardRow>
+                        <span>Subject:</span> <strong>{selectedInquiry.subject}</strong>
+                      </CardRow>
+                    </ModernCard>
+
+                    <ModernCard>
+                      <CardHeader>
+                        <FiClock color="#00a884" /> Preferences & Budget
+                      </CardHeader>
+                      <CardRow>
+                        <span>Budget:</span> <strong>{selectedInquiry.budget ? `Rs ${selectedInquiry.budget}` : "Standard"}</strong>
+                      </CardRow>
+                      <CardRow>
+                        <span>Contact Method:</span> <strong>{selectedInquiry.preferred_contact_method || "Chat"}</strong>
+                      </CardRow>
+                      <CardRow>
+                        <span>Preferred Time:</span> <strong>{selectedInquiry.preferred_contact_time || "Anytime"}</strong>
+                      </CardRow>
+                      <CardRow>
+                        <span>Created:</span> <strong>{new Date(selectedInquiry.created_at).toLocaleDateString()}</strong>
+                      </CardRow>
+                    </ModernCard>
+                  </CardsGrid>
+                </InfoCardsDrawer>
               )}
 
-              <div ref={messagesEndRef} />
-            </MessagesArea>
+              {/* Messages Area */}
+              <MessagesArea>
+                <DatePill>{new Date(selectedInquiry.created_at).toLocaleDateString(undefined, { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}</DatePill>
 
-            {error && (
-              <div style={{ padding: "8px 16px", background: "#fef2f2", color: "#991b1b", fontSize: "0.82rem" }}>
-                {error}
-              </div>
-            )}
+                {messages.map((msg) => {
+                  const isMe = msg.sender_type === "expert";
+                  const timeStr = new Date(msg.created_at).toLocaleTimeString([], { 
+                    hour: "2-digit", 
+                    minute: "2-digit" 
+                  });
+                  // Use the helper function to get the correct sender name
+                  const senderName = getMessageSenderName(msg);
+                  
+                  return (
+                    <MessageGroup key={msg.id} $isMe={isMe}>
+                      <MessageBubble $isMe={isMe}>
+                        <MessageSenderName $isMe={isMe}>
+                          {senderName}
+                        </MessageSenderName>
+                        <div>{msg.message}</div>
+                        <MessageFooter>
+                          <TimeStamp>{timeStr}</TimeStamp>
+                          {isMe && <ReadStatus $seen={true}>✓✓</ReadStatus>}
+                        </MessageFooter>
+                      </MessageBubble>
+                    </MessageGroup>
+                  );
+                })}
 
-            {/* FIXED WHATSAPP MESSAGING INPUT BAR (TEXT INPUT + ALWAYS VISIBLE SEND BUTTON) */}
-            <InputArea onSubmit={handleSendReply}>
-              <TextInput
-                type="text"
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder={
-                  selectedInquiry.status === "closed" || selectedInquiry.status === "rejected"
-                    ? "Inquiry is inactive"
-                    : "Type your message..."
-                }
-                disabled={selectedInquiry.status === "closed" || selectedInquiry.status === "rejected" || loading}
-              />
-              <SendTextButton
-                type="submit"
-                onMouseDown={(e) => e.preventDefault()}
-                onTouchStart={(e) => e.preventDefault()}
-                disabled={selectedInquiry.status === "closed" || selectedInquiry.status === "rejected" || !replyText.trim() || loading}
-              >
-                <FiSend size={15} style={{ marginRight: 6 }} />
-                Send
-              </SendTextButton>
-            </InputArea>
-          </>
-        ) : (
-          <EmptyStateContainer>
-            <FiInbox size={52} color="#00a884" />
-            <h3 style={{ margin: "0", color: "#111b21", fontSize: "1.25rem", fontWeight: 600 }}>
-              Select an Inquiry
-            </h3>
-            <p style={{ margin: 0, fontSize: "0.9rem" }}>
-              Choose an inquiry from the sidebar to start messaging.
-            </p>
-          </EmptyStateContainer>
-        )}
-      </MainContent>
-    </PageContainer>
+                {isTyping && (
+                  <TypingBubble>
+                    <Dot $delay="0s" />
+                    <Dot $delay="0.2s" />
+                    <Dot $delay="0.4s" />
+                  </TypingBubble>
+                )}
+
+                <div ref={messagesEndRef} />
+              </MessagesArea>
+
+              {error && (
+                <ErrorMessage>{error}</ErrorMessage>
+              )}
+
+              {/* Fixed WhatsApp Messaging Input Bar */}
+              <InputArea onSubmit={handleSendReply}>
+                <TextInput
+                  type="text"
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder={
+                    isInactive
+                      ? "Inquiry is inactive"
+                      : "Type your message..."
+                  }
+                  disabled={isInactive || loading}
+                />
+                <SendTextButton
+                  type="submit"
+                  disabled={isInactive || !replyText.trim() || loading}
+                >
+                  <FiSend size={15} style={{ marginRight: 6 }} />
+                  Send
+                </SendTextButton>
+              </InputArea>
+            </>
+          ) : (
+            <EmptyStateContainer>
+              <FiInbox size={52} color="#00a884" />
+              <h3 style={{ margin: "0", color: "#111b21", fontSize: "1.25rem", fontWeight: 600 }}>
+                Select an Inquiry
+              </h3>
+              <p style={{ margin: 0, fontSize: "0.9rem" }}>
+                Choose an inquiry from the sidebar to start messaging.
+              </p>
+            </EmptyStateContainer>
+          )}
+        </MainContent>
+      </Container>
+    </PageBackground>
   );
 }

@@ -1,4 +1,4 @@
-// src/apps/user/components/userExperts/ExpertCard.jsx - PREMIUM UPGRADED VERSION (NO FRONTEND FILTERING)
+// src/apps/user/components/userExperts/ExpertCard.jsx - WITH VIDEO CALL SUPPORT FIXED
 import React, { useCallback, useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -12,7 +12,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
 import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/leadTracking";
-import VideoCallButton from "../../../../shared/components/VideoCallButton";
 import { normalizeVideoCallPrice } from "../../../../shared/utils/normalizeExpertPrice";
 
 import {
@@ -22,6 +21,7 @@ import {
   AvatarSection,
   AvatarWrap,
   AvatarImg,
+  AvatarInitials,
   StatusDot,
   ExpertInfo,
   NameRow,
@@ -34,24 +34,14 @@ import {
   RatingStar,
   StatsGrid,
   StatCard,
-  PricingSection,
   PricingBadges,
   PricingBadge,
-  PriceRow,
-  PriceLabel,
-  PriceTag,
-  PriceValue,
   ActionRow,
   PrimaryBtn,
   GhostBtn,
   PricingInfo,
-  QuickActions,
-  ActionIcon,
-  HoverGlow,
   ShineEffect,
-  GradientBorder,
-  CategoryTags,
-  CategoryChip
+  GradientBorder
 } from "./ExpertCard.styles";
 
 const DEFAULT_AVATAR = "https://i.pravatar.cc/150?img=12";
@@ -62,8 +52,7 @@ const isEnabledFlag = (value) =>
   value === "1" ||
   String(value || "").toLowerCase() === "true";
 
-// REMOVED maxPrice prop - backend handles filtering
-const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
+const ExpertCard = ({ data, mode, onStartChat, onStartCall, onStartVideoCall, variant }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { isLoggedIn, user } = useAuth();
@@ -72,7 +61,6 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [showRecharge, setShowRecharge] = useState(false);
   const [requiredAmount, setRequiredAmount] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
 
   const expertId = data.id;
   const expertSlug = data.slug || data.id;
@@ -80,7 +68,7 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
   // DIRECT DATA FROM API
   const callPrice = data.call_per_minute || 0;
   const chatPrice = data.chat_per_minute || 0;
-  const videoCallPrice = normalizeVideoCallPrice(data) || 0;
+  const videoCallPrice = normalizeVideoCallPrice(data) || data.video_call_per_minute || data.videoCallPerMinute || data.video_call_price_per_minute || 0;
   const sessionPrice = data.session_price || 0;
   const sessionDuration = data.session_duration || 30;
 
@@ -102,6 +90,14 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
   );
   const routerLocation = useLocation();
 
+  // Get initials from name
+  const getInitials = useCallback((name = "") => {
+    if (!name) return "?";
+    const words = name.trim().split(" ");
+    if (words.length === 1) return words[0].charAt(0).toUpperCase();
+    return (words[0].charAt(0) + (words[1]?.charAt(0) || "")).toUpperCase();
+  }, []);
+
   const slugify = (text) => {
     if (!text) return "";
     return text.toString().toLowerCase().trim()
@@ -110,7 +106,7 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
       .replace(/\-\-+/g, '-');
   };
 
-  const { categoryName, subcategoryName, categoryChips, skillChips } = useMemo(() => {
+  const { categoryName, subcategoryName } = useMemo(() => {
     const params = new URLSearchParams(routerLocation.search);
     const catParam = params.get("category") || params.get("categoryId");
     const subParam = params.get("sub_category") || params.get("subCategory") || params.get("subcategory") || params.get("subCategoryId");
@@ -142,7 +138,6 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
       }
     }
     
-    // Check primary fallback if no match found
     if (!matchedCategory && data.category_id) {
       const catId = String(data.category_id);
       const catSlug = slugify(data.category_name);
@@ -171,7 +166,6 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
     }
     
     if (matchedCategory) {
-      // Category-specific mode: show only relevant category and relevant subcategories
       const catName = matchedCategory.category_name;
       const subNames = matchedSubcategory 
         ? [matchedSubcategory.subcategory_name]
@@ -180,44 +174,36 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
       return {
         categoryName: catName,
         subcategoryName: subNames.join(", "),
-        categoryChips: [catName],
-        skillChips: subNames.slice(0, 3)
       };
     } else {
-      // General listing/search: show expertise chips like Category 1 | Category 2 | Category 3
-      const primaryCatName = data.category_name || "";
-      const primarySubCatName = data.subcategory_name || "";
-      
-      const expertiseCategories = expertise.map((item) => item.category_name).filter(Boolean);
-      const categoryChips = expertiseCategories.length
-        ? [...new Set(expertiseCategories)].slice(0, 3)
-        : [primaryCatName].filter(Boolean);
-        
       return {
-        categoryName: primaryCatName,
-        subcategoryName: primarySubCatName,
-        categoryChips: categoryChips,
-        skillChips: []
+        categoryName: data.category_name || "",
+        subcategoryName: data.subcategory_name || "",
       };
     }
   }, [data, routerLocation.search, routerLocation.pathname]);
+  
   const location = data.location || "";
   const isPremium = data.is_premium || false;
-  const responseTime = data.avg_response_time || "< 1 min";
-  const consultationCount = data.total_consultations || 0;
   const isCallChatCard = variant === "callChat";
+  
   const chatAllowedByAdmin = isEnabledFlag(data.effective_access?.show_chat_button ?? data.effective_access?.can_chat ?? data.show_chat_button ?? data.showChatButton ?? data.can_chat ?? data.canChat);
   const callAllowedByAdmin = isEnabledFlag(data.effective_access?.show_call_button ?? data.effective_access?.can_call ?? data.show_call_button ?? data.showCallButton ?? data.can_call ?? data.canCall);
+  const videoAllowedByAdmin = isEnabledFlag(data.effective_access?.show_video_button ?? data.effective_access?.can_video_call ?? data.show_video_button ?? data.showVideoButton ?? data.can_video_call ?? data.canVideoCall);
+  
   const canUseMode = Boolean(expertId);
+  const isVideoTab = mode === "video";
+  const isCallTab = mode === "call";
+  const isChatTab = mode === "chat";
 
   const trackUserAttempt = useCallback((type) => {
     if (!expertId) return;
     trackLeadEvent(
-      type === "chat" ? "chat-attempt" : "call-attempt",
+      type === "chat" ? "chat-attempt" : type === "video" ? "video-call-attempt" : "call-attempt",
       buildTrackingPayload({
         user,
         sourcePage: "expert_card",
-        actionLabel: type === "chat" ? "Chat Now" : "Call Now",
+        actionLabel: type === "chat" ? "Chat Now" : type === "video" ? "Video Call Now" : "Call Now",
         extra: {
           expert_id: Number(expertId),
           category_id: data.category_id || data.categoryId || null,
@@ -234,18 +220,6 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
   const hasSession = sessionPrice > 0;
   const hasSubscriptionOffer = Boolean(hasSubscription && hasPerMinute);
   const hasPricingBadge = Boolean(hasPerMinute || hasSession || hasSubscription);
-
-  // REMOVED isHiddenByPrice - NO FRONTEND FILTERING
-
-  // Get lowest price for display
-  const lowestPrice = useMemo(() => {
-    if (hasPerMinute) {
-      if (mode === "call") return callPrice;
-      if (mode === "chat") return chatPrice;
-    }
-    if (hasSession) return sessionPrice;
-    return 0;
-  }, [hasPerMinute, hasSession, mode, callPrice, chatPrice, sessionPrice]);
 
   const handleStartChatLocal = useCallback(() => {
     if (!expertId) return;
@@ -348,6 +322,62 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
   }, [expertId, trackUserAttempt, isLoggedIn, navigate, expertSlug, hasPerMinute, hasSession, hasSubscription,
       callPrice, sessionPrice, balance, onStartCall, callAllowedByAdmin]);
 
+  const handleStartVideoCallLocal = useCallback(() => {
+    if (!expertId) return;
+    if (!videoAllowedByAdmin) {
+      alert("Video call is currently unavailable for this expert.");
+      return;
+    }
+    
+    if (videoCallPrice <= 0) {
+      alert("Video call pricing not configured for this expert.");
+      return;
+    }
+    
+    trackUserAttempt("video");
+
+    if (!isLoggedIn) {
+      navigate("/user/auth", { state: { from: `/user/experts/${expertSlug}` } });
+      return;
+    }
+
+    if (onStartVideoCall) {
+      onStartVideoCall(expertId);
+      return;
+    }
+
+    if (hasPerMinute && videoCallPrice > 0) {
+      const minRequired = videoCallPrice * MIN_CHAT_MINUTES;
+      const userBalance = Number(balance || 0);
+
+      if (userBalance >= minRequired) {
+        navigate(`/user/video-call/${expertSlug}`, {
+          state: { fromCard: true, callType: "video" },
+        });
+      } else {
+        setRequiredAmount(Math.max(0, minRequired - userBalance));
+        setShowRecharge(true);
+      }
+    } else if (hasSession && sessionPrice > 0) {
+      const userBalance = Number(balance || 0);
+      if (userBalance >= sessionPrice) {
+        navigate(`/user/experts/${expertSlug}`, { 
+          state: { scrollToBooking: true, bookingType: "video_session" }
+        });
+      } else {
+        setRequiredAmount(Math.max(0, sessionPrice - userBalance));
+        setShowRecharge(true);
+      }
+    } else if (hasSubscription) {
+      navigate(`/user/experts/${expertSlug}`, { 
+        state: { scrollToPlans: true }
+      });
+    } else {
+      navigate(`/user/experts/${expertSlug}`);
+    }
+  }, [expertId, trackUserAttempt, isLoggedIn, navigate, expertSlug, hasPerMinute, hasSession, hasSubscription,
+      videoCallPrice, sessionPrice, balance, onStartVideoCall, videoAllowedByAdmin]);
+
   const handleViewProfile = useCallback(() => {
     navigate(`/user/experts/${expertSlug}`);
   }, [expertSlug, navigate]);
@@ -358,25 +388,65 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
   }, []);
 
   const getButtonText = () => {
-    if (mode === "chat") {
-      if (hasPerMinute && chatPrice > 0) return `\u20B9${chatPrice}/min`;
-      if (hasSession) return `\u20B9${sessionPrice}`;
+    if (isVideoTab) {
+      if (hasPerMinute && videoCallPrice > 0) return `₹${videoCallPrice}/min`;
+      if (hasSession) return `₹${sessionPrice}`;
+      if (hasSubscription) return "Free";
+      return "--";
+    } else if (isChatTab) {
+      if (hasPerMinute && chatPrice > 0) return `₹${chatPrice}/min`;
+      if (hasSession) return `₹${sessionPrice}`;
       if (hasSubscription) return "Free";
       return "--";
     } else {
-      if (hasPerMinute && callPrice > 0) return `\u20B9${callPrice}/min`;
-      if (hasSession) return `\u20B9${sessionPrice}`;
+      if (hasPerMinute && callPrice > 0) return `₹${callPrice}/min`;
+      if (hasSession) return `₹${sessionPrice}`;
       if (hasSubscription) return "Free";
       return "--";
     }
   };
 
+  const getButtonIcon = () => {
+    if (isVideoTab) return <FiVideo size={16} />;
+    if (isChatTab) return <FiMessageSquare size={16} />;
+    return <FiPhoneCall size={16} />;
+  };
+
+  const getButtonHandler = () => {
+    if (isVideoTab) return handleStartVideoCallLocal;
+    if (isChatTab) return handleStartChatLocal;
+    return handleStartCallLocal;
+  };
+
+  const getButtonTitle = () => {
+    if (isVideoTab) return "Start video consultation";
+    if (isChatTab) return "Start chat consultation";
+    return "Start voice call";
+  };
+
   const isButtonDisabled = () => {
     if (!canUseMode) return true;
-    if (mode === "chat" && !chatAllowedByAdmin) return true;
-    if (mode !== "chat" && !callAllowedByAdmin) return true;
+    if (isChatTab && !chatAllowedByAdmin) return true;
+    if (isVideoTab && !videoAllowedByAdmin) return true;
+    if (isCallTab && !callAllowedByAdmin) return true;
     return false;
   };
+
+  // Get the appropriate price for the current mode
+  const getModePrice = () => {
+    if (isVideoTab) return videoCallPrice;
+    if (isChatTab) return chatPrice;
+    return callPrice;
+  };
+
+  const currentPrice = getModePrice();
+  const initials = getInitials(data.name);
+
+  // Check if there's a valid profile photo
+  const hasValidPhoto = data.profile_photo && 
+    !data.profile_photo.includes("default") && 
+    !data.profile_photo.includes("placeholder") &&
+    data.profile_photo.length > 10;
 
   // Animation variants
   const cardVariants = {
@@ -404,7 +474,11 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
             <CardHeader $callChat={isCallChatCard}>
               <AvatarSection>
                 <AvatarWrap $isAI={false} $callChat={isCallChatCard} isHovered={isHovered}>
-                  <AvatarImg src={data.profile_photo || DEFAULT_AVATAR} alt={data.name} />
+                  {hasValidPhoto ? (
+                    <AvatarImg src={data.profile_photo} alt={data.name} />
+                  ) : (
+                    <AvatarInitials>{initials}</AvatarInitials>
+                  )}
                   <StatusDot $online={data.isOnline === true} />
                 </AvatarWrap>
               </AvatarSection>
@@ -459,9 +533,6 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
                     {followersCount.toLocaleString()} followers
                   </MetaItem>
                 </MetaRow>
-
-                
-                
               </ExpertInfo>
             </CardHeader>
 
@@ -510,25 +581,21 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
               <PricingBadges $callChat={isCallChatCard}>
                 {hasPerMinute && (
                   <PricingBadge type="per_minute">
-                    <FiZap size={12} /> {t("expertCard.flexiblePricing")}
+                    <FiZap size={12} /> {isVideoTab ? "Video / min" : "Flexible"}
                   </PricingBadge>
                 )}
                 {hasSession && (
                   <PricingBadge type="session">
-                    <FiClock size={12} /> {t("expertCard.sessionBased")}
+                    <FiClock size={12} /> Session Based
                   </PricingBadge>
                 )}
                 {hasSubscription && !hasPerMinute && !hasSession && (
                   <PricingBadge type="plans">
-                    <FiShield size={12} /> {t("expertCard.subscriptionPlans")}
+                    <FiShield size={12} /> Subscription
                   </PricingBadge>
                 )}
               </PricingBadges>
             )}
-
-
-
-           
 
             {/* Subscription Hint */}
             {hasSubscriptionOffer && (
@@ -538,27 +605,24 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, variant }) => {
               </PricingInfo>
             )}
 
-            {/* Action Buttons */}
+            {/* Action Buttons - Only show mode-specific button */}
             <ActionRow $callChat={isCallChatCard}>
+              {/* Primary Action Button - Only for current mode */}
               <PrimaryBtn
                 $callChat={isCallChatCard}
                 disabled={isButtonDisabled()}
-                onClick={mode === "chat" ? handleStartChatLocal : handleStartCallLocal}
+                onClick={getButtonHandler()}
                 whileTap={{ scale: 0.97 }}
-                title={mode === "chat" ? "Start chat consultation" : "Start voice call"}
-                aria-label={mode === "chat" ? "Start chat consultation" : "Start voice call"}
+                title={getButtonTitle()}
+                aria-label={getButtonTitle()}
+                $isVideo={isVideoTab}
               >
-                {mode === "chat" ? <FiMessageSquare size={16} /> : <FiPhoneCall size={16} />}
+                {getButtonIcon()}
                 {getButtonText()}
               </PrimaryBtn>
-              <VideoCallButton
-                expert={data}
-                expertId={expertId}
-                sourceContext={isCallChatCard ? "call_chat_listing" : "expert_listing"}
-                compact
-              />
+              
               <GhostBtn $callChat={isCallChatCard} onClick={handleViewProfile} whileTap={{ scale: 0.97 }}>
-                {t("expertCard.profile")}
+                Profile
               </GhostBtn>
             </ActionRow>
           </CardInner>
@@ -644,6 +708,7 @@ const areExpertCardPropsEqual = (prev, next) => {
     prev.variant === next.variant &&
     prev.onStartChat === next.onStartChat &&
     prev.onStartCall === next.onStartCall &&
+    prev.onStartVideoCall === next.onStartVideoCall &&
     prevData.id === nextData.id &&
     prevData.name === nextData.name &&
     prevData.profile_photo === nextData.profile_photo &&
@@ -653,8 +718,10 @@ const areExpertCardPropsEqual = (prev, next) => {
     normalizeVideoCallPrice(prevData) === normalizeVideoCallPrice(nextData) &&
     prevData.show_chat_button === nextData.show_chat_button &&
     prevData.show_call_button === nextData.show_call_button &&
+    prevData.show_video_button === nextData.show_video_button &&
     prevData.can_chat === nextData.can_chat &&
     prevData.can_call === nextData.can_call &&
+    prevData.can_video_call === nextData.can_video_call &&
     prevData.session_price === nextData.session_price &&
     prevData.avg_rating === nextData.avg_rating &&
     prevData.total_reviews === nextData.total_reviews &&

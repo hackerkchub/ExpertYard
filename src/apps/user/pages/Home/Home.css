@@ -2143,8 +2143,9 @@ body {
   .home-desktop-shell {
     grid-template-columns: 232px minmax(0, 1fr) 286px;
     gap: 18px;
+    right: 0;
     padding-left: 20px;
-    padding-right: 20px;
+    padding-right:0;
   }
 
   .home-sidebar-card--nav a {
@@ -2738,6 +2739,7 @@ body {
   box-sizing: border-box !important;
   position: relative !important;
   clear: both !important;
+  overflow: hidden;
 }
 
 /* Desktop footer with sidebars */
@@ -2762,6 +2764,7 @@ body {
 @media (max-width: 1280px) and (min-width: 1024px) {
   .home-footer-container,
   .default-footer-container {
+    
     padding-left: calc(var(--sidebar-width, 260px) + 16px) !important;
     padding-right: calc(var(--right-sidebar-width, 300px) + 16px) !important;
   }

@@ -12,7 +12,7 @@ const HomeBanner = React.memo(function HomeBanner({
         <div className="banner-skeleton-content">
           <span />
           <span />
-          <span />
+          {/* <span /> */}
         </div>
 
         <div className="banner-skeleton-image" />

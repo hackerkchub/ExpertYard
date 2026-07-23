@@ -413,7 +413,7 @@ public final class SocketEmitter {
                 Log.d(TAG, "Video call cancel - CallId: " + callId);
             }
 
-            String event = isVideo(callType) ? "video-call:cancel" : "call:cancel";
+            String event = isVideo(callType) ? "video-call:cancel" : "call:end";
             
             emit(event, object, callback);
 

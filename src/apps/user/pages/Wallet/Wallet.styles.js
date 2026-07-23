@@ -162,10 +162,12 @@ export const BalanceCard = styled.div`
     margin-bottom: 14px;
 
     h3 {
-      margin: 0;
-      font-size: 0.98rem;
-      color: rgba(255, 255, 255, 0.78);
-      font-weight: 750;
+      color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  position: relative;
+  z-index: 5;
     }
 
     &::after {

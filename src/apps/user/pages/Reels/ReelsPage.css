@@ -1,8 +1,8 @@
 /* ========================================
-   REELS PAGE - PREMIUM DESKTOP STYLES
+   REELS PAGE - COMPLETE STYLES
    ======================================== */
 
-/* Desktop Expert Avatar with Online Indicator */
+/* ===== DESKTOP EXPERT AVATAR ===== */
 .desktop-expert-avatar-wrapper {
   position: relative;
   flex-shrink: 0;
@@ -20,13 +20,21 @@
   z-index: 2;
 }
 
-/* Desktop Expert Meta Info */
+/* ===== DESKTOP EXPERT INFO ===== */
 .desktop-expert-info {
   display: flex;
   flex-direction: column;
   gap: 6px;
   min-width: 0;
   flex: 1;
+}
+
+.desktop-expert-info h3{
+    color:#fff !important;
+}
+
+.desktop-expert-info h3 *{
+    color:#fff !important;
 }
 
 .desktop-expert-meta {
@@ -54,7 +62,7 @@
   font-weight: 600;
 }
 
-/* Statistics Row - Horizontal Cards */
+/* ===== STATISTICS ROW ===== */
 .desktop-stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -66,21 +74,21 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px 6px;
+  padding: 12px 6px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
+  border-radius: 14px;
   transition: all 0.3s ease;
 }
 
 .desktop-stat-card:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.12);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .desktop-stat-card .stat-icon {
-  font-size: 16px;
+  font-size: 18px;
   color: #a1a1aa;
   margin-bottom: 2px;
 }
@@ -104,7 +112,7 @@
   letter-spacing: 0.3px;
 }
 
-/* Quick Actions Grid */
+/* ===== QUICK ACTIONS ===== */
 .desktop-actions-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -117,22 +125,22 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 4px;
+  padding: 10px 8px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
+  border-radius: 12px;
   color: #a1a1aa;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.25s ease;
   font-family: inherit;
 }
 
-.desktop-action-btn:hover {
+.desktop-action-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.12);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .desktop-action-btn.active.liked {
@@ -158,7 +166,14 @@
   flex-shrink: 0;
 }
 
-/* CTA Grid - Full Width Buttons */
+.desktop-action-btn span {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== CTA BUTTONS ===== */
 .desktop-cta-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -171,9 +186,9 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 8px;
-  border-radius: 12px;
-  font-size: 13px;
+  padding: 14px 12px;
+  border-radius: 14px;
+  font-size: 14px;
   font-weight: 800;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -210,7 +225,7 @@
   flex-shrink: 0;
 }
 
-/* Comments Toggle */
+/* ===== COMMENTS TOGGLE ===== */
 .desktop-comments-toggle {
   margin-top: 2px;
 }
@@ -220,12 +235,12 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 10px 14px;
+  padding: 12px 16px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
+  border-radius: 14px;
   color: #d4d4d8;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.25s ease;
@@ -242,13 +257,13 @@
   color: #3b82f6;
 }
 
-/* Expanded Comments */
+/* ===== EXPANDED COMMENTS ===== */
 .desktop-comments-expanded {
-  margin-top: 10px;
-  padding: 12px;
+  margin-top: 12px;
+  padding: 16px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
+  border-radius: 16px;
   max-height: 320px;
   overflow-y: auto;
 }
@@ -270,8 +285,8 @@
 .desktop-comments-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .desktop-comments-loading {
@@ -289,14 +304,14 @@
 
 .desktop-comment-item {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: flex-start;
   padding: 6px 0;
 }
 
 .desktop-comment-avatar {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
@@ -308,15 +323,15 @@
 }
 
 .desktop-comment-name {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: #d4d4d8;
 }
 
 .desktop-comment-text {
-  font-size: 13px;
+  font-size: 14px;
   color: #a1a1aa;
-  margin: 2px 0 0;
+  margin: 4px 0 0;
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
@@ -325,7 +340,7 @@
   background: none;
   border: none;
   color: #3b82f6;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   padding: 6px 0;
@@ -337,23 +352,23 @@
   text-decoration: underline;
 }
 
-/* Comment Form */
+/* ===== COMMENT FORM ===== */
 .desktop-comment-form {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .desktop-comment-input {
   flex: 1;
   min-width: 0;
-  padding: 8px 14px;
+  padding: 10px 16px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 99px;
   color: #ffffff;
-  font-size: 13px;
+  font-size: 14px;
   font-family: inherit;
   outline: none;
   transition: border-color 0.2s ease;
@@ -368,12 +383,12 @@
 }
 
 .desktop-comment-submit {
-  padding: 8px 16px;
+  padding: 10px 20px;
   background: #3b82f6;
   border: none;
   border-radius: 99px;
   color: #ffffff;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
   cursor: pointer;
   transition: opacity 0.2s ease;
@@ -385,7 +400,7 @@
   opacity: 0.85;
 }
 
-/* Mobile Empty State */
+/* ===== MOBILE EMPTY STATE ===== */
 .reels-empty-state {
   text-align: center;
   padding: 40px 20px;
@@ -407,34 +422,44 @@
    RESPONSIVE BREAKPOINTS
    ======================================== */
 
-/* Tablet */
+/* Tablet - 2 column layout */
 @media (max-width: 1100px) {
   .desktop-stats-row {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr) !important;
   }
   
   .desktop-actions-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr) !important;
   }
   
   .desktop-cta-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
   }
 }
 
-/* Mobile - Hide all desktop-specific elements */
+/* Mobile - Hide all desktop elements */
 @media (max-width: 991px) {
   .desktop-stats-row,
   .desktop-actions-grid,
   .desktop-cta-grid,
   .desktop-comments-toggle,
   .desktop-comments-expanded,
-  .desktop-expert-meta {
+  .desktop-expert-meta,
+  .desktop-expert-avatar-wrapper,
+  .desktop-online-dot,
+  .desktop-expert-info {
     display: none !important;
   }
 }
 
-/* Dark mode support for all elements */
+/* Desktop - Hide mobile action column and CTA */
+@media (min-width: 992px) {
+  .reel-actions-overlay {
+    display: none !important;
+  }
+}
+
+/* Dark mode support */
 @media (prefers-color-scheme: dark) {
   .desktop-stat-card {
     background: rgba(255, 255, 255, 0.03);
@@ -452,3 +477,26 @@
     background: rgba(255, 255, 255, 0.03);
   }
 }
+
+/* Fix mobile bottom spacing */
+@media (max-width: 767px) {
+  .g9-reels-page-active .reel-slide {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 360px) {
+  .reel-actions-overlay {
+    bottom: 96px !important;
+    right: 8px !important;
+    gap: 10px !important;
+  }
+  
+  .reel-actions-overlay .action-button {
+    width: 42px !important;
+    height: 42px !important;
+  }
+}
+

@@ -338,7 +338,7 @@ function ExpertLayoutInner() {
         <Outlet />
       </ContentWrapper>
 
-      <ExpertBottomNavbar />
+     {!isExpertInquiryPage && <ExpertBottomNavbar />}
 {!Capacitor.isNativePlatform() && (
   <>
     <IncomingCallPopup

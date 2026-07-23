@@ -45,35 +45,89 @@ public class MyFirebaseMessagingService extends MessagingService {
 
         Log.d(TAG, "TYPE = " + type);
 
+        // Step 1: Read action from payload
+        String action = message.getData().get("action");
+        if (action == null) {
+            action = "";
+        } else {
+            action = action.trim().toLowerCase();
+        }
+        Log.d(TAG, "ACTION = " + action);
+
         switch (type) {
             case "incoming_call":
             case "voice_call":
             case "video_call":
-                // Step 1: Cleanup before showing incoming call
-                CallNotificationHelper.cancelIncomingCallNotification(this, null);
-                NotificationManagerCompat.from(this)
-                        .cancel(CallNotificationHelper.MISSED_NOTIFICATION_ID);
+                // Old payloads don't have action, so treat empty as incoming
+                if (action.isEmpty() || "incoming".equals(action)) {
+                    // Step 1: Cleanup before showing incoming call
+                    CallNotificationHelper.cancelIncomingCallNotification(this, null);
+                    NotificationManagerCompat.from(this)
+                            .cancel(CallNotificationHelper.MISSED_NOTIFICATION_ID);
 
-                // ✅ START FOREGROUND SERVICE FOR VOICE / VIDEO CALLS
-                Log.d(TAG, "📞 Incoming Call: " + message.getData());
+                    // ✅ START FOREGROUND SERVICE FOR VOICE / VIDEO CALLS
+                    Log.d(TAG, "📞 Incoming Call: " + message.getData());
 
-                Intent serviceIntent = new Intent(this, IncomingCallForegroundService.class);
-                serviceIntent.setAction(IncomingCallForegroundService.ACTION_START);
+                    Intent serviceIntent = new Intent(this, IncomingCallForegroundService.class);
+                    serviceIntent.setAction(IncomingCallForegroundService.ACTION_START);
 
-                for (String key : message.getData().keySet()) {
-                    serviceIntent.putExtra(key, message.getData().get(key));
+                    for (String key : message.getData().keySet()) {
+                        serviceIntent.putExtra(key, message.getData().get(key));
+                    }
+
+                    try {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            startForegroundService(serviceIntent);
+                            Log.d(TAG, "✅ startForegroundService() called");
+                        } else {
+                            startService(serviceIntent);
+                            Log.d(TAG, "✅ startService() called");
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "❌ Failed to start IncomingCallForegroundService", e);
+                    }
+                    break;
                 }
 
-                try {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        startForegroundService(serviceIntent);
-                        Log.d(TAG, "✅ startForegroundService() called");
-                    } else {
-                        startService(serviceIntent);
-                        Log.d(TAG, "✅ startService() called");
+                // New backend actions - cancel/decline/end
+                if ("cancel".equals(action)
+                        || "decline".equals(action)
+                        || "end".equals(action)) {
+
+                    Log.d(TAG, "📴 Call closed by remote side. Action = " + action);
+
+                    // 1. Stop ringtone
+                    CallRingtoneManager.stop();
+
+                    // 2. Get call ID
+                    String cancelCallId = message.getData().get("callId");
+                    if (cancelCallId == null) cancelCallId = message.getData().get("call_id");
+                    if (cancelCallId == null) cancelCallId = message.getData().get("request_id");
+
+                    // 3. Dismiss notification
+                    CallNotificationHelper.cancelIncomingCallNotification(this, cancelCallId);
+
+                    // 4. Stop the foreground service
+                    try {
+                        Intent stopIntent = new Intent(this, IncomingCallForegroundService.class);
+                        stopIntent.setAction(IncomingCallForegroundService.ACTION_STOP);
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            startForegroundService(stopIntent);
+                        } else {
+                            startService(stopIntent);
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Failed to stop foreground service", e);
                     }
-                } catch (Exception e) {
-                    Log.e(TAG, "❌ Failed to start IncomingCallForegroundService", e);
+
+                    // 5. Finish the activity screen instantly
+                    IncomingCallActivity.finishActiveInstance();
+
+                    // 6. Update state
+                    CallStateManager.setIncomingVisible(this, false, null);
+
+                    break;
                 }
                 break;
 
@@ -90,6 +144,7 @@ public class MyFirebaseMessagingService extends MessagingService {
                 CallNotificationHelper.showIncomingCall(this, message.getData());
                 break;
 
+            // Step 3: Keep old cases for backward compatibility
             case "call_cancelled":
             case "video_call_cancelled":
             case "chat_cancelled":
@@ -126,6 +181,7 @@ public class MyFirebaseMessagingService extends MessagingService {
                 CallStateManager.setIncomingVisible(this, false, null);
                 break;
 
+            // Step 4: call_missed - No changes
             case "call_missed":
                 Log.d(TAG, "📴 Call Missed: " + message.getData());
                 CallNotificationHelper.cancelIncomingCallNotification(this, null);

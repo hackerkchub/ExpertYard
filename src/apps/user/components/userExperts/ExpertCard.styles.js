@@ -164,6 +164,27 @@ export const AvatarImg = styled.img`
   border: 2px solid white;
 `;
 
+// Avatar Initials component for when no photo is available
+export const AvatarInitials = styled.div`
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0a66c2, #004182);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.2rem;
+  border: 2px solid white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  
+  @media (max-width: 640px) {
+    font-size: 1rem;
+  }
+`;
+
 export const StatusDot = styled.span`
   position: absolute;
   right: 2px;
@@ -516,6 +537,11 @@ export const PricingBadge = styled.span`
     background: linear-gradient(135deg, #ede9fe, #ddd6fe);
     color: #5b21b6;
   `}
+  
+  ${props => props.type === 'video' && css`
+    background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+    color: #6d28d9;
+  `}
 `;
 
 export const PriceRow = styled.div`
@@ -660,9 +686,17 @@ export const PrimaryBtn = styled(motion.button)`
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: linear-gradient(135deg, #ffd23f, #ffc107);
-  color: #000080;
-  box-shadow: 0 12px 22px rgba(255, 193, 7, 0.22);
+  background: ${({ $isVideo }) => 
+    $isVideo 
+      ? 'linear-gradient(135deg, #7c3aed, #6d28d9)' 
+      : 'linear-gradient(135deg, #ffd23f, #ffc107)'
+  };
+  color: ${({ $isVideo }) => $isVideo ? '#ffffff' : '#000080'};
+  box-shadow: ${({ $isVideo }) => 
+    $isVideo 
+      ? '0 12px 22px rgba(124, 58, 237, 0.22)' 
+      : '0 12px 22px rgba(255, 193, 7, 0.22)'
+  };
   transition: transform 180ms ease, box-shadow 180ms ease;
   white-space: nowrap;
   overflow: hidden;
@@ -685,7 +719,11 @@ export const PrimaryBtn = styled(motion.button)`
   
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 16px 28px rgba(255, 193, 7, 0.3);
+    box-shadow: ${({ $isVideo }) => 
+      $isVideo 
+        ? '0 16px 28px rgba(124, 58, 237, 0.3)' 
+        : '0 16px 28px rgba(255, 193, 7, 0.3)'
+    };
   }
   
   &:disabled {
@@ -731,6 +769,36 @@ export const GhostBtn = styled(motion.button)`
   @media (max-width: 380px) {
     width: ${({ $callChat }) => ($callChat ? "100%" : "auto")};
   }
+`;
+
+// Video-specific styles
+export const VideoIconWrapper = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+`;
+
+export const VideoCallIndicator = styled.div`
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  z-index: 3;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
 `;
 
 // Responsive utilities

@@ -22,6 +22,8 @@ import {
   X,
   Gift,
   Film,
+  Video,
+  Play,
 } from "lucide-react";
 
 import "./Home.css";
@@ -178,6 +180,23 @@ const formatPostDate = (value) => {
     month: "short",
     year: "numeric",
   });
+};
+
+// Helper function to get initials from name
+const getInitials = (name = "") => {
+  if (!name) return "?";
+  const words = name.trim().split(" ");
+  if (words.length === 1) return words[0].charAt(0).toUpperCase();
+  return (words[0].charAt(0) + (words[1]?.charAt(0) || "")).toUpperCase();
+};
+
+// Check if there's a valid profile photo
+const hasValidPhoto = (photo) => {
+  return photo && 
+    !photo.includes("default") && 
+    !photo.includes("placeholder") &&
+    !photo.includes("avatar") &&
+    photo.length > 10;
 };
 
 const normalizeExpertTipPost = (post = {}) => {
@@ -934,16 +953,18 @@ export default function HomePage() {
   return (
     <main className="home-feed-page">
       <HomeHeader
-        onMenuOpen={() => setMenuOpen(true)}
-        onProfileOpen={() => navigate(isLoggedIn ? "/user/user-profile" : "/user/auth")}
-        onLocationSelect={setSelectedLocation}
-        onNotificationOpen={() => navigate("/user/notifications")}
-        onWalletOpen={() => navigate("/user/wallet")}
-        onFilterOpen={() => navigate("/user/search")}
-        balance={balance}
-        user={user}
-      />
-
+  isLoggedIn={isLoggedIn}
+  user={user}
+  balance={balance}
+  onLogin={openLogin}
+  onLogout={logout}
+  onMenuOpen={() => setMenuOpen(true)}
+  onProfileOpen={() => navigate(isLoggedIn ? "/user/user-profile" : "/user/auth")}
+  onLocationSelect={setSelectedLocation}
+  onNotificationOpen={() => navigate("/user/notifications")}
+  onWalletOpen={() => navigate("/user/wallet")}
+  onFilterOpen={() => navigate("/user/search")}
+/>
       {menuOpen ? (
         <div className="home-menu-layer">
           <button type="button" className="home-menu-backdrop" onClick={() => setMenuOpen(false)} aria-label="Close menu" />
@@ -983,6 +1004,10 @@ export default function HomePage() {
               <PhoneCall size={19} />
               Quick Call
             </button>
+            <button type="button" onClick={() => navigate("/user/call-chat?page=1&mode=video")}>
+              <Video size={19} />
+              Quick Video
+            </button>
             <button type="button" onClick={() => navigate("/user/all-services")}>
               <BriefcaseBusiness size={19} />
               Quick Services
@@ -1015,7 +1040,6 @@ export default function HomePage() {
           <HomeSearch onSearch={handleSearch} selectedCategoryName={selectedCategoryName} />
           
           <section className="home-hero-card" aria-label="G9Expert Marketplace Hero">
-            {/* Desktop-specific layout */}
             <div className="desktop-hero-layout">
               <div className="desktop-hero-left">
                 <span className="home-hero-eyebrow">
@@ -1037,6 +1061,10 @@ export default function HomePage() {
                   <button type="button" className="desktop-hero-action-btn call-btn" onClick={() => navigate("/user/call-chat?page=1&mode=call")}>
                     <span className="action-btn-icon"><PhoneCall size={18} /></span>
                     <span>Call</span>
+                  </button>
+                  <button type="button" className="desktop-hero-action-btn video-btn" onClick={() => navigate("/user/call-chat?page=1&mode=video")}>
+                    <span className="action-btn-icon"><Video size={18} /></span>
+                    <span>Video Call</span>
                   </button>
                   <button type="button" className="desktop-hero-action-btn service-btn" onClick={() => navigate("/user/all-services")}>
                     <span className="action-btn-icon"><BriefcaseBusiness size={18} /></span>
@@ -1078,11 +1106,11 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <div className="floating-card card-service">
-                    <div className="service-bubble-icon">📄</div>
+                  <div className="floating-card card-video">
+                    <div className="video-bubble-icon">🎥</div>
                     <div className="card-info">
-                      <h4>ITR Filing</h4>
-                      <p>Completed successfully</p>
+                      <h4>Video Call</h4>
+                      <p>Face-to-face consultation</p>
                     </div>
                   </div>
                 </div>
@@ -1111,9 +1139,13 @@ export default function HomePage() {
                   <PhoneCall size={16} />
                   <span>Call</span>
                 </button>
+                <button type="button" className="mobile-action-card video-btn" onClick={() => navigate("/user/call-chat?page=1&mode=video")}>
+                  <Video size={16} />
+                  <span>Video</span>
+                </button>
                 <button type="button" className="mobile-action-card service-btn" onClick={() => navigate("/user/all-services")}>
                   <BriefcaseBusiness size={16} />
-                  <span>Book Service</span>
+                  <span>Service</span>
                 </button>
               </div>
             </div>
@@ -1213,7 +1245,7 @@ export default function HomePage() {
               </div>
             </section>
 
-            {/* Expert Reels Section */}
+            {/* Expert Reels Section - FIXED WITH IMAGES */}
             {homeReels && homeReels.length > 0 && (
               <section className="marketplace-section reels-home-section">
                 <div className="marketplace-section-header">
@@ -1221,20 +1253,168 @@ export default function HomePage() {
                   <button type="button" onClick={() => navigate("/user/reels")}>View All Reels</button>
                 </div>
                 <div className="home-reels-slider">
-                  {homeReels.map((reel) => (
-                    <div 
-                      key={reel.id} 
-                      className="home-reel-thumbnail-card clickable-card"
-                      onClick={() => navigate(`/user/reels/${reel.slug}`)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <img src={reel.thumbnail_url || "https://placehold.co/180x320/121214/ffffff?text=Reel"} alt={reel.title} />
-                      <div className="home-reel-card-overlay">
-                        <span className="reel-title">{reel.title}</span>
-                        <span className="expert-name">by {reel.expert_name}</span>
+                  {homeReels.map((reel) => {
+                    const thumbnailUrl = reel.thumbnail_url || reel.image_url || reel.cover_image || reel.thumbnail;
+                    const videoUrl = reel.video_url || reel.video || reel.url;
+                    
+                    return (
+                      <div 
+                        key={reel.id} 
+                        className="home-reel-thumbnail-card clickable-card"
+                        onClick={() => navigate(`/user/reels/${reel.slug || reel.id}`)}
+                        style={{ 
+                          cursor: "pointer",
+                          position: "relative",
+                          borderRadius: "12px",
+                          overflow: "hidden",
+                          background: "#121214",
+                          minWidth: "160px",
+                          maxWidth: "200px",
+                          flex: "0 0 auto",
+                          aspectRatio: "9/16",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                          transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = "scale(1.03)";
+                          e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.25)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = "scale(1)";
+                          e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+                        }}
+                      >
+                        {thumbnailUrl ? (
+                          <>
+                            <img 
+                              src={thumbnailUrl} 
+                              alt={reel.title || "Reel"} 
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                display: "block",
+                              }}
+                              loading="lazy"
+                              onError={(e) => {
+                                e.target.style.display = "none";
+                                const parent = e.target.parentElement;
+                                const fallback = document.createElement("div");
+                                fallback.style.cssText = `
+                                  width: 100%;
+                                  height: 100%;
+                                  display: flex;
+                                  flex-direction: column;
+                                  align-items: center;
+                                  justify-content: center;
+                                  background: linear-gradient(135deg, #1a1a2e, #16213e);
+                                  color: #ffffff;
+                                  padding: 12px;
+                                  text-align: center;
+                                `;
+                                fallback.innerHTML = `
+                                  <span style="font-size: 32px; margin-bottom: 8px;">🎬</span>
+                                  <span style="font-size: 12px; font-weight: 600;">${reel.title || "Expert Reel"}</span>
+                                `;
+                                parent.appendChild(fallback);
+                              }}
+                            />
+                            {/* Play Button Overlay */}
+                            <div style={{
+                              position: "absolute",
+                              top: "50%",
+                              left: "50%",
+                              transform: "translate(-50%, -50%)",
+                              width: "44px",
+                              height: "44px",
+                              borderRadius: "50%",
+                              background: "rgba(0, 0, 0, 0.6)",
+                              backdropFilter: "blur(4px)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              border: "2px solid rgba(255,255,255,0.3)",
+                              boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+                              transition: "all 0.3s ease",
+                            }}>
+                              <Play size={20} color="#ffffff" fill="#ffffff" />
+                            </div>
+                            {/* Duration Badge */}
+                            {reel.duration && (
+                              <div style={{
+                                position: "absolute",
+                                bottom: "12px",
+                                right: "12px",
+                                background: "rgba(0, 0, 0, 0.75)",
+                                color: "#ffffff",
+                                padding: "2px 8px",
+                                borderRadius: "4px",
+                                fontSize: "11px",
+                                fontWeight: "600",
+                                backdropFilter: "blur(4px)",
+                              }}>
+                                {reel.duration}
+                              </div>
+                            )}
+                            {/* Title Overlay */}
+                            <div style={{
+                              position: "absolute",
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              padding: "12px 8px",
+                              background: "linear-gradient(transparent, rgba(0,0,0,0.7))",
+                              color: "#ffffff",
+                            }}>
+                              <span style={{
+                                fontSize: "12px",
+                                fontWeight: "600",
+                                display: "block",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}>
+                                {reel.title || "Expert Reel"}
+                              </span>
+                              {reel.expert_name && (
+                                <span style={{
+                                  fontSize: "10px",
+                                  opacity: 0.8,
+                                  display: "block",
+                                }}>
+                                  by {reel.expert_name}
+                                </span>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          // Fallback when no thumbnail
+                          <div style={{
+                            width: "100%",
+                            height: "100%",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: "linear-gradient(135deg, #1a1a2e, #16213e)",
+                            color: "#ffffff",
+                            padding: "16px",
+                            textAlign: "center",
+                          }}>
+                            <Film size={32} style={{ marginBottom: "8px", opacity: 0.6 }} />
+                            <span style={{ fontSize: "13px", fontWeight: "600" }}>
+                              {reel.title || "Expert Reel"}
+                            </span>
+                            {reel.expert_name && (
+                              <span style={{ fontSize: "11px", opacity: 0.7, marginTop: "4px" }}>
+                                by {reel.expert_name}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             )}
@@ -1246,50 +1426,55 @@ export default function HomePage() {
                 <button type="button" onClick={() => navigate("/user/call-chat?page=1")}>View All Experts</button>
               </div>
               <div className="marketplace-grid experts-grid">
-                {desktopExpertsList.length > 0 ? desktopExpertsList.map((exp, idx) => (
-                  <div 
-                    className="marketplace-expert-card clickable-card" 
-                    key={exp.id || exp.expert_id || idx}
-                    onClick={() => navigate(exp.expert_slug || exp.slug || exp.id ? `/user/experts/${exp.expert_slug || exp.slug || exp.id}` : "/user/call-chat?page=1")}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <div className="expert-card-top">
-                      <div className="expert-avatar-wrapper">
-                        {exp.profile_photo ? (
-                          <img src={exp.profile_photo} alt="" />
-                        ) : (
-                          <div className="expert-avatar-fallback">{String(exp.name || exp.expert_name || "GE").slice(0, 2).toUpperCase()}</div>
-                        )}
-                        <span className={`status-dot ${exp.is_online || exp.online_status === "online" ? "online" : "offline"}`} />
-                      </div>
-                      <div className="expert-info">
-                        <h3>
-                          {exp.name || exp.expert_name}
-                          {exp.is_verified !== false && <ShieldCheck size={14} className="verified-badge-icon" />}
-                        </h3>
-                        <p className="category">{exp.category_name || exp.position || "Expert Consultant"}</p>
-                        <div className="rating-exp">
-                          <span>★ {Number(exp.avg_rating || 4.8).toFixed(1)}</span>
-                          <span>&bull; {exp.experience || 5}+ yrs exp</span>
+                {desktopExpertsList.length > 0 ? desktopExpertsList.map((exp, idx) => {
+                  const initials = getInitials(exp.name || exp.expert_name);
+                  const validPhoto = hasValidPhoto(exp.profile_photo);
+                  
+                  return (
+                    <div 
+                      className="marketplace-expert-card clickable-card" 
+                      key={exp.id || exp.expert_id || idx}
+                      onClick={() => navigate(exp.expert_slug || exp.slug || exp.id ? `/user/experts/${exp.expert_slug || exp.slug || exp.id}` : "/user/call-chat?page=1")}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <div className="expert-card-top">
+                        <div className="expert-avatar-wrapper">
+                          {validPhoto ? (
+                            <img src={exp.profile_photo} alt="" />
+                          ) : (
+                            <div className="expert-avatar-fallback">{initials}</div>
+                          )}
+                          <span className={`status-dot ${exp.is_online || exp.online_status === "online" ? "online" : "offline"}`} />
+                        </div>
+                        <div className="expert-info">
+                          <h3>
+                            {exp.name || exp.expert_name}
+                            {exp.is_verified !== false && <ShieldCheck size={14} className="verified-badge-icon" />}
+                          </h3>
+                          <p className="category">{exp.category_name || exp.position || "Expert Consultant"}</p>
+                          <div className="rating-exp">
+                            <span>★ {Number(exp.avg_rating || 4.8).toFixed(1)}</span>
+                            <span>&bull; {exp.experience || 5}+ yrs exp</span>
+                          </div>
                         </div>
                       </div>
+                      <div className="expert-pricing-row">
+                        <span>Chat: {money(exp.chat_per_minute, "Rs 20")}/m</span>
+                        <span>Call: {money(exp.call_per_minute, "Rs 40")}/m</span>
+                      </div>
+                      <div className="expert-card-actions">
+                        <button className="expert-action-chat" onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/user/call-chat?page=1&mode=chat&expert_id=${exp.expert_id || exp.id || ""}`);
+                        }}>Chat</button>
+                        <button className="expert-action-call" onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/user/call-chat?page=1&mode=call&expert_id=${exp.expert_id || exp.id || ""}`);
+                        }}>Call</button>
+                      </div>
                     </div>
-                    <div className="expert-pricing-row">
-                      <span>Chat: {money(exp.chat_per_minute, "Rs 20")}/m</span>
-                      <span>Call: {money(exp.call_per_minute, "Rs 40")}/m</span>
-                    </div>
-                    <div className="expert-card-actions">
-                      <button className="expert-action-chat" onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/user/call-chat?page=1&mode=chat&expert_id=${exp.expert_id || exp.id || ""}`);
-                      }}>Chat</button>
-                      <button className="expert-action-call" onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/user/call-chat?page=1&mode=call&expert_id=${exp.expert_id || exp.id || ""}`);
-                      }}>Call</button>
-                    </div>
-                  </div>
-                )) : (
+                  );
+                }) : (
                   <div className="home-experts-empty">No experts available right now.</div>
                 )}
               </div>
@@ -1320,10 +1505,10 @@ export default function HomePage() {
                     >
                       <div className="post-card-header">
                         <div className="post-avatar" onClick={(event) => handleTipProfileClick(event, post)} role="button" tabIndex={0}>
-                          {post.displayAvatar ? (
+                          {post.displayAvatar && hasValidPhoto(post.displayAvatar) ? (
                             <img src={post.displayAvatar} alt={post.displayExpertName} />
                           ) : (
-                            <span>{String(post.displayExpertName || "GE").slice(0, 2).toUpperCase()}</span>
+                            <span>{getInitials(post.displayExpertName)}</span>
                           )}
                         </div>
                         <div className="post-author-info">
@@ -1492,7 +1677,6 @@ export default function HomePage() {
                 <span className="mobile-section-hint">Swipe to book expert services</span>
               </div>
               <div className="mobile-section-right">
-               
                 <button type="button" className="mobile-view-all-btn" onClick={() => navigate("/user/all-services")}>
                   View all
                 </button>
@@ -1546,20 +1730,100 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="home-reels-slider">
-                  {homeReels.map((reel) => (
-                    <div 
-                      key={reel.id} 
-                      className="home-reel-thumbnail-card clickable-card"
-                      onClick={() => navigate(`/user/reels/${reel.slug}`)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <img src={reel.thumbnail_url || "https://placehold.co/180x320/121214/ffffff?text=Reel"} alt={reel.title} />
-                      <div className="home-reel-card-overlay">
-                        <span className="reel-title">{reel.title}</span>
-                        <span className="expert-name">by {reel.expert_name}</span>
+                  {homeReels.map((reel) => {
+                    const thumbnailUrl = reel.thumbnail_url || reel.image_url || reel.cover_image || reel.thumbnail;
+                    
+                    return (
+                      <div 
+                        key={reel.id} 
+                        className="home-reel-thumbnail-card clickable-card"
+                        onClick={() => navigate(`/user/reels/${reel.slug || reel.id}`)}
+                        style={{ 
+                          cursor: "pointer",
+                          position: "relative",
+                          borderRadius: "12px",
+                          overflow: "hidden",
+                          background: "#121214",
+                          minWidth: "140px",
+                          maxWidth: "180px",
+                          flex: "0 0 auto",
+                          aspectRatio: "9/16",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                        }}
+                      >
+                        {thumbnailUrl ? (
+                          <>
+                            <img 
+                              src={thumbnailUrl} 
+                              alt={reel.title || "Reel"} 
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                display: "block",
+                              }}
+                              loading="lazy"
+                            />
+                            <div style={{
+                              position: "absolute",
+                              top: "50%",
+                              left: "50%",
+                              transform: "translate(-50%, -50%)",
+                              width: "36px",
+                              height: "36px",
+                              borderRadius: "50%",
+                              background: "rgba(0, 0, 0, 0.6)",
+                              backdropFilter: "blur(4px)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              border: "2px solid rgba(255,255,255,0.3)",
+                            }}>
+                              <Play size={16} color="#ffffff" fill="#ffffff" />
+                            </div>
+                            <div style={{
+                              position: "absolute",
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              padding: "10px 6px",
+                              background: "linear-gradient(transparent, rgba(0,0,0,0.7))",
+                              color: "#ffffff",
+                            }}>
+                              <span style={{
+                                fontSize: "11px",
+                                fontWeight: "600",
+                                display: "block",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}>
+                                {reel.title || "Expert Reel"}
+                              </span>
+                            </div>
+                          </>
+                        ) : (
+                          <div style={{
+                            width: "100%",
+                            height: "100%",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: "linear-gradient(135deg, #1a1a2e, #16213e)",
+                            color: "#ffffff",
+                            padding: "12px",
+                            textAlign: "center",
+                          }}>
+                            <Film size={28} style={{ marginBottom: "6px", opacity: 0.6 }} />
+                            <span style={{ fontSize: "12px", fontWeight: "600" }}>
+                              {reel.title || "Expert Reel"}
+                            </span>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -1571,51 +1835,55 @@ export default function HomePage() {
                 <span className="mobile-section-hint">Swipe to chat or call verified experts</span>
               </div>
               <div className="mobile-section-right">
-               
                 <button type="button" className="mobile-view-all-btn" onClick={() => navigate("/user/call-chat?page=1")}>
                   View all
                 </button>
               </div>
             </div>
             <div className="mobile-experts-list">
-              {desktopExpertsList.length > 0 ? desktopExpertsList.map((exp, idx) => (
-                <div 
-                  className="mobile-expert-row-card clickable-card" 
-                  key={exp.id || exp.expert_id || idx}
-                  onClick={() => navigate(exp.expert_slug || exp.slug || exp.id ? `/user/experts/${exp.expert_slug || exp.slug || exp.id}` : "/user/call-chat?page=1")}
-                  style={{ cursor: "pointer" }}
-                >
-                  <div className="mobile-expert-avatar-wrapper">
-                    {exp.profile_photo ? (
-                      <img src={exp.profile_photo} alt="" />
-                    ) : (
-                      <div className="mobile-avatar-fallback">{String(exp.name || exp.expert_name || "GE").slice(0, 2).toUpperCase()}</div>
-                    )}
-                    <span className={`status-dot ${exp.is_online || exp.online_status === "online" ? "online" : "offline"}`} />
-                  </div>
-                  <div className="mobile-expert-info">
-                    <h3>
-                      {exp.name || exp.expert_name}
-                      {exp.is_verified !== false && <ShieldCheck size={12} className="verified-badge-icon" />}
-                    </h3>
-                    <p className="mobile-expert-category">{exp.category_name || exp.position || "Expert Consultant"}</p>
-                    <div className="mobile-expert-meta">
-                      <span>★ {Number(exp.avg_rating || 4.8).toFixed(1)}</span>
-                      <span>&bull; {exp.experience || 5}+ yrs exp</span>
+              {desktopExpertsList.length > 0 ? desktopExpertsList.map((exp, idx) => {
+                const initials = getInitials(exp.name || exp.expert_name);
+                const validPhoto = hasValidPhoto(exp.profile_photo);
+                
+                return (
+                  <div 
+                    className="mobile-expert-row-card clickable-card" 
+                    key={exp.id || exp.expert_id || idx}
+                    onClick={() => navigate(exp.expert_slug || exp.slug || exp.id ? `/user/experts/${exp.expert_slug || exp.slug || exp.id}` : "/user/call-chat?page=1")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <div className="mobile-expert-avatar-wrapper">
+                      {validPhoto ? (
+                        <img src={exp.profile_photo} alt="" />
+                      ) : (
+                        <div className="mobile-avatar-fallback">{initials}</div>
+                      )}
+                      <span className={`status-dot ${exp.is_online || exp.online_status === "online" ? "online" : "offline"}`} />
+                    </div>
+                    <div className="mobile-expert-info">
+                      <h3>
+                        {exp.name || exp.expert_name}
+                        {exp.is_verified !== false && <ShieldCheck size={12} className="verified-badge-icon" />}
+                      </h3>
+                      <p className="mobile-expert-category">{exp.category_name || exp.position || "Expert Consultant"}</p>
+                      <div className="mobile-expert-meta">
+                        <span>★ {Number(exp.avg_rating || 4.8).toFixed(1)}</span>
+                        <span>&bull; {exp.experience || 5}+ yrs exp</span>
+                      </div>
+                    </div>
+                    <div className="mobile-expert-actions-btns">
+                      <button className="mobile-expert-chat-btn" onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/user/call-chat?page=1&mode=chat&expert_id=${exp.expert_id || exp.id || ""}`);
+                      }}>Chat</button>
+                      <button className="mobile-expert-call-btn" onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/user/call-chat?page=1&mode=call&expert_id=${exp.expert_id || exp.id || ""}`);
+                      }}>Call</button>
                     </div>
                   </div>
-                  <div className="mobile-expert-actions-btns">
-                    <button className="mobile-expert-chat-btn" onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/user/call-chat?page=1&mode=chat&expert_id=${exp.expert_id || exp.id || ""}`);
-                    }}>Chat</button>
-                    <button className="mobile-expert-call-btn" onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/user/call-chat?page=1&mode=call&expert_id=${exp.expert_id || exp.id || ""}`);
-                    }}>Call</button>
-                  </div>
-                </div>
-              )) : (
+                );
+              }) : (
                 <div className="mobile-experts-empty">No experts available right now.</div>
               )}
             </div>
@@ -1627,7 +1895,6 @@ export default function HomePage() {
                 <span className="mobile-section-hint">Swipe to view expert posts and advice</span>
               </div>
               <div className="mobile-section-right">
-              
               </div>
             </div>
             <div className="mobile-posts-list">
@@ -1649,10 +1916,10 @@ export default function HomePage() {
                   >
                     <div className="mobile-post-header">
                       <div className="mobile-post-avatar" onClick={(event) => handleTipProfileClick(event, post)} role="button" tabIndex={0}>
-                        {post.displayAvatar ? (
+                        {post.displayAvatar && hasValidPhoto(post.displayAvatar) ? (
                           <img src={post.displayAvatar} alt={post.displayExpertName} />
                         ) : (
-                          <span>{String(post.displayExpertName || "GE").slice(0, 2).toUpperCase()}</span>
+                          <span>{getInitials(post.displayExpertName)}</span>
                         )}
                       </div>
                       <div className="mobile-post-author">
@@ -1744,7 +2011,6 @@ export default function HomePage() {
                 <h2>Ratings &amp; Reviews</h2>
                 <span className="mobile-section-hint">Swipe to read user feedback</span>
               </div>
-              
             </div>
             <HomeRatingsReviews isMobile={true} />
 
@@ -1771,13 +2037,6 @@ export default function HomePage() {
           services={trendingServices.map(item => item.data)} 
           balance={balance} 
         />
-      </div>
-
-      {/* Footer with inner wrapper for proper width alignment */}
-      <div className="home-footer-container">
-        <div className="home-footer-inner">
-          <Footer />
-        </div>
       </div>
     </main>
   );

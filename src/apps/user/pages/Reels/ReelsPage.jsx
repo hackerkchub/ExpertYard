@@ -65,8 +65,6 @@ import {
   ActionColumn,
   ActionButton,
   ActionLabel,
-  CommentsSection,
-  CommentsHeader,
   CommentsList,
   CommentRow,
   CommentAvatar,
@@ -237,7 +235,6 @@ export default function ReelsPage() {
   const [playFeedback, setPlayFeedback] = useState(null);
   const [failedAvatarKeys, setFailedAvatarKeys] = useState(() => new Set());
   const [showDesktopComments, setShowDesktopComments] = useState(false);
-  const [expandedCommentId, setExpandedCommentId] = useState(null);
 
   const containerRef = useRef(null);
   const videoRefs = useRef({});
@@ -760,38 +757,15 @@ export default function ReelsPage() {
           <title>{`${currentReel.title} | G9Expert Reel`}</title>
           <meta name="description" content={currentReel.caption || currentReel.title} />
           <link rel="canonical" href={`${window.location.origin}/user/reels/${currentReel.slug}`} />
-
           <meta property="og:type" content="video.other" />
           <meta property="og:title" content={currentReel.title} />
           <meta property="og:description" content={currentReel.caption || currentReel.title} />
           <meta property="og:image" content={currentReel.thumbnail_url} />
           <meta property="og:url" content={`${window.location.origin}/user/reels/${currentReel.slug}`} />
-
           <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:title" content={currentReel.title} />
           <meta name="twitter:description" content={currentReel.caption || currentReel.title} />
           <meta name="twitter:image" content={currentReel.thumbnail_url} />
-
-          <script type="application/ld+json">
-            {JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "VideoObject",
-              "name": currentReel.title,
-              "description": currentReel.caption || currentReel.title,
-              "thumbnailUrl": currentReel.thumbnail_url || "https://g9expert.com/logo.webp",
-              "uploadDate": currentReel.created_at,
-              "contentUrl": currentReel.video_url,
-              "embedUrl": `${window.location.origin}/user/reels/${currentReel.slug}`,
-              "publisher": {
-                "@type": "Organization",
-                "name": "G9Expert",
-                "logo": {
-                  "@type": "ImageObject",
-                  "url": "https://g9expert.com/logo.webp"
-                }
-              }
-            })}
-          </script>
         </Helmet>
       )}
 
@@ -816,7 +790,7 @@ export default function ReelsPage() {
                 
                 return (
                   <>
-                    {/* VIDEO SECTION - 55% width on desktop */}
+                    {/* VIDEO SECTION */}
                     <PlayerSection>
                       <SoundToggle onClick={(event) => {
                         event.stopPropagation();
@@ -867,7 +841,7 @@ export default function ReelsPage() {
                           </MobileOverlayContent>
                         </VideoOverlay>
 
-                        {/* Floating Action Column (Mobile Only) */}
+                        {/* Floating Action Column - Mobile Only */}
                         <ActionColumn className="reel-actions-overlay" onClick={(event) => event.stopPropagation()}>
                           <ActionButton
                             type="button"
@@ -922,7 +896,7 @@ export default function ReelsPage() {
                           <ActionLabel>Report</ActionLabel>
                         </ActionColumn>
 
-                        {/* CTA Buttons (Mobile Only) */}
+                        {/* CTA Buttons - Mobile Only */}
                         <CtaRow onClick={(event) => event.stopPropagation()}>
                           <CtaButton variant="primary" onClick={(event) => {
                             event.stopPropagation();
@@ -952,9 +926,9 @@ export default function ReelsPage() {
                       </VideoContainer>
                     </PlayerSection>
 
-                    {/* DESKTOP ONLY SIDEBAR - 45% width with premium glass effect */}
+                    {/* DESKTOP SIDEBAR - Only visible on desktop */}
                     <DesktopSidebar>
-                      {/* Section 1: Expert Info */}
+                      {/* Expert Info */}
                       <DesktopHeader>
                         <div className="desktop-expert-avatar-wrapper">
                           {renderExpertAvatar(reel, { onClick: () => handleProfileCTA(reel) })}
@@ -974,13 +948,13 @@ export default function ReelsPage() {
                         </div>
                       </DesktopHeader>
 
-                      {/* Section 2: Video Details */}
+                      {/* Video Details */}
                       <DesktopInfo>
                         <TitleText>{reel.title}</TitleText>
                         {reel.caption && <CaptionText>{reel.caption}</CaptionText>}
                       </DesktopInfo>
 
-                      {/* Section 3: Statistics - Horizontal Cards */}
+                      {/* Statistics */}
                       <div className="desktop-stats-row">
                         <div className="desktop-stat-card">
                           <FiHeart className="stat-icon liked" />
@@ -1006,7 +980,7 @@ export default function ReelsPage() {
 
                       <SectionDivider />
 
-                      {/* Section 4: Quick Actions - Buttons */}
+                      {/* Quick Actions */}
                       <div className="desktop-actions-grid">
                         <button 
                           className={`desktop-action-btn ${reel.is_liked ? 'active liked' : ''}`}
@@ -1036,7 +1010,7 @@ export default function ReelsPage() {
 
                       <SectionDivider />
 
-                      {/* Section 5: CTA - Full width buttons */}
+                      {/* CTA Buttons */}
                       <div className="desktop-cta-grid">
                         <button className="desktop-cta-btn primary" onClick={() => handleChatCTA(expertId)}>
                           <FiMessageSquare /> Chat with Expert
@@ -1054,7 +1028,7 @@ export default function ReelsPage() {
 
                       <SectionDivider />
 
-                      {/* Comments - Toggle */}
+                      {/* Comments Toggle */}
                       <div className="desktop-comments-toggle">
                         <button 
                           className="desktop-comments-toggle-btn"

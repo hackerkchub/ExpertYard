@@ -1,5 +1,5 @@
-// src/apps/user/pages/CallChatExpert.styles.js - UPDATED WITH RESPONSIVE FIXES
-import styled, { keyframes } from "styled-components";
+// src/apps/user/pages/CallChatExpert.styles.js - COMPLETE WITH VIDEO TAB SUPPORT
+import styled, { keyframes, css } from "styled-components";
 
 const navy = "#000080";
 const navyDark = "#02044a";
@@ -511,62 +511,6 @@ export const SubTitle = styled.p`
   @media (max-width: 430px) {
     font-size: 13px;
     line-height: 1.45;
-  }
-`;
-
-export const TabsRow = styled.div`
-  display: inline-flex;
-  align-self: flex-start;
-  gap: 6px;
-  padding: 6px;
-  border-radius: 999px;
-  background: #ffffff;
-  border: 1px solid ${border};
-  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.08);
-
-  @media (max-width: 768px) {
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    position: sticky;
-    top: 0;
-    z-index: 8;
-    padding: 4px;
-    border-radius: 16px;
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
-  }
-`;
-
-export const TabButton = styled.button`
-  border: none;
-  outline: none;
-  padding: 10px 18px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 900;
-  cursor: pointer;
-  color: ${({ $active }) => ($active ? navy : "#344054")};
-  background: ${({ $active }) =>
-    $active ? `linear-gradient(135deg, ${yellowLight}, ${yellow})` : "transparent"};
-  box-shadow: ${({ $active }) =>
-    $active ? "0 10px 22px rgba(255, 193, 7, 0.24)" : "none"};
-  transition: transform 180ms ease, background 180ms ease;
-
-  &:hover {
-    transform: translateY(-1px);
-    background: ${({ $active }) => ($active ? `linear-gradient(135deg, ${yellowLight}, ${yellow})` : "#eef2ff")};
-  }
-
-  @media (max-width: 768px) {
-    width: 100%;
-    min-height: 40px;
-    padding: 9px 10px;
-    font-size: 13px;
-    font-weight: 700;
-
-    span {
-      display: none;
-    }
   }
 `;
 
@@ -1425,3 +1369,126 @@ export const AIIcon = styled.div`font-size: 42px;`;
 export const AITitle = styled.h3`font-size: 18px; font-weight: 900; color: ${navy};`;
 export const AIDesc = styled.p`max-width: 460px; font-size: 14px; color: ${muted}; line-height: 1.5;`;
 export const AIHint = styled.div`margin-top: 6px; font-size: 12px; font-weight: 900; color: ${navy};`;
+
+// ============================================
+// TABS WITH VIDEO SUPPORT - FULLY UPDATED
+// ============================================
+
+export const TabsRow = styled.div`
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid ${border};
+  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.08);
+
+  @media (max-width: 768px) {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    position: sticky;
+    top: 0;
+    z-index: 8;
+    padding: 4px;
+    border-radius: 16px;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  }
+`;
+
+export const TabButton = styled.button`
+  border: none;
+  outline: none;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+  
+  // Default styles for inactive tabs
+  color: #344054;
+  background: transparent;
+  box-shadow: none;
+
+  // Active styles based on tab type
+  ${({ $active, children }) => {
+    if (!$active) return '';
+    const text = children?.toString?.() || '';
+    
+    // Video Tab (🎥)
+    if (text.includes('🎥')) {
+      return css`
+        color: #6d28d9;
+        background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+        box-shadow: 0 10px 22px rgba(124, 58, 237, 0.24);
+      `;
+    }
+    
+    // Call Tab (📞)
+    if (text.includes('📞')) {
+      return css`
+        color: #1e40af;
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        box-shadow: 0 10px 22px rgba(37, 99, 235, 0.24);
+      `;
+    }
+    
+    // Chat Tab (💬) - Default
+    return css`
+      color: ${navy};
+      background: linear-gradient(135deg, ${yellowLight}, ${yellow});
+      box-shadow: 0 10px 22px rgba(255, 193, 7, 0.24);
+    `;
+  }}
+
+  &:hover {
+    transform: translateY(-2px);
+    
+    ${({ $active, children }) => {
+      if ($active) return '';
+      const text = children?.toString?.() || '';
+      
+      if (text.includes('🎥')) {
+        return css`
+          background: #ede9fe;
+          color: #6d28d9;
+        `;
+      }
+      if (text.includes('📞')) {
+        return css`
+          background: #dbeafe;
+          color: #1e40af;
+        `;
+      }
+      return css`
+        background: #eef2ff;
+        color: ${navy};
+      `;
+    }}
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    min-height: 40px;
+    padding: 9px 10px;
+    font-size: 13px;
+    font-weight: 700;
+    justify-content: center;
+
+    span {
+      display: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    font-size: 12px;
+    min-height: 36px;
+    padding: 6px 8px;
+  }
+`;

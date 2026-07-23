@@ -93,6 +93,8 @@ export default function MainLayout() {
             onWalletOpen={() => navigate("/user/wallet")}
             onFilterOpen={() => navigate("/user/search")}
             balance={balance}
+            isLoggedIn={isLoggedIn}
+            onLogout={logout}
             user={user}
           />
         </div>

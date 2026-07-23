@@ -1,4 +1,4 @@
-// src/apps/user/pages/UserExpertsPage.jsx - PREMIUM UPGRADED WITH WORKING FILTERS (TAB FLICKER FIXED)
+// src/apps/user/pages/UserExpertsPage.jsx - PREMIUM UPGRADED WITH VIDEO CALL TAB
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useSearchParams, useNavigate, useParams, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -6,7 +6,7 @@ import {
   FiX, FiChevronLeft, FiChevronRight, FiSearch, FiFilter, 
   FiSliders, FiXCircle, FiTrendingUp, FiClock,
   FiStar, FiUserCheck, FiZap,
-  FiMessageSquare, FiPhoneCall, FiGlobe, FiMapPin
+  FiMessageSquare, FiPhoneCall, FiGlobe, FiMapPin, FiVideo
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -51,11 +51,11 @@ import ExpertCard from "../../components/userExperts/ExpertCard";
 import MobileSelect from "../../components/MobileSelect/MobileSelect";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
-import { socket } from "../../../../shared/api/socket"; // Only for online/offline status
+import { socket } from "../../../../shared/api/socket";
 import { useCategory } from "../../../../shared/context/CategoryContext";
 import { getExpertsApi } from "../../../../shared/api/expertapi/expert.api";
 import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
-import useChatRequest from "../../../../shared/hooks/useChatRequest"; // NEW IMPORT
+import useChatRequest from "../../../../shared/hooks/useChatRequest";
 import { normalizeExpertAccess } from "../../../../shared/utils/expertAccess";
 import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/leadTracking";
 import {
@@ -65,8 +65,9 @@ import {
 } from "../../../../shared/utils/categoryRoutes";
 
 const TABS = [
-  { id: "call", labelKey: "callChat.callTab", icon: "📞" },
-  { id: "chat", labelKey: "callChat.chatTab", icon: "💬" },
+  { id: "call", labelKey: "Call", icon: "📞" },
+  { id: "chat", labelKey: "Chat", icon: "💬" },
+  { id: "video", labelKey: "Video Call", icon: "🎥" },
 ];
 
 const isEnabledFlag = (value) =>
@@ -87,10 +88,10 @@ const ratingOptions = [
 // Price options based on mode
 const getPriceOptions = (mode) => [
   { value: "", label: `No limit` },
-  { value: "30", label: `Up to ₹30/${mode === "call" ? "min" : "min"}` },
-  { value: "50", label: `Up to ₹50/${mode === "call" ? "min" : "min"}` },
-  { value: "100", label: `Up to ₹100/${mode === "call" ? "min" : "min"}` },
-  { value: "200", label: `Up to ₹200/${mode === "call" ? "min" : "min"}` },
+  { value: "30", label: `Up to ₹30/${mode === "call" ? "min" : mode === "video" ? "min" : "min"}` },
+  { value: "50", label: `Up to ₹50/${mode === "call" ? "min" : mode === "video" ? "min" : "min"}` },
+  { value: "100", label: `Up to ₹100/${mode === "call" ? "min" : mode === "video" ? "min" : "min"}` },
+  { value: "200", label: `Up to ₹200/${mode === "call" ? "min" : mode === "video" ? "min" : "min"}` },
 ];
 
 // Sort options
@@ -168,8 +169,7 @@ export default function UserExpertsPage() {
   const sortByFromUrl = getParam(searchParams, "sortBy");
   const sortOrderFromUrl = getParam(searchParams, "order") || "desc";
 
-  // FIX 1: Initialize tab with ref to prevent re-renders
-  const initialTabRef = useRef(modeFromUrl === "chat" ? "chat" : "call");
+  const initialTabRef = useRef(modeFromUrl === "chat" ? "chat" : modeFromUrl === "video" ? "video" : "call");
   const [tab, setTab] = useState(initialTabRef.current);
   
   const [currentPage, setCurrentPage] = useState(pageFromUrl);
@@ -306,7 +306,7 @@ export default function UserExpertsPage() {
     setCurrentPage((current) => (nextPage === current ? current : nextPage));
 
     const nextMode = params.get("mode");
-    if (nextMode === "chat" || nextMode === "call") {
+    if (nextMode === "chat" || nextMode === "call" || nextMode === "video") {
       setTab((current) => (nextMode === current ? current : nextMode));
     }
 
@@ -335,7 +335,7 @@ export default function UserExpertsPage() {
     setSortOrder((current) => (nextSortOrder === current ? current : nextSortOrder));
   }, [searchParamsString]);
 
-  // Debounce search and avoid resetting pagination when the value is unchanged.
+  // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
       const nextSearch = searchInput.trim();
@@ -464,7 +464,7 @@ export default function UserExpertsPage() {
     selectedLoc
   ]);
 
-  // FIX 3: URL sync effect - prevents loop while keeping page/mode query in sync
+  // URL sync effect
   useEffect(() => {
     const currentParams = new URLSearchParams(searchParamsString);
     const nextParams = new URLSearchParams(searchParamsString);
@@ -614,24 +614,22 @@ export default function UserExpertsPage() {
     }
   }, [apiParams]);
   
-  // SINGLE EFFECT for fetching - NO duplicates
   useEffect(() => {
     fetchExperts();
     return () => abortRef.current?.abort();
   }, [fetchExperts]);
 
-  // FIX 4: Network reconnect - always enabled
   useNetworkReconnect(fetchExperts, {
     enabled: true,
   });
 
-  // Reset subcategory when category changes AND load subcategories
+  // Reset subcategory when category changes
   useEffect(() => {
     if (routeSubcategoryId) return;
     setSelectedSubcategoryId((current) => (current === "" ? current : ""));
   }, [routeSubcategoryId, selectedCategoryId]);
 
-  // Socket listeners for online/offline status ONLY
+  // Socket listeners for online/offline status
   useEffect(() => {
     if (!socket) return;
 
@@ -706,7 +704,6 @@ export default function UserExpertsPage() {
     }
   };
 
-  // UPDATED: Use hook's startChat instead of direct socket emit
   const handleStartChat = useCallback((expertId) => {
     const expert = experts.find(e => Number(e.id) === Number(expertId));
     if (!expertId) return;
@@ -777,6 +774,57 @@ export default function UserExpertsPage() {
     navigate(`/user/voice-call/${expertId}`);
   }, [isLoggedIn, experts, navigate, location, user]);
 
+  const handleStartVideoCall = useCallback((expertId) => {
+    const expert = experts.find(e => Number(e.id) === Number(expertId));
+    if (!expertId) return;
+    
+    // Check if video call is enabled
+    const videoAllowed = isEnabledFlag(
+      expert?.video_call_enabled ?? 
+      expert?.videoCallEnabled ?? 
+      expert?.effective_access?.show_video_button ?? 
+      expert?.effective_access?.can_video_call ??
+      expert?.can_video_call ??
+      expert?.canVideoCall
+    );
+    
+    if (!videoAllowed) {
+      alert("Video call is currently unavailable for this expert.");
+      return;
+    }
+
+    const videoPrice = expert?.video_call_per_minute || expert?.videoCallPerMinute || expert?.video_call_price_per_minute || 0;
+    if (videoPrice <= 0) {
+      alert("Video call pricing not configured for this expert.");
+      return;
+    }
+
+    trackLeadEvent(
+      "video-call-attempt",
+      buildTrackingPayload({
+        user,
+        sourcePage: "call_chat_listing",
+        actionLabel: "Video Call Now",
+        extra: {
+          expert_id: Number(expertId),
+          category_id: expert?.category_id || expert?.categoryId || null,
+          subcategory_id: expert?.subcategory_id || expert?.subcategoryId || null,
+          video_price: videoPrice,
+          contact_consent: true,
+          can_show_contact_to_expert: true,
+        },
+      })
+    );
+
+    if (!isLoggedIn) {
+      navigate("/user/auth", { state: { from: location } });
+      return;
+    }
+
+    // Navigate to video call page
+    navigate(`/user/video-call/${expertId}`);
+  }, [isLoggedIn, experts, navigate, location, user]);
+
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
@@ -797,10 +845,10 @@ export default function UserExpertsPage() {
       isOnline: onlineExperts[String(exp.id)],
       call_per_minute: exp.call_per_minute || 0,
       chat_per_minute: exp.chat_per_minute || 0,
-      video_call_per_minute: exp.video_call_per_minute ?? exp.videoCallPerMinute ?? exp.video_call_price_per_minute ?? exp.videoCallPricePerMinute ?? exp.video_price ?? exp.videoCallPrice ?? null,
-      videoCallPerMinute: exp.videoCallPerMinute ?? exp.video_call_per_minute ?? exp.video_call_price_per_minute ?? exp.videoCallPricePerMinute ?? exp.video_price ?? exp.videoCallPrice ?? null,
-      video_call_price_per_minute: exp.video_call_price_per_minute ?? exp.videoCallPricePerMinute ?? exp.video_call_per_minute ?? exp.videoCallPerMinute ?? exp.video_price ?? exp.videoCallPrice ?? null,
-      videoCallPricePerMinute: exp.videoCallPricePerMinute ?? exp.video_call_price_per_minute ?? exp.video_call_per_minute ?? exp.videoCallPerMinute ?? exp.video_price ?? exp.videoCallPrice ?? null,
+      video_call_per_minute: exp.video_call_per_minute || exp.videoCallPerMinute || exp.video_call_price_per_minute || exp.videoCallPricePerMinute || exp.video_price || exp.videoCallPrice || 0,
+      videoCallPerMinute: exp.videoCallPerMinute || exp.video_call_per_minute || exp.video_call_price_per_minute || exp.videoCallPricePerMinute || exp.video_price || exp.videoCallPrice || 0,
+      video_call_price_per_minute: exp.video_call_price_per_minute || exp.videoCallPricePerMinute || exp.video_call_per_minute || exp.videoCallPerMinute || exp.video_price || exp.videoCallPrice || 0,
+      videoCallPricePerMinute: exp.videoCallPricePerMinute || exp.video_call_price_per_minute || exp.video_call_per_minute || exp.videoCallPerMinute || exp.video_price || exp.videoCallPrice || 0,
       session_price: exp.session_price || 0,
       session_duration: exp.session_duration || 30,
       avg_rating: exp.avg_rating || 0,
@@ -819,6 +867,7 @@ export default function UserExpertsPage() {
       total_consultations: exp.total_consultations,
       discounted_call_per_minute: exp.discounted_call_per_minute || exp.call_discount_price || exp.discounted_call_price,
       discounted_chat_per_minute: exp.discounted_chat_per_minute || exp.chat_discount_price || exp.discounted_chat_price,
+      discounted_video_per_minute: exp.discounted_video_per_minute || exp.video_discount_price || exp.discounted_video_price,
       orders: exp.orders || exp.total_orders || exp.total_bookings || 0,
       gender: exp.gender || exp.expert_gender || "",
       status: exp.status || exp.availability || exp.available_status || "",
@@ -835,16 +884,22 @@ export default function UserExpertsPage() {
       canChat: exp.canChat,
       can_call: exp.can_call,
       canCall: exp.canCall,
+      can_video_call: exp.can_video_call || exp.canVideoCall,
+      canVideoCall: exp.canVideoCall || exp.can_video_call,
       can_view_contact: exp.can_view_contact,
       canViewContact: exp.canViewContact,
       chat_enabled: exp.chat_enabled,
       chatEnabled: exp.chatEnabled,
       call_enabled: exp.call_enabled,
       callEnabled: exp.callEnabled,
+      video_call_enabled: exp.video_call_enabled || exp.videoCallEnabled,
+      videoCallEnabled: exp.videoCallEnabled || exp.video_call_enabled,
       show_chat_button: exp.show_chat_button,
       showChatButton: exp.showChatButton,
       show_call_button: exp.show_call_button,
       showCallButton: exp.showCallButton,
+      show_video_button: exp.show_video_button || exp.showVideoButton,
+      showVideoButton: exp.showVideoButton || exp.show_video_button,
       plan_expires_at: exp.plan_expires_at,
       planExpiresAt: exp.planExpiresAt,
     }));
@@ -954,7 +1009,6 @@ export default function UserExpertsPage() {
     if (Array.isArray(languages)) {
       return languages.filter(Boolean).join(", ");
     }
-
     return languages || "";
   };
 
@@ -979,8 +1033,19 @@ export default function UserExpertsPage() {
   };
 
   const getModePrice = (expert) => {
-    const basePrice = tab === "chat" ? expert.chat_per_minute : expert.call_per_minute;
-    const discountedPrice = tab === "chat" ? expert.discounted_chat_per_minute : expert.discounted_call_per_minute;
+    let basePrice = 0;
+    let discountedPrice = 0;
+    
+    if (tab === "chat") {
+      basePrice = expert.chat_per_minute || 0;
+      discountedPrice = expert.discounted_chat_per_minute || 0;
+    } else if (tab === "video") {
+      basePrice = expert.video_call_per_minute || expert.videoCallPerMinute || expert.video_call_price_per_minute || 0;
+      discountedPrice = expert.discounted_video_per_minute || 0;
+    } else {
+      basePrice = expert.call_per_minute || 0;
+      discountedPrice = expert.discounted_call_per_minute || 0;
+    }
 
     return {
       basePrice: Number(basePrice || 0),
@@ -999,9 +1064,6 @@ export default function UserExpertsPage() {
         )}
       </FilterHeader>
 
-     
-
-      {/* Category Filter - with loadSubCategories */}
       <FilterGroup>
         <FilterLabel>{t("common.categories")}</FilterLabel>
         <MobileSelect
@@ -1026,7 +1088,6 @@ export default function UserExpertsPage() {
         />
       </FilterGroup>
 
-      {/* Subcategory Filter - FIXED rendering */}
       {selectedCategoryId && (
         <FilterGroup>
           <FilterLabel>{t("callChat.subcategory", "Subcategory")}</FilterLabel>
@@ -1048,9 +1109,8 @@ export default function UserExpertsPage() {
         </FilterGroup>
       )}
 
-      {/* Price Filter */}
       <FilterGroup>
-        <FilterLabel>Max Price ({tab === "call" ? "₹/min Call" : "₹/min Chat"})</FilterLabel>
+        <FilterLabel>Max Price ({tab === "call" ? "₹/min Call" : tab === "video" ? "₹/min Video" : "₹/min Chat"})</FilterLabel>
         <MobileSelect
           title="Select Max Price"
           value={maxPrice}
@@ -1064,7 +1124,7 @@ export default function UserExpertsPage() {
       </FilterGroup>
 
       <FilterGroup>
-        <FilterLabel>Min Price ({tab === "call" ? "Call" : "Chat"} / min)</FilterLabel>
+        <FilterLabel>Min Price ({tab === "call" ? "Call" : tab === "video" ? "Video" : "Chat"} / min)</FilterLabel>
         <MobileSelect
           title="Select Min Price"
           value={minPrice}
@@ -1155,7 +1215,6 @@ export default function UserExpertsPage() {
         </FilterGroup>
       )}
 
-      {/* Sort By */}
       <FilterGroup>
         <FilterLabel>Sort By</FilterLabel>
         <MobileSelect
@@ -1202,8 +1261,6 @@ export default function UserExpertsPage() {
       `}</style>
       
       <PageWrap className="call-chat-expert-page">
-        
-
         <TabsRow>
           {TABS.map((tabItem) => (
             <TabButton
@@ -1218,8 +1275,6 @@ export default function UserExpertsPage() {
             </TabButton>
           ))}
         </TabsRow>
-
-        {/* Stats Bar */}
 
         {/* Active Filters */}
         {activeFiltersCount > 0 && (
@@ -1250,13 +1305,13 @@ export default function UserExpertsPage() {
             )}
             {maxPrice && (
               <ActiveFilterChip onClick={() => removeFilter('price')}>
-                Max Price: ₹{maxPrice}/{tab === "call" ? "min" : "min"}
+                Max Price: ₹{maxPrice}/{tab === "call" ? "min" : tab === "video" ? "min" : "min"}
                 <FiX size={12} />
               </ActiveFilterChip>
             )}
             {minPrice && (
               <ActiveFilterChip onClick={() => removeFilter('minPrice')}>
-                Min Price: Rs {minPrice}/{tab === "call" ? "min" : "min"}
+                Min Price: Rs {minPrice}/{tab === "call" ? "min" : tab === "video" ? "min" : "min"}
                 <FiX size={12} />
               </ActiveFilterChip>
             )}
@@ -1452,10 +1507,18 @@ export default function UserExpertsPage() {
                     const { basePrice, discountedPrice } = getModePrice(exp);
                     const shownPrice = discountedPrice > 0 ? discountedPrice : basePrice;
                     const languageText = getLanguageText(exp.languages);
-                    const allowedByAdmin =
-                      tab === "chat"
-                        ? isEnabledFlag(exp.effective_access?.show_chat_button ?? exp.effective_access?.can_chat ?? exp.show_chat_button ?? exp.showChatButton ?? exp.can_chat ?? exp.canChat)
-                        : isEnabledFlag(exp.effective_access?.show_call_button ?? exp.effective_access?.can_call ?? exp.show_call_button ?? exp.showCallButton ?? exp.can_call ?? exp.canCall);
+                    
+                    let allowedByAdmin = false;
+                    if (tab === "chat") {
+                      allowedByAdmin = isEnabledFlag(exp.effective_access?.show_chat_button ?? exp.effective_access?.can_chat ?? exp.show_chat_button ?? exp.showChatButton ?? exp.can_chat ?? exp.canChat);
+                    } else if (tab === "video") {
+                      allowedByAdmin = isEnabledFlag(exp.effective_access?.show_video_button ?? exp.effective_access?.can_video_call ?? exp.show_video_button ?? exp.showVideoButton ?? exp.can_video_call ?? exp.canVideoCall);
+                    } else {
+                      allowedByAdmin = isEnabledFlag(exp.effective_access?.show_call_button ?? exp.effective_access?.can_call ?? exp.show_call_button ?? exp.showCallButton ?? exp.can_call ?? exp.canCall);
+                    }
+
+                    const isVideoTab = tab === "video";
+                    const modeIcon = isVideoTab ? <FiVideo aria-hidden="true" /> : tab === "chat" ? <FiMessageSquare aria-hidden="true" /> : <FiPhoneCall aria-hidden="true" />;
 
                     return (
                       <article className="mobile-callchat-card" key={`mobile-${exp.id}`}>
@@ -1530,11 +1593,19 @@ export default function UserExpertsPage() {
                             type="button"
                             className="mobile-callchat-card__cta"
                             disabled={!exp.id || !allowedByAdmin}
-                            title={tab === "chat" ? "Start chat consultation" : "Start voice call"}
-                            aria-label={tab === "chat" ? "Start chat consultation" : "Start voice call"}
-                            onClick={() => (tab === "chat" ? handleStartChat(exp.id) : handleStartCall(exp.id))}
+                            title={isVideoTab ? "Start video consultation" : tab === "chat" ? "Start chat consultation" : "Start voice call"}
+                            aria-label={isVideoTab ? "Start video consultation" : tab === "chat" ? "Start chat consultation" : "Start voice call"}
+                            onClick={() => {
+                              if (isVideoTab) {
+                                handleStartVideoCall(exp.id);
+                              } else if (tab === "chat") {
+                                handleStartChat(exp.id);
+                              } else {
+                                handleStartCall(exp.id);
+                              }
+                            }}
                           >
-                            {tab === "chat" ? <FiMessageSquare aria-hidden="true" /> : <FiPhoneCall aria-hidden="true" />}
+                            {modeIcon}
                             {shownPrice > 0 ? `\u20B9${shownPrice}/min` : "--"}
                           </button>
                         </div>
@@ -1558,6 +1629,7 @@ export default function UserExpertsPage() {
                           data={exp}
                           onStartChat={tab === "chat" ? handleStartChat : undefined}
                           onStartCall={tab === "call" ? handleStartCall : undefined}
+                          onStartVideoCall={tab === "video" ? handleStartVideoCall : undefined}
                         />
                       </motion.div>
                     );

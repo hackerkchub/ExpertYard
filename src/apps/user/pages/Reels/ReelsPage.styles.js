@@ -6,33 +6,14 @@ export const ReelsPageGlobalStyle = createGlobalStyle`
     overflow: hidden;
     overscroll-behavior-y: none;
   }
-
-  body.g9-reels-page-active .desktop-layout-wrapper {
-    height: 100svh;
-    overflow: hidden;
-  }
-
-  body.g9-reels-page-active .home-desktop-shell {
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  body.g9-reels-page-active .home-center-column {
-    min-height: 0;
-    overflow: hidden;
-  }
 `;
 
 export const Container = styled.div`
   width: 100%;
   max-width: 100vw;
-  --reels-mobile-bottom-nav: 72px;
-  --reels-mobile-safe-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--reels-mobile-bottom-nav));
-  --reels-mobile-safe-top: env(safe-area-inset-top, 0px);
   --reels-header-offset: 70px;
-  --reels-bottom-offset: 0px;
-  height: calc(100svh - var(--reels-header-offset) - var(--reels-bottom-offset));
-  min-height: calc(100svh - var(--reels-header-offset) - var(--reels-bottom-offset));
+  height: calc(100svh - var(--reels-header-offset));
+  min-height: calc(100svh - var(--reels-header-offset));
   background:
     radial-gradient(circle at 16% 0%, rgba(0, 61, 145, 0.28), transparent 32vw),
     linear-gradient(135deg, #05070f 0%, #09090b 52%, #07111f 100%);
@@ -42,21 +23,12 @@ export const Container = styled.div`
   align-items: center;
   position: relative;
   overflow: hidden;
-  overscroll-behavior: contain;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   @media (max-width: 767px) {
     --reels-header-offset: calc(64px + env(safe-area-inset-top, 0px));
-    --reels-bottom-offset: calc(72px + env(safe-area-inset-bottom, 0px));
-    height: calc(100dvh - var(--reels-header-offset) - var(--reels-bottom-offset));
-    min-height: calc(100dvh - var(--reels-header-offset) - var(--reels-bottom-offset));
-  }
-
-  @media (min-width: 768px) {
-    --reels-header-offset: calc(70px + env(safe-area-inset-top, 0px));
-    --reels-bottom-offset: 0px;
-    height: calc(100dvh - var(--reels-header-offset) - var(--reels-bottom-offset));
-    min-height: calc(100dvh - var(--reels-header-offset) - var(--reels-bottom-offset));
+    height: calc(100dvh - var(--reels-header-offset));
+    min-height: calc(100dvh - var(--reels-header-offset));
   }
 `;
 
@@ -80,13 +52,8 @@ export const ReelsFeed = styled.div`
     padding: 18px 22px;
   }
 
-  @media (min-width: 1200px) {
-    padding: 24px clamp(28px, 4vw, 76px);
-  }
-
   @media (min-width: 1024px) {
     padding: 0 clamp(28px, 4vw, 76px);
-    scroll-padding: 0;
   }
 `;
 
@@ -127,12 +94,6 @@ export const ReelWrapper = styled.div`
     width: min(100%, 1060px);
     max-width: 1060px;
     gap: 24px;
-  }
-
-  @media (min-width: 1536px) {
-    width: min(100%, 1140px);
-    max-width: 1140px;
-    gap: 28px;
   }
 `;
 
@@ -219,16 +180,6 @@ export const PlayToggleOverlay = styled.div`
     margin-left: ${props => props.$persistent ? "3px" : "0"};
     filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45));
   }
-
-  @media (max-width: 360px) {
-    width: 58px;
-    height: 58px;
-  }
-
-  @media (min-width: 992px) {
-    width: 78px;
-    height: 78px;
-  }
 `;
 
 export const VideoOverlay = styled.div`
@@ -242,10 +193,6 @@ export const VideoOverlay = styled.div`
   justify-content: flex-end;
   padding: 20px;
   pointer-events: none;
-
-  @media (max-width: 360px) {
-    padding: 16px 14px;
-  }
 
   @media (min-width: 992px) {
     display: none;
@@ -262,17 +209,6 @@ export const MobileOverlayContent = styled.div`
 
   @media (max-width: 767px) {
     margin-bottom: 70px;
-  }
-
-  @media (max-width: 360px) {
-    gap: 7px;
-    max-width: calc(100vw - 98px);
-    margin-bottom: 64px;
-  }
-
-  @media (min-width: 768px) and (max-width: 991px) {
-    max-width: calc(100% - 118px);
-    margin-bottom: 88px;
   }
 `;
 
@@ -296,21 +232,10 @@ export const Avatar = styled.img`
   width: 42px;
   height: 42px;
   min-width: 42px;
-  aspect-ratio: 1 / 1;
   border-radius: 50%;
   border: 2px solid #ffffff;
   object-fit: cover;
-  object-position: center;
-  display: block;
-  flex-shrink: 0;
-  overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-
-  @media (max-width: 360px) {
-    width: 38px;
-    height: 38px;
-    min-width: 38px;
-  }
+  cursor: pointer;
 
   @media (min-width: 768px) {
     width: 48px;
@@ -323,28 +248,16 @@ export const AvatarFallback = styled.div`
   width: 42px;
   height: 42px;
   min-width: 42px;
-  aspect-ratio: 1 / 1;
   border-radius: 50%;
   border: 2px solid #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  overflow: hidden;
   background: linear-gradient(135deg, #1d4ed8, #0f172a);
   color: #ffffff;
   font-size: 13px;
   font-weight: 800;
-  letter-spacing: 0;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   cursor: pointer;
-
-  @media (max-width: 360px) {
-    width: 38px;
-    height: 38px;
-    min-width: 38px;
-    font-size: 12px;
-  }
 
   @media (min-width: 768px) {
     width: 48px;
@@ -358,17 +271,13 @@ export const NameText = styled.h3`
   font-size: 16px;
   font-weight: 700;
   margin: 0;
-  color: #ffffff;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.55);
+  color: #ffffff !important;
+   -webkit-text-fill-color: #fff !important;
+  text-shadow: 0 2px 4px rgba(255, 254, 254, 0.55);
   cursor: pointer;
-  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-
-  @media (max-width: 360px) {
-    font-size: 15px;
-  }
 `;
 
 export const CategoryTag = styled.span`
@@ -382,10 +291,6 @@ export const CategoryTag = styled.span`
   letter-spacing: 0.4px;
   color: #ffffff;
   width: fit-content;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 `;
 
 export const TitleText = styled.h4`
@@ -406,12 +311,7 @@ export const CaptionText = styled.p`
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  overflow-wrap: anywhere;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
-
-  @media (min-width: 768px) {
-    -webkit-line-clamp: 3;
-  }
 `;
 
 export const DesktopSidebar = styled.div`
@@ -433,11 +333,6 @@ export const DesktopSidebar = styled.div`
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.24) transparent;
   }
-
-  @media (min-width: 1200px) {
-    height: min(100%, calc(100svh - 48px));
-    max-height: 900px;
-  }
 `;
 
 export const DesktopHeader = styled.div`
@@ -446,13 +341,6 @@ export const DesktopHeader = styled.div`
   gap: 14px;
   margin-bottom: 20px;
   min-width: 0;
-
-  > div {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
 `;
 
 export const DesktopInfo = styled.div`
@@ -482,40 +370,12 @@ export const ActionColumn = styled.div`
   z-index: 10;
   align-items: center;
 
-  &.reel-actions-sidebar {
-    display: none;
-  }
-
-  @media (max-width: 360px) {
-    right: 8px;
-    bottom: 96px;
-    gap: 10px;
-  }
-
   @media (max-width: 767px) {
     bottom: 82px;
   }
 
-  @media (min-width: 768px) and (max-width: 991px) {
-    right: 14px;
-    bottom: 112px;
-  }
-
   @media (min-width: 992px) {
-    position: static;
-    width: 100%;
-    margin-bottom: 4px;
-
-    &.reel-actions-overlay {
-      display: none;
-    }
-
-    &.reel-actions-sidebar {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      align-items: stretch;
-    }
+    display: none !important;
   }
 `;
 
@@ -548,44 +408,6 @@ export const ActionButton = styled.button`
     width: 22px;
     height: 22px;
   }
-
-  @media (max-width: 360px) {
-    width: 42px;
-    height: 42px;
-
-    svg {
-      width: 20px;
-      height: 20px;
-    }
-  }
-
-  @media (min-width: 992px) {
-    width: 100%;
-    min-height: 44px;
-    height: auto;
-    border-radius: 14px;
-    flex-direction: row;
-    gap: 7px;
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.09);
-    box-shadow: none;
-    color: ${props => props.active ? "#ff5a72" : "#d4d4d8"};
-    font-size: 12px;
-
-    span {
-      min-width: 0;
-      font-weight: 700;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    &:hover {
-      transform: translateY(-1px);
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.16);
-    }
-  }
 `;
 
 export const ActionLabel = styled.span`
@@ -594,32 +416,6 @@ export const ActionLabel = styled.span`
   color: #ffffff;
   margin-top: -8px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.65);
-
-  @media (min-width: 992px) {
-    display: none;
-  }
-`;
-
-export const CommentsSection = styled.div`
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-
-  @media (min-width: 992px) {
-    background: rgba(255, 255, 255, 0.035);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 18px;
-    padding: 14px;
-  }
-`;
-
-export const CommentsHeader = styled.h3`
-  font-size: 15px;
-  font-weight: 700;
-  margin: 0 0 12px;
-  color: #f4f4f5;
 `;
 
 export const CommentsList = styled.div`
@@ -707,11 +503,6 @@ export const CommentSubmitButton = styled.button`
     opacity: 0.9;
     transform: translateY(-1px);
   }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
 `;
 
 export const MobileCommentsBackdrop = styled.div`
@@ -742,16 +533,9 @@ export const MobileCommentsPanel = styled.div`
   overflow: hidden;
 
   @media (max-width: 767px) {
-    height: min(68dvh, calc(100dvh - var(--reels-mobile-safe-bottom) - 96px));
-    margin-bottom: var(--reels-mobile-safe-bottom);
+    height: min(68dvh, calc(100dvh - 96px));
     padding-bottom: 16px;
     border-radius: 20px;
-  }
-
-  @media (min-width: 768px) and (max-width: 991px) {
-    max-width: 640px;
-    height: min(68vh, 620px);
-    border-radius: 22px 22px 0 0;
   }
 `;
 
@@ -789,19 +573,8 @@ export const CtaRow = styled.div`
     right: 68px;
   }
 
-  @media (min-width: 768px) and (max-width: 991px) {
-    left: 24px;
-    right: 92px;
-    bottom: 20px;
-    gap: 10px;
-  }
-
   @media (min-width: 992px) {
-    position: static;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    margin-top: 16px;
-    width: 100%;
+    display: none !important;
   }
 `;
 
@@ -833,25 +606,6 @@ export const CtaButton = styled.button`
     transform: translateY(-2px);
     background: ${props => props.variant === "primary" ? "#ffffff" : "rgba(255, 255, 255, 0.18)"};
   }
-
-  @media (max-width: 360px) {
-    padding: 8px 4px;
-    font-size: 9.5px;
-
-    svg {
-      width: 14px;
-      height: 14px;
-    }
-  }
-
-  @media (min-width: 992px) {
-    flex-direction: row;
-    padding: 12px 10px;
-    min-height: 44px;
-    font-size: 12px;
-    border-radius: 14px;
-    gap: 8px;
-  }
 `;
 
 export const SoundToggle = styled.button`
@@ -871,17 +625,8 @@ export const SoundToggle = styled.button`
   z-index: 10;
   backdrop-filter: blur(10px);
 
-  &:hover {
-    background: rgba(0, 0, 0, 0.7);
-  }
-
   @media (max-width: 767px) {
     display: none;
-  }
-
-  @media (min-width: 768px) {
-    top: 18px;
-    right: 18px;
   }
 `;
 

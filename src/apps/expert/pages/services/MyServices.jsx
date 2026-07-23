@@ -6,6 +6,30 @@ import { useExpert } from "../../../../shared/context/ExpertContext";
 import { getServicesByExpert, updateService, deleteService, uploadServiceFiles, deleteServiceFile } from "../../../../shared/api/service.api";
 import * as S from "./MyServices.style";
 
+// Add scroll lock utility
+const useScrollLock = (isLocked) => {
+  useEffect(() => {
+    if (isLocked) {
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.top = `-${window.scrollY}px`;
+      
+      return () => {
+        const scrollY = document.body.style.top;
+        document.body.style.overflow = originalStyle;
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.top = '';
+        if (scrollY) {
+          window.scrollTo(0, parseInt(scrollY || '0', 10) * -1);
+        }
+      };
+    }
+  }, [isLocked]);
+};
+
 const MyServices = () => {
   const navigate = useNavigate();
   const { expertData, profileLoading } = useExpert();
@@ -40,22 +64,19 @@ const MyServices = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingService, setDeletingService] = useState(null);
 
-  // Helper function to get correct image URL (handles both relative and absolute paths)
+  // Lock scroll when modals are open
+  useScrollLock(showEditModal || showDeleteConfirm);
+
+  // Helper function to get correct image URL
   const getImageUrl = (img) => {
     if (!img) return "https://via.placeholder.com/200x150?text=No+Image";
-    
-    // If already full URL
     if (img.startsWith("http")) return img;
-    
-    // If relative path
     return `https://softmaxs.com/${img}`;
   };
 
-  // Helper function to render deliverables (handles both array and HTML string)
+  // Helper function to render deliverables
   const renderDeliverables = (deliverables) => {
     if (!deliverables) return null;
-    
-    // If deliverables is an array
     if (Array.isArray(deliverables)) {
       return (
         <ul>
@@ -65,8 +86,6 @@ const MyServices = () => {
         </ul>
       );
     }
-    
-    // If deliverables is HTML string
     return <div dangerouslySetInnerHTML={{ __html: deliverables }} />;
   };
 
@@ -244,7 +263,6 @@ const MyServices = () => {
       const response = await deleteService(deletingService.id);
       
       if (response.data.success) {
-        // Remove from local state
         setServices(prev => prev.filter(s => s.id !== deletingService.id));
         setShowDeleteConfirm(false);
         setDeletingService(null);
@@ -271,7 +289,6 @@ const MyServices = () => {
             <p>Manage your professional offerings for <strong>{expertData?.name}</strong></p>
           </div>
           
-          {/* Action Buttons Container */}
           <S.ActionGroup>
             <S.BookingButton onClick={() => navigate("/expert/mybookings")}>
               <FiClipboard /> My Bookings

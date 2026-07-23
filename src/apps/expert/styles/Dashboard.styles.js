@@ -5,10 +5,9 @@ export const Layout = styled.div`
   display: flex;
   width: 100%;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top left, rgba(63, 81, 181, 0.06), transparent 24%),
-    #f3f6fb;
+  background: #f8fafc;
   font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #111827;
 `;
 
 export const MainContent = styled.main`
@@ -17,89 +16,92 @@ export const MainContent = styled.main`
   flex-direction: column;
   min-width: 0;
   
-  /* Desktop Sidebar Space */
- 
-
   @media (max-width: 1024px) {
-    margin-left: 0; /* Mobile par sidebar hide hota hai */
-    padding-top: 20px;
+    margin-left: 0;
+    padding-top: 12px;
   }
 `;
 
 export const ContentInner = styled.div`
-  padding: clamp(16px, 2.2vw, 28px);
+  padding: 20px 16px max(32px, calc(20px + env(safe-area-inset-bottom, 0px)));
   width: 100%;
-  max-width: 1128px; /* LinkedIn standard width */
-  margin: 0 auto; /* ✅ Center Align Desktop Content */
+  max-width: 1128px;
+  margin: 0 auto;
+  box-sizing: border-box;
 
   @media (max-width: 768px) {
-    padding: 16px 12px; /* Mobile par clean padding */
+    padding: 14px 12px max(24px, calc(16px + env(safe-area-inset-bottom, 0px)));
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px 10px max(20px, calc(12px + env(safe-area-inset-bottom, 0px)));
   }
 `;
 
 export const Welcome = styled.h2`
-  font-size: 22px;
-  font-weight: 600;
-  color: #000000;
-  margin-bottom: 24px;
-  letter-spacing: -0.02em;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #000080;
+  margin-bottom: 20px;
+  letter-spacing: -0.01em;
 
   @media (max-width: 768px) {
-    font-size: 18px;
-    margin-bottom: 16px;
+    font-size: 1.2rem;
+    margin-bottom: 14px;
   }
 `;
 
-/* Stats Grid - Instagram Insight Style */
+/* Stats Grid - Groww Material Card Style */
 export const StatsRow = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* Desktop: 3 Columns */
-  gap: 16px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
 
   @media (max-width: 1024px) {
-    grid-template-columns: repeat(2, 1fr); /* Tablet: 2 Columns */
+    grid-template-columns: repeat(2, 1fr);
   }
 
   @media (max-width: 580px) {
-    grid-template-columns: 1fr; /* Mobile: Single Column stack */
-    gap: 12px;
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 `;
 
 export const StatCard = styled.div`
   background: #ffffff;
-  border: 1px solid #d8e0eb; /* Instagram-ish border */
-  border-radius: 20px;
-  padding: 22px;
-  transition: transform 0.2s;
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 18px 20px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    box-shadow: 0 8px 20px rgba(0, 0, 128, 0.08);
+    border-color: rgba(0, 0, 128, 0.2);
   }
   
   span {
-    font-size: 13px;
-    color: #737373; /* Instagram Grey */
-    font-weight: 500;
+    font-size: 0.78rem;
+    color: #64748b;
+    font-weight: 600;
     display: block;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
   }
 
   h2 {
     margin: 0;
-    font-size: 28px;
-    color: #000000;
-    font-weight: 700;
+    font-size: 1.75rem;
+    color: #000080;
+    font-weight: 800;
   }
 
   @media (max-width: 480px) {
-    padding: 16px;
-    h2 { font-size: 22px; }
+    padding: 14px 16px;
+    h2 { font-size: 1.4rem; }
   }
 `;
 

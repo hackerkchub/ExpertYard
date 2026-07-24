@@ -2,16 +2,17 @@ import styled from "styled-components";
 
 export const PageWrapper = styled.div`
   width: 100%;
-  min-height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
-  background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 28%),
-    linear-gradient(180deg, #f8fafc 0%, #eef3f8 100%);
+  background: #ffffff;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 32px 20px 64px;
+  padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(32px, calc(20px + env(safe-area-inset-bottom, 0px)));
   font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #0f172a;
+  box-sizing: border-box;
 
   *,
   *::before,
@@ -19,20 +20,8 @@ export const PageWrapper = styled.div`
     box-sizing: border-box;
   }
 
-  @media (min-width: 1440px) {
-    padding-top: 40px;
-  }
-
-  @media (max-width: 1024px) {
-    padding: 28px 18px 56px;
-  }
-
   @media (max-width: 768px) {
-    padding: 22px 14px 44px;
-  }
-
-  @media (max-width: 430px) {
-    padding: 16px 10px 36px;
+    padding: max(12px, env(safe-area-inset-top, 0px)) 12px max(24px, calc(16px + env(safe-area-inset-bottom, 0px)));
   }
 
   @media (max-width: 360px) {
@@ -41,35 +30,28 @@ export const PageWrapper = styled.div`
 `;
 
 export const FormContainer = styled.div`
-  background: white;
-  width: min(100%, 980px);
+  background: #ffffff;
+  width: 100%;
+  max-width: 1128px;
   min-width: 0;
-  border: 1px solid #d8e0eb;
-  border-radius: 12px;
-  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.08);
-  padding: clamp(18px, 2.4vw, 30px);
-  overflow: hidden;
-
-  @media (min-width: 1440px) {
-    width: min(100%, 1040px);
-  }
-
-  @media (max-width: 430px) {
-    border-radius: 10px;
-    padding: 14px;
-  }
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 0 auto;
+  overflow: visible;
 `;
 
 export const FormHeader = styled.div`
   border-bottom: 1px solid #e2e8f0;
-  margin-bottom: 24px;
-  padding-bottom: 18px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  background: #ffffff;
 
   h2 {
-    color: #0f172a;
-    font-size: clamp(22px, 3vw, 30px);
-    line-height: 1.15;
-    font-weight: 800;
+    color: #000080;
+    font-size: clamp(20px, 3vw, 26px);
+    line-height: 1.2;
+    font-weight: 700;
     margin: 0;
     overflow-wrap: break-word;
   }
@@ -78,7 +60,7 @@ export const FormHeader = styled.div`
     color: #64748b;
     font-size: 14px;
     line-height: 1.45;
-    margin: 8px 0 0;
+    margin: 6px 0 0;
     overflow-wrap: break-word;
   }
 `;
@@ -86,26 +68,29 @@ export const FormHeader = styled.div`
 export const StyledForm = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
   min-width: 0;
+  width: 100%;
+  background: #ffffff;
 `;
 
 export const FormGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 12px;
   }
 `;
 
 export const InputGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
+  width: 100%;
 
   label {
     display: flex;
@@ -113,7 +98,7 @@ export const InputGroup = styled.div`
     gap: 8px;
     font-size: 14px;
     line-height: 1.35;
-    font-weight: 750;
+    font-weight: 600;
     color: #334155;
     overflow-wrap: break-word;
   }
@@ -121,38 +106,41 @@ export const InputGroup = styled.div`
   input, textarea, select {
     width: 100%;
     min-width: 0;
-    min-height: 44px;
-    padding: 11px 13px;
+    min-height: 48px;
+    padding: 12px 14px;
     border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    font-size: 14px;
+    border-radius: 10px;
+    font-size: 16px;
     color: #0f172a;
-    background: #fff;
+    background: #ffffff;
     font-family: inherit;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    box-sizing: border-box;
 
     &:focus {
       outline: none;
-      border-color: #0a66c2;
-      box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.14);
+      border-color: #000080;
+      box-shadow: 0 0 0 2px rgba(0, 0, 128, 0.15);
       background: #ffffff;
     }
   }
 
   textarea {
     resize: vertical;
-    line-height: 1.5;
+    line-height: 1.45;
     min-height: 112px;
   }
 `;
 
-// New Compact Upload Styles
+// Compact Upload Styles
 export const CompactUploadBox = styled.div`
   min-width: 0;
-  background: #f8fafc;
-  border: 1px dashed #93c5fd;
-  border-radius: 10px;
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
   padding: 14px;
+  width: 100%;
+  box-sizing: border-box;
 `;
 
 export const UploadTrigger = styled.div`
@@ -161,9 +149,9 @@ export const UploadTrigger = styled.div`
   justify-content: center;
   flex-wrap: wrap;
   gap: 10px;
-  color: #0a66c2;
+  color: #000080;
   cursor: pointer;
-  font-weight: 750;
+  font-weight: 700;
   font-size: 14px;
   line-height: 1.4;
   text-align: center;
@@ -172,7 +160,7 @@ export const UploadTrigger = styled.div`
   overflow-wrap: break-word;
 
   &:hover {
-    color: #004182;
+    color: #1e3a8a;
   }
 `;
 
@@ -181,6 +169,7 @@ export const FileStatus = styled.div`
   align-items: center;
   gap: 12px;
   min-width: 0;
+  width: 100%;
 
   .info {
     flex: 1;
@@ -192,7 +181,7 @@ export const FileStatus = styled.div`
     .filename {
       font-size: 14px;
       line-height: 1.35;
-      font-weight: 750;
+      font-weight: 700;
       color: #0f172a;
       overflow-wrap: anywhere;
     }
@@ -207,14 +196,14 @@ export const FileStatus = styled.div`
   button {
     flex: 0 0 auto;
     background: #ffffff;
-    border: 1px solid #0a66c2;
-    color: #0a66c2;
-    padding: 8px 12px;
+    border: 1px solid #000080;
+    color: #000080;
+    padding: 8px 14px;
     border-radius: 999px;
     font-size: 12px;
-    font-weight: 750;
+    font-weight: 700;
     cursor: pointer;
-    &:hover { background: #f0f7ff; }
+    &:hover { background: #eef2ff; }
   }
 
   @media (max-width: 430px) {
@@ -228,11 +217,11 @@ export const FileStatus = styled.div`
 `;
 
 export const SectionTitle = styled.h3`
-  font-size: 17px;
+  font-size: 1.05rem;
   line-height: 1.35;
-  color: #0f172a;
+  color: #000080;
   margin: 0;
-  font-weight: 800;
+  font-weight: 700;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -240,7 +229,7 @@ export const SectionTitle = styled.h3`
 
   svg {
     flex: 0 0 auto;
-    color: #0a66c2;
+    color: #000080;
   }
 `;
 
@@ -249,8 +238,10 @@ export const ButtonGroup = styled.div`
   justify-content: flex-end;
   align-items: center;
   gap: 12px;
-  padding-top: 4px;
+  padding-top: 8px;
   min-width: 0;
+  width: 100%;
+  background: #ffffff;
 
   @media (max-width: 768px) {
     justify-content: stretch;
@@ -262,14 +253,18 @@ export const BuilderSection = styled.section`
   flex-direction: column;
   gap: 16px;
   min-width: 0;
+  width: 100%;
   padding: 20px;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 16px;
   background: #ffffff;
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  box-sizing: border-box;
 
   @media (max-width: 768px) {
     padding: 16px;
+    border-radius: 12px;
+    gap: 14px;
   }
 
   @media (max-width: 390px) {
@@ -289,8 +284,9 @@ export const CheckboxLine = styled.div`
 
   input {
     flex: 0 0 auto;
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
+    accent-color: #000080;
   }
 
   label {
@@ -304,17 +300,20 @@ export const FileBuilderList = styled.div`
   flex-direction: column;
   gap: 12px;
   min-width: 0;
+  width: 100%;
 `;
 
 export const FileBuilderRow = styled.div`
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr) auto;
   gap: 12px;
-  padding: 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  background: #f8fafc;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
   min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 
   .file-icon {
     width: 42px;
@@ -322,9 +321,9 @@ export const FileBuilderRow = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;
-    background: #eff6ff;
-    color: #0a66c2;
+    border-radius: 10px;
+    background: #eef2ff;
+    color: #000080;
   }
 
   .file-fields {
@@ -353,11 +352,13 @@ export const FileBuilderRow = styled.div`
   .file-fields > input {
     width: 100%;
     min-width: 0;
-    min-height: 36px;
+    min-height: 40px;
     border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    padding: 0 10px;
-    font-size: 13px;
+    border-radius: 8px;
+    padding: 0 12px;
+    font-size: 14px;
+    box-sizing: border-box;
+    background: #ffffff;
   }
 
   .file-flags {
@@ -377,13 +378,17 @@ export const FileBuilderRow = styled.div`
   }
 
   .remove {
-    width: 34px;
-    height: 34px;
+    width: 38px;
+    height: 38px;
     border: 0;
-    border-radius: 8px;
-    background: #fee2e2;
-    color: #b91c1c;
+    border-radius: 10px;
+    background: #ffe4e6;
+    color: #e11d48;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
   }
 
   @media (max-width: 560px) {
@@ -414,22 +419,9 @@ export const FileBuilderRow = styled.div`
   }
 `;
 
-// export const SubmitButton = styled.button`
-//   background-color: #0a66c2;
-//   color: white;
-//   border: none;
-//   border-radius: 24px;
-//   padding: 12px 32px;
-//   font-size: 16px;
-//   font-weight: 600;
-//   cursor: pointer;
-//   &:hover { background-color: #004182; }
-//   &:disabled { background-color: #cbd5e0; cursor: not-allowed; }
-// `;
-
 export const Alert = styled.div`
-  padding: 12px 14px;
-  border-radius: 10px;
+  padding: 14px 16px;
+  border-radius: 12px;
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -437,9 +429,11 @@ export const Alert = styled.div`
   line-height: 1.45;
   font-weight: 650;
   overflow-wrap: break-word;
+  width: 100%;
+  box-sizing: border-box;
   ${(props) => props.$type === "success" 
-    ? `background: #e7f4ed; color: #057642; border: 1px solid #057642;` 
-    : `background: #f9eaea; color: #cc1011; border: 1px solid #cc1011;`}
+    ? `background: #ecfdf5; color: #047857; border: 1px solid #10b981;` 
+    : `background: #fff1f2; color: #be123c; border: 1px solid #f43f5e;`}
 
   svg {
     flex: 0 0 auto;
@@ -448,17 +442,22 @@ export const Alert = styled.div`
 `;
 
 export const EditorWrapper = styled.div`
+  width: 100%;
+  box-sizing: border-box;
+  background: #ffffff;
   .ql-container {
     min-height: 120px;
-    border-bottom-left-radius: 4px;
-    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
     font-family: inherit;
-    font-size: 14px;
+    font-size: 15px;
+    background: #ffffff;
   }
   .ql-toolbar {
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
-    background: #f8f9fa;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    background: #ffffff;
+    border-color: #cbd5e1;
   }
   .ql-editor.ql-blank::before {
     font-style: normal;
@@ -466,14 +465,13 @@ export const EditorWrapper = styled.div`
   }
 `;
 
-// Add these new styles to your existing CreateService.style.js
-
 export const LoaderContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 12px 0 4px;
   min-width: 0;
+  width: 100%;
 `;
 
 export const ProgressBarWrapper = styled.div`
@@ -486,7 +484,7 @@ export const ProgressBarWrapper = styled.div`
 
 export const ProgressBar = styled.div`
   height: 100%;
-  background: linear-gradient(90deg, #0a66c2, #0057a3);
+  background: #000080;
   border-radius: 4px;
   transition: width 0.3s ease;
   width: ${props => props.$progress || 0}%;
@@ -503,7 +501,7 @@ export const LoaderText = styled.div`
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: #0a66c2;
+  color: #000080;
   font-weight: 650;
   overflow-wrap: break-word;
 
@@ -517,30 +515,26 @@ export const LoaderText = styled.div`
   }
 `;
 
-// Update SubmitButton to handle loading state
 export const SubmitButton = styled.button`
-  background-color: ${props => props.disabled ? '#cbd5e0' : '#0a66c2'};
+  background-color: ${props => props.disabled ? '#cbd5e0' : '#000080'};
   color: white;
   border: none;
-  border-radius: 999px;
+  border-radius: 24px;
   padding: 12px 28px;
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 700;
   cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: auto;
+  width: 100%;
   max-width: 100%;
-  min-height: 46px;
-  min-width: 160px;
+  min-height: 48px;
   transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
 
   &:hover:not(:disabled) {
-    background-color: #004182;
-    transform: translateY(-1px);
-    box-shadow: 0 10px 18px rgba(10, 102, 194, 0.18);
+    background-color: #1e3a8a;
   }
 
   .spinning {
@@ -550,9 +544,5 @@ export const SubmitButton = styled.button`
   @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
-  }
-
-  @media (max-width: 768px) {
-    width: 100%;
   }
 `;

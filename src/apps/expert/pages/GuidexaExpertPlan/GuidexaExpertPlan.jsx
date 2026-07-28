@@ -9,7 +9,7 @@ import {
 } from "../../../../shared/api/expertapi/expertMembershipPlan.api";
 
 const GuidexaExpertPlan = () => {
-  const { expertData } = useExpert();
+  const { expertData, refreshExpertData } = useExpert();
   const [currentPlan, setCurrentPlan] = useState(null);
   const [allPlans, setAllPlans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -240,9 +240,16 @@ const GuidexaExpertPlan = () => {
       });
 
       if (verify.data.success) {
-        alert("Payment Successful! Your plan is now active.");
-        window.location.reload();
-      } else {
+  // Refresh expert profile and trial/subscription status
+  await refreshExpertData();
+
+  alert("Payment Successful! Your plan is now active.");
+
+  // Optional: navigate if required
+  // navigate("/expert/home", { replace: true });
+
+  window.location.reload();
+} else {
         throw new Error(verify.data.message || "Payment verification failed");
       }
 

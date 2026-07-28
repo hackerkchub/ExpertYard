@@ -128,3 +128,58 @@ export const updateExpertRegistrationStatusApi = (
 // Dashboard stats
 export const getExpertRegistrationStatsApi = () =>
   adminApi.get("/expert-detail/expert-registration-stats");
+
+
+// =========================
+// EXPERT TRIAL MANAGEMENT
+// =========================
+
+// Get trial details
+export const getExpertTrialApi = (id) =>
+  adminApi.get(`/admin/experts/${id}/trial`);
+
+// Expire trial immediately
+export const expireExpertTrialApi = (id) =>
+  adminApi.post(`/admin/experts/${id}/trial/expire`);
+
+// Extend trial
+export const extendExpertTrialApi = (id, hours = 72) =>
+  adminApi.post(`/admin/experts/${id}/trial/extend`, {
+    hours,
+  });
+
+// Reset trial
+export const resetExpertTrialApi = (id, hours = 72) =>
+  adminApi.post(`/admin/experts/${id}/trial/reset`, {
+    hours,
+  });
+
+  // =========================
+// BULK TRIAL MANAGEMENT
+// =========================
+
+// Expire multiple experts
+export const bulkExpireExpertTrialsApi = (expertIds) =>
+  adminApi.post("/admin/experts/trial/bulk-expire", {
+    expert_ids: expertIds,
+  });
+
+// Extend multiple experts
+export const bulkExtendExpertTrialsApi = (
+  expertIds,
+  hours = 72
+) =>
+  adminApi.post("/admin/experts/trial/bulk-extend", {
+    expert_ids: expertIds,
+    hours,
+  });
+
+// Reset multiple experts
+export const bulkResetExpertTrialsApi = (
+  expertIds,
+  hours = 72
+) =>
+  adminApi.post("/admin/experts/trial/bulk-reset", {
+    expert_ids: expertIds,
+    hours,
+  });

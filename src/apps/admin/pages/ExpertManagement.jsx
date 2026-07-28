@@ -17,14 +17,27 @@ import {
   FaToggleOn,
   FaToggleOff,
   FaSpinner,
-  FaSave
+  FaSave,
+  FaGift,
+  FaCheckSquare,
+  FaSquare,
+  FaClock,
+  FaCheckCircle,
+  FaExclamationCircle,
+  FaBan,
+  FaChevronDown,
+  FaCheck,
+  FaPhone // Added Phone Icon
 } from "react-icons/fa";
 
-// API IMPORTS
+// API IMPORTS - Use the correct bulk functions
 import { 
   getAllExpertsApi, 
   deleteExpertApi,
-  updateExpertRankApi
+  updateExpertRankApi,
+  bulkExpireExpertTrialsApi,
+  bulkExtendExpertTrialsApi,
+  bulkResetExpertTrialsApi
 } from "../../../shared/api/admin/expert.api";
 
 // Animations
@@ -226,6 +239,76 @@ const ResetBtn = styled.button`
   }
 `;
 
+// Bulk Action Bar
+const BulkActionBar = styled.div`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 16px 24px;
+  border-radius: 12px;
+  margin: 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  animation: ${fadeIn} 0.3s ease-out;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+`;
+
+const BulkInfo = styled.span`
+  font-weight: 600;
+  font-size: 14px;
+  
+  @media (max-width: 768px) {
+    text-align: center;
+  }
+`;
+
+const BulkSelect = styled.select`
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: white;
+  color: #212529;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  min-width: 120px;
+  
+  &:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+  }
+`;
+
+const BulkButton = styled.button`
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: ${props => props.$primary ? 'white' : 'rgba(255, 255, 255, 0.2)'};
+  color: ${props => props.$primary ? '#667eea' : 'white'};
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    background: ${props => props.$primary ? '#f0f0f0' : 'rgba(255, 255, 255, 0.3)'};
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
 const TableWrapper = styled.div`
   overflow-x: auto;
   padding: 0 32px 32px;
@@ -313,7 +396,7 @@ const ExpertPhoto = styled.img`
 const ExpertName = styled.div`
   font-weight: 700;
   color: #212529;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   font-size: 15px;
   
   @media (max-width: 768px) {
@@ -333,6 +416,38 @@ const ExpertEmail = styled.div`
   }
 `;
 
+// 👇 NEW: Phone display
+const ExpertPhone = styled.div`
+  font-size: 12px;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  
+  svg {
+    font-size: 10px;
+  }
+`;
+
+const CheckboxWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #667eea;
+    
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
+`;
+
 const StatusBadge = styled.span`
   display: inline-flex;
   align-items: center;
@@ -343,6 +458,57 @@ const StatusBadge = styled.span`
   font-weight: 600;
   background: ${props => props.$enabled ? '#d4edda' : '#f8d7da'};
   color: ${props => props.$enabled ? '#155724' : '#721c24'};
+  
+  svg {
+    font-size: 14px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+`;
+
+// Trial Status Badge
+const TrialBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  
+  ${props => {
+    switch(props.$status) {
+      case 'paid':
+        return `
+          background: #d1ecf1;
+          color: #0c5460;
+        `;
+      case 'active':
+        return `
+          background: #d4edda;
+          color: #155724;
+        `;
+      case 'expired':
+        return `
+          background: #f8d7da;
+          color: #721c24;
+        `;
+      case 'converted':
+        return `
+          background: #d1ecf1;
+          color: #0c5460;
+        `;
+      default:
+        return `
+          background: #e9ecef;
+          color: #6c757d;
+        `;
+    }
+  }}
   
   svg {
     font-size: 14px;
@@ -517,6 +683,12 @@ export default function ExpertManagement() {
   const [subcategory, setSubcategory] = useState("");
   const [loading, setLoading] = useState(true);
   const [savingRankId, setSavingRankId] = useState(null);
+  const [bulkAction, setBulkAction] = useState("extend-24h");
+  const [bulkProcessing, setBulkProcessing] = useState(false);
+  
+  // Selection state
+  const [selectedExperts, setSelectedExperts] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
 
   useEffect(() => {
     fetchExperts();
@@ -525,22 +697,41 @@ export default function ExpertManagement() {
   const fetchExperts = async () => {
     try {
       setLoading(true);
-      const { data } = await getAllExpertsApi();
+      const response = await getAllExpertsApi();
+      const data = response.data;
+      
+      // Debug: Log the first expert to check is_paid field
+      if (data.data && data.data.length > 0) {
+        console.log("First expert from API:", data.data[0]);
+        console.log("All experts data:", data.data);
+      }
       
       setRows(
         data.data.map((e) => ({
           id: e.id,
           name: e.name,
           email: e.email,
+          phone: e.phone || "", // 👈 Added phone field
           category: e.category_name || e.category_id || "-",
           subcategory: e.subcategory_name || e.subcategory_id || "-",
           photo: e.profile_photo || "https://via.placeholder.com/48",
           status: e.status === 1 ? "ENABLED" : "DISABLED",
           manual_rank: e.manual_rank || "",
           rank_enabled: e.rank_enabled === 1 || e.rank_enabled === true,
-          rank_context: e.rank_context || "call_chat"
+          rank_context: e.rank_context || "call_chat",
+          // Trial fields
+          trial_enabled: e.trial_enabled === 1 || e.trial_enabled === true,
+          trial_status: e.trial_status || "disabled",
+          trial_end_at: e.trial_end_at,
+          remaining_hours: e.remaining_hours || 0,
+          // Paid status - Backend decides
+          is_paid: Number(e.is_paid) === 1
         }))
       );
+      
+      // Reset selections
+      setSelectedExperts([]);
+      setSelectAll(false);
     } catch (err) {
       console.error("Error fetching experts:", err);
       alert("Failed to load experts");
@@ -555,6 +746,8 @@ export default function ExpertManagement() {
     try {
       await deleteExpertApi(id);
       setRows(rows.filter((r) => r.id !== id));
+      // Remove from selected if present
+      setSelectedExperts(selectedExperts.filter(expId => expId !== id));
       alert("Expert moved to Deleted Experts.");
     } catch (err) {
       console.error("Delete failed:", err);
@@ -595,10 +788,180 @@ export default function ExpertManagement() {
     }
   };
 
+  // Selection handlers
+  const toggleSelectAll = () => {
+    if (selectAll) {
+      setSelectedExperts([]);
+    } else {
+      // Only select non-paid experts
+      const selectableExperts = filteredData
+        .filter(r => !r.is_paid)
+        .map(r => r.id);
+      setSelectedExperts(selectableExperts);
+    }
+    setSelectAll(!selectAll);
+  };
+
+  const toggleSelectExpert = (id) => {
+    setSelectedExperts(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(expId => expId !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+
+  // Bulk action handler
+  const handleBulkAction = async () => {
+    if (selectedExperts.length === 0) {
+      alert("Please select at least one expert.");
+      return;
+    }
+
+    const action = bulkAction;
+    let confirmMessage = "";
+    let hours = 72;
+
+    switch (action) {
+      case "extend-24h":
+        confirmMessage = `Extend trial by 24 hours for ${selectedExperts.length} expert(s)?`;
+        hours = 24;
+        break;
+      case "extend-72h":
+        confirmMessage = `Extend trial by 72 hours for ${selectedExperts.length} expert(s)?`;
+        hours = 72;
+        break;
+      case "extend-7d":
+        confirmMessage = `Extend trial by 7 days for ${selectedExperts.length} expert(s)?`;
+        hours = 168; // 7 days
+        break;
+      case "expire":
+        confirmMessage = `Expire trial for ${selectedExperts.length} expert(s)?`;
+        break;
+      case "reset":
+        confirmMessage = `Reset trial for ${selectedExperts.length} expert(s)?`;
+        hours = 72;
+        break;
+      default:
+        alert("Invalid action selected.");
+        return;
+    }
+
+    if (!window.confirm(confirmMessage)) return;
+
+    try {
+      setBulkProcessing(true);
+      
+      let response;
+      // Call the appropriate bulk API based on action
+      if (action === "expire") {
+        response = await bulkExpireExpertTrialsApi(selectedExperts);
+      } else if (action === "reset") {
+        response = await bulkResetExpertTrialsApi(selectedExperts, hours);
+      } else {
+        // extend actions
+        response = await bulkExtendExpertTrialsApi(selectedExperts, hours);
+      }
+      
+      // Extract updated and failed from response
+      const { updated = [], failed = [] } = response.data.data || response.data || {};
+      
+      await fetchExperts();
+      
+      // Build detailed success message
+      let message = `✅ Updated : ${updated.length} expert(s)`;
+      
+      if (failed.length > 0) {
+        const paidCount = failed.filter(f => 
+          f.reason && (
+            f.reason.includes("active subscription") || 
+            f.reason.includes("paid")
+          )
+        ).length;
+        
+        message += `\n⚠️ Skipped : ${failed.length} expert(s)`;
+        
+        if (paidCount > 0) {
+          message += ` (${paidCount} paid)`;
+        }
+        
+        // Show first 3 failure details
+        if (failed.length <= 3) {
+          failed.forEach(f => {
+            message += `\n   • Expert #${f.expert_id}: ${f.reason}`;
+          });
+        } else {
+          message += `\n   • ${failed.length} experts failed. Check logs for details.`;
+        }
+      }
+      
+      alert(message);
+      
+      setSelectedExperts([]);
+      setSelectAll(false);
+    } catch (err) {
+      console.error("Bulk action failed:", err);
+      alert("Bulk action failed. Please try again.");
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  // Get trial status display
+  const getTrialDisplay = (row) => {
+    // Check if expert is paid first
+    if (row.is_paid) {
+      return {
+        label: "Paid Plan",
+        status: "paid",
+        icon: <FaCheck />
+      };
+    }
+
+    if (!row.trial_enabled) {
+      return {
+        label: "Disabled",
+        status: "disabled",
+        icon: <FaBan />
+      };
+    }
+
+    switch (row.trial_status) {
+      case "active":
+        return {
+          label: `Active (${Math.floor(row.remaining_hours)}h ${Math.floor((row.remaining_hours % 1) * 60)}m)`,
+          status: "active",
+          icon: <FaClock />
+        };
+      case "expired":
+        return {
+          label: "Expired",
+          status: "expired",
+          icon: <FaExclamationCircle />
+        };
+      case "converted":
+        return {
+          label: "Converted",
+          status: "converted",
+          icon: <FaCheckCircle />
+        };
+      default:
+        return {
+          label: "Disabled",
+          status: "disabled",
+          icon: <FaBan />
+        };
+    }
+  };
+
+  // 👇 Updated Filter to include Phone number
   const filteredData = rows.filter((r) => {
+    const searchLower = search.toLowerCase();
     return (
-      (r.name.toLowerCase().includes(search.toLowerCase()) ||
-        r.email.toLowerCase().includes(search.toLowerCase())) &&
+      (r.name.toLowerCase().includes(searchLower) ||
+        r.email.toLowerCase().includes(searchLower) ||
+        (r.phone && r.phone.includes(searchLower))) && // 👈 Search by Phone
       (category ? r.category === category : true) &&
       (subcategory ? r.subcategory === subcategory : true)
     );
@@ -610,7 +973,8 @@ export default function ExpertManagement() {
   const stats = {
     total: rows.length,
     enabled: rows.filter(r => r.status === "ENABLED").length,
-    disabled: rows.filter(r => r.status === "DISABLED").length
+    disabled: rows.filter(r => r.status === "DISABLED").length,
+    paid: rows.filter(r => r.is_paid).length
   };
 
   if (loading) {
@@ -648,8 +1012,8 @@ export default function ExpertManagement() {
               <div className="stat-number" style={{ color: '#28a745' }}>{stats.enabled}</div>
             </StatCard>
             <StatCard>
-              <h4>Inactive Experts</h4>
-              <div className="stat-number" style={{ color: '#dc3545' }}>{stats.disabled}</div>
+              <h4>Paid Experts</h4>
+              <div className="stat-number" style={{ color: '#17a2b8' }}>{stats.paid}</div>
             </StatCard>
           </StatsGrid>
           
@@ -657,7 +1021,7 @@ export default function ExpertManagement() {
             <InputWrapper>
               <FaSearch />
               <StyledInput
-                placeholder="Search by name or email..."
+                placeholder="Search by name, email, or phone..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -693,13 +1057,65 @@ export default function ExpertManagement() {
           </FilterGrid>
         </FilterSection>
 
+        {/* Bulk Action Bar */}
+        {selectedExperts.length > 0 && (
+          <div style={{ padding: "0 32px" }}>
+            <BulkActionBar>
+              <BulkInfo>
+                <FaCheckSquare style={{ marginRight: "8px" }} />
+                Selected: {selectedExperts.length} Expert{selectedExperts.length > 1 ? 's' : ''}
+              </BulkInfo>
+              
+              <BulkSelect 
+                value={bulkAction} 
+                onChange={(e) => setBulkAction(e.target.value)}
+              >
+                <option value="extend-24h">⏱ Extend 24 Hours</option>
+                <option value="extend-72h">⏱ Extend 72 Hours</option>
+                <option value="extend-7d">📅 Extend 7 Days</option>
+                <option value="expire">🚫 Expire</option>
+                <option value="reset">🔄 Reset</option>
+              </BulkSelect>
+              
+              <BulkButton 
+                $primary 
+                onClick={handleBulkAction}
+                disabled={bulkProcessing}
+              >
+                {bulkProcessing ? <FaSpinner style={{ animation: 'spin 1s linear infinite' }} /> : 'Apply'}
+              </BulkButton>
+              
+              <BulkButton 
+                onClick={() => {
+                  setSelectedExperts([]);
+                  setSelectAll(false);
+                }}
+                disabled={bulkProcessing}
+              >
+                Clear
+              </BulkButton>
+            </BulkActionBar>
+          </div>
+        )}
+
         <TableWrapper>
           <StyledTable>
             <thead>
               <tr>
+                <Th style={{ width: '40px' }}>
+                  <CheckboxWrapper>
+                    <input
+                      type="checkbox"
+                      checked={selectAll}
+                      onChange={toggleSelectAll}
+                      disabled={filteredData.length === 0 || filteredData.every(r => r.is_paid)}
+                    />
+                  </CheckboxWrapper>
+                </Th>
                 <Th>Expert</Th>
                 <Th>Category</Th>
                 <Th>Subcategory</Th>
+                <Th>Trial</Th>
                 <Th>Manual Rank</Th>
                 <Th>Status</Th>
                 <Th>Actions</Th>
@@ -708,7 +1124,7 @@ export default function ExpertManagement() {
             <tbody>
               {filteredData.length === 0 ? (
                 <tr>
-                  <Td colSpan="6">
+                  <Td colSpan="8">
                     <EmptyState>
                       <FaUserGraduate />
                       <h3>No experts found</h3>
@@ -717,99 +1133,124 @@ export default function ExpertManagement() {
                   </Td>
                 </tr>
               ) : (
-                filteredData.map((r) => (
-                  <Tr key={r.id}>
-                    <Td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <ExpertPhoto src={r.photo} alt={r.name} />
-                        <div>
-                          <ExpertName>{r.name}</ExpertName>
-                          <ExpertEmail>
-                            <FaEnvelope /> {r.email}
-                          </ExpertEmail>
-                        </div>
-                      </div>
-                    </Td>
-                    <Td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <FaTag style={{ color: '#667eea', fontSize: '12px' }} />
-                        {r.category}
-                      </div>
-                    </Td>
-                    <Td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <FaLayerGroup style={{ color: '#764ba2', fontSize: '12px' }} />
-                        {r.subcategory}
-                      </div>
-                    </Td>
-                    <Td>
-                      <RankControls>
-                        <RankInput
-                          type="number"
-                          min="1"
-                          placeholder="Rank"
-                          value={r.manual_rank}
-                          onChange={(event) => updateRankRow(r.id, { manual_rank: event.target.value })}
-                        />
-                        <RankToggle>
+                filteredData.map((r) => {
+                  const trialInfo = getTrialDisplay(r);
+                  const isPaid = r.is_paid;
+                  return (
+                    <Tr key={r.id}>
+                      <Td>
+                        <CheckboxWrapper>
                           <input
                             type="checkbox"
-                            checked={r.rank_enabled}
-                            onChange={(event) => updateRankRow(r.id, { rank_enabled: event.target.checked })}
+                            checked={selectedExperts.includes(r.id)}
+                            disabled={isPaid}
+                            onChange={() => toggleSelectExpert(r.id)}
+                            title={isPaid ? "Paid experts cannot be selected for bulk trial actions" : ""}
                           />
-                          Enabled
-                        </RankToggle>
-                      </RankControls>
-                    </Td>
-                    <Td>
-                      <StatusBadge $enabled={r.status === "ENABLED"}>
-                        {r.status === "ENABLED" ? <FaToggleOn /> : <FaToggleOff />}
-                        {r.status}
-                      </StatusBadge>
-                    </Td>
-                    <Td>
-                      <ActionButtons>
-                        <ActionBtn
-                          title="View Full Profile"
-                          onClick={() => navigate(`/admin/expert/${r.id}`)}
-                          $color="#e3f2fd"
-                          $textColor="#1976d2"
-                          $hover="#bbdef5"
-                        >
-                          <FaEye />
-                        </ActionBtn>
-                        {/* <ActionBtn
-                          title="Edit Expert"
-                          onClick={() => navigate(`/admin/expert/edit/${r.id}`)}
-                          $color="#fff3e0"
-                          $textColor="#f57c00"
-                          $hover="#ffe0b2"
-                        >
-                          <FaEdit />
-                        </ActionBtn> */}
-                        <ActionBtn
-                          title="Save Rank"
-                          onClick={() => saveRank(r)}
-                          disabled={savingRankId === r.id}
-                          $color="#e8f5e9"
-                          $textColor="#2e7d32"
-                          $hover="#c8e6c9"
-                        >
-                          {savingRankId === r.id ? <FaSpinner /> : <FaSave />}
-                        </ActionBtn>
-                        <ActionBtn
-                          title="Delete Expert"
-                          onClick={() => remove(r.id)}
-                          $color="#ffebee"
-                          $textColor="#d32f2f"
-                          $hover="#ffcdd2"
-                        >
-                          <FaTrash />
-                        </ActionBtn>
-                      </ActionButtons>
-                    </Td>
-                  </Tr>
-                ))
+                        </CheckboxWrapper>
+                      </Td>
+                      <Td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <ExpertPhoto src={r.photo} alt={r.name} />
+                          <div>
+                            <ExpertName>{r.name}</ExpertName>
+                            <ExpertEmail>
+                              <FaEnvelope /> {r.email}
+                            </ExpertEmail>
+                            {/* 👇 Display Phone Number below Email */}
+                            <ExpertPhone>
+                              <FaPhone /> {r.phone || 'N/A'}
+                            </ExpertPhone>
+                          </div>
+                        </div>
+                      </Td>
+                      <Td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <FaTag style={{ color: '#667eea', fontSize: '12px' }} />
+                          {r.category}
+                        </div>
+                      </Td>
+                      <Td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <FaLayerGroup style={{ color: '#764ba2', fontSize: '12px' }} />
+                          {r.subcategory}
+                        </div>
+                      </Td>
+                      <Td>
+                        <TrialBadge $status={trialInfo.status}>
+                          {trialInfo.icon}
+                          {trialInfo.label}
+                        </TrialBadge>
+                      </Td>
+                      <Td>
+                        <RankControls>
+                          <RankInput
+                            type="number"
+                            min="1"
+                            placeholder="Rank"
+                            value={r.manual_rank}
+                            onChange={(event) => updateRankRow(r.id, { manual_rank: event.target.value })}
+                          />
+                          <RankToggle>
+                            <input
+                              type="checkbox"
+                              checked={r.rank_enabled}
+                              onChange={(event) => updateRankRow(r.id, { rank_enabled: event.target.checked })}
+                            />
+                            Enabled
+                          </RankToggle>
+                        </RankControls>
+                      </Td>
+                      <Td>
+                        <StatusBadge $enabled={r.status === "ENABLED"}>
+                          {r.status === "ENABLED" ? <FaToggleOn /> : <FaToggleOff />}
+                          {r.status}
+                        </StatusBadge>
+                      </Td>
+                      <Td>
+                        <ActionButtons>
+                          <ActionBtn
+                            title="View Full Profile"
+                            onClick={() => navigate(`/admin/expert/${r.id}`)}
+                            $color="#e3f2fd"
+                            $textColor="#1976d2"
+                            $hover="#bbdef5"
+                          >
+                            <FaEye />
+                          </ActionBtn>
+                          <ActionBtn
+                            title="Trial Management"
+                            onClick={() => navigate(`/admin/expert/${r.id}`)}
+                            $color="#f3e5f5"
+                            $textColor="#7b1fa2"
+                            $hover="#e1bee7"
+                          >
+                            <FaGift />
+                          </ActionBtn>
+                          <ActionBtn
+                            title="Save Rank"
+                            onClick={() => saveRank(r)}
+                            disabled={savingRankId === r.id}
+                            $color="#e8f5e9"
+                            $textColor="#2e7d32"
+                            $hover="#c8e6c9"
+                          >
+                            {savingRankId === r.id ? <FaSpinner /> : <FaSave />}
+                          </ActionBtn>
+                          <ActionBtn
+                            title="Delete Expert"
+                            onClick={() => remove(r.id)}
+                            $color="#ffebee"
+                            $textColor="#d32f2f"
+                            $hover="#ffcdd2"
+                          >
+                            <FaTrash />
+                          </ActionBtn>
+                        </ActionButtons>
+                      </Td>
+                    </Tr>
+                  );
+                })
               )}
             </tbody>
           </StyledTable>

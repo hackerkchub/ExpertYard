@@ -81,6 +81,14 @@ const DEFAULT_STATE = {
   profile_edit_enabled: false,
   can_edit_profile: false,
   priceId: null,
+  trial: {
+    enabled: false,
+    status: "inactive",
+    expired: false,
+    startAt: null,
+    endAt: null,
+    dashboardLocked: false,
+  },
 };
 
 const DEFAULT_PRICE = {
@@ -166,7 +174,9 @@ export const ExpertProvider = ({ children }) => {
         prev.can_earn !== newState.can_earn ||
         prev.can_withdraw !== newState.can_withdraw ||
         prev.profile_edit_enabled !== newState.profile_edit_enabled ||
-        prev.can_edit_profile !== newState.can_edit_profile;
+        prev.can_edit_profile !== newState.can_edit_profile ||
+        JSON.stringify(prev.trial || {}) !==
+        JSON.stringify(newState.trial || {});
 
       if (hasChanged) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
@@ -245,6 +255,9 @@ export const ExpertProvider = ({ children }) => {
           accessProfile = {};
         }
 
+        // Extract trial data from access object
+        const trial = accessProfile.access?.trial || {};
+
         updateExpertData({
           expertId: profileData.expert_id,
           profileId: profileData.id,
@@ -280,6 +293,14 @@ export const ExpertProvider = ({ children }) => {
           can_withdraw: truthyFlag(accessProfile.access?.can_withdraw ?? accessProfile.can_withdraw),
           profile_edit_enabled: truthyFlag(accessProfile.access?.profile_edit_enabled ?? accessProfile.access?.can_edit_profile ?? accessProfile.profile_edit_enabled ?? accessProfile.can_edit_profile),
           can_edit_profile: truthyFlag(accessProfile.access?.can_edit_profile ?? accessProfile.access?.profile_edit_enabled ?? accessProfile.can_edit_profile ?? accessProfile.profile_edit_enabled),
+          trial: {
+            enabled: trial.enabled ?? false,
+            status: trial.status ?? "inactive",
+            expired: trial.status === "expired",
+            startAt: trial.start_at ?? trial.started_at ?? null,
+            endAt: trial.end_at ?? trial.ends_at ?? null,
+            dashboardLocked: trial.dashboard_locked ?? false,
+          },
         });
       } catch (err) {
         console.error("Profile fetch error:", err);
@@ -362,6 +383,25 @@ export const ExpertProvider = ({ children }) => {
       console.error("Auto load failed:", err);
     });
   }, [expertData.expertId, fetchPrice, fetchProfile]);
+
+  // Auto-refresh expert data periodically to keep trial status updated
+  useEffect(() => {
+    if (!expertData?.expertId) return;
+
+    const REFRESH_INTERVAL = 60000; // 1 minute
+
+    const interval = setInterval(() => {
+      // Only refresh if not already loading
+      if (!profileLoading && !priceLoading) {
+        console.log("Auto-refreshing expert data...");
+        refreshExpertData().catch((err) => {
+          console.error("Auto-refresh failed:", err);
+        });
+      }
+    }, REFRESH_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, [expertData?.expertId, profileLoading, priceLoading]);
 
   useEffect(() => {
     const currentId = expertData?.expertId;

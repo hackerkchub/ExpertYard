@@ -89,3 +89,12 @@ export const deleteSubcategoryApi = (id) =>
 =========================== */
 export const saveSubCategoryApi = (data) =>
   api.post("/expert/subcategory", data);
+
+
+/* ===========================
+   TOGGLE SUBCATEGORY STATUS
+=========================== */
+export const toggleSubcategoryStatusApi = (id, is_active) =>
+  api.patch(`/subcategory/${id}/status`, {
+    is_active,
+  });

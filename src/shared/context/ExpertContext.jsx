@@ -385,23 +385,23 @@ export const ExpertProvider = ({ children }) => {
   }, [expertData.expertId, fetchPrice, fetchProfile]);
 
   // Auto-refresh expert data periodically to keep trial status updated
-  useEffect(() => {
-    if (!expertData?.expertId) return;
+  // useEffect(() => {
+  //   if (!expertData?.expertId) return;
 
-    const REFRESH_INTERVAL = 60000; // 1 minute
+  //   const REFRESH_INTERVAL = 60000; // 1 minute
 
-    const interval = setInterval(() => {
-      // Only refresh if not already loading
-      if (!profileLoading && !priceLoading) {
-        console.log("Auto-refreshing expert data...");
-        refreshExpertData().catch((err) => {
-          console.error("Auto-refresh failed:", err);
-        });
-      }
-    }, REFRESH_INTERVAL);
+  //   const interval = setInterval(() => {
+  //     // Only refresh if not already loading
+  //     if (!profileLoading && !priceLoading) {
+  //       console.log("Auto-refreshing expert data...");
+  //       refreshExpertData().catch((err) => {
+  //         console.error("Auto-refresh failed:", err);
+  //       });
+  //     }
+  //   }, REFRESH_INTERVAL);
 
-    return () => clearInterval(interval);
-  }, [expertData?.expertId, profileLoading, priceLoading]);
+  //   return () => clearInterval(interval);
+  // }, [expertData?.expertId, profileLoading, priceLoading]);
 
   useEffect(() => {
     const currentId = expertData?.expertId;

@@ -335,20 +335,20 @@ function ExpertLayoutInner() {
   /* =====================================================
      🔄 AUTO REFRESH EXPERT DATA (Every 1 minute)
   ===================================================== */
-  useEffect(() => {
-    if (!expertId) return;
+  // useEffect(() => {
+  //   if (!expertId) return;
 
-    const REFRESH_INTERVAL = 60000;
+  //   const REFRESH_INTERVAL = 60000;
 
-    const interval = setInterval(() => {
-      if (!expertData?.expertId) return;
-      if (!isOnCallPage) {
-        refreshExpertData();
-      }
-    }, REFRESH_INTERVAL);
+  //   const interval = setInterval(() => {
+  //     if (!expertData?.expertId) return;
+  //     if (!isOnCallPage) {
+  //       refreshExpertData();
+  //     }
+  //   }, REFRESH_INTERVAL);
 
-    return () => clearInterval(interval);
-  }, [expertId, refreshExpertData, expertData?.expertId, isOnCallPage]);
+  //   return () => clearInterval(interval);
+  // }, [expertId, refreshExpertData, expertData?.expertId, isOnCallPage]);
 
   /* =====================================================
      🔒 TRIAL DASHBOARD LOCK REDIRECT - REMOVED

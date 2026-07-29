@@ -37,29 +37,40 @@ export const PageWrap = styled.div`
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
     .expert-profile-content-grid {
-      grid-template-columns: minmax(280px, 330px) minmax(0, 1fr);
-      gap: 22px;
+      grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
     }
   }
 
   .expert-profile-content-grid {
     display: grid;
-    grid-template-columns: minmax(270px, 320px) minmax(0, 1fr);
-    gap: 18px;
+    grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+    gap: 24px;
     align-items: start;
+    width: 100%;
+    height: auto;
   }
 
   .expert-profile-sidebar {
-    position: sticky;
-    top: 88px;
+    position: relative;
     align-self: start;
-    display: grid;
-    gap: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
     min-width: 0;
+    width: 100%;
+    height: auto;
   }
 
   .expert-profile-main {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
     min-width: 0;
+    width: 100%;
+    height: auto;
+    align-self: start;
     scroll-behavior: smooth;
   }
 
@@ -68,6 +79,7 @@ export const PageWrap = styled.div`
   .profile-tabs-card,
   .profile-reviews-card {
     margin-bottom: 0;
+    height: auto;
   }
 
   .consult-options {
@@ -178,7 +190,7 @@ export const PageWrap = styled.div`
 
     .expert-profile-content-grid {
       grid-template-columns: 1fr;
-      gap: 12px;
+      gap: 24px;
       width: 100%;
       max-width: 100%;
       margin-bottom: 0;
@@ -187,7 +199,9 @@ export const PageWrap = styled.div`
 
     .expert-profile-sidebar {
       position: static;
-      gap: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
       width: 100%;
       max-width: 100%;
       margin-bottom: 0;
@@ -199,6 +213,9 @@ export const PageWrap = styled.div`
     }
 
     .expert-profile-main {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
       width: 100%;
       max-width: 100%;
       margin-bottom: 0;
@@ -881,23 +898,26 @@ export const TagList = styled.div`
 export const Tag = styled.span`
   background: #eef2ff;
   color: #000080;
-  padding: 7px 12px;
+  padding: 6px 12px;
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   border: 1px solid rgba(0, 0, 128, 0.12);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
+  max-width: 100%;
+  width: auto;
+  line-height: 1.35;
+  box-sizing: border-box;
 
   @media (max-width: 768px) {
     max-width: 100%;
-    padding: 4px 7px;
-    font-size: 10.5px;
-    line-height: 1.2;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    padding: 5px 9px;
+    font-size: 11px;
+    line-height: 1.25;
     gap: 4px;
 
     &.expert-profile-header-tag {
@@ -920,6 +940,60 @@ export const Tag = styled.span`
       height: 12px;
       flex: 0 0 auto;
     }
+  }
+`;
+
+export const AboutSubsection = styled.div`
+  margin-top: 16px;
+  &:first-of-type {
+    margin-top: 14px;
+  }
+`;
+
+export const AboutSubtitle = styled.h3`
+  font-size: 12.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #000080;
+  margin: 0 0 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  svg {
+    color: #000080;
+    font-size: 14px;
+  }
+`;
+
+export const QualificationsList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+export const QualificationItem = styled.li`
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1e293b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 9px 13px;
+  line-height: 1.4;
+  word-break: break-word;
+
+  svg {
+    color: #000080;
+    flex-shrink: 0;
+    margin-top: 2px;
   }
 `;
 
@@ -1160,6 +1234,9 @@ export const SectionBody = styled.div`
   font-size: 15px;
   line-height: 1.7;
   color: #344054;
+  white-space: pre-line;
+  word-break: break-word;
+  overflow-wrap: break-word;
 
   @media (min-width: 1024px) {
     color: #334155;

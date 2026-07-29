@@ -83,6 +83,10 @@ import {
   QuickStats,
   TagList,
   Tag,
+  AboutSubsection,
+  AboutSubtitle,
+  QualificationsList,
+  QualificationItem,
   AvatarFallback,
   TabContainer,
   TabButton,
@@ -302,6 +306,50 @@ const ExpertProfilePage = () => {
   const displayCategoryName = primaryExpertise?.category_name || primaryExpertise?.group?.category_name || profile?.category_name;
   const displaySubcategoryName = primaryExpertise?.subcategory_name || primaryExpertise?.sub?.subcategory_name || profile?.subcategory_name;
   const numericExpertId = expertData?.expertId || null;
+
+  const parseList = (data) => {
+    if (!data) return [];
+    if (Array.isArray(data)) {
+      return data
+        .flatMap(item => {
+          if (!item) return [];
+          if (typeof item === "string") return item.split(/[,;\n]+/);
+          const str = item.name || item.title || item.degree || item.skill_name || "";
+          return str.split(/[,;\n]+/);
+        })
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+    if (typeof data === "string") {
+      return data
+        .split(/[,;\n]+/)
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+    return [];
+  };
+
+  const qualificationItems = useMemo(() => {
+    return Array.from(
+      new Set([
+        ...parseList(profile?.education),
+        ...parseList(profile?.qualifications)
+      ])
+    );
+  }, [profile?.education, profile?.qualifications]);
+
+  const skillItems = useMemo(() => {
+    return Array.from(
+      new Set(parseList(profile?.skills))
+    );
+  }, [profile?.skills]);
+
+  const hasExpertiseOrSkills = Boolean(
+    displayCategoryName ||
+    displaySubcategoryName ||
+    profile?.position ||
+    skillItems.length > 0
+  );
   const showProfileChatButton = useMemo(() => resolveProfilePageButtonVisibility(expertData, "chat"), [expertData]);
   const showProfileCallButton = useMemo(() => resolveProfilePageButtonVisibility(expertData, "call"), [expertData]);
   const canShowUserChatButton = Boolean(numericExpertId) && showProfileChatButton;
@@ -1564,13 +1612,38 @@ const ExpertProfilePage = () => {
 
             <Section className="about-me-card">
               <SectionTitle>{t("expertProfile.aboutMe")}</SectionTitle>
-              <SectionBody>{profile.description || "Experienced professional with proven track record in the field."}</SectionBody>
-              <TagList>
-                {displayCategoryName && <Tag><FiTarget />{displayCategoryName}</Tag>}
-                {displaySubcategoryName && <Tag><FiAward />{displaySubcategoryName}</Tag>}
-                {profile.position && <Tag><FiBriefcase />{profile.position}</Tag>}
-                {profile.education && <Tag><FiBookOpen />{profile.education}</Tag>}
-              </TagList>
+              <SectionBody>{profile?.description || "Experienced professional with proven track record in the field."}</SectionBody>
+
+              {hasExpertiseOrSkills && (
+                <AboutSubsection>
+                  <AboutSubtitle><FiTarget /> Expertise & Skills</AboutSubtitle>
+                  <TagList>
+                    {displayCategoryName && <Tag><FiTarget />{displayCategoryName}</Tag>}
+                    {displaySubcategoryName && <Tag><FiAward />{displaySubcategoryName}</Tag>}
+                    {profile?.position && <Tag><FiBriefcase />{profile.position}</Tag>}
+                    {skillItems.map((skill, idx) => (
+                      <Tag key={`skill-${idx}`}>
+                        <FiCheckCircle />
+                        {skill}
+                      </Tag>
+                    ))}
+                  </TagList>
+                </AboutSubsection>
+              )}
+
+              {qualificationItems.length > 0 && (
+                <AboutSubsection>
+                  <AboutSubtitle><FiBookOpen /> Qualifications & Education</AboutSubtitle>
+                  <QualificationsList>
+                    {qualificationItems.map((qual, idx) => (
+                      <QualificationItem key={`qual-${idx}`}>
+                        <FiBookOpen size={15} />
+                        <span>{qual}</span>
+                      </QualificationItem>
+                    ))}
+                  </QualificationsList>
+                </AboutSubsection>
+              )}
             </Section>
           </aside>
 
@@ -1765,7 +1838,7 @@ const ExpertProfilePage = () => {
             </Section>
 
             {/* Review Section */}
-            <ReviewSection>
+            <ReviewSection className="profile-reviews-card">
               <ReviewHeader><div><SectionTitle>{t("expertProfile.ratingReviews")}</SectionTitle></div></ReviewHeader>
 
               <ReviewForm>

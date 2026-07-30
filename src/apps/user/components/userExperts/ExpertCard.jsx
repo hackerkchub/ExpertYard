@@ -189,7 +189,7 @@ const ExpertCard = ({ data, mode, onStartChat, onStartCall, onStartVideoCall, va
   
   const chatAllowedByAdmin = isEnabledFlag(data.effective_access?.show_chat_button ?? data.effective_access?.can_chat ?? data.show_chat_button ?? data.showChatButton ?? data.can_chat ?? data.canChat);
   const callAllowedByAdmin = isEnabledFlag(data.effective_access?.show_call_button ?? data.effective_access?.can_call ?? data.show_call_button ?? data.showCallButton ?? data.can_call ?? data.canCall);
-  const videoAllowedByAdmin = isEnabledFlag(data.effective_access?.show_video_button ?? data.effective_access?.can_video_call ?? data.show_video_button ?? data.showVideoButton ?? data.can_video_call ?? data.canVideoCall);
+  const videoAllowedByAdmin = isEnabledFlag(data.effective_access?.show_video_button ?? data.effective_access?.can_video_call ?? data.effective_access?.video_call_enabled ?? data.show_video_button ?? data.showVideoButton ?? data.can_video_call ?? data.canVideoCall ?? data.video_call_enabled ?? data.videoCallEnabled ?? data.allow_video_call ?? data.allow_video ?? data.can_video ?? true);
   
   const canUseMode = Boolean(expertId);
   const isVideoTab = mode === "video";

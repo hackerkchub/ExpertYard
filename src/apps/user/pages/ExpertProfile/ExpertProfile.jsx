@@ -236,16 +236,43 @@ const resolveProfilePageButtonVisibility = (expertData, feature) => {
           expertData?.show_chat_button_on_profile_page,
           expertData?.showChatButtonOnProfilePage,
           expertData?.profile?.show_chat_button_on_profile_page,
-          expertData?.profile?.showChatButtonOnProfilePage
+          expertData?.profile?.showChatButtonOnProfilePage,
+          expertData?.show_chat_button,
+          expertData?.showChatButton
+        )
+      : feature === "video"
+      ? firstDefined(
+          expertData?.show_video_button_on_profile_page,
+          expertData?.showVideoButtonOnProfilePage,
+          expertData?.profile?.show_video_button_on_profile_page,
+          expertData?.profile?.showVideoButtonOnProfilePage,
+          expertData?.show_video_call_button,
+          expertData?.showVideoCallButton,
+          expertData?.show_video_button,
+          expertData?.showVideoButton,
+          expertData?.allow_video_call,
+          expertData?.allowVideoCall,
+          expertData?.video_call_enabled,
+          expertData?.videoCallEnabled,
+          expertData?.can_video_call,
+          expertData?.canVideoCall,
+          expertData?.profile?.show_video_button,
+          expertData?.profile?.showVideoButton,
+          expertData?.profile?.can_video_call,
+          expertData?.profile?.canVideoCall
         )
       : firstDefined(
           expertData?.show_call_button_on_profile_page,
           expertData?.showCallButtonOnProfilePage,
           expertData?.profile?.show_call_button_on_profile_page,
-          expertData?.profile?.showCallButtonOnProfilePage
+          expertData?.profile?.showCallButtonOnProfilePage,
+          expertData?.show_call_button,
+          expertData?.showCallButton
         );
 
-  return rawValue === undefined ? true : isEnabledFlag(rawValue);
+  const result = rawValue === undefined ? true : isEnabledFlag(rawValue);
+  console.log(`🔍 [PROFILE VISIBILITY LOG] Feature: ${feature}, rawValue: ${rawValue}, evaluatedResult: ${result}`);
+  return result;
 };
 
 // Helper function to get post ID consistently
@@ -352,10 +379,13 @@ const ExpertProfilePage = () => {
   );
   const showProfileChatButton = useMemo(() => resolveProfilePageButtonVisibility(expertData, "chat"), [expertData]);
   const showProfileCallButton = useMemo(() => resolveProfilePageButtonVisibility(expertData, "call"), [expertData]);
+  const showProfileVideoButton = useMemo(() => resolveProfilePageButtonVisibility(expertData, "video"), [expertData]);
   const canShowUserChatButton = Boolean(numericExpertId) && showProfileChatButton;
   const canShowUserCallButton = Boolean(numericExpertId) && showProfileCallButton;
+  const canShowUserVideoButton = Boolean(numericExpertId) && showProfileVideoButton;
   const chatDisabledReason = "Expert unavailable";
   const callDisabledReason = "Expert unavailable";
+  const videoDisabledReason = "Expert unavailable";
 
   // REMOVED: chatRequestId, showWaitingPopup, waitingText, showChatCancelled, chatRejectedMessage, requestingChat, requestIdRef
 
@@ -1446,6 +1476,7 @@ const ExpertProfilePage = () => {
 
               {/* Action Buttons based on selected pricing mode */}
               <CallToAction>
+                {showProfileVideoButton && (
                 <div className="expert-profile-action-item expert-profile-video-action">
                   <PriceTag style={{ background: "#2563eb", color: "white" }}><FiVideo /> {displayPrices.videoCallPrice > 0 ? `₹${displayPrices.videoCallPrice}/min` : "Video"}</PriceTag>
                   <VideoCallButton
@@ -1456,6 +1487,7 @@ const ExpertProfilePage = () => {
                     className="expert-profile-video-call-btn"
                   />
                 </div>
+                )}
                 {showProfileCallButton && (
                 <div className="expert-profile-action-item">
                   {hasActiveSubscription && canShowUserCallButton ? (
@@ -1582,6 +1614,7 @@ const ExpertProfilePage = () => {
             <Section className="consult-card">
               <SectionTitle>{t("expertProfile.consultWithMe")}</SectionTitle>
               <div className="consult-options">
+                {showProfileVideoButton && (
                 <VideoCallButton
                   expert={expertData || profile}
                   expertId={numericExpertId}
@@ -1590,6 +1623,7 @@ const ExpertProfilePage = () => {
                   className="expert-profile-consult-video-btn"
                   compact
                 />
+                )}
                 {showProfileCallButton && (
                 <button type="button" className="consult-option consult-call" disabled={!canShowUserCallButton} title={!canShowUserCallButton ? callDisabledReason : "Start voice call"} aria-label="Start voice call" onClick={() => handleStart("call")}>
                   <FiPhoneCall />
@@ -1883,6 +1917,7 @@ const ExpertProfilePage = () => {
             <strong>{!canShowUserChatButton ? "--" : getCompactActionPrice("chat")}</strong>
           </button>
           )}
+          {showProfileVideoButton && (
           <VideoCallButton
             expert={expertData || profile}
             expertId={numericExpertId}
@@ -1891,6 +1926,7 @@ const ExpertProfilePage = () => {
             className="mobile-video-call-btn"
             compact
           />
+          )}
           {showProfileCallButton && (
           <button type="button" className="mobile-call-btn" disabled={!canShowUserCallButton} title={!canShowUserCallButton ? callDisabledReason : "Start voice call"} aria-label="Start voice call" onClick={() => handleStart("call")}>
             <FiPhoneCall />

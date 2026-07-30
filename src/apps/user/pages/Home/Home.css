@@ -2870,7 +2870,7 @@ body {
   .home-desktop-shell {
     grid-template-columns: minmax(0, 1fr) 360px !important;
     gap: 28px !important;
-    padding: 1px 2px 3px 290px !important;
+    padding: 70px 0px 0px 270px !important;
   }
 }
 
@@ -7257,4 +7257,217 @@ img {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* ==================================================
+   DESKTOP REFINEMENT: TASK 1 & TASK 2
+   ================================================== */
+@media (min-width: 1024px) {
+  /* TASK 1: Remove gap between main content & right sidebar, expand main content */
+  .home-desktop-shell {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) var(--right-sidebar-width, 300px) !important;
+    gap: 16px !important;
+    padding-top: calc(var(--header-height, 64px) + 8px) !important;
+    padding-left: calc(var(--sidebar-width, 260px) + 16px) !important;
+    padding-right: 16px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .home-center-column {
+    min-width: 0 !important;
+    width: 100% !important;
+    grid-column: 1 / 2 !important;
+  }
+
+  .home-right-sidebar {
+    grid-column: 2 / 3 !important;
+    position: sticky !important;
+    top: calc(var(--header-height, 64px) + 12px) !important;
+    right: auto !important;
+    width: var(--right-sidebar-width, 300px) !important;
+    min-width: var(--right-sidebar-width, 300px) !important;
+    max-width: var(--right-sidebar-width, 300px) !important;
+    height: fit-content !important;
+    max-height: calc(100vh - var(--header-height, 64px) - 24px) !important;
+    flex-shrink: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  /* Desktop Header Redesign: Justdial Inspired Layout & Search Bar */
+  .home-feed-header.desktop-header-only {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 10000 !important;
+    height: var(--header-height, 64px) !important;
+    min-height: var(--header-height, 64px) !important;
+    max-height: var(--header-height, 64px) !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 24px !important;
+    gap: 20px !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04) !important;
+    margin-left: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+  }
+
+  .home-feed-header.desktop-header-only .home-feed-logo {
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .home-feed-header.desktop-header-only .home-feed-logo img {
+    height: 38px !important;
+    width: auto !important;
+    display: block !important;
+  }
+
+  /* Centered Justdial-inspired Search Bar */
+  .home-feed-header.desktop-header-only .home-header-search {
+    position: relative !important;
+    flex: 1 1 520px !important;
+    flex-shrink: 1 !important;
+    min-width: 220px !important;
+    max-width: 520px !important;
+    margin: 0 auto !important;
+  }
+
+  .home-feed-header.desktop-header-only .home-global-search .g9-global-search__form {
+    min-height: 44px !important;
+    height: 44px !important;
+    padding: 4px 44px 4px 14px !important;
+    border-radius: 999px !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #f8fafc !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .home-feed-header.desktop-header-only .home-global-search .g9-global-search__form:focus-within {
+    background: #ffffff !important;
+    border-color: #000080 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 128, 0.12), 0 0 0 3px rgba(0, 0, 128, 0.08) !important;
+  }
+
+  .home-feed-header.desktop-header-only .home-global-search .g9-global-search__icon {
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    color: #000080 !important;
+  }
+
+  .home-feed-header.desktop-header-only .home-global-search .g9-global-search__submit {
+    min-width: 76px !important;
+    height: 36px !important;
+    border-radius: 999px !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    background: #000080 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 128, 0.2) !important;
+  }
+
+  .home-feed-header.desktop-header-only .home-header-filter {
+    position: absolute !important;
+    right: 6px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    background: #EEF2FF !important;
+    color: #000080 !important;
+    border: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+  }
+
+  /* Right-aligned Actions Group (Location, Bell, Wallet, Profile) */
+  .home-feed-header.desktop-header-only .home-header-right-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
+    white-space: nowrap !important;
+  }
+
+  .home-feed-header.desktop-header-only .home-feed-location {
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    min-width: 150px !important;
+    max-width: 210px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .home-feed-header.desktop-header-only .home-header-notification {
+    flex: 0 0 40px !important;
+    flex-shrink: 0 !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 12px !important;
+    border: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    color: #000080 !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .home-feed-header.desktop-header-only .home-wallet-pill {
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    height: 40px !important;
+    padding: 0 14px !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 193, 7, 0.4) !important;
+    background: linear-gradient(180deg, #fff7d6, #ffffff) !important;
+    box-shadow: 0 2px 6px rgba(255, 193, 7, 0.12) !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+
+  .home-feed-header.desktop-header-only .home-profile-avatar-btn {
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    height: 40px !important;
+    padding: 0 8px 0 4px !important;
+    border-radius: 999px !important;
+    border: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  .home-feed-header.desktop-header-only .home-profile-avatar-wrapper {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+  }
 }

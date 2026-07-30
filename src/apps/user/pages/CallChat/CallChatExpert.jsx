@@ -1512,7 +1512,7 @@ export default function UserExpertsPage() {
                     if (tab === "chat") {
                       allowedByAdmin = isEnabledFlag(exp.effective_access?.show_chat_button ?? exp.effective_access?.can_chat ?? exp.show_chat_button ?? exp.showChatButton ?? exp.can_chat ?? exp.canChat);
                     } else if (tab === "video") {
-                      allowedByAdmin = isEnabledFlag(exp.effective_access?.show_video_button ?? exp.effective_access?.can_video_call ?? exp.show_video_button ?? exp.showVideoButton ?? exp.can_video_call ?? exp.canVideoCall);
+                      allowedByAdmin = isEnabledFlag(exp.effective_access?.show_video_button ?? exp.effective_access?.can_video_call ?? exp.effective_access?.video_call_enabled ?? exp.show_video_button ?? exp.showVideoButton ?? exp.can_video_call ?? exp.canVideoCall ?? exp.video_call_enabled ?? exp.videoCallEnabled ?? exp.allow_video_call ?? exp.allow_video ?? exp.can_video ?? true);
                     } else {
                       allowedByAdmin = isEnabledFlag(exp.effective_access?.show_call_button ?? exp.effective_access?.can_call ?? exp.show_call_button ?? exp.showCallButton ?? exp.can_call ?? exp.canCall);
                     }

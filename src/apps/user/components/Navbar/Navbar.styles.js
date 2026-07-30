@@ -87,6 +87,8 @@ export const Container = styled.div`
     height: 84px;
     padding: 0 28px;
     gap: 14px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
   }
 
   @media (max-width: 768px) {

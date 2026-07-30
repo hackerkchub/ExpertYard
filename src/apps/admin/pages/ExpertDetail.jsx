@@ -1,4 +1,4 @@
-﻿// src/apps/admin/pages/ExpertDetail.jsx
+// src/apps/admin/pages/ExpertDetail.jsx
 
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -389,17 +389,25 @@ try {
   const profilePageAccessOptions = [
     ["show_chat_button_on_profile_page", "Show Chat Button on Expert Profile Page"],
     ["show_call_button_on_profile_page", "Show Call Button on Expert Profile Page"],
+    ["show_video_button_on_profile_page", "Show Video Call Button on Expert Profile Page"],
   ];
 
   const handleAccessToggle = async (field) => {
     const profilePageField = profilePageAccessOptions.some(([optionField]) => optionField === field);
     const currentValue = profilePageField ? accessSettings[field] !== false : Boolean(accessSettings[field]);
     const nextValue = !currentValue;
+    console.log(`👉 [ADMIN ACCESS TOGGLE] Field '${field}' toggling from ${currentValue} to ${nextValue}`);
     try {
       setSavingAccess(true);
       setAccessSettings((prev) => ({ ...prev, [field]: nextValue }));
       const res = await updateExpertAccessSettingsApi(id, { [field]: nextValue });
-      setAccessSettings(res.data?.data?.effective_access || {});
+      const serverAccess = res.data?.data?.effective_access || res.data?.data || {};
+      setAccessSettings((prev) => ({
+        ...prev,
+        ...serverAccess,
+        [field]: nextValue,
+      }));
+      console.log(`👉 [ADMIN ACCESS TOGGLE SUCCESS] Field '${field}' saved as ${nextValue}`, res.data);
     } catch (err) {
       console.error("Access settings update error:", err);
       alert("Failed to update access settings");

@@ -63,84 +63,52 @@ const HomeHeader = React.memo(function HomeHeader({
           </button>
         </div>
 
-        <div className="home-feed-location">
-          <LocationSelector onLocationSelect={onLocationSelect} />
+        {/* Right Actions Group (Location, Notification, Wallet, Profile) */}
+        <div className="home-header-right-actions">
+          <div className="home-feed-location">
+            <LocationSelector onLocationSelect={onLocationSelect} />
+          </div>
+
+          <button type="button" className="home-header-icon home-header-notification" onClick={onNotificationOpen} aria-label="Open notifications">
+            <Bell size={18} />
+          </button>
+
+          {isLoggedIn ? (
+            <button type="button" className="home-wallet-pill" onClick={onWalletOpen} aria-label="Open wallet">
+              <Wallet size={17} className="wallet-icon" />
+              <div className="wallet-info">
+                <small className="wallet-label">Wallet Balance</small>
+                <strong className="wallet-amount">₹ {walletAmount}</strong>
+              </div>
+              <span className="wallet-arrow">▼</span>
+            </button>
+          ) : (
+            <button 
+              type="button" 
+              className="home-login-btn"
+              onClick={onLogin}
+            >
+              <LogIn size={18} />
+              <span>Login</span>
+            </button>
+          )}
+
+          {/* Profile Avatar - Only shows when logged in */}
+          {isLoggedIn && (
+            <button type="button" className="home-profile-avatar-btn" onClick={onProfileOpen} aria-label="Open profile">
+              <div className="home-profile-avatar-wrapper">
+                {validPhoto ? (
+                  <img src={user.profile_photo} alt={displayName} />
+                ) : (
+                  <span className="home-profile-initials">
+                    {initials}
+                  </span>
+                )}
+              </div>
+              <span className="profile-arrow">▼</span>
+            </button>
+          )}
         </div>
-
-        <button type="button" className="home-header-icon home-header-notification" onClick={onNotificationOpen} aria-label="Open notifications">
-          <Bell size={18} />
-        </button>
-
-        {isLoggedIn ? (
-          <button type="button" className="home-wallet-pill" onClick={onWalletOpen} aria-label="Open wallet">
-            <Wallet size={17} className="wallet-icon" />
-            <div className="wallet-info">
-              <small className="wallet-label">Wallet Balance</small>
-              <strong className="wallet-amount">₹ {walletAmount}</strong>
-            </div>
-            <span className="wallet-arrow">▼</span>
-          </button>
-        ) : (
-          <button 
-            type="button" 
-            className="home-login-btn"
-            onClick={onLogin}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "8px 18px",
-              borderRadius: "999px",
-              background: "linear-gradient(135deg, #0a66c2, #004182)",
-              color: "#ffffff",
-              border: "none",
-              fontWeight: "600",
-              fontSize: "14px",
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-              boxShadow: "0 2px 8px rgba(10, 102, 194, 0.3)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "scale(1.02)";
-              e.currentTarget.style.boxShadow = "0 4px 12px rgba(10, 102, 194, 0.4)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1)";
-              e.currentTarget.style.boxShadow = "0 2px 8px rgba(10, 102, 194, 0.3)";
-            }}
-          >
-            <LogIn size={18} />
-            <span>Login</span>
-          </button>
-        )}
-
-        {/* Profile Avatar - Only shows when logged in */}
-        {isLoggedIn && (
-          <button type="button" className="home-profile-avatar-btn" onClick={onProfileOpen} aria-label="Open profile">
-            <div className="home-profile-avatar-wrapper">
-              {validPhoto ? (
-                <img src={user.profile_photo} alt={displayName} />
-              ) : (
-                <span className="home-profile-initials" style={{
-                  width: "100%",
-                  height: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: "linear-gradient(135deg, #0a66c2, #004182)",
-                  color: "#ffffff",
-                  fontWeight: "700",
-                  fontSize: "1rem",
-                  textTransform: "uppercase",
-                  borderRadius: "50%",
-                }}>
-                  {initials}
-                </span>
-              )}
-            </div>
-            <span className="profile-arrow">▼</span>
-          </button>
-        )}
       </header>
 
       {/* Mobile Header */}

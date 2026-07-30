@@ -83,12 +83,15 @@ export const Container = styled.div`
   gap: clamp(8px, 1.5vw, 16px);
 
   @media (min-width: 769px) {
-    max-width: 1440px;
-    height: 84px;
-    padding: 0 28px;
-    gap: 14px;
+    max-width: 1600px;
+    height: 66px;
+    min-height: 64px;
+    max-height: 72px;
+    padding: 0 clamp(16px, 2.5vw, 32px);
+    gap: clamp(8px, 1.5vw, 16px);
     flex-wrap: nowrap;
     white-space: nowrap;
+    align-items: center;
   }
 
   @media (max-width: 768px) {
@@ -498,36 +501,40 @@ export const HeaderSearch = styled.div`
   max-width: 520px;
 
   @media (min-width: 769px) {
-    max-width: none;
-    min-width: 280px;
+    flex: 1;
+    min-width: 200px;
+    max-width: clamp(260px, 28vw, 480px);
   }
 
   .navbar-global-search .g9-global-search__form {
-    min-height: 52px;
-    height: 52px;
-    padding: 6px 7px 6px 14px;
-    border-radius: 18px;
+    min-height: 38px;
+    height: 38px;
+    max-height: 38px;
+    padding: 4px 6px 4px 12px;
+    border-radius: 12px;
     background: #f8fafc;
     border-color: rgba(203, 213, 225, 0.92);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.64);
+    display: flex;
+    align-items: center;
   }
 
   .navbar-global-search .g9-global-search__icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 12px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
   }
 
   .navbar-global-search .g9-global-search__submit {
-    height: 38px;
-    min-width: 86px;
-    border-radius: 13px;
-    font-size: 0.84rem;
+    height: 30px;
+    min-width: 68px;
+    border-radius: 8px;
+    font-size: 0.78rem;
   }
 
   .navbar-global-search .g9-global-search__clear {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
   }
 
   .navbar-global-search .g9-search-dropdown {
@@ -554,6 +561,10 @@ export const HeaderLeft = styled.div`
 export const NavbarSpacer = styled.div`
   height: 70px;
 
+  @media (min-width: 769px) {
+    height: 66px;
+  }
+
   @media (max-width: 768px) {
     height: 64px;
   }
@@ -577,7 +588,7 @@ export const BrandBox = styled(Link)`
 export const BrandLogo = styled.img`
   width: 150px;
   max-width: 32vw;
-  height: 42px;
+  height: 34px;
   object-fit: contain;
   object-position: left center;
   flex-shrink: 0;
@@ -586,10 +597,11 @@ export const BrandLogo = styled.img`
   mix-blend-mode: multiply;
   filter: drop-shadow(0 7px 14px rgba(0, 0, 128, 0.1));
 
-  @media (min-width: 1025px) {
-    width: 176px;
-    max-width: 176px;
-    height: 44px;
+  @media (min-width: 769px) {
+    width: auto;
+    max-width: 160px;
+    height: 34px;
+    max-height: 34px;
   }
 
   @media (max-width: 768px) {

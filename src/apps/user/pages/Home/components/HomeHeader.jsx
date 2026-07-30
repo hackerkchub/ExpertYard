@@ -45,69 +45,71 @@ const HomeHeader = React.memo(function HomeHeader({
     <>
       {/* Desktop Header */}
       <header className="home-feed-header desktop-header-only">
-        <button type="button" className="home-icon-button home-menu-toggle" onClick={onMenuOpen} aria-label="Open menu">
-          <Menu size={22} />
-        </button>
-
-        <Link className="home-feed-logo" to="/user" aria-label="G9Expert home">
-          <img src={logo} alt="G9Expert" />
-        </Link>
-
-        <div className="home-header-search">
-          <GlobalSearchBar
-            className="home-global-search"
-            placeholder="Search experts, services, categories..."
-          />
-          <button type="button" className="home-header-filter" onClick={onFilterOpen} aria-label="Open search filters">
-            <SlidersHorizontal size={18} />
+        <div className="home-header-inner-container">
+          <button type="button" className="home-icon-button home-menu-toggle" onClick={onMenuOpen} aria-label="Open menu">
+            <Menu size={20} />
           </button>
-        </div>
 
-        {/* Right Actions Group (Location, Notification, Wallet, Profile) */}
-        <div className="home-header-right-actions">
-          <div className="home-feed-location">
-            <LocationSelector onLocationSelect={onLocationSelect} />
+          <Link className="home-feed-logo" to="/user" aria-label="G9Expert home">
+            <img src={logo} alt="G9Expert" />
+          </Link>
+
+          <div className="home-header-search">
+            <GlobalSearchBar
+              className="home-global-search"
+              placeholder="Search experts, services, categories..."
+            />
+            <button type="button" className="home-header-filter" onClick={onFilterOpen} aria-label="Open search filters">
+              <SlidersHorizontal size={16} />
+            </button>
           </div>
 
-          <button type="button" className="home-header-icon home-header-notification" onClick={onNotificationOpen} aria-label="Open notifications">
-            <Bell size={18} />
-          </button>
+          {/* Right Actions Group (Location, Notification, Wallet, Profile) */}
+          <div className="home-header-right-actions">
+            <div className="home-feed-location">
+              <LocationSelector onLocationSelect={onLocationSelect} />
+            </div>
 
-          {isLoggedIn ? (
-            <button type="button" className="home-wallet-pill" onClick={onWalletOpen} aria-label="Open wallet">
-              <Wallet size={17} className="wallet-icon" />
-              <div className="wallet-info">
-                <small className="wallet-label">Wallet Balance</small>
-                <strong className="wallet-amount">₹ {walletAmount}</strong>
-              </div>
-              <span className="wallet-arrow">▼</span>
+            <button type="button" className="home-header-icon home-header-notification" onClick={onNotificationOpen} aria-label="Open notifications">
+              <Bell size={18} />
             </button>
-          ) : (
-            <button 
-              type="button" 
-              className="home-login-btn"
-              onClick={onLogin}
-            >
-              <LogIn size={18} />
-              <span>Login</span>
-            </button>
-          )}
 
-          {/* Profile Avatar - Only shows when logged in */}
-          {isLoggedIn && (
-            <button type="button" className="home-profile-avatar-btn" onClick={onProfileOpen} aria-label="Open profile">
-              <div className="home-profile-avatar-wrapper">
-                {validPhoto ? (
-                  <img src={user.profile_photo} alt={displayName} />
-                ) : (
-                  <span className="home-profile-initials">
-                    {initials}
-                  </span>
-                )}
-              </div>
-              <span className="profile-arrow">▼</span>
-            </button>
-          )}
+            {isLoggedIn ? (
+              <button type="button" className="home-wallet-pill" onClick={onWalletOpen} aria-label="Open wallet">
+                <Wallet size={16} className="wallet-icon" />
+                <div className="wallet-info">
+                  <small className="wallet-label">Wallet Balance</small>
+                  <strong className="wallet-amount">₹ {walletAmount}</strong>
+                </div>
+                <span className="wallet-arrow">▼</span>
+              </button>
+            ) : (
+              <button 
+                type="button" 
+                className="home-login-btn"
+                onClick={onLogin}
+              >
+                <LogIn size={16} />
+                <span>Login</span>
+              </button>
+            )}
+
+            {/* Profile Avatar - Only shows when logged in */}
+            {isLoggedIn && (
+              <button type="button" className="home-profile-avatar-btn" onClick={onProfileOpen} aria-label="Open profile">
+                <div className="home-profile-avatar-wrapper">
+                  {validPhoto ? (
+                    <img src={user.profile_photo} alt={displayName} />
+                  ) : (
+                    <span className="home-profile-initials">
+                      {initials}
+                    </span>
+                  )}
+                </div>
+                <span className="profile-arrow">▼</span>
+              </button>
+            )}
+          </div>
         </div>
       </header>
 

@@ -2030,6 +2030,11 @@ export default function HomePage() {
               </button>
             </section>
           </div>
+
+          {/* Desktop Only Footer */}
+          <div className="desktop-only-footer-wrapper">
+            <Footer />
+          </div>
         </section>
 
         <HomeRightSidebar 

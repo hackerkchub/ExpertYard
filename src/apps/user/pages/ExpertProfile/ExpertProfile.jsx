@@ -10,6 +10,7 @@ import {
   FiUserCheck,
   FiX,
   FiBell,
+  FiCheck,
   FiCheckCircle,
   FiBookOpen,
   FiTarget,
@@ -39,7 +40,7 @@ import InquiryModal from "./InquiryModal";
 import {
   PageWrap,
   FollowButton,
-  VerifiedBadge,
+  VerifiedCheckIcon,
   ReviewForm,
   ReviewFormTitle,
   RatingInput,
@@ -504,7 +505,23 @@ const ExpertProfilePage = () => {
       hasSession: false,
       hasSubscription: false,
       callPrice: 0,
-      videoCallPrice: 0,
+      videoCallPrice:
+        normalizeVideoCallPrice(expertPrice) ||
+        normalizeVideoCallPrice(expertData) ||
+        normalizeVideoCallPrice(expertData?.profile) ||
+        normalizeVideoCallPrice(profile) ||
+        Number(
+          expertPrice?.video_call_price ||
+          expertPrice?.video_call_per_minute ||
+          expertPrice?.videoCallPrice ||
+          expertPrice?.videoCallPerMinute ||
+          expertData?.video_call_per_minute ||
+          expertData?.videoCallPerMinute ||
+          profile?.video_call_per_minute ||
+          profile?.videoCallPerMinute ||
+          expertPrice?.call ||
+          50
+        ),
       chatPrice: 0,
       sessionPrice: 0,
       sessionDuration: 0
@@ -513,7 +530,6 @@ const ExpertProfilePage = () => {
     if (pricingModes.includes('per_minute')) {
       prices.hasPerMinute = true;
       prices.callPrice = Number(expertPrice?.call || 0);
-      prices.videoCallPrice = normalizeVideoCallPrice(expertPrice) || normalizeVideoCallPrice(expertData) || normalizeVideoCallPrice(profile) || 0;
       prices.chatPrice = Number(expertPrice?.chat || 0);
     }
 
@@ -1387,50 +1403,60 @@ const ExpertProfilePage = () => {
       
       <PageWrap className="expert-profile-page">
         <ProfileCard>
-          <div className="expert-profile-hero-inner" style={{ display: 'flex', flexWrap: 'wrap' }}>
-            <div className="expert-profile-hero-media" style={{ flex: '0 0 200px' }}>
-              {profile.profile_photo ? (
-                <LeftImage src={profile.profile_photo} alt="Profile" />
-              ) : (
-                <AvatarFallback>{getInitials(profile.name)}</AvatarFallback>
-              )}
-              <div className="expert-profile-follow-wrap">
-                {!following ? (
-                  <FollowButton onClick={handleFollowAction}><FiUserPlus /> {t("expertProfile.follow")}</FollowButton>
-                ) : (
-                  <FollowButton $active onClick={handleFollowAction}><FiUserCheck /> {t("expertProfile.following")}</FollowButton>
-                )}
-              </div>
-            </div>
+          <div className="expert-profile-hero-inner">
+            {/* LEFT COLUMN: User Profile & Info Flow */}
+            <div className="expert-profile-hero-left">
+              <div className="expert-profile-user-row">
+                <div className="expert-profile-avatar-box">
+                  {profile.profile_photo ? (
+                    <LeftImage src={profile.profile_photo} alt="Profile" />
+                  ) : (
+                    <AvatarFallback>{getInitials(profile.name)}</AvatarFallback>
+                  )}
+                  <div className="expert-profile-follow-wrap">
+                    {!following ? (
+                      <FollowButton onClick={handleFollowAction}><FiUserPlus /> {t("expertProfile.follow")}</FollowButton>
+                    ) : (
+                      <FollowButton $active onClick={handleFollowAction}><FiUserCheck /> {t("expertProfile.following")}</FollowButton>
+                    )}
+                  </div>
+                </div>
 
-            <div className="expert-profile-hero-info" style={{ flex: 1 }}>
-              <div className="expert-profile-hero-top" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-                <div className="expert-profile-identity">
-                  <Name>{profile.name} <VerifiedBadge><FiUserCheck size={14} /> Verified</VerifiedBadge></Name>
+                <div className="expert-profile-name-group">
+                  <Name>
+                    {profile.name}
+                    <VerifiedCheckIcon title="Verified Expert" aria-label="Verified Expert">
+                      <FiCheck />
+                    </VerifiedCheckIcon>
+                  </Name>
                   <Role>{profile.position || "Expert"}</Role>
                   <Status $online={isExpertOnline}>{isExpertOnline ? "🟢 Available Now" : "🔴 Offline"}</Status>
                 </div>
-                
-                <QuickStats>
-                  <StatItem><FiStar color="#facc15" /><span>{formattedAvgRating} Rating</span></StatItem>
-                  <StatItem><FiThumbsUp color="#10b981" /><span>{followersCount} Followers</span></StatItem>
-                  <StatItem><FiClock color="#6366f1" /><span>{totalExperienceText || experienceData?.total_text || `${profile.experience || "5"} Years`}</span></StatItem>
-                </QuickStats>
               </div>
 
               <TagList className="expert-profile-header-tags">
-                <Tag className="expert-profile-header-tag"><FiBookOpen /> Education: {profile.education || "Masters Degree"}</Tag>
-                <Tag className="expert-profile-header-tag"><FiTarget /> Category: {displayCategoryName || "Business"}</Tag>
+                <Tag className="expert-profile-header-tag expert-profile-desktop-tag" style={{ color: "#ffffff" }}> Education: {profile.education || "Masters Degree"}</Tag>
+                <Tag className="expert-profile-header-tag expert-profile-desktop-tag" style={{ color: "#ffffff" }}> Category: {displayCategoryName || "Business"}</Tag>
               </TagList>
+            </div>
+
+            {/* RIGHT COLUMN: Metrics, Pricing & Call-To-Action Flow */}
+            <div className="expert-profile-hero-right">
+              <QuickStats>
+                <StatItem><FiStar color="#facc15" /><span>{formattedAvgRating} Rating</span></StatItem>
+                <StatItem><FiThumbsUp color="#10b981" /><span>{followersCount} Followers</span></StatItem>
+                <StatItem><FiClock color="#6366f1" /><span>{totalExperienceText || experienceData?.total_text || `${profile.experience || "5"} Years`}</span></StatItem>
+              </QuickStats>
 
               {/* Pricing Mode Selection Tabs */}
               {availablePricingModes.length > 0 && !hasActiveSubscription && (
-                <div className="expert-profile-pricing-summary" style={{ marginBottom: 20 }}>
+                <div className="expert-profile-pricing-summary">
                   <PricingModeTabs>
                     {availablePricingModes.map((mode) => (
                       <PricingModeTab
                         key={mode.id}
                         $active={selectedPricingMode === mode.id}
+                        className={`expert-profile-desktop-mode-tab ${selectedPricingMode === mode.id ? "active-tab" : "inactive-tab"}`}
                         onClick={() => setSelectedPricingMode(mode.id)}
                       >
                         {mode.icon}
@@ -1438,160 +1464,101 @@ const ExpertProfilePage = () => {
                       </PricingModeTab>
                     ))}
                   </PricingModeTabs>
-                  <PricingInfo>
-                    {selectedPricingMode === "per_minute" && (
-                      <span>💬 Chat: ₹{displayPrices.chatPrice}/min | 📞 Call: ₹{displayPrices.callPrice}/min{displayPrices.videoCallPrice > 0 ? ` | 🎥 Video: ₹${displayPrices.videoCallPrice}/min` : ""}</span>
-                    )}
-                    {selectedPricingMode === "session" && (
-                      <span>🎯 Session: ₹{displayPrices.sessionPrice} for {displayPrices.sessionDuration} minutes</span>
-                    )}
-                    {selectedPricingMode === "subscription" && (
-                      <span>📦 Get unlimited access with subscription plans</span>
-                    )}
-                  </PricingInfo>
                 </div>
               )}
 
-              {/* Active Subscription Display */}
-              {hasActiveSubscription && activeSubscription && (
+              {/* Active Subscription Banner Card - Displayed when user has an active plan for this expert */}
+              {hasActiveSubscription && (
                 <ActiveSubscriptionCard>
                   <SubscriptionInfo>
-                    <FiCheckCircle color="#10b981" size={20} />
+                    <FiCheckCircle size={20} color="#10b981" />
                     <div>
-                      <strong>Active Subscription</strong>
-                      <small>Valid until {formatDate(activeSubscription.end_date)}</small>
+                      <strong>Active Plan: {activeSubscriptionDetails?.planName}</strong>
+                      <small>Unlimited Chat & Call access</small>
                     </div>
                   </SubscriptionInfo>
-                  
-                  <SubscriptionRemaining>
-                    {activeSubscription.remaining_total_minutes !== null && (
-                      <>
-                        <UsageText>{Math.floor(activeSubscription.remaining_total_minutes)} minutes remaining</UsageText>
-                        <ProgressBar><div style={{ width: `${getRemainingPercentage()}%`, height: "100%", background: "#10b981", borderRadius: 4, transition: "width 0.3s ease" }} /></ProgressBar>
-                      </>
-                    )}
-                  </SubscriptionRemaining>
                 </ActiveSubscriptionCard>
               )}
 
-              {/* Action Buttons based on selected pricing mode */}
+              {/* Action Buttons Container */}
               <CallToAction>
-                {showProfileVideoButton && (
-                <div className="expert-profile-action-item expert-profile-video-action">
-                  <PriceTag style={{ background: "#2563eb", color: "white" }}><FiVideo /> {displayPrices.videoCallPrice > 0 ? `₹${displayPrices.videoCallPrice}/min` : "Video"}</PriceTag>
+                {/* Video Call Button Container */}
+                {selectedPricingMode === "per_minute" && (
+                <div className="expert-profile-action-item">
+                  <PriceTag style={{ background: "#2563eb", color: "#ffffff" }}>Video ₹{displayPrices.videoCallPrice}/min</PriceTag>
                   <VideoCallButton
-                    expert={expertData || profile}
-                    expertId={numericExpertId}
-                    sourceContext="expert_profile"
-                    sourceRefId={numericExpertId}
+                    expertId={profile._id || expertData?._id}
+                    expertName={profile.name}
+                    isAvailable={isExpertOnline}
+                    videoCallPrice={displayPrices.videoCallPrice}
                     className="expert-profile-video-call-btn"
+                    iconOnly={true}
                   />
                 </div>
                 )}
-                {showProfileCallButton && (
+                {/* Voice Call Button Container */}
+                {selectedPricingMode === "per_minute" && (
                 <div className="expert-profile-action-item">
-                  {hasActiveSubscription && canShowUserCallButton ? (
-                    <>
-                      <PriceTag style={{ background: "#10b981", color: "white" }}><FiUnlock /> Active Subscription</PriceTag>
-                      <ActionButton $primary onClick={() => handleStart("call")} aria-label="Start voice call" title="Start voice call"><FiPhoneCall /> {getCompactActionPrice("call")}</ActionButton>
-                    </>
-                  ) : canShowUserCallButton && selectedPricingMode === "per_minute" && displayPrices.hasPerMinute ? (
-                    <>
-                      <PriceTag>₹{displayPrices.callPrice}/min</PriceTag>
-                      <ActionButton $primary onClick={() => handleStart("call")} aria-label="Start voice call" title="Start voice call"><FiPhoneCall /> {getCompactActionPrice("call")}</ActionButton>
-                    </>
-                  ) : canShowUserCallButton && selectedPricingMode === "session" && displayPrices.hasSession ? (
-                    <>
-                      <PriceTag>₹{displayPrices.sessionPrice}</PriceTag>
-                      <ActionButton $primary onClick={() => handleStart("call")} aria-label="Start voice call" title="Start voice call"><FiPhoneCall /> {getCompactActionPrice("call")}</ActionButton>
-                    </>
-                  ) : canShowUserCallButton && selectedPricingMode === "subscription" && displayPrices.hasSubscription ? (
-                    <>
-                      <PriceTag style={{ background: "#8b5cf6", color: "white" }}><FiZap /> Subscribe</PriceTag>
-                      <ActionButton className="expert-profile-green-action-btn" $primary onClick={() => setShowPlansModal(true)}><FiZap /> View Plans</ActionButton>
-                    </>
-                  ) : canShowUserCallButton ? (
-                    <>
-                      <PriceTag>Price not set</PriceTag>
-                      <ActionButton $primary onClick={() => handleStart("call")} aria-label="Start voice call" title="Start voice call"><FiPhoneCall /> {getCompactActionPrice("call")}</ActionButton>
-                    </>
+                  <PriceTag>
+                    {hasActiveSubscription ? "Call Free" : `Call ₹${displayPrices.callPrice}/min`}
+                  </PriceTag>
+                  {canShowUserCallButton ? (
+                    <ActionButton onClick={() => handleStart("call")} aria-label="Voice Call" title="Voice Call">
+                      <FiPhoneCall size={20} />
+                    </ActionButton>
                   ) : (
-                    <>
-                      <PriceTag>{callDisabledReason}</PriceTag>
-                      <ActionButton $primary disabled title={callDisabledReason} aria-label="Start voice call"><FiPhoneCall /> --</ActionButton>
-                    </>
+                    <ActionButton disabled title={callDisabledReason} aria-label="Voice Call">
+                      <FiPhoneCall size={20} />
+                    </ActionButton>
                   )}
                 </div>
                 )}
-                {showProfileChatButton && (
+
+                {/* Chat Button Container */}
+                {(selectedPricingMode === "per_minute" || selectedPricingMode === "session" || selectedPricingMode === "subscription") && (
                 <div className="expert-profile-action-item">
-                  {hasActiveSubscription && canShowUserChatButton ? (
-                    <>
-                      <PriceTag style={{ background: "#10b981", color: "white" }}><FiUnlock /> Active Subscription</PriceTag>
-                      <ActionButton onClick={() => handleStart("chat")} aria-label="Start chat consultation" title="Start chat consultation"><FiMessageSquare /> {getCompactActionPrice("chat")}</ActionButton>
-                    </>
-                  ) : canShowUserChatButton && selectedPricingMode === "per_minute" && displayPrices.hasPerMinute ? (
-                    <>
-                      <PriceTag>₹{displayPrices.chatPrice}/min</PriceTag>
-                      <ActionButton onClick={() => handleStart("chat")} aria-label="Start chat consultation" title="Start chat consultation"><FiMessageSquare /> {getCompactActionPrice("chat")}</ActionButton>
-                    </>
+                  <PriceTag>
+                    {hasActiveSubscription 
+                      ? "Chat Free" 
+                      : selectedPricingMode === "per_minute"
+                      ? `Chat ₹${displayPrices.chatPrice}/min`
+                      : selectedPricingMode === "session"
+                      ? `Session ₹${displayPrices.sessionPrice}`
+                      : "Subscription"
+                    }
+                  </PriceTag>
+                  {canShowUserChatButton && selectedPricingMode === "per_minute" ? (
+                    <ActionButton onClick={() => handleStart("chat")} aria-label="Chat Consultation" title="Chat Consultation">
+                      <FiMessageSquare size={20} />
+                    </ActionButton>
                   ) : canShowUserChatButton && selectedPricingMode === "session" && displayPrices.hasSession ? (
-                    <>
-                      <PriceTag>₹{displayPrices.sessionPrice}</PriceTag>
-                      <ActionButton onClick={() => handleStart("chat")} aria-label="Start chat consultation" title="Start chat consultation"><FiMessageSquare /> {getCompactActionPrice("chat")}</ActionButton>
-                    </>
+                    <ActionButton onClick={() => handleStart("chat")} aria-label="Chat Consultation" title="Chat Consultation">
+                      <FiMessageSquare size={20} />
+                    </ActionButton>
                   ) : canShowUserChatButton && selectedPricingMode === "subscription" && displayPrices.hasSubscription ? (
-                    <>
-                      <PriceTag style={{ background: "#8b5cf6", color: "white" }}><FiZap /> Subscribe</PriceTag>
-                      <ActionButton className="expert-profile-green-action-btn" onClick={() => setShowPlansModal(true)}><FiZap /> Subscribe Now</ActionButton>
-                    </>
+                    <ActionButton className="expert-profile-green-action-btn" onClick={() => setShowPlansModal(true)} aria-label="Subscribe" title="Subscribe">
+                      <FiZap size={20} />
+                    </ActionButton>
                   ) : canShowUserChatButton ? (
-                    <>
-                      <PriceTag>Price not set</PriceTag>
-                      <ActionButton onClick={() => handleStart("chat")} aria-label="Start chat consultation" title="Start chat consultation"><FiMessageSquare /> {getCompactActionPrice("chat")}</ActionButton>
-                    </>
+                    <ActionButton onClick={() => handleStart("chat")} aria-label="Chat Consultation" title="Chat Consultation">
+                      <FiMessageSquare size={20} />
+                    </ActionButton>
                   ) : (
-                    <>
-                      <PriceTag>{chatDisabledReason}</PriceTag>
-                      <ActionButton disabled title={chatDisabledReason} aria-label="Start chat consultation"><FiMessageSquare /> --</ActionButton>
-                    </>
+                    <ActionButton disabled title={chatDisabledReason} aria-label="Chat Consultation">
+                      <FiMessageSquare size={20} />
+                    </ActionButton>
                   )}
                 </div>
                 )}
                 <div className="expert-profile-action-item">
-                  <PriceTag style={{ background: "#4f46e5", color: "white" }}><FiFileText /> Inquiry</PriceTag>
+                  <PriceTag style={{ background: "#006845", color: "#ffffff" }}>Free Inquiry</PriceTag>
                   <ActionButton onClick={() => setIsInquiryModalOpen(true)} aria-label="Send Inquiry" title="Send Inquiry">
-                    <FiSend /> Send Inquiry
+                    <FiSend size={20} />
                   </ActionButton>
                 </div>
               </CallToAction>
 
-              {/* Send Inquiry for Mobile View */}
-              <div className="mobile-inquiry-action-container" style={{ display: 'none' }}>
-                <button
-                  type="button"
-                  className="mobile-inquiry-action-btn"
-                  onClick={() => setIsInquiryModalOpen(true)}
-                  style={{
-                    width: "100%",
-                    minHeight: 50,
-                    background: "linear-gradient(135deg, #000080, #2563eb)",
-                    color: "#ffffff",
-                    border: "none",
-                    borderRadius: 30,
-                    fontWeight: 700,
-                    fontSize: 14,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 8,
-                    cursor: "pointer",
-                    boxShadow: "0 10px 20px rgba(0, 0, 128, 0.15)"
-                  }}
-                >
-                  <FiSend /> Send Inquiry
-                </button>
-              </div>
+
 
               {/* Subscription CTA Button - Only show if expert has subscription pricing and user has no active subscription */}
               {displayPrices.hasSubscription && !hasActiveSubscription && selectedPricingMode !== "subscription" && (

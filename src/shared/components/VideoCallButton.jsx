@@ -25,6 +25,7 @@ export default function VideoCallButton({
   className = "",
   compact = false,
   compactLabel = "Video",
+  iconOnly = false,
 }) {
   const navigate = useNavigate();
   const resolvedExpertId = Number(expertId || getExpertId(expert) || 0);
@@ -178,12 +179,12 @@ export default function VideoCallButton({
         fontWeight: 800,
         fontSize: compact ? 13 : 14,
         whiteSpace: "nowrap",
-        minWidth: compact ? 0 : 112,
+        minWidth: compact ? 0 : (iconOnly ? "100%" : 112),
         lineHeight: 1,
       }}
     >
-      <FiVideo />
-      {finalLabel}
+      <FiVideo size={iconOnly ? 20 : 16} />
+      {!iconOnly && finalLabel}
     </button>
   );
 }

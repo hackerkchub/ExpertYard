@@ -26,7 +26,11 @@ export default function Dashboard() {
   }, [expertData]);
 
   const expertName = expertData?.profile?.name || expertData?.name || "Expert";
-  const isLimited = !Boolean(expertData?.can_view_contact);
+  const hasActivePlan =
+  expertData.subscription_status === "active" &&
+  expertData.planId;
+
+const isLimited = !hasActivePlan;
 
   useEffect(() => {
     getExpertLeadStatsApi()

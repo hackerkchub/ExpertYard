@@ -1077,21 +1077,21 @@ try {
                     style={{ width: '60px', padding: '6px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '14px' }}
                   />
                   <ActionButton
-                    type="button"
-                    disabled={savingTrial || trialData.status === 'expired' || trialData.status === 'converted'}
-                    onClick={() => {
-                      const hours = parseInt(document.getElementById('customExtendHours').value);
-                      if (hours && hours > 0) {
-                        handleExtendTrial(hours);
-                      } else {
-                        alert("Please enter a valid number of hours");
-                      }
-                    }}
-                    style={{ padding: '6px 16px' }}
-                    title={trialData.status === 'expired' || trialData.status === 'converted' ? 'Cannot extend expired or converted trial' : ''}
-                  >
-                    Extend Trial
-                  </ActionButton>
+  type="button"
+  onClick={() => {
+    console.log("Extend button clicked");
+
+    const hours = parseInt(
+      document.getElementById("customExtendHours").value
+    );
+
+    console.log(hours);
+
+    handleExtendTrial(hours);
+  }}
+>
+  Extend Trial
+</ActionButton>
                 </div>
 
                 {/* Expire Now Button */}

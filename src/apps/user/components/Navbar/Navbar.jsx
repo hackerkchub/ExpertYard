@@ -263,17 +263,6 @@ const Navbar = () => {
           )}
 
           {showMobileBack && (
-            <HeaderMenuButton
-              type="button"
-              className="mobile-menu-trigger"
-              onClick={() => setOpen((prev) => !prev)}
-              aria-label={open ? "Close navigation menu" : "Open navigation menu"}
-            >
-              {open ? <FiX size={20} /> : <FiMenu size={20} />}
-            </HeaderMenuButton>
-          )}
-
-          {showMobileBack && (
             <HeaderMobileTitle title={mobileHeaderTitle}>
               {mobileHeaderTitle}
             </HeaderMobileTitle>
@@ -370,17 +359,19 @@ const Navbar = () => {
             }} />
           </div>
 
-          {!isSearchRoute && (
+          {!showMobileBack && !isSearchRoute && (
             <MobileIcon onClick={() => navigate("/user/search")} aria-label="Open search page">
               <FiSearch size={20} />
             </MobileIcon>
           )}
 
-          <HeaderMobileLocation className={showMobileBack ? "common-mobile-location" : undefined}>
-            <LocationSelector />
-          </HeaderMobileLocation>
+          {!showMobileBack && (
+            <HeaderMobileLocation>
+              <LocationSelector />
+            </HeaderMobileLocation>
+          )}
 
-          {!isProfileRoute && (
+          {!showMobileBack && !isProfileRoute && (
             <HeaderProfileButton
               type="button"
               className="mobile-profile-shortcut"

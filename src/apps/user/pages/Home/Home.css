@@ -6647,7 +6647,7 @@ img {
 
   .mobile-service-img {
     width: 100% !important;
-    height: 100px !important;
+    height: 140px !important;
     border-radius: 14px !important;
     overflow: hidden !important;
     background: #f3f4f6 !important;
@@ -6660,9 +6660,9 @@ img {
   .mobile-service-img img {
     width: 100% !important;
     height: 100% !important;
-    object-fit: contain !important;
+    object-fit: cover !important;
     object-position: center !important;
-    background: #f3f4f6 !important;
+    display: block !important;
   }
 
   .mobile-service-fallback-icon {
@@ -6932,6 +6932,7 @@ img {
   .mobile-post-body p {
     font-size: 14px !important;
     color: #334155 !important;
+    height: 40px;
     margin: 0 0 6px 0 !important;
     line-height: 1.45 !important;
     display: -webkit-box !important;
@@ -6943,11 +6944,11 @@ img {
 
   .mobile-post-img {
     width: 100% !important;
-    height: 100px !important;
-    object-fit: contain !important;
+    height: 160px !important;
+    object-fit: cover !important;
     object-position: center !important;
     background: #f3f4f6 !important;
-    border-radius: 10px !important;
+    border-radius: 12px !important;
     display: block !important;
   }
 

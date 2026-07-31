@@ -78,10 +78,26 @@ export default function MainLayout() {
     );
   }
 
+  // Check if current page is Expert Profile page (/user/experts/:slug)
+  const isExpertProfilePage = Boolean(
+    location.pathname.startsWith("/user/experts/") &&
+    location.pathname.split("/").filter(Boolean).length >= 3
+  );
+
+  // Check if current page is ONLY the Chat & Call listing page (and NOT expert profile page)
+  const isCallChatPage = 
+    !isExpertProfilePage && (
+      location.pathname.startsWith("/user/call-chat") || 
+      location.pathname === "/user/call-chat" ||
+      location.pathname === "/user/experts" ||
+      location.pathname === "/user/experts/" ||
+      (location.pathname.startsWith("/user/category/") && location.pathname.endsWith("/experts"))
+    );
+
   // Desktop layout for non-home pages
   if (isDesktop) {
     return (
-      <div className="desktop-layout-wrapper">
+      <div className={`desktop-layout-wrapper ${isCallChatPage ? "is-call-chat-layout" : ""}`}>
         <div className="desktop-only-header">
           <HomeHeader
             onMenuOpen={() => {}}
@@ -98,15 +114,17 @@ export default function MainLayout() {
             user={user}
           />
         </div>
-        <div className="home-desktop-shell layout--full-content">
-          <HomeLeftSidebar
-            isLoggedIn={isLoggedIn}
-            user={user}
-            balance={balance}
-            onLogin={openLogin}
-            onLogout={logout}
-          />
-          <main className="home-center-column">
+        <div className={`home-desktop-shell layout--full-content ${isCallChatPage ? "no-left-sidebar-shell" : ""}`}>
+          {!isCallChatPage && (
+            <HomeLeftSidebar
+              isLoggedIn={isLoggedIn}
+              user={user}
+              balance={balance}
+              onLogin={openLogin}
+              onLogout={logout}
+            />
+          )}
+          <main className={`home-center-column ${isCallChatPage ? "full-width-center-column" : ""}`}>
             <Outlet />
           </main>
         </div>

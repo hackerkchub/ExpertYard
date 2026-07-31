@@ -325,18 +325,16 @@ export const RightPanel = styled.div`
 
 export const ExpertsGrid = styled.div`
   display: grid;
-  gap: 20px;
+  gap: 18px;
+  width: 100%;
 
-  @media (min-width: 900px) {
-    grid-template-columns: repeat(2, 1fr);
+  @media (min-width: 769px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 18px !important;
   }
 
-  @media (max-width: 899px) {
+  @media (max-width: 768px) {
     grid-template-columns: 1fr;
-  }
-
-  @media (min-width: 1280px) {
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   }
 `;
 

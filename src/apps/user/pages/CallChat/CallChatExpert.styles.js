@@ -32,9 +32,68 @@ export const PageWrap = styled.div`
   scroll-behavior: smooth;
   overflow-x: hidden;
 
+  .desktop-call-chat-top-bar {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+    padding: 16px 0 !important;
+
+    .desktop-call-chat-top-bar {
+      display: flex !important;
+      align-items: center !important;
+      gap: 16px !important;
+      margin-bottom: 12px !important;
+      padding: 14px 20px !important;
+      background: #ffffff !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 14px !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+    }
+
+    .desktop-call-chat-back-btn {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      padding: 9px 18px !important;
+      border-radius: 10px !important;
+      border: 1px solid #cbd5e1 !important;
+      background: #ffffff !important;
+      color: #1e293b !important;
+      font-size: 14px !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      transition: all 0.2s ease !important;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04) !important;
+      flex-shrink: 0 !important;
+    }
+
+    .desktop-call-chat-back-btn:hover {
+      background: #f8fafc !important;
+      border-color: #000080 !important;
+      color: #000080 !important;
+      transform: translateX(-2px) !important;
+    }
+
+    .desktop-call-chat-title-group h2 {
+      font-size: 20px !important;
+      font-weight: 700 !important;
+      color: #0f172a !important;
+      margin: 0 0 2px 0 !important;
+    }
+
+    .desktop-call-chat-title-group p {
+      font-size: 13px !important;
+      color: #64748b !important;
+      margin: 0 !important;
+    }
+  }
+
   @media (min-width: 1024px) {
-    max-width: none;
-    margin: 0;
+    max-width: 1400px !important;
+    margin: 0 auto !important;
     background:
       radial-gradient(circle at 8% 0%, rgba(0, 0, 128, 0.08), transparent 30%),
       radial-gradient(circle at 92% 8%, rgba(255, 213, 74, 0.14), transparent 28%),
@@ -759,34 +818,31 @@ export const ExpertsWrap = styled.section`
 
 export const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   grid-auto-rows: 1fr;
   align-items: stretch;
   gap: 18px;
+  width: 100%;
+  box-sizing: border-box;
 
-  @media (min-width: 1280px) {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  @media (min-width: 769px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 18px !important;
   }
 
   > div {
     min-width: 0;
+    width: 100%;
     height: 100%;
     display: flex;
+    box-sizing: border-box;
   }
 
   > div > div {
     width: 100%;
     min-width: 0;
     height: 100%;
-  }
-
-  @media (max-width: 1023px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
-  }
-
-  @media (max-width: 640px) {
-    display: none;
+    box-sizing: border-box;
   }
 
   @media (max-width: 768px) {
@@ -821,14 +877,16 @@ export const LoaderRow = styled.div`
 
 export const SkeletonGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   gap: 18px;
+  width: 100%;
 
-  @media (max-width: 1023px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  @media (min-width: 769px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 18px !important;
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
     grid-template-columns: repeat(1, minmax(0, 1fr));
     gap: 14px;
   }

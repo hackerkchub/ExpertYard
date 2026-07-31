@@ -7684,3 +7684,46 @@ img {
     z-index: 10 !important;
   }
 }
+
+/* DESKTOP & TABLET FIXED CONTAINER LAYOUT FOR CALL & CHAT PAGE */
+@media (min-width: 768px) {
+  .home-desktop-shell.no-left-sidebar-shell {
+    display: block !important;
+    width: 100% !important;
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+    padding-top: calc(var(--header-height, 64px) + 16px) !important;
+    box-sizing: border-box !important;
+  }
+
+  .home-center-column.full-width-center-column {
+    width: 100% !important;
+    max-width: 1400px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .desktop-layout-wrapper.is-call-chat-layout .home-right-sidebar {
+    display: none !important;
+  }
+
+  .desktop-layout-wrapper.is-call-chat-layout .default-footer-container {
+    width: 100% !important;
+    max-width: 1400px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+    box-sizing: border-box !important;
+  }
+
+  .desktop-layout-wrapper.is-call-chat-layout .default-footer-container footer {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+  }
+}

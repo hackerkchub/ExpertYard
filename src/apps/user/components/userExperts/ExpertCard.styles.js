@@ -21,10 +21,11 @@ const pulseRing = keyframes`
 // Card Container
 export const Card = styled(motion.div)`
   position: relative;
-  width: ${({ $callChat }) => ($callChat ? "100%" : "auto")};
+  width: 100% !important;
+  box-sizing: border-box !important;
   height: 100%;
-  min-height: ${({ $callChat }) => ($callChat ? "356px" : "360px")};
-  max-height: ${({ $callChat }) => ($callChat ? "380px" : "none")};
+  min-height: ${({ $callChat }) => ($callChat ? "340px" : "360px")};
+  max-height: none !important;
   border-radius: 20px;
   background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
   border: 1px solid rgba(0, 0, 128, 0.08);

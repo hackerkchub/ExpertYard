@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState, useCallback } from "react"
 import { useSearchParams, useNavigate, useParams, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { 
-  FiX, FiChevronLeft, FiChevronRight, FiSearch, FiFilter, 
+  FiX, FiArrowLeft, FiChevronLeft, FiChevronRight, FiSearch, FiFilter, 
   FiSliders, FiXCircle, FiTrendingUp, FiClock,
   FiStar, FiUserCheck, FiZap,
   FiMessageSquare, FiPhoneCall, FiGlobe, FiMapPin, FiVideo
@@ -212,9 +212,12 @@ export default function UserExpertsPage() {
   const userId = user?.id;
   const { balance } = useWallet();
 
+  const categoryFromUrl = getParam(searchParams, "category");
+  const subcategoryFromUrl = getParam(searchParams, "subcategory");
+
   // Filter states
-  const [selectedCategoryId, setSelectedCategoryId] = useState("");
-  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState(categoryFromUrl || "");
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState(subcategoryFromUrl || "");
   const [searchInput, setSearchInput] = useState(searchQueryFromUrl || "");
   const [debouncedSearch, setDebouncedSearch] = useState(searchQueryFromUrl || "");
   const [minRating, setMinRating] = useState(minRatingFromUrl);
@@ -310,6 +313,8 @@ export default function UserExpertsPage() {
       setTab((current) => (nextMode === current ? current : nextMode));
     }
 
+    const nextCategory = getParam(params, "category");
+    const nextSubcategory = getParam(params, "subcategory");
     const nextSearch = params.get("q") || "";
     setSearchInput((current) => (nextSearch === current ? current : nextSearch));
     setDebouncedSearch((current) => (nextSearch === current ? current : nextSearch));
@@ -324,6 +329,8 @@ export default function UserExpertsPage() {
     const nextSortBy = getParam(params, "sortBy");
     const nextSortOrder = getParam(params, "order") || "desc";
 
+    setSelectedCategoryId((current) => (nextCategory === current ? current : nextCategory));
+    setSelectedSubcategoryId((current) => (nextSubcategory === current ? current : nextSubcategory));
     setMinRating((current) => (nextMinRating === current ? current : nextMinRating));
     setMinPrice((current) => (nextMinPrice === current ? current : nextMinPrice));
     setMaxPrice((current) => (nextMaxPrice === current ? current : nextMaxPrice));
@@ -471,6 +478,18 @@ export default function UserExpertsPage() {
     nextParams.set("mode", tab);
     nextParams.set("page", String(currentPage));
 
+    if (selectedCategoryId) {
+      nextParams.set("category", selectedCategoryId);
+    } else {
+      nextParams.delete("category");
+    }
+
+    if (selectedSubcategoryId) {
+      nextParams.set("subcategory", selectedSubcategoryId);
+    } else {
+      nextParams.delete("subcategory");
+    }
+
     if (debouncedSearch) {
       nextParams.set("q", debouncedSearch);
     } else {
@@ -532,15 +551,13 @@ export default function UserExpertsPage() {
     const nextParamsString = nextParams.toString();
 
     if (nextParamsString !== searchParamsString) {
-      const isDefaultNormalization =
-        !currentParams.has("mode") ||
-        !currentParams.has("page");
-
-      setSearchParams(nextParams, { replace: isDefaultNormalization });
+      setSearchParams(nextParams, { replace: true });
     }
   }, [
     tab,
     currentPage,
+    selectedCategoryId,
+    selectedSubcategoryId,
     debouncedSearch,
     minRating,
     minPrice,
@@ -1261,6 +1278,26 @@ export default function UserExpertsPage() {
       `}</style>
       
       <PageWrap className="call-chat-expert-page">
+        {/* Desktop & Tablet Top Bar with Back Button */}
+        <div className="desktop-call-chat-top-bar">
+          <button 
+            type="button" 
+            className="desktop-call-chat-back-btn"
+            onClick={() => {
+              resetFilters();
+              navigate("/user");
+            }}
+            aria-label="Back to Home"
+          >
+            <FiArrowLeft size={18} />
+            <span>Back to Home</span>
+          </button>
+          <div className="desktop-call-chat-title-group">
+            <h2>Verified Experts Consultation</h2>
+            <p>Connect instantly with top verified experts via Call, Chat, or Video</p>
+          </div>
+        </div>
+
         <TabsRow>
           {TABS.map((tabItem) => (
             <TabButton

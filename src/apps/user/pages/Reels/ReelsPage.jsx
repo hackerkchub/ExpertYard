@@ -224,7 +224,7 @@ export default function ReelsPage() {
   const [reels, setReels] = useState([]);
   const [activeIdx, setActiveIdx] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
@@ -502,7 +502,12 @@ export default function ReelsPage() {
             return;
           }
 
-          video.play().catch(() => {});
+          video.play().catch(() => {
+            if (!video.muted) {
+              video.muted = true;
+              video.play().catch(() => {});
+            }
+          });
           if (activeReel && !viewedReelsRef.current.has(activeReel.id)) {
             viewTimersRef.current[activeReel.id] = setTimeout(() => {
               const duration = Number(video.duration || 0);

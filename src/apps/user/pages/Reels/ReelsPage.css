@@ -489,9 +489,9 @@
 /* Small mobile devices */
 @media (max-width: 360px) {
   .reel-actions-overlay {
-    bottom: 96px !important;
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
     right: 8px !important;
-    gap: 10px !important;
+    gap: 8px !important;
   }
   
   .reel-actions-overlay .action-button {

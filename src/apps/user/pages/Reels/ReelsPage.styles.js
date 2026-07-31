@@ -26,9 +26,9 @@ export const Container = styled.div`
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   @media (max-width: 767px) {
-    --reels-header-offset: calc(64px + env(safe-area-inset-top, 0px));
-    height: calc(100dvh - var(--reels-header-offset));
-    min-height: calc(100dvh - var(--reels-header-offset));
+    --reels-header-offset: 0px;
+    height: 100dvh;
+    min-height: 100dvh;
   }
 `;
 
@@ -208,7 +208,8 @@ export const MobileOverlayContent = styled.div`
   margin-bottom: 82px;
 
   @media (max-width: 767px) {
-    margin-bottom: 70px;
+    margin-bottom: calc(134px + env(safe-area-inset-bottom, 0px));
+    max-width: min(74%, calc(100vw - 76px));
   }
 `;
 
@@ -371,7 +372,9 @@ export const ActionColumn = styled.div`
   align-items: center;
 
   @media (max-width: 767px) {
-    bottom: 82px;
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    right: 10px;
+    gap: 10px;
   }
 
   @media (min-width: 992px) {
@@ -565,12 +568,13 @@ export const CtaRow = styled.div`
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
-  z-index: 10;
+  z-index: 20;
 
   @media (max-width: 767px) {
-    bottom: 12px;
-    left: 12px;
-    right: 68px;
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    left: 10px;
+    right: 64px;
+    gap: 4px;
   }
 
   @media (min-width: 992px) {
@@ -579,22 +583,23 @@ export const CtaRow = styled.div`
 `;
 
 export const CtaButton = styled.button`
-  background: ${props => props.variant === "primary" ? "linear-gradient(135deg, #ffffff, #dbeafe)" : "rgba(255, 255, 255, 0.1)"};
-  border: 1px solid ${props => props.variant === "primary" ? "rgba(255, 255, 255, 0.65)" : "rgba(255, 255, 255, 0.18)"};
+  background: ${props => props.variant === "primary" ? "linear-gradient(135deg, #ffffff, #dbeafe)" : "rgba(18, 18, 20, 0.76)"};
+  border: 1px solid ${props => props.variant === "primary" ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.22)"};
   backdrop-filter: blur(10px);
   color: ${props => props.variant === "primary" ? "#000080" : "#ffffff"};
-  padding: 9px 5px;
-  border-radius: 14px;
-  font-size: 10.5px;
+  padding: 8px 4px;
+  border-radius: 12px;
+  font-size: 10px;
   font-weight: 800;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 3px;
   cursor: pointer;
   transition: transform 0.2s, background-color 0.2s, border-color 0.2s;
   min-width: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 
   svg {
     width: 15px;
@@ -604,7 +609,7 @@ export const CtaButton = styled.button`
 
   &:hover {
     transform: translateY(-2px);
-    background: ${props => props.variant === "primary" ? "#ffffff" : "rgba(255, 255, 255, 0.18)"};
+    background: ${props => props.variant === "primary" ? "#ffffff" : "rgba(255, 255, 255, 0.25)"};
   }
 `;
 

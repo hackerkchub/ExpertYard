@@ -33,6 +33,7 @@ import {
   FiUser,
   FiVideo,
   FiMail,
+  FiPlusCircle,
 } from "react-icons/fi";
 
 import { useNavigate } from "react-router-dom";
@@ -76,14 +77,15 @@ export default function ExpertSidebar() {
 };
   const menuItems = [
     { path: "/expert", icon: FiHome, label: "Dashboard", exact: true },
-    { path: "/expert/my-content", icon: FiFileText, label: "My Content" },
-    { path: "/expert/reels", icon: FiVideo, label: "Manage Reels" },
-    { path: "/expert/chat-history", icon: FiMessageSquare, label: "Chat History" },
-    { path: "/expert/leads", icon: FiUsers, label: "Leads" },
+    { path: "/expert/services/activation", icon: FiFileText, label: "Available Services" },
+    { path: "/expert/myservices", icon: FiFileText, label: "My Services" },
+    { path: "/expert/services/custom-requests", icon: FiPlusCircle, label: "Custom Service Request" },
+    { path: "/expert/mybookings", icon: FiCalendar, label: "Bookings" },
     { path: "/expert/earnings", icon: FiBarChart2, label: "Earnings" },
+    { path: "/expert/leads", icon: FiUsers, label: "Leads" },
     { path: "/expert/inquiries", icon: FiMail, label: "Inquiries" },
-    { path: "/expert/myservices", icon: FiBell, label: "My Service" },
-    { path: "/expert/g9-plan", icon: FiBell, label: "G9-Plan" },
+    { path: "/expert/reels", icon: FiVideo, label: "Manage Reels" },
+    { path: "/expert/profile", icon: FiUser, label: "Profile" },
   ];
 
   return (

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  FiArrowLeft,
   FiCheckCircle,
   FiDollarSign,
   FiFile,
@@ -213,6 +214,29 @@ const CreateService = () => {
 
   return (
     <S.PageWrapper>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", background: "#f0f2f5", padding: "10px 16px", borderRadius: "12px", border: "1px solid #e9edef", marginBottom: "1rem" }}>
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          style={{
+            background: "#ffffff",
+            border: "1px solid #cbd5e1",
+            borderRadius: "50%",
+            width: "36px",
+            height: "36px",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+          }}
+          title="Go Back"
+        >
+          <FiArrowLeft size={18} color="#111b21" />
+        </button>
+        <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "#111b21" }}>Create Service</h2>
+      </div>
+
       <S.FormContainer>
         <S.FormHeader>
           <h2>Universal Service Builder</h2>

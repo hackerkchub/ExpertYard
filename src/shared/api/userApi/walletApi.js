@@ -11,30 +11,28 @@ export const getWalletApi = async () => {
 };
 
 // ➕ ADD MONEY
-export const addMoneyApi = async (
-  paymentData
-) => {
-
-  const { data } =
-    await api.post(
-      "/wallet/add",
-      paymentData
-    );
-
+export const addMoneyApi = async (paymentData) => {
+  const { data } = await api.post("/wallet/add", paymentData);
   return data;
 };
-// 📜 WALLET HISTORY (NEW)
+
+// 📜 WALLET HISTORY
 export const getWalletHistoryApi = async () => {
   const { data } = await api.get("/wallet/history");
   return data;
-}; 
+};
+
+// 💼 USER SPENDING HISTORY & PAYMENTS
+export const getUserSpendingHistoryApi = async () => {
+  const { data } = await api.get("/wallet/spending-history");
+  return data;
+};
 
 export const createWalletOrderApi = async (amount, breakdown = {}) => {
   const { data } = await api.post("/wallet/create-order", {
     amount,
     ...breakdown,
   });
-
   return data;
 };
 
@@ -52,6 +50,5 @@ export const deductWalletApi = async ({
       service_type
     }
   );
-
   return data;
 };

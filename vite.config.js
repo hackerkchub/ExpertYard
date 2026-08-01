@@ -57,9 +57,7 @@ export default defineConfig(({ mode }) => {
   const apiProxyTarget =
     env.VITE_API_PROXY_TARGET ||
     env.VITE_PROXY_TARGET ||
-    (env.VITE_APP_TYPE === "mobile"
-      ? "http://10.47.91.234:5000"
-      : "https://softmaxs.com");
+    "http://localhost:5000";
 
   return {
     plugins: [react(), devRobotsPlugin()],
@@ -77,6 +75,11 @@ export default defineConfig(({ mode }) => {
       allowedHosts: true,
       proxy: {
         "/api": {
+          target: apiProxyTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        "/uploads": {
           target: apiProxyTarget,
           changeOrigin: true,
           secure: false,

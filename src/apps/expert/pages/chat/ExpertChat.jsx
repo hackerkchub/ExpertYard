@@ -27,6 +27,8 @@ import { hotToast } from "../../../../shared/utils/lazyNotifications";
 import { APP_CONFIG } from "../../../../config/appConfig";
 import { getChatRoomCandidates, getChatRoomId, waitForChatDetailsRetry } from "../../../../shared/utils/chatRoom";
 import { saveActiveChatSession, clearActiveChatSession } from "../../../../shared/utils/chatSession";
+import { Capacitor } from "@capacitor/core";
+import { App } from "@capacitor/app";
 
 /* ------------------ ANIMATIONS ------------------ */
 const fadeIn = keyframes`
@@ -516,35 +518,170 @@ export default function ExpertChat() {
     };
   }, []);
 
-  const expertId = useMemo(() => {
-    return expert?.id || expert?.expert_id || chatData?.expert_id || null;
-  }, [expert, chatData]);
+  const getMediaUrl = useCallback((url) => {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("blob:") || url.startsWith("data:")) {
+      return url;
+    }
+    const backendHost = APP_CONFIG.API_BASE_URL.replace(/\/api\/?$/, "");
+    return `${backendHost}${url.startsWith("/") ? "" : "/"}${url}`;
+  }, []);
 
-  const roomCandidates = useMemo(
-    () => getChatRoomCandidates(location.state?.roomCandidates || [], location.state || {}, room_id),
-    [location.state, room_id]
-  );
+  const storedExpert = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("expert") || localStorage.getItem("expertData") || "{}");
+    } catch (e) {
+      return {};
+    }
+  }, []);
+
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const queryUserId = searchParams.get("user_id") || searchParams.get("userId") || location.state?.userId || location.state?.user_id;
+  const currentExpertId = expert?.id || expert?.expert_id || expert?.expertId || storedExpert?.id || storedExpert?.expert_id || storedExpert?.expertId;
+  const queryExpertId = searchParams.get("expert_id") || searchParams.get("expertId") || currentExpertId;
+
+  const expertId = useMemo(() => {
+    return currentExpertId || chatData?.expert_id || queryExpertId || null;
+  }, [currentExpertId, chatData, queryExpertId]);
+
+  const isServiceChat = useMemo(() => {
+    const activeRoom = room_id || location.state?.room_id || (queryUserId && queryExpertId ? `chat_${queryUserId}_${queryExpertId}` : null);
+    return (
+      String(activeRoom || "").startsWith("chat_") ||
+      chatData?.pricing_mode === "subscription" ||
+      location.state?.fromService ||
+      location.state?.fromWorkspace
+    );
+  }, [room_id, location.state, queryUserId, queryExpertId, chatData]);
+
+  const navigateBackOrPrevious = useCallback(() => {
+    const returnUrl = location.state?.returnUrl || location.state?.fromUrl;
+    const bookingId = chatData?.booking_id || location.state?.bookingId;
+    if (returnUrl) {
+      navigate(returnUrl, { replace: true });
+    } else if (isServiceChat || location.state?.fromWorkspace || location.state?.fromService) {
+      if (window.history.length > 1) {
+        navigate(-1);
+      } else if (bookingId) {
+        navigate(`/expert/workspace/${bookingId}`, { replace: true });
+      } else {
+        navigate(-1);
+      }
+    } else {
+      navigate("/expert/chat-history", { replace: true });
+    }
+  }, [location.state, chatData?.booking_id, isServiceChat, navigate]);
+
+  const handleBack = useCallback(() => {
+    if (isServiceChat) {
+      clearActiveChatSession();
+    }
+    navigateBackOrPrevious();
+  }, [isServiceChat, navigateBackOrPrevious]);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    let listener;
+    const setupBackHandler = async () => {
+      listener = await App.addListener("backButton", () => {
+        handleBack();
+      });
+    };
+    setupBackHandler();
+    return () => {
+      listener?.remove();
+    };
+  }, [handleBack]);
+
+  const isChatActive = useMemo(() => {
+    return isServiceChat || sessionActive;
+  }, [isServiceChat, sessionActive]);
+
+  const roomCandidates = useMemo(() => {
+    const list = getChatRoomCandidates(location.state?.roomCandidates || [], location.state || {}, room_id);
+    
+    if (queryUserId && queryExpertId) {
+      const canonical = `chat_${queryUserId}_${queryExpertId}`;
+      if (!list.includes(canonical)) list.push(canonical);
+      const altRoom = `room_${queryUserId}_${queryExpertId}`;
+      if (!list.includes(altRoom)) list.push(altRoom);
+    }
+    return list;
+  }, [location.state, room_id, queryUserId, queryExpertId]);
+
+  useEffect(() => {
+    if (!room_id && queryUserId && queryExpertId) {
+      const canonical = `chat_${queryUserId}_${queryExpertId}`;
+      navigate(`/expert/chat/${canonical}`, { replace: true, state: location.state });
+    }
+  }, [room_id, queryUserId, queryExpertId, navigate, location.state]);
 
   const fetchUserProfile = async (userId) => {
     try {
       const res = await getUserPublicProfileApi(userId);
-      if (res?.success) setUserProfile(res.data);
-    } catch (e) {}
+      if (res?.success && res.data) {
+        setUserProfile(res.data);
+      } else {
+        const directRes = await fetch(`${APP_CONFIG.API_BASE_URL}/user/public/${userId}`);
+        if (directRes.ok) {
+          const directData = await directRes.json();
+          setUserProfile(directData.data || directData);
+        }
+      }
+    } catch (e) {
+      try {
+        const directRes = await fetch(`${APP_CONFIG.API_BASE_URL}/user/public/${userId}`);
+        if (directRes.ok) {
+          const directData = await directRes.json();
+          setUserProfile(directData.data || directData);
+        }
+      } catch (err) {}
+    }
   };
 
   const fetchChat = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
-      const token = localStorage.getItem("expert_token");
+      const token = localStorage.getItem("expert_token") || localStorage.getItem("token") || localStorage.getItem("expertToken") || "";
+
+      let candidateList = [...roomCandidates];
+
+      // If candidateList is empty or no room_id specified in URL, fetch expert active chats from API
+      if (candidateList.length === 0 && expertId) {
+        try {
+          const expertChatsRes = await fetch(`${APP_CONFIG.API_BASE_URL}/chat/expert?expert_id=${expertId}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          });
+          if (expertChatsRes.ok) {
+            const expertChatsData = await expertChatsRes.json();
+            const chats = expertChatsData.data?.chats || expertChatsData.data || [];
+            if (Array.isArray(chats) && chats.length > 0) {
+              chats.forEach((c) => {
+                if (c.room_id && !candidateList.includes(c.room_id)) {
+                  candidateList.push(c.room_id);
+                }
+              });
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (candidateList.length === 0) {
+        setChatData(null);
+        setMessages([]);
+        setLoading(false);
+        return;
+      }
 
       let res = null;
       let data = null;
       let lastErrorText = "";
       let loadedRoomId = room_id;
 
-      for (let attempt = 0; attempt < 5; attempt += 1) {
-        for (const candidateRoomId of roomCandidates) {
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        for (const candidateRoomId of candidateList) {
           res = await fetch(`${APP_CONFIG.API_BASE_URL}/chat/details/${candidateRoomId}`, {
             headers: token
               ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
@@ -560,7 +697,7 @@ export default function ExpertChat() {
           lastErrorText = await res.text();
           if (res.status !== 404) break;
         }
-        if (res?.ok || res?.status !== 404 || attempt === 4) break;
+        if (res?.ok || res?.status !== 404 || attempt === 2) break;
         await waitForChatDetailsRetry();
       }
 
@@ -589,15 +726,16 @@ export default function ExpertChat() {
       if (String(loadedRoomId) !== String(room_id)) {
         navigate(`/expert/chat/${loadedRoomId}`, {
           replace: true,
-          state: { ...location.state, roomCandidates },
+          state: { ...location.state, roomCandidates: candidateList },
         });
       }
-    } catch {
-      setError("Failed to load chat");
+    } catch (err) {
+      console.error("❌ Expert chat fetch error:", err);
+      setError("Failed to load chat. Please select an active chat or try again.");
     } finally {
       setLoading(false);
     }
-  }, [room_id, location.state, navigate, roomCandidates]);
+  }, [room_id, location.state, navigate, roomCandidates, expertId]);
 
   const uploadImage = async (file) => {
     const formData = new FormData();
@@ -662,7 +800,7 @@ export default function ExpertChat() {
 
   const handleSendMessage = async (e) => {
     if (e) e.preventDefault();
-    if (!room_id || !sessionActive || uploading) return;
+    if (!room_id || !isChatActive || uploading) return;
 
     if (!selectedImage && message.trim()) {
       const tempId = Date.now();
@@ -721,7 +859,7 @@ export default function ExpertChat() {
 
         const imageUrl = await uploadImage(selectedImage);
         setMessages((prev) =>
-          prev.map((msg) => (msg.client_id === tempId ? { ...msg, image_url: imageUrl, isTemp: false } : msg))
+          prev.map((msg) => (String(msg.client_id) === String(tempId) || String(msg.id) === String(tempId) ? { ...msg, image_url: imageUrl, isTemp: false } : msg))
         );
 
         socket.emit("sendMessage", {
@@ -730,6 +868,7 @@ export default function ExpertChat() {
           message: message.trim() || "",
           type: "image",
           imageUrl,
+          image_url: imageUrl,
         });
         setSelectedImage(null);
         emitTyping(false);
@@ -770,16 +909,18 @@ export default function ExpertChat() {
       if (String(incomingRoomId) !== String(room_id)) return;
 
       setMessages((prev) => {
-        const exists = prev.some(
-          (m) => m.id === msgData.id || (msgData.client_id && m.client_id === msgData.client_id)
-        );
+        const isMatch = (m) =>
+          (msgData.id && String(m.id) === String(msgData.id)) ||
+          (msgData.client_id && m.client_id && String(m.client_id) === String(msgData.client_id));
+
+        const exists = prev.some(isMatch);
         if (exists) {
           return prev.map((m) => {
-            if (m.id === msgData.id || (msgData.client_id && m.client_id === msgData.client_id)) {
+            if (isMatch(m)) {
               return {
                 ...m,
                 id: msgData.id,
-                message_type: msgData.message_type || "text",
+                message_type: msgData.message_type || (msgData.image_url ? "image" : m.message_type) || "text",
                 image_url: msgData.image_url || m.image_url,
                 is_seen: Number(msgData.is_seen) === 1 || msgData.is_seen === true || m.is_seen,
                 seen_at: msgData.seen_at || m.seen_at || null,
@@ -847,7 +988,7 @@ export default function ExpertChat() {
       setSessionActive(false);
       clearActiveChatSession();
       hotToast("success", "Chat ended", { id: "chat-ended" });
-      navigate("/expert/chat-history", { replace: true });
+      navigateBackOrPrevious();
     };
 
     socket.on("chat_ended", handleChatEnded);
@@ -865,7 +1006,7 @@ export default function ExpertChat() {
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       if (peerTypingTimeoutRef.current) clearTimeout(peerTypingTimeoutRef.current);
     };
-  }, [room_id, expertId, navigate, markMessagesSeen, emitTyping, scrollToBottom]);
+  }, [room_id, expertId, navigate, markMessagesSeen, emitTyping, scrollToBottom, navigateBackOrPrevious]);
 
   useEffect(() => {
     fetchChat();
@@ -928,7 +1069,7 @@ export default function ExpertChat() {
           {/* WHATSAPP STICKY HEADER (SAFE AREA TOP COMPLIANT) */}
           <HeaderBar>
             <HeaderLeft>
-              <HeaderBackBtn onClick={() => navigate("/expert/chat-history")}>
+              <HeaderBackBtn onClick={handleBack}>
                 <FiArrowLeft size={20} />
               </HeaderBackBtn>
               <HeaderAvatarWrap>
@@ -941,7 +1082,13 @@ export default function ExpertChat() {
               </HeaderAvatarWrap>
               <HeaderTitleGroup>
                 <HeaderName>{user.name}</HeaderName>
-                <HeaderSubtext>{sessionActive ? "🟢 Active" : "🔴 Offline"}</HeaderSubtext>
+                <HeaderSubtext>
+                  {isServiceChat
+                    ? "🟢 Service Communication (Active)"
+                    : sessionActive
+                    ? "🟢 Active Paid Chat"
+                    : "🔴 Offline"}
+                </HeaderSubtext>
               </HeaderTitleGroup>
             </HeaderLeft>
           </HeaderBar>
@@ -960,15 +1107,18 @@ export default function ExpertChat() {
                 return (
                   <MessageGroup key={msg.id} $isMe={isMe}>
                     <MessageBubble $isMe={isMe}>
-                      {msg.message_type === "image" && msg.image_url && (
-                        <img
-                          src={msg.image_url}
-                          alt="attachment"
-                          onError={(e) => {
-                            if (msg.isTemp) e.target.style.opacity = "0.5";
-                            else e.target.style.display = "none";
-                          }}
-                        />
+                      {(msg.message_type === "image" || msg.image_url) && msg.image_url && (
+                        <div style={{ marginBottom: 4 }}>
+                          <img
+                            src={getMediaUrl(msg.image_url)}
+                            alt="attachment"
+                            style={{ maxWidth: "100%", maxHeight: 260, borderRadius: 8, objectFit: "cover", cursor: "pointer", display: "block" }}
+                            onClick={() => window.open(getMediaUrl(msg.image_url), "_blank")}
+                            onError={(e) => {
+                              if (msg.isTemp) e.target.style.opacity = "0.5";
+                            }}
+                          />
+                        </div>
                       )}
                       {msg.message && <div>{msg.message}</div>}
                       <MessageFooter>
@@ -1023,7 +1173,7 @@ export default function ExpertChat() {
               <AttachIconButton
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={!sessionActive || uploading}
+                disabled={!isChatActive || uploading}
                 title="Attach Image"
               >
                 <FiPaperclip size={20} />
@@ -1038,20 +1188,20 @@ export default function ExpertChat() {
                 onBlur={() => emitTyping(false)}
                 onKeyDown={handleKeyPress}
                 placeholder={
-                  sessionActive
+                  isChatActive
                     ? uploading
                       ? "Uploading image..."
                       : "Type a message..."
                     : "Chat ended"
                 }
-                disabled={!sessionActive || uploading}
+                disabled={!isChatActive || uploading}
               />
 
               <SendCircleBtn
                 type="submit"
                 onMouseDown={(e) => e.preventDefault()}
                 onTouchStart={(e) => e.preventDefault()}
-                disabled={uploading || (!message.trim() && !selectedImage) || !sessionActive}
+                disabled={uploading || (!message.trim() && !selectedImage) || !isChatActive}
               >
                 {uploading ? "..." : <FiSend size={18} />}
               </SendCircleBtn>

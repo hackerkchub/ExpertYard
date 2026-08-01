@@ -67,6 +67,7 @@ const getSavedLocation = () => {
 const sidebarItems = [
   { label: "Home", to: "/user", icon: HomeIcon },
   { label: "Services", to: "/user/all-services", icon: BriefcaseBusiness },
+  { label: "My Services", to: "/user/my-services", icon: BriefcaseBusiness },
   { label: "Wallet", to: "/user/wallet", icon: Wallet },
   { label: "Category", to: "/user/categories", icon: Grid3X3 },
   { label: "Consultations", to: "/user/chat-history", icon: History },
@@ -980,10 +981,6 @@ export default function HomePage() {
             <button type="button" onClick={() => navigate("/user/call-chat?page=1&mode=call")}>
               <PhoneCall size={19} />
               Quick Call
-            </button>
-            <button type="button" onClick={() => navigate("/user/all-services")}>
-              <BriefcaseBusiness size={19} />
-              Quick Services
             </button>
             {isLoggedIn ? (
               <button type="button" onClick={logout}>

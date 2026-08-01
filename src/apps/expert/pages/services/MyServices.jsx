@@ -1,628 +1,834 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { FiPlus, FiEdit2, FiTrash2, FiPackage, FiClipboard, FiX, FiFile, FiLock, FiUnlock } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiPackage, FiFolder, FiCheckCircle, FiPauseCircle, FiPlayCircle, FiFileText, FiLayers, FiDollarSign, FiList, FiPhone, FiVideo, FiMessageSquare, FiUser } from "react-icons/fi";
 import { useExpert } from "../../../../shared/context/ExpertContext";
-import { getServicesByExpert, updateService, deleteService, uploadServiceFiles, deleteServiceFile } from "../../../../shared/api/service.api";
+import APP_CONFIG from "../../../../config/appConfig";
 import * as S from "./MyServices.style";
 
-const MyServices = () => {
+const authHeaders = () => {
+  const token = localStorage.getItem("expert_token") || localStorage.getItem("token") || localStorage.getItem("expertToken") || "";
+  return {
+    "Content-Type": "application/json",
+    Authorization: token ? `Bearer ${token}` : "",
+  };
+};
+
+const API_BASE = APP_CONFIG?.API_BASE_URL || "/api";
+const FALLBACK_API_BASE = "http://localhost:5000/api";
+
+const apiFetch = async (path, options = {}) => {
+  const cleanPath = path.replace(/^\/api/, "");
+  const primaryUrl = `${API_BASE}${cleanPath}`;
+  try {
+    const res = await fetch(primaryUrl, options);
+    if (res.status === 404 && API_BASE !== FALLBACK_API_BASE) {
+      return await fetch(`${FALLBACK_API_BASE}${cleanPath}`, options);
+    }
+    return res;
+  } catch {
+    return await fetch(`${FALLBACK_API_BASE}${cleanPath}`, options);
+  }
+};
+
+export default function MyServices() {
   const navigate = useNavigate();
   const { expertData, profileLoading } = useExpert();
-  
-  const [services, setServices] = useState([]);
+
+  const [activations, setActivations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // Edit Modal States
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingService, setEditingService] = useState(null);
-  const [editFormData, setEditFormData] = useState({
-    title: "",
-    price: "",
-    description: "",
-    short_description: "",
-    full_description: "",
-    deliverables: "",
-    service_type: "consultation",
+  const [successMsg, setSuccessMsg] = useState("");
+
+  // Edit Modal State & OS V2 Module States
+  const [editingActivation, setEditingActivation] = useState(null);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [editForm, setEditForm] = useState({
+    custom_price: "",
     offer_price: "",
-    delivery_type: "scheduled",
-    preview_enabled: false,
-    status: "active"
+    delivery_time_days: 1,
+    custom_bio: "",
   });
-  const [editImage, setEditImage] = useState(null);
-  const [editImagePreview, setEditImagePreview] = useState(null);
-  const [editFiles, setEditFiles] = useState([]);
-  const [newFiles, setNewFiles] = useState([]);
+  const [editDocSpecs, setEditDocSpecs] = useState([]);
+  const [editFormFields, setEditFormFields] = useState([]);
+  const [editWorkflowSteps, setEditWorkflowSteps] = useState([]);
+  const [newDocLabel, setNewDocLabel] = useState("");
+  const [newFieldLabel, setNewFieldLabel] = useState("");
+  const [newStepLabel, setNewStepLabel] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Delete Confirmation States
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deletingService, setDeletingService] = useState(null);
+  // Call User Modal State
+  const [callModalService, setCallModalService] = useState(null);
+  const [expertBookings, setExpertBookings] = useState([]);
+  const [userProfiles, setUserProfiles] = useState({});
+  const [directUserId, setDirectUserId] = useState("");
+  const [loadingBookings, setLoadingBookings] = useState(false);
 
-  // Helper function to get correct image URL (handles both relative and absolute paths)
-  const getImageUrl = (img) => {
-    if (!img) return "https://via.placeholder.com/200x150?text=No+Image";
-    
-    // If already full URL
-    if (img.startsWith("http")) return img;
-    
-    // If relative path
-    return `https://softmaxs.com/${img}`;
+  const handleOpenCallModal = async (act) => {
+    setCallModalService(act);
+    if (!expertData?.expertId) return;
+
+    try {
+      setLoadingBookings(true);
+      const res = await apiFetch(`/api/bookings/expert/${expertData.expertId}`);
+      if (res.ok) {
+        const data = await res.json();
+        const bList = data.data || [];
+        setExpertBookings(bList);
+
+        const uIds = [...new Set(bList.map((b) => b.user_id))];
+        const uMap = {};
+        await Promise.all(
+          uIds.map(async (uid) => {
+            try {
+              const uRes = await apiFetch(`/api/user/public/${uid}`);
+              if (uRes.ok) {
+                const uData = await uRes.json();
+                uMap[uid] = uData.data || uData;
+              }
+            } catch (e) {}
+          })
+        );
+        setUserProfiles(uMap);
+      }
+    } catch (e) {
+      console.error("Error fetching bookings for call:", e);
+    } finally {
+      setLoadingBookings(false);
+    }
   };
 
-  // Helper function to render deliverables (handles both array and HTML string)
-  const renderDeliverables = (deliverables) => {
-    if (!deliverables) return null;
-    
-    // If deliverables is an array
-    if (Array.isArray(deliverables)) {
-      return (
-        <ul>
-          {deliverables.map((item, i) => (
-            <li key={i}>{item}</li>
-          ))}
-        </ul>
-      );
+  const fetchMyActivations = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await apiFetch("/api/expert-activations/my-services", { headers: authHeaders() });
+      const data = await res.json();
+      if (data.success) {
+        setActivations(data.data || []);
+      } else {
+        setError(data.message || "Failed to load activated services.");
+      }
+    } catch (err) {
+      console.error("Error fetching activated services:", err);
+      setError("Failed to load services. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    
-    // If deliverables is HTML string
-    return <div dangerouslySetInnerHTML={{ __html: deliverables }} />;
   };
 
   useEffect(() => {
-    const fetchServices = async () => {
-      if (expertData?.expertId) {
-        try {
-          setLoading(true);
-          const res = await getServicesByExpert(expertData.expertId);
-          const data = Array.isArray(res.data) ? res.data : res.data.data || [];
-          setServices(Array.isArray(data) ? data : []);
-          setError(null);
-        } catch (err) {
-          console.error("Error fetching services:", err);
-          setError("Failed to load services. Please try again.");
-          setServices([]);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-    fetchServices();
-  }, [expertData?.expertId]);
+    fetchMyActivations();
+  }, []);
 
-  // Handle Edit Click
-  const handleEditClick = (service) => {
-    setEditingService(service);
-    setEditFormData({
-      title: service.title || "",
-      price: service.price || "",
-      description: service.short_description || service.description || "",
-      short_description: service.short_description || service.description || "",
-      full_description: service.full_description || service.description || "",
-      deliverables: Array.isArray(service.deliverables) 
-        ? service.deliverables.join("\n") 
-        : (service.deliverables || ""),
-      service_type: service.service_type || "consultation",
-      offer_price: service.offer_price || "",
-      delivery_type: service.delivery_type || "scheduled",
-      preview_enabled: Boolean(service.preview_enabled),
-      status: service.status || "active"
-    });
-    setEditImagePreview(getImageUrl(service.image));
-    setEditImage(null);
-    setEditFiles(Array.isArray(service.files) ? service.files : []);
-    setNewFiles([]);
-    setShowEditModal(true);
-  };
-
-  // Handle Edit Form Input Change
-  const handleEditInputChange = (e) => {
-    const { name, value } = e.target;
-    setEditFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  // Handle Edit Image Change
-  const handleEditImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setEditImage(file);
-      const previewUrl = URL.createObjectURL(file);
-      setEditImagePreview(previewUrl);
-    }
-  };
-
-  const handleNewFilesChange = (e) => {
-    const files = Array.from(e.target.files || []).map((file, index) => ({
-      id: `${file.name}-${file.lastModified}-${index}`,
-      file,
-      title: file.name.replace(/\.[^/.]+$/, ""),
-      is_preview: false,
-      is_paid_content: true,
-      is_downloadable: true
-    }));
-    setNewFiles(prev => [...prev, ...files]);
-    e.target.value = "";
-  };
-
-  const updateNewFileMeta = (id, key, value) => {
-    setNewFiles(prev => prev.map(item => item.id === id ? { ...item, [key]: value } : item));
-  };
-
-  const removeNewFile = (id) => {
-    setNewFiles(prev => prev.filter(item => item.id !== id));
-  };
-
-  const handleDeleteExistingFile = async (fileId) => {
-    if (!editingService?.id || !window.confirm("Delete this service file?")) return;
+  const handleToggleStatus = async (act) => {
     try {
-      await deleteServiceFile(editingService.id, fileId);
-      setEditFiles(prev => prev.filter(file => file.id !== fileId));
+      const nextStatus = act.is_available ? 0 : 1;
+      const res = await apiFetch(`/api/expert-activations/${act.id}`, {
+        method: "PUT",
+        headers: authHeaders(),
+        body: JSON.stringify({ is_available: nextStatus })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccessMsg(`Service "${act.master_service_title}" status set to ${nextStatus ? "Active (Online)" : "Paused (Offline)"}.`);
+        await fetchMyActivations();
+      } else {
+        alert(data.message || "Failed to update service status.");
+      }
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to delete file");
+      alert("Error updating service status.");
     }
   };
 
-  // Handle Edit Submit
+  const handleEditClick = (act) => {
+    setEditingActivation(act);
+    setActiveTab("overview");
+    setEditForm({
+      custom_price: act.custom_price || act.base_price || "",
+      offer_price: act.offer_price || "",
+      delivery_time_days: act.delivery_time_days || act.base_delivery_days || 1,
+      custom_bio: act.custom_bio || "",
+    });
+
+    // 1. Documents Created by Admin
+    let docs = [];
+    if (act.custom_document_specs_json) {
+      try {
+        const parsed = typeof act.custom_document_specs_json === 'string' ? JSON.parse(act.custom_document_specs_json) : act.custom_document_specs_json;
+        if (Array.isArray(parsed) && parsed.length > 0) docs = parsed;
+      } catch (e) { console.error(e); }
+    }
+    if (docs.length === 0 && Array.isArray(act.document_specs)) {
+      docs = act.document_specs;
+    }
+    setEditDocSpecs(docs.map(d => ({
+      id: d.id || Math.random(),
+      doc_type_key: d.doc_type_key || d.label?.toLowerCase().replace(/\s+/g, "_"),
+      label: d.label,
+      is_mandatory: Boolean(d.is_mandatory ?? 1),
+      instructions: d.instructions || ""
+    })));
+
+    // 2. Form Fields Created by Admin
+    let fields = [];
+    if (act.custom_form_fields_json) {
+      try {
+        const parsed = typeof act.custom_form_fields_json === 'string' ? JSON.parse(act.custom_form_fields_json) : act.custom_form_fields_json;
+        if (Array.isArray(parsed) && parsed.length > 0) fields = parsed;
+      } catch (e) { console.error(e); }
+    }
+    if (fields.length === 0 && Array.isArray(act.form_fields)) {
+      fields = act.form_fields;
+    }
+    setEditFormFields(fields.map(f => ({
+      id: f.id || Math.random(),
+      field_key: f.field_key || f.field_label?.toLowerCase().replace(/\s+/g, "_"),
+      field_label: f.field_label,
+      field_type: f.field_type || "text",
+      is_required: Boolean(f.is_required ?? 0),
+      placeholder: f.placeholder || ""
+    })));
+
+    // 3. Workflow Steps Created by Admin
+    let steps = [];
+    if (act.custom_workflow_steps_json) {
+      try {
+        const parsed = typeof act.custom_workflow_steps_json === 'string' ? JSON.parse(act.custom_workflow_steps_json) : act.custom_workflow_steps_json;
+        if (Array.isArray(parsed) && parsed.length > 0) steps = parsed;
+      } catch (e) { console.error(e); }
+    }
+    if (steps.length === 0 && Array.isArray(act.workflow_steps)) {
+      steps = act.workflow_steps;
+    }
+    setEditWorkflowSteps(steps.map((st, i) => ({
+      id: st.id || Math.random(),
+      step_order: st.step_order || i + 1,
+      step_label: st.step_label,
+      estimated_days: st.estimated_days || 1,
+      step_description: st.step_description || ""
+    })));
+  };
+
+  // Helper functions for OS V2 modules editing
+  const handleToggleDocMandatory = (idx) => {
+    const copy = [...editDocSpecs]; copy[idx].is_mandatory = !copy[idx].is_mandatory; setEditDocSpecs(copy);
+  };
+  const handleAddCustomDoc = () => {
+    if (!newDocLabel.trim()) return;
+    setEditDocSpecs([...editDocSpecs, { id: Date.now(), doc_type_key: newDocLabel.toLowerCase().replace(/\s+/g, "_"), label: newDocLabel.trim(), is_mandatory: true, instructions: "" }]);
+    setNewDocLabel("");
+  };
+
+  const handleToggleFieldRequired = (idx) => {
+    const copy = [...editFormFields]; copy[idx].is_required = !copy[idx].is_required; setEditFormFields(copy);
+  };
+  const handleAddCustomField = () => {
+    if (!newFieldLabel.trim()) return;
+    setEditFormFields([...editFormFields, { id: Date.now(), field_key: newFieldLabel.toLowerCase().replace(/\s+/g, "_"), field_label: newFieldLabel.trim(), field_type: "text", is_required: false, placeholder: "" }]);
+    setNewFieldLabel("");
+  };
+
+  const handleAddWorkflowStep = () => {
+    if (!newStepLabel.trim()) return;
+    setEditWorkflowSteps([...editWorkflowSteps, { id: Date.now(), step_order: editWorkflowSteps.length + 1, step_label: newStepLabel.trim(), estimated_days: 1, step_description: "" }]);
+    setNewStepLabel("");
+  };
+
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!editFormData.title || !editFormData.price) {
-      alert("Please fill all required fields");
-      return;
-    }
+    if (!editingActivation) return;
 
-    setSubmitting(true);
-    
     try {
-      const formData = new FormData();
-      formData.append("title", editFormData.title);
-      formData.append("price", editFormData.price);
-      formData.append("description", editFormData.short_description || editFormData.description || "");
-      formData.append("short_description", editFormData.short_description || editFormData.description || "");
-      formData.append("full_description", editFormData.full_description || editFormData.description || "");
-      formData.append("deliverables", JSON.stringify(String(editFormData.deliverables || "").split("\n").map(item => item.trim()).filter(Boolean)));
-      formData.append("service_type", editFormData.service_type);
-      formData.append("offer_price", editFormData.offer_price || "");
-      formData.append("delivery_type", editFormData.delivery_type || "scheduled");
-      formData.append("preview_enabled", editFormData.preview_enabled ? "1" : "0");
-      formData.append("status", editFormData.status);
-      
-      if (editImage) {
-        formData.append("image", editImage);
-      }
-
-      const response = await updateService(editingService.id, formData);
-      
-      if (response.data.success) {
-        if (newFiles.length > 0) {
-          const uploadData = new FormData();
-          newFiles.forEach((item, index) => {
-            uploadData.append("files", item.file);
-            uploadData.append("file_title", item.title || item.file.name);
-            uploadData.append("is_preview", item.is_preview ? "1" : "0");
-            uploadData.append("is_paid_content", item.is_paid_content ? "1" : "0");
-            uploadData.append("is_downloadable", item.is_downloadable ? "1" : "0");
-            uploadData.append("sort_order", String(editFiles.length + index));
-          });
-          await uploadServiceFiles(editingService.id, uploadData);
-        }
-        // Refresh services list
-        const refreshRes = await getServicesByExpert(expertData.expertId);
-        const updatedServices = Array.isArray(refreshRes.data) ? refreshRes.data : refreshRes.data.data || [];
-        setServices(updatedServices);
-        setShowEditModal(false);
-        setEditingService(null);
-        alert("Service updated successfully!");
+      setSubmitting(true);
+      const res = await apiFetch(`/api/expert-activations/${editingActivation.id}`, {
+        method: "PUT",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          custom_price: Number(editForm.custom_price),
+          offer_price: editForm.offer_price ? Number(editForm.offer_price) : null,
+          delivery_time_days: Number(editForm.delivery_time_days || 1),
+          custom_bio: editForm.custom_bio,
+          custom_document_specs: editDocSpecs,
+          custom_form_fields: editFormFields,
+          custom_workflow_steps: editWorkflowSteps
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccessMsg("Service customization & all Admin document/workflow details updated successfully!");
+        setEditingActivation(null);
+        await fetchMyActivations();
       } else {
-        alert(response.data.message || "Failed to update service");
+        alert(data.message || "Failed to update service.");
       }
     } catch (err) {
-      console.error("Error updating service:", err);
-      alert(err.response?.data?.message || "Failed to update service. Please try again.");
+      alert("Error updating service.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Handle Delete Click
-  const handleDeleteClick = (service) => {
-    setDeletingService(service);
-    setShowDeleteConfirm(true);
-  };
-
-  // Handle Delete Confirm
-  const handleDeleteConfirm = async () => {
-    if (!deletingService) return;
-    
-    setSubmitting(true);
-    
+  const handleDelete = async (act) => {
+    if (!window.confirm(`Delete service activation for "${act.master_service_title}"?`)) return;
     try {
-      const response = await deleteService(deletingService.id);
-      
-      if (response.data.success) {
-        // Remove from local state
-        setServices(prev => prev.filter(s => s.id !== deletingService.id));
-        setShowDeleteConfirm(false);
-        setDeletingService(null);
-        alert("Service deleted successfully!");
+      const res = await apiFetch(`/api/expert-activations/${act.id}`, {
+        method: "DELETE",
+        headers: authHeaders()
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccessMsg("Service activation deleted successfully.");
+        await fetchMyActivations();
       } else {
-        alert(response.data.message || "Failed to delete service");
+        alert(data.message || "Unable to delete service activation.");
       }
     } catch (err) {
-      console.error("Error deleting service:", err);
-      alert(err.response?.data?.message || "Failed to delete service. Please try again.");
-    } finally {
-      setSubmitting(false);
+      alert(err.message || "Error deleting service activation.");
     }
   };
 
-  if (profileLoading) return <S.PageWrapper><S.LoadingBox>Loading Profile...</S.LoadingBox></S.PageWrapper>;
+  if (profileLoading || loading) {
+    return (
+      <S.PageWrapper>
+        <div style={{ padding: "3rem", textAlign: "center", color: "#64748b", fontWeight: 700 }}>Loading Activated Master Services...</div>
+      </S.PageWrapper>
+    );
+  }
 
   return (
     <S.PageWrapper>
       <S.Container>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", background: "#f0f2f5", padding: "10px 16px", borderRadius: "12px", border: "1px solid #e9edef", marginBottom: "1rem" }}>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            style={{
+              background: "#ffffff",
+              border: "1px solid #cbd5e1",
+              borderRadius: "50%",
+              width: "36px",
+              height: "36px",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
+            }}
+            title="Go Back"
+          >
+            <FiArrowLeft size={18} color="#111b21" />
+          </button>
+          <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "#111b21" }}>My Services</h2>
+        </div>
+
         <S.Header>
-          <div className="header-text">
-            <h1>My Services</h1>
-            <p>Manage your professional offerings for <strong>{expertData?.name}</strong></p>
+          <div>
+            <h1>My Activated Master Services</h1>
+            <p>Manage your localized pricing, Admin document specs, workflow steps, and online/offline availability.</p>
           </div>
-          
-          {/* Action Buttons Container */}
-          <S.ActionGroup>
-            <S.BookingButton onClick={() => navigate("/expert/mybookings")}>
-              <FiClipboard /> My Bookings
-            </S.BookingButton>
-            <S.AddButton onClick={() => navigate("/expert/create-services")}>
-              <FiPlus /> Create New Service
-            </S.AddButton>
-          </S.ActionGroup>
+          <button
+            type="button"
+            onClick={() => navigate("/expert/services/activation")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              background: "#2563eb",
+              color: "#fff",
+              padding: "10px 18px",
+              borderRadius: "8px",
+              fontWeight: "700",
+              fontSize: "14px",
+              border: 0,
+              cursor: "pointer"
+            }}
+          >
+            <FiPlus /> Activate New Master Service
+          </button>
         </S.Header>
 
-        {loading ? (
-          <S.LoadingBox>Fetching your services...</S.LoadingBox>
-        ) : error ? (
-          <S.ErrorBox>{error}</S.ErrorBox>
-        ) : services.length === 0 ? (
+        {error && <div style={{ background: "#fef2f2", color: "#b42318", border: "1px solid #fecaca", padding: "1rem", borderRadius: 8, marginBottom: "1rem" }}>{error}</div>}
+        {successMsg && <div style={{ background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0", padding: "1rem", borderRadius: 8, marginBottom: "1rem" }}>{successMsg}</div>}
+
+        {activations.length === 0 ? (
           <S.EmptyState>
-            <FiPackage size={50} color="#cbd5e0" />
-            <h3>No services found</h3>
-            <p>You haven't created any services yet. Start by clicking the button above.</p>
+            <FiPackage size={44} />
+            <p style={{ margin: "8px 0 16px", fontSize: "1.1rem", color: "#475569" }}>You haven't activated any master services yet.</p>
+            <button
+              type="button"
+              onClick={() => navigate("/expert/services/activation")}
+              style={{ padding: "0.75rem 1.5rem", background: "#2563eb", color: "#fff", border: 0, borderRadius: 8, fontWeight: "700", cursor: "pointer" }}
+            >
+              Browse & Activate Admin Master Services →
+            </button>
           </S.EmptyState>
         ) : (
-          <S.ServiceList>
-            {services.map((service) => (
-              <S.ServiceCard key={service.id}>
-                <S.ServiceImage 
-                  src={getImageUrl(service.image)}
-                  alt={service.title} 
-                />
-                
-                <S.ServiceInfo>
-                  <div className="top-row">
-                    <S.StatusBadge $status={service.status}>{service.status || 'Active'}</S.StatusBadge>
-                    <S.TypeBadge>{(service.type_label || service.service_type || "Consultation").replace("_", " ")}</S.TypeBadge>
-                    <span className="price">
-                      {service.offer_price ? (
-                        <>
-                          <small>₹{parseFloat(service.price || 0).toLocaleString()}</small>
-                          ₹{parseFloat(service.offer_price || 0).toLocaleString()}
-                        </>
-                      ) : (
-                        <>₹{parseFloat(service.price || 0).toLocaleString()}</>
-                      )}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "1.25rem" }}>
+            {activations.map((act) => (
+              <div
+                key={act.id}
+                style={{
+                  background: "#fff",
+                  border: act.is_available ? "1px solid #e2e8f0" : "1px solid #fecaca",
+                  borderRadius: 14,
+                  padding: "1.25rem",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.04)"
+                }}
+              >
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                    <h3 style={{ margin: 0, color: "#0f172a", fontSize: "1.15rem" }}>{act.master_service_title}</h3>
+                    <span style={{
+                      background: act.is_available ? "#dcfce7" : "#fef2f2",
+                      color: act.is_available ? "#15803d" : "#b42318",
+                      padding: "3px 10px",
+                      borderRadius: 12,
+                      fontSize: 11,
+                      fontWeight: 800
+                    }}>
+                      {act.is_available ? "ACTIVE" : "PAUSED"}
                     </span>
                   </div>
-                  
-                  <h3>{service.title}</h3>
-                  <p className="description">
-                    {service.description ? service.description.substring(0, 100) + "..." : "No description provided."}
-                  </p>
+                  <div style={{ fontSize: 12, color: "#2563eb", fontWeight: 600, marginTop: 2 }}>/{act.master_service_slug}</div>
 
-                  {service.deliverables && (
-                    <S.DeliverablesPreview>
-                      <strong>Includes:</strong>
-                      {renderDeliverables(service.deliverables)}
-                    </S.DeliverablesPreview>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "8px 0" }}>
+                    <span style={{ background: "#f1f5f9", color: "#475569", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 600 }}>
+                      {act.category_name || "Category"}
+                    </span>
+                    {act.subcategory_name && (
+                      <span style={{ background: "#ecfdf5", color: "#065f46", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 600 }}>
+                        {act.subcategory_name}
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, margin: "6px 0", fontSize: 11, color: "#475569", background: "#f8fafc", padding: "6px 8px", borderRadius: 6 }}>
+                    <div>📋 Admin Docs: <strong>{(act.document_specs || []).length} Required</strong></div>
+                    <div>⚡ Workflow: <strong>{(act.workflow_steps || []).length} Steps</strong></div>
+                  </div>
+
+                  {act.custom_bio && (
+                    <p style={{ margin: "6px 0 0", color: "#64748b", fontSize: "0.85rem", lineHeight: 1.4 }}>
+                      "{act.custom_bio}"
+                    </p>
                   )}
+                </div>
 
-                  {Array.isArray(service.files) && service.files.length > 0 && (
-                    <S.FileSummary>
-                      <FiFile /> {service.files.length} file{service.files.length > 1 ? "s" : ""} attached
-                    </S.FileSummary>
-                  )}
-                </S.ServiceInfo>
+                <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "0.85rem", display: "grid", gap: 10 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#64748b" }}>Your Price</div>
+                      <strong style={{ color: "#059669", fontSize: "1.2rem" }}>₹{act.custom_price}</strong>
+                      {act.offer_price && <span style={{ fontSize: 11, color: "#94a3b8", textDecoration: "line-through", marginLeft: 6 }}>₹{act.offer_price}</span>}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#64748b" }}>SLA Delivery</div>
+                      <strong style={{ color: "#1e293b", fontSize: "0.95rem" }}>{act.delivery_time_days || 1} Days</strong>
+                    </div>
+                  </div>
 
-                <S.ActionButtons>
-                  <button className="edit" onClick={() => handleEditClick(service)} title="Edit Service">
-                    <FiEdit2 /> Edit
-                  </button>
-                  <button className="delete" onClick={() => handleDeleteClick(service)} title="Delete Service">
-                    <FiTrash2 />
-                  </button>
-                </S.ActionButtons>
-              </S.ServiceCard>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleStatus(act)}
+                      style={{
+                        flex: 1,
+                        padding: "6px",
+                        background: act.is_available ? "#fef3c7" : "#dcfce7",
+                        color: act.is_available ? "#92400e" : "#15803d",
+                        border: 0,
+                        borderRadius: 6,
+                        fontWeight: 700,
+                        fontSize: 12,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 4
+                      }}
+                    >
+                      {act.is_available ? <><FiPauseCircle /> Pause</> : <><FiPlayCircle /> Resume</>}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleEditClick(act)}
+                      style={{ flex: 1.2, padding: "6px", background: "#f1f5f9", border: "1px solid #cbd5e1", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}
+                    >
+                      <FiEdit2 /> Edit Docs & Modules
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(act)}
+                      style={{ padding: "6px 10px", background: "#fef2f2", color: "#b42318", border: "1px solid #fecaca", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer" }}
+                    >
+                      <FiTrash2 />
+                    </button>
+                  </div>
+                </div>
+              </div>
             ))}
-          </S.ServiceList>
+          </div>
         )}
-      </S.Container>
 
-      {/* Edit Modal */}
-      {showEditModal && (
-        <S.ModalOverlay onClick={() => setShowEditModal(false)}>
-          <S.ModalContent onClick={(e) => e.stopPropagation()}>
-            <S.ModalHeader>
-              <h2>Edit Service</h2>
-              <button className="close-btn" onClick={() => setShowEditModal(false)}>
-                <FiX />
-              </button>
-            </S.ModalHeader>
-            
-            <S.ModalBody>
-              <form onSubmit={handleEditSubmit}>
-                <S.FormGroup>
-                  <label>Service Title *</label>
-                  <input
-                    type="text"
-                    name="title"
-                    value={editFormData.title}
-                    onChange={handleEditInputChange}
-                    placeholder="Enter service title"
-                    required
-                  />
-                </S.FormGroup>
+        {/* FULL EDIT MODAL WITH ALL 4 ADMIN OS MODULES */}
+        {editingActivation && (
+          <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15,23,42,0.6)", backdropFilter: "blur(4px)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000, padding: "1rem" }}>
+            <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 750, maxHeight: "90vh", overflowY: "auto", padding: "1.75rem", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)", display: "grid", gap: "1.25rem" }}>
+              
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid #f1f5f9", paddingBottom: "1rem" }}>
+                <div>
+                  <h3 style={{ margin: 0, color: "#0f172a", fontSize: "1.3rem" }}>Manage Master Service: {editingActivation.master_service_title}</h3>
+                  <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Admin Base Price: ₹{editingActivation.base_price} • GST {editingActivation.gst_percent || 18}% • Commission {editingActivation.commission_percent || 0}%</div>
+                </div>
+                <button type="button" onClick={() => setEditingActivation(null)} style={{ background: "#f1f5f9", border: 0, padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 700 }}>✕</button>
+              </div>
 
-                <S.FormRow>
-                  <S.FormGroup>
-                    <label>Service Type</label>
-                    <select
-                      name="service_type"
-                      value={editFormData.service_type}
-                      onChange={handleEditInputChange}
-                    >
-                      <option value="consultation">Consultation</option>
-                      <option value="digital_product">Digital Product</option>
-                      <option value="digital_package">Digital Package</option>
-                      <option value="course">Course</option>
-                      <option value="custom">Custom</option>
-                    </select>
-                  </S.FormGroup>
-
-                  <S.FormGroup>
-                    <label>Price (₹) *</label>
-                    <input
-                      type="number"
-                      name="price"
-                      value={editFormData.price}
-                      onChange={handleEditInputChange}
-                      placeholder="Enter price"
-                      required
-                      min="0"
-                      step="0.01"
-                    />
-                  </S.FormGroup>
-                </S.FormRow>
-
-                <S.FormRow>
-                  <S.FormGroup>
-                    <label>Offer Price</label>
-                    <input
-                      type="number"
-                      name="offer_price"
-                      value={editFormData.offer_price}
-                      onChange={handleEditInputChange}
-                      placeholder="Optional"
-                      min="0"
-                      step="0.01"
-                    />
-                  </S.FormGroup>
-
-                  <S.FormGroup>
-                    <label>Status</label>
-                    <select
-                      name="status"
-                      value={editFormData.status}
-                      onChange={handleEditInputChange}
-                    >
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                      <option value="draft">Draft</option>
-                      <option value="pending">Pending</option>
-                    </select>
-                  </S.FormGroup>
-                </S.FormRow>
-
-                <S.FormGroup>
-                  <label>Delivery Type</label>
-                  <select
-                    name="delivery_type"
-                    value={editFormData.delivery_type}
-                    onChange={handleEditInputChange}
+              {/* TABS FOR ALL 4 ADMIN MODULES */}
+              <div style={{ display: "flex", borderBottom: "2px solid #e2e8f0", gap: 8, flexWrap: "wrap" }}>
+                {[
+                  { id: "overview", label: "⚙️ Overview & Pricing" },
+                  { id: "documents", label: `📄 Admin Docs (${editDocSpecs.length})` },
+                  { id: "form", label: `📋 Form Fields (${editFormFields.length})` },
+                  { id: "workflow", label: `⚡ Workflow (${editWorkflowSteps.length})` },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    style={{
+                      padding: "8px 12px",
+                      border: 0,
+                      borderBottom: activeTab === tab.id ? "3px solid #2563eb" : "3px solid transparent",
+                      background: "transparent",
+                      color: activeTab === tab.id ? "#2563eb" : "#64748b",
+                      fontWeight: 700,
+                      fontSize: 13,
+                      cursor: "pointer"
+                    }}
                   >
-                    <option value="scheduled">Scheduled</option>
-                    <option value="instant">Instant Access</option>
-                    <option value="manual">Manual Delivery</option>
-                    <option value="download">Download</option>
-                  </select>
-                </S.FormGroup>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
 
-                <S.FormGroup>
-                  <label>Short Description</label>
-                  <textarea
-                    name="short_description"
-                    value={editFormData.short_description}
-                    onChange={handleEditInputChange}
-                    placeholder="Describe your service..."
-                    rows="4"
-                  />
-                </S.FormGroup>
+              <form onSubmit={handleEditSubmit} style={{ display: "grid", gap: "1rem" }}>
+                
+                {/* TAB 1: OVERVIEW & PRICING */}
+                {activeTab === "overview" && (
+                  <div style={{ display: "grid", gap: "1rem" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                      <label style={labelStyle}>
+                        Your Custom Price (₹)
+                        <input
+                          type="number"
+                          value={editForm.custom_price}
+                          onChange={(e) => setEditForm({ ...editForm, custom_price: e.target.value })}
+                          required
+                          style={inputStyle}
+                        />
+                      </label>
+                      <label style={labelStyle}>
+                        Offer Price (₹)
+                        <input
+                          type="number"
+                          value={editForm.offer_price}
+                          onChange={(e) => setEditForm({ ...editForm, offer_price: e.target.value })}
+                          style={inputStyle}
+                        />
+                      </label>
+                    </div>
 
-                <S.FormGroup>
-                  <label>Full Description</label>
-                  <textarea
-                    name="full_description"
-                    value={editFormData.full_description}
-                    onChange={handleEditInputChange}
-                    placeholder="Use headings, bullets, and paragraphs"
-                    rows="6"
-                  />
-                </S.FormGroup>
+                    <label style={labelStyle}>
+                      Delivery SLA (Days)
+                      <input
+                        type="number"
+                        value={editForm.delivery_time_days}
+                        onChange={(e) => setEditForm({ ...editForm, delivery_time_days: e.target.value })}
+                        required
+                        style={inputStyle}
+                      />
+                    </label>
 
-                <S.FormGroup>
-                  <label>Deliverables (one per line)</label>
-                  <textarea
-                    name="deliverables"
-                    value={editFormData.deliverables}
-                    onChange={handleEditInputChange}
-                    placeholder="What will you deliver?"
-                    rows="5"
-                  />
-                </S.FormGroup>
+                    <label style={labelStyle}>
+                      Custom Service Bio / Pitch
+                      <textarea
+                        value={editForm.custom_bio}
+                        onChange={(e) => setEditForm({ ...editForm, custom_bio: e.target.value })}
+                        rows={3}
+                        style={inputStyle}
+                      />
+                    </label>
 
-                <S.CheckboxRow>
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="preview_enabled"
-                      checked={editFormData.preview_enabled}
-                      onChange={(event) =>
-                        setEditFormData(prev => ({ ...prev, preview_enabled: event.target.checked }))
-                      }
-                    />
-                    Enable preview files
-                  </label>
-                </S.CheckboxRow>
+                    {editingActivation.full_description && (
+                      <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "0.85rem", borderRadius: 8 }}>
+                        <strong style={{ fontSize: 12, color: "#334155" }}>Admin Service Description & Scope:</strong>
+                        <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b", lineHeight: 1.4 }}>{editingActivation.full_description}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
-                <S.FormGroup>
-                  <label>Service Image</label>
-                  {editImagePreview && (
-                    <S.ImagePreview>
-                      <img src={editImagePreview} alt="Preview" />
-                      <button
-                        type="button"
-                        className="remove-image"
-                        onClick={() => {
-                          setEditImage(null);
-                          setEditImagePreview(null);
-                        }}
-                      >
-                        <FiX />
-                      </button>
-                    </S.ImagePreview>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleEditImageChange}
-                  />
-                  <small>Leave empty to keep current image</small>
-                </S.FormGroup>
-
-                <S.FormGroup>
-                  <label>Service Files</label>
-                  {editFiles.length > 0 && (
-                    <S.FileManagerList>
-                      {editFiles.map(file => (
-                        <div className="file-row" key={file.id}>
-                          <FiFile />
-                          <div>
-                            <strong>{file.file_title || file.file_name}</strong>
-                            <span>
-                              {String(file.file_type || "file").toUpperCase()} · {file.locked ? <FiLock /> : <FiUnlock />} {file.is_preview ? "Preview" : file.is_paid_content ? "Paid" : "Free"}
-                            </span>
+                {/* TAB 2: ADMIN DOCUMENTS SPECIFICATIONS */}
+                {activeTab === "documents" && (
+                  <div style={{ display: "grid", gap: "0.75rem" }}>
+                    <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>Admin document specifications required from users. Edit instructions or add expert document requirements.</p>
+                    {editDocSpecs.map((doc, idx) => (
+                      <div key={doc.id || idx} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "0.75rem", display: "grid", gap: 6 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontWeight: 700, color: "#1e293b", fontSize: 13 }}>📄 {doc.label}</span>
+                          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                            <label style={{ fontSize: 12, color: "#334155", display: "flex", gap: 4, alignItems: "center", cursor: "pointer" }}>
+                              <input type="checkbox" checked={doc.is_mandatory} onChange={() => handleToggleDocMandatory(idx)} /> Mandatory
+                            </label>
+                            <button type="button" onClick={() => setEditDocSpecs(editDocSpecs.filter((_, i) => i !== idx))} style={{ background: "#fef2f2", color: "#b42318", border: 0, padding: "2px 6px", borderRadius: 4, fontSize: 11, cursor: "pointer" }}>Remove</button>
                           </div>
-                          <button type="button" onClick={() => handleDeleteExistingFile(file.id)}>
-                            <FiTrash2 />
-                          </button>
                         </div>
-                      ))}
-                    </S.FileManagerList>
-                  )}
+                        <input
+                          type="text"
+                          placeholder="Custom expert instructions for this document..."
+                          value={doc.instructions}
+                          onChange={(e) => { const copy = [...editDocSpecs]; copy[idx].instructions = e.target.value; setEditDocSpecs(copy); }}
+                          style={{ ...inputStyle, fontSize: 12, padding: "4px 8px" }}
+                        />
+                      </div>
+                    ))}
+                    <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                      <input
+                        type="text"
+                        placeholder="Add custom document specification..."
+                        value={newDocLabel}
+                        onChange={(e) => setNewDocLabel(e.target.value)}
+                        style={{ ...inputStyle, flex: 1, fontSize: 13 }}
+                      />
+                      <button type="button" onClick={handleAddCustomDoc} style={{ padding: "6px 14px", background: "#059669", color: "#fff", border: 0, borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>+ Add Doc</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 3: ADMIN DYNAMIC FORM FIELDS */}
+                {activeTab === "form" && (
+                  <div style={{ display: "grid", gap: "0.75rem" }}>
+                    <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>Admin user submission input fields. Customize labels or required flags.</p>
+                    {editFormFields.map((f, idx) => (
+                      <div key={f.id || idx} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div>
+                          <strong style={{ fontSize: 13, color: "#1e293b" }}>📋 {f.field_label}</strong>
+                          <span style={{ fontSize: 11, color: "#64748b", marginLeft: 6 }}>({f.field_type})</span>
+                        </div>
+                        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                          <label style={{ fontSize: 12, color: "#334155", display: "flex", gap: 4, alignItems: "center", cursor: "pointer" }}>
+                            <input type="checkbox" checked={f.is_required} onChange={() => handleToggleFieldRequired(idx)} /> Required
+                          </label>
+                          <button type="button" onClick={() => setEditFormFields(editFormFields.filter((_, i) => i !== idx))} style={{ background: "#fef2f2", color: "#b42318", border: 0, padding: "2px 6px", borderRadius: 4, fontSize: 11, cursor: "pointer" }}>Remove</button>
+                        </div>
+                      </div>
+                    ))}
+                    <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                      <input
+                        type="text"
+                        placeholder="Add custom input field label..."
+                        value={newFieldLabel}
+                        onChange={(e) => setNewFieldLabel(e.target.value)}
+                        style={{ ...inputStyle, flex: 1, fontSize: 13 }}
+                      />
+                      <button type="button" onClick={handleAddCustomField} style={{ padding: "6px 14px", background: "#2563eb", color: "#fff", border: 0, borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>+ Add Field</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 4: ADMIN VISUAL WORKFLOW STEPS */}
+                {activeTab === "workflow" && (
+                  <div style={{ display: "grid", gap: "0.75rem" }}>
+                    <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>Admin execution steps and milestone triggers.</p>
+                    {editWorkflowSteps.map((st, idx) => (
+                      <div key={st.id || idx} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div>
+                          <strong style={{ fontSize: 13, color: "#1e293b" }}>Step {st.step_order || idx+1}: {st.step_label}</strong>
+                          <div style={{ fontSize: 11, color: "#64748b" }}>Turnaround SLA: {st.estimated_days || 1} Days</div>
+                        </div>
+                        <button type="button" onClick={() => setEditWorkflowSteps(editWorkflowSteps.filter((_, i) => i !== idx))} style={{ background: "#fef2f2", color: "#b42318", border: 0, padding: "2px 6px", borderRadius: 4, fontSize: 11, cursor: "pointer" }}>Remove</button>
+                      </div>
+                    ))}
+                    <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                      <input
+                        type="text"
+                        placeholder="Add custom execution step..."
+                        value={newStepLabel}
+                        onChange={(e) => setNewStepLabel(e.target.value)}
+                        style={{ ...inputStyle, flex: 1, fontSize: 13 }}
+                      />
+                      <button type="button" onClick={handleAddWorkflowStep} style={{ padding: "6px 14px", background: "#ca8a04", color: "#fff", border: 0, borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>+ Add Step</button>
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: "0.5rem", borderTop: "1px solid #f1f5f9", paddingTop: "1rem" }}>
+                  <button type="button" onClick={() => setEditingActivation(null)} style={{ padding: "0.65rem 1.25rem", background: "#f1f5f9", border: "1px solid #cbd5e1", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}>Cancel</button>
+                  <button type="submit" disabled={submitting} style={{ padding: "0.65rem 1.5rem", background: "#2563eb", color: "#fff", border: 0, borderRadius: 8, fontWeight: 800, cursor: "pointer" }}>
+                    {submitting ? "Saving..." : "Save Service & Document Details"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* CALL USER / CONTACT CLIENTS MODAL */}
+        {callModalService && (
+          <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15,23,42,0.6)", backdropFilter: "blur(4px)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000, padding: "1rem" }}>
+            <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 600, maxHeight: "85vh", overflowY: "auto", padding: "1.75rem", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)", display: "grid", gap: "1.25rem" }}>
+              
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: "1rem" }}>
+                <div>
+                  <h3 style={{ margin: 0, color: "#0f172a", fontSize: "1.25rem", display: "flex", alignItems: "center", gap: 8 }}>
+                    <FiPhone color="#059669" /> Call Clients — {callModalService.master_service_title}
+                  </h3>
+                  <p style={{ margin: "4px 0 0", fontSize: 12, color: "#64748b" }}>Initiate voice call, video call, or chat with users for this service.</p>
+                </div>
+                <button type="button" onClick={() => setCallModalService(null)} style={{ background: "#f1f5f9", border: 0, padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 700 }}>✕</button>
+              </div>
+
+              {/* QUICK DIRECT USER CALL INPUT */}
+              <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "1rem", borderRadius: 10, display: "grid", gap: 8 }}>
+                <strong style={{ fontSize: 13, color: "#334155" }}>⚡ Direct Call / Search User ID:</strong>
+                <div style={{ display: "flex", gap: 8 }}>
                   <input
-                    type="file"
-                    multiple
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.mp4,.mp3,.zip"
-                    onChange={handleNewFilesChange}
+                    type="number"
+                    placeholder="Enter Client User ID..."
+                    value={directUserId}
+                    onChange={(e) => setDirectUserId(e.target.value)}
+                    style={{ ...inputStyle, flex: 1, fontSize: 13 }}
                   />
-                  {newFiles.length > 0 && (
-                    <S.FileManagerList>
-                      {newFiles.map(file => (
-                        <div className="file-row stacked" key={file.id}>
-                          <FiFile />
-                          <div>
-                            <strong>{file.file.name}</strong>
-                            <input
-                              value={file.title}
-                              onChange={(event) => updateNewFileMeta(file.id, "title", event.target.value)}
-                              placeholder="File title"
-                            />
-                            <div className="flags">
-                              <label><input type="checkbox" checked={file.is_preview} onChange={(event) => updateNewFileMeta(file.id, "is_preview", event.target.checked)} /> Preview</label>
-                              <label><input type="checkbox" checked={file.is_paid_content} onChange={(event) => updateNewFileMeta(file.id, "is_paid_content", event.target.checked)} /> Paid</label>
-                              <label><input type="checkbox" checked={file.is_downloadable} onChange={(event) => updateNewFileMeta(file.id, "is_downloadable", event.target.checked)} /> Download</label>
+                  <button
+                    type="button"
+                    disabled={!directUserId}
+                    onClick={() => {
+                      if (directUserId) {
+                        setCallModalService(null);
+                        navigate(`/expert/voice-call/${directUserId}`);
+                      }
+                    }}
+                    style={{ padding: "6px 14px", background: "#059669", color: "#fff", border: 0, borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: directUserId ? "pointer" : "not-allowed", opacity: directUserId ? 1 : 0.6, display: "flex", alignItems: "center", gap: 4 }}
+                  >
+                    <FiPhone size={13} /> Voice Call
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!directUserId}
+                    onClick={() => {
+                      if (directUserId) {
+                        setCallModalService(null);
+                        navigate(`/expert/video-call/${directUserId}`);
+                      }
+                    }}
+                    style={{ padding: "6px 14px", background: "#2563eb", color: "#fff", border: 0, borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: directUserId ? "pointer" : "not-allowed", opacity: directUserId ? 1 : 0.6, display: "flex", alignItems: "center", gap: 4 }}
+                  >
+                    <FiVideo size={13} /> Video Call
+                  </button>
+                </div>
+              </div>
+
+              {/* SERVICE CLIENT BOOKINGS LIST */}
+              <div>
+                <h4 style={{ margin: "0 0 10px", fontSize: 14, color: "#1e293b" }}>Clients Who Ordered This Service</h4>
+                
+                {loadingBookings ? (
+                  <div style={{ textAlign: "center", padding: "1.5rem", color: "#64748b", fontSize: 13 }}>Loading client details...</div>
+                ) : (() => {
+                  const serviceBookings = expertBookings.filter(b => Number(b.master_service_id) === Number(callModalService.master_service_id));
+                  const listToRender = serviceBookings.length > 0 ? serviceBookings : expertBookings;
+
+                  if (listToRender.length === 0) {
+                    return (
+                      <div style={{ background: "#fffbe6", border: "1px solid #ffe58f", padding: "1rem", borderRadius: 8, textAlign: "center", fontSize: 13, color: "#d48806" }}>
+                        No active bookings yet. You can use the Direct Call input above with any Client User ID.
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div style={{ display: "grid", gap: 10 }}>
+                      {listToRender.map((b) => {
+                        const uProfile = userProfiles[b.user_id] || {};
+                        const uName = uProfile.name || uProfile.full_name || `Client #${b.user_id}`;
+                        const uPhone = uProfile.phone || b.phone || "";
+
+                        return (
+                          <div key={b.id} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, padding: "0.85rem", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, boxShadow: "0 1px 3px rgba(0,0,0,0.03)" }}>
+                            <div>
+                              <div style={{ fontWeight: 700, color: "#0f172a", fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}>
+                                <FiUser size={13} color="#2563eb" /> {uName}
+                              </div>
+                              <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
+                                Order #{b.id} • Booking Date: {b.booking_date ? new Date(b.booking_date).toLocaleDateString() : "Recent"}
+                              </div>
+                              {uPhone && <div style={{ fontSize: 11, color: "#059669", marginTop: 2, fontWeight: 600 }}>📞 {uPhone}</div>}
+                            </div>
+
+                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCallModalService(null);
+                                  navigate(`/expert/voice-call/${b.user_id}`);
+                                }}
+                                style={{ padding: "6px 10px", background: "#dcfce7", color: "#15803d", border: "1px solid #bbf7d0", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
+                                title="Voice Call"
+                              >
+                                <FiPhone size={12} /> Call
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCallModalService(null);
+                                  navigate(`/expert/video-call/${b.user_id}`);
+                                }}
+                                style={{ padding: "6px 10px", background: "#dbeafe", color: "#1e40af", border: "1px solid #bfdbfe", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
+                                title="Video Call"
+                              >
+                                <FiVideo size={12} /> Video
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCallModalService(null);
+                                  const expId = b.expert_id || expertData?.expertId || expertData?.id;
+                                  navigate(`/expert/chat/chat_${b.user_id}_${expId}`);
+                                }}
+                                style={{ padding: "6px 10px", background: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
+                                title="Chat"
+                              >
+                                <FiMessageSquare size={12} /> Chat
+                              </button>
+                              {uPhone && (
+                                <a
+                                  href={`tel:${uPhone}`}
+                                  style={{ padding: "6px 10px", background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a", borderRadius: 6, fontWeight: 700, fontSize: 12, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}
+                                  title="Cellular Phone Call"
+                                >
+                                  📱 Phone
+                                </a>
+                              )}
                             </div>
                           </div>
-                          <button type="button" onClick={() => removeNewFile(file.id)}>
-                            <FiTrash2 />
-                          </button>
-                        </div>
-                      ))}
-                    </S.FileManagerList>
-                  )}
-                </S.FormGroup>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
 
-                <S.ModalFooter>
-                  <button type="button" className="cancel" onClick={() => setShowEditModal(false)}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="submit" disabled={submitting}>
-                    {submitting ? "Updating..." : "Update Service"}
-                  </button>
-                </S.ModalFooter>
-              </form>
-            </S.ModalBody>
-          </S.ModalContent>
-        </S.ModalOverlay>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <S.ModalOverlay onClick={() => setShowDeleteConfirm(false)}>
-          <S.DeleteConfirmModal onClick={(e) => e.stopPropagation()}>
-            <S.ModalHeader>
-              <h2>Confirm Delete</h2>
-              <button className="close-btn" onClick={() => setShowDeleteConfirm(false)}>
-                <FiX />
-              </button>
-            </S.ModalHeader>
-            
-            <S.ModalBody>
-              <p>Are you sure you want to delete the service:</p>
-              <p><strong>"{deletingService?.title}"</strong>?</p>
-              <p style={{ color: "#e53e3e", marginTop: "10px" }}>This action cannot be undone.</p>
-            </S.ModalBody>
-
-            <S.ModalFooter>
-              <button type="button" className="cancel" onClick={() => setShowDeleteConfirm(false)}>
-                Cancel
-              </button>
-              <button 
-                type="button" 
-                className="delete-confirm" 
-                onClick={handleDeleteConfirm}
-                disabled={submitting}
-              >
-                {submitting ? "Deleting..." : "Yes, Delete"}
-              </button>
-            </S.ModalFooter>
-          </S.DeleteConfirmModal>
-        </S.ModalOverlay>
-      )}
+            </div>
+          </div>
+        )}
+      </S.Container>
     </S.PageWrapper>
   );
-};
+}
 
-export default MyServices;
+const labelStyle = { display: "grid", gap: 4, fontWeight: 700, color: "#334155", fontSize: 13 };
+const inputStyle = { width: "100%", padding: "0.6rem 0.75rem", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: 14, background: "#fff" };

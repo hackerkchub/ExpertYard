@@ -552,23 +552,7 @@ export default function Chat() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
 
-    let listener;
-    const setupBackHandler = async () => {
-      listener = await App.addListener("backButton", () => {
-        navigate("/user/chat-history", {
-          replace: true,
-          state: { from: "chat", expertId: chatData?.expert_id },
-        });
-      });
-    };
-    setupBackHandler();
-    return () => {
-      listener?.remove();
-    };
-  }, [room_id, navigate, chatData?.expert_id]);
 
   const getRemainingMinutes = useCallback(() => {
     return chatData?.remainingMinutes ?? chatData?.remaining_minutes;
@@ -580,8 +564,16 @@ export default function Chat() {
   }, [chatData, getRemainingMinutes]);
 
   const fetchChatDetails = useCallback(async () => {
-    if (!room_id) {
-      setError("Unable to load chat: missing room ID.");
+    const searchParams = new URLSearchParams(location.search);
+    const queryExpertId = searchParams.get("expert_id") || searchParams.get("expertId");
+    let activeRoomId = room_id || location.state?.room_id;
+
+    if (!activeRoomId && queryExpertId && user?.id) {
+      activeRoomId = `chat_${user.id}_${queryExpertId}`;
+    }
+
+    if (!activeRoomId) {
+      setError("Unable to load chat: missing room ID or expert parameter.");
       setChatData(null);
       setMessages([]);
       setSessionActive(false);
@@ -592,12 +584,12 @@ export default function Chat() {
     try {
       setLoading(true);
       setError("");
-      const token = localStorage.getItem("user_token");
+      const token = localStorage.getItem("token") || localStorage.getItem("user_token") || localStorage.getItem("userToken") || "";
       if (!token) {
         throw new Error("Login required to open this chat.");
       }
 
-      const response = await fetch(`${APP_CONFIG.API_BASE_URL}/chat/details/${room_id}`, {
+      const response = await fetch(`${APP_CONFIG.API_BASE_URL}/chat/details/${activeRoomId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -656,39 +648,89 @@ export default function Chat() {
     }
   }, [room_id, location.state?.endTime]);
 
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const queryExpertId = searchParams.get("expert_id") || searchParams.get("expertId");
+  const effectiveRoomId = useMemo(() => {
+    return room_id || location.state?.room_id || (user?.id && queryExpertId ? `chat_${user.id}_${queryExpertId}` : null) || chatData?.room_id;
+  }, [room_id, location.state, user?.id, queryExpertId, chatData]);
+
+  const isServiceChat = useMemo(() => {
+    const activeRoom = room_id || effectiveRoomId;
+    return (
+      String(activeRoom || "").startsWith("chat_") ||
+      chatData?.pricing_mode === "subscription" ||
+      location.state?.fromService ||
+      location.state?.fromWorkspace
+    );
+  }, [room_id, effectiveRoomId, chatData, location.state]);
+
+  const navigateBackOrPrevious = useCallback(() => {
+    const returnUrl = location.state?.returnUrl || location.state?.fromUrl;
+    const bookingId = chatData?.booking_id || location.state?.bookingId;
+    if (returnUrl) {
+      navigate(returnUrl, { replace: true });
+    } else if (isServiceChat || location.state?.fromWorkspace || location.state?.fromService) {
+      if (window.history.length > 1) {
+        navigate(-1);
+      } else if (bookingId) {
+        navigate(`/user/workspace/${bookingId}`, { replace: true });
+      } else {
+        navigate(-1);
+      }
+    } else {
+      navigate("/user/chat-history", {
+        replace: true,
+        state: { from: "chat", expertId: chatData?.expert_id },
+      });
+    }
+  }, [location.state, chatData?.booking_id, chatData?.expert_id, isServiceChat, navigate]);
+
   const handleAutoEndChat = useCallback(() => {
     if (isUnlimited) return;
     setSessionActive(false);
     if (socket.connected) {
       socket.emit("end_chat", { room_id });
     }
-    navigate("/user/chat-history", {
-      replace: true,
-      state: { from: "chat", expertId: chatData?.expert_id },
-    });
-  }, [room_id, navigate, isUnlimited, chatData?.expert_id]);
+    navigateBackOrPrevious();
+  }, [room_id, isUnlimited, navigateBackOrPrevious]);
 
   const handleEndChat = useCallback(() => {
+    if (isServiceChat) {
+      hotToast("info", "Service communication remains active throughout service fulfillment.", { id: "service-chat-info" });
+      return;
+    }
     if (!room_id) return;
-    const ok = window.confirm("Are you sure you want to end this chat?");
+    const ok = window.confirm("Are you sure you want to end this paid consultation chat?");
     if (!ok) return;
 
     if (socket.connected) {
       socket.emit("end_chat", { room_id });
     }
     setSessionActive(false);
-    navigate("/user/chat-history", {
-      replace: true,
-      state: { from: "chat", expertId: chatData?.expert_id },
-    });
-  }, [room_id, navigate, chatData?.expert_id]);
+    navigateBackOrPrevious();
+  }, [room_id, isServiceChat, navigateBackOrPrevious]);
 
-  const handleBack = () => {
-    navigate("/user/chat-history", {
-      replace: true,
-      state: { from: "chat", expertId: chatData?.expert_id },
-    });
-  };
+  const handleBack = useCallback(() => {
+    if (isServiceChat) {
+      clearActiveChatSession();
+    }
+    navigateBackOrPrevious();
+  }, [isServiceChat, navigateBackOrPrevious]);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    let listener;
+    const setupBackHandler = async () => {
+      listener = await App.addListener("backButton", () => {
+        handleBack();
+      });
+    };
+    setupBackHandler();
+    return () => {
+      listener?.remove();
+    };
+  }, [handleBack]);
 
   const { formatted, secondsLeft } = useChatTimer(isUnlimited ? null : endTime, handleAutoEndChat);
 
@@ -761,7 +803,6 @@ export default function Chat() {
     },
     [emitTyping]
   );
-
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
       messagesEndRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
@@ -770,7 +811,11 @@ export default function Chat() {
 
   const sendMessage = async (e) => {
     if (e) e.preventDefault();
-    if (!room_id || !sessionActive || uploading) return;
+    const searchParams = new URLSearchParams(location.search);
+    const queryExpertId = searchParams.get("expert_id") || searchParams.get("expertId");
+    const effectiveRoomId = room_id || location.state?.room_id || (user?.id && queryExpertId ? `chat_${user.id}_${queryExpertId}` : null) || chatData?.room_id;
+
+    if (!effectiveRoomId || uploading) return;
 
     if (!selectedImage && input.trim()) {
       const tempId = Date.now();
@@ -789,16 +834,38 @@ export default function Chat() {
           is_seen: false,
           seen_at: null,
           time: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }),
-          isTemp: true,
+          isTemp: false,
         },
       ]);
 
-      socket.emit("sendMessage", {
-        room_id,
-        client_id: tempId,
-        message: messageText,
-        type: "text",
-      });
+      if (socket.connected) {
+        socket.emit("sendMessage", {
+          room_id: effectiveRoomId,
+          client_id: tempId,
+          message: messageText,
+          type: "text",
+        });
+      } else {
+        try {
+          const token = localStorage.getItem("token") || localStorage.getItem("user_token") || localStorage.getItem("userToken") || "";
+          await fetch(`${APP_CONFIG.API_BASE_URL}/chat/send`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: token ? `Bearer ${token}` : "",
+            },
+            body: JSON.stringify({
+              room_id: effectiveRoomId,
+              message: messageText,
+              message_type: "text",
+              sender_type: "user",
+              sender_id: user?.id,
+            }),
+          });
+        } catch (httpErr) {
+          console.warn("HTTP message send fallback:", httpErr);
+        }
+      }
 
       emitTyping(false);
       scrollToBottom();
@@ -832,22 +899,46 @@ export default function Chat() {
 
         const imageUrl = await uploadImage(selectedImage);
         setMessages((prev) =>
-          prev.map((msg) => (msg.client_id === tempId ? { ...msg, image_url: imageUrl, isTemp: false } : msg))
+          prev.map((msg) => (String(msg.client_id) === String(tempId) || String(msg.id) === String(tempId) ? { ...msg, image_url: imageUrl, isTemp: false } : msg))
         );
 
-        socket.emit("sendMessage", {
-          room_id,
-          client_id: tempId,
-          message: messageText || "",
-          type: "image",
-          imageUrl,
-        });
+        if (socket.connected) {
+          socket.emit("sendMessage", {
+            room_id: effectiveRoomId,
+            client_id: tempId,
+            message: messageText || "",
+            type: "image",
+            image_url: imageUrl,
+            imageUrl: imageUrl,
+          });
+        } else {
+          try {
+            const token = localStorage.getItem("token") || localStorage.getItem("user_token") || localStorage.getItem("userToken") || "";
+            await fetch(`${APP_CONFIG.API_BASE_URL}/chat/send`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: token ? `Bearer ${token}` : "",
+              },
+              body: JSON.stringify({
+                room_id: effectiveRoomId,
+                message: messageText || "",
+                message_type: "image",
+                image_url: imageUrl,
+                sender_type: "user",
+                sender_id: user?.id,
+              }),
+            });
+          } catch (httpErr) {
+            console.warn("HTTP image message send fallback:", httpErr);
+          }
+        }
 
         setSelectedImage(null);
         setPreviewUrl(null);
         emitTyping(false);
       } catch (err) {
-        console.error("Upload failed:", err);
+        console.error(err);
         hotToast("error", "Failed to upload image");
         setMessages((prev) => prev.filter((msg) => !msg.isTemp));
       } finally {
@@ -864,12 +955,22 @@ export default function Chat() {
     }
   };
 
+  const getMediaUrl = useCallback((url) => {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("blob:") || url.startsWith("data:")) {
+      return url;
+    }
+    const backendHost = APP_CONFIG.API_BASE_URL.replace(/\/api\/?$/, "");
+    return `${backendHost}${url.startsWith("/") ? "" : "/"}${url}`;
+  }, []);
+
   useEffect(() => {
-    if (!room_id || !user?.id) return;
+    const targetRoomId = room_id || effectiveRoomId;
+    if (!targetRoomId || !user?.id) return;
 
     const joinChatRoom = () => {
       socket.emit("register", { userId: Number(user.id), role: "user" });
-      socket.emit("join_room", { room_id });
+      socket.emit("join_room", { room_id: targetRoomId });
       markMessagesSeen();
     };
 
@@ -879,19 +980,21 @@ export default function Chat() {
 
     const handleNewMessage = (msgData) => {
       const incomingRoomId = msgData.room_id || msgData.roomId || msgData.chat_room_id || msgData.chatRoomId;
-      if (String(incomingRoomId) !== String(room_id)) return;
+      if (targetRoomId && String(incomingRoomId) !== String(targetRoomId)) return;
 
       setMessages((prev) => {
-        const exists = prev.some(
-          (m) => m.id === msgData.id || (msgData.client_id && m.client_id === msgData.client_id)
-        );
+        const isMatch = (m) =>
+          (msgData.id && String(m.id) === String(msgData.id)) ||
+          (msgData.client_id && m.client_id && String(m.client_id) === String(msgData.client_id));
+
+        const exists = prev.some(isMatch);
         if (exists) {
           return prev.map((m) => {
-            if (m.id === msgData.id || (msgData.client_id && m.client_id === msgData.client_id)) {
+            if (isMatch(m)) {
               return {
                 ...m,
                 id: msgData.id,
-                message_type: msgData.message_type || "text",
+                message_type: msgData.message_type || (msgData.image_url ? "image" : m.message_type) || "text",
                 image_url: msgData.image_url || m.image_url,
                 is_seen: Number(msgData.is_seen) === 1 || msgData.is_seen === true || m.is_seen,
                 seen_at: msgData.seen_at || m.seen_at || null,
@@ -929,14 +1032,14 @@ export default function Chat() {
     socket.on("message_sent", handleNewMessage);
 
     const handlePeerTypingStart = (data = {}) => {
-      if (String(data.room_id) !== String(room_id) || data.sender_type === "user") return;
+      if (String(data.room_id) !== String(targetRoomId) || data.sender_type === "user") return;
       setPeerTyping(true);
       if (peerTypingTimeoutRef.current) clearTimeout(peerTypingTimeoutRef.current);
       peerTypingTimeoutRef.current = setTimeout(() => setPeerTyping(false), 1600);
     };
 
     const handlePeerTypingStop = (data = {}) => {
-      if (String(data.room_id) !== String(room_id) || data.sender_type === "user") return;
+      if (String(data.room_id) !== String(targetRoomId) || data.sender_type === "user") return;
       setPeerTyping(false);
       if (peerTypingTimeoutRef.current) {
         clearTimeout(peerTypingTimeoutRef.current);
@@ -945,7 +1048,7 @@ export default function Chat() {
     };
 
     const handleMessagesSeen = (data = {}) => {
-      if (String(data.room_id) !== String(room_id) || data.viewer_type === "user") return;
+      if (String(data.room_id) !== String(targetRoomId) || data.viewer_type === "user") return;
       const seenIds = new Set((data.message_ids || []).map((id) => Number(id)));
       setMessages((prev) =>
         prev.map((msg) => (seenIds.has(Number(msg.id)) ? { ...msg, is_seen: true, seen_at: data.seen_at || msg.seen_at } : msg))
@@ -957,18 +1060,18 @@ export default function Chat() {
     socket.on("messages:seen", handleMessagesSeen);
 
     const handleChatEnded = (data = {}) => {
-      if (String(data.room_id) !== String(room_id)) return;
+      if (String(data.room_id) !== String(targetRoomId)) return;
       setSessionActive(false);
       clearActiveChatSession();
       hotToast("success", "Chat ended");
-      navigate("/user/chat-history", { replace: true });
+      navigateBackOrPrevious();
     };
 
     socket.on("chat_ended", handleChatEnded);
 
     return () => {
       emitTyping(false);
-      socket.emit("leave_room", { room_id });
+      socket.emit("leave_room", { room_id: targetRoomId });
       socket.off("message", handleNewMessage);
       socket.off("message_sent", handleNewMessage);
       socket.off("typing:start", handlePeerTypingStart);
@@ -979,17 +1082,18 @@ export default function Chat() {
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       if (peerTypingTimeoutRef.current) clearTimeout(peerTypingTimeoutRef.current);
     };
-  }, [room_id, user?.id, navigate, markMessagesSeen, emitTyping, scrollToBottom]);
+  }, [room_id, effectiveRoomId, user?.id, navigate, markMessagesSeen, emitTyping, scrollToBottom, navigateBackOrPrevious]);
 
   useEffect(() => {
     fetchChatDetails();
   }, [fetchChatDetails]);
 
   useEffect(() => {
-    if (chatData && sessionActive === true && room_id) {
+    const activeRoom = room_id || effectiveRoomId;
+    if (chatData && sessionActive === true && activeRoom) {
       const pName = chatData.expert_name || "Expert";
       saveActiveChatSession({
-        room_id: String(room_id),
+        room_id: String(activeRoom),
         participantName: pName,
         role: "user",
         module: "user",
@@ -999,7 +1103,7 @@ export default function Chat() {
     } else if (sessionActive === false) {
       clearActiveChatSession();
     }
-  }, [chatData, sessionActive, room_id]);
+  }, [chatData, sessionActive, room_id, effectiveRoomId]);
 
   const expertInfo = useMemo(() => {
     if (!chatData) return null;
@@ -1010,15 +1114,15 @@ export default function Chat() {
   }, [chatData, expertData]);
 
   const isChatDisabled = useMemo(() => {
-    return sessionActive === false || loading;
-  }, [sessionActive, loading]);
+    return (sessionActive === false && !isServiceChat) || loading;
+  }, [sessionActive, isServiceChat, loading]);
 
   const handleInitiateVoiceCall = () => {
-    navigate("/user/voice-call", { state: { roomId: room_id, expertId: chatData?.expert_id } });
+    navigate("/user/voice-call", { state: { roomId: room_id || effectiveRoomId, expertId: chatData?.expert_id } });
   };
 
   const handleInitiateVideoCall = () => {
-    navigate("/user/video-call", { state: { roomId: room_id, expertId: chatData?.expert_id } });
+    navigate("/user/video-call", { state: { roomId: room_id || effectiveRoomId, expertId: chatData?.expert_id } });
   };
 
   if (loading) {
@@ -1045,7 +1149,7 @@ export default function Chat() {
               </HeaderBackBtn>
               <HeaderAvatarWrap>
                 {expertInfo.avatar ? (
-                  <HeaderAvatar src={expertInfo.avatar} alt={expertInfo.name} />
+                  <HeaderAvatar src={getMediaUrl(expertInfo.avatar)} alt={expertInfo.name} />
                 ) : (
                   <HeaderAvatarPlaceholder>{getInitials(expertInfo.name)}</HeaderAvatarPlaceholder>
                 )}
@@ -1053,21 +1157,29 @@ export default function Chat() {
               </HeaderAvatarWrap>
               <HeaderTitleGroup>
                 <HeaderName>{expertInfo.name}</HeaderName>
-                <HeaderSubtext>{sessionActive ? "🟢 Active" : "🔴 Ended"}</HeaderSubtext>
+                <HeaderSubtext>
+                  {isServiceChat
+                    ? "🟢 Service Communication (Active)"
+                    : sessionActive
+                    ? "🟢 Active Paid Chat"
+                    : "🔴 Ended"}
+                </HeaderSubtext>
               </HeaderTitleGroup>
             </HeaderLeft>
 
             <HeaderActions>
-              {!isUnlimited && sessionActive === true && endTime && (
+              {!isServiceChat && !isUnlimited && sessionActive === true && endTime && (
                 <TimerPill $color={getTimerColor()}>
                   <FiClock size={12} />
                   <span>{formatted}</span>
                 </TimerPill>
               )}
 
-              <EndChatPill onClick={handleEndChat} disabled={isChatDisabled}>
-                <FiX size={14} /> End
-              </EndChatPill>
+              {!isServiceChat && (
+                <EndChatPill onClick={handleEndChat} disabled={isChatDisabled}>
+                  <FiX size={14} /> End
+                </EndChatPill>
+              )}
             </HeaderActions>
           </HeaderBar>
 
@@ -1085,15 +1197,18 @@ export default function Chat() {
                 return (
                   <MessageGroup key={msg.id} $isMe={isMine}>
                     <MessageBubble $isMe={isMine}>
-                      {msg.message_type === "image" && msg.image_url && (
-                        <img
-                          src={msg.image_url}
-                          alt="attachment"
-                          onError={(e) => {
-                            if (msg.isTemp) e.target.style.opacity = "0.5";
-                            else e.target.style.display = "none";
-                          }}
-                        />
+                      {(msg.message_type === "image" || msg.image_url) && msg.image_url && (
+                        <div style={{ marginBottom: 4 }}>
+                          <img
+                            src={getMediaUrl(msg.image_url)}
+                            alt="attachment"
+                            style={{ maxWidth: "100%", maxHeight: 260, borderRadius: 8, objectFit: "cover", cursor: "pointer", display: "block" }}
+                            onClick={() => window.open(getMediaUrl(msg.image_url), "_blank")}
+                            onError={(e) => {
+                              if (msg.isTemp) e.target.style.opacity = "0.5";
+                            }}
+                          />
+                        </div>
                       )}
                       {msg.message && <div>{msg.message}</div>}
                       <MessageFooter>
@@ -1179,8 +1294,6 @@ export default function Chat() {
 
               <SendCircleBtn
                 type="submit"
-                onMouseDown={(e) => e.preventDefault()}
-                onTouchStart={(e) => e.preventDefault()}
                 disabled={uploading || (!input.trim() && !selectedImage) || isChatDisabled}
               >
                 {uploading ? "..." : <FiSend size={18} />}

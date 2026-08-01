@@ -16,9 +16,9 @@ const actions = [
     icon: PhoneCall,
   },
   {
-    title: "Quick Services",
-    text: "Book verified services",
-    to: "/user/all-services",
+    title: "My Services",
+    text: "Book and manage your services",
+    to: "/user/my-services",
     icon: BriefcaseBusiness,
   },
 ];

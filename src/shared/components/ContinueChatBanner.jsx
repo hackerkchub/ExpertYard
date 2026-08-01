@@ -315,7 +315,13 @@ export default function ContinueChatBanner() {
     setEnding(false);
   }, [session?.room_id]);
 
-  if (!session || dismissed) {
+  const isServiceChat = 
+    String(session?.room_id || "").startsWith("chat_") ||
+    session?.pricing_mode === "subscription" ||
+    session?.pricingMode === "subscription" ||
+    session?.is_service_chat === true;
+
+  if (!session || dismissed || isServiceChat) {
     return <Toaster position="top-center" />;
   }
 
@@ -326,8 +332,9 @@ export default function ContinueChatBanner() {
   );
   const isSameChatPage = location.pathname === sessionChatPath;
   const isExpertChatPage = session.module === 'expert' && location.pathname.startsWith('/expert/chat');
+  const isUserChatPage = session.module === 'user' && location.pathname.startsWith('/user/chat');
   
-  if (isSameChatPage || isExpertChatPage) {
+  if (isSameChatPage || isExpertChatPage || isUserChatPage) {
     return <Toaster position="top-center" />;
   }
 

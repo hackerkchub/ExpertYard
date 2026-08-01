@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { FaUserCircle, FaFilter, FaHistory, FaPlus, FaWallet, FaCalendarAlt, FaPhone, FaComments, FaConciergeBell, FaQuestionCircle } from "react-icons/fa";
+import { FaUserCircle, FaFilter, FaHistory, FaPlus, FaWallet, FaCalendarAlt, FaPhone, FaComments, FaConciergeBell, FaQuestionCircle, FaReceipt } from "react-icons/fa";
 import { MdAccountBalanceWallet, MdPayments, MdTrendingUp } from "react-icons/md";
 import { RiMoneyRupeeCircleFill } from "react-icons/ri";
 
@@ -15,7 +15,7 @@ import AddBalancePopup from "../../components/AddBalancePopup/AddBalancePopup";
 import MobileSelect from "../../components/MobileSelect/MobileSelect";
 import { useWallet } from "../../../../shared/context/WalletContext";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
-import { getWalletHistoryApi } from "../../../../shared/api/userApi/walletApi";
+import { getWalletHistoryApi, getUserSpendingHistoryApi } from "../../../../shared/api/userApi/walletApi";
 import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 
 const formatCurrency = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(amount);
@@ -29,7 +29,6 @@ const DATE_FILTER_OPTIONS = [
   { value: "custom", label: "Custom Range" },
 ];
 
-// Service type icons mapping for expenses
 const getServiceIcon = (serviceType) => {
   switch(serviceType?.toLowerCase()) {
     case 'call':
@@ -45,7 +44,6 @@ const getServiceIcon = (serviceType) => {
   }
 };
 
-// Get service display name for expenses
 const getServiceDisplayName = (serviceType) => {
   switch(serviceType?.toLowerCase()) {
     case 'call':
@@ -61,7 +59,6 @@ const getServiceDisplayName = (serviceType) => {
   }
 };
 
-// Fix 1: Get credit icon based on source
 const getCreditIcon = (source) => {
   switch (source?.toLowerCase()) {
     case "referral":
@@ -75,7 +72,6 @@ const getCreditIcon = (source) => {
   }
 };
 
-// Fix 2: Get credit display name based on source
 const getCreditDisplayName = (item) => {
   switch (item.source?.toLowerCase()) {
     case "referral":
@@ -95,14 +91,14 @@ const WalletPage = () => {
   
   const [transactions, setTransactions] = useState([]);
   const [filteredTransactions, setFilteredTransactions] = useState([]);
+  const [spendingSummary, setSpendingSummary] = useState(null);
   const [visibleCount, setVisibleCount] = useState(5);
-  const [activeTab, setActiveTab] = useState("expenses"); // "expenses" or "topups"
+  const [activeTab, setActiveTab] = useState("expenses");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Filter states
-  const [serviceFilter, setServiceFilter] = useState("all"); // all, call, chat, service_booking, other
-  const [dateFilter, setDateFilter] = useState("all"); // all, today, week, month, custom
+  const [serviceFilter, setServiceFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
   const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
@@ -111,40 +107,42 @@ const WalletPage = () => {
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupAmount, setPopupAmount] = useState(null);
 
-  const fetchWalletHistory = useCallback(async () => {
+  const fetchWalletData = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await getWalletHistoryApi();
-      if (response.success && response.data) {
-        setTransactions(response.data);
-        // Stats Calculation logic
-        const debits = response.data.filter(t => t.type === 'debit');
-        const credits = response.data.filter(t => t.type === 'credit');
+      const [historyRes, spendingRes] = await Promise.all([
+        getWalletHistoryApi().catch(() => ({ success: false })),
+        getUserSpendingHistoryApi().catch(() => ({ success: false }))
+      ]);
+
+      if (historyRes.success && historyRes.data) {
+        setTransactions(historyRes.data);
+        const debits = historyRes.data.filter(t => t.type === 'debit');
+        const credits = historyRes.data.filter(t => t.type === 'credit');
         setStats({
           totalDebits: debits.reduce((sum, t) => sum + parseFloat(t.amount), 0),
           totalCredits: credits.reduce((sum, t) => sum + parseFloat(t.amount), 0),
-          transactionCount: response.data.length,
+          transactionCount: historyRes.data.length,
           monthlySpent: debits.filter(t => new Date(t.created_at).getMonth() === new Date().getMonth()).reduce((sum, t) => sum + parseFloat(t.amount), 0)
         });
+      }
+
+      if (spendingRes.success && spendingRes.data) {
+        setSpendingSummary(spendingRes.data);
       }
     } catch (err) { setError("Failed to load history"); }
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { fetchWalletHistory(); }, [fetchWalletHistory]);
-  useNetworkReconnect(fetchWalletHistory, { enabled: Boolean(user?.id) });
+  useEffect(() => { fetchWalletData(); }, [fetchWalletData]);
+  useNetworkReconnect(fetchWalletData, { enabled: Boolean(user?.id) });
 
-  // Apply filters
   const applyFilters = useCallback(() => {
     let filtered = [...transactions];
-    
-    // Filter by type (expense/topup)
     filtered = filtered.filter(t => activeTab === "expenses" ? t.type === 'debit' : t.type === 'credit');
     
-    // Filter by service type (only for expenses)
     if (activeTab === "expenses" && serviceFilter !== "all") {
       if (serviceFilter === "other") {
-        // Include transactions that don't match call, chat, or service_booking
         filtered = filtered.filter(t => {
           const serviceType = t.service_type?.toLowerCase() || t.source?.toLowerCase();
           return !['call', 'chat', 'service_booking', 'booking'].includes(serviceType);
@@ -156,306 +154,222 @@ const WalletPage = () => {
         });
       }
     }
-    
-    // Filter by date
+
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const weekAgo = new Date(today);
-    weekAgo.setDate(today.getDate() - 7);
-    const monthAgo = new Date(today);
-    monthAgo.setMonth(today.getMonth() - 1);
-    
-    switch(dateFilter) {
-      case "today":
-        filtered = filtered.filter(t => new Date(t.created_at) >= today);
-        break;
-      case "week":
-        filtered = filtered.filter(t => new Date(t.created_at) >= weekAgo);
-        break;
-      case "month":
-        filtered = filtered.filter(t => new Date(t.created_at) >= monthAgo);
-        break;
-      case "custom":
-        if (customStartDate && customEndDate) {
-          const start = new Date(customStartDate);
-          const end = new Date(customEndDate);
-          end.setHours(23, 59, 59);
-          filtered = filtered.filter(t => {
-            const date = new Date(t.created_at);
-            return date >= start && date <= end;
-          });
-        }
-        break;
-      default:
-        break;
+    if (dateFilter === "today") {
+      const todayStart = new Date(now.setHours(0, 0, 0, 0));
+      filtered = filtered.filter(t => new Date(t.created_at) >= todayStart);
+    } else if (dateFilter === "week") {
+      const weekAgo = new Date(now.setDate(now.getDate() - 7));
+      filtered = filtered.filter(t => new Date(t.created_at) >= weekAgo);
+    } else if (dateFilter === "month") {
+      const monthAgo = new Date(now.setDate(now.getDate() - 30));
+      filtered = filtered.filter(t => new Date(t.created_at) >= monthAgo);
+    } else if (dateFilter === "custom" && customStartDate && customEndDate) {
+      const start = new Date(customStartDate);
+      const end = new Date(customEndDate);
+      end.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(t => {
+        const tDate = new Date(t.created_at);
+        return tDate >= start && tDate <= end;
+      });
     }
     
     setFilteredTransactions(filtered);
     setVisibleCount(5);
   }, [transactions, activeTab, serviceFilter, dateFilter, customStartDate, customEndDate]);
 
-  useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
+  useEffect(() => { applyFilters(); }, [applyFilters]);
 
- const handleAddMoney = async (paymentData) => {
+  const handleOpenPopup = (amount = null) => {
+    setPopupAmount(amount);
+    setPopupOpen(true);
+  };
 
-  const res = await addMoney(paymentData);
-
-  if (res?.success) {
+  const handleClosePopup = () => {
     setPopupOpen(false);
-    fetchWalletHistory();
-  }
-
-  return res;
-};
-
-  const resetFilters = () => {
-    setServiceFilter("all");
-    setDateFilter("all");
-    setCustomStartDate("");
-    setCustomEndDate("");
-    setShowCustomDatePicker(false);
+    setPopupAmount(null);
   };
 
-  // Get unique service types for filter (only from debit transactions)
-  const getServiceTypes = () => {
-    const services = new Set();
-    transactions.filter(t => t.type === 'debit').forEach(t => {
-      const serviceType = t.service_type?.toLowerCase() || t.source?.toLowerCase();
-      if (['call', 'chat', 'service_booking', 'booking'].includes(serviceType)) {
-        services.add(serviceType === 'service_booking' || serviceType === 'booking' ? 'service_booking' : serviceType);
-      } else {
-        services.add('other');
+  const handleAddBalanceSubmit = async (finalAmount, breakdown = {}) => {
+    try {
+      const order = await createOrder(finalAmount, breakdown);
+      return order;
+    } catch (err) {
+      alert("Failed to initiate payment. Please try again.");
+      throw err;
+    }
+  };
+
+  const handleConfirmRecharge = async (paymentDetails) => {
+    try {
+      const orderId = paymentDetails?.order_id;
+      if (!orderId) {
+        throw new Error("Missing Order ID for payment verification");
       }
-    });
-    return Array.from(services);
+      const res = await addMoney({ order_id: orderId });
+      if (res?.success) {
+        await fetchWalletData();
+        return res;
+      } else {
+        throw new Error(res?.message || "Failed to update wallet balance.");
+      }
+    } catch (err) {
+      alert(err.message || "Error verifying wallet top-up.");
+      throw err;
+    }
   };
-  const serviceTypes = getServiceTypes();
-  const serviceFilterOptions = [
-    { value: "all", label: "All Services" },
-    ...(serviceTypes.includes('call') ? [{ value: "call", label: "Call" }] : []),
-    ...(serviceTypes.includes('chat') ? [{ value: "chat", label: "Chat" }] : []),
-    ...(serviceTypes.includes('service_booking') ? [{ value: "service_booking", label: "Service Booking" }] : []),
-    ...(serviceTypes.includes('other') ? [{ value: "other", label: "Other" }] : []),
-  ];
 
-  if (loading) return <PageWrap><LoadingState>Loading...</LoadingState></PageWrap>;
+  const handlePaymentSuccess = async (response) => {
+    try {
+      await fetchWalletData();
+      alert("🎉 Balance added successfully to your wallet!");
+    } catch (err) {
+      console.error("Error refreshing balance:", err);
+    }
+  };
+
+  if (loading) return <LoadingState><RiMoneyRupeeCircleFill size={40} /><p>Loading wallet...</p></LoadingState>;
+  if (error) return <ErrorState><p>{error}</p><AddBalanceBtn onClick={fetchWalletData}>Retry</AddBalanceBtn></ErrorState>;
 
   return (
     <PageWrap>
       <WalletBox>
         <HeaderRow>
-          <h1 className="page-title">My Wallet</h1>
-          <div className="user-badge"><FaUserCircle /> <span>{user?.name || "User"}</span></div>
+          <h2>My Wallet & Payment History</h2>
         </HeaderRow>
 
-        <BalanceCard>
-          <div className="balance-header"><h3>Available Balance</h3></div>
-          <BalanceAmount>
-            <RiMoneyRupeeCircleFill /> <span className="amount">{balance || 0}</span> <span className="currency">INR</span>
-          </BalanceAmount>
-          <div className="balance-footer">
-            <div className="balance-stat"><span className="stat-label">Total Spent</span><span className="stat-value">{formatCurrency(stats.totalDebits)}</span></div>
-            <div className="balance-stat"><span className="stat-label">Total Added</span><span className="stat-value">{formatCurrency(stats.totalCredits)}</span></div>
+        {/* Balance Card & Spend Summary */}
+        <BalanceCard style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#fff', padding: '1.5rem', borderRadius: '16px', marginBottom: '1.5rem', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', tracking: '1px', opacity: 0.8 }}>Available Balance</span>
+              <BalanceAmount style={{ fontSize: '2.2rem', fontWeight: '800', marginTop: '0.25rem', color: '#38bdf8' }}>
+                {formatCurrency(balance)}
+              </BalanceAmount>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '1.5rem', borderLeft: '1px solid rgba(255,255,255,0.15)', paddingLeft: '1.5rem' }}>
+              <div>
+                <span style={{ fontSize: '0.75rem', opacity: 0.8, display: 'block' }}>Total Services Spent</span>
+                <strong style={{ fontSize: '1.4rem', color: '#10b981' }}>
+                  {formatCurrency(spendingSummary?.total_spent || stats.totalDebits)}
+                </strong>
+                <span style={{ fontSize: '0.7rem', display: 'block', opacity: 0.7 }}>
+                  {spendingSummary?.total_orders || 0} Paid Service Orders
+                </span>
+              </div>
+              <AddBalanceBtn onClick={() => handleOpenPopup()} style={{ background: '#3b82f6', color: '#fff', padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', fontWeight: '700', cursor: 'pointer' }}>
+                <FaPlus /> Add Money
+              </AddBalanceBtn>
+            </div>
           </div>
         </BalanceCard>
 
-        <TopupSection>
-          <div className="action-section">
-            <AddBalanceBtn onClick={() => {setPopupAmount(null); setPopupOpen(true)}}>
-              <FaPlus /> Recharge Wallet
-            </AddBalanceBtn>
-            <QuickAddRow>
-              <span className="quick-label">Quick recharge:</span>
-              {[100, 250, 500, 1000].map(amt => (
-                <QuickAddBtn key={amt} className={amt >= 1000 ? "premium" : ""} onClick={() => {setPopupAmount(amt); setPopupOpen(true)}}>+₹{amt}</QuickAddBtn>
-              ))}
-            </QuickAddRow>
-          </div>
+        {/* Quick Add Buttons */}
+        <TopupSection style={{ marginBottom: '1.5rem' }}>
+          <QuickAddRow>
+            {[100, 500, 1000, 2000].map((amt) => (
+              <QuickAddBtn key={amt} onClick={() => handleOpenPopup(amt)}>
+                +{formatCurrency(amt)}
+              </QuickAddBtn>
+            ))}
+          </QuickAddRow>
         </TopupSection>
 
-        <StatsGrid>
-          <StatCard><MdAccountBalanceWallet className="stat-icon" /><div><span className="stat-label">Total Recharge</span><span className="stat-value">{formatCurrency(stats.totalCredits)}</span></div></StatCard>
-          <StatCard><MdPayments className="stat-icon" /><div><span className="stat-label">Total Spent</span><span className="stat-value">{formatCurrency(stats.totalDebits)}</span></div></StatCard>
-          <StatCard><FaHistory className="stat-icon" /><div><span className="stat-label">Transactions</span><span className="stat-value">{stats.transactionCount}</span></div></StatCard>
-          <StatCard><FaWallet className="stat-icon" /><div><span className="stat-label">Available Balance</span><span className="stat-value">{formatCurrency(balance || 0)}</span></div></StatCard>
-        </StatsGrid>
+        {/* Services Payment History Ledger */}
+        {spendingSummary && spendingSummary.history && spendingSummary.history.length > 0 && (
+          <ExpenseSection style={{ marginBottom: '2rem' }}>
+            <SectionTitle style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem', color: '#0f172a', marginBottom: '1rem' }}>
+              <FaReceipt color="#2563eb" /> Paid Services & Invoices Ledger
+            </SectionTitle>
 
-        <div className="wallet-safety-card">
-          <MdAccountBalanceWallet />
-          <span>Your wallet balance is used for expert chat and call consultations.</span>
-        </div>
+            <div style={{ display: 'grid', gap: '0.75rem' }}>
+              {spendingSummary.history.map((order) => (
+                <div key={order.booking_id} style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                      <span style={{ background: '#eff6ff', color: '#2563eb', fontWeight: '800', fontSize: '0.75rem', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
+                        Booking #{order.booking_id}
+                      </span>
+                      <strong style={{ color: '#0f172a', fontSize: '1rem' }}>{order.service_title}</strong>
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: '#64748b', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                      <span>👤 Expert: {order.expert_name}</span>
+                      <span>📅 {formatDate(order.payment_date)}</span>
+                    </div>
+                  </div>
 
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '1.15rem', fontWeight: '800', color: '#059669' }}>
+                      {formatCurrency(order.total_paid)}
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                      Base: ₹{order.base_amount || 0} + GST (18%): ₹{order.gst_amount || 0}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ExpenseSection>
+        )}
+
+        {/* Transaction Tabs */}
         <ExpenseSection>
-          <SectionTitle>
-            <div className="tab-group">
-              <span className={`tab ${activeTab === 'expenses' ? 'active' : ''}`} onClick={() => {setActiveTab('expenses'); resetFilters();}}>Expenses</span>
-              <span className={`tab ${activeTab === 'topups' ? 'active' : ''}`} onClick={() => {setActiveTab('topups'); resetFilters();}}>Top-ups</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <AddBalanceBtn
+                onClick={() => setActiveTab("expenses")}
+                style={{ background: activeTab === "expenses" ? "#0f172a" : "#f1f5f9", color: activeTab === "expenses" ? "#fff" : "#475569" }}
+              >
+                Service Debits ({transactions.filter(t => t.type === 'debit').length})
+              </AddBalanceBtn>
+              <AddBalanceBtn
+                onClick={() => setActiveTab("topups")}
+                style={{ background: activeTab === "topups" ? "#0f172a" : "#f1f5f9", color: activeTab === "topups" ? "#fff" : "#475569" }}
+              >
+                Wallet Credits ({transactions.filter(t => t.type === 'credit').length})
+              </AddBalanceBtn>
             </div>
-          </SectionTitle>
-
-          {/* Filter Section - Only show for Expenses */}
-          {activeTab === "expenses" && (
-            <div style={{ 
-              background: '#f7fafc', 
-              padding: '15px', 
-              borderRadius: '12px', 
-              marginBottom: '20px',
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '15px',
-              alignItems: 'center'
-            }}>
-              {/* Service Type Filter */}
-              <div style={{ flex: 1, minWidth: '150px' }}>
-                <label style={{ fontSize: '12px', color: '#718096', display: 'block', marginBottom: '5px' }}>Service Type</label>
-                <MobileSelect
-                  title="Select Service Type"
-                  value={serviceFilter}
-                  onChange={(e) => setServiceFilter(e.target.value)}
-                  options={serviceFilterOptions}
-                  style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
-                />
-              </div>
-
-              {/* Date Filter */}
-              <div style={{ flex: 1, minWidth: '150px' }}>
-                <label style={{ fontSize: '12px', color: '#718096', display: 'block', marginBottom: '5px' }}>Date Range</label>
-                <MobileSelect
-                  title="Select Date Range"
-                  value={dateFilter}
-                  onChange={(e) => {
-                    setDateFilter(e.target.value);
-                    setShowCustomDatePicker(e.target.value === 'custom');
-                  }}
-                  options={DATE_FILTER_OPTIONS}
-                  style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
-                />
-              </div>
-
-              {/* Custom Date Picker */}
-              {showCustomDatePicker && (
-                <>
-                  <div style={{ flex: 1, minWidth: '130px' }}>
-                    <label style={{ fontSize: '12px', color: '#718096', display: 'block', marginBottom: '5px' }}>From Date</label>
-                    <input 
-                      type="date" 
-                      value={customStartDate} 
-                      onChange={(e) => setCustomStartDate(e.target.value)}
-                      style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
-                    />
-                  </div>
-                  <div style={{ flex: 1, minWidth: '130px' }}>
-                    <label style={{ fontSize: '12px', color: '#718096', display: 'block', marginBottom: '5px' }}>To Date</label>
-                    <input 
-                      type="date" 
-                      value={customEndDate} 
-                      onChange={(e) => setCustomEndDate(e.target.value)}
-                      style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
-                    />
-                  </div>
-                </>
-              )}
-
-              {/* Reset Filter Button */}
-              <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                <button 
-                  onClick={resetFilters}
-                  style={{ 
-                    padding: '8px 16px', 
-                    background: '#e2e8f0', 
-                    border: 'none', 
-                    borderRadius: '8px', 
-                    cursor: 'pointer',
-                    fontSize: '12px'
-                  }}
-                >
-                  Reset Filters
-                </button>
-              </div>
-            </div>
-          )}
+          </div>
 
           {filteredTransactions.length === 0 ? (
-            <EmptyState>No transactions found yet.</EmptyState>
+            <EmptyState>No {activeTab} found.</EmptyState>
           ) : (
-            <>
-              {filteredTransactions.slice(0, visibleCount).map((item) => {
-                // Fix 3: Updated rendering logic
-                const serviceType = item.service_type || item.source;
-                const isExpense = activeTab === "expenses";
+            filteredTransactions.slice(0, visibleCount).map((item) => (
+              <ExpertCard key={item.id}>
+                <ExpertLeft>
+                  <Avatar style={{ background: item.type === 'debit' ? '#fee2e2' : '#dcfce7', color: item.type === 'debit' ? '#dc2626' : '#166534' }}>
+                    {item.type === 'debit' ? getServiceIcon(item.service_type) : getCreditIcon(item.source)}
+                  </Avatar>
+                  <ExpertInfo>
+                    <h4>{item.type === 'debit' ? getServiceDisplayName(item.service_type) : getCreditDisplayName(item)}</h4>
+                    <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>{formatDate(item.created_at)}</p>
+                  </ExpertInfo>
+                </ExpertLeft>
+                <AmountBox style={{ color: item.type === 'debit' ? '#dc2626' : '#166534', fontWeight: '800' }}>
+                  {item.type === 'debit' ? '-' : '+'}{formatCurrency(item.amount)}
+                </AmountBox>
+              </ExpertCard>
+            ))
+          )}
 
-                const displayName = isExpense
-                  ? getServiceDisplayName(serviceType)
-                  : getCreditDisplayName(item);
-
-                const icon = isExpense
-                  ? getServiceIcon(serviceType)
-                  : getCreditIcon(item.source);
-                
-                return (
-                  <ExpertCard key={item.id}>
-                    <ExpertLeft>
-                      <Avatar style={{ background: isExpense ? '#fef5e7' : '#e8f5e9' }}>
-                        {icon}
-                      </Avatar>
-                      <ExpertInfo>
-                        <strong>
-                          {isExpense && item.expert_name ? `${item.expert_name} - ${displayName}` : displayName}
-                        </strong>
-                        <div className="expert-meta">
-                          {formatDate(item.created_at)}
-                          {/* Fix 4: Optional better subtitle for referral bonus */}
-                          {!isExpense && item.source === "referral" && (
-                            <span style={{
-                              marginLeft: "8px",
-                              fontSize: "11px",
-                              padding: "2px 6px",
-                              background: "#ecfdf5",
-                              borderRadius: "4px",
-                              color: "#059669"
-                            }}>
-                              Referral Bonus
-                            </span>
-                          )}
-                          <span className={`status ${item.status}`}>{item.status}</span>
-                          {isExpense && serviceType && (
-                            <span style={{ 
-                              marginLeft: '8px', 
-                              fontSize: '11px', 
-                              padding: '2px 6px', 
-                              background: '#edf2f7', 
-                              borderRadius: '4px',
-                              color: '#4a5568'
-                            }}>
-                              {serviceType}
-                            </span>
-                          )}
-                        </div>
-                      </ExpertInfo>
-                    </ExpertLeft>
-                    <AmountBox className={item.type}>
-                      <span className="amount-value">{item.type === 'credit' ? '+' : '-'}{formatCurrency(parseFloat(item.amount))}</span>
-                    </AmountBox>
-                  </ExpertCard>
-                );
-              })}
-              {visibleCount < filteredTransactions.length && (
-                <LoadMoreBtn onClick={() => setVisibleCount(prev => prev + 5)}>View More History</LoadMoreBtn>
-              )}
-            </>
+          {filteredTransactions.length > visibleCount && (
+            <LoadMoreBtn onClick={() => setVisibleCount(prev => prev + 5)}>Load More</LoadMoreBtn>
           )}
         </ExpenseSection>
       </WalletBox>
 
+      {/* Add Balance Popup */}
       {popupOpen && (
         <AddBalancePopup
-  amountPreset={popupAmount}
-  onClose={() => setPopupOpen(false)}
-  onConfirm={handleAddMoney}
-  createOrder={createOrder}
-/>
+          isOpen={popupOpen}
+          onClose={handleClosePopup}
+          createOrder={handleAddBalanceSubmit}
+          onConfirm={handleConfirmRecharge}
+          onSuccess={handlePaymentSuccess}
+          initialAmount={popupAmount}
+        />
       )}
     </PageWrap>
   );

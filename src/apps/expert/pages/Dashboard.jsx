@@ -56,6 +56,30 @@ export default function Dashboard() {
     );
   };
 
+  const [categoryMasterServices, setCategoryMasterServices] = useState([]);
+  const [categoryName, setCategoryName] = useState("");
+  const [loadingCategoryServices, setLoadingCategoryServices] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem("expert_token") || localStorage.getItem("token") || "";
+    if (!token) return;
+
+    fetch("/api/expert/master-services/available", {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.data)) {
+          setCategoryMasterServices(data.data.slice(0, 6));
+          if (data.data[0]?.expert_profile_category_name) {
+            setCategoryName(data.data[0].expert_profile_category_name);
+          }
+        }
+      })
+      .catch((err) => console.error("Error fetching category master services:", err))
+      .finally(() => setLoadingCategoryServices(false));
+  }, []);
+
   return (
     <ContentInner>
       <Welcome>
@@ -77,7 +101,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* 🔔 1. Default State: Jab user ne choose nahi kiya (Pehli baar load par) */}
+      {/* Notifications state banners */}
       {supported && permission === "default" && expertId && (
         <div style={bannerStyle}>
           <span style={{ fontSize: "14px", color: "#666" }}>
@@ -89,7 +113,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* 🚫 2. Blocked State: Jab user ne ya browser ne notifications disable/block kar di hain */}
       {supported && permission === "denied" && expertId && (
         <div style={{ ...bannerStyle, border: "1px solid #ffcccc", background: "#fff5f5" }}>
           <span style={{ fontSize: "14px", color: "#d9534f" }}>
@@ -98,43 +121,6 @@ export default function Dashboard() {
           <button onClick={handleBlockedNotificationGuide} style={{ ...buttonStyle, color: "#d9534f" }}>
             How to Enable?
           </button>
-        </div>
-      )}
-
-
-
-      {isLimited && (
-        <StatsRow>
-          <StatsCard label="Category Views" value={String(leadStats.today_category_views || leadStats.todayCategoryViews || 0)} />
-          <StatsCard label="Profile Visits" value={String(leadStats.profile_visits || leadStats.profileVisits || 0)} />
-          <StatsCard label="Lead Opportunities" value={String(leadStats.new_inquiries || leadStats.newInquiries || 0)} />
-          <StatsCard label="Chat Attempts" value={String(leadStats.chat_attempts || leadStats.chatAttempts || 0)} />
-          <StatsCard label="Call Attempts" value={String(leadStats.call_attempts || leadStats.callAttempts || 0)} />
-          <StatsCard label="Missed/Failed Calls" value={String((leadStats.missed_calls || leadStats.missedCalls || 0) + (leadStats.failed_calls || leadStats.failedCalls || 0))} />
-        </StatsRow>
-      )}
-
-      {isLimited && (
-        <div style={lockedGridStyle}>
-          {[
-            "Lead contact details",
-            "Chat and call access",
-            "Service creation",
-            "Earnings",
-            "Withdrawals",
-          ].map((label) => (
-            <div key={label} style={lockedCardStyle}>
-              <div>
-                <strong>{label}</strong>
-                <p style={{ margin: "6px 0 0", color: "#64748b", fontSize: "13px" }}>
-                  Activate a G9 Expert plan to unlock.
-                </p>
-              </div>
-              <button onClick={() => navigate("/expert/g9-plan")} style={buttonStyle}>
-                Upgrade Plan
-              </button>
-            </div>
-          ))}
         </div>
       )}
 

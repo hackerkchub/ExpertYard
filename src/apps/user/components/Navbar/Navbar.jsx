@@ -57,6 +57,7 @@ import {
   FiBell,
   FiSliders,
   FiMail,
+  FiPackage,
 } from "react-icons/fi";
 import { FaWallet } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -83,6 +84,7 @@ const getMobileHeaderTitle = (pathname) => {
   if (pathname.startsWith("/user/service-details/")) return "Service Details";
   if (pathname.startsWith("/user/category/") || pathname.startsWith("/user/categories/")) return "Categories";
   if (pathname === "/user/my-offers") return "Offers";
+  if (pathname === "/user/my-orders" || pathname === "/user/my-bookings" || pathname === "/user/my-services") return "My Orders";
   if (pathname.startsWith("/user/my-booking/")) return "Booking";
   if (pathname === "/user/about") return "About";
   if (pathname === "/user/how-it-works") return "How It Works";
@@ -246,6 +248,7 @@ const Navbar = () => {
 
   const primaryMenuItems = [
     { label: t("common.home"), path: "/user", icon: FiHome },
+    { label: "My Services", path: "/user/my-services", icon: FiPackage },
     { label: t("common.offers"), path: "/user/all-services", icon: FiGift },
     { label: t("common.categories"), path: "/user/categories", icon: FiGrid, mobileOnly: true },
     { label: t("common.history"), path: "/user/chat-history", icon: FiClock },
@@ -544,6 +547,10 @@ const Navbar = () => {
 
               <MobileMenuSection>
                 <MobileMenuTitle>Account</MobileMenuTitle>
+                <MobileItem onClick={() => handleNav("/user/my-services")}>
+                  <FiPackage />
+                  My Services
+                </MobileItem>
                 <MobileItem onClick={() => handleNav("/user/wallet")}>
                   <FaWallet />
                   {t("common.wallet")}

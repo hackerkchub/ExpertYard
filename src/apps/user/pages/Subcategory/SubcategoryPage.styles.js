@@ -1270,12 +1270,16 @@ export const SectionSubtitle = styled.p`
 
 export const SubcategoryGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
 
   @media (max-width: 767px) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+  }
+
+  @media (max-width: 360px) {
+    grid-template-columns: 1fr;
   }
 `;
 
@@ -1312,8 +1316,12 @@ export const SubcategoryCard = styled.button`
 `;
 
 export const SubcategoryImage = styled.img`
-  width: 62px;
-  height: 62px;
+  width: 64px;
+  height: 64px;
+  min-width: 64px;
+  min-height: 64px;
+  max-width: 64px;
+  max-height: 64px;
   object-fit: contain;
   padding: 8px;
   border-radius: 16px;
@@ -1321,8 +1329,12 @@ export const SubcategoryImage = styled.img`
   box-sizing: border-box;
 
   @media (max-width: 767px) {
-    width: 48px;
-    height: 48px;
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    min-height: 52px;
+    max-width: 52px;
+    max-height: 52px;
     padding: 6px;
     border-radius: 14px;
   }
@@ -1330,19 +1342,26 @@ export const SubcategoryImage = styled.img`
 
 export const SubcategoryName = styled.span`
   width: 100%;
+  height: 38px;
+  min-height: 38px;
+  max-height: 38px;
   color: ${colors.textMain};
   text-align: center;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 900;
-  line-height: 1.25;
+  line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  box-sizing: border-box;
 
   @media (max-width: 767px) {
-    font-size: 11px;
-    line-height: 1.2;
+    font-size: 12px;
+    height: 32px;
+    min-height: 32px;
+    max-height: 32px;
+    line-height: 1.25;
   }
 `;
 
@@ -1532,4 +1551,117 @@ export const PaginationInfo = styled.span`
   color: ${colors.textSecondary};
   font-size: 13px;
   font-weight: 850;
+`;
+
+export const SubcategoryCardContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px;
+  height: 236px;
+  min-height: 236px;
+  border: 1px solid #e8edf5;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(16, 24, 40, 0.05);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  box-sizing: border-box;
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: rgba(0, 0, 128, 0.28);
+    box-shadow: 0 12px 24px rgba(0, 0, 128, 0.08);
+  }
+
+  @media (max-width: 767px) {
+    padding: 12px;
+    height: 210px;
+    min-height: 210px;
+    border-radius: 14px;
+    gap: 10px;
+  }
+`;
+
+export const SubcategoryHeader = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  width: 100%;
+`;
+
+export const SubcategoryActionButtons = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: auto;
+`;
+
+export const ConnectExpertButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 40px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, ${colors.primary}, #03045e);
+  color: ${colors.white};
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  box-sizing: border-box;
+
+  &:hover {
+    background: linear-gradient(135deg, #02044a, #020329);
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 767px) {
+    height: 36px;
+    min-height: 36px;
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+`;
+
+export const ViewServicesButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 40px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid ${colors.primary};
+  border-radius: 10px;
+  background: ${colors.white};
+  color: ${colors.primary};
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  box-sizing: border-box;
+
+  &:hover {
+    background: ${colors.primaryLight};
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 767px) {
+    height: 36px;
+    min-height: 36px;
+    padding: 7px 10px;
+    font-size: 12px;
+  }
 `;

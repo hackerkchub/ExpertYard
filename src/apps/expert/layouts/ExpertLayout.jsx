@@ -55,6 +55,13 @@ function ExpertLayoutInner() {
     location.pathname.startsWith("/expert/chat") ||
     location.pathname === "/expert/chat";
 
+  const isServicePage =
+    location.pathname.startsWith("/expert/myservices") ||
+    location.pathname.startsWith("/expert/services") ||
+    location.pathname.startsWith("/expert/mybookings") ||
+    location.pathname.startsWith("/expert/expert-activations") ||
+    location.pathname.startsWith("/expert/workspace");
+
   const {
     notifications,
     acceptNotification,
@@ -330,11 +337,17 @@ function ExpertLayoutInner() {
 
   return (
     <LayoutWrapper>
-      {!(isExpertInquiryPage && isMobile) && <ExpertTopbar />}
+      {!((isExpertInquiryPage || isServicePage) && isMobile) && <ExpertTopbar />}
       <ExpertSidebar />
       <ContinueChatBanner />
 
-      <ContentWrapper className={isExpertInquiryPage ? "immersive-inquiry-layout" : ""}>
+      <ContentWrapper className={
+        isExpertInquiryPage 
+          ? "immersive-inquiry-layout" 
+          : (isServicePage && isMobile) 
+          ? "no-topbar-layout" 
+          : ""
+      }>
         <Outlet />
       </ContentWrapper>
 

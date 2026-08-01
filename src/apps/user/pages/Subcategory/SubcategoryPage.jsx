@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FiChevronRight } from "react-icons/fi";
+import { FiChevronRight, FiUsers, FiBriefcase } from "react-icons/fi";
 import { IoChatbubble, IoGridOutline } from "react-icons/io5";
 
 import { getSubCategoriesApi } from "../../../../shared/api/expertapi/category.api";
@@ -18,7 +18,6 @@ import {
   findCategoryById,
   findCategoryBySlug,
   getCategoryPath,
-  getSubcategoryExpertsPath,
 } from "../../../../shared/utils/categoryRoutes";
 import {
   PageContainer,
@@ -38,6 +37,11 @@ import {
   SectionSubtitle,
   SubcategoryGrid,
   SubcategoryCard,
+  SubcategoryCardContainer,
+  SubcategoryHeader,
+  SubcategoryActionButtons,
+  ConnectExpertButton,
+  ViewServicesButton,
   SubcategoryImage,
   SubcategoryName,
   LoadingGrid,
@@ -47,13 +51,25 @@ import {
   EmptyStateText,
   ClearFiltersButton,
 } from "./SubcategoryPage.styles";
-import "./SubcategorySeo.css";
+import APP_CONFIG from "../../../../config/appConfig";
 
 const DEFAULT_CATEGORY_IMAGE =
   "https://placehold.co/160x160/eef2ff/000080?text=G9";
 
-const getImage = (item) =>
-  item?.image_url || item?.image || item?.icon || item?.thumbnail || DEFAULT_CATEGORY_IMAGE;
+const getServiceImageUrl = (url) => {
+  if (!url) return DEFAULT_CATEGORY_IMAGE;
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+    return url;
+  }
+  const cleanPath = url.startsWith("/") ? url : `/${url}`;
+  const base = APP_CONFIG?.API_BASE_URL ? APP_CONFIG.API_BASE_URL.replace(/\/api\/?$/, "") : "http://localhost:5000";
+  return `${base}${cleanPath}`;
+};
+
+const getImage = (item) => {
+  const raw = item?.image_url || item?.thumbnail_url || item?.image || item?.icon || item?.thumbnail;
+  return getServiceImageUrl(raw);
+};
 
 const extractSubcategories = (response) => {
   if (Array.isArray(response?.data?.data)) return response.data.data;
@@ -63,7 +79,7 @@ const extractSubcategories = (response) => {
 };
 
 export default function SubcategoryPage() {
-  const { categoryId, slug } = useParams();
+  const { categoryId, slug, subcategoryId } = useParams();
   const navigate = useNavigate();
   const requestRef = useRef(0);
   const abortRef = useRef(null);
@@ -72,6 +88,8 @@ export default function SubcategoryPage() {
   const { categories, loading: categoriesLoading } = useCategory();
   const { user } = useAuth();
   const [subcategories, setSubcategories] = useState([]);
+  const [services, setServices] = useState([]);
+  const [servicesLoading, setServicesLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -131,10 +149,34 @@ export default function SubcategoryPage() {
     }
   }, [resolvedCategoryId]);
 
+  const loadServices = useCallback(async () => {
+    if (!subcategoryId) {
+      setServices([]);
+      return;
+    }
+
+    setServicesLoading(true);
+    try {
+      const response = await fetch(`/api/master-services/search?subcategory_id=${encodeURIComponent(subcategoryId)}&limit=100`);
+      const data = await response.json();
+      const serviceRows = data?.data?.services || data?.data?.data || data?.services || [];
+      setServices(Array.isArray(serviceRows) ? serviceRows : []);
+    } catch (err) {
+      console.error("Subcategory services load failed", err);
+      setServices([]);
+    } finally {
+      setServicesLoading(false);
+    }
+  }, [subcategoryId]);
+
   useEffect(() => {
     loadSubcategories();
     return () => abortRef.current?.abort();
   }, [loadSubcategories]);
+
+  useEffect(() => {
+    loadServices();
+  }, [loadServices]);
 
   useEffect(() => {
     if (!resolvedCategoryId || trackedCategoryRef.current === resolvedCategoryId) return;
@@ -153,14 +195,14 @@ export default function SubcategoryPage() {
   const handleSubcategoryClick = useCallback(
     (subcategory) => {
       if (!matchedCategory || !subcategory) return;
-      navigate(
-        getSubcategoryExpertsPath(matchedCategory, subcategory, {
-          page: 1,
-          mode: "chat",
-        })
-      );
+      navigate(`/user/category/${matchedCategory.id}/subcategory/${subcategory.id}`);
     },
     [navigate, matchedCategory]
+  );
+
+  const selectedSubcategory = useMemo(
+    () => subcategories.find((item) => String(item.id) === String(subcategoryId)),
+    [subcategories, subcategoryId]
   );
 
   const isInitialCategoryLoading = categoriesLoading && categories.length === 0;
@@ -211,7 +253,7 @@ export default function SubcategoryPage() {
         </CategoryHeroCopy>
       </CategoryDetailHero>
 
-      <SectionCard>
+      {!subcategoryId && <SectionCard>
         <SectionHeader>
           <div>
             <SectionTitle>Choose a subcategory</SectionTitle>
@@ -235,16 +277,41 @@ export default function SubcategoryPage() {
           </EmptyStateBox>
         ) : subcategories.length > 0 ? (
           <SubcategoryGrid>
-            {subcategories.map((subcategory) => (
-              <SubcategoryCard
-                key={subcategory.id}
-                type="button"
-                onClick={() => handleSubcategoryClick(subcategory)}
-              >
-                <SubcategoryImage src={getImage(subcategory)} alt={subcategory.name} />
-                <SubcategoryName>{subcategory.name}</SubcategoryName>
-              </SubcategoryCard>
-            ))}
+            {subcategories.map((subcategory) => {
+              const catKey = matchedCategory?.id || resolvedCategoryId;
+              return (
+                <SubcategoryCardContainer key={subcategory.id}>
+                  <SubcategoryHeader>
+                    <SubcategoryImage src={getImage(subcategory)} alt={subcategory.name} />
+                    <SubcategoryName>{subcategory.name}</SubcategoryName>
+                  </SubcategoryHeader>
+                  
+                  <SubcategoryActionButtons>
+                    <ConnectExpertButton
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/user/category/${catKey}/subcategory/${subcategory.id}/experts`);
+                      }}
+                    >
+                      <FiUsers size={15} />
+                      <span>Expert</span>
+                    </ConnectExpertButton>
+
+                    <ViewServicesButton
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/user/category/${catKey}/subcategory/${subcategory.id}`);
+                      }}
+                    >
+                      <FiBriefcase size={15} />
+                      <span>Services</span>
+                    </ViewServicesButton>
+                  </SubcategoryActionButtons>
+                </SubcategoryCardContainer>
+              );
+            })}
           </SubcategoryGrid>
         ) : (
           <EmptyStateBox>
@@ -252,7 +319,52 @@ export default function SubcategoryPage() {
             <EmptyStateText>Please check another category or try again later.</EmptyStateText>
           </EmptyStateBox>
         )}
-      </SectionCard>
+      </SectionCard>}
+
+      {subcategoryId && (
+        <SectionCard>
+          <SectionHeader>
+            <div>
+              <SectionTitle>{selectedSubcategory?.name || "Services"}</SectionTitle>
+              <SectionSubtitle>
+                Services linked to this subcategory. Experts are shown only after opening a service.
+              </SectionSubtitle>
+            </div>
+          </SectionHeader>
+
+          {servicesLoading ? (
+            <LoadingGrid>
+              {Array.from({ length: 6 }).map((_, index) => (
+                <SkeletonCard key={index} />
+              ))}
+            </LoadingGrid>
+          ) : services.length > 0 ? (
+            <SubcategoryGrid>
+              {services.map((service) => (
+                <SubcategoryCard
+                  key={service.id}
+                  type="button"
+                  onClick={() => navigate(`/user/service/${service.slug || service.id}`)}
+                >
+                  <SubcategoryImage src={getImage(service)} alt={service.title} />
+                  <SubcategoryName>{service.title}</SubcategoryName>
+                  <span style={{ color: "#64748b", fontSize: "0.85rem" }}>
+                    Starts at Rs. {Number(service.base_price || 0).toLocaleString("en-IN")}
+                  </span>
+                </SubcategoryCard>
+              ))}
+            </SubcategoryGrid>
+          ) : (
+            <EmptyStateBox>
+              <EmptyStateTitle>No services found</EmptyStateTitle>
+              <EmptyStateText>This subcategory does not have published services yet.</EmptyStateText>
+              <ClearFiltersButton onClick={() => navigate(`/user/category/${matchedCategory?.id || resolvedCategoryId}`)}>
+                View subcategories
+              </ClearFiltersButton>
+            </EmptyStateBox>
+          )}
+        </SectionCard>
+      )}
 
       {resolvedCategoryId && (
         <NeedHelpForm

@@ -172,4 +172,18 @@ export const ContentWrapper = styled.main`
       padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
     }
   }
+
+  &.no-topbar-layout {
+    @media (max-width: 768px) {
+      margin-top: 0 !important;
+      padding-top: max(10px, env(safe-area-inset-top, 0px)) !important;
+      min-height: calc(100vh - 84px) !important;
+      min-height: calc(100dvh - 84px) !important;
+    }
+
+    @media (max-width: 480px) {
+      margin-top: 0 !important;
+      padding-top: max(8px, env(safe-area-inset-top, 0px)) !important;
+    }
+  }
 `;

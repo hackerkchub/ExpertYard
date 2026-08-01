@@ -48,6 +48,14 @@ const PageContainer = styled.div`
   box-sizing: border-box;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   z-index: 999;
+
+  @media (min-width: 992px) {
+    left: 260px;
+    top: 70px;
+    width: calc(100% - 260px);
+    height: calc(100vh - 70px);
+    max-height: calc(100vh - 70px);
+  }
 `;
 
 const Sidebar = styled.div`

@@ -254,6 +254,9 @@ const ExpertEarningsDashboard = () => {
       
       setEarningsStats({
         totalEarnings: Number(summary.totalEarning || 0),
+        totalGrossAmount: Number(summary.totalGrossAmount || 0),
+        totalPlatformDeduction: Number(summary.totalPlatformDeduction || 0),
+        serviceEarningsHistory: summary.serviceEarningsHistory || [],
         totalMinutes:
           Number(summary.totalChatMinutes || 0) +
           Number(summary.totalCallMinutes || 0) +
@@ -268,7 +271,7 @@ const ExpertEarningsDashboard = () => {
 
         completedSessions:
           walletRes.data.data?.filter(
-            x => x.reference_type === "session_earning" || x.reference_type === "video_call_earning"
+            x => x.reference_type === "session_earning" || x.reference_type === "video_call_earning" || x.reference_type === "service_booking_earning"
           ).length || 0,
       });
       
@@ -437,6 +440,18 @@ const ExpertEarningsDashboard = () => {
       maximumFractionDigits: 0,
     }).format(earningsStats.totalEarnings);
 
+    const formattedGross = new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(earningsStats.totalGrossAmount || 0);
+
+    const formattedDeduction = new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(earningsStats.totalPlatformDeduction || 0);
+
     const formattedAvailable = new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
@@ -454,6 +469,8 @@ const ExpertEarningsDashboard = () => {
     return {
       ...earningsStats,
       formattedTotal,
+      formattedGross,
+      formattedDeduction,
       formattedAvailable,
       formattedWithdrawn,
       growthPercentage,
@@ -1051,6 +1068,32 @@ const ExpertEarningsDashboard = () => {
 
           <StatCard>
             <div className="stat-icon">
+              <HiOutlineCurrencyRupee />
+            </div>
+            <div className="stat-content">
+              <div className="stat-label">Gross Service Revenue</div>
+              <div className="stat-value">{formattedStats?.formattedGross || '₹0'}</div>
+              <div className="stat-change" style={{ color: '#64748b' }}>
+                <span>Order Total Collected</span>
+              </div>
+            </div>
+          </StatCard>
+
+          <StatCard>
+            <div className="stat-icon" style={{ background: '#fee2e2', color: '#dc2626' }}>
+              <FiDollarSign />
+            </div>
+            <div className="stat-content">
+              <div className="stat-label">Platform Fee Deduction (20%)</div>
+              <div className="stat-value" style={{ color: '#dc2626' }}>-{formattedStats?.formattedDeduction || '₹0'}</div>
+              <div className="stat-change" style={{ color: '#ef4444' }}>
+                <span>20% Commission Deducted</span>
+              </div>
+            </div>
+          </StatCard>
+
+          <StatCard>
+            <div className="stat-icon">
               <BsLightningCharge />
             </div>
             <div className="stat-content">
@@ -1068,7 +1111,7 @@ const ExpertEarningsDashboard = () => {
               <TbPigMoney />
             </div>
             <div className="stat-content">
-              <div className="stat-label">Available</div>
+              <div className="stat-label">Net Available Balance</div>
               <div className="stat-value">{formattedStats?.formattedAvailable}</div>
               <div className="stat-change">
                 <FiCalendar />
@@ -1077,6 +1120,48 @@ const ExpertEarningsDashboard = () => {
             </div>
           </StatCard>
         </StatsGrid>
+
+        {/* Completed Service Orders & Deductions Breakdown */}
+        {formattedStats?.serviceEarningsHistory && formattedStats.serviceEarningsHistory.length > 0 && (
+          <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.25rem', marginBottom: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+            <SectionTitle style={{ fontSize: '1.1rem', color: '#0f172a', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              💼 Completed Service Orders & Platform Fee Deductions (20%)
+            </SectionTitle>
+
+            <div style={{ display: 'grid', gap: '0.75rem' }}>
+              {formattedStats.serviceEarningsHistory.map((item) => (
+                <div key={item.booking_id} style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '0.9rem 1.1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+                      <span style={{ background: '#dcfce7', color: '#166534', fontWeight: '800', fontSize: '0.75rem', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
+                        Booking #{item.booking_id}
+                      </span>
+                      <strong style={{ color: '#0f172a', fontSize: '0.95rem' }}>{item.service_title}</strong>
+                    </div>
+                    <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                      📅 {formatDate(item.booking_date)} • Order Completed
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', textAlign: 'right' }}>
+                    <div>
+                      <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>Gross Amount</span>
+                      <strong style={{ fontSize: '0.95rem', color: '#334155' }}>₹{item.gross_amount}</strong>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '0.7rem', color: '#dc2626', display: 'block' }}>20% Platform Fee</span>
+                      <strong style={{ fontSize: '0.95rem', color: '#dc2626' }}>-₹{item.platform_deduction}</strong>
+                    </div>
+                    <div style={{ borderLeft: '1px solid #cbd5e1', paddingLeft: '1rem' }}>
+                      <span style={{ fontSize: '0.7rem', color: '#059669', display: 'block' }}>Net Earned (80%)</span>
+                      <strong style={{ fontSize: '1.1rem', color: '#059669', fontWeight: '800' }}>+₹{item.net_earning}</strong>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Payout Methods - Mobile */}
         <AccountStatus>

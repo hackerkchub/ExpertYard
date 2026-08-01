@@ -31,6 +31,7 @@ import {
   FiInfo,
   FiVideo,
   FiPlay,
+  FiArrowRight,
 } from "react-icons/fi";
 
 import { APP_CONFIG } from "../../../../config/appConfig";
@@ -183,6 +184,23 @@ import useChatRequest from "../../../../shared/hooks/useChatRequest";
 import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/leadTracking";
 import VideoCallButton from "../../../../shared/components/VideoCallButton";
 import { normalizeVideoCallPrice } from "../../../../shared/utils/normalizeExpertPrice";
+
+const API_BASE = APP_CONFIG?.API_BASE_URL || "/api";
+const FALLBACK_API_BASE = "http://localhost:5000/api";
+
+const apiFetch = async (path, options = {}) => {
+  const cleanPath = path.replace(/^\/api/, "");
+  const primaryUrl = `${API_BASE}${cleanPath}`;
+  try {
+    const res = await fetch(primaryUrl, options);
+    if (res.status === 404 && API_BASE !== FALLBACK_API_BASE) {
+      return await fetch(`${FALLBACK_API_BASE}${cleanPath}`, options);
+    }
+    return res;
+  } catch {
+    return await fetch(`${FALLBACK_API_BASE}${cleanPath}`, options);
+  }
+};
 
 const resolveMediaUrl = (url) => {
   if (!url) return "";
@@ -338,6 +356,8 @@ const ExpertProfilePage = () => {
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [reels, setReels] = useState([]);
   const [loadingReels, setLoadingReels] = useState(false);
+  const [expertServices, setExpertServices] = useState([]);
+  const [loadingServices, setLoadingServices] = useState(false);
   const [totalExperienceText, setTotalExperienceText] = useState("");
   
   // NEW: Pricing mode selection state
@@ -741,6 +761,29 @@ const ExpertProfilePage = () => {
     }
   }, [numericExpertId]);
 
+  // Fetch services offered by expert
+  const fetchServices = useCallback(async () => {
+    if (!numericExpertId) return;
+
+    setLoadingServices(true);
+
+    try {
+      const response = await apiFetch(`/api/expert-activations/expert/${numericExpertId}/services`);
+      const data = await response.json();
+
+      if (data?.success) {
+        setExpertServices(data.data || []);
+      } else {
+        setExpertServices([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch expert services:", error);
+      setExpertServices([]);
+    } finally {
+      setLoadingServices(false);
+    }
+  }, [numericExpertId]);
+
   const toggleLike = async (post) => {
     if (!isLoggedIn || !userId) return;
 
@@ -958,13 +1001,17 @@ const ExpertProfilePage = () => {
 
 
   useEffect(() => {
-    if (numericExpertId) fetchExperience();
-  }, [numericExpertId, fetchExperience]);
+    if (numericExpertId) {
+      fetchExperience();
+      fetchServices();
+    }
+  }, [numericExpertId, fetchExperience, fetchServices]);
 
   useEffect(() => {
     if (activeTab === "posts") fetchPosts();
     if (activeTab === "reels") fetchReels();
-  }, [activeTab, fetchPosts, fetchReels]);
+    if (activeTab === "services") fetchServices();
+  }, [activeTab, fetchPosts, fetchReels, fetchServices]);
 
   useEffect(() => {
     if (numericExpertId) {
@@ -1582,6 +1629,7 @@ const ExpertProfilePage = () => {
                 <TabButton $active={activeTab === "about"} onClick={() => setActiveTab("about")}><FiFileText /> {t("expertProfile.about")}</TabButton>
                 <TabButton $active={activeTab === "experience"} onClick={() => setActiveTab("experience")}><FiBriefcase /> {t("expertProfile.experience")}</TabButton>
                 <TabButton $active={activeTab === "posts"} onClick={() => setActiveTab("posts")}><FiImage /> {t("expertProfile.posts")}</TabButton>
+                <TabButton $active={activeTab === "services"} onClick={() => setActiveTab("services")}><FiBriefcase /> Services{expertServices.length > 0 ? ` (${expertServices.length})` : ""}</TabButton>
                 <TabButton $active={activeTab === "reels"} onClick={() => setActiveTab("reels")}><FiVideo /> Reels</TabButton>
               </TabContainer>
 
@@ -1721,6 +1769,141 @@ const ExpertProfilePage = () => {
                         );
                       })}
                     </PostGrid>
+                  )}
+                </TabContent>
+              )}
+
+              {activeTab === "services" && (
+                <TabContent>
+                  {loadingServices ? (
+                    <LoadingReviews><Spinner /><p>Loading services...</p></LoadingReviews>
+                  ) : expertServices.length === 0 ? (
+                    <NoReviews><FiBriefcase size={48} color="#d1d5db" /><h4>No active services listed by this expert yet</h4></NoReviews>
+                  ) : (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+                      {expertServices.map((svc) => {
+                        const serviceImg = resolveMediaUrl(svc.image_url || svc.thumbnail_url || svc.icon_url || svc.banner_url);
+                        const price = svc.custom_price || svc.offer_price || svc.base_price;
+                        const deliveryDays = svc.delivery_time_days || svc.base_delivery_days || 1;
+                        const serviceSlugOrId = svc.master_service_slug || svc.master_service_id || svc.id;
+
+                        return (
+                          <div
+                            key={svc.id || svc.master_service_id}
+                            style={{
+                              background: "#ffffff",
+                              border: "1px solid #e2e8f0",
+                              borderRadius: 14,
+                              padding: "1.25rem",
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "space-between",
+                              gap: 12,
+                              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                              transition: "all 0.2s ease"
+                            }}
+                          >
+                            <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                              {serviceImg ? (
+                                <img
+                                  src={serviceImg}
+                                  alt={svc.master_service_title || svc.title}
+                                  style={{ width: 54, height: 54, borderRadius: 10, objectFit: "cover", border: "1px solid #cbd5e1", flexShrink: 0 }}
+                                  onError={(e) => { e.target.src = "https://placehold.co/100x100?text=Service"; }}
+                                />
+                              ) : (
+                                <div style={{ width: 54, height: 54, borderRadius: 10, background: "#eef2ff", color: "#4f46e5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, fontWeight: 700, flexShrink: 0 }}>
+                                  🛠️
+                                </div>
+                              )}
+                              <div style={{ flex: 1 }}>
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 4 }}>
+                                  {svc.category_name && (
+                                    <span style={{ background: "#dbeafe", color: "#1e40af", padding: "2px 8px", borderRadius: 12, fontSize: 10, fontWeight: 700 }}>
+                                      {svc.category_name}
+                                    </span>
+                                  )}
+                                  {svc.subcategory_name && (
+                                    <span style={{ background: "#ecfdf5", color: "#065f46", padding: "2px 8px", borderRadius: 12, fontSize: 10, fontWeight: 700 }}>
+                                      {svc.subcategory_name}
+                                    </span>
+                                  )}
+                                </div>
+                                <h4 style={{ margin: 0, color: "#0f172a", fontSize: "1.05rem", fontWeight: 700, lineHeight: 1.3 }}>
+                                  {svc.master_service_title || svc.title || "Master Service"}
+                                </h4>
+                              </div>
+                            </div>
+
+                            {svc.short_description && (
+                              <p style={{ margin: 0, fontSize: "0.85rem", color: "#64748b", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                                {svc.short_description}
+                              </p>
+                            )}
+
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px dashed #e2e8f0", paddingTop: 10 }}>
+                              <div>
+                                <div style={{ fontSize: 11, color: "#64748b", fontWeight: 600 }}>Starting Price</div>
+                                <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#16a34a" }}>
+                                  ₹{Number(price || 0).toLocaleString("en-IN")}
+                                </div>
+                              </div>
+
+                              <div style={{ textAlign: "right" }}>
+                                <div style={{ fontSize: 11, color: "#64748b", fontWeight: 600 }}>Turnaround (SLA)</div>
+                                <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#1e293b" }}>
+                                  {deliveryDays} {deliveryDays === 1 ? "Day" : "Days"}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 4 }}>
+                              <button
+                                type="button"
+                                onClick={() => navigate(`/user/service/${serviceSlugOrId}`)}
+                                style={{
+                                  background: "#2563eb",
+                                  color: "#ffffff",
+                                  border: "none",
+                                  borderRadius: 8,
+                                  padding: "8px 12px",
+                                  fontSize: 12,
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  gap: 6
+                                }}
+                              >
+                                Connect Expert
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => navigate(`/user/service/${serviceSlugOrId}`)}
+                                style={{
+                                  background: "#f1f5f9",
+                                  color: "#334155",
+                                  border: "1px solid #cbd5e1",
+                                  borderRadius: 8,
+                                  padding: "8px 12px",
+                                  fontSize: 12,
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  gap: 6
+                                }}
+                              >
+                                View Service <FiArrowRight size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
                 </TabContent>
               )}

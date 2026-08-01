@@ -278,14 +278,6 @@ useEffect(() => {
   }
 }, [expertId, socket, pricingMode]);
 
-  // Auto-start on mount
-  useEffect(() => {
-    if (!resumeChecked) return;
-    if (!isResumed && !callStartedRef.current) {
-      startCall();
-    }
-  }, [resumeChecked, isResumed, startCall]);
-
   // WebRTC Offer Handler - FIXED makingOfferRef locking
   const handleWebRTCOffer = useCallback(async (currentCallId) => {
     if (
@@ -303,15 +295,15 @@ useEffect(() => {
     makingOfferRef.current = true;
 
     try {
-     let currentStream = getLocalStream() || localStreamRef.current;
+      let currentStream = getLocalStream() || localStreamRef.current;
 
-if (!currentStream) {
-  currentStream = await navigator.mediaDevices.getUserMedia({
-    audio: true,
-  });
+      if (!currentStream) {
+        currentStream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
 
-  localStreamRef.current = currentStream;
-}
+        localStreamRef.current = currentStream;
+      }
       await createPeer({
         socket,
         callId: currentCallId,
@@ -357,6 +349,22 @@ if (!currentStream) {
       makingOfferRef.current = false;
     }
   }, [socket, cleanupHard]);
+
+  // Auto-start on mount
+  useEffect(() => {
+    if (!resumeChecked) return;
+    const existingCallId = location.state?.callId;
+    if (existingCallId) {
+      console.log("📞 Joining existing accepted call ID:", existingCallId);
+      callIdRef.current = Number(existingCallId);
+      setCallId(Number(existingCallId));
+      callStartedRef.current = true;
+      setCallState("calling");
+      handleWebRTCOffer(Number(existingCallId));
+    } else if (!isResumed && !callStartedRef.current) {
+      startCall();
+    }
+  }, [resumeChecked, isResumed, startCall, location.state, handleWebRTCOffer]);
 
   useEffect(() => {
     const onResume = (data) => {
@@ -426,6 +434,8 @@ if (!currentStream) {
       try {
         const applied = await setRemote(answer, attemptId);
         console.log("✅ Remote description set", { applied });
+        soundManager.stopAll();
+        setCallState("connected");
       } catch (err) {
         console.error("❌ Failed to set remote:", err);
       }

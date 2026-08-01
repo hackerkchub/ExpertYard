@@ -33,6 +33,9 @@ const SubscriptionPlan = lazy(() => import("../pages/register/SubscriptionPlan")
 const G9Plan = lazy(() => import("../pages/GuidexaExpertPlan/GuidexaExpertPlan"));
 const ManageReels = lazy(() => import("../pages/Reels/ManageReels"));
 const ExpertInquiriesPage = lazy(() => import("../pages/Inquiry/ExpertInquiriesPage"));
+const ExpertServiceActivationPage = lazy(() => import("../pages/services/ExpertServiceActivationPage"));
+const CustomServiceRequestPage = lazy(() => import("../pages/services/CustomServiceRequestPage"));
+const ExpertWorkspacePage = lazy(() => import("../pages/Workspace/ExpertWorkspacePage"));
 
 const withLazyRoute = (node) => <LazyRoute>{node}</LazyRoute>;
 
@@ -116,6 +119,46 @@ export default function ExpertAppRoutes() {
             <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
               <LazyRoute>
                 <MyServices />
+              </LazyRoute>
+            </ProtectedExpertRoute>
+          }
+        />
+        <Route
+          path="services/activation"
+          element={
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <LazyRoute>
+                <ExpertServiceActivationPage />
+              </LazyRoute>
+            </ProtectedExpertRoute>
+          }
+        />
+        <Route
+          path="services/available"
+          element={
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <LazyRoute>
+                <ExpertServiceActivationPage />
+              </LazyRoute>
+            </ProtectedExpertRoute>
+          }
+        />
+        <Route
+          path="services/custom-requests"
+          element={
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <LazyRoute>
+                <CustomServiceRequestPage />
+              </LazyRoute>
+            </ProtectedExpertRoute>
+          }
+        />
+        <Route
+          path="workspace/:bookingId"
+          element={
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <LazyRoute>
+                <ExpertWorkspacePage />
               </LazyRoute>
             </ProtectedExpertRoute>
           }
@@ -236,6 +279,26 @@ export default function ExpertAppRoutes() {
             <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
               <LazyRoute>
                 <ExpertNotificationPage />
+              </LazyRoute>
+            </ProtectedExpertRoute>
+          }
+        />
+        <Route
+          path="services/activation"
+          element={
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <LazyRoute>
+                <ExpertServiceActivationPage />
+              </LazyRoute>
+            </ProtectedExpertRoute>
+          }
+        />
+        <Route
+          path="workspace/:bookingId"
+          element={
+            <ProtectedExpertRoute condition={expertData.expertId} redirectTo="/expert/home">
+              <LazyRoute>
+                <ExpertWorkspacePage />
               </LazyRoute>
             </ProtectedExpertRoute>
           }

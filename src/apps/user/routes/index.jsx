@@ -46,6 +46,10 @@ const UserProfile = lazy(() => import("../pages/user-profile/UserProfile"))
 const UserNotificationPage = lazy(() => import("../pages/notification/UserNotificationPage"));
 const UserInquiriesPage = lazy(() => import("../pages/Inquiry/UserInquiriesPage"));
 const ReelsPage = lazy(() => import("../pages/Reels/ReelsPage"));
+const DynamicBookingWizard = lazy(() => import("../pages/Booking/DynamicBookingWizard"));
+const UserWorkspacePage = lazy(() => import("../pages/Workspace/UserWorkspacePage"));
+const MasterServiceDetailPage = lazy(() => import("../pages/MasterService/MasterServiceDetailPage"));
+const MasterServiceSlugPage = lazy(() => import("../pages/MasterService/MasterServiceSlugPage"));
 
 const withLazyRoute = (node) => <LazyRoute>{node}</LazyRoute>;
 
@@ -87,10 +91,34 @@ export default function UserAppRoutes() {
             <Route path="support" element={withLazyRoute(<SupportPage />)} />
             <Route path="marketing" element={withLazyRoute(<MarketingPage />)} />
             <Route path="all-services" element={withLazyRoute(<AllServices />)} />
-            <Route path="service-details/:slug" element={withLazyRoute(<ServiceDetails />)} />
+            <Route path="service/:slug" element={withLazyRoute(<MasterServiceSlugPage />)} />
+            <Route path="services/:categorySlug/:subcategorySlug/:masterServiceSlug" element={withLazyRoute(<MasterServiceSlugPage />)} />
+            <Route path="service-details/:slug" element={withLazyRoute(<MasterServiceSlugPage />)} />
+            <Route path="booking/:slug" element={withLazyRoute(<DynamicBookingWizard />)} />
+            <Route path="workspace/:bookingId" element={withLazyRoute(<UserWorkspacePage />)} />
             <Route path="my-booking/:id" element={withLazyRoute(<MyBookings />)} />
             <Route
               path="my-services"
+              element={
+                <ProtectedRoute>
+                  <LazyRoute>
+                    <MyBookings />
+                  </LazyRoute>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="my-orders"
+              element={
+                <ProtectedRoute>
+                  <LazyRoute>
+                    <MyBookings />
+                  </LazyRoute>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="my-bookings"
               element={
                 <ProtectedRoute>
                   <LazyRoute>

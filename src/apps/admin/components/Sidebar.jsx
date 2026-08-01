@@ -72,8 +72,24 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
       items: [
         { path: "/admin/dashboard", icon: FiHome, label: "Dashboard" },
         { path: "/admin/category-management", icon: FiLayers, label: "Categories" },
-        { path: "/admin/sub-category-management", icon: FiGrid, label: "Sub-Categories" },
-        { path: "/admin/banner", icon:  FiImage, label: "Banners" },
+        { path: "/admin/sub-category-management", icon: FiGrid, label: "Sub Categories" },
+        { path: "/admin/banner", icon: FiImage, label: "Banners" },
+      ]
+    },
+    {
+      section: "Service Management",
+      items: [
+        { path: "/admin/master-services/list", icon: FiLayers, label: "All Master Services" },
+        { path: "/admin/master-services", icon: FiGrid, label: "+ Create Master Service" },
+        { path: "/admin/form-builder", icon: FiGrid, label: "Dynamic Form Builder" },
+        { path: "/admin/workflow-builder", icon: FiBarChart2, label: "Workflow Builder" },
+        { path: "/admin/document-builder", icon: FiArchive, label: "Document Builder" },
+        { path: "/admin/pricing-rules", icon: FiDollarSign, label: "Pricing Rules" },
+        { path: "/admin/service-templates", icon: FiLayers, label: "Service Templates" },
+        { path: "/admin/expert-approval", icon: FiCheckCircle, label: "Expert Approval Queue" },
+        { path: "/admin/custom-service-approval", icon: FiCheckCircle, label: "Custom Service Approval" },
+        { path: "/admin/workspace-monitoring", icon: FiBarChart2, label: "Workspace Monitor" },
+        { path: "/admin/service-analytics", icon: FiBarChart2, label: "Service Analytics" },
       ]
     },
     {
@@ -89,12 +105,6 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
           path: "/admin/deleted-experts",
           icon: FiArchive,
           label: "Deleted Experts",
-        },
-        { 
-          path: "/admin/expert-approval", 
-          icon: FiCheckCircle, 
-          label: "Approvals",
-          
         },
         { 
           path: "/admin/reels-management", 

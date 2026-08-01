@@ -297,7 +297,9 @@ export default function ExpertVoiceCall() {
     }, [callState]);
 
     useEffect(() => {
-        callIdRef.current = normalizedCallId;
+        if (!callIdRef.current) {
+            callIdRef.current = normalizedCallId;
+        }
     }, [normalizedCallId]);
 
     useEffect(() => {
@@ -366,13 +368,30 @@ export default function ExpertVoiceCall() {
                     },
                 });
 
-                // ============================================================
-                // STEP 3: Send ACCEPT socket event to server (web flow)
-                // ============================================================
-                console.log("📤 Sending voice accept socket event from React (autoStart)");
-                socket.emit(CALL_EVENTS.ACCEPT, {
-                    callId: callIdRef.current
-                });
+                const isIncomingCall = (
+                    location.state?.isIncoming ||
+                    location.state?.acceptSent ||
+                    location.state?.autoAccept ||
+                    nativeCall
+                );
+
+                if (isIncomingCall) {
+                    console.log("📤 Sending voice accept socket event from React (autoStart)");
+                    socket.emit(CALL_EVENTS.ACCEPT, {
+                        callId: callIdRef.current
+                    });
+                } else {
+                    console.log("📤 Initiating outgoing service call to user:", normalizedCallId);
+                    socket.emit(CALL_EVENTS.START, {
+                        targetUserId: normalizedCallId,
+                        expertId: expertData?.expertId || expertData?.id,
+                        pricing_mode: "subscription"
+                    });
+                    try {
+                        soundManager.stopAll();
+                        soundManager.play(SOUNDS.OUTGOING_CALL, { loop: true });
+                    } catch (e) {}
+                }
 
             } catch (err) {
                 console.error("❌ Auto mic failed", err);
@@ -389,12 +408,39 @@ export default function ExpertVoiceCall() {
         };
 
         autoStart();
-    }, [callState, socket, socketConnected, nativeCall]);
+    }, [callState, socket, socketConnected, nativeCall, location.state, normalizedCallId, expertData]);
 
     // ============================================================
     // All other event handlers remain the same
     // ============================================================
     
+    useEffect(() => {
+        if (!socket) return;
+
+        const onCreated = (data) => {
+            if (data?.callId) {
+                console.log("📞 Outgoing call created with ID:", data.callId);
+                callIdRef.current = Number(data.callId);
+            }
+        };
+
+        const onConnected = () => {
+            console.log("🟢 Call connected on expert side");
+            try { soundManager.stopAll(); } catch (e) {}
+            setCallState("connected");
+        };
+
+        socket.on("call:created", onCreated);
+        socket.on("call:connected", onConnected);
+        socket.on("call:accepted", onConnected);
+
+        return () => {
+            socket.off("call:created", onCreated);
+            socket.off("call:connected", onConnected);
+            socket.off("call:accepted", onConnected);
+        };
+    }, [socket]);
+
     useEffect(() => {
         const onResume = (data) => {
             if (data.callId !== normalizedCallId) return;
@@ -472,22 +518,25 @@ export default function ExpertVoiceCall() {
     useEffect(() => {
         if (!normalizedCallId) return;
 
-        const onConnected = ({ callId: connectedId, user_name }) => {
-            if (Number(connectedId) !== callIdRef.current) return;
+        const onConnected = (data = {}) => {
+            console.log("🟢 Call connected on expert side:", data);
+            if (data?.callId) callIdRef.current = Number(data.callId);
             
             setCaller(prev => ({
                 ...prev,
-                name: user_name || prev.name
+                name: data.user_name || prev.name
             }));
 
+            try { soundManager.stopAll(); } catch (e) {}
             setReconnecting(false);
             reconnectAttemptsRef.current = 0;
             setSeconds(0);
             setCallState("connected");
         };
 
-        const onEnded = ({ callId: endedId }) => {
-            if (Number(endedId) !== callIdRef.current) return;
+        const onEnded = (data = {}) => {
+            console.log("❌ Call ended on expert side:", data);
+            try { soundManager.stopAll(); } catch (e) {}
             setCallState("ended");
             callStartedRef.current = false;
             
@@ -497,11 +546,12 @@ export default function ExpertVoiceCall() {
             removeProcessedNativeCall(String(callIdRef.current));
             clearNativeCallData();
             
-            setTimeout(() => navigate("/expert/home", { replace: true }), 1000);
+            setTimeout(() => navigate("/expert/home", { replace: true }), 500);
         };
 
         const onBusy = () => {
             console.log("🚫 Expert: Call rejected/busy");
+            try { soundManager.stopAll(); } catch (e) {}
             setCallState("ended");
             callStartedRef.current = false;
             cleanupMedia(true);
@@ -512,12 +562,12 @@ export default function ExpertVoiceCall() {
             
             setTimeout(() => {
                 navigate("/expert/home", { replace: true });
-            }, 1000);
+            }, 500);
         };
 
         const onResumed = async ({ callId: resumedCallId }) => {
             console.log("🔁 Expert received call:resumed event for call:", resumedCallId);
-            if (Number(resumedCallId) !== Number(callIdRef.current)) {
+            if (Number(resumedCallId) !== Number(callIdRef.current) && Number(resumedCallId) !== Number(normalizedCallId)) {
                 console.log("⏭️ call:resumed callId mismatch, ignoring");
                 return;
             }
@@ -530,7 +580,7 @@ export default function ExpertVoiceCall() {
             cleanupMedia(false);
             
             setTimeout(async () => {
-                if (callStateRef.current === "connected" && Number(callIdRef.current) === Number(resumedCallId)) {
+                if (callStateRef.current === "connected") {
                     console.log("♻ Recreating expert peer connection to receive offer");
                     if (!streamRef.current || streamRef.current.getAudioTracks()[0]?.readyState !== "live") {
                         try {
@@ -551,13 +601,25 @@ export default function ExpertVoiceCall() {
         };
 
         socket.on(CALL_EVENTS.CONNECTED, onConnected);
+        socket.on("call:connected", onConnected);
+        socket.on("call:accepted", onConnected);
+
         socket.on(CALL_EVENTS.ENDED, onEnded);
+        socket.on("call:ended", onEnded);
+        socket.on("call:cancelled", onEnded);
+
         socket.on(CALL_EVENTS.BUSY, onBusy);
         socket.on("call:resumed", onResumed);
 
         return () => {
             socket.off(CALL_EVENTS.CONNECTED, onConnected);
+            socket.off("call:connected", onConnected);
+            socket.off("call:accepted", onConnected);
+
             socket.off(CALL_EVENTS.ENDED, onEnded);
+            socket.off("call:ended", onEnded);
+            socket.off("call:cancelled", onEnded);
+
             socket.off(CALL_EVENTS.BUSY, onBusy);
             socket.off("call:resumed", onResumed);
         };
@@ -734,6 +796,8 @@ export default function ExpertVoiceCall() {
                 });
 
                 console.log("✅ Answer sent to user");
+                try { soundManager.stopAll(); } catch (e) {}
+                setCallState("connected");
             } catch (err) {
                 console.error("❌ Answer failed", err);
             } finally {
@@ -852,16 +916,25 @@ export default function ExpertVoiceCall() {
         if (isCleaningUpRef.current) return;
         isCleaningUpRef.current = true;
 
-        console.log("🔚 Expert: Ending call via useCallHandler", callIdRef.current);
+        console.log("🔚 Expert: Ending call for callId:", callIdRef.current);
         
+        try { soundManager.stopAll(); } catch (e) {}
+        if (socket && socket.connected && callIdRef.current) {
+            socket.emit(CALL_EVENTS.END, { callId: callIdRef.current, by: "expert" });
+            socket.emit("call:end", { callId: callIdRef.current });
+        }
+
         cleanupMedia(true);
         nativeStartedRef.current = false;
+        releaseNativeCallLock();
+        removeProcessedNativeCall(String(callIdRef.current));
+        clearNativeCallData();
+        setCallState("ended");
 
-        executeEndCall(callIdRef.current, "expert", {
-            type: "voice_call",
-            fallbackUrl: "/expert/home",
-        });
-    }, [executeEndCall, cleanupMedia]);
+        setTimeout(() => {
+            navigate("/expert/home", { replace: true });
+        }, 300);
+    }, [socket, navigate, cleanupMedia]);
 
     // Unmount Cleanup: Ensures peer is closed, media released, and native layer reset on unexpected unmount
     useEffect(() => {

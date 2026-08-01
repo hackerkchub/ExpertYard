@@ -3,7 +3,8 @@ import {
   FiMail,
   FiPhone,
   FiLogOut,
-  FiUser
+  FiUser,
+  FiPackage
 } from "react-icons/fi";
 
 import { useNavigate } from "react-router-dom";
@@ -230,6 +231,35 @@ const ProfilePopup = ({
               margin: "16px 0"
             }}
           />
+
+          {/* ================= MY ORDERS BUTTON ================= */}
+
+          <button
+            onClick={() => {
+              onClose?.();
+              navigate("/user/my-orders");
+            }}
+            style={{
+              width: "100%",
+              background: "linear-gradient(135deg,#ecfdf5,#d1fae5)",
+              color: "#059669",
+              border: "1px solid #a7f3d0",
+              borderRadius: 12,
+              padding: "12px 16px",
+              fontWeight: 600,
+              fontSize: 14,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              cursor: "pointer",
+              marginBottom: 10,
+              transition: "all 0.2s ease"
+            }}
+          >
+            <FiPackage />
+            My Orders & Bookings
+          </button>
 
           {/* ================= VIEW PROFILE BUTTON ================= */}
 

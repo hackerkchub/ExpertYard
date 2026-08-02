@@ -218,23 +218,101 @@ export default function ServiceActivationModal({ masterService, isOpen, onClose,
   };
 
   return (
-    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15,23,42,0.6)", backdropFilter: "blur(4px)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000, padding: "1rem" }}>
-      <div style={{ background: "#fff", border: "1px solid #cbd5e1", borderRadius: 16, width: "100%", maxWidth: 750, maxHeight: "90vh", overflowY: "auto", padding: "1.75rem", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)", display: "grid", gap: "1.25rem" }}>
-        
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid #f1f5f9", paddingBottom: "1rem" }}>
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: "rgba(15, 23, 42, 0.65)",
+        backdropFilter: "blur(4px)",
+        WebkitBackdropFilter: "blur(4px)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 100000,
+        padding: "12px",
+        boxSizing: "border-box"
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        style={{
+          background: "#ffffff",
+          border: "1px solid #cbd5e1",
+          borderRadius: 16,
+          width: "100%",
+          maxWidth: 750,
+          maxHeight: "min(90vh, 90dvh)",
+          height: "auto",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+          boxSizing: "border-box"
+        }}
+      >
+        {/* FIXED HEADER */}
+        <div
+          style={{
+            flex: "0 0 auto",
+            padding: "1.25rem 1.5rem 1rem 1.5rem",
+            borderBottom: "1px solid #f1f5f9",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: "12px",
+            background: "#ffffff"
+          }}
+        >
           <div>
-            <h3 style={{ margin: 0, color: "#0f172a", fontSize: "1.35rem" }}>Activate Service: {masterService.title}</h3>
-            <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "0.85rem" }}>
+            <h3 style={{ margin: 0, color: "#0f172a", fontSize: "1.25rem", fontWeight: 700 }}>
+              Activate Service: {masterService.title}
+            </h3>
+            <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "0.82rem" }}>
               Configure all 4 Service OS V2 modules synchronized with Admin.
             </p>
           </div>
-          <button type="button" onClick={onClose} style={{ background: "#f1f5f9", border: 0, padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 700 }}>✕</button>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              background: "#f1f5f9",
+              border: 0,
+              padding: "6px 12px",
+              borderRadius: 6,
+              cursor: "pointer",
+              fontWeight: 700,
+              color: "#475569",
+              flexShrink: 0
+            }}
+          >
+            ✕
+          </button>
         </div>
 
-        {error && <div style={{ background: "#fef2f2", color: "#b42318", border: "1px solid #fecaca", padding: "0.75rem 1rem", borderRadius: 8, fontSize: 13 }}>{error}</div>}
+        {error && (
+          <div style={{ flex: "0 0 auto", margin: "0.75rem 1.5rem 0 1.5rem", background: "#fef2f2", color: "#b42318", border: "1px solid #fecaca", padding: "0.75rem 1rem", borderRadius: 8, fontSize: 13 }}>
+            {error}
+          </div>
+        )}
 
-        {/* 4 OPERATING MODULE TABS */}
-        <div style={{ display: "flex", borderBottom: "2px solid #e2e8f0", gap: 12 }}>
+        {/* FIXED 4 OPERATING MODULE TABS */}
+        <div
+          style={{
+            flex: "0 0 auto",
+            padding: "0 1.5rem",
+            borderBottom: "2px solid #e2e8f0",
+            display: "flex",
+            gap: 8,
+            overflowX: "auto",
+            scrollbarWidth: "none",
+            background: "#ffffff"
+          }}
+        >
           {[
             { id: "pricing", label: "💰 Pricing Engine" },
             { id: "documents", label: `📄 Documents (${docSpecs.length})` },
@@ -246,14 +324,16 @@ export default function ServiceActivationModal({ masterService, isOpen, onClose,
               type="button"
               onClick={() => setActiveTab(tab.id)}
               style={{
-                padding: "8px 14px",
+                padding: "10px 14px",
                 border: 0,
                 borderBottom: activeTab === tab.id ? "3px solid #2563eb" : "3px solid transparent",
                 background: "transparent",
                 color: activeTab === tab.id ? "#2563eb" : "#64748b",
                 fontWeight: 700,
                 fontSize: 13,
-                cursor: "pointer"
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                flexShrink: 0
               }}
             >
               {tab.label}
@@ -261,17 +341,29 @@ export default function ServiceActivationModal({ masterService, isOpen, onClose,
           ))}
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1.1rem" }}>
+        {/* SCROLLABLE FORM BODY */}
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            flex: "1 1 auto",
+            overflowY: "auto",
+            padding: "1.25rem 1.5rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "1.1rem",
+            WebkitOverflowScrolling: "touch"
+          }}
+        >
           {/* TAB 1: PRICING ENGINE */}
           {activeTab === "pricing" && (
             <div style={{ display: "grid", gap: "1rem" }}>
               <div style={{ background: "#f8fafc", padding: "1rem", borderRadius: 10, border: "1px solid #e2e8f0", display: "grid", gap: "0.75rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px", fontSize: 13 }}>
                   <span style={{ fontWeight: 700, color: "#1e293b" }}>Pricing Engine & Commission Simulator</span>
                   <span style={{ color: "#64748b" }}>Platform Base: <strong>₹{masterService.base_price}</strong></span>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
                   <label style={labelStyle}>
                     Your Selling Price (₹)
                     <input
@@ -297,7 +389,7 @@ export default function ServiceActivationModal({ masterService, isOpen, onClose,
                 </div>
 
                 {/* LIVE NET PAYOUT ESTIMATOR */}
-                <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", padding: "0.85rem", borderRadius: 8, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", fontSize: 12 }}>
+                <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", padding: "0.85rem", borderRadius: 8, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "8px", fontSize: 12 }}>
                   <div><span style={{ color: "#64748b" }}>Platform Comm ({commPercent}%):</span> <strong style={{ color: "#1e293b", display: "block" }}>₹{platformFee}</strong></div>
                   <div><span style={{ color: "#64748b" }}>GST ({gstPercent}%):</span> <strong style={{ color: "#1e293b", display: "block" }}>₹{gstAmount}</strong></div>
                   <div><span style={{ color: "#15803d", fontWeight: 700 }}>Estimated Net Payout:</span> <strong style={{ color: "#15803d", fontSize: 15, display: "block" }}>₹{netPayout}</strong></div>
@@ -331,7 +423,7 @@ export default function ServiceActivationModal({ masterService, isOpen, onClose,
               <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>Customize document specifications required from the user during order placement.</p>
               {docSpecs.map((doc, idx) => (
                 <div key={doc.id || idx} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "0.75rem", display: "grid", gap: 6 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
                     <span style={{ fontWeight: 700, color: "#1e293b", fontSize: 13 }}>📄 {doc.label}</span>
                     <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                       <label style={{ fontSize: 12, color: "#334155", display: "flex", gap: 4, alignItems: "center", cursor: "pointer" }}>
@@ -343,8 +435,8 @@ export default function ServiceActivationModal({ masterService, isOpen, onClose,
                   <input type="text" placeholder="Instructions..." value={doc.instructions} onChange={(e) => { const copy = [...docSpecs]; copy[idx].instructions = e.target.value; setDocSpecs(copy); }} style={{ ...inputStyle, fontSize: 12, padding: "4px 8px" }} />
                 </div>
               ))}
-              <div style={{ display: "flex", gap: 8 }}>
-                <input type="text" placeholder="Add required document name..." value={newDocLabel} onChange={(e) => setNewDocLabel(e.target.value)} style={{ ...inputStyle, flex: 1, fontSize: 13 }} />
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <input type="text" placeholder="Add required document name..." value={newDocLabel} onChange={(e) => setNewDocLabel(e.target.value)} style={{ ...inputStyle, flex: "1 1 200px", fontSize: 13 }} />
                 <button type="button" onClick={handleAddCustomDoc} style={{ padding: "6px 14px", background: "#059669", color: "#fff", border: 0, borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>+ Add Doc</button>
               </div>
             </div>
@@ -355,7 +447,7 @@ export default function ServiceActivationModal({ masterService, isOpen, onClose,
             <div style={{ display: "grid", gap: "0.75rem" }}>
               <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>Inspect & configure user submission input fields.</p>
               {formFields.map((f, idx) => (
-                <div key={f.id || idx} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div key={f.id || idx} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
                   <div>
                     <strong style={{ fontSize: 13, color: "#1e293b" }}>📋 {f.field_label}</strong>
                     <span style={{ fontSize: 11, color: "#64748b", marginLeft: 6 }}>({f.field_type})</span>
@@ -368,8 +460,8 @@ export default function ServiceActivationModal({ masterService, isOpen, onClose,
                   </div>
                 </div>
               ))}
-              <div style={{ display: "flex", gap: 8 }}>
-                <input type="text" placeholder="Add custom input field label..." value={newFieldLabel} onChange={(e) => setNewFieldLabel(e.target.value)} style={{ ...inputStyle, flex: 1, fontSize: 13 }} />
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <input type="text" placeholder="Add custom input field label..." value={newFieldLabel} onChange={(e) => setNewFieldLabel(e.target.value)} style={{ ...inputStyle, flex: "1 1 200px", fontSize: 13 }} />
                 <button type="button" onClick={handleAddCustomField} style={{ padding: "6px 14px", background: "#2563eb", color: "#fff", border: 0, borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>+ Add Field</button>
               </div>
             </div>
@@ -380,7 +472,7 @@ export default function ServiceActivationModal({ masterService, isOpen, onClose,
             <div style={{ display: "grid", gap: "0.75rem" }}>
               <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>Execution steps, milestone triggers, and SLA turnaround timeline.</p>
               {workflowSteps.map((st, idx) => (
-                <div key={st.id || idx} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div key={st.id || idx} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
                   <div>
                     <strong style={{ fontSize: 13, color: "#1e293b" }}>Step {st.step_order || idx+1}: {st.step_label}</strong>
                     <div style={{ fontSize: 11, color: "#64748b" }}>Est turnaround: {st.estimated_days || 1} Days</div>
@@ -388,15 +480,28 @@ export default function ServiceActivationModal({ masterService, isOpen, onClose,
                   <button type="button" onClick={() => setWorkflowSteps(workflowSteps.filter((_, i) => i !== idx))} style={{ background: "#fef2f2", color: "#b42318", border: 0, padding: "2px 6px", borderRadius: 4, fontSize: 11, cursor: "pointer" }}>Remove</button>
                 </div>
               ))}
-              <div style={{ display: "flex", gap: 8 }}>
-                <input type="text" placeholder="Add workflow step label..." value={newStepLabel} onChange={(e) => setNewStepLabel(e.target.value)} style={{ ...inputStyle, flex: 1, fontSize: 13 }} />
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <input type="text" placeholder="Add workflow step label..." value={newStepLabel} onChange={(e) => setNewStepLabel(e.target.value)} style={{ ...inputStyle, flex: "1 1 200px", fontSize: 13 }} />
                 <button type="button" onClick={handleAddWorkflowStep} style={{ padding: "6px 14px", background: "#ca8a04", color: "#fff", border: 0, borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>+ Add Step</button>
               </div>
             </div>
           )}
 
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: "0.5rem", borderTop: "1px solid #f1f5f9", paddingTop: "1rem" }}>
-            <button type="button" onClick={onClose} style={{ padding: "0.65rem 1.25rem", background: "#f1f5f9", border: "1px solid #cbd5e1", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}>Cancel</button>
+          {/* FIXED FOOTER BUTTONS */}
+          <div
+            style={{
+              marginTop: "auto",
+              paddingTop: "1rem",
+              borderTop: "1px solid #f1f5f9",
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 10,
+              background: "#ffffff"
+            }}
+          >
+            <button type="button" onClick={onClose} style={{ padding: "0.65rem 1.25rem", background: "#f1f5f9", border: "1px solid #cbd5e1", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}>
+              Cancel
+            </button>
             <button type="submit" disabled={submitting} style={{ padding: "0.65rem 1.5rem", background: "#2563eb", color: "#fff", border: 0, borderRadius: 8, fontWeight: 800, cursor: "pointer" }}>
               {submitting ? "Activating..." : "🚀 Save & Confirm Activation"}
             </button>

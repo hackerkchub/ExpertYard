@@ -44,14 +44,14 @@ const MOBILE_TABS = [
 ];
 const MOBILE_QUERY = "(max-width: 767px)";
 
-const getList = (response, key) => {
-  const payload = getPayload(response);
-  return asArray(payload[key] || payload.results || payload.items || payload);
-};
-
 const getSearchParamObject = (value = "", paramName = "q") => {
   const query = normalizeSearchTerm(value);
   return query ? { [paramName]: query } : {};
+};
+
+const getList = (response, key) => {
+  const payload = getPayload(response);
+  return asArray(payload[key] || payload.results || payload.items || payload);
 };
 
 function useIsMobileSearchPage() {
@@ -79,7 +79,7 @@ function useIsMobileSearchPage() {
 }
 
 const getServicePath = (service) =>
-  `/user/service-details/${service?.slug || service?.service_slug || service?.id}`;
+  `/user/service/${service?.slug || service?.service_slug || service?.id}`;
 
 const getServiceName = (service) =>
   service?.title || service?.name || service?.service_name || "Expert Service";

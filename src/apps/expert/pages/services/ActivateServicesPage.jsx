@@ -315,9 +315,9 @@ export default function ActivateServicesPage() {
 
       {/* SERVICE INSPECTION MODAL */}
       {inspectingService && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15,23,42,0.6)", backdropFilter: "blur(4px)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000, padding: "1rem" }}>
-          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 750, maxHeight: "90vh", overflowY: "auto", padding: "1.75rem", display: "grid", gap: "1.25rem", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid #f1f5f9", paddingBottom: "1rem" }}>
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15,23,42,0.65)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 100000, padding: "12px", boxSizing: "border-box" }}>
+          <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 750, maxHeight: "min(90vh, 90dvh)", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", boxSizing: "border-box" }}>
+            <div style={{ flex: "0 0 auto", display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid #f1f5f9", padding: "1.25rem 1.5rem 1rem 1.5rem" }}>
               <div>
                 <h3 style={{ margin: 0, color: "#0f172a", fontSize: "1.4rem" }}>{inspectingService.title}</h3>
                 <div style={{ fontSize: 12, color: "#2563eb", fontWeight: 600 }}>SEO Route: /service/{inspectingService.slug}</div>
@@ -327,98 +327,100 @@ export default function ActivateServicesPage() {
               </button>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem", background: "#f8fafc", padding: "1rem", borderRadius: 10 }}>
-              <div>
-                <small style={{ color: "#64748b", fontWeight: 700 }}>Base Price</small>
-                <div style={{ fontSize: "1.3rem", fontWeight: 800, color: "#059669" }}>₹{inspectingService.base_price}</div>
+            <div style={{ flex: "1 1 auto", overflowY: "auto", padding: "1.25rem 1.5rem", display: "grid", gap: "1.25rem", WebkitOverflowScrolling: "touch" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem", background: "#f8fafc", padding: "1rem", borderRadius: 10 }}>
+                <div>
+                  <small style={{ color: "#64748b", fontWeight: 700 }}>Base Price</small>
+                  <div style={{ fontSize: "1.3rem", fontWeight: 800, color: "#059669" }}>₹{inspectingService.base_price}</div>
+                </div>
+                <div>
+                  <small style={{ color: "#64748b", fontWeight: 700 }}>Platform Rules</small>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>GST {inspectingService.gst_percent || 18}% • Comm {inspectingService.commission_percent || 0}%</div>
+                </div>
+                <div>
+                  <small style={{ color: "#64748b", fontWeight: 700 }}>Delivery SLA</small>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>{inspectingService.delivery_time_days || 1} Days</div>
+                </div>
               </div>
+
               <div>
-                <small style={{ color: "#64748b", fontWeight: 700 }}>Platform Rules</small>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>GST {inspectingService.gst_percent || 18}% • Comm {inspectingService.commission_percent || 0}%</div>
+                <h4 style={{ margin: "0 0 0.5rem 0", color: "#0f172a" }}>Full Description & Scope</h4>
+                <p style={{ margin: 0, color: "#475569", lineHeight: 1.5, fontSize: 14 }}>
+                  {inspectingService.full_description || inspectingService.short_description || "Standard master service description."}
+                </p>
               </div>
-              <div>
-                <small style={{ color: "#64748b", fontWeight: 700 }}>Delivery SLA</small>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#1e293b" }}>{inspectingService.delivery_time_days || 1} Days</div>
+
+              {/* 4 OPERATING SYSTEM V2 MODULES CARDS */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1rem" }}>
+                {/* DYNAMIC FORM BUILDER CARD */}
+                <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, padding: "1rem", display: "grid", gap: 6 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <strong style={{ color: "#0f172a", fontSize: 13 }}>Dynamic Form Builder</strong>
+                    <span style={{ background: "#eff6ff", color: "#1d4ed8", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700 }}>
+                      {(inspectingService.form_fields || []).length} Fields
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>User inputs, PAN/GST regex validation, file uploads, and conditional rules.</p>
+                  {Array.isArray(inspectingService.form_fields) && inspectingService.form_fields.length > 0 && (
+                    <div style={{ fontSize: 11, color: "#334155", background: "#f8fafc", padding: "6px 8px", borderRadius: 6, display: "grid", gap: 2 }}>
+                      {inspectingService.form_fields.slice(0, 3).map((f) => (
+                        <div key={f.id || f.field_key}>• {f.field_label} ({f.field_type})</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* DOCUMENT REQUIREMENTS CARD */}
+                <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, padding: "1rem", display: "grid", gap: 6 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <strong style={{ color: "#0f172a", fontSize: 13 }}>Document Requirements</strong>
+                    <span style={{ background: "#f0fdf4", color: "#15803d", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700 }}>
+                      {(inspectingService.document_specs || []).length} Docs Required
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>Mandatory PAN, Passport, Photo, PDF, and image upload specifications.</p>
+                  {Array.isArray(inspectingService.document_specs) && inspectingService.document_specs.length > 0 && (
+                    <div style={{ fontSize: 11, color: "#334155", background: "#f8fafc", padding: "6px 8px", borderRadius: 6, display: "grid", gap: 2 }}>
+                      {inspectingService.document_specs.slice(0, 3).map((d) => (
+                        <div key={d.id || d.doc_type_key}>• {d.label} {d.is_mandatory ? "*" : ""}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* VISUAL WORKFLOW BUILDER CARD */}
+                <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, padding: "1rem", display: "grid", gap: 6 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <strong style={{ color: "#0f172a", fontSize: 13 }}>Visual Workflow Builder</strong>
+                    <span style={{ background: "#fefce8", color: "#a16207", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700 }}>
+                      {(inspectingService.workflow_steps || []).length} Pipeline Steps
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>Execution steps, role permissions (chat, calls, delivery), and milestones.</p>
+                  {Array.isArray(inspectingService.workflow_steps) && inspectingService.workflow_steps.length > 0 && (
+                    <div style={{ fontSize: 11, color: "#334155", background: "#f8fafc", padding: "6px 8px", borderRadius: 6, display: "grid", gap: 2 }}>
+                      {inspectingService.workflow_steps.slice(0, 3).map((st, idx) => (
+                        <div key={st.id || idx}>Step {st.step_order || idx+1}: {st.step_label}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* PRICING RULES & ENGINE CARD */}
+                <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, padding: "1rem", display: "grid", gap: 6 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <strong style={{ color: "#0f172a", fontSize: 13 }}>Pricing Rules & Engine</strong>
+                    <span style={{ background: "#f3e8ff", color: "#7e22ce", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700 }}>Live Engine</span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>Base pricing, GST calculations, platform commission rates, and net payouts.</p>
+                  <div style={{ fontSize: 11, color: "#334155", background: "#f8fafc", padding: "6px 8px", borderRadius: 6 }}>
+                    Net Payout Estimate: <strong>₹{Math.round(inspectingService.base_price * (1 - (inspectingService.commission_percent || 0)/100))}</strong>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div>
-              <h4 style={{ margin: "0 0 0.5rem 0", color: "#0f172a" }}>Full Description & Scope</h4>
-              <p style={{ margin: 0, color: "#475569", lineHeight: 1.5, fontSize: 14 }}>
-                {inspectingService.full_description || inspectingService.short_description || "Standard master service description."}
-              </p>
-            </div>
-
-            {/* 4 OPERATING SYSTEM V2 MODULES CARDS */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1rem" }}>
-              {/* DYNAMIC FORM BUILDER CARD */}
-              <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, padding: "1rem", display: "grid", gap: 6 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <strong style={{ color: "#0f172a", fontSize: 13 }}>Dynamic Form Builder</strong>
-                  <span style={{ background: "#eff6ff", color: "#1d4ed8", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700 }}>
-                    {(inspectingService.form_fields || []).length} Fields
-                  </span>
-                </div>
-                <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>User inputs, PAN/GST regex validation, file uploads, and conditional rules.</p>
-                {Array.isArray(inspectingService.form_fields) && inspectingService.form_fields.length > 0 && (
-                  <div style={{ fontSize: 11, color: "#334155", background: "#f8fafc", padding: "6px 8px", borderRadius: 6, display: "grid", gap: 2 }}>
-                    {inspectingService.form_fields.slice(0, 3).map((f) => (
-                      <div key={f.id || f.field_key}>• {f.field_label} ({f.field_type})</div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* DOCUMENT REQUIREMENTS CARD */}
-              <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, padding: "1rem", display: "grid", gap: 6 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <strong style={{ color: "#0f172a", fontSize: 13 }}>Document Requirements</strong>
-                  <span style={{ background: "#f0fdf4", color: "#15803d", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700 }}>
-                    {(inspectingService.document_specs || []).length} Docs Required
-                  </span>
-                </div>
-                <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>Mandatory PAN, Passport, Photo, PDF, and image upload specifications.</p>
-                {Array.isArray(inspectingService.document_specs) && inspectingService.document_specs.length > 0 && (
-                  <div style={{ fontSize: 11, color: "#334155", background: "#f8fafc", padding: "6px 8px", borderRadius: 6, display: "grid", gap: 2 }}>
-                    {inspectingService.document_specs.slice(0, 3).map((d) => (
-                      <div key={d.id || d.doc_type_key}>• {d.label} {d.is_mandatory ? "*" : ""}</div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* VISUAL WORKFLOW BUILDER CARD */}
-              <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, padding: "1rem", display: "grid", gap: 6 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <strong style={{ color: "#0f172a", fontSize: 13 }}>Visual Workflow Builder</strong>
-                  <span style={{ background: "#fefce8", color: "#a16207", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700 }}>
-                    {(inspectingService.workflow_steps || []).length} Pipeline Steps
-                  </span>
-                </div>
-                <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>Execution steps, role permissions (chat, calls, delivery), and milestones.</p>
-                {Array.isArray(inspectingService.workflow_steps) && inspectingService.workflow_steps.length > 0 && (
-                  <div style={{ fontSize: 11, color: "#334155", background: "#f8fafc", padding: "6px 8px", borderRadius: 6, display: "grid", gap: 2 }}>
-                    {inspectingService.workflow_steps.slice(0, 3).map((st, idx) => (
-                      <div key={st.id || idx}>Step {st.step_order || idx+1}: {st.step_label}</div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* PRICING RULES & ENGINE CARD */}
-              <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, padding: "1rem", display: "grid", gap: 6 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <strong style={{ color: "#0f172a", fontSize: 13 }}>Pricing Rules & Engine</strong>
-                  <span style={{ background: "#f3e8ff", color: "#7e22ce", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700 }}>Live Engine</span>
-                </div>
-                <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>Base pricing, GST calculations, platform commission rates, and net payouts.</p>
-                <div style={{ fontSize: 11, color: "#334155", background: "#f8fafc", padding: "6px 8px", borderRadius: 6 }}>
-                  Net Payout Estimate: <strong>₹{Math.round(inspectingService.base_price * (1 - (inspectingService.commission_percent || 0)/100))}</strong>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, borderTop: "1px solid #f1f5f9", paddingTop: "1rem" }}>
+            <div style={{ flex: "0 0 auto", display: "flex", justifyContent: "flex-end", gap: 10, borderTop: "1px solid #f1f5f9", padding: "1rem 1.5rem", background: "#fff" }}>
               <button type="button" onClick={() => setInspectingService(null)} style={{ padding: "0.65rem 1.25rem", background: "#f1f5f9", border: "1px solid #cbd5e1", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}>
                 Close
               </button>

@@ -768,18 +768,96 @@ export default function ExpertInquiriesPage() {
     fetchInquiries();
   }, [initialId]);
 
-  /* ------------------ REAL-TIME SOCKET MESSAGES ------------------ */
+  /* ------------------ REAL-TIME SOCKET MESSAGES & STATUS ------------------ */
   useEffect(() => {
-    if (!socket || !selectedInquiry) return;
+    if (!socket) return;
 
     const handleInquiryMessage = (data) => {
-      if (Number(data.inquiry_id || data.inquiryId) === Number(selectedInquiry.id)) {
-        setMessages((prev) => [...prev, data]);
+      const inqId = Number(data.inquiry_id || data.inquiryId);
+
+      if (selectedInquiry && Number(selectedInquiry.id) === inqId) {
+        setMessages((prev) => {
+          if (prev.some((m) => Number(m.id) === Number(data.id))) return prev;
+          return [...prev, data];
+        });
       }
+
+      setInquiries((prev) =>
+        prev.map((item) =>
+          Number(item.id) === inqId
+            ? {
+                ...item,
+                status: data.sender_type === "user" ? "user_replied" : "expert_replied",
+                message: data.message,
+                last_message_at: data.created_at || new Date().toISOString(),
+              }
+            : item
+        )
+      );
+    };
+
+    const handleNewInquiry = (newInquiry) => {
+      setInquiries((prev) => {
+        if (prev.some((item) => Number(item.id) === Number(newInquiry.id))) return prev;
+        return [newInquiry, ...prev];
+      });
+    };
+
+    const handleStatusUpdated = (data) => {
+      const inqId = Number(data.inquiry_id);
+      if (selectedInquiry && Number(selectedInquiry.id) === inqId) {
+        setSelectedInquiry((prev) => (prev ? { ...prev, status: data.status } : null));
+      }
+      setInquiries((prev) =>
+        prev.map((item) => (Number(item.id) === inqId ? { ...item, status: data.status } : item))
+      );
     };
 
     socket.on("inquiry_message", handleInquiryMessage);
-    return () => socket.off("inquiry_message", handleInquiryMessage);
+    socket.on("new_inquiry", handleNewInquiry);
+    socket.on("inquiry_status_updated", handleStatusUpdated);
+
+    return () => {
+      socket.off("inquiry_message", handleInquiryMessage);
+      socket.off("new_inquiry", handleNewInquiry);
+      socket.off("inquiry_status_updated", handleStatusUpdated);
+    };
+  }, [selectedInquiry]);
+
+  /* ------------------ FALLBACK POLLING ------------------ */
+  useEffect(() => {
+    if (!selectedInquiry) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const token = localStorage.getItem("expert_token");
+        const res = await fetch(`${APP_CONFIG.API_BASE_URL}/inquiries/expert/${selectedInquiry.id}`, {
+          headers: { Authorization: token ? `Bearer ${token}` : "" },
+        });
+        const data = await res.json();
+        if (res.ok && data.data?.messages) {
+          setMessages((prev) => {
+            const fetched = data.data.messages || [];
+            if (
+              fetched.length !== prev.length ||
+              (fetched.length > 0 && prev.length > 0 && fetched[fetched.length - 1].id !== prev[prev.length - 1].id)
+            ) {
+              return fetched;
+            }
+            return prev;
+          });
+          if (data.data.inquiry?.status) {
+            setInquiries((prev) =>
+              prev.map((item) => (item.id === selectedInquiry.id ? { ...item, status: data.data.inquiry.status } : item))
+            );
+          }
+        }
+      } catch (err) {
+        // silent fail
+      }
+    }, 4000);
+
+    return () => clearInterval(interval);
   }, [selectedInquiry]);
 
   /* ------------------ AUTO SCROLL ------------------ */
@@ -831,7 +909,10 @@ export default function ExpertInquiriesPage() {
       });
       const data = await res.json();
       if (res.ok && data.data) {
-        setMessages((prev) => [...prev, data.data]);
+        setMessages((prev) => {
+          if (prev.some((m) => Number(m.id) === Number(data.data.id))) return prev;
+          return [...prev, data.data];
+        });
         setInquiries((prev) =>
           prev.map((item) =>
             item.id === selectedInquiry.id ? { ...item, status: "expert_replied", message: messageContent } : item

@@ -123,7 +123,7 @@ export const flattenResults = (groups) =>
 export const getResultPath = (group, item) => {
   if (group === "experts") return getExpertPath(item);
   if (group === "categories") return getCategoryResultPath(item);
-  if (group === "services") return `/user/service-details/${item?.slug || item?.service_slug || item?.id}`;
+  if (group === "services") return `/user/service/${item?.slug || item?.service_slug || item?.id}`;
   if (group === "locations") return buildUserSearchPath(getLocationDisplayName(item), "location");
   return getSubcategoryResultPath(item);
 };

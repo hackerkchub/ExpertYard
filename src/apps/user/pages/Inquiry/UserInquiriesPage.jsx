@@ -4,6 +4,7 @@ import { FiSend, FiInbox, FiArrowLeft, FiMessageCircle, FiCheckCircle, FiSearch 
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { APP_CONFIG } from "../../../../config/appConfig";
+import { socket, connectSocket } from "../../../../shared/api/socket";
 
 // Animations
 const fadeIn = keyframes`
@@ -564,6 +565,7 @@ export default function UserInquiriesPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialId = searchParams.get("id");
+  const { user } = useAuth();
 
   const [inquiries, setInquiries] = useState([]);
   const [selectedInquiry, setSelectedInquiry] = useState(null);
@@ -577,6 +579,97 @@ export default function UserInquiriesPage() {
   const [statusFilter, setStatusFilter] = useState("all");
 
   const messageEndRef = useRef(null);
+
+  // Connect socket if user is logged in
+  useEffect(() => {
+    if (user?.id) {
+      connectSocket({ userId: user.id, role: "user" });
+    }
+  }, [user?.id]);
+
+  // Real-time socket message listener
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleInquiryMessage = (data) => {
+      const inqId = Number(data.inquiry_id || data.inquiryId);
+      
+      // If message is for currently selected inquiry, append to chat view
+      if (selectedInquiry && Number(selectedInquiry.id) === inqId) {
+        setMessages((prev) => {
+          if (prev.some((m) => Number(m.id) === Number(data.id))) return prev;
+          return [...prev, data];
+        });
+      }
+
+      // Update sidebar inquiry preview & status
+      setInquiries((prev) =>
+        prev.map((item) =>
+          Number(item.id) === inqId
+            ? {
+                ...item,
+                status: data.sender_type === "expert" ? "expert_replied" : "user_replied",
+                message: data.message,
+                last_message_at: data.created_at || new Date().toISOString(),
+              }
+            : item
+        )
+      );
+    };
+
+    const handleStatusUpdated = (data) => {
+      const inqId = Number(data.inquiry_id);
+      if (selectedInquiry && Number(selectedInquiry.id) === inqId) {
+        setSelectedInquiry((prev) => prev ? { ...prev, status: data.status } : null);
+      }
+      setInquiries((prev) =>
+        prev.map((item) => (Number(item.id) === inqId ? { ...item, status: data.status } : item))
+      );
+    };
+
+    socket.on("inquiry_message", handleInquiryMessage);
+    socket.on("inquiry_status_updated", handleStatusUpdated);
+
+    return () => {
+      socket.off("inquiry_message", handleInquiryMessage);
+      socket.off("inquiry_status_updated", handleStatusUpdated);
+    };
+  }, [selectedInquiry]);
+
+  // Background fallback polling when an inquiry is selected
+  useEffect(() => {
+    if (!selectedInquiry) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const token = localStorage.getItem("user_token");
+        const res = await fetch(`${APP_CONFIG.API_BASE_URL}/inquiries/${selectedInquiry.id}`, {
+          headers: { Authorization: token ? `Bearer ${token}` : "" },
+        });
+        const data = await res.json();
+        if (res.ok && data.data?.messages) {
+          setMessages((prev) => {
+            const fetched = data.data.messages || [];
+            if (fetched.length !== prev.length || (fetched.length > 0 && prev.length > 0 && fetched[fetched.length - 1].id !== prev[prev.length - 1].id)) {
+              return fetched;
+            }
+            return prev;
+          });
+          if (data.data.inquiry?.status) {
+            setInquiries((prev) =>
+              prev.map((item) =>
+                item.id === selectedInquiry.id ? { ...item, status: data.data.inquiry.status } : item
+              )
+            );
+          }
+        }
+      } catch (err) {
+        // silent fail
+      }
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [selectedInquiry]);
 
   const fetchInquiries = async (autoSelectId = null) => {
     try {
@@ -636,6 +729,8 @@ export default function UserInquiriesPage() {
     e.preventDefault();
     if (!replyText.trim() || !selectedInquiry) return;
 
+    const textToSend = replyText.trim();
+    setReplyText("");
     setLoading(true);
     try {
       const token = localStorage.getItem("user_token");
@@ -645,13 +740,15 @@ export default function UserInquiriesPage() {
           "Content-Type": "application/json",
           Authorization: token ? `Bearer ${token}` : "",
         },
-        body: JSON.stringify({ message: replyText }),
+        body: JSON.stringify({ message: textToSend }),
       });
       const data = await res.json();
       if (res.ok && data.data) {
-        setMessages(prev => [...prev, data.data]);
-        setReplyText("");
-        setInquiries(prev => prev.map(item => item.id === selectedInquiry.id ? { ...item, status: "user_replied", message: replyText } : item));
+        setMessages(prev => {
+          if (prev.some(m => Number(m.id) === Number(data.data.id))) return prev;
+          return [...prev, data.data];
+        });
+        setInquiries(prev => prev.map(item => item.id === selectedInquiry.id ? { ...item, status: "user_replied", message: textToSend } : item));
       } else {
         setError(data.message || "Failed to send reply");
       }

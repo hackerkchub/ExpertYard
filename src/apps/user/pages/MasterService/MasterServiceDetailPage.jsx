@@ -131,9 +131,17 @@ export default function MasterServiceDetailPage() {
           <h1 style={{ fontSize: "clamp(2rem, 5vw, 3.4rem)", margin: "0 0 0.75rem", maxWidth: 760 }}>
             {service.title}
           </h1>
-          <p style={{ fontSize: "1.05rem", lineHeight: 1.7, maxWidth: 760, margin: 0 }}>
-            {service.short_description || "Compare verified experts, submit requirements, and manage delivery in one workspace."}
-          </p>
+          {service.short_description ? (
+            <div
+              className="master-service-rich-description"
+              dangerouslySetInnerHTML={{ __html: service.short_description }}
+              style={{ fontSize: "1.05rem", lineHeight: 1.7, maxWidth: 760, margin: 0 }}
+            />
+          ) : (
+            <p style={{ fontSize: "1.05rem", lineHeight: 1.7, maxWidth: 760, margin: 0 }}>
+              Compare verified experts, submit requirements, and manage delivery in one workspace.
+            </p>
+          )}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 24 }}>
             <strong style={{ background: "rgba(255,255,255,0.16)", padding: "10px 14px", borderRadius: 8 }}>
               Starting from {money(service.base_price)}

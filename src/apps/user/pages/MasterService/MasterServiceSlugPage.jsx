@@ -448,9 +448,11 @@ export default function MasterServiceSlugPage() {
             </h1>
 
             {service.short_description && (
-              <p style={{ margin: 0, color: "#475569", fontSize: "0.95rem", lineHeight: 1.5 }}>
-                {service.short_description}
-              </p>
+              <div
+                className="master-service-rich-description"
+                dangerouslySetInnerHTML={{ __html: service.short_description }}
+                style={{ margin: 0, color: "#475569", fontSize: "0.95rem", lineHeight: 1.6 }}
+              />
             )}
 
             {/* COMPUTE MINIMUM PRICE ACROSS SERVICE AND ALL EXPERTS */}

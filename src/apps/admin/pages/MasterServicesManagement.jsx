@@ -713,10 +713,12 @@ export default function MasterServicesManagement() {
           <Field label="Tags (comma separated)" value={formData.tags || ""} onChange={(value) => updateField("tags", value)} placeholder="gst, tax, business" />
         </div>
 
-        <label style={labelStyle}>
-          Short Description
-          <textarea value={formData.short_description || ""} onChange={(event) => updateField("short_description", event.target.value)} rows={2} style={inputStyle} />
-        </label>
+        <RichTextHtmlEditor
+          label="Short Description"
+          value={formData.short_description || ""}
+          onChange={(val) => updateField("short_description", val)}
+          placeholder="Format product overview with bold text, lists, links, badges, or HTML design cards..."
+        />
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: "1.2rem", background: "#f8fafc", padding: "1rem", borderRadius: 8 }}>
           {[
@@ -744,6 +746,167 @@ export default function MasterServicesManagement() {
     </div>
   );
 }
+
+function RichTextHtmlEditor({ label, value, onChange, placeholder = "Enter formatted description..." }) {
+  const [activeTab, setActiveTab] = React.useState("editor"); // "editor", "code", "preview"
+  const textareaRef = React.useRef(null);
+
+  const insertTag = (openTag, closeTag = "") => {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      onChange((value || "") + openTag + closeTag);
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const currentVal = value || "";
+    const selectedText = currentVal.substring(start, end);
+    const replacement = selectedText ? `${openTag}${selectedText}${closeTag}` : `${openTag}${closeTag}`;
+    const newVal = currentVal.substring(0, start) + replacement + currentVal.substring(end);
+    
+    onChange(newVal);
+
+    setTimeout(() => {
+      textarea.focus();
+      const cursorPosition = start + openTag.length + (selectedText ? selectedText.length : 0);
+      textarea.setSelectionRange(cursorPosition, cursorPosition);
+    }, 50);
+  };
+
+  const handleInsertLink = () => {
+    const url = prompt("Enter link URL (e.g. https://example.com):", "https://");
+    if (!url) return;
+    const text = prompt("Enter link text:", "Click Here");
+    insertTag(`<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #2563eb; text-decoration: underline; font-weight: 600;">`, `${text || "Link"}</a>`);
+  };
+
+  const handleInsertCallout = () => {
+    insertTag(`<div style="background: #eff6ff; border-left: 4px solid #2563eb; padding: 10px 14px; border-radius: 8px; margin: 10px 0; color: #1e40af; font-size: 13px;">\n  <strong>Note:</strong> Enter important details here...\n</div>`);
+  };
+
+  const handleInsertBadge = () => {
+    insertTag(`<span style="background: #dcfce7; color: #166534; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; display: inline-block; margin-right: 6px;">✓ `, `Verified Feature</span>`);
+  };
+
+  return (
+    <div style={{ background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: 12, overflow: "hidden", margin: "10px 0" }}>
+      {/* HEADER & TABS */}
+      <div style={{ background: "#f8fafc", borderBottom: "1px solid #e2e8f0", padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+        <div style={{ fontWeight: 800, color: "#0f172a", fontSize: 14 }}>
+          {label} <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>(HTML & Rich Text Formatted)</span>
+        </div>
+        <div style={{ display: "flex", gap: 4, background: "#e2e8f0", padding: 3, borderRadius: 8 }}>
+          <button
+            type="button"
+            onClick={() => setActiveTab("editor")}
+            style={{ padding: "4px 10px", border: 0, borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", background: activeTab === "editor" ? "#ffffff" : "transparent", color: activeTab === "editor" ? "#2563eb" : "#64748b" }}
+          >
+            ✏️ Rich Toolbar Editor
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("code")}
+            style={{ padding: "4px 10px", border: 0, borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", background: activeTab === "code" ? "#ffffff" : "transparent", color: activeTab === "code" ? "#2563eb" : "#64748b" }}
+          >
+            &lt;/&gt; Raw HTML Code
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("preview")}
+            style={{ padding: "4px 10px", border: 0, borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", background: activeTab === "preview" ? "#ffffff" : "transparent", color: activeTab === "preview" ? "#059669" : "#64748b" }}
+          >
+            👁️ Live Preview
+          </button>
+        </div>
+      </div>
+
+      {/* TOOLBAR */}
+      {activeTab !== "preview" && (
+        <div style={{ background: "#f1f5f9", borderBottom: "1px solid #e2e8f0", padding: "6px 10px", display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center" }}>
+          <button type="button" onClick={() => insertTag("<b>", "</b>")} style={toolbarBtnStyle} title="Bold"><b>B</b></button>
+          <button type="button" onClick={() => insertTag("<i>", "</i>")} style={toolbarBtnStyle} title="Italic"><i>I</i></button>
+          <button type="button" onClick={() => insertTag("<u>", "</u>")} style={toolbarBtnStyle} title="Underline"><u>U</u></button>
+          <button type="button" onClick={() => insertTag("<s>", "</s>")} style={toolbarBtnStyle} title="Strikethrough"><s>S</s></button>
+          <span style={dividerStyle} />
+          <button type="button" onClick={() => insertTag("<h3 style='color:#0f172a; margin:10px 0 4px;'>", "</h3>")} style={toolbarBtnStyle}>H3</button>
+          <button type="button" onClick={() => insertTag("<h4 style='color:#1e293b; margin:8px 0 4px;'>", "</h4>")} style={toolbarBtnStyle}>H4</button>
+          <span style={dividerStyle} />
+          <button type="button" onClick={() => insertTag("<ul style='margin:8px 0; padding-left:20px; display:grid; gap:4px;'>\n  <li>", "</li>\n  <li>Second item...</li>\n</ul>")} style={toolbarBtnStyle}>• Bullet List</button>
+          <button type="button" onClick={() => insertTag("<ol style='margin:8px 0; padding-left:20px; display:grid; gap:4px;'>\n  <li>", "</li>\n  <li>Step 2...</li>\n</ol>")} style={toolbarBtnStyle}>1. Numbered List</button>
+          <span style={dividerStyle} />
+          <button type="button" onClick={handleInsertLink} style={toolbarBtnStyle}>🔗 Add Link</button>
+          <button type="button" onClick={handleInsertCallout} style={toolbarBtnStyle}>📌 Callout Box</button>
+          <button type="button" onClick={handleInsertBadge} style={toolbarBtnStyle}>🏷️ Badge</button>
+          <button type="button" onClick={() => onChange("")} style={{ ...toolbarBtnStyle, color: "#dc2626", marginLeft: "auto" }}>Clear</button>
+        </div>
+      )}
+
+      {/* INPUT AREA / PREVIEW AREA */}
+      {activeTab === "editor" || activeTab === "code" ? (
+        <textarea
+          ref={textareaRef}
+          value={value || ""}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          rows={6}
+          style={{
+            width: "100%",
+            boxSizing: "border-box",
+            padding: "12px",
+            border: 0,
+            outline: "none",
+            fontFamily: activeTab === "code" ? "monospace" : "inherit",
+            fontSize: activeTab === "code" ? 13 : 14,
+            lineHeight: 1.6,
+            color: "#0f172a",
+            resize: "vertical",
+            minHeight: 120,
+            background: "#ffffff"
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            padding: "14px",
+            minHeight: 120,
+            background: "#fafafa",
+            fontSize: 14,
+            lineHeight: 1.6,
+            color: "#334155"
+          }}
+        >
+          {value ? (
+            <div dangerouslySetInnerHTML={{ __html: value }} />
+          ) : (
+            <span style={{ color: "#94a3b8", fontStyle: "italic" }}>No content entered yet to preview.</span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const toolbarBtnStyle = {
+  padding: "4px 8px",
+  background: "#ffffff",
+  border: "1px solid #cbd5e1",
+  borderRadius: 4,
+  fontSize: 12,
+  fontWeight: 700,
+  color: "#334155",
+  cursor: "pointer",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 3,
+};
+
+const dividerStyle = {
+  width: 1,
+  height: 18,
+  background: "#cbd5e1",
+  margin: "0 4px",
+};
 
 function Field({ label, value, onChange, type = "text", required = false, placeholder = "" }) {
   return (

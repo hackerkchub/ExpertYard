@@ -347,19 +347,33 @@ export default function SubcategoryPage() {
             </LoadingGrid>
           ) : services.length > 0 ? (
             <SubcategoryGrid>
-              {services.map((service) => (
-                <SubcategoryCard
-                  key={service.id}
-                  type="button"
-                  onClick={() => navigate(`/user/service/${service.slug || service.id}`)}
-                >
-                  <SubcategoryImage src={getImage(service)} alt={service.title} />
-                  <SubcategoryName>{service.title}</SubcategoryName>
-                  <span style={{ color: "#64748b", fontSize: "0.85rem" }}>
-                    Starts at Rs. {Number(service.base_price || 0).toLocaleString("en-IN")}
-                  </span>
-                </SubcategoryCard>
-              ))}
+              {services.map((service) => {
+                const validPrices = [
+                  service.min_price,
+                  service.offer_price,
+                  service.price,
+                  service.custom_price,
+                  service.base_price,
+                ]
+                  .map((p) => Number(p))
+                  .filter((p) => !isNaN(p) && p > 0);
+
+                const displayPrice = validPrices.length > 0 ? Math.min(...validPrices) : 0;
+
+                return (
+                  <SubcategoryCard
+                    key={service.id}
+                    type="button"
+                    onClick={() => navigate(`/user/service/${service.slug || service.id}`)}
+                  >
+                    <SubcategoryImage src={getImage(service)} alt={service.title} />
+                    <SubcategoryName>{service.title}</SubcategoryName>
+                    <span style={{ color: "#64748b", fontSize: "0.85rem", fontWeight: 600 }}>
+                      Starts at ₹{displayPrice.toLocaleString("en-IN")}
+                    </span>
+                  </SubcategoryCard>
+                );
+              })}
             </SubcategoryGrid>
           ) : (
             <EmptyStateBox>

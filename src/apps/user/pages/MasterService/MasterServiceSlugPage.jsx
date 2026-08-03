@@ -453,14 +453,31 @@ export default function MasterServiceSlugPage() {
               </p>
             )}
 
-            <div style={{ display: "flex", gap: 16, alignItems: "center", paddingTop: 4 }}>
-              <div>
-                <span style={{ fontSize: 12, color: "#64748b" }}>Starting Base Price</span>
-                <div style={{ fontSize: "1.4rem", fontWeight: 900, color: "#059669" }}>
-                  ₹{service.base_price || 0}
+            {/* COMPUTE MINIMUM PRICE ACROSS SERVICE AND ALL EXPERTS */}
+            {(() => {
+              const validPrices = [
+                service.min_price,
+                service.offer_price,
+                service.price,
+                service.base_price,
+                ...(experts || []).map((e) => Number(e.offer_price || e.custom_price || e.price || 0)),
+              ]
+                .map((p) => Number(p))
+                .filter((p) => !isNaN(p) && p > 0);
+
+              const displayMinPrice = validPrices.length > 0 ? Math.min(...validPrices) : (service.base_price || 0);
+
+              return (
+                <div style={{ display: "flex", gap: 16, alignItems: "center", paddingTop: 4 }}>
+                  <div>
+                    <span style={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>Starting Minimum Price</span>
+                    <div style={{ fontSize: "1.4rem", fontWeight: 900, color: "#059669" }}>
+                      ₹{displayMinPrice.toLocaleString("en-IN")}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              );
+            })()}
           </div>
         </header>
 

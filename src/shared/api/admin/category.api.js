@@ -37,10 +37,13 @@ export const createCategoryApi = (formData) => {
    API: /api/category/update/:id
    (FormData: id, name, image)
 =========================== */
-export const updateCategoryApi = ({ id, name, file }) => {
+export const updateCategoryApi = ({ id, name, file, show_experts, show_master_services, display_order }) => {
   const formData = new FormData();
   formData.append("id", id);
-  formData.append("name", name);
+  if (name !== undefined) formData.append("name", name);
+  if (show_experts !== undefined) formData.append("show_experts", show_experts ? "1" : "0");
+  if (show_master_services !== undefined) formData.append("show_master_services", show_master_services ? "1" : "0");
+  if (display_order !== undefined) formData.append("display_order", String(display_order));
   if (file) formData.append("image", file);
   return api.put(`/category/update/${id}`, formData, {
     headers: {

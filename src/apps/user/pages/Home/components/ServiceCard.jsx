@@ -24,11 +24,17 @@ export default function ServiceCard({ service }) {
     slug,
     price,
     offer_price,
+    min_price,
+    base_price,
     cover_image,
     is_master_service = true,
   } = service;
 
-  const displayPrice = offer_price || price || 499;
+  const validPrices = [min_price, offer_price, price, base_price]
+    .map((p) => Number(p))
+    .filter((p) => !isNaN(p) && p > 0);
+
+  const displayPrice = validPrices.length > 0 ? Math.min(...validPrices) : 499;
   const shortTitle = truncateTitle(title);
   const rawId = master_service_id || (typeof id === "string" ? id.replace("ms-", "") : id);
   const detailLink = slug ? `/user/service-details/${slug}` : `/user/service-details/${rawId}`;

@@ -81,7 +81,7 @@ export default function CategoryManagement() {
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({});
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newCategory, setNewCategory] = useState({ name: "", image: null, file: null });
+  const [newCategory, setNewCategory] = useState({ name: "", image: null, file: null, show_experts: true, show_master_services: true, display_order: 0 });
   const [expandedSubcats, setExpandedSubcats] = useState({});
   const [subcatLoading, setSubcatLoading] = useState({});
   const [loading, setLoading] = useState(false);
@@ -210,7 +210,7 @@ export default function CategoryManagement() {
       setLoading(true);
       const response = await getCategoriesApi();
       const cats = response.data.data || response.data || [];
-      const sortedCats = [...cats].sort((a, b) => a.id - b.id);
+      const sortedCats = [...cats].sort((a, b) => Number(a.display_order || 0) - Number(b.display_order || 0));
       const normalizedCats = sortedCats.map(cat => ({
         ...cat,
         image_url: cat.image_url || cat.image
@@ -267,6 +267,9 @@ export default function CategoryManagement() {
       id: category.id,
       category_id: category.category_id || category.id,
       name: category.name,
+      show_experts: category.show_experts !== 0,
+      show_master_services: category.show_master_services !== 0,
+      display_order: category.display_order || 0,
       image: category.image_url || category.image,
       file: null,
       hasImageChange: false
@@ -294,6 +297,9 @@ export default function CategoryManagement() {
         id: editData.id,
         category_id: editData.category_id,
         name: editData.name,
+        show_experts: editData.show_experts,
+        show_master_services: editData.show_master_services,
+        display_order: editData.display_order,
         file: editData.file || null
       };
 
@@ -338,7 +344,7 @@ export default function CategoryManagement() {
     if (file) {
       const previewUrl = URL.createObjectURL(file);
       setNewCategory({
-        name: newCategory.name,
+        ...newCategory,
         image: previewUrl,
         file
       });
@@ -356,11 +362,14 @@ export default function CategoryManagement() {
 
       const formData = new FormData();
       formData.append("name", newCategory.name);
+      formData.append("show_experts", newCategory.show_experts ? "1" : "0");
+      formData.append("show_master_services", newCategory.show_master_services ? "1" : "0");
+      formData.append("display_order", String(newCategory.display_order || 0));
       formData.append("image", newCategory.file);
 
       await createCategoryApi(formData);
 
-      setNewCategory({ name: "", image: null, file: null });
+      setNewCategory({ name: "", image: null, file: null, show_experts: true, show_master_services: true, display_order: 0 });
       setShowAddModal(false);
       if (addImageRef.current) addImageRef.current.value = "";
 
@@ -477,6 +486,9 @@ export default function CategoryManagement() {
                   <th>Category ID</th>
                   <th>Image</th>
                   <th>Category Name</th>
+                  <th>Position</th>
+                  <th>Show Experts</th>
+                  <th>Show Master Services</th>
                   <th>Subcategories</th>
                   <th>Status</th>
                   <th>Actions</th>
@@ -528,6 +540,60 @@ export default function CategoryManagement() {
                           />
                         ) : (
                           <strong>{cat.name || 'N/A'}</strong>
+                        )}
+                      </TableCell>
+
+                      {/* Display Position (Sort Order) */}
+                      <TableCell>
+                        {editingId === cat.id ? (
+                          <Input
+                            type="number"
+                            min="0"
+                            style={{ width: "70px" }}
+                            value={editData.display_order ?? 0}
+                            onChange={(e) => setEditData({ ...editData, display_order: parseInt(e.target.value) || 0 })}
+                            disabled={loading}
+                          />
+                        ) : (
+                          <strong style={{ color: "#2563eb" }}>#{cat.display_order || 0}</strong>
+                        )}
+                      </TableCell>
+
+                      {/* Show Experts Toggle */}
+                      <TableCell>
+                        {editingId === cat.id ? (
+                          <select
+                            value={editData.show_experts ? "yes" : "no"}
+                            onChange={(e) => setEditData({ ...editData, show_experts: e.target.value === "yes" })}
+                            style={{ padding: "6px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }}
+                            disabled={loading}
+                          >
+                            <option value="yes">Yes (Show)</option>
+                            <option value="no">No (Hide)</option>
+                          </select>
+                        ) : (
+                          <span style={{ padding: "4px 10px", borderRadius: "12px", fontSize: "12px", fontWeight: "bold", background: cat.show_experts !== 0 ? "#dcfce7" : "#fee2e2", color: cat.show_experts !== 0 ? "#15803d" : "#b91c1c" }}>
+                            {cat.show_experts !== 0 ? "Yes" : "No"}
+                          </span>
+                        )}
+                      </TableCell>
+
+                      {/* Show Master Services Toggle */}
+                      <TableCell>
+                        {editingId === cat.id ? (
+                          <select
+                            value={editData.show_master_services ? "yes" : "no"}
+                            onChange={(e) => setEditData({ ...editData, show_master_services: e.target.value === "yes" })}
+                            style={{ padding: "6px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "13px" }}
+                            disabled={loading}
+                          >
+                            <option value="yes">Yes (Show)</option>
+                            <option value="no">No (Hide)</option>
+                          </select>
+                        ) : (
+                          <span style={{ padding: "4px 10px", borderRadius: "12px", fontSize: "12px", fontWeight: "bold", background: cat.show_master_services !== 0 ? "#dcfce7" : "#fee2e2", color: cat.show_master_services !== 0 ? "#15803d" : "#b91c1c" }}>
+                            {cat.show_master_services !== 0 ? "Yes" : "No"}
+                          </span>
                         )}
                       </TableCell>
 
@@ -668,6 +734,45 @@ export default function CategoryManagement() {
                   onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
                   disabled={loading}
                 />
+              </FormGroup>
+
+              <FormGroup>
+                <Label>Display Position (Sort Order)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  placeholder="0 (e.g., 1 for top position)"
+                  value={newCategory.display_order || 0}
+                  onChange={(e) => setNewCategory({ ...newCategory, display_order: parseInt(e.target.value) || 0 })}
+                  disabled={loading}
+                />
+              </FormGroup>
+
+              <FormGroup style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                <div>
+                  <Label>Show Experts?</Label>
+                  <select
+                    value={newCategory.show_experts ? "yes" : "no"}
+                    onChange={(e) => setNewCategory({ ...newCategory, show_experts: e.target.value === "yes" })}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "14px" }}
+                    disabled={loading}
+                  >
+                    <option value="yes">Yes (Show Experts)</option>
+                    <option value="no">No (Hide Experts)</option>
+                  </select>
+                </div>
+                <div>
+                  <Label>Show Master Services?</Label>
+                  <select
+                    value={newCategory.show_master_services ? "yes" : "no"}
+                    onChange={(e) => setNewCategory({ ...newCategory, show_master_services: e.target.value === "yes" })}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "14px" }}
+                    disabled={loading}
+                  >
+                    <option value="yes">Yes (Show Master Services)</option>
+                    <option value="no">No (Hide Master Services)</option>
+                  </select>
+                </div>
               </FormGroup>
 
               <FormGroup>

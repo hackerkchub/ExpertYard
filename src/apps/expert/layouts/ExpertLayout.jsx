@@ -6,6 +6,9 @@ import ExpertTopbar from "../components/ExpertTopbar";
 import ExpertBottomNavbar from "../components/ExpertBottomNavbar";
 import IncomingCallPopup from "../components/IncomingCallPopup";
 import ContinueChatBanner from "../../../shared/components/ContinueChatBanner";
+// In ExpertLayout or any parent component
+import ExpertTrialBanner from "../components/ExpertTrialBanner";
+import ExpertTrialExpiredModal from "../components/ExpertTrialExpiredModal";
 
 import { LayoutWrapper, ContentWrapper } from "./expertLayout.styles";
 
@@ -26,11 +29,28 @@ import {
 import { generateToken } from "../../../firebase/generateToken";
 import { APP_CONFIG } from "../../../config/appConfig";
 import { Capacitor } from "@capacitor/core";
+
+// ✅ Allowed pages when trial dashboard is locked
+const TRIAL_ALLOWED_PAGES = [
+  "/expert/g9-plan",
+  "/expert/register",
+  "/expert/register/subscription",
+  "/expert/voice-call",
+  "/expert/video-call",
+];
+
 /* ===================================================== */
 function ExpertLayoutInner() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { expertData } = useExpert();
+  
+  // ✅ Get refreshExpertData from context
+  const { expertData, refreshExpertData } = useExpert();
+
+  const isTrialModalOpen =
+  Boolean(expertData?.trial?.enabled) &&
+  Boolean(expertData?.trial?.expired) &&
+  Boolean(expertData?.trial?.dashboardLocked);
 
   const isOnCallPage =
     location.pathname.startsWith("/expert/voice-call/") ||
@@ -92,26 +112,20 @@ function ExpertLayoutInner() {
 
         const data = await res.json();
 
-        // ✅ Bug 3 Fixed: Safer data structure handling
-       const notifications =
-  data?.data?.data ||
-  data?.data ||
-  data ||
-  [];
+        const notifications =
+          data?.data?.data ||
+          data?.data ||
+          data ||
+          [];
 
-       const activeRequest = notifications.find((n) => {
-
-  if (!(n.type === "voice_call" || n.type === "chat_request")) return false;
-
-  if (!n.status) return true; // NULL status → active request
-
-  return !["missed","rejected","ended","cancelled"].includes(n.status);
-
-});
+        const activeRequest = notifications.find((n) => {
+          if (!(n.type === "voice_call" || n.type === "chat_request")) return false;
+          if (!n.status) return true;
+          return !["missed","rejected","ended","cancelled"].includes(n.status);
+        });
 
         if (!activeRequest) return;
 
-        // ✅ Bug 1 Fixed: Properly parse and use meta
         const meta =
           typeof activeRequest.meta === "string"
             ? JSON.parse(activeRequest.meta)
@@ -119,28 +133,26 @@ function ExpertLayoutInner() {
 
         /* ===== CALL ===== */
         if (
-  activeRequest.type === "voice_call" &&
-  activeRequest.status === "ringing"
-) {
+          activeRequest.type === "voice_call" &&
+          activeRequest.status === "ringing"
+        ) {
           const callId = meta.callId || meta.request_id;
 
           if (callId) {
-           setTimeout(() => {
-
-  window.dispatchEvent(
-    new CustomEvent("incoming_call", {
-      detail: {
-        callId,
-        user_name: activeRequest.title?.replace(
-          "Incoming call from ",
-          ""
-        ),
-        status: "ringing",
-      },
-    })
-  );
-
-}, 500);
+            setTimeout(() => {
+              window.dispatchEvent(
+                new CustomEvent("incoming_call", {
+                  detail: {
+                    callId,
+                    user_name: activeRequest.title?.replace(
+                      "Incoming call from ",
+                      ""
+                    ),
+                    status: "ringing",
+                  },
+                })
+              );
+            }, 500);
           }
         }
 
@@ -149,21 +161,19 @@ function ExpertLayoutInner() {
           const requestId = meta.request_id;
 
           if (requestId) {
-           setTimeout(() => {
-
-  window.dispatchEvent(
-    new CustomEvent("incoming_chat_request", {
-      detail: {
-        request_id: requestId,
-      },
-    })
-  );
-
-}, 500);
+            setTimeout(() => {
+              window.dispatchEvent(
+                new CustomEvent("incoming_chat_request", {
+                  detail: {
+                    request_id: requestId,
+                  },
+                })
+              );
+            }, 500);
           }
         }
 
-        // ✅ Bug 2 Fixed: Remove from_notification param after processing
+        // Remove from_notification param after processing
         window.history.replaceState({}, document.title, window.location.pathname || "/expert/home");
 
       } catch (err) {
@@ -225,7 +235,7 @@ function ExpertLayoutInner() {
     };
 
     const handleConnect = () => {
-      sendStatus(); // send immediately after connect
+      sendStatus();
     };
 
     socket.on("connect", handleConnect);
@@ -237,10 +247,6 @@ function ExpertLayoutInner() {
       document.removeEventListener("visibilitychange", sendStatus);
     };
   }, [expertId]);
-
-  /* =====================================================
-     📞 RESUME CALL CHECK AFTER CONNECT
-  ===================================================== */
 
   /* =====================================================
      💬 CHAT REDIRECT
@@ -290,27 +296,27 @@ function ExpertLayoutInner() {
     };
   }, [expertId, incomingVideoCall?.callId, isOnCallPage]);
 
- useEffect(() => {
-  const handleCancelled = ({ callId }) => {
-    window.dispatchEvent(
-      new CustomEvent("call_cancelled", { detail: callId })
-    );
-  };
+  useEffect(() => {
+    const handleCancelled = ({ callId }) => {
+      window.dispatchEvent(
+        new CustomEvent("call_cancelled", { detail: callId })
+      );
+    };
 
-  const handleMissed = ({ callId }) => {
-    window.dispatchEvent(
-      new CustomEvent("call_missed", { detail: callId })
-    );
-  };
+    const handleMissed = ({ callId }) => {
+      window.dispatchEvent(
+        new CustomEvent("call_missed", { detail: callId })
+      );
+    };
 
-  socket.on("call:cancelled", handleCancelled);
-  socket.on("call:missed", handleMissed);
+    socket.on("call:cancelled", handleCancelled);
+    socket.on("call:missed", handleMissed);
 
-  return () => {
-    socket.off("call:cancelled", handleCancelled);
-    socket.off("call:missed", handleMissed);
-  };
-}, []); 
+    return () => {
+      socket.off("call:cancelled", handleCancelled);
+      socket.off("call:missed", handleMissed);
+    };
+  }, []); 
 
   /* =====================================================
      📞 RESUME CALL NAVIGATION (FROM GLOBAL EVENT)
@@ -333,14 +339,36 @@ function ExpertLayoutInner() {
       (n) => n.type === "voice_call" && n.status === "ringing"
     );
 
+  /* =====================================================
+     🔄 AUTO REFRESH EXPERT DATA (Every 1 minute)
+  ===================================================== */
+  // useEffect(() => {
+  //   if (!expertId) return;
+
+  //   const REFRESH_INTERVAL = 60000;
+
+  //   const interval = setInterval(() => {
+  //     if (!expertData?.expertId) return;
+  //     if (!isOnCallPage) {
+  //       refreshExpertData();
+  //     }
+  //   }, REFRESH_INTERVAL);
+
+  //   return () => clearInterval(interval);
+  // }, [expertId, refreshExpertData, expertData?.expertId, isOnCallPage]);
+
+  /* =====================================================
+     🔒 TRIAL DASHBOARD LOCK REDIRECT - REMOVED
+     ===================================================== */
+  // ❌ REMOVED: useEffect that was redirecting to /expert/g9-plan
+  // Redirect is now handled by ProtectedExpertRoute only
+
   /* ===================================================== */
 
   return (
     <LayoutWrapper>
       {!((isExpertInquiryPage || isServicePage) && isMobile) && <ExpertTopbar />}
       <ExpertSidebar />
-      <ContinueChatBanner />
-
       <ContentWrapper className={
         isExpertInquiryPage 
           ? "immersive-inquiry-layout" 
@@ -348,66 +376,71 @@ function ExpertLayoutInner() {
           ? "no-topbar-layout" 
           : ""
       }>
+        <ExpertTrialBanner />
+        <ContinueChatBanner />
+        <ExpertTrialExpiredModal />
         <Outlet />
       </ContentWrapper>
 
-      <ExpertBottomNavbar />
-{!Capacitor.isNativePlatform() && (
-  <>
-    <IncomingCallPopup
-      caller={
-        activeIncomingCall
-          ? {
-              name:
-                activeIncomingCall.payload?.user_name ||
-                activeIncomingCall.title?.replace(
-                  "Incoming call from ",
-                  ""
-                ),
-              callId:
-                activeIncomingCall.payload?.callId ||
-                activeIncomingCall.payload?.call_id,
-            }
-          : null
-      }
-      onAccept={() => {
-        if (activeIncomingCall) {
-          acceptNotification(activeIncomingCall);
-        }
-      }}
-      onReject={() => {
-        if (activeIncomingCall) {
-          rejectNotification(activeIncomingCall);
-        }
-      }}
-    />
-
-    <IncomingCallPopup
-      caller={incomingVideoCall}
-      callType="video"
-      onAccept={() => {
-        const callId = incomingVideoCall?.callId;
-
-        setIncomingVideoCall(null);
-
-        if (callId) {
-          navigate(`/expert/video-call/${callId}`, {
-            state: { autoAccept: true, acceptSent: true, action: "accept" }
-          });
-        }
-      }}
-      onReject={() => {
-        const callId = incomingVideoCall?.callId;
-
-        if (callId) {
-          socket.emit("video-call:decline", { callId });
-        }
-
-        setIncomingVideoCall(null);
-      }}
-    />
-  </>
+     {!isExpertInquiryPage && !isTrialModalOpen && (
+  <ExpertBottomNavbar />
 )}
+      {!Capacitor.isNativePlatform() && (
+        <>
+          <IncomingCallPopup
+            caller={
+              activeIncomingCall
+                ? {
+                    name:
+                      activeIncomingCall.payload?.user_name ||
+                      activeIncomingCall.title?.replace(
+                        "Incoming call from ",
+                        ""
+                      ),
+                    callId:
+                      activeIncomingCall.payload?.callId ||
+                      activeIncomingCall.payload?.call_id,
+                  }
+                : null
+            }
+            onAccept={() => {
+              if (activeIncomingCall) {
+                acceptNotification(activeIncomingCall);
+              }
+            }}
+            onReject={() => {
+              if (activeIncomingCall) {
+                rejectNotification(activeIncomingCall);
+              }
+            }}
+          />
+
+          <IncomingCallPopup
+            caller={incomingVideoCall}
+            callType="video"
+            onAccept={() => {
+              const callId = incomingVideoCall?.callId;
+
+              setIncomingVideoCall(null);
+
+              if (callId) {
+                navigate(`/expert/video-call/${callId}`, {
+                  state: { autoAccept: true, acceptSent: true, action: "accept" }
+                });
+              }
+            }}
+            onReject={() => {
+              const callId = incomingVideoCall?.callId;
+
+              if (callId) {
+                socket.emit("video-call:decline", { callId });
+              }
+
+              setIncomingVideoCall(null);
+            }}
+          />
+        </>
+      )}
     </LayoutWrapper>
   );
 }

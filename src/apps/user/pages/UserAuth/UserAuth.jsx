@@ -503,16 +503,16 @@ const UserAuth = () => {
         {apiMessage.text && <MessageBar $isError={apiMessage.isError}>{apiMessage.text}</MessageBar>}
 
         {!isForgotMode && activeTab === "login" && (
-          <Form onSubmit={(e) => e.preventDefault()}>
+          <Form onSubmit={handleLogin}>
             <InputWrap>
               <InputIconCircle>
                 <FiMail />
               </InputIconCircle>
               <Input 
-                placeholder="Email Address" 
+                placeholder="Email Address or Phone Number" 
                 value={form.email} 
                 onChange={handleChange("email")}
-                autoComplete="email"
+                autoComplete="username"
               />
             </InputWrap>
 
@@ -546,7 +546,7 @@ const UserAuth = () => {
               </TextLink>
             </UtilityRow>
 
-            <PrimaryBtn type="button" onClick={handleLogin} disabled={loading}>
+            <PrimaryBtn type="submit" disabled={loading}>
               {loading ? "Logging in..." : "Login to Continue →"}
             </PrimaryBtn>
 

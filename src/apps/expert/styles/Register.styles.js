@@ -411,7 +411,6 @@ export const UploadStatus = styled.div`
 `;
 
 export const SuccessCard = styled.div`
-<<<<<<< HEAD
   background: rgba(16, 185, 129, 0.1);
   border: 1px solid rgba(16, 185, 129, 0.3);
   border-radius: 12px;

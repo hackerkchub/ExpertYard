@@ -21,7 +21,8 @@ import {
   getAllSubcategoriesApi,
   createSubcategoryApi,
   updateSubcategoryApi,
-  deleteSubcategoryApi
+  deleteSubcategoryApi,
+  toggleSubcategoryStatusApi,
 } from "../../../shared/api/admin/subcategory.api.js";
 import { getCategoriesApi } from "../../../shared/api/admin/category.api.js";
 
@@ -807,6 +808,22 @@ export default function SubCategoryManagement() {
       }
     }
   };
+
+  const handleToggleSubStatus = async (row) => {
+  try {
+    const newStatus = row.is_active !== 1;
+
+    await toggleSubcategoryStatusApi(
+      row.id,
+      newStatus
+    );
+
+    await fetchSubcategories();
+  } catch (error) {
+    console.error("Error updating status:", error);
+    alert("Failed to update sub-category status.");
+  }
+};
 
   const openAddModal = () => {
     setEditingRow(null);

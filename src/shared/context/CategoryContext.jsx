@@ -39,8 +39,11 @@ export const CategoryProvider = ({ children }) => {
       setError(null);
       const res = await getCategoriesApi();
       const actualData = res?.data || res || [];
+      const sortedData = Array.isArray(actualData) 
+        ? [...actualData].sort((a, b) => Number(a.display_order || 0) - Number(b.display_order || 0))
+        : [];
 
-      setCategories(actualData);
+      setCategories(sortedData);
       isFetched.current = true;
     } catch (err) {
       console.error("Category load failed", err);
@@ -53,6 +56,13 @@ export const CategoryProvider = ({ children }) => {
 
   useEffect(() => {
     loadCategories();
+    const handleUpdated = () => {
+      loadCategories(true);
+    };
+    window.addEventListener("categories_updated", handleUpdated);
+    return () => {
+      window.removeEventListener("categories_updated", handleUpdated);
+    };
   }, [loadCategories]);
 
   const loadSubCategories = useCallback(async (categoryId, forceRefresh = false) => {

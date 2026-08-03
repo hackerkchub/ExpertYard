@@ -176,17 +176,25 @@ const ContactUs = () => {
 
   const closePopup = () => setShowPopup(false);
 
+  // Updated contactInfo
   const contactInfo = {
-    phone1: "+91 81031 23106",
-    phone2: "+91 8103007446",
-    email: "support@g9expert.com",
+    // General Support
+    supportPhone1: "+91 81031 23106",
+    supportPhone2: "+91 8103007446",
+    supportEmail: "support@g9expert.com",
+
+    // Technical Support
+    techPhone: "+91 9752509672",
+    techEmail: "tech@g9expert.com",
+
     address: `Nandan Bagh Colony,
 Kushwaha Nagar,
 Indore,
 Madhya Pradesh,
 India`,
+
     hours: "Monday - Saturday | 10:00 AM - 7:00 PM (IST)",
-    support: "General Support • Expert Registration • Payment Assistance",
+
     company: "Softmaxs Solution LLP",
     platform: "G9 Expert",
     website: "https://g9expert.com"
@@ -353,41 +361,105 @@ India`,
         </FormContainer>
 
         <InfoContainer>
+          {/* General Support Card - Updated */}
           <InfoCard>
             <CardIcon>📞</CardIcon>
-            <CardTitle>Phone Support</CardTitle>
+            <CardTitle>General Support</CardTitle>
             <CardContent>
-              <ContactDetail style={{ marginBottom: '6px' }}>
-                <a href="tel:+918103123106" style={{ color: '#000080', textDecoration: 'none' }}>
-                  {contactInfo.phone1}
+              <ContactDetail style={{ marginBottom: "6px" }}>
+                <a
+                  href="tel:+918103123106"
+                  style={{ color: "#000080", textDecoration: "none" }}
+                >
+                  {contactInfo.supportPhone1}
                 </a>
               </ContactDetail>
-              <ContactDetail style={{ marginBottom: '8px' }}>
-                <a href="tel:+918103007446" style={{ color: '#000080', textDecoration: 'none' }}>
-                  {contactInfo.phone2}
-                </a>
-              </ContactDetail>
-              <ContactDetail>Monday - Saturday</ContactDetail>
-              <ContactDetail>10:00 AM – 7:00 PM (IST)</ContactDetail>
-              <ContactDetail style={{ color: '#000080', fontWeight: '500', marginTop: '10px' }}>
-                {contactInfo.support}
-              </ContactDetail>
-            </CardContent>
-          </InfoCard>
 
-          <InfoCard>
-            <CardIcon>✉️</CardIcon>
-            <CardTitle>Email Support</CardTitle>
-            <CardContent>
+              <ContactDetail style={{ marginBottom: "6px" }}>
+                <a
+                  href="tel:+918103007446"
+                  style={{ color: "#000080", textDecoration: "none" }}
+                >
+                  {contactInfo.supportPhone2}
+                </a>
+              </ContactDetail>
+
+              <ContactDetail style={{ marginBottom: "10px" }}>
+                <a
+                  href="mailto:support@g9expert.com"
+                  style={{ color: "#000080", textDecoration: "none" }}
+                >
+                  {contactInfo.supportEmail}
+                </a>
+              </ContactDetail>
+
               <ContactDetail>
-                <a href="mailto:support@g9expert.com" style={{ color: '#000080', textDecoration: 'none' }}>
-                  {contactInfo.email}
-                </a>
+                Website Support, Payment Issues,
               </ContactDetail>
-              <ContactDetail>General, Business & Partnership Enquiries</ContactDetail>
+              <ContactDetail>
+                Admin Assistance, Account Help,
+              </ContactDetail>
+              <ContactDetail>
+                Expert Registration & General Enquiries
+              </ContactDetail>
+
+              <ContactDetail
+                style={{
+                  marginTop: "12px",
+                  fontWeight: "600",
+                }}
+              >
+                Monday - Saturday
+              </ContactDetail>
+
+              <ContactDetail>
+                10:00 AM – 7:00 PM (IST)
+              </ContactDetail>
             </CardContent>
           </InfoCard>
 
+          {/* Technical Support Card - Updated */}
+          <InfoCard>
+            <CardIcon>🛠️</CardIcon>
+            <CardTitle>Technical Support</CardTitle>
+            <CardContent>
+              <ContactDetail style={{ marginBottom: "6px" }}>
+                <a
+                  href="tel:+919752509672"
+                  style={{ color: "#000080", textDecoration: "none" }}
+                >
+                  {contactInfo.techPhone}
+                </a>
+              </ContactDetail>
+
+              <ContactDetail style={{ marginBottom: "10px" }}>
+                <a
+                  href="mailto:tech@g9expert.com"
+                  style={{ color: "#000080", textDecoration: "none" }}
+                >
+                  {contactInfo.techEmail}
+                </a>
+              </ContactDetail>
+
+              <ContactDetail>
+                Technical Issues
+              </ContactDetail>
+              <ContactDetail>
+                Website Errors
+              </ContactDetail>
+              <ContactDetail>
+                App Bugs
+              </ContactDetail>
+              <ContactDetail>
+                Login & Account Access Issues
+              </ContactDetail>
+              <ContactDetail>
+                API & System Related Problems
+              </ContactDetail>
+            </CardContent>
+          </InfoCard>
+
+          {/* Company Information Card - Keeping as is */}
           <InfoCard>
             <CardIcon>🏢</CardIcon>
             <CardTitle>Company Information</CardTitle>
@@ -417,6 +489,7 @@ India`,
             </CardContent>
           </InfoCard>
 
+          {/* Social Links Card - Keeping as is */}
           <InfoCard>
             <CardTitle>Connect With Us</CardTitle>
             <CardContent>

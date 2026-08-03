@@ -89,6 +89,7 @@ import {
   WithdrawalItem,
   StatusBadge,
   AllWithdrawalsSection,
+  WithdrawalsTableContainer,
   WithdrawalsTable,
   TableHeaderCell,
   TableRow,
@@ -2322,8 +2323,8 @@ const ExpertEarningsDashboard = () => {
             </FilterBar>
 
             {/* Desktop Table View */}
-            <WithdrawalsTable>
-              <td>
+            <WithdrawalsTableContainer>
+              <WithdrawalsTable>
                 <thead>
                   <tr>
                     <TableHeaderCell>ID</TableHeaderCell>
@@ -2337,7 +2338,6 @@ const ExpertEarningsDashboard = () => {
                     <TableHeaderCell>Actions</TableHeaderCell>
                   </tr>
                 </thead>
-                </td>
                 <tbody>
                   {paginatedWithdrawals.length > 0 ? (
                     paginatedWithdrawals.map((withdrawal) => (
@@ -2400,9 +2400,8 @@ const ExpertEarningsDashboard = () => {
                     </tr>
                   )}
                 </tbody>
-              {/* </table> */}
-
-            </WithdrawalsTable>
+              </WithdrawalsTable>
+            </WithdrawalsTableContainer>
 
             {/* Pagination */}
             {filteredWithdrawals.length > itemsPerPage && (

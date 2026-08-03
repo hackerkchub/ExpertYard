@@ -36,20 +36,25 @@ export default function MainLayout() {
   const { balance } = useWallet();
   const isDesktop = useIsDesktop();
 
+  // Step 1: Home page check
   const isUserHome = location.pathname === "/user" || location.pathname === "/user/";
 
+  // Check if current page is Reels page
   const isReelsPage = 
     location.pathname.startsWith("/user/reels") || 
     location.pathname === "/user/reels" ||
     location.pathname.startsWith("/reels") || 
     location.pathname === "/reels";
 
-  const isNoFooterPage = 
-    location.pathname.startsWith("/user/my-inquiries") || 
+  // Step 2: No footer pages (includes Reels page)
+  const isNoFooterPage =
+    isReelsPage ||
+    location.pathname.startsWith("/user/my-inquiries") ||
     location.pathname === "/user/my-inquiries" ||
     location.pathname.startsWith("/user/chat") ||
     location.pathname === "/user/chat";
 
+  // Hide mobile header on Reels, My Inquiries, and Chat pages
   const isHideMobileHeader = 
     isReelsPage || 
     location.pathname.startsWith("/user/my-inquiries") || 
@@ -64,6 +69,7 @@ export default function MainLayout() {
     });
   };
 
+  // For Home page - render with its own layout (Home component handles its own footer)
   if (isUserHome) {
     return (
       <>
@@ -72,9 +78,26 @@ export default function MainLayout() {
     );
   }
 
+  // Check if current page is Expert Profile page (/user/experts/:slug)
+  const isExpertProfilePage = Boolean(
+    location.pathname.startsWith("/user/experts/") &&
+    location.pathname.split("/").filter(Boolean).length >= 3
+  );
+
+  // Check if current page is ONLY the Chat & Call listing page (and NOT expert profile page)
+  const isCallChatPage = 
+    !isExpertProfilePage && (
+      location.pathname.startsWith("/user/call-chat") || 
+      location.pathname === "/user/call-chat" ||
+      location.pathname === "/user/experts" ||
+      location.pathname === "/user/experts/" ||
+      (location.pathname.startsWith("/user/category/") && location.pathname.endsWith("/experts"))
+    );
+
+  // Desktop layout for non-home pages
   if (isDesktop) {
     return (
-      <div className="desktop-layout-wrapper">
+      <div className={`desktop-layout-wrapper ${isCallChatPage ? "is-call-chat-layout" : ""}`}>
         <div className="desktop-only-header">
           <HomeHeader
             onMenuOpen={() => {}}
@@ -86,23 +109,28 @@ export default function MainLayout() {
             onWalletOpen={() => navigate("/user/wallet")}
             onFilterOpen={() => navigate("/user/search")}
             balance={balance}
+            isLoggedIn={isLoggedIn}
+            onLogout={logout}
             user={user}
           />
         </div>
-        <div className="home-desktop-shell layout--full-content">
-          <HomeLeftSidebar
-            isLoggedIn={isLoggedIn}
-            user={user}
-            balance={balance}
-            onLogin={openLogin}
-            onLogout={logout}
-          />
-          <main className="home-center-column">
+        <div className={`home-desktop-shell layout--full-content ${isCallChatPage ? "no-left-sidebar-shell" : ""}`}>
+          {!isCallChatPage && (
+            <HomeLeftSidebar
+              isLoggedIn={isLoggedIn}
+              user={user}
+              balance={balance}
+              onLogin={openLogin}
+              onLogout={logout}
+            />
+          )}
+          <main className={`home-center-column ${isCallChatPage ? "full-width-center-column" : ""}`}>
             <Outlet />
           </main>
         </div>
+        {/* Step 3: Desktop Footer - hidden on Reels, My Inquiries, Chat pages */}
         {!isNoFooterPage && (
-          <div className="home-footer-container">
+          <div className="default-footer-container">
             <Footer />
           </div>
         )}
@@ -110,6 +138,7 @@ export default function MainLayout() {
     );
   }
 
+  // Mobile layout
   return (
     <>
       {!isHideMobileHeader && (
@@ -118,7 +147,12 @@ export default function MainLayout() {
         </div>
       )}
       <Outlet />
-      {!isNoFooterPage && <Footer />}
+      {/* Step 4: Mobile Footer - hidden on Reels, My Inquiries, Chat pages */}
+      {!isNoFooterPage && (
+        <div className="default-footer-container">
+          <Footer />
+        </div>
+      )}
     </>
   );
 }

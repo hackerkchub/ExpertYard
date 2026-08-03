@@ -1782,26 +1782,26 @@ export const AllWithdrawalsSection = styled.section`
   }
 `;
 
-export const WithdrawalsTable = styled.div`
+export const WithdrawalsTableContainer = styled.div`
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   margin: 16px 0;
   border-radius: 12px;
   border: 1px solid #eef2f6;
+`;
+
+export const WithdrawalsTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
   
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 800px;
-    
-    @media (max-width: 768px) {
-      min-width: 700px;
-    }
-    
-    @media (max-width: 480px) {
-      min-width: 600px;
-    }
+  @media (max-width: 768px) {
+    min-width: 700px;
+  }
+  
+  @media (max-width: 480px) {
+    min-width: 600px;
   }
 `;
 

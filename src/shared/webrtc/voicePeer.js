@@ -678,14 +678,15 @@ export async function createPeer({ socket, callId, audioRef, stream }) {
         safePlayAudio(remoteAudioEl, "pc-connected");
       }
     }
-    if (peer.connectionState === "disconnected") {
+    if (peer.connectionState === "disconnected" || peer.connectionState === "closed") {
       if (disconnectTimer) clearTimeout(disconnectTimer);
       disconnectTimer = setTimeout(() => {
         if (peer !== currentPeer) return;
         if (peer.connectionState !== "connected") {
-          restartIceWithRenegotiation("Connection lost");
+          logError("WebRTC Connection Lost / Closed");
+          if (onNetworkErrorCallback) onNetworkErrorCallback();
         }
-      }, 4000);
+      }, 3000);
     }
     if (peer.connectionState === "failed") {
       remoteTrackAttached = false;

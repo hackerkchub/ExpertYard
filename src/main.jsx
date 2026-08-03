@@ -1,8 +1,6 @@
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "styled-components";
-import { Capacitor } from "@capacitor/core";
-import { App } from "@capacitor/app";
 import { HelmetProvider } from "react-helmet-async";
 
 import "./i18n";
@@ -19,7 +17,17 @@ import { soundManager } from "./shared/services/sound/soundManager";
 import GlobalStyles from "./shared/styles/GlobalStyles";
 import { theme } from "./shared/styles/theme";
 
-const isNativeApp = Capacitor.isNativePlatform();
+const kbPkg = "@capacitor/keyboard";
+const appPkg = "@capacitor/app";
+const capPkg = "@capacitor/core";
+
+let Capacitor = null;
+try {
+  const capModule = await import(/* @vite-ignore */ capPkg).catch(() => null);
+  Capacitor = capModule?.Capacitor || null;
+} catch (e) {}
+
+const isNativeApp = Capacitor && typeof Capacitor.isNativePlatform === "function" && Capacitor.isNativePlatform();
 
 soundManager.preload();
 startReact();
@@ -27,27 +35,25 @@ startReact();
 /* ================= NATIVE APP ONLY ================= */
 
 if (isNativeApp) {
-  App.addListener("backButton", () => {
-    const path = window.location.pathname;
-
-    const homeRoutes = [
-      "/",
-      "/user",
-      "/user/dashboard",
-      "/user/home",
-      "/expert",
-      "/expert/home",
-      "/expert/dashboard",
-      "/admin",
-      "/admin/dashboard",
-    ];
-
-    if (homeRoutes.includes(path)) {
-      App.exitApp();
-    } else {
-      window.history.back();
+  Promise.all([
+    import(/* @vite-ignore */ kbPkg).catch(() => null),
+    import(/* @vite-ignore */ appPkg).catch(() => null)
+  ]).then(([kbModule, appModule]) => {
+    if (kbModule?.Keyboard) {
+      kbModule.Keyboard.setResizeMode({ mode: "none" }).catch(() => {});
     }
-  });
+    if (appModule?.App) {
+      appModule.App.addListener("backButton", () => {
+        const path = window.location.pathname;
+        const homeRoutes = ["/", "/home", "/user/home", "/expert/dashboard"];
+        if (homeRoutes.includes(path)) {
+          appModule.App.exitApp();
+        } else {
+          window.history.back();
+        }
+      });
+    }
+  }).catch(() => {});
 }
 
 /* ================= WEB / PWA ONLY ================= */

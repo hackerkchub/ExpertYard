@@ -303,6 +303,11 @@ public class CallNotificationHelper {
     }
 
     public static void showIncomingCall(Context context, Map<String, String> data) {
+
+         String callId = data.get("callId");
+    if (callId == null || callId.isEmpty()) {
+        callId = data.get("request_id");
+    }
         Notification notification = buildIncomingCallNotification(context, data, false);
         if (notification == null) return;
 
@@ -332,11 +337,27 @@ public class CallNotificationHelper {
                 Log.d(TAG, "canUseFullScreenIntent = " + nm.canUseFullScreenIntent());
             }
 
-            String callId = data.get("callId");
+            // String callId = data.get("callId");
             Log.d(TAG, "✅ Incoming call notification shown - CallId: " + callId);
         } catch (Exception e) {
             Log.e(TAG, "❌ Failed to post notification", e);
         }
+
+        // Log fullscreen intent availability on Android 10+
+       // Log fullscreen intent availability
+if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // Android 14+
+    NotificationManager nm = context.getSystemService(NotificationManager.class);
+
+    if (nm != null) {
+        try {
+            Log.d(TAG, "canUseFullScreenIntent = " + nm.canUseFullScreenIntent());
+        } catch (Throwable t) {
+            Log.w(TAG, "canUseFullScreenIntent() not available", t);
+        }
+    }
+}
+
+        Log.d(TAG, "✅ Incoming call notification shown - CallId: " + callId);
     }
 
     // ✅ Fix 1: Only cancel notification, NO state reset

@@ -45,8 +45,9 @@ export default function ExpertVideoCall() {
   const { callId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { expertData } = useExpert();
-  const socket = useSocket(expertData?.expertId, "expert");
+  const { expertData } = useExpert() || {};
+  const expertId = expertData?.expertId || expertData?.id || localStorage.getItem("expert_id");
+  const socket = useSocket(expertId, "expert");
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const acceptedRef = useRef(false);

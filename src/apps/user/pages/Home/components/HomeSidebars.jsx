@@ -21,6 +21,23 @@ import {
 import logo from "../../../../../assets/logo.webp";
 import { getAllServices } from "../../../../../shared/api/service.api";
 
+// Helper function to get initials from name
+const getInitials = (name = "") => {
+  if (!name) return "?";
+  const words = name.trim().split(" ");
+  if (words.length === 1) return words[0].charAt(0).toUpperCase();
+  return (words[0].charAt(0) + (words[1]?.charAt(0) || "")).toUpperCase();
+};
+
+// Check if there's a valid profile photo
+const hasValidPhoto = (photo) => {
+  return photo && 
+    !photo.includes("default") && 
+    !photo.includes("placeholder") &&
+    !photo.includes("avatar") &&
+    photo.length > 10;
+};
+
 const navItems = [
   { label: "Home", to: "/user", icon: Home, end: true },
   { label: "Reel", to: "/user/reels", icon: Film },
@@ -58,48 +75,53 @@ export function HomeLeftSidebar({ isLoggedIn = false, user, balance = 0, onLogin
 
   return (
     <aside className="home-left-sidebar" aria-label="Home navigation">
+      {/* LOGO - Fixed at Top */}
       <Link className="home-sidebar-logo" to="/user" aria-label="G9Expert home">
         <img src={logo} alt="G9Expert" />
       </Link>
 
-      <div className="home-sidebar-account">
-        <strong>{accountName}</strong>
-        <span>{accountSubtext}</span>
+      {/* SCROLLABLE MIDDLE SECTION */}
+      <div className="home-sidebar-scrollable">
+        <div className="home-sidebar-account">
+          <strong>{accountName}</strong>
+          <span>{accountSubtext}</span>
+        </div>
+
+        <div className="home-sidebar-card home-sidebar-card--nav">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink key={item.label} to={item.to} end={item.end}>
+                <Icon size={20} />
+                <span>{item.label}</span>
+              </NavLink>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="home-sidebar-card home-sidebar-card--nav">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <NavLink key={item.label} to={item.to} end={item.end}>
-              <Icon size={20} />
-              <span>{item.label}</span>
-            </NavLink>
-          );
-        })}
-
-        <div className="home-sidebar-divider" />
-
+      {/* BOTTOM FIXED SECTION - Login + Promo */}
+      <div className="home-sidebar-bottom">
         <button
           type="button"
           className="home-sidebar-auth"
           onClick={isLoggedIn ? onLogout : onLogin}
         >
           {isLoggedIn ? <LogOut size={20} /> : <LogIn size={20} />}
-          <span>{isLoggedIn ? "Logout" : "Login"}</span>
+          <span>{isLoggedIn ? "Logout" : "Login / Sign Up"}</span>
         </button>
-      </div>
 
-      <div className="home-sidebar-promo">
-        <span>
-          <Sparkles size={20} />
-        </span>
-        <strong>100% Verified Experts</strong>
-        <p>Safe. Secure. Trusted.</p>
-        <small>Consult with confidence.</small>
-        <Link to="/user/call-chat?page=1">
-          Learn More <span style={{ marginLeft: "4px" }}>→</span>
-        </Link>
+        <div className="home-sidebar-promo">
+          <span>
+            <Sparkles size={20} />
+          </span>
+          <strong>100% Verified Experts</strong>
+          <p>Safe. Secure. Trusted.</p>
+          <small>Consult with confidence.</small>
+          <Link to="/user/call-chat?page=1">
+            Learn More <span style={{ marginLeft: "4px" }}>→</span>
+          </Link>
+        </div>
       </div>
     </aside>
   );
@@ -204,7 +226,7 @@ export function HomeRightSidebar({ experts = [], services = [], balance = 0 }) {
                   style={{ textDecoration: "none", color: "inherit", display: "flex", alignItems: "center", width: "100%" }}
                 >
                   <div className="item-icon-box">
-                    {image ? (
+                    {image && hasValidPhoto(image) ? (
                       <img
                         src={image}
                         alt=""
@@ -251,18 +273,34 @@ export function HomeRightSidebar({ experts = [], services = [], balance = 0 }) {
               const rating = isReal ? Number(exp.avg_rating || 4.8).toFixed(1) : exp.rating;
               const reviews = isReal ? (exp.total_reviews || "120") : exp.reviews;
               const slug = isReal ? (exp.expert_slug || exp.slug || exp.id) : "";
+              const profilePhoto = isReal ? exp.profile_photo : null;
+              const initials = getInitials(name);
+              const validPhoto = hasValidPhoto(profilePhoto);
 
               return (
                 <div key={idx} className="home-widget-item expert-item">
                   <div className="expert-avatar-box">
-                    {isReal && exp.profile_photo ? (
-                      <img src={exp.profile_photo} alt={name} className="expert-avatar" />
+                    {validPhoto ? (
+                      <img src={profilePhoto} alt={name} className="expert-avatar" />
                     ) : (
-                      <div className="expert-avatar-placeholder">
-                        {String(name).slice(0, 2).toUpperCase()}
+                      <div className="expert-avatar-placeholder" style={{
+                        width: "44px",
+                        height: "44px",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background: "linear-gradient(135deg, #0a66c2, #004182)",
+                        color: "#ffffff",
+                        fontWeight: "700",
+                        fontSize: "1rem",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                        flexShrink: 0,
+                      }}>
+                        {initials}
                       </div>
                     )}
-                    <span className="online-dot" />
                   </div>
                   <div className="item-details">
                     <Link to={slug ? `/user/experts/${slug}` : "#"} className="expert-name-link">
@@ -306,27 +344,9 @@ export function HomeRightSidebar({ experts = [], services = [], balance = 0 }) {
         <div className="wallet-balance-display">
           <div className="balance-info-col">
             <span className="balance-label">Available Balance</span>
-            <strong className="balance-value">₹ {walletAmount || "2,450"}</strong>
+            <strong className="balance-value">₹ {walletAmount || 0}</strong>
           </div>
         </div>
-
-        {showBonus && (
-          <div className="bonus-promo-box">
-            <Gift size={20} className="gift-icon" />
-            <div className="bonus-promo-details">
-              <h4>Get 10% Extra</h4>
-              <p>Add money to wallet and get 10% bonus</p>
-            </div>
-            <button 
-              type="button" 
-              className="close-bonus-btn" 
-              onClick={() => setShowBonus(false)}
-              aria-label="Dismiss offer"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        )}
 
         <Link to="/user/wallet" className="add-money-btn-gold">
           + Add Money to Wallet

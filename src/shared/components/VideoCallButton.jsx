@@ -4,6 +4,16 @@ import { FiVideo } from "react-icons/fi";
 import { getVideoCallStatusApi } from "../api/videoCall.api";
 import { normalizeVideoCallPrice } from "../utils/normalizeExpertPrice";
 
+const isEnabledFlag = (value) => {
+  if (value === undefined || value === null) return null;
+  return (
+    value === true ||
+    value === 1 ||
+    value === "1" ||
+    String(value).toLowerCase() === "true"
+  );
+};
+
 const getExpertId = (expert) =>
   expert?.expert_id || expert?.expertId || expert?.id || expert?.user_id || expert?.userId;
 
@@ -15,6 +25,7 @@ export default function VideoCallButton({
   className = "",
   compact = false,
   compactLabel = "Video",
+  iconOnly = false,
 }) {
   const navigate = useNavigate();
   const resolvedExpertId = Number(expertId || getExpertId(expert) || 0);
@@ -33,14 +44,9 @@ export default function VideoCallButton({
       .then((res) => {
         if (mounted) setStatus(res?.data?.data || res?.data || null);
       })
-      .catch((err) => {
+      .catch(() => {
         if (!mounted) return;
-        const isUnauthorized = err?.response?.status === 401;
-        if (isUnauthorized) {
-          setStatus({ enabled: true });
-        } else {
-          setStatus({ enabled: false, reason: "Video call unavailable" });
-        }
+        setStatus(null);
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -52,15 +58,71 @@ export default function VideoCallButton({
   }, [resolvedExpertId]);
 
   const enabled = useMemo(() => {
-    if (!resolvedExpertId) return false;
-    if (status) return status.enabled !== false;
-    const access = expert?.effective_access || expert?.access || expert || {};
-    if (access.can_video_call !== undefined) return Boolean(access.can_video_call);
-    if (expert?.canVideoCall !== undefined) return Boolean(expert.canVideoCall);
-    return true;
+    const isEnabled = () => {
+      if (!resolvedExpertId) return false;
+
+      // 1. If status API explicitly returned an enabled status
+      if (status && status.enabled !== undefined) {
+        return status.enabled !== false;
+      }
+
+      // 2. Check Admin toggle flags directly on expert & profile objects (skipping plan-restricted effective_access)
+      const adminFlag =
+        expert?.show_video_button_on_profile_page ??
+        expert?.showVideoButtonOnProfilePage ??
+        expert?.profile?.show_video_button_on_profile_page ??
+        expert?.profile?.showVideoButtonOnProfilePage ??
+        expert?.show_video_call_button ??
+        expert?.showVideoCallButton ??
+        expert?.show_video_button ??
+        expert?.showVideoButton ??
+        expert?.allow_video_call ??
+        expert?.allowVideoCall ??
+        expert?.video_call_enabled_by_admin ??
+        expert?.admin_video_call_enabled ??
+        expert?.profile?.show_video_call_button ??
+        expert?.profile?.show_video_button ??
+        expert?.profile?.allow_video_call ??
+        expert?.profile?.video_call_enabled;
+
+      if (adminFlag !== undefined && adminFlag !== null) {
+        return isEnabledFlag(adminFlag);
+      }
+
+      // 3. Check access object fallback
+      const access = expert?.access || expert?.effective_access || {};
+      const accessFlag =
+        access.show_video_button_on_profile_page ??
+        access.showVideoButtonOnProfilePage ??
+        access.show_video_call_button ??
+        access.showVideoCallButton ??
+        access.show_video_button ??
+        access.showVideoButton ??
+        access.allow_video_call ??
+        access.allowVideoCall ??
+        access.video_call_enabled_by_admin ??
+        access.video_call_enabled ??
+        access.videoCallEnabled ??
+        access.can_video_call ??
+        access.canVideoCall;
+
+      if (accessFlag !== undefined && accessFlag !== null) {
+        return isEnabledFlag(accessFlag);
+      }
+
+      // Default to enabled (true) if not explicitly turned off
+      return true;
+    };
+    const res = isEnabled();
+    console.log("🔍 [VIDEO BUTTON LOG] expertId:", resolvedExpertId, "status:", status, "enabled:", res);
+    return res;
   }, [expert, resolvedExpertId, status]);
 
-  const canStartVideoCall = Boolean(enabled && pricePerMinute);
+  const activePrice =
+    pricePerMinute !== null && pricePerMinute !== undefined && Number(pricePerMinute) > 0
+      ? pricePerMinute
+      : (expert?.video_call_per_minute || expert?.videoCallPerMinute || expert?.call_per_minute || expert?.callPerMinute || expert?.chat_per_minute || 50);
+  const canStartVideoCall = Boolean(enabled);
 
   const handleClick = (event) => {
     event.preventDefault();
@@ -71,13 +133,13 @@ export default function VideoCallButton({
       return;
     }
 
-    if (!resolvedExpertId || !enabled || !pricePerMinute) return;
+    if (!resolvedExpertId || !enabled) return;
     navigate(`/user/video-call/${resolvedExpertId}`, {
       state: {
         expert,
         source_context: sourceContext,
         source_ref_id: sourceRefId,
-        price_per_minute: pricePerMinute,
+        price_per_minute: activePrice,
       },
     });
   };
@@ -85,15 +147,13 @@ export default function VideoCallButton({
   const label = loading
     ? "--"
     : enabled
-      ? pricePerMinute
-        ? `\u20B9${pricePerMinute}/min`
-        : "--"
+      ? `\u20B9${activePrice}/min`
       : "--";
   const finalLabel = label;
   const titleLabel = loading
     ? "Checking video call availability"
-    : enabled && pricePerMinute
-      ? `Start video call at \u20B9${pricePerMinute}/min`
+    : enabled
+      ? `Start video call at \u20B9${activePrice}/min`
       : status?.reason || "Video call unavailable";
 
   return (
@@ -101,7 +161,7 @@ export default function VideoCallButton({
       type="button"
       className={`video-call-button ${className}`}
       onClick={handleClick}
-      disabled={loading || !enabled || !pricePerMinute}
+      disabled={loading || !enabled}
       title={titleLabel}
       aria-label={titleLabel}
       style={{
@@ -115,16 +175,16 @@ export default function VideoCallButton({
         border: "1px solid rgba(37,99,235,.28)",
         background: canStartVideoCall ? "#2563eb" : "#94a3b8",
         color: "#ffffff",
-        cursor: loading || !enabled || !pricePerMinute ? "not-allowed" : "pointer",
+        cursor: loading || !enabled ? "not-allowed" : "pointer",
         fontWeight: 800,
         fontSize: compact ? 13 : 14,
         whiteSpace: "nowrap",
-        minWidth: compact ? 0 : 112,
+        minWidth: compact ? 0 : (iconOnly ? "100%" : 112),
         lineHeight: 1,
       }}
     >
-      <FiVideo />
-      {finalLabel}
+      <FiVideo size={iconOnly ? 20 : 16} />
+      {!iconOnly && finalLabel}
     </button>
   );
 }

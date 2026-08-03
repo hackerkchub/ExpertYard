@@ -30,6 +30,30 @@ const apiFetch = async (path, options = {}) => {
   }
 };
 
+// Scroll lock utility
+const useScrollLock = (isLocked) => {
+  useEffect(() => {
+    if (isLocked) {
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.top = `-${window.scrollY}px`;
+      
+      return () => {
+        const scrollY = document.body.style.top;
+        document.body.style.overflow = originalStyle;
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.top = '';
+        if (scrollY) {
+          window.scrollTo(0, parseInt(scrollY || '0', 10) * -1);
+        }
+      };
+    }
+  }, [isLocked]);
+};
+
 export default function MyServices() {
   const navigate = useNavigate();
   const { expertData, profileLoading } = useExpert();
@@ -114,6 +138,28 @@ export default function MyServices() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to get correct image URL
+  const getImageUrl = (img) => {
+    if (!img) return "https://via.placeholder.com/200x150?text=No+Image";
+    if (img.startsWith("http")) return img;
+    return `https://softmaxs.com/${img}`;
+  };
+
+  // Helper function to render deliverables
+  const renderDeliverables = (deliverables) => {
+    if (!deliverables) return null;
+    if (Array.isArray(deliverables)) {
+      return (
+        <ul>
+          {deliverables.map((item, i) => (
+            <li key={i}>{item}</li>
+          ))}
+        </ul>
+      );
+    }
+    return <div dangerouslySetInnerHTML={{ __html: deliverables }} />;
   };
 
   useEffect(() => {

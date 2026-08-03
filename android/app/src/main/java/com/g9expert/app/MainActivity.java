@@ -10,7 +10,7 @@ import android.content.Intent;
 
 import com.getcapacitor.BridgeActivity;
 import com.g9expert.app.bridge.NativeBridgeManager;
-
+import android.view.WindowManager; 
 /**
  * MainActivity - Production-Ready Implementation
  * 
@@ -29,6 +29,9 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
+         getWindow().setSoftInputMode(
+        WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+    );
         Log.d(TAG, "=====================================");
         Log.d(TAG, "onCreate - MainActivity Started");
         Log.d(TAG, "=====================================");

@@ -6,6 +6,11 @@ const CategoryChips = React.memo(function CategoryChips({
   onSelect,
   loading,
 }) {
+  const sortedCategories = React.useMemo(() => {
+    const list = Array.isArray(categories) ? categories : [];
+    return [...list].sort((a, b) => Number(a.display_order || 0) - Number(b.display_order || 0));
+  }, [categories]);
+
   const getInitials = (name) => {
     return String(name || "C").trim().charAt(0).toUpperCase();
   };
@@ -69,7 +74,7 @@ const CategoryChips = React.memo(function CategoryChips({
           <span className="category-label">All</span>
         </button>
         
-        {categories.slice(0, 18).map((category, idx) => {
+        {sortedCategories.slice(0, 18).map((category, idx) => {
           const isActive = String(selectedCategoryId || "") === String(category.id || "");
           const fallbackGradient = getGradient(category.id || idx);
           

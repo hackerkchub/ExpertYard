@@ -3,10 +3,12 @@ import styled from "styled-components";
 export const PageWrapper = styled.div`
   background-color: #f8fafc;
   min-height: 100vh;
+  min-height: 100dvh;
   padding: 16px 12px;
   padding-top: max(16px, env(safe-area-inset-top));
   padding-bottom: max(16px, env(safe-area-inset-bottom));
   font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  position: relative;
   
   @media (max-width: 640px) {
     padding: 12px 8px;
@@ -185,6 +187,7 @@ export const ServiceList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding-bottom: 80px; /* Add padding for mobile to prevent footer overlap */
 `;
 
 export const ServiceCard = styled.div`
@@ -216,7 +219,7 @@ export const ServiceImage = styled.img`
 export const ServiceInfo = styled.div`
   padding: 16px;
   flex: 1;
-  .top-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+  .top-row { display: flex; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 4px; }
   .price { font-size: 18px; font-weight: 700; color: #0a66c2; display: inline-flex; align-items: baseline; gap: 6px; }
   .price small { color: #94a3b8; text-decoration: line-through; font-size: 12px; }
   h3 { font-size: 18px; color: #1d1d1d; margin: 0 0 8px 0; }
@@ -288,50 +291,104 @@ export const LoadingBox = styled.div`text-align: center; padding: 40px; color: #
 export const ErrorBox = styled.div`text-align: center; padding: 20px; color: #cc1011; background: #f9eaea; border-radius: 8px;`;
 export const EmptyState = styled.div`text-align: center; padding: 60px; background: white; border-radius: 8px; h3 { margin-top: 16px; color: #333; }`;
 
+// ============================================================
+// MODALS - FIXED FOR ALL SCREEN SIZES
+// ============================================================
+
 export const ModalOverlay = styled.div`
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-`;
+  z-index: 9999;
+  padding: 16px;
+  animation: fadeIn 0.2s ease-out;
 
-export const ModalContent = styled.div`
-  background: white;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
 
-  @media (max-width: 640px) {
-    width: 100%;
-    max-height: 92vh;
-    border-radius: 20px 20px 0 0;
+  /* Ensure modal is above everything */
+  @media (max-width: 768px) {
+    padding: 8px;
+    align-items: flex-end;
+  }
+
+  /* For very small screens */
+  @media (max-width: 480px) {
+    padding: 0;
+    align-items: flex-end;
   }
 `;
 
-export const DeleteConfirmModal = styled.div`
-  background: white;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 400px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+export const ModalContent = styled.div`
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  max-height: 90dvh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.3s ease-out;
+  overflow: hidden;
+
+  @keyframes slideUp {
+    from { 
+      transform: translateY(30px);
+      opacity: 0;
+    }
+    to { 
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* Mobile full-screen modal */
+  @media (max-width: 768px) {
+    max-height: 92vh;
+    max-height: 92dvh;
+    border-radius: 20px 20px 0 0;
+    max-width: 100%;
+    width: 100%;
+    animation: slideUpMobile 0.3s ease-out;
+  }
+
+  @keyframes slideUpMobile {
+    from { 
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to { 
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: 480px) {
+    max-height: 100vh;
+    max-height: 100dvh;
+    border-radius: 16px 16px 0 0;
+  }
 `;
 
 export const ModalHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.25rem 1.5rem;
+  padding: 1rem 1.5rem;
   border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  background: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 
   h2 {
     margin: 0;
@@ -350,20 +407,41 @@ export const ModalHeader = styled.div`
     justify-content: center;
     border-radius: 50%;
     transition: all 0.2s;
+    color: #64748b;
 
     &:hover {
       background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    &:active {
+      transform: scale(0.9);
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.875rem 1rem;
+    
+    h2 {
+      font-size: 1rem;
     }
   }
 `;
 
 export const ModalBody = styled.div`
   padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+  -webkit-overflow-scrolling: touch;
 
   form {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 1rem;
   }
 `;
 
@@ -396,6 +474,11 @@ export const FormGroup = styled.div`
       border-color: #0a66c2;
       box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.12);
     }
+
+    &:disabled {
+      background: #f1f5f9;
+      cursor: not-allowed;
+    }
   }
 
   textarea {
@@ -421,6 +504,18 @@ export const FormGroup = styled.div`
     font-size: 0.75rem;
     color: #64748b;
   }
+
+  @media (max-width: 480px) {
+    input, select {
+      min-height: 44px;
+      font-size: 0.875rem;
+      padding: 0 0.875rem;
+    }
+
+    textarea {
+      font-size: 0.875rem;
+    }
+  }
 `;
 
 export const CheckboxRow = styled.div`
@@ -435,6 +530,14 @@ export const CheckboxRow = styled.div`
     align-items: center;
     gap: 8px;
     font-weight: 600;
+    cursor: pointer;
+  }
+
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #0a66c2;
   }
 `;
 
@@ -483,6 +586,18 @@ export const FileManagerList = styled.div`
     background: #fee2e2;
     color: #b91c1c;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #fecaca;
+    }
+
+    &:active {
+      transform: scale(0.9);
+    }
   }
 
   .stacked {
@@ -492,6 +607,18 @@ export const FileManagerList = styled.div`
   .stacked input:not([type="checkbox"]) {
     width: 100%;
     margin-top: 6px;
+    min-height: 36px;
+    padding: 0 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    background: #ffffff;
+
+    &:focus {
+      outline: none;
+      border-color: #0a66c2;
+      box-shadow: 0 0 0 2px rgba(10, 102, 194, 0.1);
+    }
   }
 
   .flags {
@@ -506,6 +633,27 @@ export const FileManagerList = styled.div`
     display: inline-flex;
     align-items: center;
     gap: 4px;
+    font-weight: 400;
+    cursor: pointer;
+  }
+
+  .flags input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+    accent-color: #0a66c2;
+  }
+
+  @media (max-width: 480px) {
+    .file-row {
+      grid-template-columns: 18px minmax(0, 1fr) 30px;
+      gap: 8px;
+      padding: 8px;
+    }
+
+    strong {
+      font-size: 12px;
+    }
   }
 `;
 
@@ -516,6 +664,7 @@ export const FormRow = styled.div`
 
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
 `;
 
@@ -540,8 +689,8 @@ export const ImagePreview = styled.div`
     color: white;
     border: none;
     border-radius: 50%;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -550,7 +699,16 @@ export const ImagePreview = styled.div`
 
     &:hover {
       background: #c53030;
+      transform: scale(1.1);
     }
+
+    &:active {
+      transform: scale(0.9);
+    }
+  }
+
+  @media (max-width: 480px) {
+    max-width: 150px;
   }
 `;
 
@@ -558,9 +716,13 @@ export const ModalFooter = styled.div`
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
-  padding-top: 1rem;
-  margin-top: 1rem;
+  padding: 1rem 1.5rem;
   border-top: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  background: #ffffff;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
 
   button {
     min-height: 44px;
@@ -570,6 +732,13 @@ export const ModalFooter = styled.div`
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    &:active {
+      transform: scale(0.97);
+    }
 
     &.cancel {
       background: #f1f5f9;
@@ -610,5 +779,46 @@ export const ModalFooter = styled.div`
         cursor: not-allowed;
       }
     }
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.75rem 1rem;
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+
+    button {
+      min-height: 48px;
+      width: 100%;
+      justify-content: center;
+      font-size: 0.875rem;
+    }
+  }
+`;
+
+// Delete Confirmation Modal - Simplified
+export const DeleteConfirmModal = styled(ModalContent)`
+  max-width: 440px;
+  
+  ${ModalBody} {
+    p {
+      margin: 0.5rem 0;
+      color: #334155;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    strong {
+      color: #0f172a;
+    }
+  }
+
+  @media (max-width: 768px) {
+    max-height: 60vh;
+    max-height: 60dvh;
+  }
+
+  @media (max-width: 480px) {
+    max-height: 50vh;
+    max-height: 50dvh;
   }
 `;

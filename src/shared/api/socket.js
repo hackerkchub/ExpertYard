@@ -46,11 +46,13 @@ export const socket = io(getSocketBaseUrl(), {
 ------------------------------------------------------- */
 let registerOnConnectHandler = null;
 
-export const connectSocket = ({ userId, role }) => {
-  const token = getAuthToken(role);
+export const connectSocket = (params = {}) => {
+  const { userId, role } = params || {};
+  const effectiveRole = role || (localStorage.getItem("user_token") ? "user" : localStorage.getItem("expert_token") ? "expert" : null);
+  const token = getAuthToken(effectiveRole);
 
   if (!token) {
-    console.warn("❌ No token found for role:", role);
+    console.warn("❌ No token found for role:", effectiveRole);
     return;
   }
 
@@ -60,26 +62,30 @@ export const connectSocket = ({ userId, role }) => {
     socket.off("connect", registerOnConnectHandler);
   }
 
-  registerOnConnectHandler = () => {
-    console.log("🟢 Socket connected:", socket.id);
+  if (userId && effectiveRole) {
+    registerOnConnectHandler = () => {
+      console.log("🟢 Socket connected:", socket.id);
 
-    socket.emit("register", {
-      userId,
-      role,
-    });
-  };
+      socket.emit("register", {
+        userId,
+        role: effectiveRole,
+      });
+    };
 
-  socket.on("connect", registerOnConnectHandler);
+    socket.on("connect", registerOnConnectHandler);
+  }
 
   if (!socket.connected) {
     socket.connect();
     return;
   }
 
-  socket.emit("register", {
-    userId,
-    role,
-  });
+  if (userId && effectiveRole) {
+    socket.emit("register", {
+      userId,
+      role: effectiveRole,
+    });
+  }
 };
 
 /* -------------------------------------------------------

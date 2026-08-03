@@ -653,6 +653,8 @@ export function ExpertNotificationsProvider({ children }) {
     const chatCancelled = ({ request_id }) => updateLocalStatus(byRequestId(request_id), "cancelled");
     const chatRejected = ({ request_id }) => updateLocalStatus(byRequestId(request_id), "rejected");
     const chatEnded = ({ request_id }) => updateLocalStatus(byRequestId(request_id), "ended");
+    const chatMissed = ({ request_id }) =>
+  updateLocalStatus(byRequestId(request_id), "missed");
 
     socket.on("call:missed", missed);
     socket.on("call:rejected", rejected);
@@ -668,6 +670,7 @@ export function ExpertNotificationsProvider({ children }) {
     socket.on("chat_cancelled", chatCancelled);
     socket.on("chat_rejected", chatRejected);
     socket.on("chat_ended", chatEnded);
+    socket.on("chat_missed", chatMissed);
 
     // 📱 Native Android Rejection Event Listener
     const handleNativeCallRejected = (event) => {
@@ -796,6 +799,7 @@ export function ExpertNotificationsProvider({ children }) {
       socket.off("chat_cancelled", chatCancelled);
       socket.off("chat_rejected", chatRejected);
       socket.off("chat_ended", chatEnded);
+      socket.off("chat_missed", chatMissed);
       window.removeEventListener("g9:nativeCallRejected", handleNativeCallRejected);
       window.removeEventListener("g9:nativeCallTimeout", handleNativeCallTimeout);
       window.removeEventListener("g9:nativeCallEnded", handleSessionTerminated);

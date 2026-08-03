@@ -41,8 +41,14 @@ export const updateCategoryApi = ({ id, name, file, show_experts, show_master_se
   const formData = new FormData();
   formData.append("id", id);
   if (name !== undefined) formData.append("name", name);
-  if (show_experts !== undefined) formData.append("show_experts", show_experts ? "1" : "0");
-  if (show_master_services !== undefined) formData.append("show_master_services", show_master_services ? "1" : "0");
+  if (show_experts !== undefined) {
+    const isExpTrue = show_experts === true || show_experts === 1 || show_experts === "1" || show_experts === "true" || show_experts === "yes";
+    formData.append("show_experts", isExpTrue ? "1" : "0");
+  }
+  if (show_master_services !== undefined) {
+    const isMSTrue = show_master_services === true || show_master_services === 1 || show_master_services === "1" || show_master_services === "true" || show_master_services === "yes";
+    formData.append("show_master_services", isMSTrue ? "1" : "0");
+  }
   if (display_order !== undefined) formData.append("display_order", String(display_order));
   if (file) formData.append("image", file);
   return api.put(`/category/update/${id}`, formData, {

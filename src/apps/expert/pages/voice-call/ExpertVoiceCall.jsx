@@ -74,15 +74,14 @@ const UserIcon = () => (
 
 export default function ExpertVoiceCall() {
     const { callId } = useParams();
+    const normalizedCallId = Number(callId);
     const navigate = useNavigate();
     const location = useLocation();
     const nativeCall = location.state?.native;
-    const { expertData } = useExpert();
     const nativeStartedRef = useRef(false);
-
-    // Normalized callId for all checks
-    const normalizedCallId = Number(callId);
-    const socket = useSocket(expertData?.expertId, "expert");
+    const { expertData } = useExpert() || {};
+    const expertId = expertData?.expertId || expertData?.id || localStorage.getItem("expert_id");
+    const socket = useSocket(expertId, "expert");
     
     const [socketConnected, setSocketConnected] = useState(socket?.connected || false);
 
@@ -546,7 +545,7 @@ export default function ExpertVoiceCall() {
             removeProcessedNativeCall(String(callIdRef.current));
             clearNativeCallData();
             
-            setTimeout(() => navigate("/expert/home", { replace: true }), 500);
+            navigate("/expert/home", { replace: true });
         };
 
         const onBusy = () => {
@@ -560,9 +559,7 @@ export default function ExpertVoiceCall() {
             removeProcessedNativeCall(String(callIdRef.current));
             clearNativeCallData();
             
-            setTimeout(() => {
-                navigate("/expert/home", { replace: true });
-            }, 500);
+            navigate("/expert/home", { replace: true });
         };
 
         const onResumed = async ({ callId: resumedCallId }) => {
@@ -607,6 +604,9 @@ export default function ExpertVoiceCall() {
         socket.on(CALL_EVENTS.ENDED, onEnded);
         socket.on("call:ended", onEnded);
         socket.on("call:cancelled", onEnded);
+        socket.on("call:rejected", onEnded);
+        socket.on("call:user_ended", onEnded);
+        socket.on("call:end", onEnded);
 
         socket.on(CALL_EVENTS.BUSY, onBusy);
         socket.on("call:resumed", onResumed);
@@ -619,6 +619,9 @@ export default function ExpertVoiceCall() {
             socket.off(CALL_EVENTS.ENDED, onEnded);
             socket.off("call:ended", onEnded);
             socket.off("call:cancelled", onEnded);
+            socket.off("call:rejected", onEnded);
+            socket.off("call:user_ended", onEnded);
+            socket.off("call:end", onEnded);
 
             socket.off(CALL_EVENTS.BUSY, onBusy);
             socket.off("call:resumed", onResumed);

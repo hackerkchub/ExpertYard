@@ -1,4 +1,4 @@
-﻿// src/apps/admin/pages/ExpertDetail.jsx
+// src/apps/admin/pages/ExpertDetail.jsx
 
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -25,7 +25,8 @@ import {
   FaEye,
   FaDollarSign,
   FaChartLine,
-  FaUserShield
+  FaUserShield,
+  FaGift
 } from "react-icons/fa";
 
 import {
@@ -50,7 +51,12 @@ import {
   deleteManagedExpertReelApi,
   deleteExperienceApi,
   deletePostApi,
-  deleteReviewApi
+  deleteReviewApi,
+  // ✅ Trial APIs
+  getExpertTrialApi,
+  extendExpertTrialApi,
+  expireExpertTrialApi,
+  resetExpertTrialApi
 } from "../../../shared/api/admin/expert.api";
 
 import {
@@ -153,6 +159,10 @@ export default function ExpertDetail() {
     thumbnail: null,
   });
 
+  // ✅ Trial state
+  const [trialData, setTrialData] = useState(null);
+  const [savingTrial, setSavingTrial] = useState(false);
+
   useEffect(() => {
     fetchData();
   }, [id]);
@@ -195,11 +205,72 @@ export default function ExpertDetail() {
       } catch (accessErr) {
         console.warn("Access settings endpoint failed, using detail response access data:", accessErr);
       }
+
+     
+      // ✅ Fetch trial data
+try {
+  const trialRes = await getExpertTrialApi(id);
+
+  console.log("Trial API Response:", trialRes.data);
+
+  // sirf trial object store karo
+  setTrialData(trialRes.data.data.trial);
+
+} catch (trialErr) {
+  console.error("Trial fetch error:", trialErr);
+}
     } catch (err) {
       console.error("Error fetching expert details:", err);
       alert("Failed to load expert details");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ✅ Trial action handlers
+  const handleExtendTrial = async (hours) => {
+    try {
+      setSavingTrial(true);
+      await extendExpertTrialApi(id, hours);
+      await fetchData();
+      alert(`Trial extended by ${hours} hours`);
+    } catch (err) {
+      console.error(err);
+      alert(err?.response?.data?.message || err?.message || "Failed to extend trial");
+    } finally {
+      setSavingTrial(false);
+    }
+  };
+
+  const handleExpireTrial = async () => {
+    if (!window.confirm("Expire this trial now?")) return;
+
+    try {
+      setSavingTrial(true);
+      await expireExpertTrialApi(id);
+      await fetchData();
+      alert("Trial expired successfully");
+    } catch (err) {
+      console.error(err);
+      alert(err?.response?.data?.message || err?.message || "Failed to expire trial");
+    } finally {
+      setSavingTrial(false);
+    }
+  };
+
+  const handleResetTrial = async () => {
+    if (!window.confirm("Reset this trial to 72 hours?")) return;
+
+    try {
+      setSavingTrial(true);
+      await resetExpertTrialApi(id, 72);
+      await fetchData();
+      alert("Trial reset successfully");
+    } catch (err) {
+      console.error(err);
+      alert(err?.response?.data?.message || err?.message || "Failed to reset trial");
+    } finally {
+      setSavingTrial(false);
     }
   };
 
@@ -239,7 +310,7 @@ export default function ExpertDetail() {
     }
   };
 
-const truncateText = (text, maxLength = 200) => {
+  const truncateText = (text, maxLength = 200) => {
     if (!text || typeof text !== 'string') return 'No content available';
     return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
   };
@@ -318,17 +389,25 @@ const truncateText = (text, maxLength = 200) => {
   const profilePageAccessOptions = [
     ["show_chat_button_on_profile_page", "Show Chat Button on Expert Profile Page"],
     ["show_call_button_on_profile_page", "Show Call Button on Expert Profile Page"],
+    ["show_video_button_on_profile_page", "Show Video Call Button on Expert Profile Page"],
   ];
 
   const handleAccessToggle = async (field) => {
     const profilePageField = profilePageAccessOptions.some(([optionField]) => optionField === field);
     const currentValue = profilePageField ? accessSettings[field] !== false : Boolean(accessSettings[field]);
     const nextValue = !currentValue;
+    console.log(`👉 [ADMIN ACCESS TOGGLE] Field '${field}' toggling from ${currentValue} to ${nextValue}`);
     try {
       setSavingAccess(true);
       setAccessSettings((prev) => ({ ...prev, [field]: nextValue }));
       const res = await updateExpertAccessSettingsApi(id, { [field]: nextValue });
-      setAccessSettings(res.data?.data?.effective_access || {});
+      const serverAccess = res.data?.data?.effective_access || res.data?.data || {};
+      setAccessSettings((prev) => ({
+        ...prev,
+        ...serverAccess,
+        [field]: nextValue,
+      }));
+      console.log(`👉 [ADMIN ACCESS TOGGLE SUCCESS] Field '${field}' saved as ${nextValue}`, res.data);
     } catch (err) {
       console.error("Access settings update error:", err);
       alert("Failed to update access settings");
@@ -870,6 +949,7 @@ const truncateText = (text, maxLength = 200) => {
           </InfoGrid>
         </InfoCard>
 
+        {/* Access Settings */}
         <InfoCard>
           <h3><FaUserShield /> Admin Expert Access Settings</h3>
           <p style={{ marginTop: 0, color: "#475569", lineHeight: 1.5 }}>
@@ -916,6 +996,135 @@ const truncateText = (text, maxLength = 200) => {
           </InfoGrid>
         </InfoCard>
 
+                {/* ⭐ Trial Management - Fixed */}
+        <InfoCard>
+          <h3><FaGift /> Trial Management</h3>
+          
+          {trialData ? (
+            <>
+              <InfoGrid>
+                <InfoItem>
+                  <strong>Trial Enabled</strong>
+                  <span style={{ fontWeight: 600 }}>
+                    {trialData.enabled ? "✅ Yes" : "❌ No"}
+                  </span>
+                </InfoItem>
+
+                <InfoItem>
+                  <strong>Status</strong>
+                  <span style={{ 
+                    color: trialData.status === 'active' ? '#22c55e' : 
+                           trialData.status === 'expired' ? '#ef4444' : 
+                           trialData.status === 'converted' ? '#3b82f6' : '#6b7280',
+                    fontWeight: 600,
+                    textTransform: 'capitalize'
+                  }}>
+                    {trialData.status || 'N/A'}
+                  </span>
+                </InfoItem>
+
+                <InfoItem>
+                  <strong>Start Date</strong>
+                  <span>{trialData.start_at ? formatDate(trialData.start_at) : 'Not started'}</span>
+                </InfoItem>
+
+                <InfoItem>
+                  <strong>End Date</strong>
+                  <span>{trialData.end_at ? formatDate(trialData.end_at) : 'N/A'}</span>
+                </InfoItem>
+
+                <InfoItem>
+                  <strong>Remaining Time</strong>
+                  <span style={{ 
+                    color: trialData.remaining_hours > 24 ? '#22c55e' : 
+                           trialData.remaining_hours > 0 ? '#eab308' : '#ef4444',
+                    fontWeight: 600
+                  }}>
+                    {trialData.remaining_text || (trialData.remaining_hours !== undefined ? `${trialData.remaining_hours}h` : 'N/A')}
+                  </span>
+                </InfoItem>
+
+                <InfoItem>
+                  <strong>Dashboard Lock</strong>
+                  <span style={{ 
+                    color: trialData.dashboard_locked ? '#ef4444' : '#22c55e',
+                    fontWeight: 600
+                  }}>
+                    {trialData.dashboard_locked ? "🔒 ON (Locked)" : "🟢 OFF (Unlocked)"}
+                  </span>
+                </InfoItem>
+
+                <InfoItem>
+                  <strong>Upgrade Required</strong>
+                  <span style={{ 
+                    color: trialData.upgrade_required ? '#ef4444' : '#22c55e',
+                    fontWeight: 600
+                  }}>
+                    {trialData.upgrade_required ? "YES (Blocked)" : "NO"}
+                  </span>
+                </InfoItem>
+              </InfoGrid>
+
+              <ButtonGroup style={{ marginTop: 20, flexWrap: 'wrap', gap: '10px' }}>
+                {/* Custom Time Extend Input */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f1f5f9', padding: '8px 12px', borderRadius: '8px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}>Extend by (hrs):</label>
+                  <input 
+                    type="number" 
+                    min="1" 
+                    defaultValue="24"
+                    id="customExtendHours"
+                    style={{ width: '60px', padding: '6px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '14px' }}
+                  />
+                  <ActionButton
+  type="button"
+  onClick={() => {
+    console.log("Extend button clicked");
+
+    const hours = parseInt(
+      document.getElementById("customExtendHours").value
+    );
+
+    console.log(hours);
+
+    handleExtendTrial(hours);
+  }}
+>
+  Extend Trial
+</ActionButton>
+                </div>
+
+                {/* Expire Now Button */}
+                <DeleteButton
+                  type="button"
+                  disabled={savingTrial || trialData.status === 'expired' || trialData.status === 'converted'}
+                  onClick={handleExpireTrial}
+                  title={trialData.status === 'expired' || trialData.status === 'converted' ? 'Cannot expire expired or converted trial' : ''}
+                >
+                  Expire Now
+                </DeleteButton>
+
+                {/* Reset Trial Button */}
+                <ViewButton
+                  type="button"
+                  disabled={savingTrial || trialData.status === 'converted'}
+                  onClick={handleResetTrial}
+                  title={trialData.status === 'converted' ? 'Cannot reset converted trial' : ''}
+                >
+                  Reset Trial (72h)
+                </ViewButton>
+              </ButtonGroup>
+            </>
+          ) : (
+            <EmptyState>
+              <FaGift size={48} />
+              <h4>No trial data available</h4>
+              <p>Unable to load trial information for this expert</p>
+            </EmptyState>
+          )}
+        </InfoCard>
+
+        {/* Admin Manage Expert Profile */}
         <InfoCard>
           <h3><FaUserShield /> Admin Manage Expert Profile</h3>
           <form onSubmit={handleSaveProfile} style={managerFormStyle}>
@@ -965,6 +1174,7 @@ const truncateText = (text, maxLength = 200) => {
           </form>
         </InfoCard>
 
+        {/* Pricing */}
         <InfoCard>
           <h3><FaRupeeSign /> Admin Manage Call, Chat, Video & Session Prices</h3>
           <form onSubmit={handleSavePricing} style={managerFormStyle}>
@@ -1005,6 +1215,7 @@ const truncateText = (text, maxLength = 200) => {
           </form>
         </InfoCard>
 
+        {/* Plans */}
         <DetailSection>
           <h3>
             <FaDollarSign /> Admin Manage Subscription Plans
@@ -1080,6 +1291,7 @@ const truncateText = (text, maxLength = 200) => {
           )}
         </DetailSection>
 
+        {/* Password Update */}
         <InfoCard>
           <h3><FaUserShield /> Admin Update Expert Password</h3>
           <form onSubmit={handleSavePassword} style={managerFormStyle}>
@@ -1327,6 +1539,7 @@ const truncateText = (text, maxLength = 200) => {
           )}
         </DetailSection>
 
+        {/* Reels */}
         <DetailSection>
           <h3>
             <FaImage /> Admin Manage Reels
@@ -1405,6 +1618,7 @@ const truncateText = (text, maxLength = 200) => {
           )}
         </DetailSection>
 
+        {/* Services */}
         <DetailSection>
           <h3>
             <FaBriefcase /> Admin Manage Services

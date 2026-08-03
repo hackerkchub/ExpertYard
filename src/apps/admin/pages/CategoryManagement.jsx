@@ -101,7 +101,7 @@ export default function CategoryManagement() {
   const stats = useMemo(() => {
     const totalCategories = categories.length;
     const totalSubcategories = categories.reduce((acc, cat) => 
-      acc + (cat.subcategories?.length || 0), 0
+      acc + Number(cat.subcategories_count ?? cat.subcategories?.length ?? 0), 0
     );
     const categoriesWithImages = categories.filter(cat => cat.image_url || cat.image).length;
     const activeCategories = categories.filter(cat => cat.is_active === 1).length;
@@ -125,6 +125,7 @@ export default function CategoryManagement() {
         setLoading(true);
         await updateCategoryStatusApi(category.id, newStatus === 1);
         await fetchCategories();
+        window.dispatchEvent(new CustomEvent("categories_updated"));
       } catch (error) {
         console.error("Error updating category status:", error);
         alert(error.response?.data?.message || "Failed to update category status");
@@ -243,7 +244,7 @@ export default function CategoryManagement() {
     const subcats = await fetchSubcategories(categoryId);
     setCategories(prev => prev.map(cat => 
       cat.id === categoryId 
-        ? { ...cat, subcategories: subcats }
+        ? { ...cat, subcategories: subcats, subcategories_count: subcats.length }
         : cat
     ));
   }, [fetchSubcategories]);
@@ -267,8 +268,8 @@ export default function CategoryManagement() {
       id: category.id,
       category_id: category.category_id || category.id,
       name: category.name,
-      show_experts: category.show_experts !== 0,
-      show_master_services: category.show_master_services !== 0,
+      show_experts: Number(category.show_experts) === 1 || category.show_experts === true || category.show_experts === "1" || category.show_experts === "true" || category.show_experts === "yes",
+      show_master_services: Number(category.show_master_services) === 1 || category.show_master_services === true || category.show_master_services === "1" || category.show_master_services === "true" || category.show_master_services === "yes",
       display_order: category.display_order || 0,
       image: category.image_url || category.image,
       file: null,
@@ -297,14 +298,15 @@ export default function CategoryManagement() {
         id: editData.id,
         category_id: editData.category_id,
         name: editData.name,
-        show_experts: editData.show_experts,
-        show_master_services: editData.show_master_services,
-        display_order: editData.display_order,
+        show_experts: editData.show_experts ? "1" : "0",
+        show_master_services: editData.show_master_services ? "1" : "0",
+        display_order: String(editData.display_order ?? 0),
         file: editData.file || null
       };
 
       await updateCategoryApi(payload);
       await fetchCategories();
+      window.dispatchEvent(new CustomEvent("categories_updated"));
       cancelEdit();
     } catch (error) {
       console.error("Error updating category:", error);
@@ -331,6 +333,7 @@ export default function CategoryManagement() {
       setLoading(true);
       await deleteCategoryApi(id);
       await fetchCategories();
+      window.dispatchEvent(new CustomEvent("categories_updated"));
     } catch (error) {
       console.error("Error deleting category:", error);
       alert("Error deleting category. Please try again.");
@@ -374,6 +377,7 @@ export default function CategoryManagement() {
       if (addImageRef.current) addImageRef.current.value = "";
 
       await fetchCategories();
+      window.dispatchEvent(new CustomEvent("categories_updated"));
     } catch (error) {
       console.error("Error creating category:", error);
       alert("Error creating category. Please try again.");
@@ -572,8 +576,15 @@ export default function CategoryManagement() {
                             <option value="no">No (Hide)</option>
                           </select>
                         ) : (
-                          <span style={{ padding: "4px 10px", borderRadius: "12px", fontSize: "12px", fontWeight: "bold", background: cat.show_experts !== 0 ? "#dcfce7" : "#fee2e2", color: cat.show_experts !== 0 ? "#15803d" : "#b91c1c" }}>
-                            {cat.show_experts !== 0 ? "Yes" : "No"}
+                          <span style={{
+                            padding: "4px 10px",
+                            borderRadius: "12px",
+                            fontSize: "12px",
+                            fontWeight: "bold",
+                            background: (Number(cat.show_experts) === 1 || cat.show_experts === true || cat.show_experts === "1" || cat.show_experts === "true" || cat.show_experts === "yes") ? "#dcfce7" : "#fee2e2",
+                            color: (Number(cat.show_experts) === 1 || cat.show_experts === true || cat.show_experts === "1" || cat.show_experts === "true" || cat.show_experts === "yes") ? "#15803d" : "#b91c1c"
+                          }}>
+                            {(Number(cat.show_experts) === 1 || cat.show_experts === true || cat.show_experts === "1" || cat.show_experts === "true" || cat.show_experts === "yes") ? "Yes" : "No"}
                           </span>
                         )}
                       </TableCell>
@@ -591,8 +602,15 @@ export default function CategoryManagement() {
                             <option value="no">No (Hide)</option>
                           </select>
                         ) : (
-                          <span style={{ padding: "4px 10px", borderRadius: "12px", fontSize: "12px", fontWeight: "bold", background: cat.show_master_services !== 0 ? "#dcfce7" : "#fee2e2", color: cat.show_master_services !== 0 ? "#15803d" : "#b91c1c" }}>
-                            {cat.show_master_services !== 0 ? "Yes" : "No"}
+                          <span style={{
+                            padding: "4px 10px",
+                            borderRadius: "12px",
+                            fontSize: "12px",
+                            fontWeight: "bold",
+                            background: (Number(cat.show_master_services) === 1 || cat.show_master_services === true || cat.show_master_services === "1" || cat.show_master_services === "true" || cat.show_master_services === "yes") ? "#dcfce7" : "#fee2e2",
+                            color: (Number(cat.show_master_services) === 1 || cat.show_master_services === true || cat.show_master_services === "1" || cat.show_master_services === "true" || cat.show_master_services === "yes") ? "#15803d" : "#b91c1c"
+                          }}>
+                            {(Number(cat.show_master_services) === 1 || cat.show_master_services === true || cat.show_master_services === "1" || cat.show_master_services === "true" || cat.show_master_services === "yes") ? "Yes" : "No"}
                           </span>
                         )}
                       </TableCell>
@@ -610,7 +628,7 @@ export default function CategoryManagement() {
                           ) : (
                             <FaChevronDown />
                           )}
-                          <span>{cat.subcategories?.length || 0} Subcategories</span>
+                          <span>{cat.subcategories_count ?? cat.subcategories?.length ?? 0} Subcategories</span>
                         </SubcategoryToggle>
 
                         {expandedSubcats[cat.id] && (

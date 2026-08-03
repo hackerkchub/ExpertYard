@@ -11,45 +11,16 @@ export const Nav = styled.nav`
   left: 0;
   right: 0;
   z-index: 10000;
-  background:
-    radial-gradient(circle at 8% 0%, rgba(255, 193, 7, 0.16), transparent 28%),
-    radial-gradient(circle at 90% 0%, rgba(0, 0, 128, 0.12), transparent 34%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(246, 248, 255, 0.9));
-  border-bottom: 1px solid rgba(0, 0, 128, 0.1);
-  backdrop-filter: blur(20px) saturate(165%);
-  -webkit-backdrop-filter: blur(20px) saturate(165%);
-  box-shadow: 0 16px 40px rgba(0, 0, 128, 0.08);
-
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 2px;
-    background: linear-gradient(90deg, ${NAVY}, ${YELLOW}, ${NAVY});
-    opacity: 0.9;
-  }
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
 
   @media (min-width: 769px) {
-    background: #ffffff;
-    border-bottom: 1px solid rgba(226, 232, 240, 0.92);
-    box-shadow: 0 8px 26px rgba(15, 23, 42, 0.045);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-
-    &::before {
-      display: none;
-    }
-
-    .desktop-only-location {
-      flex: 0 0 210px;
-      min-width: 0;
-      margin-left: 0 !important;
-      margin-right: 0 !important;
-    }
-
-    .desktop-only-location .g9-location-selector-container {
-      width: 100%;
-    }
+    height: 58px;
+    min-height: 58px;
+    max-height: 58px;
+    display: flex;
+    align-items: center;
   }
 
   @media (max-width: 768px) {
@@ -58,35 +29,32 @@ export const Nav = styled.nav`
       border-bottom: 1px solid rgba(0, 0, 128, 0.08);
       box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
     }
-
-    &.user-common-mobile-header::before {
-      background: linear-gradient(90deg, ${NAVY}, #2563eb);
-      opacity: 0.85;
-    }
-
-    &.user-common-mobile-header .mobile-menu-trigger {
-      display: none !important;
-    }
   }
 `;
 
 export const Container = styled.div`
   position: relative;
-  max-width: 1240px;
+  max-width: 1600px;
   width: 100%;
-  height: 70px;
+  height: 58px;
   margin: 0 auto;
-  padding: 0 clamp(16px, 3vw, 28px);
+  padding: 0 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: clamp(8px, 1.5vw, 16px);
+  gap: 16px;
+  box-sizing: border-box;
 
   @media (min-width: 769px) {
-    max-width: 1440px;
-    height: 84px;
-    padding: 0 28px;
-    gap: 14px;
+    max-width: 1600px;
+    height: 58px;
+    min-height: 58px;
+    max-height: 58px;
+    padding: 0 32px;
+    gap: 16px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    align-items: center;
   }
 
   @media (max-width: 768px) {
@@ -496,40 +464,70 @@ export const HeaderSearch = styled.div`
   max-width: 520px;
 
   @media (min-width: 769px) {
-    max-width: none;
-    min-width: 280px;
+    flex: 1;
+    min-width: 320px;
+    max-width: 480px;
+    margin-right: 28px;
   }
 
   .navbar-global-search .g9-global-search__form {
-    min-height: 52px;
-    height: 52px;
-    padding: 6px 7px 6px 14px;
-    border-radius: 18px;
+    min-height: 42px;
+    height: 42px;
+    max-height: 42px;
+    padding: 4px 44px 4px 14px;
+    border-radius: 14px;
     background: #f8fafc;
-    border-color: rgba(203, 213, 225, 0.92);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.64);
+    border: 1px solid #e2e8f0;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
+    display: flex;
+    align-items: center;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .navbar-global-search .g9-global-search__form:focus-within {
+    border-color: #000080;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(0, 0, 128, 0.08), 0 4px 12px rgba(0, 0, 128, 0.06);
+  }
+
+  .navbar-global-search .g9-global-search__form input {
+    font-family: "Poppins", -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: #1e293b;
+  }
+
+  .navbar-global-search .g9-global-search__form input::placeholder {
+    color: #94a3b8;
+    font-weight: 500;
+    font-size: 15px;
   }
 
   .navbar-global-search .g9-global-search__icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 12px;
+    width: 28px;
+    height: 28px;
+    border-radius: 10px;
+    color: #000080;
+    background: rgba(0, 0, 128, 0.06);
   }
 
   .navbar-global-search .g9-global-search__submit {
-    height: 38px;
-    min-width: 86px;
-    border-radius: 13px;
-    font-size: 0.84rem;
+    height: 32px;
+    min-width: 72px;
+    border-radius: 10px;
+    font-family: "Poppins", sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    background: #000080;
   }
 
   .navbar-global-search .g9-global-search__clear {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
   }
 
   .navbar-global-search .g9-search-dropdown {
-    top: calc(100% + 8px);
+    top: calc(100% + 6px);
   }
 
   @media (max-width: 991px) {
@@ -550,14 +548,18 @@ export const HeaderLeft = styled.div`
 `;
 
 export const NavbarSpacer = styled.div`
-  height: 70px;
+  height: 58px;
+
+  @media (min-width: 769px) {
+    height: 58px;
+  }
 
   @media (max-width: 768px) {
-    height: 64px;
+    height: 58px;
   }
 
   @media (max-width: 480px) {
-    height: 60px;
+    height: 50px;
   }
 `;
 
@@ -569,25 +571,26 @@ export const BrandBox = styled(Link)`
   text-decoration: none;
   cursor: pointer;
   flex-shrink: 0;
+  margin-right: 36px;
   -webkit-tap-highlight-color: transparent;
 `;
 
 export const BrandLogo = styled.img`
-  width: 150px;
+  width: 140px;
   max-width: 32vw;
-  height: 42px;
+  height: 32px;
   object-fit: contain;
   object-position: left center;
   flex-shrink: 0;
-  border-radius: 12px;
+  border-radius: 8px;
   background: transparent;
   mix-blend-mode: multiply;
-  filter: drop-shadow(0 7px 14px rgba(0, 0, 128, 0.1));
 
-  @media (min-width: 1025px) {
-    width: 176px;
-    max-width: 176px;
-    height: 44px;
+  @media (min-width: 769px) {
+    width: auto;
+    max-width: 150px;
+    height: 32px;
+    max-height: 32px;
   }
 
   @media (max-width: 768px) {
@@ -912,32 +915,34 @@ export const LanguageOption = styled.button`
 
 export const AuthButton = styled.button`
   border: 0;
-  border-radius: 15px;
-  background: linear-gradient(135deg, ${NAVY}, #1212a6);
+  border-radius: 14px;
+  background: linear-gradient(135deg, ${NAVY} 0%, #1212a6 100%);
   color: #ffffff;
   min-width: 92px;
   height: 42px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 8px;
   flex: 0 0 auto;
-  padding: 0 16px;
+  padding: 0 20px;
+  font-family: "Poppins", sans-serif;
   font-size: 14px;
-  font-weight: 850;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-  box-shadow: 0 14px 28px rgba(0, 0, 128, 0.22);
+  box-shadow: 0 4px 14px rgba(0, 0, 128, 0.2);
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 18px 30px rgba(0, 0, 128, 0.26);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(0, 0, 128, 0.28);
+    background: linear-gradient(135deg, #000096 0%, #1515bf 100%);
   }
 
   svg {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
   }
 
   span {
@@ -1067,23 +1072,21 @@ export const HeaderActions = styled.div`
 
 export const HeaderDesktopIconButton = styled.button`
   position: relative;
-  width: 46px;
-  height: 46px;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  min-height: 42px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(0, 0, 128, 0.1);
-  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
   background: #ffffff;
-  color: #334155;
+  color: #000080;
   cursor: pointer;
-  box-shadow: 0 10px 22px rgba(0, 0, 128, 0.06);
-  transition:
-    color 0.2s ease,
-    background 0.2s ease,
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
 
   svg {
     width: 18px;
@@ -1091,20 +1094,20 @@ export const HeaderDesktopIconButton = styled.button`
   }
 
   &:hover {
-    background: rgba(0, 0, 128, 0.07);
+    background: #f8fafc;
     color: ${NAVY};
-    border-color: rgba(0, 0, 128, 0.18);
-    transform: translateY(-2px);
-    box-shadow: 0 14px 28px rgba(0, 0, 128, 0.1);
+    border-color: rgba(0, 0, 128, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
   }
 
   &.desktop-notification-button::after {
     content: "";
     position: absolute;
-    top: 9px;
-    right: 10px;
-    width: 8px;
-    height: 8px;
+    top: 8px;
+    right: 9px;
+    width: 7px;
+    height: 7px;
     border: 2px solid #ffffff;
     border-radius: 50%;
     background: #ef4444;
@@ -1116,26 +1119,26 @@ export const HeaderDesktopIconButton = styled.button`
 `;
 
 export const HeaderWalletPill = styled.button`
-  min-width: 128px;
-  height: 46px;
-  padding: 0 15px;
+  height: 42px;
+  min-height: 42px;
+  max-height: 42px;
+  padding: 0 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border: 1px solid rgba(255, 193, 7, 0.48);
-  border-radius: 16px;
-  background: linear-gradient(180deg, #fff7d6, rgba(255, 255, 255, 0.94));
-  color: #172033;
+  border: 1px solid rgba(255, 193, 7, 0.45);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fffcf0 0%, #ffffff 100%);
+  color: #1e293b;
   cursor: pointer;
-  box-shadow: 0 12px 24px rgba(255, 193, 7, 0.13);
-  font-size: 13px;
-  font-weight: 850;
+  box-shadow: 0 2px 6px rgba(255, 193, 7, 0.1);
+  font-family: "Poppins", sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
   white-space: nowrap;
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
 
   svg {
     width: 16px;
@@ -1144,9 +1147,9 @@ export const HeaderWalletPill = styled.button`
   }
 
   &:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
     border-color: rgba(255, 193, 7, 0.7);
-    box-shadow: 0 16px 28px rgba(255, 193, 7, 0.18);
+    box-shadow: 0 6px 16px rgba(255, 193, 7, 0.18);
   }
 
   @media (max-width: 1120px) {
@@ -1166,32 +1169,28 @@ export const HeaderWalletPill = styled.button`
 export const HeaderProfileButton = styled.button`
   width: 42px;
   height: 42px;
+  min-width: 42px;
+  min-height: 42px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(0, 0, 128, 0.1);
-  border-radius: 15px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 255, 0.78));
+  border: 2px solid #e2e8f0;
+  border-radius: 50%;
+  background: #ffffff;
   color: #334155;
   cursor: pointer;
-  box-shadow: 0 10px 22px rgba(0, 0, 128, 0.06);
-  transition:
-    color 0.2s ease,
-    background 0.2s ease,
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 
   svg {
     font-size: 18px;
   }
 
   &:hover {
-    background: rgba(0, 0, 128, 0.07);
+    background: #ffffff;
     color: ${NAVY};
-    border-color: rgba(0, 0, 128, 0.18);
-    transform: translateY(-2px);
-    box-shadow: 0 14px 28px rgba(0, 0, 128, 0.1);
+    border-color: #000080;
+    transform: scale(1.03);
   }
 
   &.mobile-profile-shortcut {

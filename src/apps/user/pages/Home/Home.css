@@ -7950,3 +7950,591 @@ img {
     margin-left: 0 !important;
   }
 }
+
+/* ==========================================================================
+   FLUTTER NATIVE MOBILE HOME PAGE DESIGN SYSTEM (MOBILE ONLY: max-width 767px)
+   ========================================================================== */
+@media (max-width: 767px) {
+  /* 1. App-like Soft Canvas & Container */
+  .mobile-only-marketplace-body {
+    background-color: #f4f6fc !important;
+    padding: 12px 12px 32px 12px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 2. Mobile Top Navigation / Header */
+  .mobile-header-only {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8) !important;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04) !important;
+    height: 60px !important;
+    padding: 0 14px !important;
+  }
+
+  .mobile-header-location .g9-location-trigger-chip {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 99px !important;
+    height: 38px !important;
+    padding: 0 10px !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03) !important;
+  }
+
+  .mobile-header-bell-btn {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 50% !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03) !important;
+  }
+
+  /* 3. Flutter Native Hero Card */
+  .home-hero-card {
+    background: linear-gradient(135deg, #020B5C 0%, #1e1b4b 60%, #0f172a 100%) !important;
+    border-radius: 24px !important;
+    padding: 20px 18px !important;
+    box-shadow: 0 12px 32px rgba(2, 11, 92, 0.22), 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    margin-bottom: 18px !important;
+    overflow: hidden !important;
+    position: relative !important;
+  }
+
+  .mobile-hero-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+  }
+
+  .mobile-hero-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    background: rgba(255, 255, 255, 0.16) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    color: #ffffff !important;
+    padding: 5px 12px !important;
+    border-radius: 99px !important;
+    font-size: 11.5px !important;
+    font-weight: 750 !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    margin-bottom: 12px !important;
+    letter-spacing: 0.2px !important;
+  }
+
+  .mobile-hero-title {
+    font-size: 22px !important;
+    font-weight: 900 !important;
+    color: #ffffff !important;
+    line-height: 1.25 !important;
+    margin: 0 0 8px 0 !important;
+    letter-spacing: -0.4px !important;
+  }
+
+  .mobile-hero-title .home-hero-highlight {
+    background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+  }
+
+  .mobile-hero-subtitle {
+    font-size: 12.5px !important;
+    color: rgba(255, 255, 255, 0.82) !important;
+    line-height: 1.45 !important;
+    margin: 0 0 16px 0 !important;
+    font-weight: 500 !important;
+  }
+
+  .mobile-hero-actions-row {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin-bottom: 0 !important;
+  }
+
+  .mobile-action-card {
+    background: rgba(255, 255, 255, 0.12) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 16px !important;
+    padding: 10px 4px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    cursor: pointer !important;
+    min-height: 56px !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08) !important;
+    transition: transform 0.15s ease, background 0.15s ease !important;
+  }
+
+  .mobile-action-card:active {
+    transform: scale(0.94) !important;
+    background: rgba(255, 255, 255, 0.25) !important;
+  }
+
+  .mobile-action-card svg {
+    color: #ffffff !important;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
+  }
+
+  .mobile-action-card span {
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    color: #ffffff !important;
+    letter-spacing: 0.1px !important;
+  }
+
+  /* 4. Flutter Native Headings & Action Buttons */
+  .home-section-heading {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-top: 20px !important;
+    margin-bottom: 12px !important;
+    padding: 0 4px !important;
+  }
+
+  .home-section-heading h2 {
+    font-size: 17.5px !important;
+    font-weight: 850 !important;
+    color: #0f172a !important;
+    margin: 0 0 2px 0 !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.3px !important;
+  }
+
+  .mobile-section-hint {
+    font-size: 11px !important;
+    color: #64748b !important;
+    font-weight: 600 !important;
+    margin: 0 !important;
+  }
+
+  .mobile-view-all-btn {
+    background: #eef2ff !important;
+    border: 1px solid rgba(0, 0, 128, 0.1) !important;
+    padding: 6px 14px !important;
+    border-radius: 99px !important;
+    font-size: 11.5px !important;
+    font-weight: 800 !important;
+    color: #020B5C !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 6px rgba(2, 11, 92, 0.05) !important;
+    transition: all 0.15s ease !important;
+  }
+
+  .mobile-view-all-btn:active {
+    transform: scale(0.94) !important;
+    background: #c7d2fe !important;
+  }
+
+  /* 5. Flutter Native Category Chips */
+  .mobile-target-categories {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 10px !important;
+    overflow-x: auto !important;
+    padding: 4px 2px 14px 2px !important;
+    white-space: nowrap !important;
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin-bottom: 16px !important;
+  }
+
+  .mobile-target-categories::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .mobile-category-chip-btn {
+    display: inline-flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 0 0 78px !important;
+    width: 78px !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    border-radius: 18px !important;
+    padding: 10px 6px !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04) !important;
+    transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease !important;
+  }
+
+  .mobile-category-chip-btn:active {
+    transform: scale(0.94) !important;
+  }
+
+  .mobile-category-chip-btn.active {
+    background: linear-gradient(135deg, #020B5C 0%, #1e3a8a 100%) !important;
+    border-color: #020B5C !important;
+    box-shadow: 0 6px 18px rgba(2, 11, 92, 0.28) !important;
+  }
+
+  .mobile-category-chip-btn span {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 14px !important;
+    background: #f1f5f9 !important;
+    color: #020B5C !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-bottom: 6px !important;
+    overflow: hidden !important;
+    transition: background 0.15s ease !important;
+  }
+
+  .mobile-category-chip-btn.active span {
+    background: rgba(255, 255, 255, 0.22) !important;
+    color: #ffffff !important;
+  }
+
+  .mobile-category-chip-btn strong {
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    color: #1e293b !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  .mobile-category-chip-btn.active strong {
+    color: #ffffff !important;
+  }
+
+  /* 6. Flutter Native Services Cards Horizontal Carousel */
+  .mobile-services-list {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 12px !important;
+    overflow-x: auto !important;
+    padding: 4px 4px 16px 4px !important;
+    width: calc(100% + 8px) !important;
+    margin-left: -4px !important;
+    white-space: nowrap !important;
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+    box-sizing: border-box !important;
+    scroll-snap-type: x mandatory !important;
+    margin-bottom: 20px !important;
+  }
+
+  .mobile-services-list::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .mobile-service-row-card {
+    flex: 0 0 280px !important;
+    width: 280px !important;
+    scroll-snap-align: start !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    border-radius: 20px !important;
+    padding: 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03) !important;
+    box-sizing: border-box !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  }
+
+  .mobile-service-row-card:active {
+    transform: scale(0.98) !important;
+  }
+
+  .mobile-service-img {
+    width: 100% !important;
+    height: 130px !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
+    background: #f1f5f9 !important;
+  }
+
+  .mobile-service-info h3 {
+    font-size: 14.5px !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    margin: 0 0 4px 0 !important;
+  }
+
+  .mobile-service-expert {
+    font-size: 12px !important;
+    color: #64748b !important;
+    font-weight: 600 !important;
+    margin: 0 0 8px 0 !important;
+  }
+
+  .mobile-service-meta {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 8px 12px !important;
+  }
+
+  .mobile-rating {
+    background: #fefce8 !important;
+    color: #b45309 !important;
+    border: 1px solid #fef08a !important;
+    padding: 2px 8px !important;
+    border-radius: 8px !important;
+    font-weight: 800 !important;
+    font-size: 11.5px !important;
+  }
+
+  .mobile-price {
+    font-size: 15px !important;
+    color: #020B5C !important;
+    font-weight: 900 !important;
+  }
+
+  .mobile-service-book-btn {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 14px !important;
+    padding: 10px 14px !important;
+    font-size: 13.5px !important;
+    font-weight: 800 !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25) !important;
+    min-height: 44px !important;
+    transition: transform 0.15s ease, opacity 0.15s ease !important;
+  }
+
+  .mobile-service-book-btn:active {
+    transform: scale(0.96) !important;
+    opacity: 0.9 !important;
+  }
+
+  /* 7. Flutter Native Expert Reels Slider Container */
+  .mobile-reels-section {
+    background: #ffffff !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    border-radius: 22px !important;
+    padding: 14px !important;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05) !important;
+    margin-bottom: 20px !important;
+  }
+
+  .mobile-reels-section .home-section-heading {
+    margin-top: 0 !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* 8. Flutter Native Available Experts List */
+  .mobile-experts-list {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 12px !important;
+    overflow-x: auto !important;
+    padding: 4px 4px 16px 4px !important;
+    width: calc(100% + 8px) !important;
+    margin-left: -4px !important;
+    white-space: nowrap !important;
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+    box-sizing: border-box !important;
+    scroll-snap-type: x mandatory !important;
+    margin-bottom: 20px !important;
+  }
+
+  .mobile-experts-list::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .mobile-expert-row-card {
+    flex: 0 0 280px !important;
+    width: 280px !important;
+    scroll-snap-align: start !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    border-radius: 20px !important;
+    padding: 16px !important;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03) !important;
+    box-sizing: border-box !important;
+    transition: transform 0.15s ease !important;
+  }
+
+  .mobile-expert-row-card:active {
+    transform: scale(0.98) !important;
+  }
+
+  .mobile-expert-avatar-wrapper {
+    width: 78px !important;
+    height: 78px !important;
+    border: 3px solid #e0e7ff !important;
+    border-radius: 50% !important;
+    box-shadow: 0 4px 12px rgba(2, 11, 92, 0.08) !important;
+  }
+
+  .mobile-expert-info h3 {
+    font-size: 15px !important;
+    font-weight: 850 !important;
+    color: #0f172a !important;
+  }
+
+  .mobile-expert-category {
+    font-size: 12px !important;
+    color: #64748b !important;
+    font-weight: 600 !important;
+  }
+
+  .mobile-expert-meta {
+    font-size: 12px !important;
+    color: #475569 !important;
+  }
+
+  .mobile-expert-chat-btn {
+    background: linear-gradient(135deg, #020B5C 0%, #1e3a8a 100%) !important;
+    color: #ffffff !important;
+    border-radius: 12px !important;
+    font-weight: 800 !important;
+    box-shadow: 0 4px 12px rgba(2, 11, 92, 0.2) !important;
+    min-height: 42px !important;
+    transition: transform 0.15s ease !important;
+  }
+
+  .mobile-expert-chat-btn:active {
+    transform: scale(0.95) !important;
+  }
+
+  .mobile-expert-call-btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: #ffffff !important;
+    border-radius: 12px !important;
+    font-weight: 800 !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2) !important;
+    min-height: 42px !important;
+    transition: transform 0.15s ease !important;
+  }
+
+  .mobile-expert-call-btn:active {
+    transform: scale(0.95) !important;
+  }
+
+  /* 9. Flutter Native Expert Tips / Knowledge Cards */
+  .mobile-posts-list {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 12px !important;
+    overflow-x: auto !important;
+    padding: 4px 4px 16px 4px !important;
+    width: calc(100% + 8px) !important;
+    margin-left: -4px !important;
+    white-space: nowrap !important;
+    scroll-behavior: smooth !important;
+    -webkit-overflow-scrolling: touch !important;
+    box-sizing: border-box !important;
+    scroll-snap-type: x mandatory !important;
+    margin-bottom: 20px !important;
+  }
+
+  .mobile-posts-list::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .mobile-post-row-card {
+    flex: 0 0 280px !important;
+    width: 280px !important;
+    scroll-snap-align: start !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    border-radius: 20px !important;
+    padding: 14px !important;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.03) !important;
+    box-sizing: border-box !important;
+    transition: transform 0.15s ease !important;
+  }
+
+  .mobile-post-row-card:active {
+    transform: scale(0.98) !important;
+  }
+
+  .mobile-post-avatar {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    background: #020B5C !important;
+    color: #ffffff !important;
+  }
+
+  .mobile-post-author h4 {
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+  }
+
+  .mobile-post-consult-btn {
+    background: linear-gradient(135deg, #020B5C 0%, #1d4ed8 100%) !important;
+    color: #ffffff !important;
+    border-radius: 12px !important;
+    font-weight: 800 !important;
+    padding: 6px 14px !important;
+    box-shadow: 0 4px 12px rgba(2, 11, 92, 0.18) !important;
+  }
+
+  /* 10. Flutter Native Customer Reviews Card */
+  .home-reviews-container.mobile-reviews {
+    background: #ffffff !important;
+    border-radius: 22px !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    padding: 16px !important;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05) !important;
+    margin-bottom: 20px !important;
+  }
+
+  /* 11. Flutter Native Mobile Trust Banner */
+  .mobile-trust-banner-only {
+    background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%) !important;
+    border: 1px solid #a7f3d0 !important;
+    border-radius: 20px !important;
+    padding: 16px !important;
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.08) !important;
+  }
+
+  .mobile-trust-icon-box {
+    background: #ffffff !important;
+    color: #059669 !important;
+    border-radius: 14px !important;
+    width: 44px !important;
+    height: 44px !important;
+    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.15) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .mobile-trust-arrow-btn {
+    background: #059669 !important;
+    color: #ffffff !important;
+    border-radius: 50% !important;
+    width: 36px !important;
+    height: 36px !important;
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25) !important;
+    transition: transform 0.15s ease !important;
+  }
+
+  .mobile-trust-arrow-btn:active {
+    transform: scale(0.92) !important;
+  }
+}

@@ -1,15 +1,101 @@
 :root {
+  /* Colors */
   --g9-blue: #000080;
+  --g9-primary-dark: #02005c;
   --g9-blue-soft: #eef2ff;
   --g9-yellow: #ffd54a;
-  --g9-text: #111827;
-  --g9-muted: #6b7280;
-  --g9-line: #e5e7eb;
-  --g9-line-soft: #eef0f4;
-  --g9-bg: #f7f8fb;
+  --g9-accent-gold: #f59e0b;
+  --g9-success-green: #059669;
+  --g9-success-bg: #ecfdf5;
+  --g9-text: #0f172a;
+  --g9-text-main: #0f172a;
+  --g9-muted: #64748b;
+  --g9-text-secondary: #64748b;
+  --g9-line: #e2e8f0;
+  --g9-line-soft: #f1f5f9;
+  --g9-bg: #f8fafc;
   --g9-card: #ffffff;
-  --g9-shadow: 0 16px 42px rgba(15, 23, 42, 0.075);
+  --g9-card-bg: #ffffff;
+  --g9-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+  --g9-shadow-hover: 0 12px 28px rgba(37, 99, 235, 0.12);
   --g9-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  /* Typography Scale with clamp() */
+  --g9-heading-lg: clamp(1.2rem, 3.5vw, 1.6rem);
+  --g9-heading-md: clamp(1.05rem, 2.8vw, 1.35rem);
+  --g9-heading-sm: clamp(0.92rem, 2.2vw, 1.1rem);
+  --g9-text-body: clamp(0.82rem, 1.8vw, 0.95rem);
+  --g9-text-sub: clamp(0.72rem, 1.5vw, 0.82rem);
+
+  /* Spacing */
+  --g9-page-padding-x: 16px;
+  --g9-section-margin-y: 28px;
+  --g9-card-padding: 16px;
+  --g9-card-gap: 16px;
+  --g9-card-radius: 20px;
+  --g9-btn-radius: 12px;
+
+  /* Responsive Horizontal Scroll Widths (20% Next Card Peeking) */
+  --g9-service-card-width: 270px;
+  --g9-service-card-height: 310px;
+  --g9-expert-card-width: 215px;
+  --g9-expert-card-height: 195px;
+}
+
+/* Responsive Media Query Breakpoints */
+
+/* 576px - 767px (Phablets & Small Tablets) */
+@media (max-width: 767px) {
+  :root {
+    --g9-page-padding-x: 16px;
+    --g9-section-margin-y: 24px;
+    --g9-card-radius: 18px;
+    --g9-service-card-width: 76vw;
+    --g9-expert-card-width: 58vw;
+  }
+}
+
+/* 430px - 479px (Large Phones e.g. iPhone Max, Plus, Pixel Pro) */
+@media (max-width: 479px) {
+  :root {
+    --g9-page-padding-x: 14px;
+    --g9-section-margin-y: 22px;
+    --g9-card-gap: 14px;
+    --g9-service-card-width: 78vw;
+    --g9-expert-card-width: 62vw;
+  }
+}
+
+/* 390px - 429px (Standard Phones e.g. iPhone 13/14/15, Galaxy S) */
+@media (max-width: 429px) {
+  :root {
+    --g9-page-padding-x: 14px;
+    --g9-card-gap: 14px;
+    --g9-service-card-width: 80vw;
+    --g9-expert-card-width: 64vw;
+  }
+}
+
+/* 360px - 389px (Compact Mobile) */
+@media (max-width: 389px) {
+  :root {
+    --g9-page-padding-x: 12px;
+    --g9-section-margin-y: 18px;
+    --g9-card-gap: 12px;
+    --g9-service-card-width: 82vw;
+    --g9-expert-card-width: 68vw;
+  }
+}
+
+/* 320px - 359px (Extra Small Mobile) */
+@media (max-width: 359px) {
+  :root {
+    --g9-page-padding-x: 10px;
+    --g9-section-margin-y: 16px;
+    --g9-card-gap: 10px;
+    --g9-service-card-width: 85vw;
+    --g9-expert-card-width: 72vw;
+  }
 }
 
 * {
@@ -1152,7 +1238,7 @@ body {
 .home-service-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 180px;
-  gap: 18px;
+  gap: 5px !important;
   align-items: center;
   border-color: rgba(34, 197, 94, 0.26);
   box-shadow: 0 18px 42px rgba(22, 163, 74, 0.055);
@@ -7102,3 +7188,140 @@ img {
   letter-spacing: 0.5px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 }
+
+/* ==========================================================================
+   HOMEPAGE REVIEWS & RATINGS STYLES
+   ========================================================================== */
+.home-reviews-container {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  padding: 24px;
+  margin-bottom: 28px;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+}
+
+.reviews-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.reviews-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.reviews-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #047857;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 4px 10px;
+  border-radius: 99px;
+}
+
+.reviews-cards-scroll {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+}
+
+.reviews-cards-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.reviews-cards-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 99px;
+}
+
+.home-review-card {
+  flex: 0 0 280px;
+  background: #f8fafc;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.review-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.review-avatar-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.review-user-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.review-user-info strong {
+  font-size: 13px;
+  color: #0f172a;
+}
+
+.review-user-info span {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.review-rating-star {
+  font-size: 12px;
+  font-weight: 800;
+  color: #854d0e;
+  background: #fefce8;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.review-comment {
+  margin: 0;
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.45;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .home-reviews-container {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .reviews-title {
+    font-size: 1.05rem;
+  }
+
+  .home-review-card {
+    flex: 0 0 78vw;
+  }
+}
+

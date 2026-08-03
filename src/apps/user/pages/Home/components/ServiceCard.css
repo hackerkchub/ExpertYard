@@ -1,0 +1,214 @@
+/* ==========================================================================
+   SERVICE CARD - 2-3 WORD TITLE TRUNCATION & BALANCED FOOTER SPACING
+   ========================================================================== */
+
+.home-service-card {
+  box-sizing: border-box;
+  flex: 0 0 280px;
+  width: 280px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #eef2f7;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  scroll-snap-align: start;
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.home-service-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  border-color: #cbd5e1;
+}
+
+/* 1. IMAGE WRAPPER (160px Desktop / 150px Mobile) */
+.service-card-image-wrap {
+  position: relative;
+  width: 100%;
+  height: 160px;
+  overflow: hidden;
+  background: #f1f5f9;
+  flex-shrink: 0;
+}
+
+.service-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.home-service-card:hover .service-card-img {
+  transform: scale(1.04);
+}
+
+/* Master Service Badge */
+.service-master-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #1e3a8a;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  white-space: nowrap;
+}
+
+/* 2. FULL WIDTH COMPACT CONTENT WRAPPER */
+.service-card-content {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: space-between;
+}
+
+/* Title Section (H2 Tag, 2-3 Words Truncated) */
+.service-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 20px;
+  padding-top: 3px;
+}
+
+/* Divider Line (Balanced Spacing) */
+.service-card-divider {
+  height: 1px;
+  background-color: #f1f5f9;
+  margin: 8px 0 12px 0;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+/* Footer Section (Flexbox Space-Between) */
+.service-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.service-price-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.price-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.price-amount {
+  font-size: 15px;
+  font-weight: 700;
+  color: #059669;
+  line-height: 1.15;
+}
+
+/* Book Now CTA Button */
+.service-book-btn {
+  height: 28px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: #000080;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: background-color 200ms ease, transform 150ms ease;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.service-book-btn:hover {
+  background: #02005c;
+  transform: translateY(-1px);
+}
+
+.service-book-btn:active {
+  transform: scale(0.98);
+}
+
+/* ==========================================================================
+   BREAKPOINTS: TABLET & MOBILE RESPONSIVE
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .home-service-card {
+    flex: 0 0 250px;
+    width: 250px;
+  }
+
+  .service-card-image-wrap {
+    height: 150px;
+  }
+
+  .service-card-title {
+    font-size: 13.5px;
+    height: 19px;
+  }
+}
+
+@media (max-width: 767px) {
+  .home-service-card {
+    flex: 0 0 240px;
+    width: 240px;
+    border-radius: 14px;
+  }
+
+  .service-card-image-wrap {
+    height: 145px;
+  }
+
+  .service-card-title {
+    font-size: 13px;
+    height: 18px;
+    margin-bottom: 6px;
+  }
+
+  .service-card-divider {
+    margin: 6px 0 10px 0;
+  }
+
+  .price-amount {
+    font-size: 14px;
+  }
+
+  .service-book-btn {
+    height: 23px;
+    padding: 0 12px;
+    font-size: 12px;
+    margin-top:5px;
+  }
+
+  .home-service-card:hover {
+    transform: none;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+  }
+}

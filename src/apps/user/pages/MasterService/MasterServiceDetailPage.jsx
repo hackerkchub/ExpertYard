@@ -264,7 +264,7 @@ export default function MasterServiceDetailPage() {
                           View Profile
                         </button>
                         <button type="button" onClick={() => navigate(bookPath(expert.id))} style={{ padding: "9px 12px", borderRadius: 8, border: 0, background: "#16a34a", color: "#fff", fontWeight: 800, cursor: "pointer" }}>
-                          Book Now
+                          Book
                         </button>
                       </div>
                     </div>

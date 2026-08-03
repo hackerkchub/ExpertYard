@@ -157,10 +157,17 @@ export default function SubcategoryPage() {
 
     setServicesLoading(true);
     try {
-      const response = await fetch(`/api/master-services/search?subcategory_id=${encodeURIComponent(subcategoryId)}&limit=100`);
+      const base = APP_CONFIG?.API_BASE_URL || "http://localhost:5000/api";
+      const response = await fetch(`${base}/master-services/public`);
       const data = await response.json();
-      const serviceRows = data?.data?.services || data?.data?.data || data?.services || [];
-      setServices(Array.isArray(serviceRows) ? serviceRows : []);
+      const rawServices = data?.data?.services || data?.data || data?.services || [];
+      const serviceRows = Array.isArray(rawServices) ? rawServices : [];
+
+      const filtered = serviceRows.filter(
+        (s) => String(s.subcategory_id) === String(subcategoryId) || String(s.category_id) === String(subcategoryId)
+      );
+
+      setServices(filtered.length > 0 ? filtered : serviceRows);
     } catch (err) {
       console.error("Subcategory services load failed", err);
       setServices([]);

@@ -127,16 +127,18 @@ body {
 }
 
 .home-feed-header {
-  position: sticky;
-  top: 0;
-  z-index: 40;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 100 !important;
   display: grid;
   grid-template-columns: 260px minmax(360px, 1fr) 46px minmax(190px, 250px) 46px auto minmax(46px, auto);
   align-items: center;
   gap: 14px;
   width: 100%;
   padding: 18px 28px 14px 28px;
-  background: #ffffff;
+  background: #ffffff !important;
   border-bottom: 1px solid rgba(226, 232, 240, 0.92);
   box-shadow: 0 8px 26px rgba(15, 23, 42, 0.045);
 }
@@ -305,16 +307,64 @@ body {
   align-items: start;
   width: min(1440px, 100%);
   margin: 0 auto;
-  padding: 24px 28px 44px;
+  padding: 108px 28px 44px;
 }
 
 .home-left-sidebar {
-  position: sticky;
-  top: 96px;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 280px !important;
+  height: 100vh !important;
+  background: #ffffff !important;
+  border-right: 1px solid #E5E7EB !important;
+  padding: 24px 20px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  z-index: 50 !important;
+  overflow-y: auto;
 }
 
 .home-right-sidebar {
+  position: fixed !important;
+  top: 80px !important;
+  right: max(28px, calc((100vw - 1440px) / 2 + 28px)) !important;
+  width: 320px !important;
+  height: calc(100vh - 124px) !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 24px;
+  overflow-y: auto;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.home-right-sidebar > .home-widget:first-child {
+  margin-top: 0 !important;
+}
+
+.home-right-sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.home-right-sidebar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.home-right-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.home-footer-container {
+  width: 100%;
   position: relative;
+  z-index: 40;
+  margin-top: 24px;
 }
 
 .home-left-sidebar {

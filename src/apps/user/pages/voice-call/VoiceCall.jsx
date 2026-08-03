@@ -67,7 +67,7 @@ export default function VoiceCall() {
   const location = useLocation();
   const profileSlugRef = useRef(location.state?.slug || null);
 
-  const validModes = ["per_minute", "session", "subscription"];
+  const validModes = ["per_minute", "session", "subscription", "master_service", "workspace", "service", "free"];
 
   const pricingMode = validModes.includes(location.state?.pricingMode)
     ? location.state.pricingMode

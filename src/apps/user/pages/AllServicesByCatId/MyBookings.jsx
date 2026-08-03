@@ -140,7 +140,13 @@ const MyBookings = () => {
                           </button>
                           <button
                             type="button"
-                            onClick={() => navigate(`/user/voice-call/${booking.expert_id}`)}
+                            onClick={() => navigate(`/user/voice-call/${booking.expert_id}`, {
+                              state: {
+                                pricingMode: "master_service",
+                                bookingId: booking.id,
+                                serviceTitle: booking.service_title
+                              }
+                            })}
                             style={{ padding: "6px 12px", background: "#059669", color: "#fff", border: 0, borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
                           >
                             <FiPhone /> Voice Call

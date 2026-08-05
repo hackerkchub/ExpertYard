@@ -1534,7 +1534,8 @@ const ExpertProfilePage = () => {
                 <div className="expert-profile-action-item">
                   <PriceTag style={{ background: "#2563eb", color: "#ffffff" }}>Video ₹{displayPrices.videoCallPrice}/min</PriceTag>
                   <VideoCallButton
-                    expertId={profile._id || expertData?._id}
+                    expert={expertData || profile}
+                    expertId={numericExpertId || profile.id || profile.expert_id || expertData?.id || expertData?.expert_id}
                     expertName={profile.name}
                     isAvailable={isExpertOnline}
                     videoCallPrice={displayPrices.videoCallPrice}

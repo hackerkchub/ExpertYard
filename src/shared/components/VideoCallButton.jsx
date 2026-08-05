@@ -15,7 +15,7 @@ const isEnabledFlag = (value) => {
 };
 
 const getExpertId = (expert) =>
-  expert?.expert_id || expert?.expertId || expert?.id || expert?.user_id || expert?.userId;
+  expert?.expert_id || expert?.expertId || expert?.id || expert?.user_id || expert?.userId || expert?._id;
 
 export default function VideoCallButton({
   expert,
@@ -62,11 +62,22 @@ export default function VideoCallButton({
       if (!resolvedExpertId) return false;
 
       // 1. If status API explicitly returned an enabled status
-      if (status && status.enabled !== undefined) {
-        return status.enabled !== false;
+      if (status) {
+        const rawStatus =
+          status.enabled ??
+          status.video_call_enabled ??
+          status.videoCallEnabled ??
+          status.allow_video_call ??
+          status.allowVideoCall ??
+          status.show_video_button ??
+          status.showVideoButton;
+
+        if (rawStatus !== undefined && rawStatus !== null) {
+          return isEnabledFlag(rawStatus);
+        }
       }
 
-      // 2. Check Admin toggle flags directly on expert & profile objects (skipping plan-restricted effective_access)
+      // 2. Check Admin toggle flags directly on expert & profile objects
       const adminFlag =
         expert?.show_video_button_on_profile_page ??
         expert?.showVideoButtonOnProfilePage ??
@@ -110,7 +121,6 @@ export default function VideoCallButton({
         return isEnabledFlag(accessFlag);
       }
 
-      // Default to enabled (true) if not explicitly turned off
       return true;
     };
     const res = isEnabled();
@@ -134,9 +144,10 @@ export default function VideoCallButton({
     }
 
     if (!resolvedExpertId || !enabled) return;
+
     navigate(`/user/video-call/${resolvedExpertId}`, {
       state: {
-        expert,
+        expert: expert || status?.expert || { id: resolvedExpertId, name: status?.expert_name },
         source_context: sourceContext,
         source_ref_id: sourceRefId,
         price_per_minute: activePrice,

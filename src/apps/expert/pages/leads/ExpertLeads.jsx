@@ -138,8 +138,39 @@ export default function ExpertLeads() {
         const res = await getExpertLeadsApi(activeTab);
         if (res.data?.access) setAccess(res.data.access);
         const rows = getArrayPayload(res);
-        if (isDev) console.debug("[expert-leads] lead list count", { tab: activeTab, count: rows.length });
-        setLeads(rows);
+
+const uniqueLeads = Array.from(
+  rows.reduce((map, lead) => {
+    const existing = map.get(lead.user_id);
+    if (!existing) {
+      map.set(lead.user_id, lead);
+      return map;
+    }
+    
+    // Check if current lead has visible contact data
+    const currentHasData = lead.user_phone || lead.user_email;
+    const existingHasData = existing.user_phone || existing.user_email;
+    
+    // Prioritize the one with data (dusra wala jisme data dikh raha tha)
+    if (currentHasData && !existingHasData) {
+      map.set(lead.user_id, lead);
+    } else if (currentHasData && existingHasData) {
+      // If both have data, keep the latest one (by created_at or id)
+      if (new Date(lead.created_at) > new Date(existing.created_at)) {
+        map.set(lead.user_id, lead);
+      }
+    } else if (!currentHasData && !existingHasData) {
+      // If both don't have data, keep the latest one
+      if (new Date(lead.created_at) > new Date(existing.created_at)) {
+        map.set(lead.user_id, lead);
+      }
+    }
+    // If current has no data and existing has data, keep existing (do nothing)
+    
+    return map;
+  }, new Map()).values()
+);
+setLeads(uniqueLeads);
       }
     } finally {
       setLoading(false);

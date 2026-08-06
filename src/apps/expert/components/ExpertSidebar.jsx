@@ -80,7 +80,7 @@ export default function ExpertSidebar() {
     { path: "/expert/leads", icon: FiUsers, label: "Leads" },
     { path: "/expert/inquiries", icon: FiMail, label: "Inquiries" },
     { path: "/expert/reels", icon: FiVideo, label: "Manage Reels" },
-    { path: "/expert/profile", icon: FiUser, label: "Profile" },
+    { path: "/expert/my-content", icon: FiFileText, label: "My Content" },
   ];
 
   return (

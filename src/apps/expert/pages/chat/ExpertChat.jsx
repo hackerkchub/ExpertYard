@@ -23,6 +23,7 @@ import {
 import { socket } from "../../../../shared/api/socket";
 import { useExpert } from "../../../../shared/context/ExpertContext";
 import { getUserPublicProfileApi } from "../../../../shared/api/userApi";
+import { presenceService } from "../../../../shared/services/presence/presenceService";
 import { hotToast } from "../../../../shared/utils/lazyNotifications";
 import { APP_CONFIG } from "../../../../config/appConfig";
 import { getChatRoomCandidates, getChatRoomId, waitForChatDetailsRetry } from "../../../../shared/utils/chatRoom";
@@ -597,6 +598,18 @@ export default function ExpertChat() {
   const isChatActive = useMemo(() => {
     return isServiceChat || sessionActive;
   }, [isServiceChat, sessionActive]);
+
+  useEffect(() => {
+    if (expertId) {
+      presenceService.setIdentity(expertId, "expert");
+    }
+    if (room_id) {
+      presenceService.setActiveRoom(room_id, window.location.pathname);
+    }
+    return () => {
+      presenceService.clearActiveRoom();
+    };
+  }, [expertId, room_id]);
 
   const roomCandidates = useMemo(() => {
     const list = getChatRoomCandidates(location.state?.roomCandidates || [], location.state || {}, room_id);

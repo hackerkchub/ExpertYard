@@ -84,9 +84,17 @@ export default function MasterServiceSlugPage() {
   // Active Booking Detection & Mobile App Styled Alert Dialog State
   const [activeUserBooking, setActiveUserBooking] = useState(null);
   const [showActiveBookingDialog, setShowActiveBookingDialog] = useState(false);
+  const [showSelectExpertModal, setShowSelectExpertModal] = useState(false);
 
   // Related Services
   const [relatedServices, setRelatedServices] = useState([]);
+
+  const isAlreadyBooked = useMemo(() => {
+    return Boolean(
+      activeUserBooking &&
+      !["COMPLETED", "CANCELLED", "CLOSED", "completed", "cancelled", "closed"].includes(activeUserBooking.status)
+    );
+  }, [activeUserBooking]);
 
   const fetchWalletBalance = async () => {
     try {
@@ -981,31 +989,36 @@ export default function MasterServiceSlugPage() {
 
             {/* PRIMARY CALL TO ACTION BUTTONS */}
             <div className="msp-action-grid">
-              <button
-                type="button"
-                className="msp-btn-primary"
-                onClick={() => handleOpenBookingModal(primaryExpert)}
-              >
-                <FiZap /> Book Service Now
-              </button>
-
-              <button
-                type="button"
-                className="msp-btn-secondary"
-                onClick={() => navigate(`/user/chat?expert_id=${primaryExpert.expert_id || primaryExpert.id}`)}
-              >
-                <FiMessageSquare /> Chat
-              </button>
-
-              <button
-                type="button"
-                className="msp-btn-emerald"
-                onClick={() => navigate(`/user/voice-call/${primaryExpert.expert_id || primaryExpert.id}`, {
-                  state: { pricingMode: "master_service", serviceTitle: service.title }
-                })}
-              >
-                <FiPhone /> Call Expert
-              </button>
+              {isAlreadyBooked ? (
+                <button
+                  type="button"
+                  className="msp-btn-primary"
+                  style={{
+                    background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
+                    color: "#ffffff",
+                    cursor: "default",
+                    boxShadow: "0 4px 14px rgba(5, 150, 105, 0.25)",
+                    border: 0
+                  }}
+                  onClick={(e) => e.preventDefault()}
+                >
+                  <FiCheckCircle size={18} /> You Have Already Booked This Service
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="msp-btn-primary"
+                  onClick={() => {
+                    if (experts && experts.length > 0) {
+                      setShowSelectExpertModal(true);
+                    } else {
+                      handleOpenBookingModal(primaryExpert);
+                    }
+                  }}
+                >
+                  <FiZap /> Book Service Now
+                </button>
+              )}
             </div>
 
           </div>
@@ -1060,106 +1073,116 @@ export default function MasterServiceSlugPage() {
           </div>
         )}
 
-        {/* 👥 VERIFIED EXPERTS OFFERING THIS SERVICE */}
-        <section className="msp-section-card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-            <h2 className="msp-section-title">
-              <FiAward style={{ color: "#2563eb" }} /> Verified Experts Offering This Service ({processedExperts.length})
-            </h2>
+        {/* 👥 VERIFIED EXPERTS OFFERING THIS SERVICE (HIDDEN IF USER HAS ACTIVE BOOKING) */}
+        {!isAlreadyBooked && (
+          <section className="msp-section-card">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+              <h2 className="msp-section-title">
+                <FiAward style={{ color: "#2563eb" }} /> Verified Experts Offering This Service ({processedExperts.length})
+              </h2>
 
-            {/* EXPERTS SEARCH & FILTERS */}
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-              <div style={{ position: "relative" }}>
-                <input
-                  type="text"
-                  placeholder="Search expert by name..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ padding: "8px 12px 8px 34px", borderRadius: 10, border: "1px solid #cbd5e1", fontSize: 13, minWidth: 210, outline: "none" }}
-                />
-                <FiSearch style={{ position: "absolute", left: 11, top: 11, color: "#94a3b8" }} />
+              {/* EXPERTS SEARCH & FILTERS */}
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                <div style={{ position: "relative" }}>
+                  <input
+                    type="text"
+                    placeholder="Search expert by name..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{ padding: "8px 12px 8px 34px", borderRadius: 10, border: "1px solid #cbd5e1", fontSize: 13, minWidth: 210, outline: "none" }}
+                  />
+                  <FiSearch style={{ position: "absolute", left: 11, top: 11, color: "#94a3b8" }} />
+                </div>
+
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  style={{ padding: "8px 12px", borderRadius: 10, border: "1px solid #cbd5e1", fontSize: 13, background: "#fff", color: "#334155", fontWeight: 700 }}
+                >
+                  <option value="recommended">Sort: Recommended</option>
+                  <option value="price_asc">Price: Low to High</option>
+                  <option value="price_desc">Price: High to Low</option>
+                  <option value="sla_asc">SLA: Fastest Delivery</option>
+                  <option value="rating_desc">Rating: Highest First</option>
+                </select>
               </div>
-
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                style={{ padding: "8px 12px", borderRadius: 10, border: "1px solid #cbd5e1", fontSize: 13, background: "#fff", color: "#334155", fontWeight: 700 }}
-              >
-                <option value="recommended">Sort: Recommended</option>
-                <option value="price_asc">Price: Low to High</option>
-                <option value="price_desc">Price: High to Low</option>
-                <option value="sla_asc">SLA: Fastest Delivery</option>
-                <option value="rating_desc">Rating: Highest First</option>
-              </select>
             </div>
-          </div>
 
-          {processedExperts.length === 0 ? (
-            <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 16, padding: "2.5rem", textAlign: "center" }}>
-              <p style={{ color: "#64748b", margin: 0, fontSize: "1.05rem" }}>No experts match your search criteria. You can proceed with instant auto-assignment.</p>
-              <button
-                type="button"
-                onClick={() => handleOpenBookingModal(primaryExpert)}
-                style={{ marginTop: 14, padding: "10px 20px", background: "#2563eb", color: "#fff", border: 0, borderRadius: 10, fontWeight: 800, cursor: "pointer" }}
-              >
-                Book with Auto-Assigned Verified Expert
-              </button>
-            </div>
-          ) : (
-            <div className="msp-experts-grid">
-              {processedExperts.map((exp) => {
-                const expPrice = Number(exp.custom_price || service.base_price);
-                const expSla = exp.delivery_time_days || service.delivery_time_days || 1;
-                return (
-                  <div key={exp.id || exp.expert_id} className="msp-expert-card">
-                    <div>
-                      <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-                        <img
-                          src={exp.profile_photo || exp.profile_image || "https://via.placeholder.com/60"}
-                          alt={exp.expert_name || exp.name}
-                          style={{ width: 60, height: 60, borderRadius: "50%", objectFit: "cover", border: "2px solid #e2e8f0" }}
-                        />
-                        <div>
-                          <h4 style={{ margin: 0, color: "#0f172a", fontSize: "1.1rem", fontWeight: 800 }}>{exp.expert_name || exp.name}</h4>
-                          <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>{exp.position || "Verified Expert"} • {exp.location || exp.city || "India"}</div>
-                          <div style={{ fontSize: 12, color: "#ca8a04", fontWeight: 800, marginTop: 4 }}>
-                            ★ {exp.avg_rating || "4.9"} <span style={{ color: "#64748b", fontWeight: 500 }}>({exp.total_reviews || 12} reviews)</span>
+            {processedExperts.length === 0 ? (
+              <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 16, padding: "2.5rem", textAlign: "center" }}>
+                <p style={{ color: "#64748b", margin: 0, fontSize: "1.05rem" }}>No experts match your search criteria. You can proceed with instant auto-assignment.</p>
+                <button
+                  type="button"
+                  onClick={() => handleOpenBookingModal(primaryExpert)}
+                  style={{ marginTop: 14, padding: "10px 20px", background: "#2563eb", color: "#fff", border: 0, borderRadius: 10, fontWeight: 800, cursor: "pointer" }}
+                >
+                  Book with Auto-Assigned Verified Expert
+                </button>
+              </div>
+            ) : (
+              <div className="msp-experts-grid">
+                {processedExperts.map((exp) => {
+                  const effectivePrice = Number(exp.offer_price || exp.custom_price || service.base_price || 0);
+                  const hasOffer = exp.offer_price && Number(exp.offer_price) < Number(exp.custom_price || service.base_price);
+                  const expSla = exp.delivery_time_days || service.delivery_time_days || 1;
+                  return (
+                    <div key={exp.id || exp.expert_id} className="msp-expert-card">
+                      <div>
+                        <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+                          <img
+                            src={exp.profile_photo || exp.profile_image || "https://via.placeholder.com/60"}
+                            alt={exp.expert_name || exp.name}
+                            style={{ width: 60, height: 60, borderRadius: "50%", objectFit: "cover", border: "2px solid #e2e8f0" }}
+                          />
+                          <div>
+                            <h4 style={{ margin: 0, color: "#0f172a", fontSize: "1.1rem", fontWeight: 800 }}>{exp.expert_name || exp.name}</h4>
+                            <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>{exp.position || "Verified Expert"} • {exp.location || exp.city || "India"}</div>
+                            <div style={{ fontSize: 12, color: "#ca8a04", fontWeight: 800, marginTop: 4 }}>
+                              ★ {exp.avg_rating || "4.9"} <span style={{ color: "#64748b", fontWeight: 500 }}>({exp.total_reviews || 12} reviews)</span>
+                            </div>
                           </div>
                         </div>
+
+                        {exp.custom_bio && (
+                          <p style={{ margin: "12px 0 0", color: "#475569", fontSize: "0.85rem", lineHeight: 1.5, background: "#f8fafc", padding: "10px 12px", borderRadius: 10, border: "1px solid #f1f5f9" }}>
+                            "{exp.custom_bio}"
+                          </p>
+                        )}
                       </div>
 
-                      {exp.custom_bio && (
-                        <p style={{ margin: "12px 0 0", color: "#475569", fontSize: "0.85rem", lineHeight: 1.5, background: "#f8fafc", padding: "10px 12px", borderRadius: 10, border: "1px solid #f1f5f9" }}>
-                          "{exp.custom_bio}"
-                        </p>
-                      )}
-                    </div>
-
-                    <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-                      <div>
-                        <div style={{ fontSize: 11, color: "#64748b", fontWeight: 700 }}>Expert Price</div>
-                        <div style={{ fontSize: "1.3rem", fontWeight: 900, color: "#059669" }}>
-                          ₹{expPrice.toLocaleString("en-IN")}
+                      <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+                        <div>
+                          <div style={{ fontSize: 11, color: "#64748b", fontWeight: 700 }}>Expert Price</div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ fontSize: "1.3rem", fontWeight: 900, color: "#059669" }}>
+                              ₹{effectivePrice.toLocaleString("en-IN")}
+                            </span>
+                            {hasOffer && (
+                              <span style={{ fontSize: 12, color: "#94a3b8", textDecoration: "line-through" }}>
+                                ₹{Number(exp.custom_price || service.base_price).toLocaleString("en-IN")}
+                              </span>
+                            )}
+                          </div>
                         </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ fontSize: 11, color: "#64748b", fontWeight: 700 }}>Guaranteed SLA</div>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: "#1e293b" }}>⚡ {expSla} Day(s)</div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenBookingModal(exp)}
+                          style={{ padding: "10px 18px", background: "#2563eb", color: "#fff", border: 0, borderRadius: 10, fontWeight: 800, fontSize: 13, cursor: "pointer" }}
+                        >
+                          Book Service
+                        </button>
                       </div>
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: 11, color: "#64748b", fontWeight: 700 }}>Guaranteed SLA</div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: "#1e293b" }}>⚡ {expSla} Day(s)</div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenBookingModal(exp)}
-                        style={{ padding: "10px 18px", background: "#2563eb", color: "#fff", border: 0, borderRadius: 10, fontWeight: 800, fontSize: 13, cursor: "pointer" }}
-                      >
-                        Book Service
-                      </button>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
 
         {/* 📄 REQUIRED DOCUMENTS & FULFILLMENT STEPS */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "1.5rem" }}>
@@ -1512,7 +1535,133 @@ export default function MasterServiceSlugPage() {
         </div>
       )}
 
-      {/* 📱 FLUTTER / MOBILE APP STYLED ACTIVE BOOKING ALERT DIALOG */}
+      {/* 🌟 PLEASE SELECT AN EXPERT FOR BOOKING POPUP MODAL */}
+      {showSelectExpertModal && !isAlreadyBooked && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.7)",
+            backdropFilter: "blur(6px)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "1rem",
+          }}
+          onClick={() => setShowSelectExpertModal(false)}
+        >
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: 24,
+              maxWidth: 600,
+              width: "100%",
+              maxHeight: "85vh",
+              overflowY: "auto",
+              padding: "1.75rem",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+              display: "grid",
+              gap: 16,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: "1rem" }}>
+              <div>
+                <h3 style={{ margin: 0, color: "#0f172a", fontSize: "1.3rem", fontWeight: 900 }}>
+                  Please Select an Expert for Booking
+                </h3>
+                <div style={{ fontSize: 13, color: "#64748b", marginTop: 2 }}>
+                  Choose your preferred verified expert for {service?.title}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSelectExpertModal(false)}
+                style={{ background: "#f1f5f9", color: "#64748b", border: 0, borderRadius: "50%", width: 32, height: 32, cursor: "pointer", fontWeight: 800 }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: "grid", gap: 12, maxHeight: "55vh", overflowY: "auto", paddingRight: 4 }}>
+              {processedExperts.map((exp) => {
+                const effectivePrice = Number(exp.offer_price || exp.custom_price || service?.base_price || 0);
+                const hasOffer = exp.offer_price && Number(exp.offer_price) < Number(exp.custom_price || service?.base_price);
+                const expSla = exp.delivery_time_days || service?.delivery_time_days || 1;
+
+                return (
+                  <div
+                    key={exp.id || exp.expert_id}
+                    style={{
+                      background: "#f8fafc",
+                      border: "1.5px solid #e2e8f0",
+                      borderRadius: 16,
+                      padding: "1rem 1.25rem",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: 12,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                      <img
+                        src={exp.profile_photo || exp.profile_image || "https://via.placeholder.com/50"}
+                        alt={exp.expert_name || exp.name}
+                        style={{ width: 50, height: 50, borderRadius: "50%", objectFit: "cover", border: "2px solid #2563eb" }}
+                      />
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <strong style={{ color: "#0f172a", fontSize: 15 }}>{exp.expert_name || exp.name}</strong>
+                          <span style={{ fontSize: 11, color: "#ca8a04", fontWeight: 800 }}>★ {exp.avg_rating || "4.9"}</span>
+                        </div>
+                        <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
+                          {exp.position || "Verified Expert"} • SLA: {expSla} Day(s)
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontSize: 15, fontWeight: 900, color: "#059669" }}>
+                          ₹{effectivePrice.toLocaleString("en-IN")}
+                        </div>
+                        {hasOffer && (
+                          <div style={{ fontSize: 11, color: "#94a3b8", textDecoration: "line-through" }}>
+                            ₹{Number(exp.custom_price || service?.base_price).toLocaleString("en-IN")}
+                          </div>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowSelectExpertModal(false);
+                          handleOpenBookingModal(exp);
+                        }}
+                        style={{
+                          padding: "8px 16px",
+                          background: "#2563eb",
+                          color: "#ffffff",
+                          border: 0,
+                          borderRadius: 10,
+                          fontWeight: 800,
+                          fontSize: 13,
+                          cursor: "pointer",
+                          boxShadow: "0 2px 6px rgba(37, 99, 235, 0.2)",
+                        }}
+                      >
+                        Select & Book
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
       {showActiveBookingDialog && activeUserBooking && (
         <div style={{
           position: "fixed",

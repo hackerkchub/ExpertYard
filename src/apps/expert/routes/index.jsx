@@ -103,6 +103,7 @@ export default function ExpertAppRoutes() {
             </ProtectedExpertRoute>
           }
         />
+        <Route path="my-bookings" element={<Navigate to="/expert/mybookings" replace />} />
         <Route
           path="create-services"
           element={

@@ -22,6 +22,7 @@ import { hotToast } from "../../../../shared/utils/lazyNotifications";
 import { APP_CONFIG } from "../../../../config/appConfig";
 import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
+import { presenceService } from "../../../../shared/services/presence/presenceService";
 
 /* ------------------ ANIMATIONS ------------------ */
 const fadeIn = keyframes`
@@ -716,6 +717,18 @@ export default function Chat() {
     }
     navigateBackOrPrevious();
   }, [isServiceChat, navigateBackOrPrevious]);
+
+  useEffect(() => {
+    if (user?.id) {
+      presenceService.setIdentity(user.id, "user");
+    }
+    if (room_id) {
+      presenceService.setActiveRoom(room_id, window.location.pathname);
+    }
+    return () => {
+      presenceService.clearActiveRoom();
+    };
+  }, [user?.id, room_id]);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;

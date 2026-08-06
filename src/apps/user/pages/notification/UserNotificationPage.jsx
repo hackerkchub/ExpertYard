@@ -102,11 +102,14 @@ const getNotificationConfig = (type) => {
   };
 };
 
+import NotificationDetailModal from "../../../../shared/components/NotificationDetailModal";
+
 export default function UserNotificationPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(false);
+  const [selectedDetailNotif, setSelectedDetailNotif] = useState(null);
 
   const { notifications, unread, setUnread, setNotifications } = useNotifications({
     panel: "user",
@@ -149,16 +152,45 @@ export default function UserNotificationPage() {
   };
 
   const handleTap = (n) => {
-    if (n.targetUrl) {
-      navigate(n.targetUrl);
-    } else if (n.type?.includes("chat")) {
-      navigate("/user/chat-history");
-    } else if (n.type?.includes("call")) {
-      navigate("/user/chat-history");
-    }
-
     if (n.is_read !== 1 && n.is_read !== true) {
       handleMarkRead(n.id);
+    }
+
+    const typeStr = String(n.type || "").toLowerCase();
+    const meta = typeof n.meta === "object" ? n.meta : {};
+    let targetUrl = n.target_url || n.targetUrl || meta.target_url || meta.targetUrl || meta.url || meta.click_action;
+
+    // Prevent direct auto-calling when tapping notification cards
+    if (targetUrl && (targetUrl.includes("/voice-call/") || targetUrl.includes("/video-call/"))) {
+      targetUrl = "/user/my-bookings";
+    }
+
+    // Direct target URL if provided
+    if (targetUrl) {
+      navigate(targetUrl);
+      return;
+    }
+
+    // Specific notification category tab mapping
+    if (typeStr.includes("chat")) {
+      if (meta.room_id) {
+        navigate(`/user/chat/${meta.room_id}`);
+      } else {
+        navigate("/user/chat-history");
+      }
+    } else if (typeStr.includes("video")) {
+      navigate("/user/call-chat?mode=video");
+    } else if (typeStr.includes("call")) {
+      navigate("/user/call-chat?mode=call");
+    } else if (typeStr.includes("service") || typeStr.includes("booking") || typeStr.includes("workspace")) {
+      if (meta.booking_id) {
+        navigate(`/user/workspace/${meta.booking_id}`);
+      } else {
+        navigate("/user/my-bookings");
+      }
+    } else {
+      // Default to detail modal for system announcements
+      setSelectedDetailNotif(n);
     }
   };
 
@@ -284,6 +316,17 @@ export default function UserNotificationPage() {
             );
           })}
         </S.NotificationList>
+      )}
+
+      {selectedDetailNotif && (
+        <NotificationDetailModal
+          notification={selectedDetailNotif}
+          onClose={() => setSelectedDetailNotif(null)}
+          onNavigate={(url) => {
+            setSelectedDetailNotif(null);
+            navigate(url);
+          }}
+        />
       )}
     </S.Container>
   );

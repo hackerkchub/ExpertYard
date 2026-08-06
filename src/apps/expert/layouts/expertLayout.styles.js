@@ -10,6 +10,9 @@ export const LayoutWrapper = styled.div`
   min-height: 100vh;
   min-height: 100dvh;
   overflow-x: hidden; /* Prevent horizontal scroll, allow native vertical window scroll */
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   background:
     radial-gradient(circle at top left, rgba(63, 81, 181, 0.08), transparent 28%),
     linear-gradient(180deg, #f7f9fc 0%, #eef3f8 100%);
@@ -65,6 +68,8 @@ export const ContentWrapper = styled.main`
   /* Standard overflow behavior */
   overflow-y: visible;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   
   transition: all 0.3s ease-in-out;
 

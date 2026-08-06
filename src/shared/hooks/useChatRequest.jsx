@@ -698,12 +698,12 @@ setIsStartingAi(false);
 
     // ========== REJECTED HANDLER ==========
     const rejected = (data = {}) => {
-      const user_id = data.user_id;
-      const message = data.message;
+      const targetUserId = data.user_id || data.userId;
+      const message = data.message || "Chat request was declined by expert";
       
-      console.log("chat_rejected received", { user_id, message });
+      console.log("chat_rejected received", { targetUserId, userId, message });
       
-      if (user_id && Number(user_id) !== Number(userId)) return;
+      if (targetUserId && userId && Number(targetUserId) !== Number(userId)) return;
       if (!mountedRef.current) return;
       
       if (requestLockTimeoutRef.current) {
@@ -712,7 +712,7 @@ setIsStartingAi(false);
       }
       
       setShowWaiting(false);
-      setRejectedMsg(message || "Chat request was declined");
+      setRejectedMsg(message);
       setIsRequesting(false);
       setShowAiOffer(false);
       setAiOffer(null);
@@ -834,6 +834,21 @@ setIsStartingAi(false);
       setIsRequesting(false);
     };
 
+    const notifHandler = (notif = {}) => {
+      const notifType = String(notif.type || notif.notification_type || "").toLowerCase();
+      if (notifType === "chat_rejected" || notifType === "chat_declined") {
+        if (notif.receiver_id && Number(notif.receiver_id) !== Number(userId)) return;
+        console.log("🔔 [useChatRequest] notification:new received chat_rejected", notif);
+        setShowWaiting(false);
+        setRejectedMsg(notif.message || "Expert declined your chat request");
+        setIsRequesting(false);
+        setShowAiOffer(false);
+        setAiOffer(null);
+        setAiError("");
+        setIsStartingAi(false);
+      }
+    };
+
     // Register all socket event listeners
     socket.on("request_pending", pending);
     socket.on("chat_accepted", accepted);
@@ -843,6 +858,7 @@ setIsStartingAi(false);
     socket.on("ai_fallback_offer", aiOfferHandler);
     socket.on("ai_fallback_accepted", aiAccepted);
     socket.on("ai_fallback_failed", aiFailed);
+    socket.on("notification:new", notifHandler);
 
     // Cleanup
     return () => {
@@ -854,6 +870,7 @@ setIsStartingAi(false);
       socket.off("ai_fallback_offer", aiOfferHandler);
       socket.off("ai_fallback_accepted", aiAccepted);
       socket.off("ai_fallback_failed", aiFailed);
+      socket.off("notification:new", notifHandler);
     };
   }, [navigate, userId]);
 

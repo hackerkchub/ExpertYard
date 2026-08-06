@@ -315,6 +315,11 @@ const ExpertEarningsDashboard = () => {
             description = "Service Booking Earning";
           }
 
+          else if (item.reference_type === "admin_manual_credit" || item.reference_type === "admin_credit" || item.description === "Added by G9Expert") {
+            txnType = "admin_credit";
+            description = "Added by G9Expert";
+          }
+
           else if (item.reference_type === "withdrawal") {
             txnType = "withdrawal";
             description = "Withdrawal";

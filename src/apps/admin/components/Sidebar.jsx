@@ -12,8 +12,9 @@ import {
   FiHelpCircle,
   FiCreditCard,
   FiBarChart2,
-   FiImage,
+  FiImage,
   FiArchive,
+  FiBell,
 } from "react-icons/fi";
 import {
   Side,
@@ -133,6 +134,13 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
     },
   ]
 },
+    {
+      section: "Notifications",
+      items: [
+        { path: "/admin/notifications/users", icon: FiBell, label: "Send to Users" },
+        { path: "/admin/notifications/experts", icon: FiBell, label: "Send to Experts" },
+      ]
+    },
     {
       section: "System",
       items: [

@@ -56,7 +56,8 @@ import {
   getExpertTrialApi,
   extendExpertTrialApi,
   expireExpertTrialApi,
-  resetExpertTrialApi
+  resetExpertTrialApi,
+  manualCreditExpertWalletApi
 } from "../../../shared/api/admin/expert.api";
 
 import {
@@ -162,6 +163,8 @@ export default function ExpertDetail() {
   // ✅ Trial state
   const [trialData, setTrialData] = useState(null);
   const [savingTrial, setSavingTrial] = useState(false);
+  const [creditAmount, setCreditAmount] = useState("");
+  const [savingCredit, setSavingCredit] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -384,6 +387,8 @@ try {
     ["profile_edit_enabled", "Enable Profile Edit"],
     ["public_profile_enabled", "Enable Public Profile"],
     ["show_user_contact_in_expert_emails", "Show User Email/Phone in Expert Emails"],
+    ["show_expert_phone", "Show Phone Number"],
+    ["show_expert_email", "Show Email"],
   ];
 
   const profilePageAccessOptions = [
@@ -759,6 +764,30 @@ try {
       alert(err?.message || err || "Failed to update password");
     } finally {
       setSavingManage(false);
+    }
+  };
+
+  const handleManualCreditSubmit = async (event) => {
+    event.preventDefault();
+    const amount = parseFloat(creditAmount);
+    if (isNaN(amount) || amount <= 0) {
+      alert("Please enter a valid positive amount");
+      return;
+    }
+    if (!window.confirm(`Are you sure you want to credit ₹${amount} to this expert's account?`)) {
+      return;
+    }
+    try {
+      setSavingCredit(true);
+      const res = await manualCreditExpertWalletApi(id, amount);
+      alert(res.data?.message || `Successfully credited ₹${amount} to expert's account`);
+      setCreditAmount("");
+      fetchData();
+    } catch (err) {
+      console.error("Admin Manual Credit Error:", err);
+      alert(err?.response?.data?.message || err?.message || "Failed to credit account");
+    } finally {
+      setSavingCredit(false);
     }
   };
 
@@ -1310,6 +1339,34 @@ try {
                 Update Password
               </ActionButton>
             </ButtonGroup>
+          </form>
+        </InfoCard>
+
+        {/* Admin Manual Wallet Credit */}
+        <InfoCard style={{ borderLeft: "4px solid #16a34a" }}>
+          <h3><FaRupeeSign /> Manual Wallet Credit</h3>
+          <p style={{ marginTop: 0, color: "#475569", fontSize: "14px" }}>
+            Add money directly to this expert's account. The credited amount will reflect on the Expert's Earnings page with description <strong>"Added by G9Expert"</strong> and send a notification to the expert.
+          </p>
+          <form onSubmit={handleManualCreditSubmit} style={managerFormStyle}>
+            <div style={{ display: "flex", gap: "12px", alignItems: "flex-end", flexWrap: "wrap" }}>
+              <label style={{ ...labelStyle, flex: "1", minWidth: "220px" }}>
+                Credit Amount (₹)
+                <input
+                  style={inputStyle}
+                  type="number"
+                  min="1"
+                  step="any"
+                  placeholder="Enter amount (e.g. 500)"
+                  value={creditAmount}
+                  onChange={(e) => setCreditAmount(e.target.value)}
+                  required
+                />
+              </label>
+              <ActionButton type="submit" disabled={savingCredit} style={{ background: "#16a34a", color: "#fff" }}>
+                {savingCredit ? "Crediting..." : "Credit Account"}
+              </ActionButton>
+            </div>
           </form>
         </InfoCard>
 

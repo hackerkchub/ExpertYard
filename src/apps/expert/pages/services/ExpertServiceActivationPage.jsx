@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FiArrowLeft } from "react-icons/fi";
 import APP_CONFIG from "../../../../config/appConfig";
 import ServiceActivationModal from "./ServiceActivationModal";
+import { useExpert } from "../../../../shared/context/ExpertContext";
 
 const authHeaders = () => {
   const token = localStorage.getItem("expert_token") || localStorage.getItem("token") || localStorage.getItem("expertToken") || "";
@@ -31,6 +32,7 @@ const apiFetch = async (path, options = {}) => {
 
 export default function ExpertServiceActivationPage() {
   const navigate = useNavigate();
+  const { expertData } = useExpert();
   const [activeTab, setActiveTab] = useState("available"); // available | my_services | custom_proposal
   const [masterServices, setMasterServices] = useState([]);
   const [activatedServices, setActivatedServices] = useState([]);
@@ -71,23 +73,46 @@ export default function ExpertServiceActivationPage() {
       setLoading(true);
       setError("");
       
-      const [masterRes, actRes, customRes, catRes] = await Promise.all([
-        apiFetch("/api/expert-activations/available-master-services", { headers: authHeaders() }),
-        apiFetch("/api/expert-activations/my-services", { headers: authHeaders() }),
-        apiFetch("/api/expert-activations/my-custom-requests", { headers: authHeaders() }),
-        apiFetch("/api/category/list")
+      const [masterRes, expertMasterRes, publicMasterRes, actRes, customRes, catRes] = await Promise.all([
+        apiFetch("/api/expert-activations/available-master-services", { headers: authHeaders() }).catch(() => null),
+        apiFetch("/api/expert/master-services/available", { headers: authHeaders() }).catch(() => null),
+        apiFetch("/api/master-services/public").catch(() => null),
+        apiFetch("/api/expert-activations/my-services", { headers: authHeaders() }).catch(() => null),
+        apiFetch("/api/expert-activations/my-custom-requests", { headers: authHeaders() }).catch(() => null),
+        apiFetch("/api/category/list").catch(() => null)
       ]);
 
-      const [masterData, actData, customData, catData] = await Promise.all([
-        masterRes.json(),
-        actRes.json(),
-        customRes.json(),
-        catRes.json()
+      const [masterData, expertMasterData, publicMasterData, actData, customData, catData] = await Promise.all([
+        masterRes ? masterRes.json().catch(() => ({})) : {},
+        expertMasterRes ? expertMasterRes.json().catch(() => ({})) : {},
+        publicMasterRes ? publicMasterRes.json().catch(() => ({})) : {},
+        actRes ? actRes.json().catch(() => ({})) : {},
+        customRes ? customRes.json().catch(() => ({})) : {},
+        catRes ? catRes.json().catch(() => ({})) : {}
       ]);
 
-      if (masterData.success) setMasterServices(masterData.data || []);
-      if (actData.success) setActivatedServices(actData.data || []);
-      if (customData.success) setCustomRequests(customData.data || []);
+      const list1 = masterData?.data || [];
+      const list2 = expertMasterData?.data || expertMasterData?.services || [];
+      const list3 = publicMasterData?.data || publicMasterData?.services || publicMasterData?.master_services || [];
+
+      const combined = [...list1, ...list2, ...list3];
+      const masterMap = new Map();
+
+      combined.forEach((svc) => {
+        if (!svc) return;
+        const key = String(svc.id || svc._id || svc.slug || svc.title || "");
+        if (key && !masterMap.has(key)) {
+          masterMap.set(key, svc);
+        }
+      });
+
+      setMasterServices(Array.from(masterMap.values()));
+      if (actData?.success || Array.isArray(actData?.data)) {
+        setActivatedServices(actData.data || []);
+      }
+      if (customData?.success || Array.isArray(customData?.data)) {
+        setCustomRequests(customData.data || []);
+      }
       
       const catRows = catData?.data?.data || catData?.data || [];
       setCategories(Array.isArray(catRows) ? catRows : []);
@@ -101,7 +126,7 @@ export default function ExpertServiceActivationPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [expertData?.categoryId, expertData?.primaryCategoryId, JSON.stringify(expertData?.categoryIds || [])]);
 
   const openActivationModal = (svc) => {
     setSelectedService(svc);
@@ -251,22 +276,51 @@ export default function ExpertServiceActivationPage() {
   };
 
   const filteredMasterServices = useMemo(() => {
+    const expertCatIds = new Set(
+      [
+        expertData?.categoryId,
+        expertData?.primaryCategoryId,
+        ...(expertData?.categoryIds || []),
+        ...(expertData?.categorySelections || []).map((c) => c.category_id),
+      ]
+        .map(Number)
+        .filter(Boolean)
+    );
+
     return masterServices.filter((svc) => {
       if (searchQuery.trim() !== "") {
         const q = searchQuery.toLowerCase();
         const matchesTitle = svc.title?.toLowerCase().includes(q);
         const matchesSlug = svc.slug?.toLowerCase().includes(q);
         const matchesDesc = svc.short_description?.toLowerCase().includes(q);
-        if (!matchesTitle && !matchesSlug && !matchesDesc) return false;
+        const matchesCat = svc.category_name?.toLowerCase().includes(q) || svc.subcategory_name?.toLowerCase().includes(q);
+        if (!matchesTitle && !matchesSlug && !matchesDesc && !matchesCat) return false;
       }
+
       if (selectedCategoryFilter !== "") {
         const catId = Number(selectedCategoryFilter);
-        const hasCat = (svc.categories || []).some((c) => Number(c.id) === catId) || Number(svc.category_id) === catId;
+        const hasCat =
+          (svc.categories || []).some((c) => Number(c.id || c.category_id) === catId) ||
+          Number(svc.category_id) === catId ||
+          Number(svc.categoryId) === catId;
         if (!hasCat) return false;
+      } else if (expertCatIds.size > 0) {
+        const svcCatId = Number(svc.category_id || svc.categoryId || 0);
+        const svcSubCatId = Number(svc.subcategory_id || svc.subcategoryId || 0);
+        const hasCatInCategories = (svc.categories || []).some((c) => expertCatIds.has(Number(c.id || c.category_id)));
+
+        const matchesExpertCategories =
+          expertCatIds.has(svcCatId) ||
+          expertCatIds.has(svcSubCatId) ||
+          hasCatInCategories ||
+          !svcCatId; // include general templates
+
+        if (!matchesExpertCategories) return false;
       }
+
       return true;
     });
-  }, [masterServices, searchQuery, selectedCategoryFilter]);
+  }, [masterServices, searchQuery, selectedCategoryFilter, expertData]);
 
   return (
     <div style={{ padding: "1.5rem", maxWidth: "1200px", margin: "0 auto", display: "grid", gap: "1.5rem" }}>
@@ -456,9 +510,7 @@ export default function ExpertServiceActivationPage() {
                         )}
                       </div>
 
-                      <p style={{ margin: "0 0 10px 0", color: "#475569", fontSize: "0.85rem", lineHeight: 1.4 }}>
-                        {svc.short_description || svc.full_description || "Standard master service template ready for expert activation."}
-                      </p>
+
 
                       {/* ALL ADMIN MASTER SERVICE DETAILS */}
                       <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "8px 10px", display: "grid", gap: 6, fontSize: 11, color: "#334155" }}>

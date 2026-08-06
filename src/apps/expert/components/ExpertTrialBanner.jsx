@@ -1,6 +1,6 @@
 // shared/components/ExpertTrialBanner.jsx
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import styled from "styled-components";
 import { useExpert } from "../../../shared/context/ExpertContext";
 
@@ -405,6 +405,7 @@ const formatTimeAMPM = (dateString) => {
 
 export const ExpertTrialBanner = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { expertData } = useExpert();
 
   const [remaining, setRemaining] = useState(0);
@@ -460,8 +461,15 @@ export const ExpertTrialBanner = () => {
     navigate("/expert/g9-plan", { replace: true });
   };
 
-  // Don't render if conditions not met or expired
-  if (!shouldShowBanner || isExpired) return null;
+  // Don't render if on expert profile page, conditions not met, or expired
+  if (
+    location.pathname === "/expert/profile" ||
+    location.pathname.startsWith("/expert/profile") ||
+    !shouldShowBanner ||
+    isExpired
+  ) {
+    return null;
+  }
 
   return (
     <BannerWrapper $isUrgent={isUrgent}>

@@ -693,8 +693,12 @@ const formatTime = (value) => {
 const isRead = (notification) =>
   !notification?.unread || notification?.is_read === 1 || notification?.is_read === true;
 
+import { useNavigate } from "react-router-dom";
+import NotificationDetailModal from "../../../../shared/components/NotificationDetailModal";
+
 // ===== MAIN COMPONENT =====
 export default function ExpertNotificationPage() {
+  const navigate = useNavigate();
   const {
     notifications = [],
     unreadCount,
@@ -706,6 +710,7 @@ export default function ExpertNotificationPage() {
   
   const [filter, setFilter] = useState("all");
   const [activeMenuId, setActiveMenuId] = useState(null);
+  const [selectedDetailNotif, setSelectedDetailNotif] = useState(null);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -833,7 +838,19 @@ export default function ExpertNotificationPage() {
                   key={notification.id}
                   $read={read}
                   $index={index}
-                  onClick={() => onNotificationTap?.(notification)}
+                  onClick={() => {
+                    if (!read && markAsRead) markAsRead(notification.id);
+                    const typeStr = String(notification.type || "").toLowerCase();
+                    const meta = typeof notification.meta === "object" ? notification.meta : {};
+                    const isTabNotif = typeStr.includes("chat") || typeStr.includes("call") || typeStr.includes("video") || typeStr.includes("service") || typeStr.includes("booking") || typeStr.includes("lead");
+                    const isAdminAnnouncement = (typeStr.includes("admin") || meta.created_by_admin || meta.description) && !isTabNotif;
+
+                    if (isAdminAnnouncement) {
+                      setSelectedDetailNotif(notification);
+                    } else {
+                      onNotificationTap?.(notification);
+                    }
+                  }}
                 >
                   <AvatarContainer>
                     {notification.senderAvatar ? (
@@ -926,6 +943,17 @@ export default function ExpertNotificationPage() {
             })
           )}
         </NotificationListCard>
+
+        {selectedDetailNotif && (
+          <NotificationDetailModal
+            notification={selectedDetailNotif}
+            onClose={() => setSelectedDetailNotif(null)}
+            onNavigate={(url) => {
+              setSelectedDetailNotif(null);
+              navigate(url);
+            }}
+          />
+        )}
       </Container>
     </PageWrap>
   );

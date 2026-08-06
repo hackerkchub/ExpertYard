@@ -236,6 +236,7 @@ export function ExpertNotificationsProvider({ children }) {
   const notificationsRef = useRef([]);
   const activeCallIdsRef = useRef(new Set());
   const processedCallIdsRef = useRef(new Set());
+  const processedChatRequestIdsRef = useRef(new Map());
   const finalCallStatesRef = useRef(new Map());
   const lifecycleChannelRef = useRef(null);
   const [notifications, setNotifications] = useState([]);
@@ -273,6 +274,7 @@ export function ExpertNotificationsProvider({ children }) {
     setHistoryLoaded(false);
     activeCallIdsRef.current.clear();
     processedCallIdsRef.current.clear();
+    processedChatRequestIdsRef.current.clear();
     finalCallStatesRef.current.clear();
     soundManager.stopAll();
   }, [expertId]);
@@ -343,6 +345,24 @@ export function ExpertNotificationsProvider({ children }) {
 
   const addNotification = useCallback((notification, { playSound = true, showSystem = false } = {}) => {
     if (!notification?.id) return;
+
+    if (notification.type === "chat_request") {
+      const reqId = String(
+        notification.relatedId ||
+        notification.payload?.request_id ||
+        notification.payload?.requestId ||
+        notification.id ||
+        ""
+      );
+      if (reqId) {
+        const lastSeen = processedChatRequestIdsRef.current.get(reqId);
+        if (lastSeen && Date.now() - lastSeen < 10000) {
+          console.log(`🔒 [ExpertNotificationsContext] Duplicate chat_request ignored for request_id: ${reqId}`);
+          return;
+        }
+        processedChatRequestIdsRef.current.set(reqId, Date.now());
+      }
+    }
 
     // 🟢 Highlight section if a new request arrives in real-time
     const sectionKey = mapNotificationTypeToSection(notification.type, notification);
@@ -819,16 +839,40 @@ export function ExpertNotificationsProvider({ children }) {
     if (!notification) return;
     await markNotificationAsRead(notification.id);
 
-    if ((notification.type === "voice_call" || notification.type === "video_call" || notification.type === "video-call") && notification.payload?.callId && notification.status === "ringing") {
-      markCallFinal(notification.payload.callId, "accepted");
-      const isVideo = notification.type === "video_call" || notification.type === "video-call";
-      const path = isVideo ? `/expert/video-call/${notification.payload.callId}` : `/expert/voice-call/${notification.payload.callId}`;
-      navigate(path, { state: { autoAccept: true, acceptSent: true, action: "accept" } });
+    const typeStr = String(notification.type || "").toLowerCase();
+    const meta = typeof notification.meta === "object" ? notification.meta : {};
+    let targetUrl = notification.target_url || notification.targetUrl || meta.target_url || meta.targetUrl || meta.url || meta.click_action;
+
+    // Prevent direct auto-calling and go to expert home
+    if (targetUrl && (targetUrl.includes("/voice-call/") || targetUrl.includes("/video-call/"))) {
+      targetUrl = "/expert/home";
+    }
+
+    if (targetUrl) {
+      navigate(targetUrl);
       return;
     }
 
-    navigate(notification.targetUrl || "/expert/notifications");
-  }, [markNotificationAsRead, navigate, markCallFinal]);
+    if (typeStr.includes("chat")) {
+      if (meta.room_id) {
+        navigate(`/expert/chat/${meta.room_id}`);
+      } else {
+        navigate("/expert/chat-history");
+      }
+    } else if (typeStr.includes("call") || typeStr.includes("video")) {
+      navigate("/expert/home");
+    } else if (typeStr.includes("service") || typeStr.includes("booking") || typeStr.includes("workspace")) {
+      if (meta.booking_id) {
+        navigate(`/expert/workspace/${meta.booking_id}`);
+      } else {
+        navigate("/expert/mybookings");
+      }
+    } else if (typeStr.includes("lead") || typeStr.includes("custom_request")) {
+      navigate("/expert/leads");
+    } else {
+      navigate("/expert/home");
+    }
+  }, [markNotificationAsRead, navigate]);
 
   const acceptNotification = useCallback((notification) => {
     if (!notification) return;
@@ -942,12 +986,15 @@ export function ExpertNotificationsProvider({ children }) {
     }
 
     if (notification.type === "chat_request") {
+      const requestId = notification.payload?.request_id || notification.relatedId;
       updateNotificationStatus({
-        requestId: notification.payload?.request_id,
+        requestId,
         type: "chat_request",
         status: "rejected",
       }).catch(() => {});
-      socket.emit("reject_chat", { request_id: notification.payload?.request_id });
+      if (socket && socket.connected && requestId) {
+        socket.emit("reject_chat_request", { request_id: requestId, requestId, reason: "expert_declined" });
+      }
       updateLocalStatus((n) => n.id === notification.id, "rejected");
     }
   }, [markCallFinal, updateLocalStatus, clearHighlight]);

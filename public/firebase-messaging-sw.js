@@ -160,10 +160,27 @@ const buildNotificationOptions = (data = {}) => {
 const showDedupedNotification = async (title, options) => {
   const tag = options.tag || "notification";
   const existing = await self.registration.getNotifications({ tag });
-  const type = options.data?.type;
-  const allowReplace = type === "voice_call" || type === "incoming_call" || type === "chat_request";
-  if (existing.length > 0 && !allowReplace) return;
+  const type = String(options.data?.type || "").toLowerCase();
+  const allowReplace = type === "voice_call" || type === "incoming_call";
+
+  if (existing.length > 0 && !allowReplace) {
+    return; // Prevent duplicate display if notification with exact tag was already shown
+  }
   existing.forEach((notification) => notification.close());
+
+  // Check if recipient has an active, visible browser window (app in foreground)
+  const windowClients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+  const isAppInForeground = windowClients.some((client) => {
+    return client.visibilityState === "visible" || client.focused;
+  });
+
+  // 🟢 PUSH RULE: Push notifications are displayed ONLY when app is in background or closed/terminated.
+  // If recipient is online with app open in foreground, Socket.IO handles in-app alerts without duplicate push popups.
+  if (isAppInForeground) {
+    console.log("🔕 [ServiceWorker] App is open in foreground. Suppressing background FCM push notification.");
+    return;
+  }
+
   await self.registration.showNotification(title || "Notification", options);
 };
 
@@ -173,23 +190,6 @@ messaging.onBackgroundMessage(async (payload) => {
   const data = normalizePayload(payload);
   const title = data.title || "Notification";
   await showDedupedNotification(title, buildNotificationOptions(data));
-});
-
-self.addEventListener("push", (event) => {
-  if (!event.data) return;
-
-  event.waitUntil((async () => {
-    let payload = {};
-    try {
-      payload = event.data.json();
-    } catch {
-      payload = { title: "Notification", body: event.data.text() };
-    }
-
-    const data = normalizePayload(payload);
-    const title = payload.title || data.title || "Notification";
-    await showDedupedNotification(title, buildNotificationOptions(data));
-  })());
 });
 
 /* ================= NOTIFICATION CLICK HANDLER ================= */

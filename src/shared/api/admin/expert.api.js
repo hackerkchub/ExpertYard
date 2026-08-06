@@ -52,6 +52,9 @@ export const updateManagedExpertProfileApi = (id, formData) =>
 export const createManagedExpertPostApi = (id, formData) =>
   adminApi.post(`/admin/experts/${id}/posts`, formData);
 
+export const manualCreditExpertWalletApi = (id, amount) =>
+  adminApi.post(`/admin/experts/${id}/manual-credit`, { amount });
+
 export const updateManagedExpertPostApi = (id, postId, formData) =>
   adminApi.put(`/admin/experts/${id}/posts/${postId}`, formData);
 

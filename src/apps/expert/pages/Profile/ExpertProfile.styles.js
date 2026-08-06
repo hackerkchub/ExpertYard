@@ -52,6 +52,10 @@ export const PageWrap = styled.div`
   min-height: 100%;
   width: 100%;
   overflow-x: hidden;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  scroll-behavior: smooth;
   background:
     radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 26%),
     linear-gradient(180deg, #f8fafc 0%, #eef3f8 100%);

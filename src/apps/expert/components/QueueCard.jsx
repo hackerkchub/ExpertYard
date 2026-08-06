@@ -119,13 +119,12 @@ const CardSubLabel = styled.span`
 const PulsingDot = styled.span`
   width: 8px;
   height: 8px;
-  background-color: #ef4444;
   border-radius: 50%;
+  background: #ef4444;
   display: inline-block;
-  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-  animation: pulse 1.2s infinite;
+  animation: pulseDot 1.5s infinite;
 
-  @keyframes pulse {
+  @keyframes pulseDot {
     0% {
       transform: scale(0.95);
       box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
@@ -141,71 +140,67 @@ const PulsingDot = styled.span`
   }
 `;
 
-export default function QueueCard() {
-  const [activeTab, setActiveTab] = useState("call");
-  const listRef = useRef(null);
-  const prevCountRef = useRef(0);
+export default function QueueCard({
+  initialTab = "call",
+  highlightedSections = {},
+  clearHighlight = () => {},
+}) {
   const navigate = useNavigate();
-  const [, forceUpdate] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      forceUpdate((n) => n + 1);
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, []);
-
   const {
-    notifications,
+    notifications = [],
     acceptNotification,
     rejectNotification,
     removeById,
-    highlightedSections,
-    clearHighlight,
   } = useExpertNotifications();
 
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const listRef = useRef(null);
+  const prevCountRef = useRef(0);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
   const getTimeAgo = (timestamp) => {
+    if (!timestamp) return "";
     const seconds = Math.floor((Date.now() - timestamp) / 1000);
-
     if (seconds < 60) return `${seconds}s ago`;
-
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `${minutes}m ago`;
-
     const hours = Math.floor(minutes / 60);
     if (hours < 24) return `${hours}h ago`;
-
     const days = Math.floor(hours / 24);
     return `${days}d ago`;
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "pending":
-        return "#f59e0b";
+  const getStatusBadgeConfig = (status) => {
+    const s = String(status || "").toLowerCase();
 
-      case "ringing":
-        return "#22c55e";
-
-      case "missed":
-        return "#ef4444";
-
-      case "rejected":
-        return "#ef4444";
-
-      case "cancelled":
-        return "#6b7280";
-
-      case "ended":
-        return "#3b82f6";
-
-      case "low_balance":
-        return "#a855f7";
-
-      default:
-        return "#6b7280";
+    if (s === "missed" || s === "timeout") {
+      return { label: "MISSED", color: "#ef4444", text: "You missed this request" };
     }
+    if (s === "cancelled" || s === "canceled") {
+      return { label: "USER CANCELLED", color: "#6b7280", text: "User cancelled request" };
+    }
+    if (s === "rejected" || s === "declined") {
+      return { label: "DECLINED", color: "#dc2626", text: "You declined this request" };
+    }
+    if (s === "accepted" || s === "connected") {
+      return { label: "ACCEPTED", color: "#22c55e", text: "Request accepted" };
+    }
+    if (s === "ended") {
+      return { label: "ENDED", color: "#3b82f6", text: "Session ended" };
+    }
+    if (s === "ringing") {
+      return { label: "RINGING", color: "#22c55e", text: "Ringing..." };
+    }
+    if (s === "accepting") {
+      return { label: "ACCEPTING", color: "#f59e0b", text: "Accepting..." };
+    }
+
+    return { label: "PENDING", color: "#f59e0b", text: "Pending response..." };
   };
 
   const chatRequests = useMemo(
@@ -243,6 +238,7 @@ export default function QueueCard() {
       key: "chat",
       label: "Chat",
       count: chatRequests.length,
+      hasAlert: chatRequests.some((c) => c.status === "pending"),
     },
     {
       key: "video",
@@ -355,7 +351,7 @@ export default function QueueCard() {
                 )}
               </CardTopRow>
               <CardLabel $active={isActive}>{tab.label}</CardLabel>
-              <CardSubLabel>Pending ({tab.count})</CardSubLabel>
+              <CardSubLabel>Requests ({tab.count})</CardSubLabel>
             </MobileCard>
           );
         })}
@@ -394,32 +390,52 @@ export default function QueueCard() {
       <div ref={listRef} style={{ maxHeight: 400, overflowY: "auto" }}>
         {activeList.length === 0 ? (
           <div style={{ padding: 24, textAlign: "center", color: "#64748b" }}>
-            No pending {emptyLabels[activeTab] || "queue"} requests
+            No {emptyLabels[activeTab] || "queue"} requests found
           </div>
         ) : (
-          activeList.map((req) => (
-            <QueueItem key={req.id} className={req.status || "pending"}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1, minWidth: 0, width: "100%" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, flexWrap: "wrap" }}>
-                  <strong style={{ fontSize: "15px", fontWeight: "600", color: "#1e293b", wordBreak: "break-word" }}>
-                    {req.title}
-                  </strong>
-                  <StatusBadge style={{ background: getStatusColor(req.status), color: "#ffffff", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", padding: "2px 8px", borderRadius: "6px" }}>
-                    {req.status}
-                  </StatusBadge>
+          activeList.map((req) => {
+            const statusConfig = getStatusBadgeConfig(req.status);
+            const isPendingOrRinging =
+              req.status === "pending" || req.status === "ringing" || req.status === "accepting";
+
+            return (
+              <QueueItem key={req.id} className={req.status || "pending"}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1, minWidth: 0, width: "100%" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, flexWrap: "wrap" }}>
+                    <strong style={{ fontSize: "15px", fontWeight: "600", color: "#1e293b", wordBreak: "break-word" }}>
+                      {req.title}
+                    </strong>
+                    <StatusBadge
+                      style={{
+                        background: statusConfig.color,
+                        color: "#ffffff",
+                        fontSize: "11px",
+                        fontWeight: "700",
+                        textTransform: "uppercase",
+                        padding: "3px 8px",
+                        borderRadius: "6px",
+                      }}
+                    >
+                      {statusConfig.label}
+                    </StatusBadge>
+                  </div>
+
+                  <div style={{ fontSize: "12px", color: "#64748b", wordBreak: "break-word" }}>
+                    {req.meta} -{" "}
+                    <span
+                      style={{
+                        fontWeight: "600",
+                        color: req.status === "ringing" || req.status === "missed" ? "#ef4444" : "#64748b",
+                      }}
+                    >
+                      {statusConfig.text} ({getTimeAgo(req.createdAt)})
+                    </span>
+                  </div>
                 </div>
 
-                <div style={{ fontSize: "12px", color: "#64748b", wordBreak: "break-word" }}>
-                  {req.meta} -{" "}
-                  <span style={{ fontWeight: "500", color: req.status === "ringing" ? "#ef4444" : "#64748b" }}>
-                    {req.status === "ringing" ? "Ringing..." : getTimeAgo(req.createdAt)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="queue-item-actions">
-                {req.type === "chat_request" &&
-                  (req.status === "pending" || req.status === "accepting") && (
+                <div className="queue-item-actions">
+                  {/* Show Accept button ONLY if request is active */}
+                  {req.type === "chat_request" && isPendingOrRinging && (
                     <ActionBtn
                       className="accept"
                       disabled={req.status === "accepting"}
@@ -429,50 +445,51 @@ export default function QueueCard() {
                     </ActionBtn>
                   )}
 
-                {req.type === "voice_call" && req.status === "ringing" && (
-                  <ActionBtn
-                    className="accept"
-                    onClick={() => {
-                      navigate(`/expert/voice-call/${req.payload.callId}`);
-                    }}
-                  >
-                    Tap to Answer
-                  </ActionBtn>
-                )}
+                  {req.type === "voice_call" && isPendingOrRinging && (
+                    <ActionBtn
+                      className="accept"
+                      onClick={() => {
+                        navigate(`/expert/voice-call/${req.payload?.callId || req.relatedId}`);
+                      }}
+                    >
+                      Tap to Answer
+                    </ActionBtn>
+                  )}
 
-                {req.type === "video_call" && req.status === "ringing" && (
-                  <ActionBtn
-                    className="accept"
-                    onClick={() => {
-                      navigate(`/expert/video-call/${req.payload.callId}`);
-                    }}
-                  >
-                    Tap to Answer
-                  </ActionBtn>
-                )}
+                  {req.type === "video_call" && isPendingOrRinging && (
+                    <ActionBtn
+                      className="accept"
+                      onClick={() => {
+                        navigate(`/expert/video-call/${req.payload?.callId || req.relatedId}`);
+                      }}
+                    >
+                      Tap to Answer
+                    </ActionBtn>
+                  )}
 
-                {(req.status === "pending" || req.status === "ringing") && (
-                  <ActionBtn
-                    className="decline"
-                    onClick={() => rejectNotification(req)}
-                  >
-                    Decline
-                  </ActionBtn>
-                )}
+                  {/* Show Decline button ONLY if request is active */}
+                  {isPendingOrRinging && (
+                    <ActionBtn
+                      className="decline"
+                      onClick={() => rejectNotification(req)}
+                    >
+                      Decline
+                    </ActionBtn>
+                  )}
 
-                {["rejected", "cancelled", "ended", "missed", "low_balance"].includes(
-                  req.status
-                ) && (
-                  <ActionBtn
-                    className="decline"
-                    onClick={() => removeById(req)}
-                  >
-                    Close
-                  </ActionBtn>
-                )}
-              </div>
-            </QueueItem>
-          ))
+                  {/* Hide Accept/Decline and show Close button for resolved states (missed, cancelled, rejected, ended) */}
+                  {!isPendingOrRinging && (
+                    <ActionBtn
+                      className="decline"
+                      onClick={() => removeById(req)}
+                    >
+                      Close
+                    </ActionBtn>
+                  )}
+                </div>
+              </QueueItem>
+            );
+          })
         )}
       </div>
     </QueueCardWrap>

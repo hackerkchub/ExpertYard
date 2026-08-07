@@ -49,6 +49,14 @@ export default function NotificationDetailModal({ notification, onClose, onNavig
   const priority = meta.priority || "normal";
   const type = notification.type || "admin_announcement";
   const createdAt = notification.created_at || notification.createdAt;
+  const imageUrl =
+    notification.image_url ||
+    notification.imageUrl ||
+    meta.image_url ||
+    meta.imageUrl ||
+    meta.banner ||
+    meta.image ||
+    null;
 
   const formattedDate = createdAt
     ? new Date(createdAt).toLocaleString(undefined, {

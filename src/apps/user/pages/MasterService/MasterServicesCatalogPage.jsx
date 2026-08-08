@@ -38,7 +38,7 @@ export default function MasterServicesCatalogPage() {
         setLoading(true);
         setError(null);
 
-        const base = APP_CONFIG?.API_BASE_URL || "http://localhost:5000/api";
+        const base = APP_CONFIG.API_BASE_URL;
 
         // Fetch Master Services & Subcategories & Categories in parallel
         const [msRes, subcatRes, catRes] = await Promise.allSettled([

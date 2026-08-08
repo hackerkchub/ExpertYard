@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { getAuthToken } from "../BookingWorkspaceShell";
+import APP_CONFIG from "../../../../config/appConfig";
 
 export default function DocumentsTab({ bookingId, documents = [], snapshot, permissions, onRefresh, currentUserRole }) {
   const [uploading, setUploading] = useState(false);
@@ -155,7 +156,7 @@ export default function DocumentsTab({ bookingId, documents = [], snapshot, perm
     if (url.startsWith("http://") || url.startsWith("https://")) {
       return url;
     }
-    const apiBase = import.meta.env?.VITE_API_BASE_URL || "http://localhost:5000";
+    const apiBase = APP_CONFIG.API_BASE_URL;
     const backendOrigin = apiBase.replace(/\/api\/?$/, "");
     return url.startsWith("/") ? `${backendOrigin}${url}` : `${backendOrigin}/${url}`;
   };

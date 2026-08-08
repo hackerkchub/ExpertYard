@@ -17,21 +17,12 @@ const userAuthHeaders = () => {
   };
 };
 
-const API_BASE = APP_CONFIG?.API_BASE_URL || "/api";
-const FALLBACK_API_BASE = "http://localhost:5000/api";
+const API_BASE = APP_CONFIG.API_BASE_URL;
 
 const apiFetch = async (path, options = {}) => {
-  const cleanPath = path.replace(/^\/api/, "");
-  const primaryUrl = `${API_BASE}${cleanPath}`;
-  try {
-    const res = await fetch(primaryUrl, options);
-    if (res.status === 404 && API_BASE !== FALLBACK_API_BASE) {
-      return await fetch(`${FALLBACK_API_BASE}${cleanPath}`, options);
-    }
-    return res;
-  } catch {
-    return await fetch(`${FALLBACK_API_BASE}${cleanPath}`, options);
-  }
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  const primaryUrl = cleanPath.startsWith("/api") ? `${API_BASE.replace(/\/api\/?$/, "")}${cleanPath}` : `${API_BASE}${cleanPath}`;
+  return await fetch(primaryUrl, options);
 };
 
 const DEFAULT_SERVICE_IMAGE = "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&auto=format&fit=crop&q=80";
@@ -42,7 +33,7 @@ const getServiceImageUrl = (url) => {
     return url;
   }
   const cleanPath = url.startsWith("/") ? url : `/${url}`;
-  const base = API_BASE ? API_BASE.replace(/\/api\/?$/, "") : "http://localhost:5000";
+  const base = API_BASE.replace(/\/api\/?$/, "");
   return `${base}${cleanPath}`;
 };
 

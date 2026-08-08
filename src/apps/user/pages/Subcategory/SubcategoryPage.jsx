@@ -62,7 +62,7 @@ const getServiceImageUrl = (url) => {
     return url;
   }
   const cleanPath = url.startsWith("/") ? url : `/${url}`;
-  const base = APP_CONFIG?.API_BASE_URL ? APP_CONFIG.API_BASE_URL.replace(/\/api\/?$/, "") : "http://localhost:5000";
+  const base = APP_CONFIG.API_BASE_URL.replace(/\/api\/?$/, "");
   return `${base}${cleanPath}`;
 };
 
@@ -157,7 +157,7 @@ export default function SubcategoryPage() {
 
     setServicesLoading(true);
     try {
-      const base = APP_CONFIG?.API_BASE_URL || "http://localhost:5000/api";
+      const base = APP_CONFIG.API_BASE_URL;
       const response = await fetch(`${base}/master-services/public`);
       const data = await response.json();
       const rawServices = data?.data?.services || data?.data || data?.services || [];

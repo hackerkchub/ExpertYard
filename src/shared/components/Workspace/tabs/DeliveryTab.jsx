@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { getAuthToken } from "../BookingWorkspaceShell";
+import APP_CONFIG from "../../../../config/appConfig";
 
 export default function DeliveryTab({ bookingId, workspace, snapshot, documents = [], permissions, onRefresh, currentUserRole }) {
   const [notes, setNotes] = useState("");
@@ -91,7 +92,7 @@ export default function DeliveryTab({ bookingId, workspace, snapshot, documents 
     if (!url) return "#";
     if (url.startsWith("blob:") || url.startsWith("data:")) return url;
     if (url.startsWith("http://") || url.startsWith("https://")) return url;
-    const apiBase = import.meta.env?.VITE_API_BASE_URL || "http://localhost:5000";
+    const apiBase = APP_CONFIG.API_BASE_URL;
     const backendOrigin = apiBase.replace(/\/api\/?$/, "");
     return url.startsWith("/") ? `${backendOrigin}${url}` : `${backendOrigin}/${url}`;
   };

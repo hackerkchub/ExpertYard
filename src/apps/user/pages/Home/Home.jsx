@@ -37,6 +37,8 @@ import ReelsSection from "./components/ReelsSection";
 import ExpertTipsSection from "./components/ExpertTipsSection";
 import HomeSkeleton from "./components/HomeSkeleton";
 import { HomeLeftSidebar, HomeRightSidebar } from "./components/HomeSidebars";
+import AskG9Modal from "../../../../shared/components/ai/AskG9Modal";
+import AskG9HomeWidget from "../../../../shared/components/ai/AskG9HomeWidget";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useCategory } from "../../../../shared/context/CategoryContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
@@ -320,6 +322,8 @@ export default function Home() {
   const location = useLocation();
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [askG9Open, setAskG9Open] = useState(false);
+  const [askG9Prompt, setAskG9Prompt] = useState("");
   const [selectedLocation, setSelectedLocation] = useState(null);
   const loadMoreRef = useRef(null);
   const [items, setItems] = useState([]);
@@ -763,7 +767,9 @@ export default function Home() {
               </div>
             </div>
           </section>
-          {/* CATEGORIES SLIDER */}
+
+          {/* ASK G9 AI PROMPT WIDGET (BELOW HERO & ABOVE CATEGORY SECTION) */}
+          <AskG9HomeWidget onOpenModal={() => setAskG9Open(true)} />
 
           {/* CATEGORIES SLIDER (NO CHANGES) */}
           <CategoryChips
@@ -820,6 +826,12 @@ export default function Home() {
           balance={balance}
         />
       </div>
+
+      <AskG9Modal
+        isOpen={askG9Open}
+        onClose={() => setAskG9Open(false)}
+        initialPrompt={askG9Prompt}
+      />
     </main>
   );
 }

@@ -13,7 +13,7 @@ const getServiceImageUrl = (url) => {
     return url;
   }
   const cleanPath = url.startsWith("/") ? url : `/${url}`;
-  const base = APP_CONFIG?.API_BASE_URL ? APP_CONFIG.API_BASE_URL.replace(/\/api\/?$/, "") : "http://localhost:5000";
+  const base = APP_CONFIG.API_BASE_URL.replace(/\/api\/?$/, "");
   return `${base}${cleanPath}`;
 };
 

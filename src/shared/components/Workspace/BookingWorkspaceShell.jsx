@@ -44,25 +44,91 @@ export default function BookingWorkspaceShell({ bookingId, currentUserRole = "us
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // ⭐⭐⭐ FULLY UPDATED: DIAGNOSTIC fetchWorkspace (Safe for Vite/CRA/Any Bundler) ⭐⭐⭐
   const fetchWorkspace = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
+      // ✅ FIXED: "process is not defined" Error पूरी तरह से ठीक (Safe check for Node.js env)
+      let apiBase = '';
+      if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE_URL) {
+        apiBase = process.env.REACT_APP_API_BASE_URL;
+      }
+      
+      const url = `${apiBase}/api/workspace/${bookingId}`;
+      
+      // 2️⃣ टोकन प्राप्त करें
       const token = getAuthToken(currentUserRole);
-      const res = await fetch(`/api/workspace/${bookingId}`, {
+      
+      // ---------- DIAGNOSTIC LOGS (Step 1 to 3) ----------
+      console.log("🔍 [DIAGNOSTIC] ===== FETCH STARTED =====");
+      console.log("🔍 [STEP 1] Full Request URL:", url);
+      console.log("🔍 [STEP 2] Booking ID:", bookingId);
+      console.log("🔍 [STEP 3] Token exists?", token ? "✅ Yes (length: " + token.length + ")" : "❌ No");
+      
+      // 3️⃣ Fetch API Call
+      const res = await fetch(url, {
         headers: {
           "Content-Type": "application/json",
           Authorization: token ? `Bearer ${token}` : "",
         },
       });
+
+      // ---------- DIAGNOSTIC LOGS (Step 4) ----------
+      console.log("🔍 [STEP 4] HTTP Status Code:", res.status, res.statusText);
+      
+      // 4️⃣ अगर HTTP स्टेटस 200-299 नहीं है तो एरर फेंकें
+      if (!res.ok) {
+        const errorText = await res.text(); 
+        console.error("❌ [DIAGNOSTIC] HTTP Error Response (first 200 chars):", errorText.substring(0, 200));
+        throw new Error(`HTTP ${res.status}: ${res.statusText}. Server ने सही Response नहीं दिया.`);
+      }
+
+      // ---------- DIAGNOSTIC LOGS (Step 5) ----------
+      const contentType = res.headers.get("content-type");
+      console.log("🔍 [STEP 5] Content-Type Header:", contentType);
+
+      // 5️⃣ अगर JSON नहीं आ रहा (HTML आ रहा) तो एरर फेंकें
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await res.text();
+        console.error("❌ [DIAGNOSTIC] Non-JSON Response (Likely HTML/Proxy Error):", text.substring(0, 300));
+        throw new Error(`Server ने JSON की जगह ${contentType || 'unknown'} भेजा. शायद Nginx Proxy सेट नहीं है.`);
+      }
+
+      // 6️⃣ JSON पार्स करें
       const data = await res.json();
+      console.log("🔍 [STEP 6] Parsed Response Data:", data);
+
+      // 7️⃣ Backend का success flag चेक करें
       if (data.success) {
+        console.log("✅ [DIAGNOSTIC] Success! Data received.");
         setWorkspaceData(data.data);
         setError(null);
       } else {
+        console.error("❌ [DIAGNOSTIC] Backend returned success: false, Message:", data.message);
         setError(data.message || "Failed to load workspace.");
       }
+
     } catch (err) {
-      setError("Network error loading workspace.");
+      // ---------- DIAGNOSTIC LOGS (Step 8 - Error) ----------
+      console.error("🚨 [FATAL ERROR] Exception Caught:");
+      console.error("🚨 Error Name:", err.name);
+      console.error("🚨 Error Message:", err.message);
+      
+      // 8️⃣ एरर को यूजर-फ्रेंडली मैसेज में बदलें
+      let userFriendlyMessage = "Network error loading workspace.";
+      if (err.message.includes("Failed to fetch")) {
+        userFriendlyMessage = "❌ CORS या Network ब्लॉक: URL गलत है, या Backend (API) बंद है, या CORS सेट नहीं है।";
+      } else if (err.message.includes("JSON") || err.message.includes("HTML")) {
+        userFriendlyMessage = "❌ Backend ने JSON नहीं भेजा (शायद HTML आया)। Nginx Proxy Pass चेक करें।";
+      } else if (err.message.includes("HTTP")) {
+        userFriendlyMessage = `❌ सर्वर एरर: ${err.message}`;
+      } else {
+        userFriendlyMessage = `❌ अज्ञात एरर: ${err.message}`;
+      }
+      
+      setError(userFriendlyMessage);
     } finally {
       setLoading(false);
     }
@@ -93,6 +159,9 @@ export default function BookingWorkspaceShell({ bookingId, currentUserRole = "us
   useEffect(() => {
     if (bookingId) {
       fetchWorkspace();
+    } else {
+      // अगर bookingId नहीं है तो कंसोल में वार्निंग दें
+      console.warn("⚠️ [DIAGNOSTIC] bookingId is", bookingId, "- Fetch skipped!");
     }
   }, [bookingId]);
 

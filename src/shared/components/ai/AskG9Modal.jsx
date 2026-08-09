@@ -146,6 +146,7 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
 
   return (
     <div
+      className="ask-g9-modal-overlay"
       style={{
         position: "fixed",
         inset: 0,
@@ -160,6 +161,7 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
       onClick={onClose}
     >
       <div
+        className="ask-g9-modal-sheet"
         style={{
           background: "#ffffff",
           borderRadius: "20px",
@@ -173,6 +175,7 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        <div className="ask-g9-modal-drag-handle" />
         {/* Modal Header */}
         <div
           style={{

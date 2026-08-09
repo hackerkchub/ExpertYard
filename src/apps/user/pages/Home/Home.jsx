@@ -588,60 +588,89 @@ export default function Home() {
         <div className="home-menu-layer">
           <button type="button" className="home-menu-backdrop" onClick={() => setMenuOpen(false)} aria-label="Close menu" />
           <aside className="home-menu-panel" aria-label="Home menu">
+            {/* Gmail App Header Banner */}
             <div className="home-menu-head">
-              <div>
-                <strong>{isLoggedIn ? user?.first_name || user?.name || "G9Expert User" : "G9Expert"}</strong>
-                <span>{isLoggedIn ? `Wallet Rs ${Math.floor(Number(balance || 0))}` : "Login to manage consultations"}</span>
+              <div className="home-menu-profile">
+                <div className="home-menu-avatar">
+                  {user?.profile_photo ? (
+                    <img src={user.profile_photo} alt={user?.name || "User"} />
+                  ) : (
+                    <span>{(user?.first_name || user?.name || "G")[0].toUpperCase()}</span>
+                  )}
+                </div>
+                <div className="home-menu-user-info">
+                  <strong>{isLoggedIn ? user?.full_name || user?.first_name || user?.name || "G9Expert User" : "G9Expert"}</strong>
+                  <span className="home-menu-sub">
+                    {isLoggedIn ? (
+                      <span className="home-menu-wallet-chip">₹ Wallet: ₹{Math.floor(Number(balance || 0))}</span>
+                    ) : (
+                      "Login for full access"
+                    )}
+                  </span>
+                </div>
               </div>
-              <button type="button" onClick={() => setMenuOpen(false)} aria-label="Close menu">
-                <X size={20} />
+              <button type="button" className="home-menu-close-btn" onClick={() => setMenuOpen(false)} aria-label="Close menu">
+                <X size={18} />
               </button>
             </div>
 
-            {sidebarItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  type="button"
-                  key={item.label}
-                  onClick={() => {
-                    navigate(item.to);
-                    setMenuOpen(false);
-                  }}
-                >
-                  <Icon size={19} />
-                  {item.label}
-                </button>
-              );
-            })}
+            {/* Scrollable Gmail Drawer Body */}
+            <div className="home-menu-scrollable-body">
+              <div className="home-menu-section-title">Navigation</div>
+              {sidebarItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.to;
+                return (
+                  <button
+                    type="button"
+                    key={item.label}
+                    className={`home-menu-item ${isActive ? "active" : ""}`}
+                    onClick={() => {
+                      navigate(item.to);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    <Icon size={20} className="menu-item-icon" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
 
-            <button type="button" onClick={() => navigate("/user/call-chat?page=1&mode=chat")}>
-              <MessageCircle size={19} />
-              Quick Chat
-            </button>
-            <button type="button" onClick={() => navigate("/user/call-chat?page=1&mode=call")}>
-              <PhoneCall size={19} />
-              Quick Call
-            </button>
-            <button type="button" onClick={() => navigate("/user/call-chat?page=1&mode=video")}>
-              <Video size={19} />
-              Quick Video
-            </button>
-            <button type="button" onClick={() => navigate("/user/all-services")}>
-              <BriefcaseBusiness size={19} />
-              Quick Services
-            </button>
-            {isLoggedIn ? (
-              <button type="button" onClick={logout}>
-                <LogOut size={19} />
-                Logout
+              <div className="home-menu-divider" />
+              <div className="home-menu-section-title">Quick Actions</div>
+
+              <button type="button" className="home-menu-item" onClick={() => { navigate("/user/call-chat?page=1&mode=chat"); setMenuOpen(false); }}>
+                <MessageCircle size={20} className="menu-item-icon" />
+                <span>Quick Chat</span>
               </button>
-            ) : (
-              <button type="button" onClick={openLogin}>
-                <LogIn size={19} />
-                Login
+              <button type="button" className="home-menu-item" onClick={() => { navigate("/user/call-chat?page=1&mode=call"); setMenuOpen(false); }}>
+                <PhoneCall size={20} className="menu-item-icon" />
+                <span>Quick Call</span>
               </button>
-            )}
+              <button type="button" className="home-menu-item" onClick={() => { navigate("/user/call-chat?page=1&mode=video"); setMenuOpen(false); }}>
+                <Video size={20} className="menu-item-icon" />
+                <span>Quick Video</span>
+              </button>
+              <button type="button" className="home-menu-item" onClick={() => { navigate("/user/all-services"); setMenuOpen(false); }}>
+                <BriefcaseBusiness size={20} className="menu-item-icon" />
+                <span>Quick Services</span>
+              </button>
+
+              <div className="home-menu-divider" />
+              <div className="home-menu-section-title">Account</div>
+
+              {isLoggedIn ? (
+                <button type="button" className="home-menu-item logout-item" onClick={() => { logout(); setMenuOpen(false); }}>
+                  <LogOut size={20} className="menu-item-icon" />
+                  <span>Logout</span>
+                </button>
+              ) : (
+                <button type="button" className="home-menu-item login-item" onClick={() => { openLogin(); setMenuOpen(false); }}>
+                  <LogIn size={20} className="menu-item-icon" />
+                  <span>Login / Register</span>
+                </button>
+              )}
+            </div>
           </aside>
         </div>
       ) : null}

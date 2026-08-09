@@ -138,7 +138,7 @@ export default function MainLayout() {
     );
   }
 
-  // Mobile layout
+  // Mobile layout - Footer is hidden on mobile so only BottomNavbar shows
   return (
     <>
       {!isHideMobileHeader && (
@@ -147,12 +147,6 @@ export default function MainLayout() {
         </div>
       )}
       <Outlet />
-      {/* Step 4: Mobile Footer - hidden on Reels, My Inquiries, Chat pages */}
-      {!isNoFooterPage && (
-        <div className="default-footer-container">
-          <Footer />
-        </div>
-      )}
     </>
   );
 }

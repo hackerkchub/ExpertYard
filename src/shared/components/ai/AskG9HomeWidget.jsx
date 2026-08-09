@@ -146,11 +146,8 @@ export default function AskG9HomeWidget({ onOpenModal }) {
           </div>
           <div>
             <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#000080" }}>
-              Ask G9 <span style={{ fontSize: "0.75rem", background: "#fbbf24", color: "#000080", padding: "2px 8px", borderRadius: "12px", fontWeight: 800, marginLeft: "4px" }}>AI DISCOVERY</span>
+              Ask G9 
             </h3>
-            <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748b" }}>
-              Ask in English, Hindi, or Hinglish for instant expert & service matching
-            </p>
           </div>
         </div>
 
@@ -182,10 +179,12 @@ export default function AskG9HomeWidget({ onOpenModal }) {
           e.preventDefault();
           handleSubmitPrompt();
         }}
+        className="ask-g9-form-row"
         style={{ display: "flex", gap: "8px", alignItems: "center", position: "relative" }}
       >
         <input
           type="text"
+          className="ask-g9-input-field"
           placeholder="Ask G9 AI (e.g. 'Indore me property lawyer', 'GST registration')..."
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
@@ -203,6 +202,7 @@ export default function AskG9HomeWidget({ onOpenModal }) {
 
         <button
           type="button"
+          className="ask-g9-voice-btn"
           onClick={startVoiceInput}
           style={{
             padding: "13px 14px",
@@ -222,6 +222,7 @@ export default function AskG9HomeWidget({ onOpenModal }) {
 
         <button
           type="submit"
+          className="ask-g9-submit-btn"
           disabled={loading || !prompt.trim()}
           style={{
             padding: "14px 22px",
@@ -244,13 +245,14 @@ export default function AskG9HomeWidget({ onOpenModal }) {
 
       {/* Quick Suggestion Chips */}
       {!aiResult && (
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "12px" }}>
-          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748b", display: "flex", alignItems: "center", alignSelf: "center" }}>
+        <div className="ask-g9-chip-container" style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "12px" }}>
+          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748b", display: "flex", alignItems: "center", alignSelf: "center", flexShrink: 0 }}>
             Try asking:
           </span>
           {SUGGESTIONS.map((sug, idx) => (
             <button
               key={idx}
+              className="ask-g9-chip-btn"
               onClick={() => {
                 setPrompt(sug);
                 handleSubmitPrompt(sug);
@@ -305,6 +307,7 @@ export default function AskG9HomeWidget({ onOpenModal }) {
                 {aiResult.clarifying_options.map((opt, oIdx) => (
                   <button
                     key={oIdx}
+                    className="ask-g9-chip-btn"
                     onClick={() => {
                       setPrompt(opt);
                       handleSubmitPrompt(opt);
@@ -334,7 +337,7 @@ export default function AskG9HomeWidget({ onOpenModal }) {
               <h4 style={{ margin: "0 0 10px 0", fontSize: "0.95rem", color: "#0f172a", fontWeight: 800 }}>
                 Matched Verified Experts ({aiResult.experts.length})
               </h4>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "12px" }}>
+              <div className="ask-g9-expert-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "12px" }}>
                 {aiResult.experts.map((exp, eIdx) => (
                   <div
                     key={eIdx}

@@ -54,6 +54,7 @@ export const Container = styled.div`
 
 // Chat Launcher Styles
 export const LauncherButton = styled.button`
+  display: none !important;
   position: fixed;
   bottom: 1.5rem;
   right: 1.5rem;
@@ -114,6 +115,7 @@ export const UnreadBadge = styled.span`
 
 // Chat Window Styles
 export const ChatWindowDesktop = styled.div`
+  display: none !important;
   position: fixed;
   bottom: 6rem;
   right: 1.5rem;
@@ -130,11 +132,12 @@ export const ChatWindowDesktop = styled.div`
   animation: ${slideIn} 0.3s ease-out;
 
   @media (max-width: 768px) {
-    display: none;
+    display: none !important;
   }
 `;
 
 export const ChatWindowMobile = styled.div`
+  display: none !important;
   position: fixed;
   left: 0;
   right: 0;
@@ -150,7 +153,7 @@ export const ChatWindowMobile = styled.div`
   animation: ${slideUp} 0.3s ease-out;
 
   @media (min-width: 768px) {
-    display: none;
+    display: none !important;
   }
 `;
 

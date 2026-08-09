@@ -160,6 +160,7 @@ code {
   }
   .mobile-only-header {
     display: block !important;
+    margin-bottom: 10px;
   }
 }
 

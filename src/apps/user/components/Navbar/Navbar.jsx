@@ -72,6 +72,7 @@ import GlobalSearchBar from "../search/GlobalSearchBar";
 import { LocationSelector } from "../../../../shared/components";
 
 const getMobileHeaderTitle = (pathname) => {
+  if (pathname === "/user/notifications" || pathname.startsWith("/user/notifications")) return "Notification";
   if (pathname === "/user/search") return "Search";
   if (pathname === "/user/all-services") return "Services";
   if (pathname === "/user/categories") return "Categories";

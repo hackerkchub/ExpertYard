@@ -113,139 +113,52 @@ const HomeHeader = React.memo(function HomeHeader({
         </div>
       </header>
 
-      {/* Mobile Header */}
-      <header className="mobile-header-only" style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "10px 16px",
-        background: "#ffffff",
-        borderBottom: "1px solid #eef2f7",
-        position: "sticky",
-        top: 0,
-        zIndex: 50,
-        boxShadow: "0 1px 4px rgba(0, 0, 0, 0.04)",
-      }}>
+      {/* Mobile Header - Flutter Native App Bar Style */}
+      <header className="mobile-header-only">
         <button 
           type="button" 
           className="mobile-header-menu-btn" 
           onClick={onMenuOpen} 
           aria-label="Open menu" 
-          style={{
-            background: "none",
-            border: "none",
-            padding: "6px",
-            cursor: "pointer",
-            color: "#111827",
-          }}
         >
-          <Menu size={24} />
+          <Menu size={20} strokeWidth={2.2} />
         </button>
 
-        <Link className="mobile-header-logo-link" to="/user" style={{ flexShrink: 0 }}>
-          <img src={logo} alt="G9Expert" style={{ height: "32px", width: "auto" }} />
-        </Link>
-
-        <div className="mobile-header-location" style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+        <div className="mobile-header-location">
           <LocationSelector onLocationSelect={onLocationSelect} fallbackText="Indore, MP" />
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <div className="mobile-header-right-actions">
           <button 
             type="button" 
             className="mobile-header-bell-btn" 
             onClick={onNotificationOpen} 
             aria-label="Open notifications"
-            style={{
-              background: "none",
-              border: "none",
-              padding: "6px",
-              cursor: "pointer",
-              color: "#111827",
-              position: "relative",
-            }}
           >
-            <Bell size={22} />
+            <Bell size={18} strokeWidth={2.2} />
             <span className="mobile-bell-badge" style={{
               position: "absolute",
-              top: "2px",
-              right: "2px",
-              width: "18px",
-              height: "18px",
+              top: "4px",
+              right: "4px",
+              width: "8px",
+              height: "8px",
               borderRadius: "50%",
               background: "#ef4444",
-              color: "#ffffff",
-              fontSize: "10px",
-              fontWeight: "700",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}>3</span>
+              boxShadow: "0 0 0 2px #ffffff",
+            }} />
           </button>
 
-          {/* Mobile Auth - Shows Login or User Avatar */}
-          {!isLoggedIn ? (
-            <button 
-              type="button" 
-              onClick={onLogin}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-                padding: "6px 14px",
-                borderRadius: "999px",
-                background: "linear-gradient(135deg, #0a66c2, #004182)",
-                color: "#ffffff",
-                border: "none",
-                fontWeight: "600",
-                fontSize: "12px",
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-              }}
-            >
-              <LogIn size={16} />
-              <span>Login</span>
-            </button>
-          ) : (
-            <button 
-              type="button" 
-              onClick={onProfileOpen}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "4px",
-                borderRadius: "50%",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-              }}
-            >
-              <div style={{
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
-                overflow: "hidden",
-                background: "linear-gradient(135deg, #0a66c2, #004182)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}>
-                {validPhoto ? (
-                  <img src={user.profile_photo} alt={displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                ) : (
-                  <span style={{
-                    color: "#ffffff",
-                    fontWeight: "700",
-                    fontSize: "14px",
-                    textTransform: "uppercase",
-                  }}>
-                    {initials}
-                  </span>
-                )}
-              </div>
-            </button>
-          )}
+          {/* Live Wallet Amount (Replaces Profile Icon) */}
+          <button 
+            type="button" 
+            className="mobile-header-wallet-btn" 
+            onClick={onWalletOpen}
+            aria-label="Open wallet"
+            title="Wallet Balance"
+          >
+            <Wallet size={16} strokeWidth={2.2} />
+            <span style={{ whiteSpace: "nowrap" }}>₹{walletAmount}</span>
+          </button>
         </div>
       </header>
 

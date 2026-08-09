@@ -31,6 +31,10 @@ export const Wrapper = styled.footer`
     mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent 72%);
   }
 
+  @media (max-width: 767px) {
+    display: none !important;
+  }
+
   @media (max-width: ${breakpoints.md}) {
     padding: 36px 0 20px;
   }

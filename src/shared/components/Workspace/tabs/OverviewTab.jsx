@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { getAuthToken } from "../BookingWorkspaceShell";
 import { FiCheckCircle, FiClipboard, FiFileText, FiUser, FiPhone, FiInfo } from "react-icons/fi";
+import { confirmWorkspaceForm } from "../../../api/workspace.api";
 
 export default function OverviewTab({ workspace, snapshot, role }) {
   const meta = snapshot?.service_meta || {};
@@ -16,21 +16,15 @@ export default function OverviewTab({ workspace, snapshot, role }) {
   const handleConfirmForm = async () => {
     try {
       setConfirming(true);
-      const token = getAuthToken();
       const bookingId = workspace?.booking_id || workspace?.id;
-      const res = await fetch(`/api/workspace/${bookingId}/confirm-form`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : ""
-        }
-      });
-      const data = await res.json();
-      if (data.success) {
+      
+      const response = await confirmWorkspaceForm(bookingId);
+      
+      if (response.data.success) {
         setIsConfirmed(true);
         setMessage("Client form responses and requirement details confirmed successfully!");
       } else {
-        setMessage(data.message || "Failed to confirm form details.");
+        setMessage(response.data.message || "Failed to confirm form details.");
       }
     } catch {
       setMessage("Error confirming form details.");

@@ -34,6 +34,7 @@ const AdminWorkspaceDetailPage = lazy(() => import("../pages/AdminWorkspaceDetai
 const AdminServiceAnalyticsPage = lazy(() => import("../pages/AdminServiceAnalyticsPage"));
 const SendToUsersPage = lazy(() => import("../pages/notifications/SendToUsersPage"));
 const SendToExpertsPage = lazy(() => import("../pages/notifications/SendToExpertsPage"));
+const LegalManagement = lazy(() => import("../pages/LegalManagement/LegalManagement"));
 
 const withLazyRoute = (node) => <LazyRoute>{node}</LazyRoute>;
 
@@ -79,6 +80,7 @@ export default function AdminAppRoutes() {
           <Route path="service-analytics" element={withLazyRoute(<AdminServiceAnalyticsPage/>)}/>
           <Route path="notifications/users" element={withLazyRoute(<SendToUsersPage />)} />
           <Route path="notifications/experts" element={withLazyRoute(<SendToExpertsPage />)} />
+          <Route path="legal-management" element={withLazyRoute(<LegalManagement/>)}/>
         </Route>
       </Route>
 

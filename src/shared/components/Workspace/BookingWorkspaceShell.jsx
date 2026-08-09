@@ -9,44 +9,10 @@ import ChecklistTab from "./tabs/ChecklistTab";
 import DeliveryTab from "./tabs/DeliveryTab";
 import InvoiceTab from "./tabs/InvoiceTab";
 import ReviewTab from "./tabs/ReviewTab";
-
-const getEndpointUrl = (path) => {
-  const envUrl = import.meta.env?.VITE_API_BASE_URL;
-  const configUrl = APP_CONFIG?.API_BASE_URL;
-  const base = envUrl || configUrl || "/api";
-  const cleanBase = base.replace(/\/api\/?$/, "");
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${cleanBase}/api${normalizedPath}`;
-};
-
-export const getAuthToken = (role = "user") => {
-  if (role === "admin") {
-    return (
-      localStorage.getItem("admin_token") ||
-      localStorage.getItem("adminToken") ||
-      localStorage.getItem("token") ||
-      localStorage.getItem("user_token") ||
-      localStorage.getItem("expert_token") ||
-      ""
-    );
-  }
-  if (role === "expert") {
-    return (
-      localStorage.getItem("expert_token") ||
-      localStorage.getItem("expertToken") ||
-      localStorage.getItem("token") ||
-      localStorage.getItem("user_token") ||
-      ""
-    );
-  }
-  return (
-    localStorage.getItem("user_token") ||
-    localStorage.getItem("userToken") ||
-    localStorage.getItem("token") ||
-    localStorage.getItem("expert_token") ||
-    ""
-  );
-};
+import {
+  getWorkspace,
+  updateWorkspaceStep,
+} from "../../api/workspace.api";
 
 export default function BookingWorkspaceShell({ bookingId, currentUserRole = "user" }) {
   const [activeTab, setActiveTab] = useState("overview");
@@ -54,119 +20,63 @@ export default function BookingWorkspaceShell({ bookingId, currentUserRole = "us
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // ⭐⭐⭐ UPDATED: fetchWorkspace using workspace.api ⭐⭐⭐
   const fetchWorkspace = async () => {
     try {
       setLoading(true);
       setError(null);
-      
-      const numBookingId = Number(bookingId);
-      if (!bookingId || isNaN(numBookingId) || numBookingId <= 0) {
-        setWorkspaceData(null);
-        setError(`Invalid Booking ID: #${bookingId}`);
-        setLoading(false);
-        return;
-      }
 
-      const url = getEndpointUrl(`/workspace/${numBookingId}`);
-      const token = getAuthToken(currentUserRole);
-      
-      console.log("🔍 [DIAGNOSTIC] ===== FETCH STARTED =====");
-      console.log("🔍 [STEP 1] Full Request URL:", url);
-      console.log("🔍 [STEP 2] Booking ID:", bookingId);
-      console.log("🔍 [STEP 3] Token exists?", token ? "✅ Yes (length: " + token.length + ")" : "❌ No");
-      
-      const res = await fetch(url, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-      });
+      console.log("🔍 [WORKSPACE] Loading:", bookingId);
 
-      console.log("🔍 [STEP 4] HTTP Status Code:", res.status, res.statusText);
-      
-      if (!res.ok) {
-        let errMessage = `HTTP ${res.status}: ${res.statusText}`;
-        try {
-          const errData = await res.json();
-          if (errData && errData.message) {
-            errMessage = errData.message;
-          }
-        } catch (_) {}
-        throw new Error(errMessage);
-      }
+      const response = await getWorkspace(bookingId);
 
-      const contentType = res.headers.get("content-type");
-      console.log("🔍 [STEP 5] Content-Type Header:", contentType);
+      console.log("✅ [WORKSPACE] Response:", response.data);
 
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await res.text();
-        console.error("❌ [DIAGNOSTIC] Non-JSON Response (Likely HTML/Proxy Error):", text.substring(0, 300));
-        throw new Error(`Server returned ${contentType || 'non-JSON'} instead of JSON.`);
-      }
-
-      const data = await res.json();
-      console.log("🔍 [STEP 6] Parsed Response Data:", data);
-
-      if (data.success && data.data) {
-        const fetchedWorkspace = data.data.workspace;
-        const returnedBookingId = fetchedWorkspace?.booking_id;
-        const returnedWorkspaceId = fetchedWorkspace?.workspace_id || fetchedWorkspace?.id;
-
-        // Client-side data integrity validation: requested ID must match either booking_id or workspace_id
-        const isBookingMatch = returnedBookingId && String(returnedBookingId) === String(numBookingId);
-        const isWorkspaceMatch = returnedWorkspaceId && String(returnedWorkspaceId) === String(numBookingId);
-
-        if (!isBookingMatch && !isWorkspaceMatch) {
-          console.error(`❌ [DATA MISMATCH] Requested ID #${numBookingId} but received workspace data for bookingId #${returnedBookingId} / workspaceId #${returnedWorkspaceId}`);
-          setWorkspaceData(null);
-          setError(`Workspace Unavailable: Data mismatch for Requested ID #${numBookingId}.`);
-          return;
-        }
-
-        console.log("✅ [DIAGNOSTIC] Success! Data received and validated.");
-        setWorkspaceData(data.data);
+      if (response.data.success) {
+        setWorkspaceData(response.data.data);
         setError(null);
       } else {
-        console.error("❌ [DIAGNOSTIC] Backend returned success: false, Message:", data.message);
-        setWorkspaceData(null);
-        setError(data.message || "Failed to load workspace.");
+        setError(response.data.message || "Failed to load workspace.");
       }
 
     } catch (err) {
-      console.error("🚨 [FATAL ERROR] Exception Caught:", err);
-      
-      let userFriendlyMessage = err.message || "Network error loading workspace.";
-      if (err.message?.includes("Failed to fetch")) {
-        userFriendlyMessage = "❌ Network Error: Server unreachable or CORS blocked.";
-      }
-      
-      setWorkspaceData(null);
-      setError(userFriendlyMessage);
+
+      console.error("🚨 Workspace Error:", err);
+
+      setError(
+        err?.response?.data?.message ||
+        err?.message ||
+        "Network error loading workspace."
+      );
+
     } finally {
       setLoading(false);
     }
   };
 
+  // ⭐⭐⭐ UPDATED: handleStepOverride using workspace.api ⭐⭐⭐
   const handleStepOverride = async (targetStepKey) => {
     try {
-      const token = getAuthToken();
-      const url = getEndpointUrl(`/workspace/${bookingId}/transition`);
-      const res = await fetch(url, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-        body: JSON.stringify({ target_step_key: targetStepKey }),
-      });
-      const data = await res.json();
-      if (data.success) {
+
+      const response = await updateWorkspaceStep(
+        bookingId,
+        targetStepKey
+      );
+
+      if (response.data.success) {
         fetchWorkspace();
       } else {
-        alert(data.message || "Failed to override step.");
+        alert(response.data.message || "Failed to override step.");
       }
-    } catch {
-      alert("Error overriding step.");
+
+    } catch (err) {
+
+      alert(
+        err?.response?.data?.message ||
+        err?.message ||
+        "Error overriding step."
+      );
+
     }
   };
 
@@ -174,7 +84,6 @@ export default function BookingWorkspaceShell({ bookingId, currentUserRole = "us
     if (bookingId) {
       fetchWorkspace();
     } else {
-      // अगर bookingId नहीं है तो कंसोल में वार्निंग दें
       console.warn("⚠️ [DIAGNOSTIC] bookingId is", bookingId, "- Fetch skipped!");
     }
   }, [bookingId]);

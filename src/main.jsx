@@ -13,6 +13,7 @@ import { AuthProvider } from "./shared/context/UserAuthContext";
 import { WalletProvider } from "./shared/context/WalletContext";
 
 import { soundManager } from "./shared/services/sound/soundManager";
+import { LegalProvider } from "./shared/context/LegalContext";
 
 import GlobalStyles from "./shared/styles/GlobalStyles";
 import { theme } from "./shared/styles/theme";
@@ -126,18 +127,32 @@ if (!isNativeApp && "serviceWorker" in navigator) {
 function startReact() {
   ReactDOM.createRoot(document.getElementById("root")).render(
     <HelmetProvider>
-      <ThemeProvider theme={theme}>
-        <GlobalStyles />
-        <CategoryProvider>
-          <BrowserRouter>
-            <AuthProvider>
-              <WalletProvider>
-                <AppRouter />
-              </WalletProvider>
-            </AuthProvider>
-          </BrowserRouter>
-        </CategoryProvider>
-      </ThemeProvider>
-    </HelmetProvider>
+  <ThemeProvider theme={theme}>
+    <GlobalStyles />
+
+    <CategoryProvider>
+
+      <BrowserRouter>
+
+        <AuthProvider>
+
+          <WalletProvider>
+
+            <LegalProvider>
+
+              <AppRouter />
+
+            </LegalProvider>
+
+          </WalletProvider>
+
+        </AuthProvider>
+
+      </BrowserRouter>
+
+    </CategoryProvider>
+
+  </ThemeProvider>
+</HelmetProvider>
   );
 }

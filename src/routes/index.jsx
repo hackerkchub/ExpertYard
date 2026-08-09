@@ -19,6 +19,8 @@ import AppGuard from "../core/AppGuard";
 import { APP_CONFIG } from "../config/appConfig";
 
 import useNativeIncomingCall from "../shared/hooks/useNativeIncomingCall";
+import LegalManager from "../shared/components/Legal/LegalManager";
+import { useAuth } from "../shared/context/UserAuthContext";
 
 const UserAppRoutes =
   APP_CONFIG.APP_TYPE !== "expert"
@@ -45,11 +47,7 @@ const APP_SHELL_STYLE = {
   position: "relative",
 };
 
-const CONTENT_WRAPPER_STYLE = {
-  width: "100%",
-  overflowX: "hidden",
-};
-
+// Helper functions
 const isCallScreenPath = (pathname = "") => {
   const normalizedPath = pathname.toLowerCase();
   return (
@@ -63,9 +61,35 @@ const isCallScreenPath = (pathname = "") => {
 export default function AppRouter() {
   useNativeIncomingCall();
   useSoundInit();
+  
   const location = useLocation();
   const navigate = useNavigate();
+  const { isLoggedIn } = useAuth();
 
+  const pathname = location.pathname.toLowerCase();
+  const isAdminRoute = pathname.startsWith("/admin");
+  const isCallScreen = isCallScreenPath(pathname);
+
+  const [showSplash, setShowSplash] = useState(
+    () => typeof window !== "undefined" && !isCallScreenPath(location.pathname)
+  );
+
+  const showNavbar = useMemo(
+    () => shouldShowBottomNavbar(location.pathname),
+    [location.pathname]
+  );
+
+  const hideSplash = useCallback(() => {
+    setShowSplash(false);
+  }, []);
+
+  useEffect(() => {
+    if (isCallScreenPath(location.pathname)) {
+      setShowSplash(false);
+    }
+  }, [location.pathname]);
+
+  // Push notification setup
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
@@ -138,26 +162,8 @@ export default function AppRouter() {
       clickListener.remove();
     };
   }, [navigate]);
-  const [showSplash, setShowSplash] = useState(
-    () =>
-      typeof window !== "undefined" && !isCallScreenPath(window.location.pathname)
-  );
 
-  const showNavbar = useMemo(
-    () => shouldShowBottomNavbar(location.pathname),
-    [location.pathname]
-  );
-
-  const hideSplash = useCallback(() => {
-    setShowSplash(false);
-  }, []);
-
-  useEffect(() => {
-    if (isCallScreenPath(location.pathname)) {
-      setShowSplash(false);
-    }
-  }, [location.pathname]);
-
+  // Socket connection management
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === "visible" && !socket.connected) {
@@ -192,15 +198,21 @@ export default function AppRouter() {
 
   return (
     <div className="app-main-layout" style={APP_SHELL_STYLE}>
-      {showSplash && !isCallScreenPath(location.pathname) ? (
+      {showSplash && !isCallScreen ? (
         <SplashScreen onDone={hideSplash} />
       ) : null}
 
       <NetworkStatus />
+      
+      {/* LegalManager - Handles all legal logic internally */}
+      <LegalManager />
 
       <div
         className={`main-content-wrapper${showNavbar ? " has-mobile-bottom-nav" : ""}`}
-        style={CONTENT_WRAPPER_STYLE}
+        style={{
+          width: "100%",
+          overflowX: "hidden",
+        }}
       >
         <AppGuard>
           <Routes>
@@ -306,7 +318,7 @@ export default function AppRouter() {
         </AppGuard>
       </div>
 
-      {showNavbar && !location.pathname.toLowerCase().startsWith("/expert") ? <BottomNavbar /> : null}
+      {showNavbar && !pathname.startsWith("/expert") && <BottomNavbar />}
     </div>
   );
 }

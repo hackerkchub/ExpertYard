@@ -1,6 +1,10 @@
 import React, { useState } from "react";
-import { getAuthToken } from "../BookingWorkspaceShell";
 import APP_CONFIG from "../../../../config/appConfig";
+import {
+    uploadWorkspaceFile,
+    submitWorkspaceDelivery,
+    acceptWorkspaceDelivery,
+} from "../../../api/workspace.api";
 
 export default function DeliveryTab({ bookingId, workspace, snapshot, documents = [], permissions, onRefresh, currentUserRole }) {
   const [notes, setNotes] = useState("");
@@ -21,40 +25,28 @@ export default function DeliveryTab({ bookingId, workspace, snapshot, documents 
 
     try {
       setSubmitting(true);
-      const token = getAuthToken();
 
       if (selectedFile) {
         const formData = new FormData();
         formData.append("file", selectedFile);
 
-        const uploadRes = await fetch("/api/workspace/upload-file", {
-          method: "POST",
-          headers: {
-            Authorization: token ? `Bearer ${token}` : ""
-          },
-          body: formData
-        });
-        const uploadData = await uploadRes.json();
-        if (uploadData.success && uploadData.data?.file_url) {
-          finalUrl = uploadData.data.file_url;
+        const uploadResponse = await uploadWorkspaceFile(formData);
+        if (uploadResponse.data.success && uploadResponse.data.data?.file_url) {
+          finalUrl = uploadResponse.data.data.file_url;
         } else {
-          return alert(uploadData.message || "Deliverable file upload failed.");
+          return alert(uploadResponse.data.message || "Deliverable file upload failed.");
         }
       }
 
-      const res = await fetch(`/api/workspace/${bookingId}/delivery`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : ""
-        },
-        body: JSON.stringify({ notes, file_url: finalUrl })
+      const response = await submitWorkspaceDelivery(bookingId, {
+        notes,
+        file_url: finalUrl
       });
-      const data = await res.json();
-      if (data.success && onRefresh) {
+
+      if (response.data.success && onRefresh) {
         onRefresh();
       } else {
-        alert(data.message || "Failed to submit deliverables.");
+        alert(response.data.message || "Failed to submit deliverables.");
       }
     } catch (err) {
       alert("Error submitting deliverables.");
@@ -65,15 +57,8 @@ export default function DeliveryTab({ bookingId, workspace, snapshot, documents 
 
   const handleAcceptDelivery = async () => {
     try {
-      const token = getAuthToken();
-      const res = await fetch(`/api/workspace/${bookingId}/delivery/accept`, {
-        method: "POST",
-        headers: {
-          Authorization: token ? `Bearer ${token}` : ""
-        }
-      });
-      const data = await res.json();
-      if (data.success && onRefresh) {
+      const response = await acceptWorkspaceDelivery(bookingId);
+      if (response.data.success && onRefresh) {
         onRefresh();
       }
     } catch (err) {

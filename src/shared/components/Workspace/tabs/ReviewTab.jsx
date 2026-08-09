@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { submitWorkspaceReview } from "../../../api/workspace.api";
 
 export default function ReviewTab({ bookingId, workspace, snapshot }) {
   const [rating, setRating] = useState(5);
@@ -8,21 +9,14 @@ export default function ReviewTab({ bookingId, workspace, snapshot }) {
   const handleSubmitReview = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`/api/reviews`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token") || ""}`
-        },
-        body: JSON.stringify({
-          booking_id: bookingId,
-          expert_id: snapshot?.expert?.expert_id,
-          rating,
-          comment
-        })
+      const response = await submitWorkspaceReview({
+        booking_id: bookingId,
+        expert_id: snapshot?.expert?.expert_id,
+        rating,
+        comment
       });
-      const data = await res.json();
-      if (data.success) {
+
+      if (response.data.success) {
         setSubmitted(true);
       }
     } catch (err) {

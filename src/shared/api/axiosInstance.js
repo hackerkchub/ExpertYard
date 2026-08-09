@@ -24,6 +24,7 @@ const api = axios.create({
 const getRoleFromRoute = () => {
   const path = window.location.pathname;
 
+  if (path.startsWith("/admin")) return "admin";
   if (path.startsWith("/user")) return "user";
   if (path.startsWith("/expert")) return "expert";
 
@@ -34,9 +35,14 @@ const getRoleFromRoute = () => {
    HELPER: CLEAN CONFLICT TOKENS
 ================================ */
 const cleanConflictingTokens = (activeRole) => {
-  if (activeRole === "user") {
+  if (activeRole === "admin") {
+    localStorage.removeItem("user_token");
+    localStorage.removeItem("expert_token");
+  } else if (activeRole === "user") {
+    localStorage.removeItem("admin_token");
     localStorage.removeItem("expert_token");
   } else if (activeRole === "expert") {
+    localStorage.removeItem("admin_token");
     localStorage.removeItem("user_token");
   }
 };
@@ -52,6 +58,7 @@ api.interceptors.request.use(
       loader?.showLoader();
     }
 
+    const adminToken = localStorage.getItem("admin_token");
     const expertToken = localStorage.getItem("expert_token");
     const userToken = localStorage.getItem("user_token");
 
@@ -64,29 +71,43 @@ api.interceptors.request.use(
        ROUTE BASED TOKEN SELECTION
     ============================== */
 
-    if (routeRole === "user" && userToken) {
+    if (routeRole === "admin" && adminToken) {
+      token = adminToken;
+      role = "admin";
+      cleanConflictingTokens("admin");
+    }
+    else if (routeRole === "user" && userToken) {
       token = userToken;
       role = "user";
-      cleanConflictingTokens("user"); // ✅ auto clean
-    } 
+      cleanConflictingTokens("user");
+    }
     else if (routeRole === "expert" && expertToken) {
       token = expertToken;
       role = "expert";
-      cleanConflictingTokens("expert"); // ✅ auto clean
-    } 
+      cleanConflictingTokens("expert");
+    }
     else {
+
       /* ===============================
          FALLBACK (SAFE MODE)
       ============================== */
-      if (userToken) {
+
+      if (adminToken) {
+        token = adminToken;
+        role = "admin";
+        cleanConflictingTokens("admin");
+      }
+      else if (userToken) {
         token = userToken;
         role = "user";
         cleanConflictingTokens("user");
-      } else if (expertToken) {
+      }
+      else if (expertToken) {
         token = expertToken;
         role = "expert";
         cleanConflictingTokens("expert");
       }
+
     }
 
     /* ===============================
@@ -134,6 +155,7 @@ api.interceptors.response.use(
     ============================== */
     if (status === 401) {
 
+      localStorage.removeItem("admin_token");
       localStorage.removeItem("expert_token");
       localStorage.removeItem("user_token");
 

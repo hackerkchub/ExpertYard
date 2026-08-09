@@ -1,6 +1,11 @@
 import React, { useState } from "react";
-import { getAuthToken } from "../BookingWorkspaceShell";
 import APP_CONFIG from "../../../../config/appConfig";
+import {
+    uploadWorkspaceFile,
+    uploadWorkspaceDocument,
+    replaceWorkspaceDocument,
+    verifyWorkspaceDocument,
+} from "../../../api/workspace.api";
 
 export default function DocumentsTab({ bookingId, documents = [], snapshot, permissions, onRefresh, currentUserRole }) {
   const [uploading, setUploading] = useState(false);
@@ -29,50 +34,35 @@ export default function DocumentsTab({ bookingId, documents = [], snapshot, perm
 
     try {
       setUploading(true);
-      const token = getAuthToken();
 
       if (selectedFile) {
         const formData = new FormData();
         formData.append("file", selectedFile);
 
-        const uploadRes = await fetch("/api/workspace/upload-file", {
-          method: "POST",
-          headers: {
-            Authorization: token ? `Bearer ${token}` : ""
-          },
-          body: formData
-        });
-        const uploadData = await uploadRes.json();
-        if (uploadData.success && uploadData.data?.file_url) {
-          finalUrl = uploadData.data.file_url;
+        const uploadResponse = await uploadWorkspaceFile(formData);
+        if (uploadResponse.data.success && uploadResponse.data.data?.file_url) {
+          finalUrl = uploadResponse.data.data.file_url;
         } else {
-          return alert(uploadData.message || "File upload to server failed.");
+          return alert(uploadResponse.data.message || "File upload to server failed.");
         }
       }
 
       if (!finalUrl) return alert("Please select a file or provide a valid URL.");
 
-      const res = await fetch(`/api/workspace/${bookingId}/documents/upload`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : ""
-        },
-        body: JSON.stringify({
-          doc_type_key: "CLIENT_DOCUMENT",
-          file_name: fileName,
-          file_url: finalUrl,
-          file_size: selectedFile ? selectedFile.size : 1024
-        })
+      const response = await uploadWorkspaceDocument(bookingId, {
+        doc_type_key: "CLIENT_DOCUMENT",
+        file_name: fileName,
+        file_url: finalUrl,
+        file_size: selectedFile ? selectedFile.size : 1024
       });
-      const data = await res.json();
-      if (data.success) {
+
+      if (response.data.success) {
         setFileName("");
         setSelectedFile(null);
         setFileUrlInput("");
         if (onRefresh) onRefresh();
       } else {
-        alert(data.message || "Upload failed.");
+        alert(response.data.message || "Upload failed.");
       }
     } catch (err) {
       alert("Error uploading document.");
@@ -86,40 +76,27 @@ export default function DocumentsTab({ bookingId, documents = [], snapshot, perm
 
     try {
       setUploading(true);
-      const token = getAuthToken();
 
       const formData = new FormData();
       formData.append("file", replaceFile);
 
-      const uploadRes = await fetch("/api/workspace/upload-file", {
-        method: "POST",
-        headers: { Authorization: token ? `Bearer ${token}` : "" },
-        body: formData
-      });
-      const uploadData = await uploadRes.json();
-      if (!uploadData.success || !uploadData.data?.file_url) {
-        return alert(uploadData.message || "File upload failed.");
+      const uploadResponse = await uploadWorkspaceFile(formData);
+      if (!uploadResponse.data.success || !uploadResponse.data.data?.file_url) {
+        return alert(uploadResponse.data.message || "File upload failed.");
       }
 
-      const res = await fetch(`/api/workspace/${bookingId}/documents/${doc.id}/replace`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : ""
-        },
-        body: JSON.stringify({
-          file_name: replaceFile.name,
-          file_url: uploadData.data.file_url,
-          file_size: replaceFile.size
-        })
+      const response = await replaceWorkspaceDocument(bookingId, doc.id, {
+        file_name: replaceFile.name,
+        file_url: uploadResponse.data.data.file_url,
+        file_size: replaceFile.size
       });
-      const data = await res.json();
-      if (data.success) {
+
+      if (response.data.success) {
         setReplacingDocId(null);
         setReplaceFile(null);
         if (onRefresh) onRefresh();
       } else {
-        alert(data.message || "Replacement failed.");
+        alert(response.data.message || "Replacement failed.");
       }
     } catch (err) {
       alert("Error replacing document.");
@@ -130,17 +107,12 @@ export default function DocumentsTab({ bookingId, documents = [], snapshot, perm
 
   const handleVerify = async (docId, status, rejectionReason = "") => {
     try {
-      const token = getAuthToken();
-      const res = await fetch(`/api/workspace/${bookingId}/documents/${docId}/status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : ""
-        },
-        body: JSON.stringify({ status, rejection_reason: rejectionReason })
+      const response = await verifyWorkspaceDocument(bookingId, docId, {
+        status,
+        rejection_reason: rejectionReason
       });
-      const data = await res.json();
-      if (data.success && onRefresh) {
+
+      if (response.data.success && onRefresh) {
         onRefresh();
       }
     } catch (err) {

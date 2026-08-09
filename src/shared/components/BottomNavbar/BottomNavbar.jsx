@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import "./BottomNavbar.css";
 
-const BottomNavbar = () => {
+const BottomNavbar = ({ disabled = false }) => {
   const location = useLocation();
   const currentPath = location.pathname.toLowerCase();
 
@@ -47,7 +47,15 @@ const BottomNavbar = () => {
   ];
 
   return (
-    <nav className="bottom-nav" aria-label="Primary mobile navigation">
+    <nav 
+      className={`bottom-nav ${disabled ? 'bottom-nav-disabled' : ''}`} 
+      aria-label="Primary mobile navigation"
+      style={{
+        pointerEvents: disabled ? 'none' : 'auto',
+        opacity: disabled ? 0.5 : 1,
+        transition: 'all 0.3s ease',
+      }}
+    >
       {menuItems.map((item) => {
         const active = item.isActive();
         return (
@@ -56,6 +64,12 @@ const BottomNavbar = () => {
             to={item.path}
             className={['nav-item', active ? 'active' : ''].filter(Boolean).join(' ')}
             aria-label={item.name}
+            tabIndex={disabled ? -1 : undefined}
+            onClick={(e) => {
+              if (disabled) {
+                e.preventDefault();
+              }
+            }}
           >
             <div className="icon-wrapper">{item.icon}</div>
             <span className="nav-label">{item.name}</span>

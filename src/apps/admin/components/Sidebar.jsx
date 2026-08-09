@@ -15,6 +15,7 @@ import {
   FiImage,
   FiArchive,
   FiBell,
+  FiFileText,
 } from "react-icons/fi";
 import {
   Side,
@@ -85,6 +86,13 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
         { path: "/admin/form-builder", icon: FiGrid, label: "Dynamic Form Builder" },
         { path: "/admin/workflow-builder", icon: FiBarChart2, label: "Workflow Builder" },
         { path: "/admin/document-builder", icon: FiArchive, label: "Document Builder" },
+
+         // ✅ New Menu
+    {
+      path: "/admin/legal-management",
+      icon: FiFileText,
+      label: "Legal Management",
+    },
         { path: "/admin/pricing-rules", icon: FiDollarSign, label: "Pricing Rules" },
         { path: "/admin/service-templates", icon: FiLayers, label: "Service Templates" },
         { path: "/admin/expert-approval", icon: FiCheckCircle, label: "Expert Approval Queue" },

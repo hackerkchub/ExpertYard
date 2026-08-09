@@ -109,13 +109,17 @@ export default function BookingWorkspaceShell({ bookingId, currentUserRole = "us
 
       if (data.success && data.data) {
         const fetchedWorkspace = data.data.workspace;
-        const returnedBookingId = fetchedWorkspace?.booking_id || fetchedWorkspace?.id;
+        const returnedBookingId = fetchedWorkspace?.booking_id;
+        const returnedWorkspaceId = fetchedWorkspace?.workspace_id || fetchedWorkspace?.id;
 
-        // Client-side data integrity validation
-        if (returnedBookingId && String(returnedBookingId) !== String(numBookingId)) {
-          console.error(`❌ [DATA MISMATCH] Requested bookingId #${numBookingId} but received workspace data for bookingId #${returnedBookingId}`);
+        // Client-side data integrity validation: requested ID must match either booking_id or workspace_id
+        const isBookingMatch = returnedBookingId && String(returnedBookingId) === String(numBookingId);
+        const isWorkspaceMatch = returnedWorkspaceId && String(returnedWorkspaceId) === String(numBookingId);
+
+        if (!isBookingMatch && !isWorkspaceMatch) {
+          console.error(`❌ [DATA MISMATCH] Requested ID #${numBookingId} but received workspace data for bookingId #${returnedBookingId} / workspaceId #${returnedWorkspaceId}`);
           setWorkspaceData(null);
-          setError(`Workspace Unavailable: Data mismatch for Booking #${numBookingId}.`);
+          setError(`Workspace Unavailable: Data mismatch for Requested ID #${numBookingId}.`);
           return;
         }
 

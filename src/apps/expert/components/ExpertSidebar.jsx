@@ -28,6 +28,7 @@ import {
   FiVideo,
   FiMail,
   FiPlusCircle,
+  FiZap,
 } from "react-icons/fi";
 
 import { useNavigate } from "react-router-dom";
@@ -72,6 +73,7 @@ export default function ExpertSidebar() {
 
   const menuItems = [
     { path: "/expert", icon: FiHome, label: "Dashboard", exact: true },
+    { path: "/expert/g9-plan", icon: FiZap, label: "G9 Plan" },
     { path: "/expert/services/activation", icon: FiFileText, label: "Available Services" },
     { path: "/expert/myservices", icon: FiFileText, label: "My Services" },
     { path: "/expert/services/custom-requests", icon: FiPlusCircle, label: "Custom Service Request" },

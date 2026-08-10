@@ -65,8 +65,6 @@ const MyBookings = () => {
     <S.PageContainer>
       <S.ContentWrapper>
         <S.Header>
-          <h1>My Orders & Booked Services</h1>
-          <p>Track your active master services, communicate with assigned experts, and access workspaces.</p>
         </S.Header>
 
         {bookings.length === 0 ? (

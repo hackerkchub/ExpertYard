@@ -87,6 +87,7 @@ const getMobileHeaderTitle = (pathname) => {
   if (pathname === "/user/my-offers") return "Offers";
   if (pathname === "/user/my-orders" || pathname === "/user/my-bookings" || pathname === "/user/my-services") return "My Orders";
   if (pathname.startsWith("/user/my-booking/")) return "Booking";
+  if (pathname.startsWith("/user/workspace")) return "Workspace";
   if (pathname === "/user/about") return "About";
   if (pathname === "/user/how-it-works") return "How It Works";
   if (pathname === "/user/reviews") return "Reviews";

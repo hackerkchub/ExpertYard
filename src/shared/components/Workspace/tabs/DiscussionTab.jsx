@@ -13,7 +13,7 @@ export default function DiscussionTab({ bookingId, workspace, snapshot, permissi
 
   const allowChat = !isCompleted && permissions?.allow_chat !== false;
   const allowVoice = !isCompleted && permissions?.allow_voice_call !== false;
-  const allowVideo = !isCompleted && permissions?.allow_video_call !== false;
+  
 
   const expertId = snapshot?.expert?.expert_id || workspace?.expert_id;
   const userId = workspace?.user_id;
@@ -92,14 +92,6 @@ export default function DiscussionTab({ bookingId, workspace, snapshot, permissi
                 📞 Launch Voice Call (Free)
               </button>
             )}
-            {allowVideo && (
-              <button
-                style={{ padding: '0.65rem 1.25rem', background: '#7c3aed', color: '#ffffff', border: 'none', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }}
-                onClick={handleVideoCall}
-              >
-                📹 Launch Video Call (Free)
-              </button>
-            )}
             {allowChat && (
               <button
                 style={{ padding: '0.65rem 1.25rem', background: '#2563eb', color: '#ffffff', border: 'none', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }}
@@ -113,21 +105,6 @@ export default function DiscussionTab({ bookingId, workspace, snapshot, permissi
           {/* Embedded Chat Room Console */}
           <div style={{ border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1.25rem', background: '#f8fafc' }}>
             <h4 style={{ margin: '0 0 1rem 0', color: '#0f172a' }}>Workspace Active Chat Room</h4>
-            <div style={{ minHeight: '120px', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '1rem', marginBottom: '1rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-              <p style={{ fontSize: '0.9rem', color: '#334155', fontWeight: 600, margin: 0 }}>
-                Live chat room active for Booking #{bookingId}
-              </p>
-              <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '4px 0 12px 0' }}>
-                Connect directly with {currentUserRole === 'expert' ? 'the client' : 'your assigned expert'}
-              </p>
-              <button
-                type="button"
-                onClick={handleOpenChat}
-                style={{ padding: '6px 14px', background: '#2563eb', color: '#fff', border: 0, borderRadius: 6, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-              >
-                Go to Dedicated Chat Room →
-              </button>
-            </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <input
                 type="text"

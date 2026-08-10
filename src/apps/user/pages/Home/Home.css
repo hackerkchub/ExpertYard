@@ -4150,7 +4150,7 @@ body {
     align-items: center !important;
     justify-content: center !important;
     width: 100% !important;
-    background: #172554 !important; /* Brand Navy Deep Blue */
+    background: #111827 !important; /* System Status Bar Theme Color */
     position: sticky !important;
     top: 0 !important;
     z-index: 1000 !important;

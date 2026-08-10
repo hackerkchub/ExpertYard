@@ -24,13 +24,17 @@ export const Nav = styled.nav`
   }
 
   @media (max-width: 768px) {
+    background: #111827 !important;
+    border-bottom: none !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15) !important;
+
     &.user-common-mobile-header {
-      background: #172554 !important;
+      background: #111827 !important;
       border-bottom: none !important;
       box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15) !important;
 
       * {
-        color: #ffffff;
+        color: #ffffff !important;
       }
     }
   }

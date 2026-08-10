@@ -617,10 +617,11 @@ export const CardContent = styled.div`
     font-size: 1.12rem;
     line-height: 1.35;
     font-weight: 950;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    white-space: nowrap;
     overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: block;
   }
 
   .description {
@@ -641,10 +642,14 @@ export const CardContent = styled.div`
 
     h3 {
       margin: 8px 0 6px;
-      font-size: 16px;
+      font-size: 14px;
       line-height: 1.35;
       font-weight: 700;
-      overflow-wrap: anywhere;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      display: block;
     }
 
     .description {
@@ -675,6 +680,9 @@ export const CategoryTag = styled.div`
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 
   @media (max-width: 767px) {
     max-width: 100%;

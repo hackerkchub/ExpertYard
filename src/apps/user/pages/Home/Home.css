@@ -8966,10 +8966,15 @@ img {
   }
 
   .mobile-service-info h3 {
-    font-size: 14.5px !important;
+    font-size: 13px !important;
     font-weight: 800 !important;
     color: #0f172a !important;
     margin: 0 0 4px 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+    display: block !important;
   }
 
   .mobile-service-expert {

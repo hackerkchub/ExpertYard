@@ -1342,25 +1342,20 @@ export const SubcategoryImage = styled.img`
 
 export const SubcategoryName = styled.span`
   width: 100%;
-  height: 38px;
-  min-height: 38px;
-  max-height: 38px;
+  max-width: 100%;
   color: ${colors.textMain};
   text-align: center;
   font-size: 13.5px;
   font-weight: 900;
   line-height: 1.3;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
   box-sizing: border-box;
 
   @media (max-width: 767px) {
     font-size: 12px;
-    height: 32px;
-    min-height: 32px;
-    max-height: 32px;
     line-height: 1.25;
   }
 `;

@@ -24,6 +24,8 @@ import {
   Film,
   Video,
   Play,
+  Package,
+  MessageSquare,
 } from "lucide-react";
 
 import "./Home.css";
@@ -70,7 +72,9 @@ const sidebarItems = [
   { label: "Services", to: "/user/all-services", icon: BriefcaseBusiness },
   { label: "Wallet", to: "/user/wallet", icon: Wallet },
   { label: "Category", to: "/user/categories", icon: Grid3X3 },
-  { label: "Consultations", to: "/user/chat-history", icon: History },
+  { label: "History", to: "/user/chat-history", icon: History },
+  { label: "My Orders", to: "/user/my-services", icon: Package },
+  { label: "My Inquiries", to: "/user/my-inquiries", icon: MessageSquare },
   { label: "Notifications", to: "/user/notifications", icon: Bell },
 ];
 

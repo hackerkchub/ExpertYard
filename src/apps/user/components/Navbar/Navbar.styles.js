@@ -25,9 +25,13 @@ export const Nav = styled.nav`
 
   @media (max-width: 768px) {
     &.user-common-mobile-header {
-      background: rgba(255, 255, 255, 0.96);
-      border-bottom: 1px solid rgba(0, 0, 128, 0.08);
-      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+      background: #172554 !important;
+      border-bottom: none !important;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15) !important;
+
+      * {
+        color: #ffffff;
+      }
     }
   }
 `;
@@ -95,10 +99,10 @@ export const HeaderMobileTitle = styled.div`
     min-width: 0;
     flex: 1 1 auto;
     display: block;
-    color: #111827;
+    color: #ffffff !important;
     font-size: 17px;
     line-height: 1.2;
-    font-weight: 850;
+    font-weight: 700;
     letter-spacing: -0.01em;
     white-space: nowrap;
     overflow: hidden;
@@ -124,16 +128,22 @@ export const HeaderBackButton = styled.button`
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid rgba(0, 0, 128, 0.12);
+    border: none !important;
     border-radius: 13px;
-    background: #ffffff;
-    color: ${NAVY};
+    background: transparent !important;
+    color: #ffffff !important;
     cursor: pointer;
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+    box-shadow: none !important;
+
+    &:hover, &:active {
+      background: rgba(255, 255, 255, 0.1) !important;
+    }
 
     svg {
       width: 19px;
       height: 19px;
+      color: #ffffff !important;
+      stroke: #ffffff !important;
     }
   }
 
@@ -173,6 +183,15 @@ export const HeaderMenuButton = styled.button`
     width: 38px;
     height: 38px;
     border-radius: 13px;
+    background: transparent !important;
+    border: none !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+
+    svg {
+      color: #ffffff !important;
+      stroke: #ffffff !important;
+    }
 
     &.mobile-menu-trigger {
       display: inline-flex;
@@ -992,9 +1011,16 @@ export const MobileLanguageButton = styled.button`
   cursor: pointer;
   box-shadow: 0 10px 22px rgba(0, 0, 128, 0.05);
 
-  svg {
-    width: 17px;
-    height: 17px;
+  @media (max-width: 768px) {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border: none !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+
+    svg {
+      color: #ffffff !important;
+      stroke: #ffffff !important;
+    }
   }
 
   @media (max-width: 420px) {
@@ -1201,6 +1227,10 @@ export const HeaderProfileButton = styled.button`
     width: 38px;
     height: 38px;
     border-radius: 13px;
+    background: transparent !important;
+    border: none !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
 
     &.mobile-profile-shortcut {
       display: inline-flex;
@@ -1209,6 +1239,8 @@ export const HeaderProfileButton = styled.button`
     svg {
       width: 18px;
       height: 18px;
+      color: #ffffff !important;
+      stroke: #ffffff !important;
     }
   }
 
@@ -1264,6 +1296,15 @@ export const MobileIcon = styled.button`
     width: 38px;
     height: 38px;
     border-radius: 13px;
+    background: transparent !important;
+    border: none !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+
+    svg {
+      color: #ffffff !important;
+      stroke: #ffffff !important;
+    }
   }
 
   @media (max-width: 420px) {

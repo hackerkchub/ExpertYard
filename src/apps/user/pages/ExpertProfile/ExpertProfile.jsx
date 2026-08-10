@@ -33,10 +33,14 @@ import {
   FiVideo,
   FiPlay,
   FiArrowRight,
+  FiShare2,
+  FiCopy,
 } from "react-icons/fi";
+import { FaWhatsapp, FaTelegramPlane, FaTwitter } from "react-icons/fa";
 
 import { APP_CONFIG } from "../../../../config/appConfig";
 import InquiryModal from "./InquiryModal";
+import PostDetailModal from "../../../../shared/components/PostDetailModal/PostDetailModal";
 
 import {
   PageWrap,
@@ -151,6 +155,10 @@ import {
   ReelPlayIcon,
   ReelMetaInfo,
   ReelCaption,
+  ShareIconButton,
+  ShareModalOverlay,
+  ShareModalBox,
+  ShareOptionItem,
 } from "./ExpertProfile.styles";
 
 import {
@@ -442,6 +450,32 @@ const ExpertProfilePage = () => {
   const [purchasingPlan, setPurchasingPlan] = useState(null);
   const [showSubscribeSuccess, setShowSubscribeSuccess] = useState(false);
   const [purchaseError, setPurchaseError] = useState(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [selectedPostForModal, setSelectedPostForModal] = useState(null);
+
+  const handleShareProfile = useCallback(async () => {
+    const shareTitle = `${profile?.name || "Expert"} on G9Expert`;
+    const shareText = `Check out ${profile?.name || "Expert"}'s profile on G9Expert - ${profile?.position || "Professional Expert"}`;
+    const shareUrl = window.location.href;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+        return;
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Share error:", err);
+        } else {
+          return;
+        }
+      }
+    }
+    setShowShareModal(true);
+  }, [profile]);
   
   // Post interaction states
   const [liked, setLiked] = useState({});
@@ -1451,13 +1485,6 @@ const ExpertProfilePage = () => {
                   ) : (
                     <AvatarFallback>{getInitials(profile.name)}</AvatarFallback>
                   )}
-                  <div className="expert-profile-follow-wrap">
-                    {!following ? (
-                      <FollowButton onClick={handleFollowAction}><FiUserPlus /> {t("expertProfile.follow")}</FollowButton>
-                    ) : (
-                      <FollowButton $active onClick={handleFollowAction}><FiUserCheck /> {t("expertProfile.following")}</FollowButton>
-                    )}
-                  </div>
                 </div>
 
                 <div className="expert-profile-name-group">
@@ -1469,6 +1496,17 @@ const ExpertProfilePage = () => {
                   </Name>
                   <Role>{profile.position || "Expert"}</Role>
                   <Status $online={isExpertOnline}>{isExpertOnline ? "🟢 Available Now" : "🔴 Offline"}</Status>
+
+                  <div className="expert-profile-follow-wrap">
+                    {!following ? (
+                      <FollowButton onClick={handleFollowAction} className="follow-btn"><FiUserPlus /> {t("expertProfile.follow")}</FollowButton>
+                    ) : (
+                      <FollowButton $active onClick={handleFollowAction} className="follow-btn active-following"><FiUserCheck /> {t("expertProfile.following")}</FollowButton>
+                    )}
+                    <ShareIconButton type="button" onClick={handleShareProfile} title="Share Profile" aria-label="Share Profile" className="share-icon-btn">
+                      <FiShare2 size={16} />
+                    </ShareIconButton>
+                  </div>
                 </div>
               </div>
 
@@ -1595,6 +1633,7 @@ const ExpertProfilePage = () => {
                     <FiSend size={20} />
                   </ActionButton>
                 </div>
+                
               </CallToAction>
 
 
@@ -1762,15 +1801,22 @@ const ExpertProfilePage = () => {
                         const isLiked = liked[postId];
                         
                         return (
-                          <PostCard key={postId}>
+                          <PostCard
+                            key={postId}
+                            onClick={() => setSelectedPostForModal(post)}
+                            style={{ cursor: "pointer" }}
+                          >
                             {post.image_url && <PostImage src={post.image_url} alt={post.title} />}
                             <PostHeader><PostTitle>{post.title}</PostTitle></PostHeader>
                             {post.description && <PostDescription>{post.description}</PostDescription>}
                             
-                            <PostActions>
+                            <PostActions onClick={(e) => e.stopPropagation()}>
                               <PostActionBtn
                                 $liked={!!isLiked}
-                                onClick={() => toggleLike(post)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleLike(post);
+                                }}
                               >
                                 <FiHeart
                                   fill={isLiked ? "#ef4444" : "none"}
@@ -1784,7 +1830,10 @@ const ExpertProfilePage = () => {
                               </PostActionBtn>
 
                               <PostActionBtn
-                                onClick={() => toggleSection("comments", postId)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleSection("comments", postId);
+                                }}
                               >
                                 <FiMessageCircle />
                                 {post.comments_count}
@@ -2186,7 +2235,73 @@ const ExpertProfilePage = () => {
           onClose={() => setIsInquiryModalOpen(false)}
           expert={{ ...profile, id: numericExpertId }}
         />
+
+        <PostDetailModal
+          post={selectedPostForModal}
+          isOpen={Boolean(selectedPostForModal)}
+          onClose={() => setSelectedPostForModal(null)}
+          expertProfile={profile}
+        />
       </PageWrap>
+
+      {showShareModal && (
+        <ShareModalOverlay onClick={() => setShowShareModal(false)}>
+          <ShareModalBox onClick={(e) => e.stopPropagation()}>
+            <div className="share-header">
+              <h3>Share {profile?.name || "Expert"}'s Profile</h3>
+              <button type="button" onClick={() => setShowShareModal(false)}>
+                <FiX size={20} />
+              </button>
+            </div>
+            <div className="share-grid">
+              <ShareOptionItem
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out ${profile?.name || "Expert"}'s profile on G9Expert: ${window.location.href}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="share-option whatsapp"
+              >
+                <FaWhatsapp size={24} />
+                <span>WhatsApp</span>
+              </ShareOptionItem>
+              <ShareOptionItem
+                href={`https://telegram.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(`Check out ${profile?.name || "Expert"}'s profile on G9Expert`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="share-option telegram"
+              >
+                <FaTelegramPlane size={24} />
+                <span>Telegram</span>
+              </ShareOptionItem>
+              <ShareOptionItem
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out ${profile?.name || "Expert"}'s profile on G9Expert`)}&url=${encodeURIComponent(window.location.href)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="share-option twitter"
+              >
+                <FaTwitter size={24} />
+                <span>Twitter</span>
+              </ShareOptionItem>
+              <ShareOptionItem
+                as="button"
+                type="button"
+                className="share-option copy"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(window.location.href);
+                    alert("Profile link copied to clipboard!");
+                  } catch (err) {
+                    console.error(err);
+                  }
+                  setShowShareModal(false);
+                }}
+              >
+                <FiCopy size={24} />
+                <span>Copy Link</span>
+              </ShareOptionItem>
+            </div>
+          </ShareModalBox>
+        </ShareModalOverlay>
+      )}
     </>
   );
 };

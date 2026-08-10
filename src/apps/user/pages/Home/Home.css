@@ -1057,7 +1057,7 @@ body {
   padding: 20px 28px;
   border: none;
   border-radius: 18px;
-  background: linear-gradient(135deg, #020B5C 0%, #001B8F 50%, #2563EB 100%);
+  background: #172554;
   color: #ffffff;
   box-shadow: 0 16px 40px rgba(0, 0, 128, 0.15);
   margin-bottom: 16px;
@@ -4145,137 +4145,187 @@ body {
   .desktop-header-only {
     display: none !important;
   }
-  
-  .mobile-header-only {
-    display: flex !important;
-    align-items: center;
-    justify-content: space-between;
-    height: 64px !important;
-    background: #ffffff;
-    border-bottom: 1px solid #E5E7EB;
-    padding: 0 16px !important;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    gap: 8px !important;
-  }
-
-  .mobile-header-menu-btn {
-    background: none;
-    border: none;
-    color: #1E293B;
-    padding: 4px !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-  .mobile-header-menu-btn svg {
-    width: 24px !important;
-    height: 24px !important;
-  }
-
-  .mobile-header-logo-link {
-    display: flex;
-    align-items: center;
-    flex-shrink: 1;
-    min-width: 0;
-  }
-
-  .mobile-header-logo-link img {
-    height: auto !important;
-    width: 135px !important;
-    max-width: 145px !important;
-    object-fit: contain;
-  }
-
-  .mobile-header-location {
-    display: flex;
-    align-items: center;
-    flex-shrink: 1;
-    min-width: 0;
-  }
-
-  .mobile-header-location .g9-location-selector-container {
-    border: none !important;
-    background: transparent !important;
-    padding: 0 !important;
-  }
-
-  .mobile-header-location .g9-location-trigger-chip {
-    background: #ffffff !important;
-    border: 1px solid #E5E7EB !important;
-    border-radius: 14px !important;
-    padding: 0 8px !important;
-    font-size: 11px !important;
-    font-weight: 700 !important;
-    color: #1E293B !important;
+    .mobile-header-only {
     display: flex !important;
     align-items: center !important;
-    gap: 3px !important;
-    height: 44px !important;
-    box-shadow: none !important;
+    justify-content: center !important;
+    width: 100% !important;
+    background: #172554 !important; /* Brand Navy Deep Blue */
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15) !important;
+    border-bottom: none !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 60px !important;
+  }
+
+  .mobile-header-inner {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    width: 100% !important;
+    max-width: 480px !important;
+    padding: 10px 16px !important;
     box-sizing: border-box !important;
-    max-width: 105px !important;
   }
 
-  .mobile-header-location .g9-location-trigger-chip .location-name {
-    max-width: 60px !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
+  /* Circular Icon Buttons (Hamburger, Wallet, Bell) */
+  .mobile-header-icon-btn {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    border: none !important;
+    color: #ffffff !important; /* White Icon */
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    position: relative !important;
+    flex-shrink: 0 !important;
+    transition: background-color 0.15s ease !important;
+    -webkit-tap-highlight-color: transparent !important;
   }
 
-  .mobile-header-location .g9-location-trigger-chip .pin-icon {
-    color: #3B82F6 !important;
-    width: 12px !important;
-    height: 12px !important;
+  .mobile-header-icon-btn:hover,
+  .mobile-header-icon-btn:active {
+    background-color: rgba(255, 255, 255, 0.1) !important; /* hover:bg-white/10 */
+  }
+
+  .mobile-header-icon-btn .header-outlined-icon,
+  .mobile-header-icon-btn svg {
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+    fill: none !important;
+    stroke-width: 1.8px !important;
     flex-shrink: 0 !important;
   }
 
-  .mobile-header-location .g9-location-trigger-chip::after {
-    content: "▼" !important;
-    font-size: 7px !important;
-    color: #64748B !important;
-    margin-left: 1px !important;
+  /* Center Location Box */
+  .mobile-header-location-box {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+    padding: 0 6px !important;
+    cursor: pointer !important;
   }
 
-  .mobile-header-location .g9-location-trigger-chip .clear-icon {
+  .mobile-header-location-top {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    line-height: 1 !important;
+  }
+
+  .location-delivering-label {
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    color: #bfdbfe !important; /* text-blue-200 */
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+  }
+
+  .location-caret-icon {
+    color: #ffffff !important;
+    transition: transform 0.15s ease !important;
+  }
+
+  .mobile-header-location-box:hover .location-caret-icon {
+    transform: translateY(2px) !important;
+  }
+
+  .mobile-header-location-bottom {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin-top: 2px !important;
+    min-width: 0 !important;
+  }
+
+  .location-pin-icon {
+    color: #facc15 !important;
+    fill: #facc15 !important;
+    flex-shrink: 0 !important;
+  }
+
+  .mobile-header-location-selector-wrap {
+    min-width: 0 !important;
+    flex: 1 !important;
+    overflow: hidden !important;
+  }
+
+  .mobile-header-location-selector-wrap .g9-location-trigger-chip {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important; /* Pure White text */
+    box-shadow: none !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .mobile-header-location-selector-wrap .g9-location-trigger-chip::after,
+  .mobile-header-location-selector-wrap .g9-location-trigger-chip .pin-icon,
+  .mobile-header-location-selector-wrap .g9-location-trigger-chip .clear-icon {
     display: none !important;
   }
 
-  .mobile-header-bell-btn {
-    position: relative;
-    background: none;
-    border: none;
-    color: #1E293B;
-    padding: 4px !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    flex-shrink: 0;
-    width: 40px !important;
-    height: 40px !important;
-    border-radius: 50% !important;
+  /* Right Side Actions Group */
+  .mobile-header-right-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
   }
 
+  /* Wallet Indicator Badge */
+  .mobile-wallet-dot {
+    position: absolute !important;
+    top: 8px !important;
+    right: 8px !important;
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 50% !important;
+    background-color: #4ade80 !important; /* bg-green-400 */
+    border: 1.5px solid #172554 !important; /* border-brand-navy */
+  }
+
+  .mobile-wallet-dot.empty {
+    background-color: #94a3b8 !important;
+    border-color: #172554 !important;
+  }
+
+  /* Notification Unread Badge */
   .mobile-bell-badge {
-    position: absolute;
-    top: 4px !important;
-    right: 4px !important;
-    background: #EF4444;
-    color: #ffffff;
-    font-size: 9px;
-    font-weight: 800;
-    min-width: 12px;
-    height: 12px;
-    border-radius: 999px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #ffffff;
+    position: absolute !important;
+    top: 6px !important;
+    right: 6px !important;
+    min-width: 18px !important;
+    height: 18px !important;
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    border-radius: 99px !important;
+    border: 1.5px solid #172554 !important; /* border-brand-navy */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 4px !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15) !important;
   }
 
   .home-search {
@@ -7837,6 +7887,7 @@ img {
     font-size: 14px !important;
     font-weight: 850 !important;
     line-height: 1.2 !important;
+    margin: 2px ! IMPORTANT;
   }
 
   .home-desktop-shell.layout--full-content .home-center-column :where(.premium-btn, .details-btn, .search-page-submit, .expert-profile-btn, .book-service-btn) {
@@ -8401,9 +8452,7 @@ img {
     align-items: center !important;
     justify-content: space-between !important;
     gap: 8px !important;
-    padding: 8px 12px !important;
     height: 56px !important;
-    background: rgba(255, 255, 255, 0.96) !important;
     backdrop-filter: blur(14px) !important;
     -webkit-backdrop-filter: blur(14px) !important;
     border-bottom: 1px solid rgba(226, 232, 240, 0.85) !important;
@@ -8421,9 +8470,6 @@ img {
     justify-content: center !important;
     width: 36px !important;
     height: 36px !important;
-    border-radius: 12px !important;
-    background: #f8fafc !important;
-    border: 1px solid #e2e8f0 !important;
     color: #0f172a !important;
     cursor: pointer !important;
     flex-shrink: 0 !important;
@@ -8472,10 +8518,7 @@ img {
     justify-content: center !important;
     width: 36px !important;
     height: 36px !important;
-    border-radius: 12px !important;
-    background: #f8fafc !important;
-    border: 1px solid #e2e8f0 !important;
-    color: #0f172a !important;
+    color: #ffffff !important;
     position: relative !important;
     cursor: pointer !important;
     flex-shrink: 0 !important;
@@ -8494,7 +8537,6 @@ img {
     height: 36px !important;
     padding: 0 10px !important;
     border-radius: 12px !important;
-    background: linear-gradient(135deg, #000080 0%, #1e3a8a 100%) !important;
     color: #ffffff !important;
     border: none !important;
     font-weight: 700 !important;
@@ -8512,6 +8554,7 @@ img {
 
   /* 2b. Flutter Native Ask G9 Advisory Widget & Modal */
   .ask-g9-home-widget {
+    display: none;
     margin: 12px 0 !important;
     padding: 14px 12px !important;
     border-radius: 18px !important;
@@ -8648,7 +8691,7 @@ img {
 
   /* 3. Flutter Native Hero Card */
   .home-hero-card {
-    background: linear-gradient(135deg, #020B5C 0%, #1e1b4b 60%, #0f172a 100%) !important;
+    background: #172554 !important;
     border-radius: 24px !important;
     padding: 20px 18px !important;
     box-shadow: 0 12px 32px rgba(2, 11, 92, 0.22), 0 4px 12px rgba(0, 0, 0, 0.08) !important;

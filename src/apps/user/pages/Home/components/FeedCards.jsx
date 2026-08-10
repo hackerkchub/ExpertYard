@@ -18,6 +18,7 @@ import {
   addCommentApi 
 } from "../../../../../shared/api/expertapi/post.api";
 import { hotToast } from "../../../../../shared/utils/lazyNotifications";
+import PostDetailModal from "../../../../../shared/components/PostDetailModal/PostDetailModal";
 import {
   CommentsBox,
   CommentsList,
@@ -325,6 +326,7 @@ export const ExpertTipFeedCard = React.memo(function ExpertTipFeedCard({ item })
   const [commentInput, setCommentInput] = React.useState("");
   const [commentsCount, setCommentsCount] = React.useState(Number(data.comments_count || 0));
   const [likeLock, setLikeLock] = React.useState(false);
+  const [showModal, setShowModal] = React.useState(false);
 
   const handleLike = async () => {
     if (!isLoggedIn) {
@@ -443,12 +445,12 @@ export const ExpertTipFeedCard = React.memo(function ExpertTipFeedCard({ item })
         {data.category_name && <span style={{ opacity: 0.8, fontSize: "9px" }}>{data.category_name}</span>}
       </div>
       <FeedHeader data={data} eyebrow={data.category_name || "Expert tip"} />
-      <div className="feed-title-link">
+      <div className="feed-title-link" onClick={() => setShowModal(true)} style={{ cursor: "pointer" }}>
         <h3>{data.title}</h3>
         <p>{data.description}</p>
       </div>
       {data.image_url ? (
-        <div className="feed-media">
+        <div className="feed-media" onClick={() => setShowModal(true)} style={{ cursor: "pointer" }}>
           <img src={data.image_url} alt={data.title} loading="lazy" decoding="async" />
         </div>
       ) : null}
@@ -563,6 +565,12 @@ export const ExpertTipFeedCard = React.memo(function ExpertTipFeedCard({ item })
       )}
 
       <FeedCtas data={data} />
+
+      <PostDetailModal
+        post={data}
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+      />
     </article>
   );
 });

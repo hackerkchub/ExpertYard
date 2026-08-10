@@ -197,6 +197,7 @@ export const PageWrap = styled.div`
     overscroll-behavior-y: auto;
     -webkit-overflow-scrolling: touch;
     animation: none;
+    background: #111827 !Important;
 
     *,
     *::before,
@@ -500,11 +501,7 @@ export const ProfileCard = styled.div`
   position: relative;
   overflow: visible;
   color: #ffffff;
-  background:
-    radial-gradient(circle at 12% 0%, rgba(255, 255, 255, 0.18), transparent 28%),
-    radial-gradient(circle at 88% 18%, rgba(255, 210, 63, 0.26), transparent 24%),
-    linear-gradient(135deg, #000080 0%, #03045e 56%, #020329 100%);
-  border-radius: 24px;
+  background:#172554!important;
   border: 1px solid rgba(255, 255, 255, 0.14);
   padding: clamp(20px, 2.2vw, 36px);
   margin-bottom: 24px;
@@ -539,6 +536,9 @@ export const ProfileCard = styled.div`
     .expert-profile-header-tag svg {
       color: #ffffff !important;
     }
+     .expert-profile-page{
+  background:#172033 !Important;
+  }
 
     .expert-profile-desktop-mode-tab.inactive-tab,
     .expert-profile-desktop-mode-tab.inactive-tab *,
@@ -574,6 +574,10 @@ export const ProfileCard = styled.div`
       width: 100% !important;
       margin-bottom: 2px !important;
     }
+    .expert-profile-page{
+    background: #000000 !Important;
+    }
+
 
     .expert-profile-verified-badge {
       margin-top: 2px !important;
@@ -590,28 +594,13 @@ export const ProfileCard = styled.div`
       display: flex !important;
       flex-direction: column !important;
       align-items: center !important;
-      gap: 8px !important;
       flex-shrink: 0 !important;
-      width: 86px !important;
+      width: 80px !important;
     }
 
     .expert-profile-avatar-box img {
-      width: 86px !important;
-      height: 86px !important;
-    }
-
-    .expert-profile-avatar-box .expert-profile-follow-wrap {
-      display: flex !important;
-      width: 100% !important;
-    }
-
-    .expert-profile-avatar-box .expert-profile-follow-wrap button {
-      width: 100% !important;
-      min-width: 0 !important;
-      margin-top: 0 !important;
-      padding: 5px 6px !important;
-      font-size: 11px !important;
-      border-radius: 999px !important;
+      width: 80px !important;
+      height: 80px !important;
     }
 
     .expert-profile-name-group {
@@ -640,11 +629,82 @@ export const ProfileCard = styled.div`
       text-align: left !important;
     }
 
-    .expert-profile-name-group div {
+    .expert-profile-name-group div:not(.expert-profile-follow-wrap) {
       margin-top: 2px !important;
       margin-bottom: 0 !important;
       display: inline-flex !important;
       width: fit-content !important;
+    }
+
+    .expert-profile-name-group .expert-profile-follow-wrap {
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+      margin-top: 10px !important;
+      margin-bottom: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    .expert-profile-name-group .expert-profile-follow-wrap .follow-btn {
+      flex: 1 !important;
+      min-width: 0 !important;
+      height: 38px !important;
+      min-height: 38px !important;
+      padding: 0 16px !important;
+      border-radius: 999px !important;
+      font-size: 13px !important;
+      font-weight: 800 !important;
+      background: #ffffff !important;
+      color: #172554 !important;
+      border: none !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 6px !important;
+      white-space: nowrap !important;
+    }
+
+    .expert-profile-name-group .expert-profile-follow-wrap .follow-btn svg {
+      color: #172554 !important;
+      stroke: #172554 !important;
+      width: 15px !important;
+      height: 15px !important;
+    }
+
+    .expert-profile-name-group .expert-profile-follow-wrap .follow-btn.active-following {
+      background: #10b981 !important;
+      color: #ffffff !important;
+    }
+
+    .expert-profile-name-group .expert-profile-follow-wrap .follow-btn.active-following svg {
+      color: #ffffff !important;
+      stroke: #ffffff !important;
+    }
+
+    .expert-profile-name-group .expert-profile-follow-wrap .share-icon-btn {
+      width: 38px !important;
+      height: 38px !important;
+      min-width: 38px !important;
+      flex: 0 0 38px !important;
+      border-radius: 50% !important;
+      background: #ffffff !important;
+      color: #172554 !important;
+      border: 1px solid rgba(255, 255, 255, 0.4) !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 0 !important;
+    }
+
+    .expert-profile-name-group .expert-profile-follow-wrap .share-icon-btn svg {
+      width: 17px !important;
+      height: 17px !important;
+      stroke: #172554 !important;
+      color: #172554 !important;
+      stroke-width: 2.2px !important;
     }
 
     .expert-profile-sidebar,
@@ -2633,4 +2693,157 @@ export const ReelCaption = styled.p`
   text-overflow: ellipsis;
   white-space: nowrap;
   color: #ffffff;
+`;
+
+export const ShareIconButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #172554;
+  border: 1px solid rgba(23, 37, 84, 0.2);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background: #f8fafc;
+    border-color: #172554;
+    color: #1e3a8a;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: scale(0.94);
+  }
+
+  svg {
+    width: 17px;
+    height: 17px;
+    stroke-width: 2.2;
+  }
+
+  @media (max-width: 768px) {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+
+    svg {
+      width: 15px;
+      height: 15px;
+    }
+  }
+`;
+
+export const ShareModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+`;
+
+export const ShareModalBox = styled.div`
+  width: 100%;
+  max-width: 400px;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: slideIn 0.2s ease-out;
+
+  .share-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #0b132b;
+    }
+
+    button {
+      background: none;
+      border: none;
+      color: #64748b;
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      &:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+      }
+    }
+  }
+
+  .share-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+`;
+
+export const ShareOptionItem = styled.a`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 8px;
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  text-decoration: none;
+  color: #1e293b;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  }
+
+  &.whatsapp {
+    color: #25D366;
+    background: rgba(37, 211, 102, 0.08);
+    border-color: rgba(37, 211, 102, 0.2);
+  }
+
+  &.telegram {
+    color: #0088cc;
+    background: rgba(0, 136, 204, 0.08);
+    border-color: rgba(0, 136, 204, 0.2);
+  }
+
+  &.twitter {
+    color: #1DA1F2;
+    background: rgba(29, 161, 242, 0.08);
+    border-color: rgba(29, 161, 242, 0.2);
+  }
+
+  &.copy {
+    color: #172554;
+    background: rgba(23, 37, 84, 0.08);
+    border-color: rgba(23, 37, 84, 0.2);
+  }
 `;

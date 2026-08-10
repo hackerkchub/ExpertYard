@@ -249,7 +249,7 @@ const Navbar = () => {
 
   const primaryMenuItems = [
     { label: t("common.home"), path: "/user", icon: FiHome },
-    { label: "My Services", path: "/user/my-services", icon: FiPackage },
+    { label: "My Orders", path: "/user/my-services", icon: FiPackage },
     { label: t("common.offers"), path: "/user/all-services", icon: FiGift },
     { label: t("common.categories"), path: "/user/categories", icon: FiGrid, mobileOnly: true },
     { label: t("common.history"), path: "/user/chat-history", icon: FiClock },
@@ -541,7 +541,7 @@ const Navbar = () => {
                 <MobileMenuTitle>Account</MobileMenuTitle>
                 <MobileItem onClick={() => handleNav("/user/my-services")}>
                   <FiPackage />
-                  My Services
+                  My Orders
                 </MobileItem>
                 <MobileItem onClick={() => handleNav("/user/wallet")}>
                   <FaWallet />

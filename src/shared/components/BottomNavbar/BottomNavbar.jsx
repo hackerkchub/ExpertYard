@@ -1,11 +1,12 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
-  BriefcaseBusiness,
   Home,
+  BriefcaseBusiness,
   Film,
-  MessageCircle,
+  Package,
   Mail,
+  MessageCircle,
 } from 'lucide-react';
 import "./BottomNavbar.css";
 
@@ -21,16 +22,22 @@ const BottomNavbar = ({ disabled = false }) => {
       isActive: () => currentPath === '/user' || currentPath === '/user/',
     },
     {
+      name: 'Services',
+      path: '/user/all-services',
+      icon: <BriefcaseBusiness size={21} />,
+      isActive: () => currentPath.startsWith('/user/all-services') || currentPath.startsWith('/user/service-details') || currentPath.startsWith('/user/service/'),
+    },
+    {
       name: 'Reel',
       path: '/user/reels',
       icon: <Film size={21} />,
       isActive: () => currentPath.startsWith('/user/reels'),
     },
     {
-      name: 'Services',
-      path: '/user/all-services',
-      icon: <BriefcaseBusiness size={21} />,
-      isActive: () => currentPath.startsWith('/user/all-services') || currentPath.startsWith('/user/service-details'),
+      name: 'Orders',
+      path: '/user/my-services',
+      icon: <Package size={21} />,
+      isActive: () => currentPath.startsWith('/user/my-services') || currentPath.startsWith('/user/my-orders'),
     },
     {
       name: 'Inquiries',

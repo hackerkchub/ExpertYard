@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Bell, Menu, SlidersHorizontal, Wallet, LogIn, LogOut } from "lucide-react";
+import { Bell, Menu, SlidersHorizontal, Wallet, LogIn, LogOut, MapPin, ChevronDown } from "lucide-react";
 
 import logo from "../../../../../assets/logo.webp";
 import { LocationSelector } from "../../../../../shared/components";
@@ -113,52 +113,62 @@ const HomeHeader = React.memo(function HomeHeader({
         </div>
       </header>
 
-      {/* Mobile Header - Flutter Native App Bar Style */}
+      {/* Mobile Header - Modern App Header Reference Design */}
       <header className="mobile-header-only">
-        <button 
-          type="button" 
-          className="mobile-header-menu-btn" 
-          onClick={onMenuOpen} 
-          aria-label="Open menu" 
-        >
-          <Menu size={20} strokeWidth={2.2} />
-        </button>
-
-        <div className="mobile-header-location">
-          <LocationSelector onLocationSelect={onLocationSelect} fallbackText="Indore, MP" />
-        </div>
-
-        <div className="mobile-header-right-actions">
+        <div className="mobile-header-inner">
+          {/* Left Side: Hamburger Menu */}
           <button 
             type="button" 
-            className="mobile-header-bell-btn" 
-            onClick={onNotificationOpen} 
-            aria-label="Open notifications"
+            className="mobile-header-icon-btn mobile-header-menu-btn" 
+            onClick={onMenuOpen} 
+            aria-label="Open menu" 
           >
-            <Bell size={18} strokeWidth={2.2} />
-            <span className="mobile-bell-badge" style={{
-              position: "absolute",
-              top: "4px",
-              right: "4px",
-              width: "8px",
-              height: "8px",
-              borderRadius: "50%",
-              background: "#ef4444",
-              boxShadow: "0 0 0 2px #ffffff",
-            }} />
+            <Menu size={24} strokeWidth={2} color="#ffffff" fill="none" className="header-outlined-icon" />
           </button>
 
-          {/* Live Wallet Amount (Replaces Profile Icon) */}
-          <button 
-            type="button" 
-            className="mobile-header-wallet-btn" 
-            onClick={onWalletOpen}
-            aria-label="Open wallet"
-            title="Wallet Balance"
-          >
-            <Wallet size={16} strokeWidth={2.2} />
-            <span style={{ whiteSpace: "nowrap" }}>₹{walletAmount}</span>
-          </button>
+          {/* Center: Location */}
+          <div className="mobile-header-location-box" onClick={onLocationSelect}>
+            <div className="mobile-header-location-top">
+              <span className="location-delivering-label">Location</span>
+              <ChevronDown size={12} className="location-caret-icon" color="#ffffff" />
+            </div>
+            <div className="mobile-header-location-bottom">
+              <MapPin size={16} className="location-pin-icon" fill="#facc15" color="#facc15" />
+              <div className="mobile-header-location-selector-wrap">
+                <LocationSelector onLocationSelect={onLocationSelect} fallbackText="Indore, Madhya Pradesh" />
+              </div>
+            </div>
+          </div>
+
+          {/* Right Side: Actions (Wallet & Notifications) */}
+          <div className="mobile-header-right-actions">
+            {/* Wallet Icon Button */}
+            <button 
+              type="button" 
+              className="mobile-header-icon-btn mobile-header-wallet-btn" 
+              onClick={onWalletOpen}
+              aria-label="Open wallet"
+              title="Wallet Balance"
+            >
+              <Wallet size={22} strokeWidth={1.8} color="#ffffff" fill="none" className="header-outlined-icon" />
+              {walletAmount > 0 ? (
+                <span className="mobile-wallet-dot" />
+              ) : (
+                <span className="mobile-wallet-dot empty" />
+              )}
+            </button>
+
+            {/* Notification Bell Icon Button */}
+            <button 
+              type="button" 
+              className="mobile-header-icon-btn mobile-header-bell-btn" 
+              onClick={onNotificationOpen} 
+              aria-label="Open notifications"
+            >
+              <Bell size={22} strokeWidth={1.8} color="#ffffff" fill="none" className="header-outlined-icon" />
+              <span className="mobile-bell-badge">3</span>
+            </button>
+          </div>
         </div>
       </header>
 

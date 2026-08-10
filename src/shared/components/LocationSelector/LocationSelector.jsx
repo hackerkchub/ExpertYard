@@ -281,7 +281,7 @@ export default function LocationSelector({ onLocationSelect, currentSelected, fa
                 type="button" 
                 className="g9-gps-btn g9-global-location-btn"
                 onClick={() => handleSelect({ type: "global", search_text: "Global" })}
-                style={{ marginTop: "10px", background: "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)", color: "#ffffff" }}
+                style={{ marginTop: "10px", background: "#172554", color: "#ffffff" }}
               >
                 <FiGlobe className="action-icon" />
                 <span>Global (Show All Experts)</span>

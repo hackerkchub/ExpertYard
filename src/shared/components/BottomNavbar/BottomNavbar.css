@@ -98,7 +98,7 @@
     max-width: 100%;
     height: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     align-items: center;
     border: 0;
     border-top: 1px solid rgba(15, 23, 42, 0.08);

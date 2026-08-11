@@ -172,7 +172,9 @@ const ExpertBookings = () => {
         ) : (
           <S.BookingGrid>
             {bookings.map((booking) => {
-              const isCompleted = ["COMPLETED", "CANCELLED", "completed", "cancelled"].includes(booking.status);
+              const bStatusClean = String(booking.status || "").toLowerCase();
+              const stepKeyClean = String(booking.current_step_key || "").toUpperCase();
+              const isCompleted = ["completed", "cancelled"].includes(bStatusClean) || ["COMPLETED", "CANCELLED"].includes(stepKeyClean);
               const userData = users[booking.user_id] || {};
               const hasPendingReq = booking.expert_status_request;
 
@@ -213,7 +215,7 @@ const ExpertBookings = () => {
                       <FiCalendar size={14} /> 
                       <span>{booking.booking_date ? new Date(booking.booking_date).toLocaleDateString() : "Recent"}</span>
                     </div>
-                    <div className="info-row">
+                    <div className="info-row-ammount">
                       <FiClock size={14} /> 
                       <span>Amount: <strong>₹{booking.amount}</strong></span>
                     </div>
@@ -274,23 +276,29 @@ const ExpertBookings = () => {
                       </div>
                     )}
 
-                    <S.CardActions>
-                      <div className="select-wrapper">
-                        <label>Update Status:</label>
-                        <select 
-                          value={booking.status} 
-                          onChange={(e) => handleStatusSelect(booking.id, e.target.value)}
-                          disabled={updateLoading === booking.id || hasPendingReq}
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="confirmed">Confirmed</option>
-                          <option value="in_progress">In Progress</option>
-                          <option value="request_completed">Request Complete (Needs Admin Approval)</option>
-                          <option value="request_cancelled">Request Cancellation (Needs Admin Approval)</option>
-                        </select>
+                    {!isCompleted ? (
+                      <S.CardActions>
+                        <div className="select-wrapper">
+                          <label>Update Status:</label>
+                          <select 
+                            value={booking.status} 
+                            onChange={(e) => handleStatusSelect(booking.id, e.target.value)}
+                            disabled={updateLoading === booking.id || hasPendingReq}
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="request_completed">Request Complete (Needs Admin Approval)</option>
+                            <option value="request_cancelled">Request Cancellation (Needs Admin Approval)</option>
+                          </select>
+                        </div>
+                        {updateLoading === booking.id && <S.MiniLoader>...</S.MiniLoader>}
+                      </S.CardActions>
+                    ) : (
+                      <div style={{ fontSize: "11px", color: "#1e293b", background: "#f1f5f9", padding: "8px", borderRadius: 6, fontWeight: "700", textAlign: "center", border: "1px solid #cbd5e1" }}>
+                        🔒 Order Closed & Locked (Only Admin Can Change Status)
                       </div>
-                      {updateLoading === booking.id && <S.MiniLoader>...</S.MiniLoader>}
-                    </S.CardActions>
+                    )}
 
                     {booking.expert_request_notes && (
                       <div style={{ background: '#f8fafc', padding: '0.4rem 0.6rem', borderRadius: '4px', borderLeft: '3px solid #f59e0b', fontSize: '0.75rem', color: '#475569' }}>

@@ -233,3 +233,75 @@ export const EmptyState = styled.div`
   h3 { margin-bottom: 10px; color: #333; }
   p { color: #666; }
 `;
+
+export const HeaderBar = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  background: #ffffff;
+  padding: 12px 16px;
+  border-radius: 18px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+  border: 1px solid #e2e8f0;
+
+  @media (max-width: 768px) {
+    display: none !important;
+  }
+`;
+
+export const TabSwitcher = styled.div`
+  background: #e2e8f0;
+  padding: 4px;
+  border-radius: 16px;
+  display: flex;
+  gap: 4px;
+  margin-bottom: 1.25rem;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+
+  @media (max-width: 768px) {
+    padding: 3px;
+    border-radius: 14px;
+    margin-bottom: 0.85rem;
+  }
+`;
+
+export const TabButton = styled.button`
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: none;
+  background: ${props => props.$active ? "#ffffff" : "transparent"};
+  color: ${props => props.$active ? "#0f172a" : "#64748b"};
+  font-weight: 800;
+  font-size: 0.88rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: ${props => props.$active ? "0 4px 12px rgba(15, 23, 42, 0.08)" : "none"};
+  transition: all 0.25s ease;
+
+  @media (max-width: 768px) {
+    padding: 8px 6px;
+    border-radius: 10px;
+    font-size: 0.78rem;
+    gap: 4px;
+  }
+`;
+
+export const TabCountBadge = styled.span`
+  background: ${props => props.$active ? (props.$type === "active" ? "#2563eb" : "#059669") : "#94a3b8"};
+  color: #ffffff;
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 800;
+
+  @media (max-width: 768px) {
+    font-size: 0.68rem;
+    padding: 1px 6px;
+    border-radius: 8px;
+  }
+`;

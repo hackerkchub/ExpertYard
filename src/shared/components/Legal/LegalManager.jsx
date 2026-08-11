@@ -301,7 +301,7 @@ export default function LegalManager() {
     if (isLoading) {
         return (
             <LegalLoader
-                message="Checking legal documents..."
+                message="loading.........."
             />
         );
     }

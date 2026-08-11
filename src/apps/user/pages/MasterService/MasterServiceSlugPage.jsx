@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { 
   FiSearch, FiFilter, FiCheckCircle, FiClock, FiStar, FiShield, 
   FiDollarSign, FiMessageSquare, FiMessageCircle, FiPhone, FiVideo, FiFolder, 
@@ -41,6 +41,7 @@ export default function MasterServiceSlugPage() {
   const { slug, masterServiceSlug } = useParams();
   const targetSlug = masterServiceSlug || slug;
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [service, setService] = useState(null);
   const [experts, setExperts] = useState([]);
@@ -176,14 +177,23 @@ export default function MasterServiceSlugPage() {
 
   // Open Booking Modal & Refresh Wallet Balance
   const handleOpenBookingModal = async (exp) => {
+    const token = localStorage.getItem("token") || localStorage.getItem("userToken") || localStorage.getItem("user_token");
+    const userRaw = localStorage.getItem("user") || localStorage.getItem("userData");
+    let user = null;
+    try { if (userRaw) user = JSON.parse(userRaw); } catch(e) {}
+
+    if (!token || !user) {
+      const redirectPath = `${location.pathname}${location.search}${location.hash}`;
+      navigate(`/user/auth?redirect=${encodeURIComponent(redirectPath)}`, {
+        state: { from: location },
+      });
+      return;
+    }
+
     if (activeUserBooking && !["COMPLETED", "CANCELLED", "CLOSED", "completed", "cancelled", "closed"].includes(activeUserBooking.status)) {
       setShowActiveBookingDialog(true);
       return;
     }
-
-    const userRaw = localStorage.getItem("user") || localStorage.getItem("userData");
-    let user = null;
-    try { if (userRaw) user = JSON.parse(userRaw); } catch(e) {}
     
     // Fallback top expert if direct click
     const targetExpert = exp || experts[0] || {
@@ -1754,6 +1764,10 @@ export default function MasterServiceSlugPage() {
         <AddBalancePopup
           amountPreset={rechargeAmountNeeded}
           onClose={() => setShowRechargePopup(false)}
+          onSuccess={() => {
+            setShowRechargePopup(false);
+            setBookingError("");
+          }}
           createOrder={handleCreateRechargeOrder}
           onConfirm={handleConfirmRecharge}
         />

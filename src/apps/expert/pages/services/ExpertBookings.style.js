@@ -82,6 +82,9 @@ export const CardBody = styled.div`
     color: #444;
     svg { color: #666; }
   }
+  .info-row-ammount{
+  display:none;
+  }
 `;
 
 export const CardActions = styled.div`

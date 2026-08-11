@@ -129,7 +129,7 @@ export default function LegalManager() {
             return docs;
         } catch (err) {
             console.error("Failed to load legal documents:", err);
-            setError("Unable to load legal documents. Please try again.");
+            setError("please refresh it or open app again");
             // Lock application on error for security
             setApplicationLocked(true);
             throw err;
@@ -152,7 +152,7 @@ export default function LegalManager() {
             await refreshPendingDocuments();
         } catch (err) {
             console.error("Failed to load legal documents:", err);
-            setError("Unable to load legal documents. Please try again.");
+            setError("please refresh it or app again open");
             // Keep application locked on error for security
             setApplicationLocked(true);
         } finally {

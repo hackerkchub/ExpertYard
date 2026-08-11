@@ -16,6 +16,12 @@ export default function DocumentsTab({ bookingId, documents = [], snapshot, perm
   const [replacingDocId, setReplacingDocId] = useState(null);
   const [replaceFile, setReplaceFile] = useState(null);
 
+  const clientDocuments = (documents || []).filter((d) => {
+    const role = String(d.uploaded_by_role || "").trim().toUpperCase();
+    const docType = String(d.doc_type_key || "").trim().toUpperCase();
+    return role !== "EXPERT" && role !== "ADMIN" && docType !== "FINAL_DELIVERABLE" && docType !== "DELIVERY" && !docType.includes("DELIVER");
+  });
+
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -49,8 +55,10 @@ export default function DocumentsTab({ bookingId, documents = [], snapshot, perm
 
       if (!finalUrl) return alert("Please select a file or provide a valid URL.");
 
+      const roleClean = String(currentUserRole || "").trim().toLowerCase();
+      const isExpertOrAdmin = roleClean === "expert" || roleClean === "admin";
       const response = await uploadWorkspaceDocument(bookingId, {
-        doc_type_key: "CLIENT_DOCUMENT",
+        doc_type_key: isExpertOrAdmin ? "FINAL_DELIVERABLE" : "CLIENT_DOCUMENT",
         file_name: fileName,
         file_url: finalUrl,
         file_size: selectedFile ? selectedFile.size : 1024
@@ -107,10 +115,7 @@ export default function DocumentsTab({ bookingId, documents = [], snapshot, perm
 
   const handleVerify = async (docId, status, rejectionReason = "") => {
     try {
-      const response = await verifyWorkspaceDocument(bookingId, docId, {
-        status,
-        rejection_reason: rejectionReason
-      });
+      const response = await verifyWorkspaceDocument(bookingId, docId, status, rejectionReason);
 
       if (response.data.success && onRefresh) {
         onRefresh();
@@ -133,20 +138,47 @@ export default function DocumentsTab({ bookingId, documents = [], snapshot, perm
     return url.startsWith("/") ? `${backendOrigin}${url}` : `${backendOrigin}/${url}`;
   };
 
+  const handleDownloadFile = async (url, fileName) => {
+    if (!url || url === "#") return alert("No valid download URL available.");
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Network response was not ok");
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = fileName || "download";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.warn("Direct blob download failed, falling back to direct anchor:", err);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName || "download";
+      a.target = "_blank";
+      a.rel = "noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  };
+
   const isBlobOrExpired = (url = "") => {
     return url.startsWith("blob:");
   };
 
-  const isImage = (url = "") => {
-    if (!url) return false;
-    const clean = url.split("?")[0].toLowerCase();
-    return (
-      clean.match(/\.(jpeg|jpg|png|gif|webp|svg|bmp|ico)$/) ||
-      clean.includes("/uploads/workspace/") ||
-      clean.includes("/uploads/") ||
-      url.startsWith("data:image/") ||
-      url.startsWith("blob:")
-    );
+  const isImage = (url = "", fileName = "") => {
+    if (!url && !fileName) return false;
+    const combined = (url + " " + fileName).split("?")[0].toLowerCase();
+    return combined.match(/\.(jpeg|jpg|png|gif|webp|svg|bmp|ico)$/) || url.startsWith("data:image/");
+  };
+
+  const isPdf = (url = "", fileName = "") => {
+    if (!url && !fileName) return false;
+    const combined = (url + " " + fileName).split("?")[0].toLowerCase();
+    return combined.endsWith(".pdf") || combined.includes(".pdf?") || combined.includes("pdf");
   };
 
   return (
@@ -194,8 +226,8 @@ export default function DocumentsTab({ bookingId, documents = [], snapshot, perm
       )}
 
       {/* Documents Table */}
-      {documents.length === 0 ? (
-        <p style={{ color: '#64748b' }}>No documents uploaded yet.</p>
+      {clientDocuments.length === 0 ? (
+        <p style={{ color: '#64748b' }}>No client documents uploaded yet.</p>
       ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse', background: '#fff', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
           <thead>
@@ -207,7 +239,7 @@ export default function DocumentsTab({ bookingId, documents = [], snapshot, perm
             </tr>
           </thead>
           <tbody>
-            {documents.map((doc) => {
+            {clientDocuments.map((doc) => {
               const fullUrl = formatUrl(doc.file_url);
               const expired = isBlobOrExpired(doc.file_url);
 
@@ -237,13 +269,22 @@ export default function DocumentsTab({ bookingId, documents = [], snapshot, perm
                   <td style={{ padding: '0.75rem 1rem' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
                       {!expired ? (
-                        <button
-                          type="button"
-                          onClick={() => setPreviewDoc({ ...doc, fullUrl })}
-                          style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.35rem 0.75rem', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer' }}
-                        >
-                          👁️ View
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setPreviewDoc({ ...doc, fullUrl })}
+                            style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.35rem 0.75rem', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer' }}
+                          >
+                            👁️ View
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadFile(fullUrl, doc.file_name)}
+                            style={{ background: '#059669', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.35rem 0.75rem', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer' }}
+                          >
+                            ⬇️ Download
+                          </button>
+                        </>
                       ) : (
                         <button
                           type="button"
@@ -320,18 +361,36 @@ export default function DocumentsTab({ bookingId, documents = [], snapshot, perm
 
             {/* Document / Image Content Preview */}
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #cbd5e1', padding: '1rem', marginBottom: '1.25rem' }}>
-              {isImage(previewDoc.fullUrl) ? (
+              {isImage(previewDoc.fullUrl, previewDoc.file_name) ? (
                 <img
                   src={previewDoc.fullUrl}
                   alt={previewDoc.file_name}
                   style={{ maxWidth: '100%', maxHeight: '60vh', objectFit: 'contain', borderRadius: '6px' }}
                 />
-              ) : (
-                <iframe
-                  src={previewDoc.fullUrl}
-                  title={previewDoc.file_name}
+              ) : isPdf(previewDoc.fullUrl, previewDoc.file_name) ? (
+                <object
+                  data={previewDoc.fullUrl}
+                  type="application/pdf"
                   style={{ width: '100%', height: '60vh', border: 'none', borderRadius: '6px' }}
-                />
+                >
+                  <iframe
+                    src={previewDoc.fullUrl}
+                    title={previewDoc.file_name}
+                    style={{ width: '100%', height: '60vh', border: 'none', borderRadius: '6px' }}
+                  />
+                </object>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '2rem' }}>
+                  <p style={{ color: '#475569', fontSize: '1rem', marginBottom: '1rem' }}>
+                    📄 Document File: <strong>{previewDoc.file_name}</strong>
+                  </p>
+                  <button
+                    onClick={() => handleDownloadFile(previewDoc.fullUrl, previewDoc.file_name)}
+                    style={{ padding: '0.65rem 1.25rem', background: '#059669', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: '700', cursor: 'pointer' }}
+                  >
+                    ⬇️ Download File to View
+                  </button>
+                </div>
               )}
             </div>
 
@@ -345,13 +404,13 @@ export default function DocumentsTab({ bookingId, documents = [], snapshot, perm
               >
                 🔗 Open Direct Link
               </a>
-              <a
-                href={previewDoc.fullUrl}
-                download={previewDoc.file_name}
-                style={{ padding: '0.6rem 1.25rem', background: '#059669', color: '#ffffff', borderRadius: '6px', fontWeight: '700', textDecoration: 'none' }}
+              <button
+                type="button"
+                onClick={() => handleDownloadFile(previewDoc.fullUrl, previewDoc.file_name)}
+                style={{ padding: '0.6rem 1.25rem', background: '#059669', color: '#ffffff', border: 'none', borderRadius: '6px', fontWeight: '700', cursor: 'pointer' }}
               >
                 ⬇️ Download Document
-              </a>
+              </button>
             </div>
           </div>
         </div>

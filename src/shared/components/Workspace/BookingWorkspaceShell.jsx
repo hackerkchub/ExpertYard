@@ -110,13 +110,24 @@ export default function BookingWorkspaceShell({ bookingId, currentUserRole = "us
 
   const { workspace, snapshot, timeline, documents, current_permissions } = workspaceData;
 
+  const clientDocuments = (documents || []).filter((d) => {
+    const role = String(d.uploaded_by_role || "").trim().toUpperCase();
+    const docType = String(d.doc_type_key || "").trim().toUpperCase();
+    return role !== "EXPERT" && role !== "ADMIN" && docType !== "FINAL_DELIVERABLE" && docType !== "DELIVERY" && !docType.includes("DELIVER");
+  });
+  const deliverableDocuments = (documents || []).filter((d) => {
+    const role = String(d.uploaded_by_role || "").trim().toUpperCase();
+    const docType = String(d.doc_type_key || "").trim().toUpperCase();
+    return role === "EXPERT" || role === "ADMIN" || docType === "FINAL_DELIVERABLE" || docType === "DELIVERY" || docType.includes("DELIVER");
+  });
+
   const tabs = [
     { id: "overview", label: "Overview" },
     { id: "timeline", label: `Timeline (${timeline?.length || 0})` },
     { id: "discussion", label: "Discussion (Free)" },
-    { id: "documents", label: `Documents (${documents?.length || 0})` },
+    { id: "documents", label: `Documents (${clientDocuments.length})` },
     { id: "checklist", label: "Checklist" },
-    { id: "delivery", label: "Delivery" },
+    { id: "delivery", label: `Delivery (${deliverableDocuments.length})` },
     { id: "invoice", label: "Invoice" },
     { id: "review", label: "Review" },
   ];
@@ -161,6 +172,33 @@ export default function BookingWorkspaceShell({ bookingId, currentUserRole = "us
           <button className="btn-refresh" onClick={fetchWorkspace}>↻ Refresh</button>
         </div>
       </div>
+
+      {workspace?.expert_status_request && (
+        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div>
+            <strong style={{ color: '#92400e', fontSize: '0.9rem', display: 'block' }}>
+              {workspace.expert_status_request === "COMPLETED_REQUESTED"
+                ? "🏆 Pending Admin Completion Approval"
+                : "🚫 Pending Admin Cancellation Approval"}
+            </strong>
+            {workspace.expert_request_notes && (
+              <span style={{ color: '#b45309', fontSize: '0.85rem' }}>
+                Expert Notes: "{workspace.expert_request_notes}"
+              </span>
+            )}
+          </div>
+          {currentUserRole === "admin" && (
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                onClick={() => handleStepOverride(workspace.expert_status_request === "COMPLETED_REQUESTED" ? "COMPLETED" : "CANCELLED")}
+                style={{ padding: '0.4rem 0.85rem', background: '#059669', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer' }}
+              >
+                Approve & Update Status
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 8-Tab Navigation Bar */}
       <div className="workspace-nav">
@@ -210,6 +248,7 @@ export default function BookingWorkspaceShell({ bookingId, currentUserRole = "us
             bookingId={bookingId}
             workspace={workspace}
             snapshot={snapshot}
+            documents={documents}
             permissions={current_permissions}
             onRefresh={fetchWorkspace}
             currentUserRole={currentUserRole}

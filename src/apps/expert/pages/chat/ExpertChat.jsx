@@ -196,6 +196,7 @@ const MessagesArea = styled.div`
   flex: 1 1 auto;
   overflow-y: auto;
   padding: 16px;
+  padding-bottom: calc(70px + max(8px, env(safe-area-inset-bottom, 0px)) + var(--native-keyboard-height, 0px));
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -243,23 +244,24 @@ const MessageFooter = styled.div`
 `;
 
 const TimeStamp = styled.span`
-  font-size: 0.66rem;
+  font-size: 0.68rem;
   color: #667781;
 `;
 
 const ReadStatus = styled.span`
-  font-size: 0.72rem;
-  color: ${(props) => (props.$seen ? "#53bdeb" : "#8696a0")};
   display: inline-flex;
   align-items: center;
+  color: ${(props) => (props.$seen ? "#53bdeb" : "#667781")};
+  font-size: 0.75rem;
+  margin-left: 2px;
 `;
 
 const TypingBubble = styled.div`
-  align-self: flex-start;
   background: #ffffff;
-  padding: 8px 14px;
+  padding: 10px 16px;
   border-radius: 12px 12px 12px 2px;
   box-shadow: 0 1px 2px rgba(11, 20, 26, 0.13);
+  align-self: flex-start;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -276,7 +278,10 @@ const Dot = styled.span`
 `;
 
 const InputBarArea = styled.div`
-  flex: 0 0 auto;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: var(--native-keyboard-height, 0px);
   width: 100%;
   max-width: 100%;
   background: #f0f2f5;
@@ -492,6 +497,8 @@ export default function ExpertChat() {
 
   /* ------------------ VISUAL VIEWPORT MANAGEMENT ------------------ */
   useEffect(() => {
+    if (Capacitor.isNativePlatform()) return;
+
     const updateHeight = () => {
       const height = window.visualViewport?.height || window.innerHeight;
       document.documentElement.style.setProperty("--chat-height", `${height}px`);
@@ -1080,7 +1087,7 @@ export default function ExpertChat() {
       {chatData && user ? (
         <>
           {/* WHATSAPP STICKY HEADER (SAFE AREA TOP COMPLIANT) */}
-          <HeaderBar>
+          <HeaderBar className="chat-header-bar">
             <HeaderLeft>
               <HeaderBackBtn onClick={handleBack}>
                 <FiArrowLeft size={20} />
@@ -1164,7 +1171,7 @@ export default function ExpertChat() {
           </MessagesArea>
 
           {/* FIXED BOTTOM CHAT INPUT (SAFE AREA BOTTOM COMPLIANT) */}
-          <InputBarArea ref={inputWrapRef}>
+          <InputBarArea className="chat-input-bar" ref={inputWrapRef}>
             {selectedImage && (
               <ImagePreviewRow>
                 <img src={URL.createObjectURL(selectedImage)} alt="preview" />

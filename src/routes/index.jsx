@@ -21,6 +21,8 @@ import { APP_CONFIG } from "../config/appConfig";
 import useNativeIncomingCall from "../shared/hooks/useNativeIncomingCall";
 import LegalManager from "../shared/components/Legal/LegalManager";
 import { useAuth } from "../shared/context/UserAuthContext";
+// import KeyboardDiagnosticOverlay from "../shared/components/KeyboardDiagnosticOverlay";
+import { setNativeKeyboardMode, isAndroid10 } from "../shared/utils/nativeKeyboardBridge";
 
 const UserAppRoutes =
   APP_CONFIG.APP_TYPE !== "expert"
@@ -196,6 +198,17 @@ export default function AppRouter() {
     };
   }, []);
 
+  /* ------------------ CONTEXT-AWARE KEYBOARD MODE ROUTE LISTENER ------------------ */
+  useEffect(() => {
+    const pathname = (location.pathname || "").toLowerCase();
+    const isChatRoute = pathname.includes("/chat");
+    if (isAndroid10()) {
+      setNativeKeyboardMode(isChatRoute ? "nothing" : "pan");
+    } else {
+      setNativeKeyboardMode(isChatRoute ? "resize" : "pan");
+    }
+  }, [location.pathname]);
+
   return (
     <div className="app-main-layout" style={APP_SHELL_STYLE}>
       {showSplash && !isCallScreen ? (
@@ -204,6 +217,9 @@ export default function AppRouter() {
 
       <NetworkStatus />
       
+      {/* Temporary Diagnostic Overlay for Android 10 Keyboard Telemetry */}
+      {/* <KeyboardDiagnosticOverlay /> */}
+
       {/* LegalManager - Handles all legal logic internally */}
       <LegalManager />
 

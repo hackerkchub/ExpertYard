@@ -11,6 +11,9 @@ import android.content.Intent;
 import com.getcapacitor.BridgeActivity;
 import com.g9expert.app.bridge.NativeBridgeManager;
 import android.view.WindowManager; 
+import android.graphics.Rect;
+import android.view.View;
+import android.view.ViewTreeObserver;
 /**
  * MainActivity - Production-Ready Implementation
  * 
@@ -24,17 +27,21 @@ import android.view.WindowManager;
 public class MainActivity extends BridgeActivity {
 
     private static final String TAG = "MainActivity";
+    private volatile int nativeKeyboardHeight = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-         getWindow().setSoftInputMode(
-        WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
-    );
+        getWindow().setSoftInputMode(
+            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN
+        );
         Log.d(TAG, "=====================================");
         Log.d(TAG, "onCreate - MainActivity Started");
         Log.d(TAG, "=====================================");
+
+        // Setup real-time native IME keyboard height listener
+        setupImeInsetDetector();
 
         // 1. Initialize NativeBridgeManager
         initializeBridgeManager();
@@ -49,6 +56,55 @@ public class MainActivity extends BridgeActivity {
         dispatchPendingCall();
 
         Log.d(TAG, "onCreate - MainActivity initialization complete");
+    }
+
+    private void setupImeInsetDetector() {
+        try {
+            final View decorView = getWindow().getDecorView();
+            decorView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                private int lastHeight = -1;
+
+                @Override
+                public void onGlobalLayout() {
+                    try {
+                        Rect r = new Rect();
+                        decorView.getWindowVisibleDisplayFrame(r);
+                        int screenHeight = decorView.getRootView().getHeight();
+                        int keypadHeight = screenHeight - r.bottom;
+
+                        // Threshold to distinguish keyboard from system navigation bar insets (> 15% screen height)
+                        int calculatedImeHeight = 0;
+                        if (keypadHeight > screenHeight * 0.15) {
+                            calculatedImeHeight = keypadHeight;
+                        }
+
+                        if (calculatedImeHeight != lastHeight) {
+                            lastHeight = calculatedImeHeight;
+                            nativeKeyboardHeight = calculatedImeHeight;
+                            Log.d(TAG, "[KEYBOARD_HEIGHT_DEBUG] Native IME Height changed: " + calculatedImeHeight + "px");
+
+                            final String js = "window.dispatchEvent(new CustomEvent('nativeKeyboardHeightChange', { detail: { height: " + calculatedImeHeight + " } }));";
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        if (getBridge() != null && getBridge().getWebView() != null) {
+                                            getBridge().getWebView().evaluateJavascript(js, null);
+                                        }
+                                    } catch (Exception err) {
+                                        Log.e(TAG, "Error evaluating keyboard JS event", err);
+                                    }
+                                }
+                            });
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error in IME inset calculation", e);
+                    }
+                }
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "Error attaching IME inset detector", e);
+        }
     }
 
     @Override
@@ -316,6 +372,90 @@ public class MainActivity extends BridgeActivity {
             return "State: " + NativeBridgeManager.getState() +
                    ", CallId: " + NativeBridgeManager.getPendingCallId() +
                    ", DispatchId: " + NativeBridgeManager.getDispatchId();
+        }
+
+        /**
+         * Dynamically switch native soft input mode (pan, resize, nothing)
+         */
+        @JavascriptInterface
+        public void setSoftInputMode(final String mode) {
+            if (mode == null) return;
+            final String normalizedMode = mode.trim().toLowerCase(java.util.Locale.US);
+            if (!"pan".equals(normalizedMode) && !"resize".equals(normalizedMode) && !"nothing".equals(normalizedMode)) {
+                Log.w(TAG, "[KEYBOARD_MODE_DEBUG] setSoftInputMode ignored invalid mode: " + mode);
+                return;
+            }
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if ("nothing".equals(normalizedMode)) {
+                            getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
+                        } else if ("resize".equals(normalizedMode)) {
+                            getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+                        } else {
+                            getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+                        }
+
+                        int currentModeFlags = getWindow().getAttributes().softInputMode;
+                        int adjustMask = currentModeFlags & WindowManager.LayoutParams.SOFT_INPUT_MASK_ADJUST;
+                        String activeAdjustStr = "UNKNOWN";
+                        if (adjustMask == WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING) activeAdjustStr = "NOTHING";
+                        else if (adjustMask == WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN) activeAdjustStr = "PAN";
+                        else if (adjustMask == WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE) activeAdjustStr = "RESIZE";
+                        else if (adjustMask == WindowManager.LayoutParams.SOFT_INPUT_ADJUST_UNSPECIFIED) activeAdjustStr = "UNSPECIFIED";
+
+                        Log.d(TAG, "[KEYBOARD_MODE_DEBUG] Requested: " + mode + " | Normalized: " + normalizedMode + " | RawFlags: " + currentModeFlags + " | MaskedAdjust: " + activeAdjustStr);
+                    } catch (Exception e) {
+                        Log.e(TAG, "[KEYBOARD_MODE_DEBUG] Error setting soft input mode: " + mode, e);
+                    }
+                }
+            });
+        }
+
+        /**
+         * Query current active window adjust mode
+         */
+        @JavascriptInterface
+        public String getActualSoftInputMode() {
+            try {
+                int flags = getWindow().getAttributes().softInputMode;
+                int adjust = flags & WindowManager.LayoutParams.SOFT_INPUT_MASK_ADJUST;
+                if (adjust == WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING) return "NOTHING";
+                if (adjust == WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN) return "PAN";
+                if (adjust == WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE) return "RESIZE";
+                if (adjust == WindowManager.LayoutParams.SOFT_INPUT_ADJUST_UNSPECIFIED) return "UNSPECIFIED";
+                return "RAW_" + adjust;
+            } catch (Exception e) {
+                return "ERROR";
+            }
+        }
+
+        /**
+         * Query DecorView location on screen to detect native window panning
+         */
+        @JavascriptInterface
+        public String getDecorViewMetrics() {
+            try {
+                int[] loc = new int[2];
+                getWindow().getDecorView().getLocationOnScreen(loc);
+                int top = loc[1];
+                int left = loc[0];
+                int height = getWindow().getDecorView().getHeight();
+                int bottom = top + height;
+                return "top:" + top + "|btm:" + bottom + "|h:" + height + "|l:" + left;
+            } catch (Exception e) {
+                return "ERROR";
+            }
+        }
+
+        /**
+         * Query real-time native IME keyboard height in pixels
+         */
+        @JavascriptInterface
+        public int getNativeKeyboardHeight() {
+            return nativeKeyboardHeight;
         }
 
         /**

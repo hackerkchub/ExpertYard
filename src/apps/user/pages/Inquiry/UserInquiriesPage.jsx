@@ -1229,12 +1229,22 @@ export default function UserInquiriesPage() {
     });
   }, [inquiries, searchText, statusFilter]);
 
-  const getInitials = (name = "") => {
-    const words = name.trim().split(" ");
-    if (words.length === 1) return words[0].charAt(0).toUpperCase();
-    return (words[0].charAt(0) + (words[1]?.charAt(0) || "")).toUpperCase();
-  };
+ const getInitials = (name) => {
+  const safeName = typeof name === "string" ? name.trim() : "";
 
+  if (!safeName) return "E";
+
+  const words = safeName.split(/\s+/).filter(Boolean);
+
+  if (words.length === 1) {
+    return words[0].charAt(0).toUpperCase();
+  }
+
+  return (
+    words[0].charAt(0) +
+    words[1].charAt(0)
+  ).toUpperCase();
+};
   const getStatusCount = (status) => {
     if (status === "all") return inquiries.length;
     if (status === "active") return inquiries.filter(i => i.status !== "closed" && i.status !== "rejected").length;

@@ -10,12 +10,12 @@ export const ModalBackdrop = styled.div`
   justify-content: center;
   z-index: 50;
   padding: 16px;
-  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px) + var(--native-keyboard-height, 0px));
 
   @media (max-width: 480px) {
     align-items: flex-end;
     padding: 12px;
-    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px) + var(--native-keyboard-height, 0px));
   }
 `;
 
@@ -38,7 +38,7 @@ export const ModalShell = styled.div`
 
   @media (max-width: 480px) {
     max-width: 100%;
-    max-height: min(90dvh, 760px);
+    max-height: min(calc(100dvh - var(--native-keyboard-height, 0px) - 24px), 760px);
     border-radius: 20px;
     padding: 18px 16px 16px;
   }

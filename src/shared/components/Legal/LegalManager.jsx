@@ -97,46 +97,70 @@ export default function LegalManager() {
         };
     }, [isOpen]);
 
-    // Network recovery - re-initialize when internet comes back
-    useEffect(() => {
-        const handleOnline = () => {
-            if (isAuthenticated && !shouldSkipLegal) {
-                initialize();
-            }
-        };
-
-        window.addEventListener("online", handleOnline);
-        return () => {
-            window.removeEventListener("online", handleOnline);
-        };
-    }, [isAuthenticated, shouldSkipLegal]);
-
-    // Refresh pending documents helper
+    // Refresh pending documents helper with offline handling
     const refreshPendingDocuments = useCallback(async () => {
         try {
             setError(null);
+
             const docs = await loadPendingDocuments();
+
             setPendingDocuments(docs);
-            
-            // Lock application if there are pending documents
+
+            // Pending legal documents exist => lock application
             const shouldLock = docs.length > 0;
+
             setApplicationLocked(shouldLock);
             setIsOpen(shouldLock);
-            
-            // Reset retry count on success
+
+            // Successful load
             setRetryCount(0);
-            
+
             return docs;
+
         } catch (err) {
-            console.error("Failed to load legal documents:", err);
-            setError("Unable to load legal documents. Please try again.");
-            // Lock application on error for security
+            console.error(
+                "Failed to load legal documents:",
+                err
+            );
+
+            /*
+             * IMPORTANT:
+             * Browser can sometimes report offline
+             * while API request is already failing.
+             *
+             * Offline should NEVER show legal error popup.
+             */
+            if (!navigator.onLine) {
+                console.log(
+                    "📴 Offline - legal document error ignored"
+                );
+
+                setError(null);
+                setPendingDocuments([]);
+                setApplicationLocked(false);
+                setIsOpen(false);
+
+                return [];
+            }
+
+            // Actual online API error
+            setError(
+                "Unable to load legal documents. Please try again."
+            );
+
+            // Keep application locked only for actual online failure
             setApplicationLocked(true);
+
             throw err;
         }
-    }, [loadPendingDocuments, setPendingDocuments, setIsOpen, setApplicationLocked]);
+    }, [
+        loadPendingDocuments,
+        setPendingDocuments,
+        setIsOpen,
+        setApplicationLocked,
+    ]);
 
-    // Initialize - load pending documents on mount
+    // Initialize - load pending documents on mount with offline support
     const initialize = useCallback(async () => {
         // Skip if not authenticated or route is excluded
         if (!isAuthenticated || shouldSkipLegal) {
@@ -146,25 +170,95 @@ export default function LegalManager() {
             return;
         }
 
+        /*
+         * OFFLINE MODE
+         *
+         * Do not block application.
+         * loadPendingDocuments() itself will use cache.
+         */
+        if (!navigator.onLine) {
+            console.log(
+                "📴 LegalManager initialized in offline mode"
+            );
+
+            setError(null);
+            setIsLoading(false);
+            setApplicationLocked(false);
+            setIsOpen(false);
+            setLegalInitialized(true);
+
+            return;
+        }
+
         try {
             setIsLoading(true);
             setError(null);
+
             await refreshPendingDocuments();
+
         } catch (err) {
-            console.error("Failed to load legal documents:", err);
-            setError("Unable to load legal documents. Please try again.");
-            // Keep application locked on error for security
+            console.error(
+                "Failed to load legal documents:",
+                err
+            );
+
+            /*
+             * If connection disappeared while request
+             * was running, don't show legal error.
+             */
+            if (!navigator.onLine) {
+                console.log(
+                    "📴 Connection lost during legal request"
+                );
+
+                setError(null);
+                setApplicationLocked(false);
+                setIsOpen(false);
+
+                return;
+            }
+
+            setError(
+                "Unable to load legal documents. Please try again."
+            );
+
             setApplicationLocked(true);
+
         } finally {
             setIsLoading(false);
             setLegalInitialized(true);
         }
-    }, [isAuthenticated, shouldSkipLegal, refreshPendingDocuments, setIsLoading, setApplicationLocked, setLegalInitialized]);
+    }, [
+        isAuthenticated,
+        shouldSkipLegal,
+        refreshPendingDocuments,
+        setIsLoading,
+        setApplicationLocked,
+        setLegalInitialized,
+        setIsOpen,
+    ]);
+
+    // Network recovery - re-initialize when internet comes back
+    useEffect(() => {
+        const handleOnline = () => {
+            if (isAuthenticated && !shouldSkipLegal) {
+                console.log(
+                    "🌐 Internet restored - refreshing legal documents"
+                );
+                initialize();
+            }
+        };
+
+        window.addEventListener("online", handleOnline);
+        return () => {
+            window.removeEventListener("online", handleOnline);
+        };
+    }, [isAuthenticated, shouldSkipLegal, initialize]); // ✅ initialize added to dependencies
 
     // Initialize on mount and when refreshKey changes
     useEffect(() => {
         initialize();
-    }, [initialize, refreshKey]);
+    }, [initialize, refreshKey]); // ✅ initialize added to dependencies
 
     // Handle view document
     const handleView = (document) => {
@@ -176,7 +270,7 @@ export default function LegalManager() {
         setSelectedDocument(null);
     };
 
-    // Actual API call with signature support
+    // Actual API call with signature support and offline handling
     const submitAcceptance = useCallback(async (documents) => {
         // Prevent double submit
         if (accepting) return;
@@ -203,23 +297,47 @@ export default function LegalManager() {
 
             await acceptDocuments(payload);
 
-            // Clear all states on success
+            // Clear all states only after REAL success
             setSelectedDocument(null);
             setShowSignatureModal(false);
             setDocumentsToAccept([]);
             setSignatureDocuments([]);
             setCurrentSignatureIndex(0);
 
-            // Refresh pending documents - this will unlock if no documents remain
+            // Refresh after successful acceptance
             await refreshPendingDocuments();
 
         } catch (err) {
+            /*
+             * Offline is NOT an application error.
+             * Do not show popup.
+             */
+            if (
+                err?.code === "LEGAL_ACCEPTANCE_OFFLINE" ||
+                !navigator.onLine
+            ) {
+                console.log(
+                    "📴 Acceptance postponed - offline"
+                );
+
+                setError(null);
+
+                return;
+            }
+
             console.error("Accept failed:", err);
-            setError("Failed to accept documents. Please try again.");
+
+            setError(
+                "Failed to accept documents. Please try again."
+            );
         } finally {
             setAccepting(false);
         }
-    }, [accepting, acceptDocuments, refreshPendingDocuments]);
+    }, [
+        accepting,
+        acceptDocuments,
+        refreshPendingDocuments,
+    ]);
 
     // Handle continue button - check for signature requirements
     const handleContinue = useCallback((documents) => {

@@ -4139,26 +4139,143 @@ body {
    ================================================== */
 @media (max-width: 767px) {
   .home-feed-page {
-    background: #FFFFFF !important;
+    background: #0F172A !important;
   }
 
   .desktop-header-only {
     display: none !important;
   }
-    .mobile-header-only {
+
+  .mobile-header-only {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     width: 100% !important;
-    background: #111827 !important; /* System Status Bar Theme Color */
+    background: #0F172A !important; /* Solid fixed deep navy header */
     position: sticky !important;
     top: 0 !important;
     z-index: 1000 !important;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
     border-bottom: none !important;
     padding: 0 !important;
     height: auto !important;
     min-height: 60px !important;
+  }
+
+  /* Mobile Search Input Section */
+  .home-search {
+    background-color: #0F172A !important;
+    padding: 8px 16px 20px 16px !important;
+  }
+
+  /* Mobile Hero Layout & 4-Action Grid */
+  .mobile-hero-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 8px 16px 24px 16px !important;
+    background-color: #0F172A !important;
+  }
+
+  .mobile-hero-trust-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    background-color: #1E293B !important;
+    border: 1px solid #334155 !important;
+    padding: 6px 14px !important;
+    border-radius: 9999px !important;
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.2) !important;
+    margin-bottom: 24px !important;
+  }
+
+  .mobile-hero-trust-badge span {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: #E2E8F0 !important;
+    letter-spacing: 0.025em !important;
+  }
+
+  .mobile-hero-title {
+    font-size: 32px !important;
+    font-weight: 900 !important;
+    line-height: 1.15 !important;
+    letter-spacing: -0.025em !important;
+    color: #FFFFFF !important;
+    margin: 0 0 12px 0 !important;
+  }
+
+  .mobile-hero-blue-text {
+    color: #3B82F6 !important;
+  }
+
+  .mobile-hero-subtitle {
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    line-height: 1.6 !important;
+    color: #94A3B8 !important;
+    max-width: 90% !important;
+    margin: 0 0 28px 0 !important;
+  }
+
+  /* 4 Action Cards Grid */
+  .mobile-hero-action-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+
+  .mobile-hero-card {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    padding: 14px 8px !important;
+    border-radius: 20px !important;
+    background-color: #1E293B !important;
+    border: 1px solid #334155 !important;
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.2) !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .mobile-hero-card:active {
+    transform: scale(0.95) !important;
+    background-color: #334155 !important;
+  }
+
+  .hero-card-icon-wrap {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .hero-card-icon-wrap.chat-icon-wrap {
+    background-color: rgba(59, 130, 246, 0.12) !important;
+  }
+
+  .hero-card-icon-wrap.call-icon-wrap {
+    background-color: rgba(16, 185, 129, 0.12) !important;
+  }
+
+  .hero-card-icon-wrap.video-icon-wrap {
+    background-color: rgba(139, 92, 246, 0.12) !important;
+  }
+
+  .hero-card-icon-wrap.service-icon-wrap {
+    background-color: rgba(245, 158, 11, 0.12) !important;
+  }
+
+  .hero-card-label {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: #E2E8F0 !important;
+    letter-spacing: 0.025em !important;
   }
 
   .mobile-header-inner {
@@ -4476,11 +4593,11 @@ body {
   }
 
   .home-hero-card p {
-    font-size: 9.5px !important;
-    color: #EAF0FF !important;
+    font-size: 14px !important;
+    color: #ffffff !important;
     line-height: 1.25 !important;
     margin: 0 0 10px 0 !important;
-    width: 54% !important;
+    width: 70% !important;
     text-align: left !important;
   }
 
@@ -8691,7 +8808,7 @@ img {
 
   /* 3. Flutter Native Hero Card */
   .home-hero-card {
-    background: #172554 !important;
+    background: #0F172A !important;
     border-radius: 24px !important;
     padding: 20px 18px !important;
     box-shadow: 0 12px 32px rgba(2, 11, 92, 0.22), 0 4px 12px rgba(0, 0, 0, 0.08) !important;

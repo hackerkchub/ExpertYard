@@ -769,33 +769,71 @@ export default function Home() {
             </div>
 
             <div className="mobile-hero-layout">
-              <span className="mobile-hero-badge">
-                <ShieldCheck size={11} />
-                Trusted by 500,000+ Users
-              </span>
+              {/* Trust Badge (Solid styling) */}
+              <div className="mobile-hero-trust-badge">
+                <ShieldCheck size={14} color="#4ade80" fill="none" />
+                <span>Trusted by 500,000+ Users</span>
+              </div>
+
+              {/* Headline (Solid colors, NO gradients) */}
               <h1 className="mobile-hero-title">
-                Find &amp; Consult <span className="home-hero-highlight">Verified Experts</span>
+                Find &amp; Consult <br />
+                <span className="mobile-hero-blue-text">Verified Experts</span>
               </h1>
+
+              {/* Subtitle */}
               <p className="mobile-hero-subtitle">
                 Chat, call, or book top-rated expert services instantly with G9Expert.
               </p>
 
-              <div className="mobile-hero-actions-row">
-                <button type="button" className="mobile-action-card chat-btn" onClick={() => navigate("/user/call-chat?page=1&mode=chat")}>
-                  <MessageCircle size={16} />
-                  <span>Chat</span>
+              {/* Action Grid (Solid 4 Column Cards) */}
+              <div className="mobile-hero-action-grid">
+                {/* Action 1: Chat */}
+                <button 
+                  type="button" 
+                  className="mobile-hero-card"
+                  onClick={() => navigate("/user/call-chat?page=1&mode=chat")}
+                >
+                  <div className="hero-card-icon-wrap chat-icon-wrap">
+                    <MessageSquare size={22} color="#60a5fa" fill="none" />
+                  </div>
+                  <span className="hero-card-label">Chat</span>
                 </button>
-                <button type="button" className="mobile-action-card call-btn" onClick={() => navigate("/user/call-chat?page=1&mode=call")}>
-                  <PhoneCall size={16} />
-                  <span>Call</span>
+
+                {/* Action 2: Call */}
+                <button 
+                  type="button" 
+                  className="mobile-hero-card"
+                  onClick={() => navigate("/user/call-chat?page=1&mode=call")}
+                >
+                  <div className="hero-card-icon-wrap call-icon-wrap">
+                    <PhoneCall size={22} color="#34d399" fill="none" />
+                  </div>
+                  <span className="hero-card-label">Call</span>
                 </button>
-                <button type="button" className="mobile-action-card video-btn" onClick={() => navigate("/user/call-chat?page=1&mode=video")}>
-                  <Video size={16} />
-                  <span>Video</span>
+
+                {/* Action 3: Video */}
+                <button 
+                  type="button" 
+                  className="mobile-hero-card"
+                  onClick={() => navigate("/user/call-chat?page=1&mode=video")}
+                >
+                  <div className="hero-card-icon-wrap video-icon-wrap">
+                    <Video size={22} color="#a78bfa" fill="none" />
+                  </div>
+                  <span className="hero-card-label">Video</span>
                 </button>
-                <button type="button" className="mobile-action-card service-btn" onClick={() => navigate("/user/all-services")}>
-                  <BriefcaseBusiness size={16} />
-                  <span>Service</span>
+
+                {/* Action 4: Service */}
+                <button 
+                  type="button" 
+                  className="mobile-hero-card"
+                  onClick={() => navigate("/user/all-services")}
+                >
+                  <div className="hero-card-icon-wrap service-icon-wrap">
+                    <BriefcaseBusiness size={22} color="#fbbf24" fill="none" />
+                  </div>
+                  <span className="hero-card-label">Service</span>
                 </button>
               </div>
             </div>

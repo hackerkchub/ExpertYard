@@ -129,8 +129,8 @@ const HomeHeader = React.memo(function HomeHeader({
           {/* Center: Location */}
           <div className="mobile-header-location-box" onClick={onLocationSelect}>
             <div className="mobile-header-location-top">
-              <span className="location-delivering-label">Location</span>
-              <ChevronDown size={12} className="location-caret-icon" color="#ffffff" />
+              <span className="location-delivering-label">Delivering to</span>
+              <ChevronDown size={10} className="location-caret-icon" color="#94a3b8" />
             </div>
             <div className="mobile-header-location-bottom">
               <MapPin size={16} className="location-pin-icon" fill="#facc15" color="#facc15" />

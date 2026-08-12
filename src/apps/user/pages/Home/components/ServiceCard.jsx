@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Medal, CheckCircle, QrCode } from "lucide-react";
+import {Medal, CheckCircle, QrCode } from "lucide-react";
 import "./ServiceCard.css";
 
 const truncateTitle = (rawTitle) => {
@@ -62,14 +62,7 @@ export default function ServiceCard({ service }) {
             e.target.src = "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&auto=format&fit=crop&q=80";
           }}
         />
-
-        {/* Master / Verified Service Badge */}
-        <div className="ticket-top-bar">
-          <div className="ticket-master-pill">
-            <Medal size={14} color="#2563eb" fill="#2563eb" />
-            <span>{is_master_service ? "Master Service" : "Verified Service"}</span>
-          </div>
-        </div>
+        
       </div>
 
       {/* Bottom White Section */}
@@ -86,7 +79,6 @@ export default function ServiceCard({ service }) {
 
           <Link to={detailLink} className="ticket-book-button">
             <span>Book</span>
-            <ArrowRight size={16} />
           </Link>
         </div>
       </div>

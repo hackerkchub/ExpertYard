@@ -42,14 +42,7 @@ export default function ExpertCard({ expert }) {
           <span className={`expert-status-dot ${is_online ? "online" : "offline"}`} title={is_online ? "Online Now" : "Offline"} />
         </div>
 
-        <div className="expert-card-rating">
-          <Star size={12} className="star-icon" />
-          <span className="rating-num">{ratingVal}</span>
-          <span className="rating-count">({reviewsCount})</span>
-        </div>
-      </div>
-
-      <div className="expert-card-info">
+            <div className="expert-card-info">
         <Link to={expertProfileLink} className="expert-card-name-row">
           <span className="expert-card-name">{name || "Verified Expert"}</span>
           <CheckCircle2 size={14} className="verified-icon" />
@@ -57,6 +50,15 @@ export default function ExpertCard({ expert }) {
 
         <p className="expert-card-position">{position || "Consultant & Advisor"}</p>
       </div>
+{/* 
+        <div className="expert-card-rating">
+          <Star size={12} className="star-icon" />
+          <span className="rating-num">{ratingVal}</span>
+          <span className="rating-count">({reviewsCount})</span>
+        </div> */}
+      </div>
+
+  
 
       <div className="expert-card-actions">
         <Link to={`/user/chat?expertId=${id}`} className="expert-action-btn chat-btn">

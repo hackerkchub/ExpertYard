@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Bell, Menu, SlidersHorizontal, Wallet, LogIn, LogOut } from "lucide-react";
+import { Bell, Menu, SlidersHorizontal, Wallet, LogIn, LogOut, MapPin, ChevronDown } from "lucide-react";
 
 import logo from "../../../../../assets/logo.webp";
 import { LocationSelector } from "../../../../../shared/components";
@@ -113,139 +113,62 @@ const HomeHeader = React.memo(function HomeHeader({
         </div>
       </header>
 
-      {/* Mobile Header */}
-      <header className="mobile-header-only" style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "10px 16px",
-        background: "#ffffff",
-        borderBottom: "1px solid #eef2f7",
-        position: "sticky",
-        top: 0,
-        zIndex: 50,
-        boxShadow: "0 1px 4px rgba(0, 0, 0, 0.04)",
-      }}>
-        <button 
-          type="button" 
-          className="mobile-header-menu-btn" 
-          onClick={onMenuOpen} 
-          aria-label="Open menu" 
-          style={{
-            background: "none",
-            border: "none",
-            padding: "6px",
-            cursor: "pointer",
-            color: "#111827",
-          }}
-        >
-          <Menu size={24} />
-        </button>
-
-        <Link className="mobile-header-logo-link" to="/user" style={{ flexShrink: 0 }}>
-          <img src={logo} alt="G9Expert" style={{ height: "32px", width: "auto" }} />
-        </Link>
-
-        <div className="mobile-header-location" style={{ flex: 1, display: "flex", justifyContent: "center" }}>
-          <LocationSelector onLocationSelect={onLocationSelect} fallbackText="Indore, MP" />
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+      {/* Mobile Header - Modern App Header Reference Design */}
+      <header className="mobile-header-only">
+        <div className="mobile-header-inner">
+          {/* Left Side: Hamburger Menu */}
           <button 
             type="button" 
-            className="mobile-header-bell-btn" 
-            onClick={onNotificationOpen} 
-            aria-label="Open notifications"
-            style={{
-              background: "none",
-              border: "none",
-              padding: "6px",
-              cursor: "pointer",
-              color: "#111827",
-              position: "relative",
-            }}
+            className="mobile-header-icon-btn mobile-header-menu-btn" 
+            onClick={onMenuOpen} 
+            aria-label="Open menu" 
           >
-            <Bell size={22} />
-            <span className="mobile-bell-badge" style={{
-              position: "absolute",
-              top: "2px",
-              right: "2px",
-              width: "18px",
-              height: "18px",
-              borderRadius: "50%",
-              background: "#ef4444",
-              color: "#ffffff",
-              fontSize: "10px",
-              fontWeight: "700",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}>3</span>
+            <Menu size={24} strokeWidth={2} color="#ffffff" fill="none" className="header-outlined-icon" />
           </button>
 
-          {/* Mobile Auth - Shows Login or User Avatar */}
-          {!isLoggedIn ? (
-            <button 
-              type="button" 
-              onClick={onLogin}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-                padding: "6px 14px",
-                borderRadius: "999px",
-                background: "linear-gradient(135deg, #0a66c2, #004182)",
-                color: "#ffffff",
-                border: "none",
-                fontWeight: "600",
-                fontSize: "12px",
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-              }}
-            >
-              <LogIn size={16} />
-              <span>Login</span>
-            </button>
-          ) : (
-            <button 
-              type="button" 
-              onClick={onProfileOpen}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "4px",
-                borderRadius: "50%",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-              }}
-            >
-              <div style={{
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
-                overflow: "hidden",
-                background: "linear-gradient(135deg, #0a66c2, #004182)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}>
-                {validPhoto ? (
-                  <img src={user.profile_photo} alt={displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                ) : (
-                  <span style={{
-                    color: "#ffffff",
-                    fontWeight: "700",
-                    fontSize: "14px",
-                    textTransform: "uppercase",
-                  }}>
-                    {initials}
-                  </span>
-                )}
+          {/* Center: Location */}
+          <div className="mobile-header-location-box" onClick={onLocationSelect}>
+            <div className="mobile-header-location-top">
+              <span className="location-delivering-label">Delivering to</span>
+              <ChevronDown size={10} className="location-caret-icon" color="#94a3b8" />
+            </div>
+            <div className="mobile-header-location-bottom">
+              <MapPin size={16} className="location-pin-icon" fill="#facc15" color="#facc15" />
+              <div className="mobile-header-location-selector-wrap">
+                <LocationSelector onLocationSelect={onLocationSelect} fallbackText="Indore, Madhya Pradesh" />
               </div>
+            </div>
+          </div>
+
+          {/* Right Side: Actions (Wallet & Notifications) */}
+          <div className="mobile-header-right-actions">
+            {/* Wallet Icon Button */}
+            <button 
+              type="button" 
+              className="mobile-header-icon-btn mobile-header-wallet-btn" 
+              onClick={onWalletOpen}
+              aria-label="Open wallet"
+              title="Wallet Balance"
+            >
+              <Wallet size={22} strokeWidth={1.8} color="#ffffff" fill="none" className="header-outlined-icon" />
+              {walletAmount > 0 ? (
+                <span className="mobile-wallet-dot" />
+              ) : (
+                <span className="mobile-wallet-dot empty" />
+              )}
             </button>
-          )}
+
+            {/* Notification Bell Icon Button */}
+            <button 
+              type="button" 
+              className="mobile-header-icon-btn mobile-header-bell-btn" 
+              onClick={onNotificationOpen} 
+              aria-label="Open notifications"
+            >
+              <Bell size={22} strokeWidth={1.8} color="#ffffff" fill="none" className="header-outlined-icon" />
+              <span className="mobile-bell-badge">3</span>
+            </button>
+          </div>
         </div>
       </header>
 

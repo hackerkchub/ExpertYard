@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { BriefcaseBusiness, MessageCircle, PhoneCall } from "lucide-react";
+import { Package, MessageCircle, PhoneCall } from "lucide-react";
 
 const actions = [
   {
@@ -16,10 +16,10 @@ const actions = [
     icon: PhoneCall,
   },
   {
-    title: "My Services",
-    text: "Book and manage your services",
+    title: "My Orders",
+    text: "Book and manage your orders",
     to: "/user/my-services",
-    icon: BriefcaseBusiness,
+    icon: Package,
   },
 ];
 

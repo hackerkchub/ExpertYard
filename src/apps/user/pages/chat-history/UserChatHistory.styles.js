@@ -68,6 +68,30 @@ export const StickyHeaderBar = styled.div`
     overflow: hidden;
     text-overflow: ellipsis;
   }
+
+  @media (max-width: 768px) {
+    background: #111827 !important;
+    border-bottom: none !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15) !important;
+
+    .header-back-btn {
+      color: #ffffff !important;
+      background: transparent !important;
+
+      &:hover, &:active {
+        background: rgba(255, 255, 255, 0.1) !important;
+      }
+
+      svg {
+        color: #ffffff !important;
+        stroke: #ffffff !important;
+      }
+    }
+
+    .header-page-title {
+      color: #ffffff !important;
+    }
+  }
 `;
 
 export const PageContainer = styled.div`
@@ -975,6 +999,16 @@ export const MobileDetailHeader = styled.div`
       text-overflow: ellipsis;
     }
   }
+
+  @media (max-width: 768px) {
+    background: #111827 !important;
+    border-bottom: none !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15) !important;
+
+    .detail-title-block h1 {
+      color: #ffffff !important;
+    }
+  }
 `;
 
 export const MobileBackButton = styled.button`
@@ -991,6 +1025,20 @@ export const MobileBackButton = styled.button`
   &:hover {
     background: #f1f5f9;
   }
+
+  @media (max-width: 768px) {
+    color: #ffffff !important;
+    background: transparent !important;
+
+    &:hover, &:active {
+      background: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    svg {
+      color: #ffffff !important;
+      stroke: #ffffff !important;
+    }
+  }
 `;
 
 export const MobileDetailMeta = styled.div`
@@ -998,6 +1046,14 @@ export const MobileDetailMeta = styled.div`
   color: #64748b;
   display: flex;
   gap: 6px;
+
+  @media (max-width: 768px) {
+    color: #cbd5e1 !important;
+
+    span {
+      color: #cbd5e1 !important;
+    }
+  }
 `;
 
 export const MobileDetailEmpty = styled.div`

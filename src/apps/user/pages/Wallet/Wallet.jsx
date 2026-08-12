@@ -8,7 +8,7 @@ import {
   SectionTitle, ExpertCard, ExpertLeft, Avatar, ExpertInfo, AmountBox,
   TopupSection, AddBalanceBtn, QuickAddRow, QuickAddBtn, StatsGrid, StatCard,
   FilterDropdown, TransactionBadge, ProgressBar, EmptyState, LoadingState,
-  ErrorState, LoadMoreBtn
+  ErrorState, LoadMoreBtn, TabFilterRow, TabFilterBtn
 } from "./Wallet.styles";
 
 import AddBalancePopup from "../../components/AddBalancePopup/AddBalancePopup";
@@ -236,31 +236,31 @@ const WalletPage = () => {
     <PageWrap>
       <WalletBox>
         <HeaderRow>
-          <h2>My Wallet & Payment History</h2>
+        
         </HeaderRow>
 
         {/* Balance Card & Spend Summary */}
-        <BalanceCard style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#fff', padding: '1.5rem', borderRadius: '16px', marginBottom: '1.5rem', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)' }}>
+        <BalanceCard style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#fff', padding: '1.25rem 1.5rem', borderRadius: '20px', marginBottom: '1.5rem', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <span style={{ fontSize: '0.85rem', textTransform: 'uppercase', tracking: '1px', opacity: 0.8 }}>Available Balance</span>
+              <span style={{ fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.5px', opacity: 0.8 }}>Available Balance</span>
               <BalanceAmount style={{ fontSize: '2.2rem', fontWeight: '800', marginTop: '0.25rem', color: '#38bdf8' }}>
                 {formatCurrency(balance)}
               </BalanceAmount>
             </div>
             
-            <div style={{ display: 'flex', gap: '1.5rem', borderLeft: '1px solid rgba(255,255,255,0.15)', paddingLeft: '1.5rem' }}>
+            <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <div>
                 <span style={{ fontSize: '0.75rem', opacity: 0.8, display: 'block' }}>Total Services Spent</span>
-                <strong style={{ fontSize: '1.4rem', color: '#10b981' }}>
+                <strong style={{ fontSize: '1.3rem', color: '#10b981' }}>
                   {formatCurrency(spendingSummary?.total_spent || stats.totalDebits)}
                 </strong>
                 <span style={{ fontSize: '0.7rem', display: 'block', opacity: 0.7 }}>
                   {spendingSummary?.total_orders || 0} Paid Service Orders
                 </span>
               </div>
-              <AddBalanceBtn onClick={() => handleOpenPopup()} style={{ background: '#3b82f6', color: '#fff', padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', fontWeight: '700', cursor: 'pointer' }}>
-                <FaPlus /> Add Money
+              <AddBalanceBtn onClick={() => handleOpenPopup()} style={{ background: '#3b82f6', color: '#fff', padding: '0 16px', minHeight: '38px', borderRadius: '10px', border: 'none', fontWeight: '800', cursor: 'pointer', flexShrink: 0, fontSize: '0.85rem' }}>
+                <FaPlus size={12} /> Add Money
               </AddBalanceBtn>
             </div>
           </div>
@@ -316,22 +316,22 @@ const WalletPage = () => {
 
         {/* Transaction Tabs */}
         <ExpenseSection>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <AddBalanceBtn
-                onClick={() => setActiveTab("expenses")}
-                style={{ background: activeTab === "expenses" ? "#0f172a" : "#f1f5f9", color: activeTab === "expenses" ? "#fff" : "#475569" }}
-              >
-                Service Debits ({transactions.filter(t => t.type === 'debit').length})
-              </AddBalanceBtn>
-              <AddBalanceBtn
-                onClick={() => setActiveTab("topups")}
-                style={{ background: activeTab === "topups" ? "#0f172a" : "#f1f5f9", color: activeTab === "topups" ? "#fff" : "#475569" }}
-              >
-                Wallet Credits ({transactions.filter(t => t.type === 'credit').length})
-              </AddBalanceBtn>
-            </div>
-          </div>
+          <TabFilterRow>
+            <TabFilterBtn
+              type="button"
+              $active={activeTab === "expenses"}
+              onClick={() => setActiveTab("expenses")}
+            >
+              Service Debits ({transactions.filter(t => t.type === 'debit').length})
+            </TabFilterBtn>
+            <TabFilterBtn
+              type="button"
+              $active={activeTab === "topups"}
+              onClick={() => setActiveTab("topups")}
+            >
+              Wallet Credits ({transactions.filter(t => t.type === 'credit').length})
+            </TabFilterBtn>
+          </TabFilterRow>
 
           {filteredTransactions.length === 0 ? (
             <EmptyState>No {activeTab} found.</EmptyState>

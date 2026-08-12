@@ -24,6 +24,8 @@ import {
   Film,
   Video,
   Play,
+  Package,
+  MessageSquare,
 } from "lucide-react";
 
 import "./Home.css";
@@ -70,7 +72,9 @@ const sidebarItems = [
   { label: "Services", to: "/user/all-services", icon: BriefcaseBusiness },
   { label: "Wallet", to: "/user/wallet", icon: Wallet },
   { label: "Category", to: "/user/categories", icon: Grid3X3 },
-  { label: "Consultations", to: "/user/chat-history", icon: History },
+  { label: "History", to: "/user/chat-history", icon: History },
+  { label: "My Orders", to: "/user/my-services", icon: Package },
+  { label: "My Inquiries", to: "/user/my-inquiries", icon: MessageSquare },
   { label: "Notifications", to: "/user/notifications", icon: Bell },
 ];
 
@@ -588,60 +592,89 @@ export default function Home() {
         <div className="home-menu-layer">
           <button type="button" className="home-menu-backdrop" onClick={() => setMenuOpen(false)} aria-label="Close menu" />
           <aside className="home-menu-panel" aria-label="Home menu">
+            {/* Gmail App Header Banner */}
             <div className="home-menu-head">
-              <div>
-                <strong>{isLoggedIn ? user?.first_name || user?.name || "G9Expert User" : "G9Expert"}</strong>
-                <span>{isLoggedIn ? `Wallet Rs ${Math.floor(Number(balance || 0))}` : "Login to manage consultations"}</span>
+              <div className="home-menu-profile">
+                <div className="home-menu-avatar">
+                  {user?.profile_photo ? (
+                    <img src={user.profile_photo} alt={user?.name || "User"} />
+                  ) : (
+                    <span>{(user?.first_name || user?.name || "G")[0].toUpperCase()}</span>
+                  )}
+                </div>
+                <div className="home-menu-user-info">
+                  <strong>{isLoggedIn ? user?.full_name || user?.first_name || user?.name || "G9Expert User" : "G9Expert"}</strong>
+                  <span className="home-menu-sub">
+                    {isLoggedIn ? (
+                      <span className="home-menu-wallet-chip">₹ Wallet: ₹{Math.floor(Number(balance || 0))}</span>
+                    ) : (
+                      "Login for full access"
+                    )}
+                  </span>
+                </div>
               </div>
-              <button type="button" onClick={() => setMenuOpen(false)} aria-label="Close menu">
-                <X size={20} />
+              <button type="button" className="home-menu-close-btn" onClick={() => setMenuOpen(false)} aria-label="Close menu">
+                <X size={18} />
               </button>
             </div>
 
-            {sidebarItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  type="button"
-                  key={item.label}
-                  onClick={() => {
-                    navigate(item.to);
-                    setMenuOpen(false);
-                  }}
-                >
-                  <Icon size={19} />
-                  {item.label}
-                </button>
-              );
-            })}
+            {/* Scrollable Gmail Drawer Body */}
+            <div className="home-menu-scrollable-body">
+              <div className="home-menu-section-title">Navigation</div>
+              {sidebarItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.to;
+                return (
+                  <button
+                    type="button"
+                    key={item.label}
+                    className={`home-menu-item ${isActive ? "active" : ""}`}
+                    onClick={() => {
+                      navigate(item.to);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    <Icon size={20} className="menu-item-icon" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
 
-            <button type="button" onClick={() => navigate("/user/call-chat?page=1&mode=chat")}>
-              <MessageCircle size={19} />
-              Quick Chat
-            </button>
-            <button type="button" onClick={() => navigate("/user/call-chat?page=1&mode=call")}>
-              <PhoneCall size={19} />
-              Quick Call
-            </button>
-            <button type="button" onClick={() => navigate("/user/call-chat?page=1&mode=video")}>
-              <Video size={19} />
-              Quick Video
-            </button>
-            <button type="button" onClick={() => navigate("/user/all-services")}>
-              <BriefcaseBusiness size={19} />
-              Quick Services
-            </button>
-            {isLoggedIn ? (
-              <button type="button" onClick={logout}>
-                <LogOut size={19} />
-                Logout
+              <div className="home-menu-divider" />
+              <div className="home-menu-section-title">Quick Actions</div>
+
+              <button type="button" className="home-menu-item" onClick={() => { navigate("/user/call-chat?page=1&mode=chat"); setMenuOpen(false); }}>
+                <MessageCircle size={20} className="menu-item-icon" />
+                <span>Quick Chat</span>
               </button>
-            ) : (
-              <button type="button" onClick={openLogin}>
-                <LogIn size={19} />
-                Login
+              <button type="button" className="home-menu-item" onClick={() => { navigate("/user/call-chat?page=1&mode=call"); setMenuOpen(false); }}>
+                <PhoneCall size={20} className="menu-item-icon" />
+                <span>Quick Call</span>
               </button>
-            )}
+              <button type="button" className="home-menu-item" onClick={() => { navigate("/user/call-chat?page=1&mode=video"); setMenuOpen(false); }}>
+                <Video size={20} className="menu-item-icon" />
+                <span>Quick Video</span>
+              </button>
+              <button type="button" className="home-menu-item" onClick={() => { navigate("/user/all-services"); setMenuOpen(false); }}>
+                <BriefcaseBusiness size={20} className="menu-item-icon" />
+                <span>Quick Services</span>
+              </button>
+
+              <div className="home-menu-divider" />
+              <div className="home-menu-section-title">Account</div>
+
+              {isLoggedIn ? (
+                <button type="button" className="home-menu-item logout-item" onClick={() => { logout(); setMenuOpen(false); }}>
+                  <LogOut size={20} className="menu-item-icon" />
+                  <span>Logout</span>
+                </button>
+              ) : (
+                <button type="button" className="home-menu-item login-item" onClick={() => { openLogin(); setMenuOpen(false); }}>
+                  <LogIn size={20} className="menu-item-icon" />
+                  <span>Login / Register</span>
+                </button>
+              )}
+            </div>
           </aside>
         </div>
       ) : null}
@@ -736,33 +769,67 @@ export default function Home() {
             </div>
 
             <div className="mobile-hero-layout">
-              <span className="mobile-hero-badge">
-                <ShieldCheck size={11} />
-                Trusted by 500,000+ Users
-              </span>
+              {/* Trust Badge (Solid styling) */}
+              <div className="mobile-hero-trust-badge">
+                <ShieldCheck size={14} color="#4ade80" fill="none" />
+                <span>Trusted by 500,000+ Users</span>
+              </div>
+
+              {/* Headline (Solid colors, NO gradients) */}
               <h1 className="mobile-hero-title">
-                Find &amp; Consult <span className="home-hero-highlight">Verified Experts</span>
+                Find &amp; Consult <br />
+                <span className="mobile-hero-blue-text">Verified Experts</span>
               </h1>
+
+              {/* Subtitle */}
               <p className="mobile-hero-subtitle">
                 Chat, call, or book top-rated expert services instantly with G9Expert.
               </p>
 
-              <div className="mobile-hero-actions-row">
-                <button type="button" className="mobile-action-card chat-btn" onClick={() => navigate("/user/call-chat?page=1&mode=chat")}>
-                  <MessageCircle size={16} />
-                  <span>Chat</span>
+              {/* Action Grid (Solid 4 Column Cards) */}
+              <div className="mobile-hero-action-grid">
+                {/* Action 1: Chat */}
+                <button 
+                  type="button" 
+                  className="mobile-hero-card"
+                  onClick={() => navigate("/user/call-chat?page=1&mode=chat")}
+                >
+                  <div className="hero-card-icon-wrap chat-icon-wrap">
+                    <MessageSquare size={22} color="#60a5fa" fill="none" />
+                  </div>
                 </button>
-                <button type="button" className="mobile-action-card call-btn" onClick={() => navigate("/user/call-chat?page=1&mode=call")}>
-                  <PhoneCall size={16} />
-                  <span>Call</span>
+
+                {/* Action 2: Call */}
+                <button 
+                  type="button" 
+                  className="mobile-hero-card"
+                  onClick={() => navigate("/user/call-chat?page=1&mode=call")}
+                >
+                  <div className="hero-card-icon-wrap call-icon-wrap">
+                    <PhoneCall size={22} color="#34d399" fill="none" />
+                  </div>
                 </button>
-                <button type="button" className="mobile-action-card video-btn" onClick={() => navigate("/user/call-chat?page=1&mode=video")}>
-                  <Video size={16} />
-                  <span>Video</span>
+
+                {/* Action 3: Video */}
+                <button 
+                  type="button" 
+                  className="mobile-hero-card"
+                  onClick={() => navigate("/user/call-chat?page=1&mode=video")}
+                >
+                  <div className="hero-card-icon-wrap video-icon-wrap">
+                    <Video size={22} color="#a78bfa" fill="none" />
+                  </div>
                 </button>
-                <button type="button" className="mobile-action-card service-btn" onClick={() => navigate("/user/all-services")}>
-                  <BriefcaseBusiness size={16} />
-                  <span>Service</span>
+
+                {/* Action 4: Service */}
+                <button 
+                  type="button" 
+                  className="mobile-hero-card"
+                  onClick={() => navigate("/user/all-services")}
+                >
+                  <div className="hero-card-icon-wrap service-icon-wrap">
+                    <BriefcaseBusiness size={22} color="#fbbf24" fill="none" />
+                  </div>
                 </button>
               </div>
             </div>

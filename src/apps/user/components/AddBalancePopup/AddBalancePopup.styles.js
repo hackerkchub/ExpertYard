@@ -3,18 +3,18 @@ import styled from "styled-components";
 export const Overlay = styled.div`
   position: fixed;
   inset: 0;
-  background: rgba(20, 24, 40, 0.55);
+  background: rgba(20, 24, 40, 0.75);
   backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 2000;
+  z-index: 999999;
 
   @media (max-width: 768px) {
     align-items: flex-end;
     justify-content: center;
-    z-index: 20060;
-    background: rgba(15, 23, 42, 0.62);
+    z-index: 999999;
+    background: rgba(15, 23, 42, 0.75);
     padding: 0;
   }
 `;

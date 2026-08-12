@@ -1450,6 +1450,7 @@ export const TabsRow = styled.div`
     top: 0;
     z-index: 8;
     padding: 4px;
+    margin-top:5px;
     border-radius: 16px;
     box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
   }

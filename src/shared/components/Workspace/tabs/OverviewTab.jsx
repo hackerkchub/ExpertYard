@@ -53,9 +53,6 @@ export default function OverviewTab({ workspace, snapshot, role }) {
         <div className="card-box" style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
           <h4 style={{ margin: '0 0 0.5rem 0', color: '#1e293b' }}>Service Details</h4>
           <p style={{ margin: '0.25rem 0', fontSize: '0.9rem', color: '#475569' }}><strong>Service Name:</strong> {meta.title}</p>
-          <p style={{ margin: '0.25rem 0', fontSize: '0.9rem', color: '#475569' }}><strong>Category:</strong> {meta.category_name || "General"}</p>
-          <p style={{ margin: '0.25rem 0', fontSize: '0.9rem', color: '#475569' }}><strong>Subcategory:</strong> {meta.subcategory_name || "N/A"}</p>
-          <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>{meta.short_description}</p>
         </div>
 
         {/* Financial Breakdown Card */}

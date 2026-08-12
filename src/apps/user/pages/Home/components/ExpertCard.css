@@ -1,7 +1,4 @@
 .home-expert-card {
-  flex: 0 0 var(--g9-expert-card-width, 215px);
-  width: var(--g9-expert-card-width, 215px);
-  height: var(--g9-expert-card-height, 195px);
   background: var(--g9-card-bg, #ffffff);
   border-radius: var(--g9-card-radius, 20px);
   border: 1px solid var(--g9-line, #e2e8f0);
@@ -121,7 +118,7 @@
   text-overflow: ellipsis;
 }
 
-.expert-card-actions {
+.home-expert-card .expert-card-actions {
   display: flex;
   gap: 8px;
   border-top: 1px solid var(--g9-line-soft, #f1f5f9);

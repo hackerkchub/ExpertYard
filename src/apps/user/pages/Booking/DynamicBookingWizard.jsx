@@ -872,8 +872,20 @@ export default function DynamicBookingWizard() {
   }, []);
 
   useEffect(() => {
+    const token = localStorage.getItem("token") || localStorage.getItem("userToken") || localStorage.getItem("user_token");
+    const userRaw = localStorage.getItem("user") || localStorage.getItem("userData");
+    let userObj = null;
+    try { if (userRaw) userObj = JSON.parse(userRaw); } catch(e) {}
+
+    if (!token || !userObj) {
+      const redirectPath = `${location.pathname}${location.search}${location.hash}`;
+      navigate(`/user/auth?redirect=${encodeURIComponent(redirectPath)}`, {
+        state: { from: location },
+      });
+      return;
+    }
     fetchWalletBalance();
-  }, [fetchWalletBalance]);
+  }, [fetchWalletBalance, location, navigate]);
 
   // Fetch Service Details and Experts
   useEffect(() => {
@@ -1857,6 +1869,10 @@ export default function DynamicBookingWizard() {
         <AddBalancePopup
           amountPreset={rechargeDeficit}
           onClose={() => setShowRechargePopup(false)}
+          onSuccess={() => {
+            setShowRechargePopup(false);
+            setBookingError("");
+          }}
           createOrder={handleCreateRechargeOrder}
           onConfirm={handleConfirmRecharge}
         />

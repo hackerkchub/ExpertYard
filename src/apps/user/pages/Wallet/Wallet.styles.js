@@ -274,28 +274,88 @@ export const TopupSection = styled.div`
 `;
 
 export const AddBalanceBtn = styled.button`
-  min-height: 46px;
-  padding: 0 20px;
+  min-height: 42px;
+  padding: 0 18px;
   background: linear-gradient(135deg, #ffd23f, ${YELLOW});
   color: #111827;
   border: none;
-  border-radius: 999px;
+  border-radius: 12px;
   font-weight: 950;
+  font-size: 0.88rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 14px 28px rgba(255, 193, 7, 0.26);
+  box-shadow: 0 10px 22px rgba(255, 193, 7, 0.26);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 18px 34px rgba(255, 193, 7, 0.34);
+    box-shadow: 0 14px 28px rgba(255, 193, 7, 0.34);
   }
 
   @media (max-width: 560px) {
-    width: 100%;
+    min-height: 36px;
+    padding: 0 14px;
+    font-size: 0.82rem;
+    border-radius: 10px;
+  }
+`;
+
+export const TabFilterRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid #e5e7eb;
+
+  @media (max-width: 640px) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 12px 14px 10px;
+  }
+`;
+
+export const TabFilterBtn = styled.button`
+  flex: 1;
+  min-height: 42px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  border: 1px solid ${(props) => (props.$active ? "#0f172a" : "#e2e8f0")};
+  background: ${(props) => (props.$active ? "#0f172a" : "#f8fafc")};
+  color: ${(props) => (props.$active ? "#ffffff" : "#475569")};
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: ${(props) => (props.$active ? "0 4px 12px rgba(15, 23, 42, 0.18)" : "none")};
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    background: ${(props) => (props.$active ? "#1e293b" : "#f1f5f9")};
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  @media (max-width: 640px) {
+    font-size: 0.76rem;
+    padding: 8px 6px;
+    min-height: 38px;
+    border-radius: 10px;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.25;
   }
 `;
 

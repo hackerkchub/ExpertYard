@@ -219,12 +219,6 @@ export default function MasterServicesCatalogPage() {
           </div>
 
           <div className="catalog-title">Explore Verified Master Services</div>
-          <p className="catalog-subtitle">
-            Browse structured professional services by subcategory with transparent pricing, instant expert match, and 100% satisfaction guarantee.
-          </p>
-
-         
-
           {/* CATEGORY FILTER PILLS */}
           {filterCategories.length > 1 && (
             <div className="catalog-category-pills">

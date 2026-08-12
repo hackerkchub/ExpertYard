@@ -867,10 +867,10 @@ export const UserChatHistory = () => {
               <FiArrowLeft size={20} />
             </MobileBackButton>
             <div className="detail-title-block" style={{ flex: 1 }}>
-              <h1 style={{ fontSize: "1rem", fontWeight: 600, margin: 0, color: "#111827" }}>
+              <h1 style={{ fontSize: "1rem", fontWeight: 600, margin: 0 }}>
                 {selectedSession?.expert_name || "Expert"}
               </h1>
-              <MobileDetailMeta style={{ fontSize: "0.76rem", color: "#64748b" }}>
+              <MobileDetailMeta style={{ fontSize: "0.76rem" }}>
                 <span>{selectedSession?.end_time ? formatDate(selectedSession.end_time) : "Past Session"}</span>
               </MobileDetailMeta>
             </div>

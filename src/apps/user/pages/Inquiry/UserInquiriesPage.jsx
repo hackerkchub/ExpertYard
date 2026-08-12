@@ -112,6 +112,8 @@ const SidebarHeader = styled.div`
 
   @media (max-width: 768px) {
     padding: 16px 20px;
+    background: #111827 !important;
+    border-bottom: none !important;
   }
 `;
 
@@ -142,6 +144,14 @@ const BackButton = styled.button`
     background: #f3f2ef;
   }
 
+  @media (max-width: 768px) {
+    color: #ffffff !important;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+  }
+
   @media (min-width: 769px) {
     display: none;
   }
@@ -167,6 +177,12 @@ const ListTitle = styled.h2`
 
   @media (max-width: 768px) {
     font-size: 1.1rem;
+    color: #ffffff !important;
+
+    span {
+      background: rgba(255, 255, 255, 0.18) !important;
+      color: #ffffff !important;
+    }
   }
 `;
 
@@ -517,6 +533,16 @@ const WhatsAppHeader = styled.div`
     padding: 8px 12px;
     min-height: 54px;
     padding-top: max(8px, env(safe-area-inset-top, 0px));
+    background: #111827 !important;
+    border-bottom: none !important;
+
+    .inquiry-header-title {
+      color: #ffffff !important;
+    }
+
+    .inquiry-header-status {
+      color: #9ca3af !important;
+    }
   }
 `;
 
@@ -542,6 +568,14 @@ const HeaderBackBtn = styled.button`
 
   &:hover {
     background: #e9edef;
+  }
+
+  @media (max-width: 768px) {
+    color: #ffffff !important;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
   }
 `;
 
@@ -590,6 +624,14 @@ const HeaderIconButton = styled.button`
 
   &:hover {
     background: #e9edef;
+  }
+
+  @media (max-width: 768px) {
+    color: #ffffff !important;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
   }
 `;
 
@@ -1374,10 +1416,10 @@ export default function UserInquiriesPage() {
                     {getInitials(selectedInquiry.expert_name)}
                   </HeaderAvatar>
                   <div style={{ marginLeft: 4 }}>
-                    <div style={{ fontWeight: 600, fontSize: "0.95rem", color: "#111b21" }}>
+                    <div className="inquiry-header-title" style={{ fontWeight: 600, fontSize: "0.95rem", color: "#111b21" }}>
                       {selectedInquiry.expert_name}
                     </div>
-                    <div style={{ fontSize: "0.72rem", color: "#667781" }}>
+                    <div className="inquiry-header-status" style={{ fontSize: "0.72rem", color: "#667781" }}>
                       {selectedInquiry.status}
                     </div>
                   </div>

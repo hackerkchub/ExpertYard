@@ -72,6 +72,7 @@ import GlobalSearchBar from "../search/GlobalSearchBar";
 import { LocationSelector } from "../../../../shared/components";
 
 const getMobileHeaderTitle = (pathname) => {
+  if (pathname === "/user/notifications" || pathname.startsWith("/user/notifications")) return "Notification";
   if (pathname === "/user/search") return "Search";
   if (pathname === "/user/all-services") return "Services";
   if (pathname === "/user/categories") return "Categories";
@@ -86,6 +87,7 @@ const getMobileHeaderTitle = (pathname) => {
   if (pathname === "/user/my-offers") return "Offers";
   if (pathname === "/user/my-orders" || pathname === "/user/my-bookings" || pathname === "/user/my-services") return "My Orders";
   if (pathname.startsWith("/user/my-booking/")) return "Booking";
+  if (pathname.startsWith("/user/workspace")) return "Workspace";
   if (pathname === "/user/about") return "About";
   if (pathname === "/user/how-it-works") return "How It Works";
   if (pathname === "/user/reviews") return "Reviews";
@@ -248,7 +250,7 @@ const Navbar = () => {
 
   const primaryMenuItems = [
     { label: t("common.home"), path: "/user", icon: FiHome },
-    { label: "My Services", path: "/user/my-services", icon: FiPackage },
+    { label: "My Orders", path: "/user/my-services", icon: FiPackage },
     { label: t("common.offers"), path: "/user/all-services", icon: FiGift },
     { label: t("common.categories"), path: "/user/categories", icon: FiGrid, mobileOnly: true },
     { label: t("common.history"), path: "/user/chat-history", icon: FiClock },
@@ -540,7 +542,7 @@ const Navbar = () => {
                 <MobileMenuTitle>Account</MobileMenuTitle>
                 <MobileItem onClick={() => handleNav("/user/my-services")}>
                   <FiPackage />
-                  My Services
+                  My Orders
                 </MobileItem>
                 <MobileItem onClick={() => handleNav("/user/wallet")}>
                   <FaWallet />

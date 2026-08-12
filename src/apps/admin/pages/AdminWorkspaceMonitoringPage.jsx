@@ -6,6 +6,7 @@ import {
   getWorkspaceExpertsList,
   updateWorkspaceStep,
   reassignWorkspaceExpert,
+  dismissWorkspaceStatusRequest,
 } from "../../../shared/api/workspace.api";
 
 const LIFECYCLE_STEPS = [
@@ -133,6 +134,17 @@ export default function AdminWorkspaceMonitoringPage() {
         err?.response?.data?.message ||
           "Error overriding workspace step."
       );
+    }
+  };
+
+  const handleDismissStatusRequest = async (bookingId) => {
+    try {
+      const response = await dismissWorkspaceStatusRequest(bookingId);
+      if (response?.data?.success) {
+        await fetchWorkspaces();
+      }
+    } catch (err) {
+      alert("Failed to dismiss status request.");
     }
   };
 
@@ -1171,6 +1183,33 @@ export default function AdminWorkspaceMonitoringPage() {
                               }
                             </strong>
                           </span>
+
+                          {ws.expert_status_request && (
+                            <div style={{ marginTop: "0.5rem", background: "#fef3c7", border: "1px solid #fde68a", borderRadius: "6px", padding: "0.5rem" }}>
+                              <span style={{ fontSize: "0.78rem", fontWeight: "800", color: "#92400e", display: "block" }}>
+                                {ws.expert_status_request === "COMPLETED_REQUESTED" ? "⏳ Expert Requested Completion Approval" : "⚠️ Expert Requested Cancellation Approval"}
+                              </span>
+                              {ws.expert_request_notes && (
+                                <p style={{ margin: "0.2rem 0 0 0", fontSize: "0.75rem", color: "#78350f" }}>
+                                  "{ws.expert_request_notes}"
+                                </p>
+                              )}
+                              <div style={{ display: "flex", gap: "0.3rem", marginTop: "0.4rem" }}>
+                                <button
+                                  onClick={() => handleOverrideStep(ws.booking_id, ws.expert_status_request === "COMPLETED_REQUESTED" ? "COMPLETED" : "CANCELLED")}
+                                  style={{ background: "#059669", color: "#fff", border: "none", borderRadius: "4px", padding: "0.25rem 0.55rem", fontSize: "0.72rem", fontWeight: "700", cursor: "pointer" }}
+                                >
+                                  ✅ Approve & Confirm
+                                </button>
+                                <button
+                                  onClick={() => handleDismissStatusRequest(ws.booking_id)}
+                                  style={{ background: "#dc2626", color: "#fff", border: "none", borderRadius: "4px", padding: "0.25rem 0.55rem", fontSize: "0.72rem", fontWeight: "700", cursor: "pointer" }}
+                                >
+                                  ❌ Reject Request
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </td>
 
                         {/* Actions */}

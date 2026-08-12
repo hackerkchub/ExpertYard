@@ -163,6 +163,23 @@ export const reassignWorkspaceExpert = (
   );
 };
 
+/**
+ * Request status change by Expert (COMPLETED or CANCELLED) requiring Admin approval
+ */
+export const requestWorkspaceStatusChange = (bookingId, targetStatus, notes = "") => {
+  return axios.post(`/workspace/${bookingId}/request-status-change`, {
+    target_status: targetStatus,
+    notes,
+  });
+};
+
+/**
+ * Dismiss status change request by Admin
+ */
+export const dismissWorkspaceStatusRequest = (bookingId) => {
+  return axios.delete(`/workspace/${bookingId}/dismiss-status-request`);
+};
+
 /* =====================================================
    ⭐ REVIEW
 ===================================================== */

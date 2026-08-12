@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { 
   FiSearch, FiFilter, FiCheckCircle, FiClock, FiStar, FiShield, 
   FiDollarSign, FiMessageSquare, FiMessageCircle, FiPhone, FiVideo, FiFolder, 
@@ -41,6 +41,7 @@ export default function MasterServiceSlugPage() {
   const { slug, masterServiceSlug } = useParams();
   const targetSlug = masterServiceSlug || slug;
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [service, setService] = useState(null);
   const [experts, setExperts] = useState([]);
@@ -176,14 +177,23 @@ export default function MasterServiceSlugPage() {
 
   // Open Booking Modal & Refresh Wallet Balance
   const handleOpenBookingModal = async (exp) => {
+    const token = localStorage.getItem("token") || localStorage.getItem("userToken") || localStorage.getItem("user_token");
+    const userRaw = localStorage.getItem("user") || localStorage.getItem("userData");
+    let user = null;
+    try { if (userRaw) user = JSON.parse(userRaw); } catch(e) {}
+
+    if (!token || !user) {
+      const redirectPath = `${location.pathname}${location.search}${location.hash}`;
+      navigate(`/user/auth?redirect=${encodeURIComponent(redirectPath)}`, {
+        state: { from: location },
+      });
+      return;
+    }
+
     if (activeUserBooking && !["COMPLETED", "CANCELLED", "CLOSED", "completed", "cancelled", "closed"].includes(activeUserBooking.status)) {
       setShowActiveBookingDialog(true);
       return;
     }
-
-    const userRaw = localStorage.getItem("user") || localStorage.getItem("userData");
-    let user = null;
-    try { if (userRaw) user = JSON.parse(userRaw); } catch(e) {}
     
     // Fallback top expert if direct click
     const targetExpert = exp || experts[0] || {
@@ -829,6 +839,9 @@ export default function MasterServiceSlugPage() {
 
         /* MOBILE RESPONSIVE MEDIA QUERIES */
         @media (max-width: 900px) {
+          .msp-breadcrumb {
+            display: none !important;
+          }
           .msp-hero-card {
             grid-template-columns: 1fr;
             padding: 1.25rem;
@@ -925,17 +938,6 @@ export default function MasterServiceSlugPage() {
             <h1 className="msp-title">
               {service.title}
             </h1>
-
-            {/* RATING & REVIEWS BAR */}
-            <div className="msp-meta-bar">
-              <span>
-                <span className="msp-rating-star">★ 4.9</span> (128 Verified Reviews)
-              </span>
-              <span>•</span>
-              <span>💼 250+ Orders Fulfilled</span>
-              <span>•</span>
-              <span>⚡ ~15m Response</span>
-            </div>
 
             {/* FORMATTED SHORT DESCRIPTION WITH READ MORE TOGGLE */}
             {service.short_description && (
@@ -1267,39 +1269,6 @@ export default function MasterServiceSlugPage() {
                     {faq.a}
                   </div>
                 )}
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ⭐ CUSTOMER REVIEWS SECTION */}
-        <section className="msp-section-card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-            <h3 className="msp-section-title">
-              ⭐ Customer Reviews & Ratings
-            </h3>
-            <span style={{ fontSize: 13, color: "#64748b", fontWeight: 700 }}>
-              4.9 / 5.0 ⭐ (128 Ratings)
-            </span>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.25rem" }}>
-            {[
-              { name: "Rahul S.", rating: 5, date: "2 days ago", text: "Excellent guidance and fast delivery! The expert answered all my queries inside the workspace very clearly." },
-              { name: "Priya M.", rating: 5, date: "1 week ago", text: "Very smooth process. Uploaded my documents and received full fulfillment before the committed SLA turnaround." },
-              { name: "Amit K.", rating: 5, date: "2 weeks ago", text: "Highly professional service. The direct call with the assigned expert was super helpful." }
-            ].map((rev, idx) => (
-              <div key={idx} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 16, padding: "1.25rem", display: "grid", gap: 8 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <strong style={{ color: "#0f172a" }}>{rev.name}</strong>
-                  <span style={{ fontSize: 12, color: "#94a3b8" }}>{rev.date}</span>
-                </div>
-                <div style={{ color: "#eab308", fontWeight: 800, fontSize: 13 }}>
-                  {"★".repeat(rev.rating)}
-                </div>
-                <p style={{ margin: 0, color: "#475569", fontSize: 13, lineHeight: 1.5 }}>
-                  "{rev.text}"
-                </p>
               </div>
             ))}
           </div>
@@ -1795,6 +1764,10 @@ export default function MasterServiceSlugPage() {
         <AddBalancePopup
           amountPreset={rechargeAmountNeeded}
           onClose={() => setShowRechargePopup(false)}
+          onSuccess={() => {
+            setShowRechargePopup(false);
+            setBookingError("");
+          }}
           createOrder={handleCreateRechargeOrder}
           onConfirm={handleConfirmRecharge}
         />

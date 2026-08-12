@@ -33,10 +33,14 @@ import {
   FiVideo,
   FiPlay,
   FiArrowRight,
+  FiShare2,
+  FiCopy,
 } from "react-icons/fi";
+import { FaWhatsapp, FaTelegramPlane, FaTwitter } from "react-icons/fa";
 
 import { APP_CONFIG } from "../../../../config/appConfig";
 import InquiryModal from "./InquiryModal";
+import PostDetailModal from "../../../../shared/components/PostDetailModal/PostDetailModal";
 
 import {
   PageWrap,
@@ -151,6 +155,10 @@ import {
   ReelPlayIcon,
   ReelMetaInfo,
   ReelCaption,
+  ShareIconButton,
+  ShareModalOverlay,
+  ShareModalBox,
+  ShareOptionItem,
 } from "./ExpertProfile.styles";
 
 import {
@@ -442,6 +450,32 @@ const ExpertProfilePage = () => {
   const [purchasingPlan, setPurchasingPlan] = useState(null);
   const [showSubscribeSuccess, setShowSubscribeSuccess] = useState(false);
   const [purchaseError, setPurchaseError] = useState(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [selectedPostForModal, setSelectedPostForModal] = useState(null);
+
+  const handleShareProfile = useCallback(async () => {
+    const shareTitle = `${profile?.name || "Expert"} on G9Expert`;
+    const shareText = `Check out ${profile?.name || "Expert"}'s profile on G9Expert - ${profile?.position || "Professional Expert"}`;
+    const shareUrl = window.location.href;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+        return;
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Share error:", err);
+        } else {
+          return;
+        }
+      }
+    }
+    setShowShareModal(true);
+  }, [profile]);
   
   // Post interaction states
   const [liked, setLiked] = useState({});
@@ -1440,6 +1474,186 @@ const ExpertProfilePage = () => {
       `}</style>
       
       <PageWrap className="expert-profile-page">
+        {/* MODERN MOBILE EXPERT PROFILE VIEW (SPECIFIED HTML & CSS DESIGN) */}
+        <div className="expert-profile-mobile-view">
+
+          <div className="mobile-expert-body">
+            {/* Profile Top Section: Avatar + Info + Share Button */}
+            <div className="mobile-profile-top-row">
+              <div className="mobile-avatar-wrap">
+                <div className="mobile-avatar-circle">
+                  {profile.profile_photo ? (
+                    <img src={profile.profile_photo} alt={profile.name} className="mobile-avatar-img" />
+                  ) : (
+                    <span className="mobile-avatar-initial">{getInitials(profile.name)}</span>
+                  )}
+                </div>
+                <div className="mobile-avatar-status-badge">
+                  <div className={`mobile-status-dot ${isExpertOnline ? 'online' : 'offline'}`} />
+                </div>
+              </div>
+
+              <div className="mobile-profile-info">
+                <div className="mobile-name-row">
+                  <h1 className="mobile-expert-name">{profile.name}</h1>
+                  <FiCheckCircle size={18} style={{ color: "#059669", flexShrink: 0 }} />
+                </div>
+                <p className="mobile-expert-degree">{profile.education || profile.position || "BTECH"}</p>
+                
+                {/* Status Pill */}
+                <div className={`mobile-status-pill ${isExpertOnline ? 'online-pill' : 'offline-pill'}`}>
+                  <span className={`mobile-pulse-dot ${isExpertOnline ? 'online-pulse' : 'offline-pulse'}`} />
+                  <span className="mobile-status-pill-text">{isExpertOnline ? "Available Now" : "Offline"}</span>
+                </div>
+              </div>
+
+              {/* Share Icon in Main Mobile Layout Top Row */}
+              <button 
+                type="button" 
+                onClick={handleShareProfile} 
+                className="mobile-share-btn-top" 
+                title="Share Profile" 
+                aria-label="Share Profile"
+              >
+                <FiShare2 size={18} />
+              </button>
+            </div>
+
+            {/* Follow Action Button */}
+            <div className="mobile-follow-container">
+              <button type="button" onClick={handleFollowAction} className="mobile-follow-btn">
+                {!following ? (
+                  <><FiUserPlus size={20} /> {t("expertProfile.follow")}</>
+                ) : (
+                  <><FiUserCheck size={20} /> {t("expertProfile.following")}</>
+                )}
+              </button>
+            </div>
+
+            {/* Tags / Chips Grid */}
+            <div className="mobile-chips-grid">
+              <div className="mobile-glass-card mobile-chip">
+                <FiBookOpen size={16} style={{ color: "#94a3b8" }} />
+                <span className="mobile-chip-text">Education: <strong>{profile.education || "BTech"}</strong></span>
+              </div>
+              <div className="mobile-glass-card mobile-chip">
+                <FiTarget size={16} style={{ color: "#94a3b8" }} />
+                <span className="mobile-chip-text">Category: <strong>{displayCategoryName || "General"}</strong></span>
+              </div>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="mobile-stats-container">
+              <div className="mobile-glass-card mobile-stats-grid">
+                <div className="mobile-stat-col">
+                  <FiStar size={22} style={{ color: "#fbbf24", marginBottom: 6 }} />
+                  <span className="mobile-stat-val">{formattedAvgRating}</span>
+                  <span className="mobile-stat-lbl">Rating</span>
+                </div>
+                <div className="mobile-stat-col">
+                  <FiThumbsUp size={22} style={{ color: "#059669", marginBottom: 6 }} />
+                  <span className="mobile-stat-val">{followersCount}</span>
+                  <span className="mobile-stat-lbl">Followers</span>
+                </div>
+                <div className="mobile-stat-col">
+                  <FiClock size={22} style={{ color: "#60a5fa", marginBottom: 6 }} />
+                  <span className="mobile-stat-val">{profile.experience || "0"} <small style={{ fontSize: 13, fontWeight: 700 }}>yr</small></span>
+                  <span className="mobile-stat-lbl">Experience</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Consultation Rates Section (In-body Mobile Card) */}
+            <div className="mobile-in-body-rates-card">
+              <div className="mobile-dock-header">
+                <h3 className="mobile-dock-title">Consultation Rates</h3>
+                <div className="mobile-dock-badge">
+                  <FiClock size={12} style={{ color: "#fbbf24" }} />
+                  <span>PER MINUTE</span>
+                </div>
+              </div>
+
+              <div className="mobile-action-grid">
+                {/* Video Call */}
+                <button 
+                  type="button" 
+                  className="mobile-action-card video-card"
+                  style={{ background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)", border: "1px solid rgba(59, 130, 246, 0.6)", boxShadow: "0 4px 15px rgba(37, 99, 235, 0.4)" }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!isLoggedIn) {
+                      navigate("/user/auth", { state: { from: routerLocation } });
+                      return;
+                    }
+                    if (numericExpertId) {
+                      navigate(`/user/video-call/${numericExpertId}`, {
+                        state: {
+                          expert: expertData || profile,
+                          source_context: "expert_profile",
+                          source_ref_id: numericExpertId,
+                          price_per_minute: displayPrices.videoCallPrice || displayPrices.callPrice || 10,
+                        },
+                      });
+                    }
+                  }}
+                >
+                  <FiVideo size={24} style={{ color: "#ffffff" }} />
+                  <span className="mobile-action-lbl" style={{ color: "#dbeafe" }}>VIDEO</span>
+                  <span className="mobile-action-price">₹{displayPrices.videoCallPrice || displayPrices.callPrice || 10}</span>
+                </button>
+
+                {/* Voice Call */}
+                <button 
+                  type="button" 
+                  className="mobile-action-card voice-card"
+                  style={{ background: "linear-gradient(135deg, #d97706 0%, #b45309 100%)", border: "1px solid rgba(245, 158, 11, 0.6)", boxShadow: "0 4px 15px rgba(217, 119, 6, 0.4)" }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleStart("call");
+                  }}
+                >
+                  <FiPhoneCall size={24} style={{ color: "#ffffff" }} />
+                  <span className="mobile-action-lbl" style={{ color: "#fef3c7" }}>CALL</span>
+                  <span className="mobile-action-price">₹{displayPrices.callPrice || 10}</span>
+                </button>
+
+                {/* Chat */}
+                <button 
+                  type="button" 
+                  className="mobile-action-card chat-card"
+                  style={{ background: "linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)", border: "1px solid rgba(139, 92, 246, 0.6)", boxShadow: "0 4px 15px rgba(139, 92, 246, 0.4)" }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleStart("chat");
+                  }}
+                >
+                  <FiMessageSquare size={24} style={{ color: "#ffffff" }} />
+                  <span className="mobile-action-lbl" style={{ color: "#ede9fe" }}>CHAT</span>
+                  <span className="mobile-action-price">₹{displayPrices.chatPrice || 5}</span>
+                </button>
+
+                {/* Free Inquiry */}
+                <button 
+                  type="button" 
+                  className="mobile-action-card inquiry-card"
+                  style={{ background: "linear-gradient(135deg, #059669 0%, #047857 100%)", border: "1px solid rgba(16, 185, 129, 0.6)", boxShadow: "0 4px 15px rgba(5, 150, 105, 0.4)" }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsInquiryModalOpen(true);
+                  }}
+                >
+                  <FiSend size={24} style={{ color: "#ffffff" }} />
+                  <span className="mobile-action-lbl inquiry-lbl" style={{ color: "#d1fae5" }}>FREE<br/>INQUIRY</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <ProfileCard>
           <div className="expert-profile-hero-inner">
             {/* LEFT COLUMN: User Profile & Info Flow */}
@@ -1451,13 +1665,6 @@ const ExpertProfilePage = () => {
                   ) : (
                     <AvatarFallback>{getInitials(profile.name)}</AvatarFallback>
                   )}
-                  <div className="expert-profile-follow-wrap">
-                    {!following ? (
-                      <FollowButton onClick={handleFollowAction}><FiUserPlus /> {t("expertProfile.follow")}</FollowButton>
-                    ) : (
-                      <FollowButton $active onClick={handleFollowAction}><FiUserCheck /> {t("expertProfile.following")}</FollowButton>
-                    )}
-                  </div>
                 </div>
 
                 <div className="expert-profile-name-group">
@@ -1469,6 +1676,17 @@ const ExpertProfilePage = () => {
                   </Name>
                   <Role>{profile.position || "Expert"}</Role>
                   <Status $online={isExpertOnline}>{isExpertOnline ? "🟢 Available Now" : "🔴 Offline"}</Status>
+
+                  <div className="expert-profile-follow-wrap">
+                    {!following ? (
+                      <FollowButton onClick={handleFollowAction} className="follow-btn"><FiUserPlus /> {t("expertProfile.follow")}</FollowButton>
+                    ) : (
+                      <FollowButton $active onClick={handleFollowAction} className="follow-btn active-following"><FiUserCheck /> {t("expertProfile.following")}</FollowButton>
+                    )}
+                    <ShareIconButton type="button" onClick={handleShareProfile} title="Share Profile" aria-label="Share Profile" className="share-icon-btn">
+                      <FiShare2 size={16} />
+                    </ShareIconButton>
+                  </div>
                 </div>
               </div>
 
@@ -1595,6 +1813,7 @@ const ExpertProfilePage = () => {
                     <FiSend size={20} />
                   </ActionButton>
                 </div>
+                
               </CallToAction>
 
 
@@ -1762,15 +1981,22 @@ const ExpertProfilePage = () => {
                         const isLiked = liked[postId];
                         
                         return (
-                          <PostCard key={postId}>
+                          <PostCard
+                            key={postId}
+                            onClick={() => setSelectedPostForModal(post)}
+                            style={{ cursor: "pointer" }}
+                          >
                             {post.image_url && <PostImage src={post.image_url} alt={post.title} />}
                             <PostHeader><PostTitle>{post.title}</PostTitle></PostHeader>
                             {post.description && <PostDescription>{post.description}</PostDescription>}
                             
-                            <PostActions>
+                            <PostActions onClick={(e) => e.stopPropagation()}>
                               <PostActionBtn
                                 $liked={!!isLiked}
-                                onClick={() => toggleLike(post)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleLike(post);
+                                }}
                               >
                                 <FiHeart
                                   fill={isLiked ? "#ef4444" : "none"}
@@ -1784,7 +2010,10 @@ const ExpertProfilePage = () => {
                               </PostActionBtn>
 
                               <PostActionBtn
-                                onClick={() => toggleSection("comments", postId)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleSection("comments", postId);
+                                }}
                               >
                                 <FiMessageCircle />
                                 {post.comments_count}
@@ -2051,32 +2280,7 @@ const ExpertProfilePage = () => {
           </main>
         </div>
 
-        {!isInquiryModalOpen && (
-        <div className="mobile-profile-actions">
-          {showProfileChatButton && (
-          <button type="button" className="mobile-message-btn" disabled={!canShowUserChatButton} title={!canShowUserChatButton ? chatDisabledReason : "Start chat consultation"} aria-label="Start chat consultation" onClick={() => handleStart("chat")}>
-            <FiMessageSquare />
-            <strong>{!canShowUserChatButton ? "--" : getCompactActionPrice("chat")}</strong>
-          </button>
-          )}
-          {showProfileVideoButton && (
-          <VideoCallButton
-            expert={expertData || profile}
-            expertId={numericExpertId}
-            sourceContext="expert_profile"
-            sourceRefId={numericExpertId}
-            className="mobile-video-call-btn"
-            compact
-          />
-          )}
-          {showProfileCallButton && (
-          <button type="button" className="mobile-call-btn" disabled={!canShowUserCallButton} title={!canShowUserCallButton ? callDisabledReason : "Start voice call"} aria-label="Start voice call" onClick={() => handleStart("call")}>
-            <FiPhoneCall />
-            <strong>{!canShowUserCallButton ? "--" : getCompactActionPrice("call")}</strong>
-          </button>
-          )}
-        </div>
-        )}
+
 
         {/* Subscription Plans Modal */}
         {showPlansModal && (
@@ -2186,7 +2390,73 @@ const ExpertProfilePage = () => {
           onClose={() => setIsInquiryModalOpen(false)}
           expert={{ ...profile, id: numericExpertId }}
         />
+
+        <PostDetailModal
+          post={selectedPostForModal}
+          isOpen={Boolean(selectedPostForModal)}
+          onClose={() => setSelectedPostForModal(null)}
+          expertProfile={profile}
+        />
       </PageWrap>
+
+      {showShareModal && (
+        <ShareModalOverlay onClick={() => setShowShareModal(false)}>
+          <ShareModalBox onClick={(e) => e.stopPropagation()}>
+            <div className="share-header">
+              <h3>Share {profile?.name || "Expert"}'s Profile</h3>
+              <button type="button" onClick={() => setShowShareModal(false)}>
+                <FiX size={20} />
+              </button>
+            </div>
+            <div className="share-grid">
+              <ShareOptionItem
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out ${profile?.name || "Expert"}'s profile on G9Expert: ${window.location.href}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="share-option whatsapp"
+              >
+                <FaWhatsapp size={24} />
+                <span>WhatsApp</span>
+              </ShareOptionItem>
+              <ShareOptionItem
+                href={`https://telegram.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(`Check out ${profile?.name || "Expert"}'s profile on G9Expert`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="share-option telegram"
+              >
+                <FaTelegramPlane size={24} />
+                <span>Telegram</span>
+              </ShareOptionItem>
+              <ShareOptionItem
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out ${profile?.name || "Expert"}'s profile on G9Expert`)}&url=${encodeURIComponent(window.location.href)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="share-option twitter"
+              >
+                <FaTwitter size={24} />
+                <span>Twitter</span>
+              </ShareOptionItem>
+              <ShareOptionItem
+                as="button"
+                type="button"
+                className="share-option copy"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(window.location.href);
+                    alert("Profile link copied to clipboard!");
+                  } catch (err) {
+                    console.error(err);
+                  }
+                  setShowShareModal(false);
+                }}
+              >
+                <FiCopy size={24} />
+                <span>Copy Link</span>
+              </ShareOptionItem>
+            </div>
+          </ShareModalBox>
+        </ShareModalOverlay>
+      )}
     </>
   );
 };

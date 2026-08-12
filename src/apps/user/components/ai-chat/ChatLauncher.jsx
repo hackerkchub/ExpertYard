@@ -30,7 +30,7 @@ const ChatLauncher = () => {
   }, [isOpen]);
 
   return (
-    <>
+    <div style={{ display: "none" }} aria-hidden="true">
       <LauncherButton type="button" onClick={toggleChat} aria-label="Open G9 Experts assistant">
         <ButtonContent>
           <ButtonText>G9</ButtonText>
@@ -39,7 +39,7 @@ const ChatLauncher = () => {
         </ButtonContent>
       </LauncherButton>
       {isOpen && <ChatWindow />}
-    </>
+    </div>
   );
 };
 

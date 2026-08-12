@@ -24,10 +24,18 @@ export const Nav = styled.nav`
   }
 
   @media (max-width: 768px) {
+    background: #111827 !important;
+    border-bottom: none !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15) !important;
+
     &.user-common-mobile-header {
-      background: rgba(255, 255, 255, 0.96);
-      border-bottom: 1px solid rgba(0, 0, 128, 0.08);
-      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+      background: #111827 !important;
+      border-bottom: none !important;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15) !important;
+
+      * {
+        color: #ffffff !important;
+      }
     }
   }
 `;
@@ -95,10 +103,10 @@ export const HeaderMobileTitle = styled.div`
     min-width: 0;
     flex: 1 1 auto;
     display: block;
-    color: #111827;
+    color: #ffffff !important;
     font-size: 17px;
     line-height: 1.2;
-    font-weight: 850;
+    font-weight: 700;
     letter-spacing: -0.01em;
     white-space: nowrap;
     overflow: hidden;
@@ -124,16 +132,22 @@ export const HeaderBackButton = styled.button`
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid rgba(0, 0, 128, 0.12);
+    border: none !important;
     border-radius: 13px;
-    background: #ffffff;
-    color: ${NAVY};
+    background: transparent !important;
+    color: #ffffff !important;
     cursor: pointer;
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+    box-shadow: none !important;
+
+    &:hover, &:active {
+      background: rgba(255, 255, 255, 0.1) !important;
+    }
 
     svg {
       width: 19px;
       height: 19px;
+      color: #ffffff !important;
+      stroke: #ffffff !important;
     }
   }
 
@@ -173,6 +187,15 @@ export const HeaderMenuButton = styled.button`
     width: 38px;
     height: 38px;
     border-radius: 13px;
+    background: transparent !important;
+    border: none !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+
+    svg {
+      color: #ffffff !important;
+      stroke: #ffffff !important;
+    }
 
     &.mobile-menu-trigger {
       display: inline-flex;
@@ -992,9 +1015,16 @@ export const MobileLanguageButton = styled.button`
   cursor: pointer;
   box-shadow: 0 10px 22px rgba(0, 0, 128, 0.05);
 
-  svg {
-    width: 17px;
-    height: 17px;
+  @media (max-width: 768px) {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border: none !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+
+    svg {
+      color: #ffffff !important;
+      stroke: #ffffff !important;
+    }
   }
 
   @media (max-width: 420px) {
@@ -1201,6 +1231,10 @@ export const HeaderProfileButton = styled.button`
     width: 38px;
     height: 38px;
     border-radius: 13px;
+    background: transparent !important;
+    border: none !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
 
     &.mobile-profile-shortcut {
       display: inline-flex;
@@ -1209,6 +1243,8 @@ export const HeaderProfileButton = styled.button`
     svg {
       width: 18px;
       height: 18px;
+      color: #ffffff !important;
+      stroke: #ffffff !important;
     }
   }
 
@@ -1264,6 +1300,15 @@ export const MobileIcon = styled.button`
     width: 38px;
     height: 38px;
     border-radius: 13px;
+    background: transparent !important;
+    border: none !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+
+    svg {
+      color: #ffffff !important;
+      stroke: #ffffff !important;
+    }
   }
 
   @media (max-width: 420px) {
@@ -1277,24 +1322,31 @@ export const MobileMenu = styled.div`
   position: fixed;
   top: 0;
   left: 0;
-  width: min(320px, 84vw);
+  width: min(280px, 80vw);
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding: max(16px, env(safe-area-inset-top, 0px)) 0 max(20px, calc(16px + env(safe-area-inset-bottom, 0px)));
-  background: #ffffff;
+  padding: 0 0 max(24px, calc(16px + env(safe-area-inset-bottom, 0px)));
+  background: #0f172a;
+  color: #f8fafc;
   border-radius: 0 16px 16px 0;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  box-shadow: 12px 0 45px rgba(0, 0, 0, 0.6);
   z-index: 10001;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   box-sizing: border-box;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   @media (max-width: 768px) {
-    width: min(310px, 84vw);
+    width: min(280px, 80vw);
     height: 100dvh;
     max-height: 100dvh;
-    overscroll-behavior: contain;
   }
 `;
 
@@ -1302,8 +1354,9 @@ export const MobileMenuOverlay = styled.div`
   position: fixed;
   inset: 0;
   z-index: 10000;
-  background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(2px);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 `;
 
 export const MobileMenuHeader = styled.div`
@@ -1311,26 +1364,38 @@ export const MobileMenuHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 56px;
-  padding: 12px 16px 16px 20px;
-  border-bottom: 1px solid #e9edef;
+  min-height: 64px;
+  padding: max(16px, calc(12px + env(safe-area-inset-top, 0px))) 16px 16px 18px;
+  background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+  color: #ffffff;
   flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+  h4 {
+    color: #ffffff !important;
+  }
+
+  span {
+    color: #94a3b8 !important;
+  }
 
   button {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border: none;
     border-radius: 50%;
-    background: transparent;
-    color: #54656f;
+    background: rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    transition: all 0.15s ease;
 
-    &:hover {
-      background: #f0f2f5;
+    &:active {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
     }
   }
 `;
@@ -1340,16 +1405,18 @@ export const MobileMenuSection = styled.div`
   flex-direction: column;
   gap: 2px;
   padding: 8px 0;
-  border-bottom: 1px solid #e9edef;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 `;
 
 export const MobileMenuTitle = styled.div`
-  color: #64748b;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-family: "Google Sans", "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
-  padding: 12px 20px 6px;
+  padding: 16px 16px 6px 16px;
+  margin-top: 4px;
 `;
 
 export const MobileMenuFooter = styled(MobileMenuSection)`
@@ -1360,22 +1427,25 @@ export const MobileMenuFooter = styled(MobileMenuSection)`
 
 export const MenuWalletValue = styled.span`
   margin-left: auto;
-  color: ${NAVY};
-  font-size: 0.82rem;
+  color: #fbbf24;
+  font-size: 12px;
   font-weight: 700;
 `;
 
 export const MobileItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
   min-height: 48px;
-  padding: 10px 16px 10px 20px;
+  height: 48px;
+  padding: 0 16px 0 16px;
   border-radius: 0 24px 24px 0;
-  margin-right: 12px;
-  color: #475569;
-  font-size: 0.9rem;
+  margin: 2px 12px 2px 0;
+  color: #f1f5f9;
+  font-family: "Google Sans", "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
   font-weight: 500;
+  letter-spacing: 0.25px;
   cursor: pointer;
   transition: all 0.15s ease-in-out;
   -webkit-tap-highlight-color: transparent;
@@ -1383,14 +1453,20 @@ export const MobileItem = styled.div`
   svg {
     flex: 0 0 auto;
     font-size: 20px;
-    color: inherit;
+    color: #94a3b8;
+    transition: color 0.15s ease;
   }
 
   &:hover,
   &:active {
-    background: #eef2ff;
-    color: ${NAVY};
-    font-weight: 600;
+    background: linear-gradient(90deg, rgba(30, 58, 138, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+    color: #ffffff;
+    font-weight: 700;
+    border-left: 3px solid #fbbf24;
+
+    svg {
+      color: #fbbf24;
+    }
   }
 
   @media (min-width: 769px) {

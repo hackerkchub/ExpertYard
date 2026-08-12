@@ -118,37 +118,9 @@ export default function LegalManager() {
             return docs;
 
         } catch (err) {
-            console.error(
-                "Failed to load legal documents:",
-                err
-            );
-
-            /*
-             * IMPORTANT:
-             * Browser can sometimes report offline
-             * while API request is already failing.
-             *
-             * Offline should NEVER show legal error popup.
-             */
-            if (!navigator.onLine) {
-                console.log(
-                    "📴 Offline - legal document error ignored"
-                );
-
-                setError(null);
-                setPendingDocuments([]);
-                setApplicationLocked(false);
-                setIsOpen(false);
-
-                return [];
-            }
-
-            // Actual online API error
-            setError(
-                "Unable to load legal documents. Please try again."
-            );
-
-            // Keep application locked only for actual online failure
+            console.error("Failed to load legal documents:", err);
+            setError("please refresh it or open app again");
+            // Lock application on error for security
             setApplicationLocked(true);
 
             throw err;
@@ -197,31 +169,9 @@ export default function LegalManager() {
             await refreshPendingDocuments();
 
         } catch (err) {
-            console.error(
-                "Failed to load legal documents:",
-                err
-            );
-
-            /*
-             * If connection disappeared while request
-             * was running, don't show legal error.
-             */
-            if (!navigator.onLine) {
-                console.log(
-                    "📴 Connection lost during legal request"
-                );
-
-                setError(null);
-                setApplicationLocked(false);
-                setIsOpen(false);
-
-                return;
-            }
-
-            setError(
-                "Unable to load legal documents. Please try again."
-            );
-
+            console.error("Failed to load legal documents:", err);
+            setError("please refresh it or app again open");
+            // Keep application locked on error for security
             setApplicationLocked(true);
 
         } finally {
@@ -419,7 +369,7 @@ export default function LegalManager() {
     if (isLoading) {
         return (
             <LegalLoader
-                message="Checking legal documents..."
+                message="loading.........."
             />
         );
     }

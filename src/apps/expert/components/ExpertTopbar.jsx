@@ -37,7 +37,8 @@ import {
   FiUser, 
   FiShare2,
   FiUsers,
-  FiX
+  FiX,
+  FiZap,
 } from "react-icons/fi";
 import Logo from "../../../assets/logo.webp";
 import ProfileDropdown from "./ProfileDropdown";
@@ -173,12 +174,12 @@ export default function ExpertTopbar() {
   // COMPLETE MOBILE NAV ITEMS (Same as Sidebar)
   const mobileNavItems = [
     { icon: FiHome, label: "Dashboard", path: "/expert/home" },
+    { icon: FiZap, label: "G9 Plan", path: "/expert/g9-plan" },
     { icon: FiFileText, label: "My Content", path: "/expert/my-content" },
     { icon: FiMessageSquare, label: "Chat History", path: "/expert/chat-history" },
     { icon: FiUsers, label: "Leads", path: "/expert/leads" },
     { icon: FiBarChart2, label: "Earnings", path: "/expert/earnings" },
     { icon: FiBell, label: "Services", path: "/expert/myservices" },
-    { icon: FiClock, label: "G9-Plan", path: "/expert/g9-plan" },
   ];
 
   const isActivePath = (path) => {

@@ -59,15 +59,19 @@ const ExpertBottomNavbar = () => {
       aria-label="Expert mobile navigation"
     >
       {menuItems.map((item) => {
-        const active = item.isActive();
+        const isItemActive = item.isActive();
         return (
           <NavLink 
             key={item.name} 
             to={item.path} 
-            className={[
-              'nav-item',
-              active ? 'active' : '',
-            ].filter(Boolean).join(' ')}
+            end={item.path === '/expert/home' || item.path === '/expert'}
+            className={({ isActive: isRouterActive }) => {
+              const active = (item.path === '/expert/home' || item.path === '/expert') ? (isItemActive && isRouterActive) : isItemActive;
+              return [
+                'nav-item',
+                active ? 'active' : '',
+              ].filter(Boolean).join(' ');
+            }}
             aria-label={item.name}
           >
             <div className="icon-wrapper">{item.icon}</div>

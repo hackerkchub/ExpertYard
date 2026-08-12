@@ -66,19 +66,22 @@ const BottomNavbar = ({ disabled = false }) => {
     >
       <div className="bottom-nav-inner">
         {menuItems.map((item) => {
-          const active = item.isActive();
-          const itemClasses = [
-            'nav-btn',
-            'nav-item',
-            active ? 'active' : '',
-            item.isTalkBtn ? 'talk-btn' : '',
-          ].filter(Boolean).join(' ');
+          const isItemActive = item.isActive();
 
           return (
             <NavLink
               key={item.name}
               to={item.path}
-              className={itemClasses}
+              end={item.path === '/user' || item.path === '/user/'}
+              className={({ isActive: isRouterActive }) => {
+                const active = item.path === '/user' || item.path === '/user/' ? (isItemActive && isRouterActive) : isItemActive;
+                return [
+                  'nav-btn',
+                  'nav-item',
+                  active ? 'active' : '',
+                  item.isTalkBtn ? 'talk-btn' : '',
+                ].filter(Boolean).join(' ');
+              }}
               aria-label={item.name}
               tabIndex={disabled ? -1 : undefined}
               onClick={(e) => {

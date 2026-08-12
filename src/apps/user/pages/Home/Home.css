@@ -8572,7 +8572,6 @@ img {
     height: 56px !important;
     backdrop-filter: blur(14px) !important;
     -webkit-backdrop-filter: blur(14px) !important;
-    border-bottom: 1px solid rgba(226, 232, 240, 0.85) !important;
     position: sticky !important;
     top: 0 !important;
     z-index: 100 !important;

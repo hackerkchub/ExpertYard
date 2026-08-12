@@ -797,7 +797,6 @@ export default function Home() {
                   <div className="hero-card-icon-wrap chat-icon-wrap">
                     <MessageSquare size={22} color="#60a5fa" fill="none" />
                   </div>
-                  <span className="hero-card-label">Chat</span>
                 </button>
 
                 {/* Action 2: Call */}
@@ -809,7 +808,6 @@ export default function Home() {
                   <div className="hero-card-icon-wrap call-icon-wrap">
                     <PhoneCall size={22} color="#34d399" fill="none" />
                   </div>
-                  <span className="hero-card-label">Call</span>
                 </button>
 
                 {/* Action 3: Video */}
@@ -821,7 +819,6 @@ export default function Home() {
                   <div className="hero-card-icon-wrap video-icon-wrap">
                     <Video size={22} color="#a78bfa" fill="none" />
                   </div>
-                  <span className="hero-card-label">Video</span>
                 </button>
 
                 {/* Action 4: Service */}
@@ -833,7 +830,6 @@ export default function Home() {
                   <div className="hero-card-icon-wrap service-icon-wrap">
                     <BriefcaseBusiness size={22} color="#fbbf24" fill="none" />
                   </div>
-                  <span className="hero-card-label">Service</span>
                 </button>
               </div>
             </div>

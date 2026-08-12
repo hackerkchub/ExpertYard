@@ -214,12 +214,12 @@ export default function UserNotificationPage() {
     <S.Container>
       <S.HeaderRow>
         <S.Title>
-          Notifications
-          {unread > 0 && <span>{unread} new</span>}
+         
+        
         </S.Title>
         {unread > 0 && (
           <S.MarkAllReadBtn onClick={handleMarkAllRead}>
-            Mark all as read
+          
           </S.MarkAllReadBtn>
         )}
       </S.HeaderRow>

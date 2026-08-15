@@ -20,7 +20,7 @@ import {
   FiAlertCircle
 } from "react-icons/fi";
 import AddBalancePopup from "../../components/AddBalancePopup/AddBalancePopup";
-import { uploadWorkspaceFile } from "../../../shared/api/workspace.api";
+import { uploadWorkspaceFile } from "../../../../shared/api/workspace.api";
 
 const WIZARD_CANVAS_STYLES = `
   @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }

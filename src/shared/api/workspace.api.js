@@ -1,4 +1,55 @@
 import axios from "./axiosInstance";
+import { APP_CONFIG } from "../../config/appConfig";
+
+/**
+ * Resolve workspace file URL against backend origin
+ */
+export const resolveWorkspaceFileUrl = (fileUrl) => {
+  if (!fileUrl) return "";
+
+  if (
+    fileUrl.startsWith("http://") ||
+    fileUrl.startsWith("https://") ||
+    fileUrl.startsWith("blob:") ||
+    fileUrl.startsWith("data:")
+  ) {
+    return fileUrl;
+  }
+
+  const apiBase = APP_CONFIG?.API_BASE_URL || "";
+  let backendOrigin = APP_CONFIG?.SOCKET_URL || "";
+
+  if (!backendOrigin && apiBase) {
+    backendOrigin = apiBase.replace(/\/api\/?$/, "");
+  }
+
+  // Strip trailing slashes from backendOrigin
+  const cleanOrigin = backendOrigin.replace(/\/+$/, "");
+
+  // Ensure leading slash on file path
+  const cleanPath = fileUrl.startsWith("/") ? fileUrl : `/${fileUrl}`;
+
+  return `${cleanOrigin}${cleanPath}`;
+};
+
+/**
+ * Trigger direct browser file download without fetch/blob to avoid CORS errors
+ */
+export const downloadWorkspaceFile = (fileUrl, fileName = "download") => {
+  if (!fileUrl) return;
+
+  const resolvedUrl = resolveWorkspaceFileUrl(fileUrl);
+  if (!resolvedUrl) return;
+
+  const anchor = document.createElement("a");
+  anchor.style.display = "none";
+  anchor.href = resolvedUrl;
+  anchor.download = fileName || "download";
+
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+};
 
 /* =====================================================
    📦 WORKSPACE API
@@ -51,9 +102,6 @@ export const confirmWorkspaceForm = (bookingId) => {
  */
 export const uploadWorkspaceFile = (formData, onUploadProgress) => {
   return axios.post(`/workspace/upload-file`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
     onUploadProgress,
   });
 };

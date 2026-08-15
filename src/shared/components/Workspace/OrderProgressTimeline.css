@@ -1,0 +1,474 @@
+/* ==========================================================================
+   G9Expert Order Progress Timeline CSS
+   Semantic Color System:
+   - Initial Stage (Order Placed): G9Expert Purple (#6B46C1, #FAF5FF, #553C9A)
+   - Active Workflow Stages: Amber (#F59E0B, #FFFBEB, #B45309)
+   - Final Completion Stage: Green (#10B981, #ECFDF5, #047857)
+   - Upcoming Stages: Neutral Grey (#94A3B8, #E2E8F0)
+   - Connector Lines: Neutral Light Grey (#E2E8F0)
+   - Error / Cancelled Stage: Red (#EF4444, #FEF2F2, #B91C1C) ONLY
+   ========================================================================== */
+
+.opt-container {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 1. CURRENT STATUS BANNER */
+.opt-status-banner {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid #fde68a;
+  border-radius: 14px;
+  padding: 1rem 1.15rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  box-shadow: 0 2px 6px rgba(107, 70, 193, 0.06);
+}
+
+.opt-status-banner.state-initial {
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  border-color: #e9d5ff;
+}
+
+.opt-status-banner.state-action-required {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-color: #fde68a;
+}
+
+.opt-status-banner.state-delivered {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-color: #fde68a;
+}
+
+.opt-status-banner.state-completed {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-color: #bbf7d0;
+}
+
+.opt-status-banner.state-cancelled {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-color: #fecaca;
+}
+
+.opt-banner-header-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #6b46c1;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 0.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.state-action-required .opt-banner-header-label,
+.state-delivered .opt-banner-header-label {
+  color: #b45309;
+}
+
+.state-completed .opt-banner-header-label {
+  color: #15803d;
+}
+
+.state-cancelled .opt-banner-header-label {
+  color: #b91c1c;
+}
+
+.opt-banner-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.opt-banner-desc {
+  font-size: 0.84rem;
+  color: #475569;
+  margin: 0.25rem 0 0 0;
+  line-height: 1.45;
+}
+
+.opt-badge-pill {
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+.opt-badge-purple {
+  background: #6b46c1;
+  color: #ffffff;
+}
+
+.opt-badge-amber {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+.opt-badge-green {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.opt-badge-red {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+/* 2. COMPACT VERTICAL ORDER TIMELINE */
+.opt-timeline-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.opt-timeline-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.opt-timeline-list {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+}
+
+.opt-step-item {
+  display: flex;
+  gap: 0.85rem;
+  position: relative;
+  padding-bottom: 1.25rem;
+  box-sizing: border-box;
+}
+
+.opt-step-item:last-child {
+  padding-bottom: 0;
+}
+
+/* NEUTRAL CONNECTOR LINE */
+.opt-step-connector {
+  position: absolute;
+  left: 13px;
+  top: 28px;
+  bottom: 0;
+  width: 2px;
+  background-color: #e2e8f0;
+  z-index: 1;
+}
+
+/* INDICATOR BADGES */
+.opt-step-indicator {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  z-index: 2;
+  box-sizing: border-box;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+/* STEP 1: G9EXPERT PURPLE INITIAL STAGE (NORMAL ORDER PLACED) */
+.opt-step-item.is-initial-step .opt-step-indicator {
+  background: #faf5ff;
+  color: #6b46c1;
+  border: 2px solid #6b46c1;
+}
+
+.opt-step-item.is-initial-step.is-current .opt-step-indicator {
+  background: #6b46c1;
+  color: #ffffff;
+  border: 2px solid #6b46c1;
+  box-shadow: 0 0 0 4px rgba(107, 70, 193, 0.2);
+}
+
+/* WORKFLOW STEPS: AMBER OPERATIONAL INDICATOR */
+.opt-step-item.is-amber-step .opt-step-indicator {
+  background: #fffbeb;
+  color: #f59e0b;
+  border: 2px solid #f59e0b;
+}
+
+.opt-step-item.is-amber-step.is-current .opt-step-indicator {
+  background: #f59e0b;
+  color: #ffffff;
+  border: 2px solid #f59e0b;
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+}
+
+/* FINAL STEP: GREEN SUCCESS INDICATOR (ONLY WHEN COMPLETED) */
+.opt-step-item.is-completed-step .opt-step-indicator {
+  background: #ecfdf5;
+  color: #10b981;
+  border: 2px solid #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+}
+
+/* UPCOMING STEPS: GREY HOLLOW CIRCLE */
+.opt-step-item.is-upcoming .opt-step-indicator {
+  background: #ffffff;
+  color: #94a3b8;
+  border: 2px solid #cbd5e1;
+}
+
+/* STEP CONTENT BODY */
+.opt-step-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+/* STEP HEADER & BADGES */
+.opt-step-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.opt-step-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  margin: 0;
+  color: #334155;
+  line-height: 1.3;
+}
+
+.opt-step-item.is-initial-step .opt-step-title {
+  color: #553c9a;
+}
+
+.opt-step-item.is-amber-step .opt-step-title {
+  color: #b45309;
+}
+
+.opt-step-item.is-completed-step .opt-step-title {
+  color: #047857;
+  font-weight: 800;
+}
+
+.opt-step-item.is-upcoming .opt-step-title {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.opt-stage-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.opt-badge-purple-soft {
+  background: #faf5ff;
+  color: #6b46c1;
+  border: 1px solid #d8b4fe;
+}
+
+.opt-badge-amber-soft {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.opt-badge-green-soft {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+/* CURRENT STEP HIGHLIGHT CARD */
+.opt-step-card {
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem;
+  margin-top: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  transition: all 0.2s ease;
+}
+
+.opt-step-item.is-initial-step.is-current .opt-step-card {
+  background: #faf5ff;
+  border: 1.5px solid #d8b4fe;
+}
+
+.opt-step-item.is-amber-step.is-current .opt-step-card {
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.08);
+}
+
+.opt-step-item.is-completed-step.is-current .opt-step-card {
+  background: #ecfdf5;
+  border: 1.5px solid #a7f3d0;
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.08);
+}
+
+.opt-step-subtext {
+  font-size: 0.82rem;
+  color: #475569;
+  line-height: 1.45;
+  margin: 0;
+  word-break: break-word;
+}
+
+.opt-step-item.is-initial-step .opt-step-subtext {
+  color: #553c9a;
+}
+
+.opt-step-item.is-amber-step .opt-step-subtext {
+  color: #b45309;
+}
+
+.opt-step-item.is-completed-step .opt-step-subtext {
+  color: #047857;
+}
+
+.opt-step-item.is-upcoming .opt-step-subtext {
+  color: #94a3b8;
+}
+
+/* ACTION BUTTONS */
+.opt-action-bar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+.opt-btn-action {
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.opt-btn-action:active {
+  transform: scale(0.97);
+}
+
+.opt-btn-orange {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+.opt-btn-amber {
+  background: #d97706;
+  color: #ffffff;
+}
+
+.opt-btn-green {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.opt-btn-outline {
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+/* RESPONSIVE MEDIA QUERIES */
+@media (max-width: 768px) {
+  .opt-container {
+    padding: 0.9rem 0.75rem;
+    border-radius: 12px;
+    gap: 1rem;
+  }
+
+  .opt-status-banner {
+    padding: 0.85rem;
+    border-radius: 12px;
+  }
+
+  .opt-banner-title {
+    font-size: 1.05rem;
+  }
+
+  .opt-step-item {
+    padding-bottom: 1rem;
+  }
+
+  .opt-step-title {
+    font-size: 0.88rem;
+  }
+
+  .opt-step-card {
+    padding: 0.65rem 0.75rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .opt-container {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .opt-step-indicator {
+    width: 24px;
+    height: 24px;
+    font-size: 0.7rem;
+  }
+
+  .opt-step-connector {
+    left: 11px;
+    top: 24px;
+  }
+
+  .opt-step-item {
+    gap: 0.65rem;
+  }
+
+  .opt-banner-title {
+    font-size: 0.98rem;
+  }
+
+  .opt-btn-action {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.74rem;
+    width: 100%;
+    justify-content: center;
+  }
+}

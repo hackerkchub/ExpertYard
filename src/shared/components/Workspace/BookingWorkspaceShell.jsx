@@ -1,266 +1,700 @@
-import React, { useState, useEffect } from "react";
-import "./Workspace.css";
-import APP_CONFIG from "../../../config/appConfig";
-import OverviewTab from "./tabs/OverviewTab";
-import TimelineTab from "./tabs/TimelineTab";
-import DiscussionTab from "./tabs/DiscussionTab";
-import DocumentsTab from "./tabs/DocumentsTab";
-import ChecklistTab from "./tabs/ChecklistTab";
-import DeliveryTab from "./tabs/DeliveryTab";
-import InvoiceTab from "./tabs/InvoiceTab";
-import ReviewTab from "./tabs/ReviewTab";
+import React, { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  FiArrowLeft,
+  FiCheckCircle,
+  FiFileText,
+  FiFolder,
+  FiClock,
+  FiMessageSquare,
+  FiPhone,
+  FiUploadCloud,
+  FiAlertTriangle,
+  FiRefreshCw,
+  FiDownload,
+  FiUserCheck,
+  FiShield,
+  FiDollarSign,
+  FiX
+} from "react-icons/fi";
+import OrderProgressTimeline from "./OrderProgressTimeline";
 import {
   getWorkspace,
+  uploadWorkspaceFile,
+  uploadWorkspaceDocument,
+  acceptWorkspaceDelivery,
+  confirmWorkspaceForm,
   updateWorkspaceStep,
+  resolveWorkspaceFileUrl,
+  downloadWorkspaceFile
 } from "../../api/workspace.api";
+import "./Workspace.css";
 
-export default function BookingWorkspaceShell({ bookingId, currentUserRole = "user" }) {
-  const [activeTab, setActiveTab] = useState("overview");
-  const [workspaceData, setWorkspaceData] = useState(null);
+export default function BookingWorkspaceShell() {
+  const { bookingId } = useParams();
+  const navigate = useNavigate();
+
+  // State Management
+  const [workspace, setWorkspace] = useState(null);
+  const [snapshot, setSnapshot] = useState(null);
+  const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
-  // ⭐⭐⭐ UPDATED: fetchWorkspace using workspace.api ⭐⭐⭐
-  const fetchWorkspace = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  // Modal / Action State
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [docFile, setDocFile] = useState(null);
+  const [docLabel, setDocLabel] = useState("");
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [acceptingDelivery, setAcceptingDelivery] = useState(false);
+  const [confirmingForm, setConfirmingForm] = useState(false);
 
-      console.log("🔍 [WORKSPACE] Loading:", bookingId);
+  // User Role
+  const userRaw = localStorage.getItem("user") || localStorage.getItem("userData");
+  let currentUserRole = "user";
+  try {
+    const parsedUser = JSON.parse(userRaw);
+    if (parsedUser?.role) currentUserRole = parsedUser.role.toLowerCase();
+  } catch (e) {}
 
-      const response = await getWorkspace(bookingId);
-
-      console.log("✅ [WORKSPACE] Response:", response.data);
-
-      if (response.data.success) {
-        setWorkspaceData(response.data.data);
-        setError(null);
-      } else {
-        setError(response.data.message || "Failed to load workspace.");
-      }
-
-    } catch (err) {
-
-      console.error("🚨 Workspace Error:", err);
-
-      setError(
-        err?.response?.data?.message ||
-        err?.message ||
-        "Network error loading workspace."
-      );
-
-    } finally {
-      setLoading(false);
-    }
+  // Token Resolver helper
+  const getAuthToken = () => {
+    return (
+      localStorage.getItem("user_token") ||
+      localStorage.getItem("token") ||
+      localStorage.getItem("userToken") ||
+      localStorage.getItem("expert_token") ||
+      localStorage.getItem("admin_token") ||
+      ""
+    );
   };
 
-  // ⭐⭐⭐ UPDATED: handleStepOverride using workspace.api ⭐⭐⭐
-  const handleStepOverride = async (targetStepKey) => {
+  // Fetch Complete Workspace State
+  const fetchWorkspace = useCallback(async () => {
+    if (!bookingId) return;
     try {
+      setRefreshing(true);
+      setError("");
+      const res = await getWorkspace(bookingId);
+      if (res.data?.success) {
+        setWorkspace(res.data.data.workspace);
+        setSnapshot(res.data.data.snapshot);
+        setDocuments(res.data.data.documents || []);
+      } else {
+        setError(res.data?.message || "Failed to load workspace details.");
+      }
+    } catch (err) {
+      setError(err?.response?.data?.message || err?.message || "Error fetching workspace.");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [bookingId]);
 
-      const response = await updateWorkspaceStep(
-        bookingId,
-        targetStepKey
-      );
+  useEffect(() => {
+    fetchWorkspace();
+  }, [fetchWorkspace]);
 
-      if (response.data.success) {
+  // Handle Admin Step Override
+  const handleStepOverride = async (targetStepKey) => {
+    if (!window.confirm(`Are you sure you want to transition order to ${targetStepKey}?`)) return;
+    try {
+      const response = await updateWorkspaceStep(bookingId, targetStepKey);
+      if (response.data?.success) {
         fetchWorkspace();
       } else {
         alert(response.data.message || "Failed to override step.");
       }
-
     } catch (err) {
-
-      alert(
-        err?.response?.data?.message ||
-        err?.message ||
-        "Error overriding step."
-      );
-
+      alert(err?.response?.data?.message || err?.message || "Error overriding step.");
     }
   };
 
-  useEffect(() => {
-    if (bookingId) {
+  // Handle Client Document Upload
+  const handleUploadDocumentSubmit = async (e) => {
+    e.preventDefault();
+    if (!docFile) return alert("Please select a file to upload.");
+    try {
+      setUploadingDoc(true);
+      const formData = new FormData();
+      formData.append("file", docFile);
+
+      // Upload file via workspace API endpoint helper (uses APP_CONFIG.API_BASE_URL)
+      const fileRes = await uploadWorkspaceFile(formData);
+      const fileData = fileRes.data;
+
+      if (!fileData.success) throw new Error(fileData.message || "File upload failed.");
+
+      // Attach document metadata to workspace
+      const docPayload = {
+        doc_type_key: "CLIENT_DOCUMENT",
+        file_name: docFile.name,
+        file_url: fileData.data?.file_url || fileData.file_url,
+        file_size: docFile.size
+      };
+
+      await uploadWorkspaceDocument(bookingId, docPayload);
+      alert("Document uploaded successfully!");
+      setShowUploadModal(false);
+      setDocFile(null);
+      setDocLabel("");
       fetchWorkspace();
-    } else {
-      console.warn("⚠️ [DIAGNOSTIC] bookingId is", bookingId, "- Fetch skipped!");
+    } catch (err) {
+      alert(err.message || "Failed to upload document.");
+    } finally {
+      setUploadingDoc(false);
     }
-  }, [bookingId]);
+  };
+
+  // Handle Delivery Acceptance
+  const handleAcceptDelivery = async () => {
+    if (!window.confirm("Are you sure you want to accept the delivery and complete this order?")) return;
+    try {
+      setAcceptingDelivery(true);
+      const res = await acceptWorkspaceDelivery(bookingId);
+      if (res.data?.success) {
+        alert("Delivery accepted! Order is now COMPLETED.");
+        fetchWorkspace();
+      } else {
+        alert(res.data?.message || "Failed to accept delivery.");
+      }
+    } catch (err) {
+      alert(err?.response?.data?.message || err?.message || "Error accepting delivery.");
+    } finally {
+      setAcceptingDelivery(false);
+    }
+  };
+
+  // Handle Form Confirmation
+  const handleConfirmFormDetails = async () => {
+    try {
+      setConfirmingForm(true);
+      const res = await confirmWorkspaceForm(bookingId);
+      if (res.data?.success) {
+        alert("Requirements confirmed!");
+        fetchWorkspace();
+      } else {
+        alert(res.data?.message || "Failed to confirm requirements.");
+      }
+    } catch (err) {
+      alert(err?.response?.data?.message || err?.message || "Error confirming requirements.");
+    } finally {
+      setConfirmingForm(false);
+    }
+  };
+
+  // Action Dispatcher for Timeline Buttons
+  const handleTimelineAction = (actionType) => {
+    if (actionType === "upload_document") {
+      setShowUploadModal(true);
+    } else if (actionType === "chat") {
+      const expId = snapshot?.expert?.expert_id || workspace?.expert_id;
+      if (expId) navigate(`/user/chat?expert_id=${expId}`);
+      else alert("Expert assignment in progress.");
+    } else if (actionType === "call") {
+      const expId = snapshot?.expert?.expert_id || workspace?.expert_id;
+      if (expId) navigate(`/user/voice-call/${expId}`);
+      else alert("Expert assignment in progress.");
+    } else if (actionType === "view_delivery") {
+      const el = document.getElementById("canvas-delivery-section");
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   if (loading) {
     return (
-      <div className="workspace-skeleton">
-        <div className="skeleton-header"></div>
-        <div className="skeleton-tabs"></div>
-        <div className="skeleton-content"></div>
+      <div className="canvas-workspace-container" style={{ minHeight: "80vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ textAlign: "center" }}>
+          <div className="canvas-spin" style={{ width: 44, height: 44, border: "4px solid #e2e8f0", borderTopColor: "#6b46c1", borderRadius: "50%", margin: "0 auto 1rem" }} />
+          <p style={{ color: "#64748b", fontWeight: 700 }}>Loading Order Workspace Canvas...</p>
+        </div>
       </div>
     );
   }
 
-  if (error || !workspaceData) {
+  if (error || !workspace) {
     return (
-      <div className="workspace-error-card" style={{ padding: "2rem", textAlign: "center", background: "#fff", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", margin: "2rem auto", maxWidth: "600px" }}>
-        <h3 style={{ color: "#ef4444", marginBottom: "0.5rem" }}>Workspace Unavailable</h3>
-        <p style={{ color: "#64748b", marginBottom: "1.5rem" }}>{error || "Unable to retrieve workspace data."}</p>
-        <button onClick={fetchWorkspace} className="btn-reload" style={{ padding: "0.5rem 1.25rem", background: "#2563eb", color: "#fff", border: "none", borderRadius: "6px", fontWeight: "700", cursor: "pointer" }}>Retry</button>
+      <div className="canvas-workspace-container" style={{ maxWidth: 640, margin: "3rem auto", padding: "2rem", background: "#fff", borderRadius: 16, border: "1px solid #fecaca", textAlign: "center" }}>
+        <FiAlertTriangle size={36} color="#ef4444" style={{ marginBottom: "0.5rem" }} />
+        <h3 style={{ color: "#b91c1c", margin: "0 0 0.5rem" }}>Order Workspace Unavailable</h3>
+        <p style={{ color: "#64748b", marginBottom: "1.5rem" }}>{error || "Booking record not found."}</p>
+        <button onClick={() => navigate(-1)} style={{ padding: "0.6rem 1.25rem", background: "#6b46c1", color: "#fff", border: 0, borderRadius: 8, fontWeight: 700, cursor: "pointer" }}>
+          ← Return to Dashboard
+        </button>
       </div>
     );
   }
 
-  const { workspace, snapshot, timeline, documents, current_permissions } = workspaceData;
+  // Derive State Flags & Data
+  const currentStepKey = String(workspace?.current_step_key || "SUBMITTED").toUpperCase();
+  const bookingStatus = String(workspace?.booking_status || workspace?.status || "").toUpperCase();
+  const isCompleted = currentStepKey === "COMPLETED" || bookingStatus === "COMPLETED";
+  const isCancelled = currentStepKey === "CANCELLED" || bookingStatus === "CANCELLED";
 
-  const clientDocuments = (documents || []).filter((d) => {
-    const role = String(d.uploaded_by_role || "").trim().toUpperCase();
-    const docType = String(d.doc_type_key || "").trim().toUpperCase();
-    return role !== "EXPERT" && role !== "ADMIN" && docType !== "FINAL_DELIVERABLE" && docType !== "DELIVERY" && !docType.includes("DELIVER");
-  });
-  const deliverableDocuments = (documents || []).filter((d) => {
-    const role = String(d.uploaded_by_role || "").trim().toUpperCase();
-    const docType = String(d.doc_type_key || "").trim().toUpperCase();
-    return role === "EXPERT" || role === "ADMIN" || docType === "FINAL_DELIVERABLE" || docType === "DELIVERY" || docType.includes("DELIVER");
-  });
+  // Communication Availability Rule: ONLY Active orders!
+  const canContactExpert = !isCompleted && !isCancelled;
 
-  const tabs = [
-    { id: "overview", label: "Overview" },
-    { id: "timeline", label: `Timeline (${timeline?.length || 0})` },
-    { id: "discussion", label: "Discussion (Free)" },
-    { id: "documents", label: `Documents (${clientDocuments.length})` },
-    { id: "checklist", label: "Checklist" },
-    { id: "delivery", label: `Delivery (${deliverableDocuments.length})` },
-    { id: "invoice", label: "Invoice" },
-    { id: "review", label: "Review" },
-  ];
+  // Filter Document lists
+  const rejectedDocs = documents.filter((d) => String(d.status).toUpperCase() === "REJECTED");
+  const expertFiles = documents.filter((d) => String(d.doc_type_key).toUpperCase() === "EXPERT_DELIVERY" || String(d.uploaded_by_role).toUpperCase() === "EXPERT");
+  const userDocs = documents.filter((d) => String(d.uploaded_by_role).toUpperCase() !== "EXPERT" && String(d.doc_type_key).toUpperCase() !== "EXPERT_DELIVERY");
+
+  // Action Required State
+  const isActionRequired = (rejectedDocs.length > 0 || workspace?.expert_status_request === "CANCELLED_REQUESTED" || workspace?.action_required === true) && !isCompleted && !isCancelled;
+
+  // Metadata Snapshot Details
+  const expertInfo = snapshot?.expert || {};
+  const masterServiceInfo = snapshot?.master_service || {};
+  const financial = snapshot?.financial || {};
+
+  const effectiveBaseAmount = Number(
+    financial?.effective_base_amount ?? financial?.base_amount ?? 0
+  );
+
+  const gstAmount = Number(financial?.gst_amount ?? 0);
+
+  const totalAmount = Number(
+    financial?.total_amount ?? workspace?.amount ?? 0
+  );
+
+  const formatCurrency = (value) => {
+    const amount = Number(value);
+
+    if (!Number.isFinite(amount)) {
+      return "₹0.00";
+    }
+
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
 
   return (
-    <div className="workspace-shell">
-      {/* Admin Supervisory Banner */}
-      {currentUserRole === "admin" && (
-        <div style={{ background: "#1e293b", color: "#fff", padding: "0.75rem 1.25rem", borderRadius: "10px 10px 0 0", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <span style={{ fontSize: "1.1rem" }}>🛡️</span>
-            <span style={{ fontWeight: "700", fontSize: "0.9rem" }}>ADMIN SUPERVISORY CONTROL — Booking #{bookingId}</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <span style={{ fontSize: "0.8rem", color: "#cbd5e1" }}>Override Step:</span>
-            <select
-              value={workspace?.current_step_key || "SUBMITTED"}
-              onChange={(e) => handleStepOverride(e.target.value)}
-              style={{ padding: "0.35rem 0.65rem", borderRadius: "6px", border: "none", background: "#334155", color: "#fff", fontWeight: "700", fontSize: "0.85rem", cursor: "pointer" }}
-            >
-              <option value="SUBMITTED">1. SUBMITTED</option>
-              <option value="EXPERT_ASSIGNED">2. EXPERT_ASSIGNED</option>
-              <option value="IN_REVIEW">3. IN_REVIEW</option>
-              <option value="DELIVERED">4. DELIVERED</option>
-              <option value="COMPLETED">5. COMPLETED</option>
-              <option value="CANCELLED">CANCELLED</option>
-            </select>
+    <div className="canvas-workspace-container">
+      
+      {/* 1. ORDER WORKSPACE HEADER BAR */}
+      <div className="canvas-header-card">
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            style={{ background: "#f1f5f9", border: 0, width: 36, height: 36, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#334155" }}
+            title="Back"
+          >
+            <FiArrowLeft size={18} />
+          </button>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 800, color: "#6b46c1", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              Order Workspace • Booking #{workspace.booking_id || workspace.id}
+            </div>
+            <h1 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 800, color: "#0f172a" }}>
+              {masterServiceInfo.title || workspace.service_title || "Service Fulfilling Order"}
+            </h1>
           </div>
         </div>
-      )}
 
-      {/* Top Workspace Header */}
-      <div className="workspace-header">
-        <div className="header-meta">
-          <span className="booking-badge">Booking #{bookingId}</span>
-          <h2 className="service-title">{snapshot?.service_meta?.title || workspace?.master_service_title || "Digital Service Execution"}</h2>
-          <span className={`status-pill status-${(workspace?.current_step_key || 'submitted').toLowerCase()}`}>
-            Status: {workspace?.current_step_key || "SUBMITTED"}
-          </span>
-        </div>
-        <div className="header-action">
-          <button className="btn-refresh" onClick={fetchWorkspace}>↻ Refresh</button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          {/* <button
+            type="button"
+            onClick={fetchWorkspace}
+            disabled={refreshing}
+            style={{ background: "#f8fafc", border: "1px solid #cbd5e1", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 700, color: "#334155", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
+          >
+            <FiRefreshCw size={13} className={refreshing ? "canvas-spin" : ""} /> Refresh
+          </button> */}
+
+          {currentUserRole === "admin" && (
+            <select
+              value={currentStepKey}
+              onChange={(e) => handleStepOverride(e.target.value)}
+              style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #6b46c1", background: "#faf5ff", color: "#553c9a", fontSize: 12, fontWeight: 800, cursor: "pointer" }}
+            >
+              <option value="SUBMITTED">Admin: Set SUBMITTED</option>
+              <option value="DOCUMENTS">Admin: Set DOCUMENTS</option>
+              <option value="EXPERT_ASSIGNED">Admin: Set EXPERT_ASSIGNED</option>
+              <option value="IN_REVIEW">Admin: Set IN_REVIEW</option>
+              <option value="DELIVERED">Admin: Set DELIVERED</option>
+              <option value="COMPLETED">Admin: Set COMPLETED</option>
+              <option value="CANCELLED">Admin: Set CANCELLED</option>
+            </select>
+          )}
         </div>
       </div>
 
-      {workspace?.expert_status_request && (
-        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-          <div>
-            <strong style={{ color: '#92400e', fontSize: '0.9rem', display: 'block' }}>
-              {workspace.expert_status_request === "COMPLETED_REQUESTED"
-                ? "🏆 Pending Admin Completion Approval"
-                : "🚫 Pending Admin Cancellation Approval"}
-            </strong>
-            {workspace.expert_request_notes && (
-              <span style={{ color: '#b45309', fontSize: '0.85rem' }}>
-                Expert Notes: "{workspace.expert_request_notes}"
-              </span>
+      {/* 2. SINGLE CONTINUOUS CANVAS GRID (65% PRIMARY COLUMN / 35% SIDEBAR) */}
+      <div className="canvas-workspace-grid">
+        
+        {/* =========================================================================
+           PRIMARY CANVAS COLUMN (LEFT)
+           ========================================================================= */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+          
+          {/* COMPLETE ORDER PROGRESS JOURNEY */}
+          <OrderProgressTimeline
+            workspace={workspace}
+            snapshot={snapshot}
+            documents={documents}
+            currentUserRole={currentUserRole}
+            onActionClick={handleTimelineAction}
+          />
+
+          {/* ACTION REQUIRED BANNER CARD (IF APPLICABLE) */}
+          {isActionRequired && (
+            <div className="canvas-card" style={{ background: "#fffbeb", border: "1.5px solid #fde68a" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                <FiAlertTriangle size={22} color="#b45309" style={{ marginTop: 2, flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <h4 style={{ margin: 0, color: "#92400e", fontSize: "1rem", fontWeight: 800 }}>
+                    Action Required from Client
+                  </h4>
+                  <p style={{ margin: "4px 0 10px", color: "#78350f", fontSize: "0.86rem", lineHeight: 1.45 }}>
+                    {rejectedDocs.length > 0
+                      ? `Your expert rejected ${rejectedDocs.length} document(s). Please review the feedback and re-upload valid files.`
+                      : "Action is required to proceed with service fulfillment."}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowUploadModal(true)}
+                    style={{ background: "#f59e0b", color: "#fff", border: 0, padding: "8px 16px", borderRadius: 8, fontWeight: 800, fontSize: 13, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}
+                  >
+                    <FiUploadCloud size={14} /> Upload Required Documents
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* FILES RECEIVED FROM EXPERT CARD */}
+          {expertFiles.length > 0 && (
+            <div className="canvas-card">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.75rem" }}>
+                <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#0f172a", display: "flex", alignItems: "center", gap: 6 }}>
+                  <FiFolder color="#6b46c1" /> Files Received from Expert ({expertFiles.length})
+                </h3>
+                <span style={{ fontSize: 11, fontWeight: 800, color: "#047857", background: "#ecfdf5", padding: "2px 8px", borderRadius: 10 }}>
+                  ✓ Deliverables
+                </span>
+              </div>
+
+              <div style={{ display: "grid", gap: 8, marginTop: "0.5rem" }}>
+                {expertFiles.map((file, idx) => (
+                  <div
+                    key={file.id || idx}
+                    style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>📄 {file.file_name || "Deliverable File"}</div>
+                      <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
+                        Uploaded by Expert • {file.created_at ? new Date(file.created_at).toLocaleDateString() : "Recent"}
+                      </div>
+                    </div>
+
+                    {file.file_url && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <a
+                          href={resolveWorkspaceFileUrl(file.file_url)}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ fontSize: 12, color: "#6b46c1", fontWeight: 700, textDecoration: "none" }}
+                        >
+                          View
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => downloadWorkspaceFile(file.file_url, file.file_name || "deliverable")}
+                          style={{ padding: "6px 12px", background: "#6b46c1", color: "#fff", borderRadius: 6, fontSize: 12, fontWeight: 700, border: 0, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 }}
+                        >
+                          <FiDownload size={13} /> Download
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* SUBMITTED CLIENT DOCUMENTS CARD */}
+          <div className="canvas-card">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.75rem" }}>
+              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#0f172a", display: "flex", alignItems: "center", gap: 6 }}>
+                <FiFileText color="#6b46c1" /> Your Submitted Documents ({userDocs.length})
+              </h3>
+              {!isCompleted && !isCancelled && (
+                <button
+                  type="button"
+                  onClick={() => setShowUploadModal(true)}
+                  style={{ background: "#faf5ff", color: "#6b46c1", border: "1px solid #d8b4fe", borderRadius: 8, padding: "5px 12px", fontSize: 12, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
+                >
+                  <FiUploadCloud size={13} /> Upload Document
+                </button>
+              )}
+            </div>
+
+            {userDocs.length === 0 ? (
+              <div style={{ padding: "1.25rem", textAlign: "center", color: "#64748b", fontSize: 13, background: "#f8fafc", borderRadius: 10 }}>
+                No custom client documents uploaded yet.
+              </div>
+            ) : (
+              <div style={{ display: "grid", gap: 8, marginTop: "0.5rem" }}>
+                {userDocs.map((doc, idx) => {
+                  const docStatus = String(doc.status || "APPROVED").toUpperCase();
+                  const isRejected = docStatus === "REJECTED";
+
+                  return (
+                    <div
+                      key={doc.id || idx}
+                      style={{
+                        background: isRejected ? "#fef2f2" : "#f8fafc",
+                        border: isRejected ? "1px solid #fecaca" : "1px solid #e2e8f0",
+                        borderRadius: 10,
+                        padding: "10px 12px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                        gap: 8
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: isRejected ? "#b91c1c" : "#0f172a" }}>
+                          📄 {doc.file_name || doc.label || "Document"}
+                        </div>
+                        {isRejected && doc.rejection_reason && (
+                          <div style={{ fontSize: 11, color: "#dc2626", marginTop: 2, fontWeight: 600 }}>
+                            Reason: {doc.rejection_reason}
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{
+                          fontSize: 10,
+                          fontWeight: 800,
+                          padding: "2px 7px",
+                          borderRadius: 8,
+                          background: isRejected ? "#fee2e2" : "#dcfce7",
+                          color: isRejected ? "#b91c1c" : "#15803d"
+                        }}>
+                          {isRejected ? "REJECTED" : "ACCEPTED"}
+                        </span>
+                        {doc.file_url && (
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <a
+                              href={resolveWorkspaceFileUrl(doc.file_url)}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ fontSize: 12, color: "#6b46c1", fontWeight: 700, textDecoration: "none" }}
+                            >
+                              View
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => downloadWorkspaceFile(doc.file_url, doc.file_name || doc.label || "document")}
+                              style={{ padding: "4px 10px", background: "#faf5ff", color: "#6b46c1", border: "1px solid #d8b4fe", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 }}
+                            >
+                              <FiDownload size={12} /> Download
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
-          {currentUserRole === "admin" && (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                onClick={() => handleStepOverride(workspace.expert_status_request === "COMPLETED_REQUESTED" ? "COMPLETED" : "CANCELLED")}
-                style={{ padding: '0.4rem 0.85rem', background: '#059669', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer' }}
-              >
-                Approve & Update Status
-              </button>
+
+          {/* FINAL SERVICE DELIVERY CONTAINER */}
+          {currentStepKey === "DELIVERED" && !isCompleted && (
+            <div id="canvas-delivery-section" className="canvas-card" style={{ background: "#faf5ff", border: "1.5px solid #d8b4fe" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #e9d5ff", paddingBottom: "0.75rem" }}>
+                <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#553c9a" }}>
+                  🎁 Service Delivered — Ready for Your Review
+                </h3>
+                <span style={{ fontSize: 11, fontWeight: 800, color: "#b45309", background: "#fffbeb", padding: "2px 8px", borderRadius: 10 }}>
+                  Review Required
+                </span>
+              </div>
+
+              <p style={{ margin: "0.5rem 0", fontSize: "0.88rem", color: "#553c9a", lineHeight: 1.45 }}>
+                Your expert has uploaded the final service deliverables. Please inspect the files and accept delivery to complete your order.
+              </p>
+
+              <div style={{ display: "flex", gap: 10, marginTop: "0.5rem" }}>
+                <button
+                  type="button"
+                  onClick={handleAcceptDelivery}
+                  disabled={acceptingDelivery}
+                  style={{ background: "#10b981", color: "#fff", border: 0, padding: "10px 20px", borderRadius: 8, fontWeight: 800, fontSize: 14, cursor: "pointer" }}
+                >
+                  {acceptingDelivery ? "Processing Acceptance..." : "✓ Accept Delivery & Complete Order"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* CLIENT REQUIREMENT ANSWERS GRID */}
+          {workspace.form_responses && Object.keys(workspace.form_responses).length > 0 && (
+            <div className="canvas-card">
+              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#0f172a", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.75rem" }}>
+                📝 Requirement Form Responses
+              </h3>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: "0.5rem" }}>
+                {Object.entries(workspace.form_responses).map(([k, v]) => (
+                  <div key={k} style={{ background: "#f8fafc", padding: "8px 12px", borderRadius: 8, border: "1px solid #e2e8f0" }}>
+                    <div style={{ fontSize: 11, color: "#64748b", textTransform: "uppercase", fontWeight: 700 }}>{k.replace(/_/g, " ")}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", marginTop: 2, wordBreak: "break-word" }}>
+                      {String(v || "N/A")}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
+
+        {/* =========================================================================
+           SIDEBAR CANVAS COLUMN (RIGHT)
+           ========================================================================= */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+          
+          {/* ASSIGNED EXPERT CARD */}
+          <div className="canvas-card">
+            <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#0f172a", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.75rem" }}>
+              Assigned Expert
+            </h3>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: "0.25rem" }}>
+              <div style={{
+                width: 48,
+                height: 48,
+                borderRadius: "50%",
+                background: "#6b46c1",
+                color: "#fff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: 800,
+                fontSize: "1.1rem",
+                flexShrink: 0
+              }}>
+                {(expertInfo.expert_name || workspace.expert_name || "E").slice(0, 2).toUpperCase()}
+              </div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontWeight: 800, fontSize: "0.98rem", color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {expertInfo.expert_name || workspace.expert_name || "Assigned Expert"}
+                </div>
+                <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
+                  {expertInfo.position || "Verified Platform Expert"}
+                </div>
+              </div>
+            </div>
+
+            {/* CALL + CHAT AVAILABILITY RULE: ONLY VISIBLE WHILE ORDER IS ACTIVE! */}
+            {canContactExpert && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: "0.5rem" }}>
+                <button
+                  type="button"
+                  onClick={() => handleTimelineAction("chat")}
+                  style={{ background: "#6b46c1", color: "#fff", border: 0, padding: "8px", borderRadius: 8, fontWeight: 800, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}
+                >
+                  <FiMessageSquare size={13} /> Chat
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleTimelineAction("call")}
+                  style={{ background: "#ffffff", color: "#334155", border: "1px solid #cbd5e1", padding: "8px", borderRadius: 8, fontWeight: 800, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}
+                >
+                  <FiPhone size={13} /> Call
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* PAYMENT & ORDER SUMMARY CARD */}
+          <div className="canvas-card">
+            <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#0f172a", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.75rem" }}>
+              Order & Payment Summary
+            </h3>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 13, marginTop: "0.25rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", color: "#475569" }}>
+                <span>Booking ID:</span>
+                <strong style={{ color: "#0f172a" }}>#{workspace.booking_id || workspace.id}</strong>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", color: "#475569" }}>
+                <span>Service Fee:</span>
+                <strong style={{ color: "#0f172a" }}>{formatCurrency(effectiveBaseAmount)}</strong>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", color: "#475569" }}>
+                <span>GST ({financial?.gst_rate_percent || 18}%):</span>
+                <strong style={{ color: "#0f172a" }}>{formatCurrency(gstAmount)}</strong>
+              </div>
+
+              <div style={{ borderTop: "1px dashed #cbd5e1", paddingTop: 6, display: "flex", justifyContent: "space-between", fontSize: 14, fontWeight: 900, color: "#0f172a" }}>
+                <span>Total Paid:</span>
+                <span style={{ color: "#10b981" }}>{formatCurrency(totalAmount)}</span>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", color: "#475569", paddingTop: 4 }}>
+                <span>Payment Status:</span>
+                <span style={{ color: "#047857", fontWeight: 800, background: "#ecfdf5", padding: "2px 6px", borderRadius: 6, fontSize: 11 }}>
+                  ✓ PAID (ESCROW)
+                </span>
+              </div>
+            </div>
+
+            <div style={{ background: "#f8fafc", borderRadius: 8, padding: 8, fontSize: 11, color: "#64748b", lineHeight: 1.4, marginTop: "0.5rem" }}>
+              🔒 Escrow Protection: Payment is safely held by G9Expert until final delivery approval.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* DOCUMENT UPLOAD MODAL */}
+      {showUploadModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: 16 }}>
+          <div style={{ background: "#fff", borderRadius: 16, maxWidth: 460, width: "100%", padding: "1.5rem", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+              <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#0f172a" }}>Upload Document</h3>
+              <button type="button" onClick={() => setShowUploadModal(false)} style={{ background: "none", border: 0, cursor: "pointer", color: "#64748b" }}>
+                <FiX size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUploadDocumentSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 700, color: "#334155", display: "block", marginBottom: 4 }}>Select File *</label>
+                <input
+                  type="file"
+                  required
+                  onChange={(e) => setDocFile(e.target.files[0])}
+                  style={{ width: "100%", fontSize: 13 }}
+                />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: "0.5rem" }}>
+                <button type="button" onClick={() => setShowUploadModal(false)} style={{ padding: "8px 14px", background: "#f1f5f9", border: 0, borderRadius: 8, fontWeight: 700, color: "#334155", cursor: "pointer" }}>
+                  Cancel
+                </button>
+                <button type="submit" disabled={uploadingDoc} style={{ padding: "8px 16px", background: "#6b46c1", color: "#fff", border: 0, borderRadius: 8, fontWeight: 800, cursor: "pointer" }}>
+                  {uploadingDoc ? "Uploading..." : "Upload Document"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
-      {/* 8-Tab Navigation Bar */}
-      <div className="workspace-nav">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            className={`nav-tab ${activeTab === tab.id ? "active" : ""}`}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Active Tab View Body */}
-      <div className="workspace-body">
-        {activeTab === "overview" && (
-          <OverviewTab workspace={workspace} snapshot={snapshot} role={currentUserRole} />
-        )}
-        {activeTab === "timeline" && (
-          <TimelineTab timeline={timeline} />
-        )}
-        {activeTab === "discussion" && (
-          <DiscussionTab
-            bookingId={bookingId}
-            workspace={workspace}
-            snapshot={snapshot}
-            permissions={current_permissions}
-            currentUserRole={currentUserRole}
-          />
-        )}
-        {activeTab === "documents" && (
-          <DocumentsTab
-            bookingId={bookingId}
-            documents={documents}
-            snapshot={snapshot}
-            permissions={current_permissions}
-            onRefresh={fetchWorkspace}
-            currentUserRole={currentUserRole}
-          />
-        )}
-        {activeTab === "checklist" && (
-          <ChecklistTab snapshot={snapshot} workspace={workspace} />
-        )}
-        {activeTab === "delivery" && (
-          <DeliveryTab
-            bookingId={bookingId}
-            workspace={workspace}
-            snapshot={snapshot}
-            documents={documents}
-            permissions={current_permissions}
-            onRefresh={fetchWorkspace}
-            currentUserRole={currentUserRole}
-          />
-        )}
-        {activeTab === "invoice" && (
-          <InvoiceTab snapshot={snapshot} workspace={workspace} />
-        )}
-        {activeTab === "review" && (
-          <ReviewTab bookingId={bookingId} workspace={workspace} snapshot={snapshot} />
-        )}
-      </div>
     </div>
   );
 }

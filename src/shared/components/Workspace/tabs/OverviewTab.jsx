@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { FiCheckCircle, FiClipboard, FiFileText, FiUser, FiPhone, FiInfo } from "react-icons/fi";
 import { confirmWorkspaceForm } from "../../../api/workspace.api";
 
-export default function OverviewTab({ workspace, snapshot, role }) {
+export default function OverviewTab({ workspace, snapshot, documents = [], role, onTabChange }) {
   const meta = snapshot?.service_meta || {};
   const fin = snapshot?.financial || {};
   const exp = snapshot?.expert || {};

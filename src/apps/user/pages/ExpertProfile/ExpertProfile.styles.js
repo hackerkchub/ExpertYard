@@ -1,3061 +1,841 @@
 import styled, { keyframes, css } from "styled-components";
 
 // Animations
-const fadeIn = keyframes`
-  from { opacity: 0; transform: translateY(10px); }
+export const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 `;
 
-const spin = keyframes`
+export const pulseRing = keyframes`
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 0.4; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+`;
+
+export const spin = keyframes`
   to { transform: rotate(360deg); }
 `;
 
 export const PageWrap = styled.div`
-  @import url('https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Rubik:wght@400;500;600;700;800&display=swap');
 
   width: 100%;
-  max-width: 1600px;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 24px clamp(20px, 2vw, 40px);
-  scroll-behavior: smooth;
-  overscroll-behavior-y: contain;
+  padding: 16px clamp(12px, 2vw, 24px);
   background: #f8fafc;
   min-height: 100vh;
-  font-family: "Rubik", "Poppins", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: #111827;
-  animation: ${fadeIn} 0.4s ease-out;
+  font-family: "Inter", "Rubik", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  color: #0f172a;
+  animation: ${fadeIn} 0.3s ease-out;
+  box-sizing: border-box;
 
-  *,
-  *::before,
-  *::after,
-  button,
-  input,
-  select,
-  textarea,
-  h1, h2, h3, h4, h5, h6, p, span, div, a, label {
-    font-family: "Rubik", "Poppins", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  *, *::before, *::after, button, input, select, textarea {
+    font-family: "Inter", "Rubik", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    box-sizing: border-box;
+  }
+
+  /* Custom scrollbar utility */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* Mobile container adjustments */
+  @media (max-width: 1023px) {
+    padding: 0 0 calc(90px + env(safe-area-inset-bottom, 0px)) 0 !important;
+    background: #ffffff !important;
+  }
+
+  /* Top sticky navigation header */
+  .profile-top-header-bar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid #f1f5f9;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .top-back-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .top-back-btn:active {
+    transform: scale(0.95);
+    background: #e2e8f0;
+  }
+
+  .top-header-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.2px;
+  }
+
+  .top-verified-icon {
+    color: #2563eb;
+    flex-shrink: 0;
+  }
+
+  .top-share-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .top-share-btn:active {
+    transform: scale(0.95);
+    background: #e2e8f0;
+  }
+
+  /* Desktop vs Mobile Layout Grid */
+  .profile-page-layout-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    width: 100%;
+    margin-top: 12px;
   }
 
   @media (min-width: 1024px) {
-    .expert-profile-content-grid {
-      display: grid;
-      grid-template-columns: 28% minmax(0, 1fr);
+    .profile-page-layout-grid {
+      grid-template-columns: minmax(0, 1fr) 360px;
       gap: 24px;
       align-items: start;
     }
   }
 
-  .expert-profile-content-grid {
-    display: grid;
-    grid-template-columns: 28% minmax(0, 1fr);
-    gap: 24px;
-    align-items: start;
-    width: 100%;
-    height: auto;
-  }
-
-  .expert-profile-sidebar {
-    position: relative;
-    align-self: start;
-    display: flex;
-    flex-direction: column;
-    gap: clamp(16px, 1.8vw, 24px);
-    min-width: 0;
-    width: 100%;
-    height: auto;
-
-    @media (min-width: 1024px) {
-      position: sticky;
-      top: 90px;
-    }
-  }
-
-  @media (max-width: 768px) {
-     .expert-profile-sidebar {
-        display: none !important;
-    }
-}
-
-  .expert-profile-main {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: clamp(16px, 1.8vw, 24px);
-    width: 100%;
-    height: auto;
-    align-self: start;
-    scroll-behavior: smooth;
-  }
-
-  .consult-card,
-  .about-me-card,
-  .profile-tabs-card,
-  .profile-reviews-card {
-    margin-bottom: 0;
-    height: auto;
-  }
-
-  .consult-options {
-    display: grid;
-    gap: 10px;
-  }
-
-  .consult-options .expert-profile-consult-video-btn {
-    width: 100% !important;
-    min-height: 56px !important;
-    justify-content: center !important;
-    border-radius: 18px !important;
-    padding: 10px 12px !important;
-    background: linear-gradient(135deg, #2563eb, #000080) !important;
-    color: #ffffff !important;
-    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.18) !important;
-    white-space: normal !important;
-    text-align: center !important;
-  }
-
-  .consult-option {
-    width: 100%;
-    display: grid;
-    grid-template-columns: 38px minmax(0, 1fr);
-    align-items: center;
-    gap: 10px;
-    min-height: 56px;
-    padding: 10px 12px;
-    border: 1px solid #e5e7eb;
-    border-radius: 18px;
-    background: #ffffff;
-    color: #111827;
-    font: inherit;
-    cursor: pointer;
-    text-align: left;
-    box-shadow: 0 10px 24px rgba(16, 24, 40, 0.06);
-    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
-  }
-
-  .consult-option svg {
-    width: 38px;
-    height: 38px;
-    padding: 10px;
-    border-radius: 14px;
-    color: #ffffff;
-    background: linear-gradient(135deg, #000080, #05044f);
-    box-sizing: border-box;
-  }
-
-  .consult-option span {
-    font-size: 14px;
-    font-weight: 900;
-    color: #000080;
-  }
-
-  .consult-option strong {
-    font-size: 14px;
-    color: #475467;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    min-width: 0;
-  }
-
-  .consult-call {
-    border-color: rgba(255, 193, 7, 0.55);
-    background: linear-gradient(135deg, #fff9e6, #ffffff);
-  }
-
-  .consult-call svg {
-    color: #000080;
-    background: linear-gradient(135deg, #ffd23f, #ffc107);
-  }
-
-  .consult-option:hover:not(:disabled) {
-    transform: translateY(-2px);
-    border-color: rgba(0, 0, 128, 0.22);
-    box-shadow: 0 16px 34px rgba(16, 24, 40, 0.11);
-  }
-
-  .consult-option:disabled {
-    cursor: not-allowed;
-    opacity: 0.72;
-  }
-
-  .mobile-profile-actions {
-    display: none;
-  }
-
-  .expert-profile-mobile-view {
-    display: none;
-  }
-
-  @media (max-width: 768px) {
-    min-height: auto;
-    width: 100%;
-    max-width: 100%;
-    padding: 0;
-    padding-bottom: 110px;
-    margin-bottom: 0;
-    overflow-x: hidden;
-    overflow-y: visible;
-    overscroll-behavior-y: auto;
-    -webkit-overflow-scrolling: touch;
-    animation: none;
-    background: #fff !important;
-
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-    }
-
-    .expert-profile-mobile-view {
-      display: flex !important;
-      flex-direction: column;
-      width: 100%;
-      background: #0f172a !important;
-      color: #ffffff;
-    }
-
-    .expert-profile-hero-inner {
-      display: none !important;
-    }
-
-    /* Mobile Card Dark Theme Overrides */
-    .profile-tabs-card,
-    .about-me-card,
-    .profile-reviews-card {
-      background: #ffffff !important;
-      border: 1px solid rgba(255, 255, 255, 0.08) !important;
-      border-radius: 20px !important;
-      color: #ffffff !important;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
-    }
-
-    .profile-tabs-card h1, .profile-tabs-card h2, .profile-tabs-card h3, .profile-tabs-card h4,
-    .about-me-card h1, .about-me-card h2, .about-me-card h3, .about-me-card h4,
-    .profile-reviews-card h1, .profile-reviews-card h2, .profile-reviews-card h3, .profile-reviews-card h4 {
-      color: #000000 !important;
-    }
-
-    /* Top Row Avatar & Info Share Button */
-    .mobile-share-btn-top {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: #ffffff;
-      color: #0f172a;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      margin-left: auto;
-      flex-shrink: 0;
-      transition: transform 0.2s;
-    }
-    .mobile-share-btn-top:active {
-      transform: scale(0.95);
-      background: #e2e8f0;
-    }
-
-    /* Body padding & layout */
-    .mobile-expert-body {
-      padding: 16px 18px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
-
-    /* Top Row Avatar & Info */
-    .mobile-profile-top-row {
-      display: flex;
-      align-items: center;
-      gap: 18px;
-    }
-
-    .mobile-avatar-wrap {
-      position: relative;
-      flex-shrink: 0;
-    }
-
-    .mobile-avatar-circle {
-      width: 84px;
-      height: 84px;
-      border-radius: 50%;
-      background: #fbbf24;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 4px solid #0f172a;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-      overflow: hidden;
-    }
-
-    .mobile-avatar-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .mobile-avatar-initial {
-      font-size: 32px;
-      font-weight: 900;
-      color: #0f172a;
-    }
-
-    .mobile-avatar-status-badge {
-      position: absolute;
-      bottom: 0;
-      right: 0;
-      width: 24px;
-      height: 24px;
-      background: #0f172a;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .mobile-status-dot {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      border: 2px solid #0f172a;
-    }
-    .mobile-status-dot.online {
-      background: #059669;
-    }
-    .mobile-status-dot.offline {
-      background: #64748b;
-    }
-
-    .mobile-profile-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .mobile-name-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 2px;
-    }
-
-    .mobile-expert-name {
-      margin: 0;
-      font-size: 24px;
-      font-weight: 700;
-      color: #ffffff;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      line-height: 1.1;
-    }
-
-    .mobile-expert-degree {
-      margin: 0 0 8px 0;
-      font-size: 14px;
-      color: #cbd5e1;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    /* Status Pill */
-    .mobile-status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 20px;
-    }
-    .mobile-status-pill.online-pill {
-      background: rgba(5, 150, 105, 0.12);
-      border: 1px solid rgba(5, 150, 105, 0.25);
-    }
-    .mobile-status-pill.offline-pill {
-      background: rgba(239, 68, 68, 0.12);
-      border: 1px solid rgba(239, 68, 68, 0.25);
-    }
-
-    .mobile-pulse-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-    }
-    .mobile-pulse-dot.online-pulse {
-      background: #059669;
-      box-shadow: 0 0 8px #059669;
-    }
-    .mobile-pulse-dot.offline-pulse {
-      background: #ef4444;
-      box-shadow: 0 0 8px #ef4444;
-    }
-
-    .mobile-status-pill-text {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .online-pill .mobile-status-pill-text { color: #34d399; }
-    .offline-pill .mobile-status-pill-text { color: #fca5a5; }
-
-    /* Follow Container */
-    .mobile-follow-container {
-      width: 100%;
-    }
-
-    .mobile-follow-btn {
-      width: 100%;
-      background: #ffffff;
-      color: #0f172a;
-      padding: 14px;
-      border-radius: 16px;
-      font-weight: 700;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.2);
-      transition: transform 0.15s ease;
-    }
-    .mobile-follow-btn:active {
-      transform: scale(0.97);
-    }
-
-    /* Chips Grid */
-    .mobile-chips-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .mobile-glass-card {
-      background: rgba(30, 41, 59, 0.7);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .mobile-chip {
-      padding: 8px 14px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .mobile-chip-text {
-      font-size: 13px;
-      font-weight: 500;
-      color: #cbd5e1;
-    }
-    .mobile-chip-text strong {
-      color: #ffffff;
-    }
-
-    /* Stats Grid */
-    .mobile-stats-container {
-      width: 100%;
-    }
-
-    .mobile-stats-grid {
-      border-radius: 16px;
-      padding: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .mobile-stat-col {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-    }
-    .mobile-stat-col:not(:last-child) {
-      border-right: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .mobile-stat-val {
-      font-size: 18px;
-      font-weight: 900;
-      color: #ffffff;
-      line-height: 1;
-      margin-bottom: 4px;
-    }
-
-    .mobile-stat-lbl {
-      font-size: 11px;
-      font-weight: 500;
-      color: #94a3b8;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    /* In-body Consultation Rates Section */
-    .mobile-in-body-rates-card {
-      background: #1e293b;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 20px;
-      padding: 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      width: 100%;
-    }
-
-    /* Unified Action Dock (Fixed Bottom) */
-    .mobile-unified-action-dock {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      background: #1e293b;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      border-top-left-radius: 24px;
-      border-top-right-radius: 24px;
-      padding: 14px 14px calc(14px + env(safe-area-inset-bottom, 0px));
-      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.4);
-    }
-
-    .mobile-dock-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-      padding: 0 4px;
-    }
-
-    .mobile-dock-title {
-      margin: 0;
-      font-size: 15px;
-      font-weight: 700;
-      color: #ffffff;
-    }
-
-    .mobile-dock-badge {
-      background: rgba(251, 191, 36, 0.1);
-      border: 1px solid rgba(251, 191, 36, 0.2);
-      padding: 3px 8px;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .mobile-dock-badge span {
-      font-size: 10px;
-      font-weight: 700;
-      color: #fbbf24;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-    }
-
-    .mobile-action-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-    }
-
-    .mobile-action-card {
-      padding: 10px 4px;
-      border-radius: 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      border: none;
-      cursor: pointer;
-      transition: transform 0.15s ease, opacity 0.15s ease;
-    }
-    .mobile-action-card:active {
-      transform: scale(0.95);
-    }
-    .mobile-action-card:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .mobile-action-card.video-card {
-      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
-      border: 1px solid rgba(59, 130, 246, 0.6) !important;
-      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4) !important;
-    }
-
-    .mobile-action-card.voice-card {
-      background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
-      border: 1px solid rgba(245, 158, 11, 0.6) !important;
-      box-shadow: 0 4px 15px rgba(217, 119, 6, 0.4) !important;
-    }
-
-    .mobile-action-card.chat-card {
-      background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%) !important;
-      border: 1px solid rgba(139, 92, 246, 0.6) !important;
-      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4) !important;
-    }
-
-    .mobile-action-card.inquiry-card {
-      background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
-      border: 1px solid rgba(16, 185, 129, 0.6) !important;
-      box-shadow: 0 4px 15px rgba(5, 150, 105, 0.4) !important;
-    }
-
-    .mobile-action-lbl {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: #ffffff;
-    }
-    .video-card .mobile-action-lbl { color: #dbeafe; }
-    .voice-card .mobile-action-lbl { color: #fef3c7; }
-    .chat-card .mobile-action-lbl { color: #ede9fe; }
-    .inquiry-card .mobile-action-lbl { color: #d1fae5; text-align: center; line-height: 1.1; }
-
-    .mobile-action-price {
-      font-size: 13px;
-      font-weight: 800;
-      color: #ffffff;
-      line-height: 1;
-    }
-
-    .expert-profile-content-grid {
-      grid-template-columns: 1fr;
-      gap: 24px;
-      width: 100%;
-      max-width: 100%;
-      margin-bottom: 0;
-      overflow: visible;
-    }
-
-    .expert-profile-sidebar {
-      position: static;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-      width: 100%;
-      max-width: 100%;
-      margin-bottom: 0;
-      overflow: visible;
-    }
-
-    .consult-card {
-      display: none;
-    }
-
-    .expert-profile-main {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-      width: 100%;
-      max-width: 100%;
-      margin-bottom: 0;
-      padding-bottom: 0;
-      overflow: visible;
-    }
-
-    .expert-profile-subscription-cta {
-      margin-top: 8px !important;
-      text-align: left !important;
-      grid-column: 1 / -1;
-    }
-
-    .expert-profile-subscription-cta-btn {
-      width: 100% !important;
-      min-height: 40px !important;
-      justify-content: center !important;
-      padding: 9px 12px !important;
-      border-radius: 999px !important;
-      font-size: 12.5px !important;
-      background: #16a34a !important;
-      color: #ffffff !important;
-      box-shadow: 0 10px 22px rgba(22, 163, 74, 0.24);
-    }
-
-    .expert-profile-subscription-cta-btn svg,
-    .expert-profile-subscription-cta-btn * {
-      color: #ffffff !important;
-    }
-
-    .expert-profile-main > *:last-child,
-    .expert-profile-sidebar > *:last-child {
-      margin-bottom: 0;
-    }
-
-    .mobile-profile-actions {
-      position: fixed;
-      left: 10px;
-      right: 10px;
-      bottom: calc(var(--nav-height, 72px) + 8px + env(safe-area-inset-bottom, 0px));
-      z-index: 10005;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-      padding: 0;
-      border: 0;
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
-      backdrop-filter: none;
-      transform: translateZ(0);
-      will-change: transform;
-      pointer-events: none;
-    }
-
-    .mobile-profile-actions button,
-    .mobile-profile-actions .video-call-button {
-      min-width: 0;
-      width: 100% !important;
-      min-height: 50px !important;
-      border: none;
-      border-radius: 999px;
-      padding: 8px 8px !important;
-      font-size: 12.5px !important;
-      line-height: 1.2;
-      font-weight: 800;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      cursor: pointer;
-      white-space: nowrap !important;
-      touch-action: manipulation;
-      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.18);
-      pointer-events: auto;
-      text-align: center;
-      overflow: hidden;
-    }
-
-    .mobile-profile-actions button svg,
-    .mobile-profile-actions .video-call-button svg {
-      width: 16px;
-      height: 16px;
-      flex: 0 0 auto;
-    }
-
-    .mobile-profile-actions button strong {
-      display: inline-block;
-      width: auto;
-      min-width: 0;
-      font-size: 11px;
-      font-weight: 900;
-      opacity: 0.94;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .mobile-profile-actions button span {
-      min-width: 0;
-    }
-
-    .mobile-message-btn {
-      background: linear-gradient(135deg, #000080, #2563eb);
-      color: #ffffff;
-    }
-
-    .mobile-call-btn {
-      background: linear-gradient(135deg, #ffd23f, #ffc107);
-      color: #000080;
-      box-shadow: 0 12px 24px rgba(255, 193, 7, 0.24);
-    }
-
-    .mobile-video-call-btn {
-      background: linear-gradient(135deg, #2563eb, #000080) !important;
-      color: #ffffff !important;
-      border: 1px solid rgba(255, 255, 255, 0.22) !important;
-      box-shadow: 0 12px 24px rgba(37, 99, 235, 0.26) !important;
-    }
-
-    .mobile-video-call-btn:disabled {
-      background: #94a3b8 !important;
-      color: #ffffff !important;
-      border-color: #cbd5e1 !important;
-      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12) !important;
-      opacity: 1 !important;
-    }
-
-    .subscription-plans-modal {
-      align-items: flex-end !important;
-      justify-content: center !important;
-      padding: 0 !important;
-      overflow: hidden !important;
-      z-index: 20050 !important;
-      background: rgba(15, 23, 42, 0.62) !important;
-      backdrop-filter: blur(4px);
-    }
-
-    .subscription-plans-modal__sheet {
-      width: 100% !important;
-      max-width: 100% !important;
-      max-height: min(88dvh, 720px) !important;
-      overflow-y: auto !important;
-      -webkit-overflow-scrolling: touch;
-      border-radius: 24px 24px 0 0 !important;
-      padding: 18px 12px calc(14px + env(safe-area-inset-bottom, 0px)) !important;
-      box-shadow: 0 -18px 44px rgba(15, 23, 42, 0.24) !important;
-      animation: expertProfileSheetUp 260ms ease-out both;
-    }
-
-    .subscription-plans-modal__header {
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      margin: 0 0 10px !important;
-      padding: 4px 0 8px;
-      background: #ffffff;
-      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-    }
-
-    .subscription-plans-modal__header::before {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: -8px;
-      width: 42px;
-      height: 4px;
-      border-radius: 999px;
-      background: #cbd5e1;
-      transform: translateX(-50%);
-    }
-
-    .subscription-plans-modal__header h2 {
-      font-size: 18px !important;
-      line-height: 1.25 !important;
-      color: #000080 !important;
-    }
-
-    .expert-profile-recharge-modal {
-      align-items: flex-end !important;
-      justify-content: center !important;
-      padding: 0 !important;
-      z-index: 20060 !important;
-      background: rgba(15, 23, 42, 0.62) !important;
-      backdrop-filter: blur(4px);
-    }
-
-    .expert-profile-recharge-modal__sheet {
-      position: relative;
-      width: 100% !important;
-      max-width: 100% !important;
-      max-height: 82dvh;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      border-radius: 24px 24px 0 0 !important;
-      padding: 24px 16px calc(16px + env(safe-area-inset-bottom, 0px)) !important;
-      box-shadow: 0 -18px 44px rgba(15, 23, 42, 0.26);
-      animation: expertProfileSheetUp 260ms ease-out both;
-    }
-
-    .expert-profile-recharge-modal__sheet::before {
-      content: "";
-      position: absolute;
-      top: 9px;
-      left: 50%;
-      width: 44px;
-      height: 4px;
-      border-radius: 999px;
-      background: #cbd5e1;
-      transform: translateX(-50%);
-    }
-
-    .expert-profile-recharge-modal__sheet > div {
-      display: grid !important;
-      grid-template-columns: 1fr;
-      gap: 10px !important;
-    }
-
-    .expert-profile-recharge-modal__sheet button {
-      width: 100%;
-      min-height: 46px;
-    }
-  }
-
-  @media (max-width: 380px) {
-    padding-left: 8px;
-    padding-right: 8px;
-    padding-bottom: calc(var(--mobile-bottom-nav-reserved-space, 80px) + 42px + env(safe-area-inset-bottom, 0px));
-
-    .mobile-profile-actions {
-      left: 8px;
-      right: 8px;
-      gap: 6px;
-      padding: 0;
-      border-radius: 16px;
-    }
-
-    .mobile-profile-actions button,
-    .mobile-profile-actions .video-call-button {
-      min-height: 48px !important;
-      font-size: 11.5px !important;
-      gap: 4px;
-      padding: 7px 5px !important;
-    }
-
-    .mobile-profile-actions button strong {
-      font-size: 9.5px;
-    }
-  }
-
-  @keyframes expertProfileSheetUp {
-    from {
-      opacity: 0.88;
-      transform: translateY(18px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-`;
-
-
-// --- Main Profile Section ---
-export const ProfileCard = styled.div`
-  position: relative;
-  overflow: visible;
-  color: #ffffff;
-  background:#172554!important;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  padding: clamp(20px, 2.2vw, 36px);
-  margin-bottom: 24px;
-  width: 100%;
-  max-width: 1700px;
-  margin-left: auto;
-  margin-right: auto;
-  height: auto;
-  min-height: 280px;
-  box-shadow: 0 16px 44px rgba(0, 0, 128, 0.18);
-  box-sizing: border-box;
-
-  
-  /* MOBILE: Completely hide ProfileCard */
-  @media (max-width: 768px) {
-    display: none !important;
-  }
-
-  @media (min-width: 1024px) {
-    height: auto;
-    min-height: 280px;
-    
-    .expert-profile-hero-inner {
-      display: grid !important;
-      grid-template-columns: minmax(0, 1fr) 400px !important;
-      gap: clamp(20px, 2.2vw, 36px) !important;
-      align-items: start !important;
-      width: 100% !important;
-    }
-  }
-
-  @media (min-width: 769px) {
-    .expert-profile-desktop-tag,
-    .expert-profile-desktop-tag *,
-    .expert-profile-desktop-tag svg,
-    .expert-profile-header-tag,
-    .expert-profile-header-tag *,
-    .expert-profile-header-tag svg {
-      color: #ffffff !important;
-    }
-     .expert-profile-page{
-  background:#172033 !Important;
-  }
-
-    .expert-profile-desktop-mode-tab.inactive-tab,
-    .expert-profile-desktop-mode-tab.inactive-tab *,
-    .expert-profile-desktop-mode-tab.inactive-tab svg {
-      color: #ffffff !important;
-    }
-
-    .expert-profile-desktop-mode-tab.active-tab,
-    .expert-profile-desktop-mode-tab.active-tab *,
-    .expert-profile-desktop-mode-tab.active-tab svg {
-      color: #000080 !important;
-    }
-  }
-
-  .expert-profile-mobile-follow-wrap {
-    display: none;
-  }
-
-  .expert-profile-title-row {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-bottom: 4px;
-  }
-
-  @media (max-width: 768px) {
-    .expert-profile-title-row {
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: flex-start !important;
-      gap: 3px !important;
-      margin-bottom:5px;
-      width: 100% !important;
-      margin-bottom: 2px !important;
-    }
-    .expert-profile-page{
-    background: #000000 !Important;
-    }
-
-
-    .expert-profile-verified-badge {
-      margin-top: 2px !important;
-      display: inline-flex !important;
-      width: fit-content !important;
-    }
-
-    .expert-profile-user-row {
-      gap: 14px !important;
-      align-items: flex-start !important;
-    }
-
-    .expert-profile-avatar-box {
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: center !important;
-      flex-shrink: 0 !important;
-      width: 80px !important;
-    }
-
-    .expert-profile-avatar-box img {
-      width: 80px !important;
-      height: 80px !important;
-    }
-
-    .expert-profile-name-group {
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: flex-start !important;
-      gap: 0 !important;
-      min-width: 0;
-      flex: 1 !important;
-    }
-
-    .expert-profile-name-group h1 {
-      display: inline-flex !important;
-      align-items: center !important;
-      flex-wrap: nowrap !important;
-      font-size: 19px !important;
-      line-height: 1.2 !important;
-      margin: 0 0 2px 0 !important;
-    }
-
-    .expert-profile-name-group p {
-      margin-top: 10px !important;
-      margin-bottom: 6px !important;
-      font-size: 12.5px !important;
-      line-height: 1.35 !important;
-      text-align: left !important;
-    }
-
-    .expert-profile-name-group div:not(.expert-profile-follow-wrap) {
-      margin-top: 2px !important;
-      margin-bottom: 0 !important;
-      display: inline-flex !important;
-      width: fit-content !important;
-    }
-
-    .expert-profile-name-group .expert-profile-follow-wrap {
-      display: flex !important;
-      align-items: center !important;
-      gap: 12px !important;
-      margin-top: 10px !important;
-      margin-bottom: 0 !important;
-      width: 100% !important;
-      max-width: 100% !important;
-    }
-
-    .expert-profile-name-group .expert-profile-follow-wrap .follow-btn {
-      flex: 1 !important;
-      min-width: 0 !important;
-      height: 38px !important;
-      min-height: 38px !important;
-      padding: 0 16px !important;
-      border-radius: 999px !important;
-      font-size: 13px !important;
-      font-weight: 800 !important;
-      background: #ffffff !important;
-      color: #172554 !important;
-      border: none !important;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      gap: 6px !important;
-      white-space: nowrap !important;
-    }
-
-    .expert-profile-name-group .expert-profile-follow-wrap .follow-btn svg {
-      color: #172554 !important;
-      stroke: #172554 !important;
-      width: 15px !important;
-      height: 15px !important;
-    }
-
-    .expert-profile-name-group .expert-profile-follow-wrap .follow-btn.active-following {
-      background: #10b981 !important;
-      color: #ffffff !important;
-    }
-
-    .expert-profile-name-group .expert-profile-follow-wrap .follow-btn.active-following svg {
-      color: #ffffff !important;
-      stroke: #ffffff !important;
-    }
-
-    .expert-profile-name-group .expert-profile-follow-wrap .share-icon-btn {
-      width: 38px !important;
-      height: 38px !important;
-      min-width: 38px !important;
-      flex: 0 0 38px !important;
-      border-radius: 50% !important;
-      background: #ffffff !important;
-      color: #172554 !important;
-      border: 1px solid rgba(255, 255, 255, 0.4) !important;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      padding: 0 !important;
-    }
-
-    .expert-profile-name-group .expert-profile-follow-wrap .share-icon-btn svg {
-      width: 17px !important;
-      height: 17px !important;
-      stroke: #172554 !important;
-      color: #172554 !important;
-      stroke-width: 2.2px !important;
-    }
-
-    .expert-profile-sidebar,
-    .expert-profile-page .expert-profile-sidebar,
-    aside.expert-profile-sidebar {
-      display: none !important;
-    }
-  }
-
-  .expert-profile-header-tag.expert-profile-desktop-tag{
-  color:white !Important;
-  }
-  
-  .expert-profile-hero-left {
-    min-width: 0;
-    width: 100%;
+  .profile-layout-main-col {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    min-width: 0;
+    width: 100%;
   }
 
-  .expert-profile-user-row {
+  .profile-layout-sidebar-col {
     display: flex;
-    align-items: flex-start;
+    flex-direction: column;
     gap: 20px;
     width: 100%;
+
+    @media (min-width: 1024px) {
+      position: sticky;
+      top: 80px;
+    }
   }
 
-  .expert-profile-avatar-box {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  @media (max-width: 1023px) {
+    .profile-layout-sidebar-col {
+      display: none !important;
+    }
   }
 
-  .expert-profile-name-group {
-    min-width: 0;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .expert-profile-hero-right {
-    min-width: 0;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 14px;
-  }
-`;
-
-export const LeftImage = styled.img`
-  border-radius: 50%;
-  object-fit: cover;
-  object-position: center;
-  overflow: hidden;
-  border: 3px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 12px 28px rgba(0, 0, 128, 0.28);
-  display: block;
-  margin: 0 auto;
-  width: 110px !important;
-  height: 110px !important;
-  aspect-ratio: 1 / 1;
-  flex-shrink: 0;
-
-  @media (max-width: 768px) {
-    width: 78px !important;
-    height: 78px !important;
-    border-width: 2px;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.22);
-  }
-`;
-
-export const AvatarFallback = styled.div`
-  border-radius: 50%;
-  background: ${({ bg }) =>
-    bg || "linear-gradient(135deg, #ffd23f, #ffc107)"};
-  color: #000080;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-transform: uppercase;
-  border: 3px solid #fff;
-  box-shadow: 0 12px 28px rgba(0, 0, 128, 0.28);
-  margin: 0 auto;
-  width: 110px !important;
-  height: 110px !important;
-  font-size: clamp(28px, 2.5vw, 36px);
-  aspect-ratio: 1 / 1;
-  flex-shrink: 0;
-
-  @media (max-width: 768px) {
-    width: 78px !important;
-    height: 78px !important;
-    font-size: 25px;
-    border-width: 2px;
-    box-shadow: 0 10px 24px rgba(0,0,0,0.22);
-  }
-`;
-
-// --- Name & Header Info ---
-export const Name = styled.h1`
-  font-family: "Rubik", "Poppins", sans-serif;
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  color: #ffffff;
-  margin: 0 0 6px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  line-height: 1.2;
-  flex-wrap: nowrap;
-  
-  @media (max-width: 768px) { 
-    font-size: 19px;
-    line-height: 1.2;
-    display: inline-flex !important;
-    align-items: center !important;
-    flex-wrap: nowrap !important;
-    justify-content: flex-start;
-    text-align: left; 
-    margin-top: 0; 
-    margin-bottom: 2px;
-    gap: 6px;
-  }
-`;
-
-export const VerifiedCheckIcon = styled.span`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  min-width: 22px;
-  min-height: 22px;
-  border-radius: 50%;
-  background: #047857 !important;
-  color: #ffffff !important;
-  margin-left: 6px;
-  flex-shrink: 0;
-  vertical-align: middle;
-  box-shadow: 0 2px 6px rgba(4, 120, 87, 0.35);
-
-  svg,
-  * {
-    color: #ffffff !important;
-    stroke: #ffffff !important;
-    stroke-width: 3.2px !important;
-    width: 12px !important;
-    height: 12px !important;
-  }
-
-  @media (max-width: 768px) {
-    width: 18px;
-    height: 18px;
-    min-width: 18px;
-    min-height: 18px;
-    margin-left: 5px;
-
-    svg,
-    * {
-      width: 10px !important;
-      height: 10px !important;
-      stroke-width: 3.2px !important;
+  @media (min-width: 1024px) {
+    .mobile-only-consult-module {
+      display: none !important;
     }
   }
 `;
 
-export const Role = styled.p`
-  font-family: "Inter", "Outfit", sans-serif;
-  font-size: 14px;
-  color: #e2e8f0;
-  margin: 0 0 8px;
-  font-weight: 500;
-  line-height: 1.4;
-
-  @media (max-width: 768px) {
-    text-align: left;
-    font-size: 13px;
-    line-height: 1.3;
-    margin: 0;
-    color: #e2e8f0;
-  }
-`;
-
-export const Status = styled.div`
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: ${props => props.$online ? "rgba(16, 185, 129, 0.16)" : "rgba(248, 113, 113, 0.14)"};
-  border: 1px solid ${props => props.$online ? "rgba(16, 185, 129, 0.28)" : "rgba(248, 113, 113, 0.28)"};
-  font-size: 13px;
-  font-weight: 700;
-  color: ${props => props.$online ? "#bbf7d0" : "#fecaca"};
-  margin-bottom: 12px;
-  @media (max-width: 768px) {
-    display: flex;
-    width: fit-content;
-    margin-top: 4px;
-    margin-bottom: 4px;
-    text-align: left;
-    font-size: 11px;
-    min-height: 22px;
-    padding: 3px 8px;
-  }
-`;
-
-// --- Stats & Tags (No Overflow) ---
-export const QuickStats = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 16px;
+/* Hero Profile Card Components */
+export const ProfileCard = styled.div`
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   width: 100%;
 
   @media (max-width: 768px) {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
-    margin-bottom: 12px;
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid #f1f5f9;
+    box-shadow: none;
+    padding: 14px 16px;
   }
+`;
+
+export const HeroTopRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+`;
+
+export const AvatarWrap = styled.div`
+  position: relative;
+  flex-shrink: 0;
+
+  .avatar-circle {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+    color: #ffffff;
+    font-size: 22px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ffffff;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    overflow: hidden;
+  }
+
+  .avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .status-badge {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 16px;
+    height: 16px;
+    background: #10b981;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+
+    &.offline {
+      background: #94a3b8;
+    }
+  }
+
+  .pulse-inner {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ffffff;
+    animation: ${pulseRing} 2s infinite ease-in-out;
+  }
+`;
+
+export const QuickStats = styled.div`
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  text-align: center;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 14px;
+  padding: 10px 6px;
 `;
 
 export const StatItem = styled.div`
   display: flex;
-  height: clamp(64px, 4.8vw, 76px);
-  min-height: 64px;
-  max-height: 76px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  font-size: clamp(11px, 0.8vw, 13px);
-  color: rgba(255, 255, 255, 0.95);
-  background: rgba(255, 255, 255, 0.14);
-  padding: 6px 8px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  text-align: center;
-  backdrop-filter: blur(12px);
-  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 
-  &:hover {
-    transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.35);
+  &:not(:last-child) {
+    border-right: 1px solid #e2e8f0;
   }
 
-  span {
-    font-weight: 700;
-    font-size: clamp(13px, 1vw, 18px);
-  }
-
-  svg {
-    font-size: clamp(16px, 1.2vw, 20px);
-    color: #ffc107;
-  }
-
-  @media (max-width: 768px) {
-    height: auto;
-    min-height: 48px;
-    padding: 8px 4px;
-    gap: 3px;
-    font-size: 10px;
-    line-height: 1.15;
-    border-radius: 10px;
-
-    span {
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    svg {
-      width: 14px;
-      height: 14px;
-    }
-  }
-`;
-
-export const TagList = styled.div`
-  display: flex;
-  flex-wrap: wrap; 
-  gap: 8px;
-  margin: 12px 0;
-  @media (max-width: 768px) {
-    margin: 8px 0 10px;
-    gap: 6px;
-    width: 100%;
-  }
-`;
-
-export const Tag = styled.span`
-  background: rgba(255, 255, 255, 0.14);
-  color: #ffffff !important;
-  padding: 5px 12px;
-  border-radius: 999px;
-  font-family: "Inter", "Outfit", sans-serif;
-  font-size: 13px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  font-weight: 600;
-
-  &&,
-  && svg,
-  && * {
-    color: #ffffff !important;
-  }
-
-  @media (max-width: 768px) {
-    font-size: 11px;
-    padding: 4px 10px;
-    border-radius: 8px;
-    gap: 4px;
-
-    svg {
-      width: 12px;
-      height: 12px;
-    }
-  }
-`;
-
-// --- Pricing Mode Tabs ---
-export const PricingModeTabs = styled.div`
-  display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
-  background: rgba(255, 255, 255, 0.12);
-  padding: 4px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  width: fit-content;
-
-  @media (max-width: 768px) {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    gap: 6px;
-  }
-`;
-
-export const PricingModeTab = styled.button`
-  background: ${props => props.$active ? "#ffc107" : "transparent"};
-  color: ${props => props.$active ? "#000080 !important" : "#ffffff !important"};
-  border: none;
-  padding: 6px 14px;
-  border-radius: 10px;
-  font-family: "Inter", "Outfit", sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.2s ease;
-
-  &&,
-  && svg,
-  && * {
-    color: ${props => props.$active ? "#000080 !important" : "#ffffff !important"};
-  }
-
-  &:hover {
-    background: ${props => props.$active ? "#ffc107" : "rgba(255, 255, 255, 0.18)"};
-  }
-
-  @media (max-width: 768px) {
-    flex: 1;
-    width: 100%;
-    justify-content: center;
-    padding: 8px 12px;
-    min-height: 38px;
-    border-radius: 10px;
-    font-size: 12px;
-  }
-`;
-
-export const PricingInfo = styled.div`
-  font-size: clamp(12px, 0.85vw, 13.5px);
-  color: rgba(255, 255, 255, 0.92);
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  line-height: 1.3;
-`;
-
-export const ActiveSubscriptionCard = styled.div`
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.35);
-  border-radius: 14px;
-  padding: 12px 16px;
-  margin-bottom: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`;
-
-export const SubscriptionInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  div {
-    display: flex;
-    flex-direction: column;
-    
-    strong {
-      font-size: 13.5px;
-      color: #ffffff;
-    }
-    small {
-      font-size: 11.5px;
-      color: rgba(255, 255, 255, 0.78);
-    }
-  }
-`;
-
-export const SubscriptionRemaining = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-`;
-
-export const UsageText = styled.span`
-  font-size: 12px;
-  color: #bbf7d0;
-  font-weight: 600;
-`;
-
-export const ProgressBar = styled.div`
-  width: 100%;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  overflow: hidden;
-`;
-
-// --- Buttons & Price ---
-export const CallToAction = styled.div`
-  display: flex;
-  flex-direction: row;
-  align-items: flex-end;
-  gap: clamp(6px, 0.8vw, 10px);
-  margin-top: 10px;
-  width: 100%;
-  box-sizing: border-box;
-
-  .expert-profile-action-item {
-    flex: 1 1 0px;
-    min-width: 0;
-    width: 100%;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    overflow: hidden;
-  }
-
-  .expert-profile-video-call-btn {
-    width: 100% !important;
-    height: 46px !important;
-    min-height: 46px !important;
-    max-height: 46px !important;
-    border-radius: 12px !important;
-    background: linear-gradient(135deg, #2563eb, #000080) !important;
-    color: #ffffff !important;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22) !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    font-size: clamp(12px, 0.88vw, 13.5px) !important;
-    padding: 0 12px !important;
-  }
-
-  .expert-profile-video-call-btn,
-  .expert-profile-video-call-btn *,
-  .expert-profile-video-call-btn svg {
-    color: #ffffff !important;
-  }
-
-  .expert-profile-video-call-btn:disabled {
-    background: #94a3b8 !important;
-    color: #ffffff !important;
-    border-color: #cbd5e1 !important;
-    box-shadow: none !important;
-    opacity: 1 !important;
-  }
-
-  @media (max-width: 768px) { 
-    display: flex;
-    flex-direction: row;
-    align-items: flex-end;
-    gap: 4px;
-    margin-top: 8px;
-    margin-bottom: clamp(14px, 4vw, 22px);
-    padding-bottom: env(safe-area-inset-bottom, 12px);
-    width: 100%;
-
-    .expert-profile-action-item {
-      flex: 1 1 0px;
-      min-width: 0;
-      width: 100%;
-      box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      overflow: hidden;
-    }
-  }
-`;
-
-export const ActionButton = styled.button`
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-width: 0;
-  height: 46px;
-  min-height: 46px;
-  max-height: 46px;
-  padding: 0 12px;
-  border-radius: 12px;
-  font-family: "Poppins", sans-serif;
-  font-weight: 600;
-  font-size: clamp(12px, 0.88vw, 13.5px);
-  cursor: pointer;
-  border: 1px solid ${props => props.$primary ? "#ffc107" : "#e2e8f0"};
-  background: ${props => props.$primary ? "linear-gradient(135deg, #ffd23f, #ffc107)" : "#ffffff"};
-  color: ${props => props.$primary ? "#000080" : "#000080"};
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  box-shadow: ${props => props.$primary ? "0 4px 12px rgba(255, 193, 7, 0.2)" : "0 2px 6px rgba(0, 0, 0, 0.04)"};
-  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
-
-  svg {
-    flex: 0 0 auto;
-    font-size: clamp(13px, 0.9vw, 16px);
-  }
-
-  .action-btn-rate {
-    font-size: 11px;
-    opacity: 0.88;
-    font-weight: 600;
-    display: inline-block;
-    background: rgba(0, 0, 0, 0.12);
-    padding: 1px 6px;
-    border-radius: 999px;
-    margin-left: 3px;
-  }
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: ${props => props.$primary ? "0 8px 18px rgba(255, 193, 7, 0.3)" : "0 4px 12px rgba(0, 0, 0, 0.08)"};
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    transform: none;
-    border-color: #cbd5e1;
-    background: #e5e7eb;
-    color: #475569;
-    box-shadow: none;
-    opacity: 1;
-  }
-
-  &.expert-profile-green-action-btn {
-    border-color: #16a34a !important;
-    background: #16a34a !important;
-    color: #ffffff !important;
-    box-shadow: 0 8px 18px rgba(22, 163, 74, 0.22) !important;
-
-    svg,
-    * {
-      color: #ffffff !important;
-    }
-
-    &:hover {
-      background: #15803d !important;
-      border-color: #15803d !important;
-      color: #ffffff !important;
-    }
-  }
-
-  @media (max-width: 768px) {
-    min-height: 40px;
-    padding: 8px 10px;
+  .stat-value {
     font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
     line-height: 1.2;
+    display: flex;
+    align-items: center;
+    gap: 3px;
   }
-`;
 
-export const PriceTag = styled.div`
-  width: 100%;
-  max-width: 100%;
-  min-height: 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 2px 6px;
-  border-radius: 999px;
-  font-size: clamp(10px, 0.72vw, 11.5px);
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 2px;
-  box-sizing: border-box;
-  @media (max-width: 768px) { 
-    font-size: 9.5px !important;
-    padding: 2px 2px !important;
-    min-height: 18px !important;
-    border-radius: 999px !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    text-align: center !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    margin-left: auto;
-    margin-right: auto;
-    letter-spacing: -0.2px;
-  }
-`;
-
-export const AboutSubsection = styled.div`
-  margin-top: 16px;
-  &:first-of-type {
-    margin-top: 14px;
-  }
-`;
-
-export const AboutSubtitle = styled.h3`
-  font-family: "Poppins", "Plus Jakarta Sans", sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: #000080;
-  margin: 0 0 10px 0;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-
-  svg {
-    color: #000080;
-    font-size: 14px;
-  }
-`;
-
-export const QualificationsList = styled.ul`
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`;
-
-export const QualificationItem = styled.li`
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #1e293b;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 9px 13px;
-  line-height: 1.4;
-  word-break: break-word;
-
-  svg {
-    color: #000080;
-    flex-shrink: 0;
+  .stat-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: #64748b;
     margin-top: 2px;
   }
 `;
 
+export const HeroBioSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 
+  .hero-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .hero-expert-name {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+  }
+
+  .category-pill {
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid #dbeafe;
+  }
+
+  .hero-subtitle {
+    margin: 0;
+    font-size: 12px;
+    color: #475569;
+    font-weight: 500;
+  }
+
+  .hero-availability {
+    font-size: 11px;
+    font-weight: 600;
+    color: #059669;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+
+    &.offline {
+      color: #64748b;
+    }
+  }
+`;
+
+export const HeroActionRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+`;
 
 export const FollowButton = styled.button`
+  flex: 1;
+  height: 38px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  color: ${props => props.$active ? " #ffffff" : " #000080"};
-  border-radius: 999px;
-  padding: 9px 18px;
-  font-weight: 900;
+  gap: 6px;
+  border: none;
   cursor: pointer;
-  transition: 0.3s;
-  margin-top: 16px;
+  transition: all 0.2s ease;
+  background: ${props => props.$active ? "#f1f5f9" : "#2563eb"};
+  color: ${props => props.$active ? "#334155" : "#ffffff"};
+  border: ${props => props.$active ? "1px solid #cbd5e1" : "none"};
 
-  ${props => props.$active && css`
-    color: #ffffff !important;
-    background: #000080 !important;
-    border-color: #000080 !important;
-    svg, * {
-      color: #ffffff !important;
-    }
-  `}
-
-  &:hover {
-    transform: translateY(-1px);
-    background-color: ${props => props.$active ? "rgba(255, 255, 255, 0.28)" : "rgba(255, 255, 255, 0.92)"};
-    color: ${props => props.$active ? "#ffffff !important" : "#000080"};
-  }
-
-  @media (min-width: 1024px) {
-    ${props => props.$active && css`
-      color: #ffffff;
-      border-color: #000080;
-      background: #000080;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
-    `}
-  }
-
-  @media (max-width: 768px) {
-    margin: 5px auto 0;
-    width: 100%;
-    min-height: 28px;
-    padding: 5px 7px;
-    font-size: 10.5px;
-    line-height: 1.1;
-    font-weight: 800;
-    gap: 4px;
+  &:active {
+    transform: scale(0.98);
   }
 `;
 
-// --- Content Sections ---
-export const Section = styled.div`
-  background: #ffffff;
-  border-radius: 18px;
+export const ActionButton = styled.button`
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   border: 1px solid #e2e8f0;
-  padding: 24px;
-  margin-bottom: 24px;
-  scroll-margin-top: 96px;
-  min-height: 220px;
+  background: #f8fafc;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+export const SkillChipsBar = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+
+  .skill-chip {
+    background: #f1f5f9;
+    color: #334155;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 14px;
+    white-space: nowrap;
+    border: 1px solid #e2e8f0;
+    flex-shrink: 0;
+  }
+`;
+
+/* Consultation Pricing Module Components */
+export const ConsultModuleCard = styled.div`
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
   box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
-  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+
+  @media (max-width: 768px) {
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid #f1f5f9;
+    box-shadow: none;
+    padding: 14px 16px;
+  }
+`;
+
+export const PricingModeTabs = styled.div`
+  display: flex;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 10px;
+  gap: 2px;
+`;
+
+export const PricingModeTab = styled.button`
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: ${props => (props.$active ? "700" : "500")};
+  color: ${props => (props.$active ? "#1d4ed8" : "#64748b")};
+  background: ${props => (props.$active ? "#ffffff" : "transparent")};
+  box-shadow: ${props => (props.$active ? "0 1px 3px rgba(0,0,0,0.08)" : "none")};
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+`;
+
+export const PerMinuteGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+`;
+
+export const PricingCard = styled.div`
+  padding: 12px;
+  border-radius: 14px;
+  border: ${props => (props.$active ? `2px solid ${props.$borderColor || "#2563eb"}` : "1px solid #e2e8f0")};
+  background: ${props => props.$bg || "#ffffff"};
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+  box-shadow: ${props => (props.$active ? "0 4px 14px rgba(37,99,235,0.18)" : "0 1px 3px rgba(0,0,0,0.02)")};
 
   &:hover {
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    border-color: ${props => props.$hoverColor || props.$borderColor || "#2563eb"};
   }
 
-  @media (max-width: 768px) {
-    width: 100%;
-    max-width: 100%;
-    border-radius: 16px;
-    padding: 16px;
-    margin-bottom: 12px;
-    min-height: auto;
-    scroll-margin-top: 12px;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
-  }
-`;
-
-export const SectionTitle = styled.h2`
-  font-family: "Poppins", "Plus Jakarta Sans", sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 16px;
-  color: #000080;
-  letter-spacing: -0.01em;
-
-  @media (max-width: 768px) {
-    margin-bottom: 10px;
-    font-size: 16px;
-    line-height: 1.25;
-  }
-`;
-
-export const SectionBody = styled.div`
-  font-family: "Inter", "Outfit", sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.6;
-  color: #334155;
-  white-space: pre-line;
-  word-break: break-word;
-  overflow-wrap: break-word;
-
-  @media (max-width: 768px) {
-    font-size: 14px;
-    line-height: 1.6;
-  }
-`;
-
-// --- Reviews ---
-export const ReviewSection = styled(Section)`
-  @media (min-width: 1920px) {
-    max-width: 900px;
+  &:active {
+    transform: scale(0.98);
   }
 
-  @media (max-width: 768px) {
-    padding: 14px;
-    margin-bottom: 0;
-  }
-`;
-export const ReviewHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 18px;
-
-  @media (max-width: 768px) {
-    margin-bottom: 8px;
-  }
-`;
-
-export const ReviewForm = styled.div`
-  background:
-    radial-gradient(circle at 100% 0%, rgba(255, 210, 63, 0.12), transparent 28%),
-    #f8fafc;
-  padding: 20px;
-  border-radius: 20px;
-  border: 1px solid #e5e7eb;
-  margin-bottom: 24px;
-
-  @media (max-width: 768px) {
-    padding: 10px;
-    border-radius: 14px;
-    margin-bottom: 12px;
-  }
-`;
-
-export const ReviewFormTitle = styled.h3`
-  font-size: 16px;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #000080;
-  font-weight: 900;
-
-  @media (max-width: 768px) {
-    margin-bottom: 8px;
-    font-size: 14px;
-    line-height: 1.3;
-  }
-`;
-
-export const RatingInput = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-
-  @media (max-width: 768px) {
+  .card-header-row {
+    display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-`;
-
-export const RatingLabel = styled.span`
-  font-size: 14px;
-  font-weight: 600;
-
-  @media (max-width: 768px) {
     font-size: 12px;
     font-weight: 700;
+    color: ${props => props.$titleColor || "#0f172a"};
+  }
+
+  .card-price {
+    font-size: 15px;
+    font-weight: 800;
+    color: ${props => props.$priceColor || "#1e293b"};
+    line-height: 1.1;
+  }
+
+  .card-subtext {
+    font-size: 10px;
+    color: #64748b;
+    font-weight: 400;
   }
 `;
 
-export const StarRating = styled.div`
+export const SessionCardBox = styled.div`
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 16px;
+  padding: 14px;
   display: flex;
-  gap: 4px;
+  flex-direction: column;
+  gap: 10px;
 
-  @media (max-width: 768px) {
-    gap: 2px;
+  .session-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
-`;
 
-export const Star = styled.button`
-  background: none; border: none; cursor: pointer; font-size: 22px;
-  color: ${props => props.$filled ? "#f59e0b" : "#d1d5db"};
-  transition: transform 0.1s;
-  &:hover { transform: scale(1.1); }
-
-  @media (max-width: 768px) {
-    font-size: 19px;
-    padding: 2px;
-  }
-`;
-
-export const TextAreaContainer = styled.div`
-  position: relative;
-  margin-bottom: 12px;
-
-  @media (max-width: 768px) {
-    margin-bottom: 8px;
-  }
-`;
-
-export const ReviewTextarea = styled.textarea`
-  width: 100%; padding: 13px 14px; border: 1px solid #d0d5dd; border-radius: 14px;
-  font-family: inherit; font-size: 14px; resize: vertical;
-  box-sizing: border-box;
-  &:focus { border-color: #000080; outline: none; box-shadow: 0 0 0 4px rgba(0, 0, 128, 0.08); }
-
-  @media (max-width: 768px) {
-    min-height: 74px;
-    max-height: 104px;
-    padding: 10px 11px;
-    border-radius: 12px;
+  .session-title {
     font-size: 13px;
-    line-height: 1.4;
-    resize: none;
+    font-weight: 700;
+    color: #0f172a;
   }
-`;
 
-export const FormActions = styled.div`
-  display: flex;
-  gap: 12px;
-  align-items: center;
-
-  @media (max-width: 768px) {
-    align-items: stretch;
-    flex-direction: row;
-    justify-content: flex-end;
-    gap: 8px;
+  .session-badge {
+    background: #dbeafe;
+    color: #1e40af;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
   }
-`;
 
-export const SubmitButton = styled(ActionButton)`
-  width: auto;
-  background: #000080;
-  color: #ffffff;
-  border-color: #000080;
-  box-shadow: 0 12px 24px rgba(0, 0, 128, 0.16);
-  padding: 10px 20px; font-size: 14px;
-  ${props => props.$disabled && css` background: #ccc; border-color: #ccc; cursor: not-allowed; `}
-
-  @media (max-width: 768px) {
-    width: auto;
-    min-height: 38px;
-    padding: 8px 14px;
-    font-size: 13px;
-  }
-`;
-
-export const DeleteButton = styled.button`
-  background: transparent; border: none; color: #cc1016; font-size: 14px;
-  font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;
-  &:hover { text-decoration: underline; }
-
-  @media (max-width: 768px) {
-    min-height: 38px;
-    padding: 8px 12px;
-    justify-content: center;
-    border: 1px solid rgba(204, 16, 22, 0.18);
-    border-radius: 999px;
-    background: #fff5f5;
-    font-size: 13px;
-  }
-`;
-
-export const ReviewList = styled.div` display: flex; flex-direction: column; `;
-
-export const ReviewItem = styled.div`
-  padding: 16px;
-  border: 1px solid #eef2f7;
-  border-radius: 18px;
-  background: #ffffff;
-  margin-bottom: 12px;
-  &:last-child { border-bottom: none; }
-
-  @media (max-width: 768px) {
-    padding: 12px;
-    border-radius: 14px;
-    margin-bottom: 10px;
-  }
-`;
-
-export const ReviewUser = styled.div`
-  display: flex;
-  gap: 12px;
-
-  @media (max-width: 768px) {
-    gap: 10px;
-  }
-`;
-
-export const UserAvatar = styled.div`
-  width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #000080, #05044f);
-  color: white; display: flex; align-items: center; justify-content: center;
-  font-weight: 900; flex-shrink: 0;
-
-  @media (max-width: 768px) {
-    width: 40px;
-    height: 40px;
-    font-size: 14px;
-  }
-`;
-
-export const UserInfo = styled.div`
-  min-width: 0;
-  flex: 1;
-`;
-export const UserName = styled.h4`
-  font-size: 14px;
-  font-weight: 900;
-  margin: 0;
-  color: #111827;
-
-  @media (max-width: 768px) {
-    font-size: 13px;
-    line-height: 1.3;
-  }
-`;
-export const ReviewMeta = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 2px;
-
-  @media (max-width: 768px) {
-    align-items: flex-start;
-    flex-direction: column;
+  .session-price-row {
+    display: flex;
+    align-items: baseline;
     gap: 4px;
   }
-`;
-export const ReviewDate = styled.span`
-  font-size: 12px;
-  color: #666;
-`;
-export const ReviewText = styled.p`
-  font-size: 14px;
-  color: #000000e6;
-  margin-top: 8px;
-  line-height: 1.4;
-  overflow-wrap: anywhere;
 
-  @media (max-width: 768px) {
-    font-size: 13px;
-    line-height: 1.5;
+  .session-price {
+    font-size: 18px;
+    font-weight: 800;
+    color: #0f172a;
+  }
+
+  .session-desc {
+    font-size: 11px;
+    color: #475569;
+    line-height: 1.4;
+  }
+
+  .session-book-btn {
+    width: 100%;
+    padding: 10px;
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #1d4ed8;
+    }
   }
 `;
 
-export const ViewAllButton = styled.button`
-  width: 100%; padding: 12px; background: transparent; border: none;
-  color: #000080; font-weight: 600; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  &:hover { background: #eef3f8; }
-`;
-
-export const LoginPrompt = styled.div` text-align: center; width: 100%; p { margin-bottom: 12px; color: #666; font-size: 14px; } `;
-export const LoginButton = styled(ActionButton)` margin: 0 auto; font-size: 14px; padding: 6px 20px; `;
-
-// --- Missing Exports for Error Resolution ---
-export const CharCount = styled.div` font-size: 12px; color: #666; text-align: right; margin-top: 4px; `;
-export const ExpertiseGrid = styled.div` display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px; `;
-export const ExpertiseCard = styled.div` background: #f9f9f9; padding: 16px; border-radius: 8px; border: 1px solid #eee; `;
-export const RecentReviewsTitle = styled.h3`
-  font-size: 16px;
-  font-weight: 900;
-  margin: 24px 0 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #000080;
+/* Edge-to-Edge Content Tabs */
+export const ProfileTabsCard = styled.div`
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+  width: 100%;
 
   @media (max-width: 768px) {
-    margin: 14px 0 10px;
-    font-size: 15px;
-    line-height: 1.25;
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid #f1f5f9;
+    box-shadow: none;
+    padding: 12px 16px;
   }
 `;
-export const LoadingReviews = styled.div` text-align: center; padding: 40px 0; color: #667085; `;
-export const NoReviews = styled.div` text-align: center; padding: 40px 0; color: #667085; h4 { margin: 12px 0 4px; color: #111827; } `;
-
-// Fallback for missing styled components in JSX
-export const MiniRating = styled.div` display: flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 600; color: #000; `;
-export const RatingValue = styled.span` font-size: 14px; color: #666; `;
-export const LeftColumn = styled.div``;
-export const TopSection = styled.div``;
-export const RightInfo = styled.div``;
-export const TwoColumn = styled.div` display: grid; grid-template-columns: 1fr 1fr; gap: 20px; @media (max-width: 768px) { grid-template-columns: 1fr; } `;
-export const ListItem = styled.div``;
-export const ReviewBox = styled.div``;
-export const RatingRow = styled.div``;
-export const NotificationBadge = styled.span``;
-
-// new added styles for experience and price sections
-
-
-// Add these new styled components to your ExpertProfile.styles.js file
 
 export const TabContainer = styled.div`
   display: flex;
-  gap: 4px;
-  border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 24px;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 2px;
   overflow-x: auto;
-  overflow-y: hidden;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x proximity;
+  -ms-overflow-style: none;
   scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-  
-  @media (max-width: 768px) {
-    width: 100%;
-    max-width: 100%;
-    gap: 4px;
-    margin-bottom: 14px;
-  }
+  &::-webkit-scrollbar { display: none; }
 `;
 
 export const TabButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
-  scroll-snap-align: start;
-  padding: 13px 18px;
-  background: none;
-  border: none;
-  font-size: 15px;
-  font-weight: 900;
-  color: ${props => props.$active ? "#000080" : "#667085"};
+  padding: 8px 0;
+  font-size: 12px;
+  font-weight: ${props => (props.$active ? "700" : "500")};
+  color: ${props => (props.$active ? "#2563eb" : "#64748b")};
+  border-bottom: 2px solid ${props => (props.$active ? "#2563eb" : "transparent")};
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
   cursor: pointer;
-  position: relative;
-  transition: all 0.2s;
-  
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
   &:hover {
-    color: #000080;
-  }
-  
-  ${props => props.$active && `
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: -1px;
-      left: 0;
-      right: 0;
-      height: 3px;
-      border-radius: 999px 999px 0 0;
-      background: #000080;
-    }
-  `}
-  
-  @media (max-width: 768px) {
-    flex: 0 0 auto;
-    min-height: 40px;
-    padding: 8px 14px;
-    font-size: 13px;
-    font-weight: 800;
+    color: #0f172a;
   }
 `;
 
 export const TabContent = styled.div`
-  animation: ${fadeIn} 0.3s ease-out;
-
-  @media (max-width: 768px) {
-    width: 100%;
-    max-width: 100%;
-    overflow: visible;
-  }
+  padding-top: 14px;
 `;
 
-export const InfoGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
-  
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
+export const SectionTitle = styled.h3`
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 8px 0;
 `;
 
-export const InfoItem = styled.div`
-  background: #ffffff;
-  padding: 24px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  min-height: 180px;
+export const SectionBody = styled.p`
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.5;
+  margin: 0;
+`;
+
+export const QualificationsList = styled.div`
   display: flex;
   flex-direction: column;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
-  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07);
-  }
-
-  @media (max-width: 768px) {
-    padding: 14px;
-    border-radius: 14px;
-    min-height: auto;
-  }
+  gap: 6px;
+  margin-top: 8px;
 `;
 
-export const InfoLabel = styled.div`
-  font-family: "Poppins", sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: #000080;
-  letter-spacing: 0.5px;
-  margin-bottom: 10px;
-
-  @media (max-width: 768px) {
-    margin-bottom: 6px;
-    font-size: 11px;
-    line-height: 1.3;
-  }
-`;
-
-export const InfoValue = styled.div`
-  font-family: "Poppins", sans-serif;
-  font-size: 15px;
+export const QualificationItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
   color: #334155;
-  line-height: 1.65;
-  overflow-wrap: anywhere;
-  flex: 1;
-  
-  div {
-    margin-bottom: 6px;
-    
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  @media (max-width: 768px) {
-    font-size: 13px;
-    line-height: 1.5;
-  }
+  background: #f8fafc;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #f1f5f9;
 `;
 
-export const ExperienceCard = styled.div`
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  padding: 20px;
-  margin-bottom: 16px;
-  transition: all 0.2s;
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 14px 30px rgba(16, 24, 40, 0.09);
-  }
-  
-  &:last-child {
-    margin-bottom: 0;
-  }
+export const TagList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+`;
 
-  @media (max-width: 768px) {
-    padding: 14px;
-    border-radius: 14px;
-    margin-bottom: 10px;
+export const Tag = styled.span`
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+/* Experience Timeline */
+export const ExperienceCard = styled.div`
+  position: relative;
+  padding-left: 16px;
+  border-left: 2px solid #e2e8f0;
+  margin-bottom: 14px;
+
+  &::before {
+    content: "";
+    position: absolute;
+    left: -5px;
+    top: 4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #2563eb;
+    border: 2px solid #ffffff;
   }
 `;
 
 export const ExperienceHeader = styled.div`
-  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
 `;
 
-export const ExperienceTitle = styled.h3`
-  font-size: 16px;
-  font-weight: 900;
-  color: #000080;
-  margin: 0 0 4px 0;
-
-  @media (max-width: 768px) {
-    font-size: 15px;
-    line-height: 1.3;
-  }
+export const ExperienceTitle = styled.div`
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
 `;
 
 export const ExperienceCompany = styled.div`
-  font-size: 14px;
-  color: #344054;
-  font-weight: 700;
-
-  @media (max-width: 768px) {
-    font-size: 13px;
-    line-height: 1.4;
-  }
+  font-size: 11px;
+  font-weight: 600;
+  color: #2563eb;
 `;
 
 export const ExperienceDate = styled.div`
-  font-size: 12px;
-  color: #667085;
-  margin-bottom: 12px;
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 2px;
 `;
 
 export const ExperienceCertificate = styled.a`
+  font-size: 11px;
+  color: #059669;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #000080;
+  gap: 4px;
+  margin-top: 4px;
   text-decoration: none;
-  padding: 6px 12px;
-  background: #eef2ff;
-  border-radius: 999px;
-  
-  &:hover {
-    text-decoration: underline;
-    background: #e2e9f0;
-  }
+  &:hover { text-decoration: underline; }
 `;
 
-
-// Add this new styled component for the post grid
+/* Post Feed Grid */
 export const PostGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 16px;
-  
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 `;
 
-// Update PostCard for grid layout
 export const PostCard = styled.div`
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  overflow: hidden;
-  transition: all 0.2s;
-  box-shadow: 0 10px 24px rgba(16, 24, 40, 0.06);
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 16px 34px rgba(16, 24, 40, 0.12);
-  }
-
-  @media (max-width: 768px) {
-    border-radius: 14px;
-    box-shadow: 0 8px 18px rgba(16, 24, 40, 0.05);
-  }
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 `;
 
 export const PostHeader = styled.div`
-  padding: 16px 16px 8px 16px;
-
-  @media (max-width: 768px) {
-    padding: 12px 12px 6px;
-  }
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 `;
 
-export const PostTitle = styled.h3`
-  font-size: 16px;
-  font-weight: 900;
-  color: #000080;
+export const PostTitle = styled.h4`
   margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-
-  @media (max-width: 768px) {
-    font-size: 15px;
-    line-height: 1.3;
-  }
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
 `;
 
 export const PostDescription = styled.p`
-  font-size: 14px;
-  color: #344054;
-  line-height: 1.5;
-  margin: 0 16px 12px 16px;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-
-  @media (max-width: 768px) {
-    margin: 0 12px 10px;
-    font-size: 13px;
-    line-height: 1.45;
-  }
+  margin: 0;
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.4;
 `;
 
 export const PostImage = styled.img`
   width: 100%;
-  height: 220px;
+  max-height: 240px;
   object-fit: cover;
-  background: #f8fafc;
-
-  @media (max-width: 768px) {
-    height: 190px;
-  }
+  border-radius: 10px;
 `;
 
 export const PostStats = styled.div`
   display: flex;
-  gap: 16px;
-  padding: 12px 16px;
-  border-top: 1px solid #e0e0e0;
-  border-bottom: 1px solid #e0e0e0;
-  margin: 0;
+  align-items: center;
+  gap: 12px;
 `;
 
 export const PostStat = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #666;
+  font-size: 11px;
+  color: #64748b;
 `;
 
 export const PostActions = styled.div`
   display: flex;
-  gap: 8px;
-  padding: 12px 16px;
-
-  @media (max-width: 768px) {
-    padding: 10px 12px;
-  }
+  align-items: center;
+  gap: 16px;
+  padding-top: 6px;
+  border-top: 1px solid #e2e8f0;
 `;
 
 export const PostActionBtn = styled.button`
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px;
-  background: none;
+  background: transparent;
   border: none;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 800;
-  color: ${props => props.$liked ? "#ef4444" : "#000080"};
-  cursor: pointer;
-  transition: all 0.2s;
-  
-  &:hover {
-    background: #eef2ff;
-    color: ${props => props.$liked ? "#dc2626" : "#000080"};
-  }
-`;
-
-// Add these new styled components
-
-export const CommentsBox = styled.div`
-  padding: 12px;
-  border-top: 1px solid #e5e7eb;
-  background: #f8fafc;
-`;
-
-export const CommentsList = styled.div`
-  max-height: 200px;
-  overflow-y: auto;
-  margin-bottom: 12px;
-`;
-
-export const CommentItem = styled.div`
-  padding: 8px 0;
-  border-bottom: 1px solid #eee;
-  
-  &:last-child {
-    border-bottom: none;
-  }
-`;
-
-export const CommentText = styled.div`
-  font-size: 13px;
-  color: #000000bf;
-  margin-bottom: 4px;
-`;
-
-export const CommentMeta = styled.div`
   font-size: 11px;
-  color: #000080;
-`;
-
-export const InlineInput = styled.input`
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #d0d5dd;
-  border-radius: 20px;
-  font-size: 13px;
-  outline: none;
-  
-  &:focus {
-    border-color: #000080;
-  }
-
-  @media (max-width: 768px) {
-    min-width: 0;
-    font-size: 13px;
-  }
-`;
-
-export const SendBtn = styled.button`
-  background: #000080;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  
-  &:hover {
-    background: #004182;
-  }
-  
-  &:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-  }
-`;
-
-export const RatingBox = styled.div`
-  padding: 12px;
-  border-top: 1px solid #fff;
-  background: #000000;
-`;
-
-export const StarsRow = styled.div`
-  display: flex;
-  gap: 8px;
-  margin: 12px 0;
-`;
-
-export const StarBtn = styled.button`
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  color: ${props => props.active ? "#f59e0b" : "#d1d5db"};
-  
-  &:hover {
-    transform: scale(1.1);
-  }
-`;
-
-export const UserReviewBox = styled.div`
-  padding: 8px 12px;
-  background: #e0f2fe;
-  border-radius: 8px;
-  margin-bottom: 12px;
-  font-size: 12px;
-`;
-
-// Add these to your existing styled components file
-
-export const SubscriptionCard = styled.div`
-  background: linear-gradient(135deg, #000080 0%, #05044f 100%);
-  border-radius: 18px;
-  padding: 20px;
-  margin-top: 20px;
-  color: white;
-
-  @media (min-width: 1024px) {
-    color: #ffffff !important;
-
-    :where(h1, h2, h3, h4, p, span, small, strong, div, li, svg) {
-      color: inherit !important;
-    }
-  }
-
-  @media (max-width: 768px) {
-    grid-column: 1 / -1;
-    margin-top: 8px;
-    padding: 10px 12px;
-    border-radius: 14px;
-    box-shadow: 0 10px 24px rgba(0, 0, 128, 0.14);
-  }
-`;
-
-export const SubscriptionBadge = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255,255,255,0.2);
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 500;
-`;
-
-export const PlansContainer = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
-
-  @media (max-width: 768px) {
-    display: flex;
-    grid-template-columns: none;
-    gap: 10px;
-    margin-top: 10px;
-    width: 100%;
-    max-width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 2px 2px 8px;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-
-    &::-webkit-scrollbar {
-      display: none;
-    }
-  }
-`;
-
-export const PlanCard = styled.div`
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  padding: 24px;
-  transition: transform 0.2s, box-shadow 0.2s;
-  
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0,0,0,0.1);
-  }
-
-  @media (max-width: 768px) {
-    flex: 0 0 clamp(218px, 76vw, 286px);
-    min-width: 0;
-    padding: 12px;
-    border-radius: 14px;
-    scroll-snap-align: start;
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
-
-    &:hover {
-      transform: none;
-    }
-  }
-`;
-
-export const PlanHeader = styled.div`
-  text-align: center;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e2e8f0;
-
-  @media (max-width: 768px) {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-    gap: 4px 8px;
-    text-align: left;
-    margin-bottom: 8px;
-    padding-bottom: 8px;
-  }
-`;
-
-export const PlanName = styled.h3`
-  margin: 0 0 8px 0;
-  color: #000080;
-  font-size: 20px;
-
-  @media (max-width: 768px) {
-    margin: 0;
-    min-width: 0;
-    font-size: 14px;
-    line-height: 1.25;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-`;
-
-export const PlanPrice = styled.div`
-  font-size: 32px;
-  font-weight: 700;
-  color: #000080;
-  margin: 8px 0;
-
-  @media (max-width: 768px) {
-    margin: 0;
-    font-size: 19px;
-    line-height: 1.1;
-    white-space: nowrap;
-  }
-`;
-
-export const PlanDuration = styled.div`
-  color: #64748b;
-  font-size: 14px;
-
-  @media (max-width: 768px) {
-    grid-column: 1 / -1;
-    font-size: 11.5px;
-    line-height: 1.25;
-  }
-`;
-
-export const PlanFeatures = styled.ul`
-  list-style: none;
-  padding: 0;
-  margin: 0 0 24px 0;
-
-  @media (max-width: 768px) {
-    display: grid;
-    gap: 3px;
-    margin: 0 0 10px;
-  }
-`;
-
-export const PlanFeature = styled.li`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 0;
-  color: #334155;
-  font-size: 14px;
-
-  @media (max-width: 768px) {
-    min-width: 0;
-    gap: 6px;
-    padding: 2px 0;
-    font-size: 12px;
-    line-height: 1.3;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-
-    svg {
-      flex: 0 0 auto;
-      width: 14px;
-      height: 14px;
-    }
-
-    &:nth-child(n + 5) {
-      display: none;
-    }
-  }
-`;
-
-export const SubscribeButton = styled.button`
-  width: 100%;
-  padding: 12px;
-  background: linear-gradient(135deg, #000080 0%, #05044f 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
   font-weight: 600;
+  color: ${props => props.$liked ? "#ef4444" : "#64748b"};
+  display: flex;
+  align-items: center;
+  gap: 4px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: opacity 0.2s;
-  
-  &:hover {
-    opacity: 0.9;
-  }
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  @media (max-width: 768px) {
-    min-height: 38px;
-    padding: 9px 10px;
-    border-radius: 999px;
-    font-size: 12.5px;
-    line-height: 1.2;
-  }
 `;
 
-// In ExpertProfile.styles.js, after defining PlanCard
-export const SubscriptionPlanCard = PlanCard;
-
-// Add these to your ExpertProfile.styles.js file
-
-export const PricingOptionsContainer = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  margin: 24px 0;
-`;
-
-export const PricingOptionCard = styled.div`
-  background: ${props => props.$featured ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#ffffff'};
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-  border: 1px solid ${props => props.$featured ? 'transparent' : '#e5e7eb'};
-  transition: all 0.3s ease;
-  
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
-  }
-
-  @media (min-width: 1024px) {
-    ${props => props.$featured && `
-      color: #ffffff !important;
-
-      :where(h1, h2, h3, h4, p, span, small, strong, div, li, svg) {
-        color: inherit !important;
-      }
-
-      button {
-        color: #667eea !important;
-      }
-    `}
-  }
-`;
-
-export const PricingOptionTitle = styled.h3`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 12px;
-  color: ${props => props.$featured ? '#ffffff' : '#1f2937'};
-`;
-
-export const PricingOptionPrice = styled.div`
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 16px;
-  color: ${props => props.$featured ? '#ffffff' : '#0f172a'};
-`;
-
-export const PricingOptionDetails = styled.div`
-  font-size: 13px;
-  line-height: 1.6;
-  margin-bottom: 20px;
-  color: ${props => props.$featured ? 'rgba(255, 255, 255, 0.9)' : '#6b7280'};
-`;
-
-export const PricingOptionButton = styled.button`
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: none;
-  
-  ${props => props.$primary && `
-    background: #3b82f6;
-    color: white;
-    &:hover {
-      background: #2563eb;
-      transform: translateY(-1px);
-    }
-  `}
-  
-  ${props => props.$featured && `
-    background: white;
-    color: #667eea;
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-  `}
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
-
-
-
+/* Reels Grid */
 export const ReelsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    padding-bottom: 60px;
-  }
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
 `;
 
 export const ReelGridCard = styled.div`
   position: relative;
-  aspect-ratio: 9 / 16;
-  border-radius: 12px;
+  height: 160px;
+  border-radius: 14px;
   overflow: hidden;
-  background: #000;
-  border: 1px solid #e5e7eb;
+  background: #0f172a;
   cursor: pointer;
-  transition: transform 0.2s ease;
-
-  &:hover {
-    transform: scale(1.02);
-  }
 `;
 
 export const ReelThumbnail = styled.img`
@@ -3064,213 +844,377 @@ export const ReelThumbnail = styled.img`
   object-fit: cover;
 `;
 
-export const ReelVideoPreview = styled.video`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-`;
-
 export const ReelOverlay = styled.div`
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 60%, rgba(0, 0, 0, 0.75) 100%);
+  background: linear-gradient(to top, rgba(15,23,42,0.85) 0%, transparent 60%);
+  padding: 8px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 12px;
-  color: #fff;
+  color: #ffffff;
 `;
 
 export const ReelPlayIcon = styled.div`
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.5);
-  border-radius: 50%;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  opacity: 0.85;
-  transition: opacity 0.2s, transform 0.2s;
+  top: 8px;
+  right: 8px;
+`;
 
-  ${ReelGridCard}:hover & {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.1);
-  }
+export const ReelCaption = styled.div`
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 export const ReelMetaInfo = styled.div`
   display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  margin-top: 4px;
+  gap: 8px;
+  font-size: 10px;
+  color: #cbd5e1;
+  margin-top: 2px;
 `;
 
-export const ReelCaption = styled.p`
-  font-size: 12px;
-  font-weight: 500;
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #ffffff;
-`;
-
-export const ShareIconButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  border-radius: 50%;
+/* Reviews Components */
+export const ReviewSection = styled.div`
   background: #ffffff;
-  color: #172554;
-  border: 1px solid rgba(23, 37, 84, 0.2);
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.2s ease;
-  -webkit-tap-highlight-color: transparent;
-
-  &:hover {
-    background: #f8fafc;
-    border-color: #172554;
-    color: #1e3a8a;
-    transform: translateY(-1px);
-  }
-
-  &:active {
-    transform: scale(0.94);
-  }
-
-  svg {
-    width: 17px;
-    height: 17px;
-    stroke-width: 2.2;
-  }
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+  margin-top: 16px;
 
   @media (max-width: 768px) {
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-
-    svg {
-      width: 15px;
-      height: 15px;
-    }
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    padding: 14px 16px;
   }
 `;
 
-export const ShareModalOverlay = styled.div`
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(4px);
-  z-index: 10050;
+export const ReviewHeader = styled.div`
+  margin-bottom: 12px;
+`;
+
+export const ReviewForm = styled.div`
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 16px;
+`;
+
+export const ReviewFormTitle = styled.div`
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+export const RatingInput = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+`;
+
+export const RatingLabel = styled.span`
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+`;
+
+export const StarRating = styled.div`
+  display: flex;
+  gap: 4px;
+`;
+
+export const Star = styled.button`
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  color: ${props => props.$filled ? "#f59e0b" : "#cbd5e1"};
+  cursor: pointer;
+  padding: 0;
+`;
+
+export const TextAreaContainer = styled.div`
+  width: 100%;
+  margin-bottom: 8px;
+`;
+
+export const ReviewTextarea = styled.textarea`
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 12px;
+  outline: none;
+  resize: vertical;
+  color: #0f172a;
+  background: #ffffff;
+`;
+
+export const FormActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+export const SubmitButton = styled.button`
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+export const DeleteButton = styled.button`
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+`;
+
+export const RecentReviewsTitle = styled.div`
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+export const ReviewList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+export const ReviewItem = styled.div`
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 10px;
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+export const ReviewUser = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+`;
+
+export const UserAvatar = styled.div`
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
 `;
 
-export const ShareModalBox = styled.div`
-  width: 100%;
-  max-width: 400px;
-  background: #ffffff;
-  border-radius: 24px;
-  padding: 24px;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
+export const UserInfo = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  animation: slideIn 0.2s ease-out;
+`;
 
-  .share-header {
-    display: flex;
+export const UserName = styled.span`
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+`;
+
+export const ReviewMeta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+export const ReviewDate = styled.span`
+  font-size: 10px;
+  color: #94a3b8;
+`;
+
+export const ReviewText = styled.p`
+  margin: 0;
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.4;
+`;
+
+export const LoadingReviews = styled.div`
+  text-align: center;
+  padding: 20px;
+  color: #64748b;
+  font-size: 12px;
+`;
+
+export const NoReviews = styled.div`
+  text-align: center;
+  padding: 20px;
+  color: #94a3b8;
+  font-size: 12px;
+`;
+
+/* Mobile Sticky Bottom Consultation Bar */
+export const MobileStickyBottomBar = styled.div`
+  display: none;
+
+  @media (max-width: 1023px) {
+    display: flex !important;
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    z-index: 2147483647 !important;
+    background: #ffffff !important;
+    border-top: 1px solid #e2e8f0 !important;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06) !important;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
+    box-sizing: border-box !important;
+  }
 
-    h3 {
-      margin: 0;
-      font-size: 1.1rem;
-      font-weight: 800;
-      color: #0b132b;
+  @media (min-width: 1024px) {
+    display: none !important;
+  }
+
+  .cta-info-col {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+
+    .cta-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    button {
-      background: none;
-      border: none;
-      color: #64748b;
-      cursor: pointer;
-      padding: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      &:hover {
-        background: #f1f5f9;
-        color: #0f172a;
+    .cta-price {
+      font-size: 15px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.2;
+      white-space: nowrap;
+
+      span {
+        font-size: 11px;
+        font-weight: 400;
+        color: #64748b;
       }
     }
   }
 
-  .share-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
+  .cta-btn-primary {
+    flex: 1;
+    min-width: 140px;
+    height: 44px;
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    transition: all 0.15s ease;
+
+    &:active {
+      transform: scale(0.98);
+      background: #1d4ed8;
+    }
   }
 `;
 
-export const ShareOptionItem = styled.a`
-  display: flex;
-  flex-direction: column;
+/* Legacy compatibility exports */
+export const VerifiedCheckIcon = styled.span`
+  color: #2563eb;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 8px;
-  border-radius: 16px;
-  background: #f8fafc;
-  border: 1px solid #f1f5f9;
-  text-decoration: none;
-  color: #1e293b;
-  font-size: 0.75rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-  }
-
-  &.whatsapp {
-    color: #25D366;
-    background: rgba(37, 211, 102, 0.08);
-    border-color: rgba(37, 211, 102, 0.2);
-  }
-
-  &.telegram {
-    color: #0088cc;
-    background: rgba(0, 136, 204, 0.08);
-    border-color: rgba(0, 136, 204, 0.2);
-  }
-
-  &.twitter {
-    color: #1DA1F2;
-    background: rgba(29, 161, 242, 0.08);
-    border-color: rgba(29, 161, 242, 0.2);
-  }
-
-  &.copy {
-    color: #172554;
-    background: rgba(23, 37, 84, 0.08);
-    border-color: rgba(23, 37, 84, 0.2);
-  }
 `;
+export const LoginPrompt = styled.div` font-size: 12px; color: #64748b; `;
+export const LoginButton = styled.button` background: #2563eb; color: #fff; border: none; padding: 4px 10px; border-radius: 6px; font-size: 11px; `;
+export const ViewAllButton = styled.button` background: transparent; border: none; color: #2563eb; font-size: 11px; cursor: pointer; `;
+export const LeftImage = styled.img` width: 100%; height: 100%; object-fit: cover; `;
+export const Name = styled.h1` font-size: 17px; font-weight: 800; margin: 0; color: #0f172a; `;
+export const Role = styled.p` font-size: 12px; color: #64748b; margin: 0; `;
+export const Status = styled.span` font-size: 11px; font-weight: 600; color: ${props => props.$online ? "#059669" : "#64748b"}; `;
+export const Section = styled.div` margin-bottom: 16px; `;
+export const PriceTag = styled.span` font-size: 11px; font-weight: 700; color: #2563eb; `;
+export const CallToAction = styled.div` display: flex; gap: 8px; `;
+export const AboutSubsection = styled.div` margin-top: 12px; `;
+export const AboutSubtitle = styled.h4` font-size: 12px; font-weight: 700; color: #0f172a; margin: 0 0 6px 0; `;
+export const AvatarFallback = styled.span` font-size: 22px; font-weight: 800; color: #fff; `;
+export const InfoGrid = styled.div` display: flex; flex-direction: column; gap: 10px; `;
+export const InfoItem = styled.div` display: flex; flex-direction: column; gap: 2px; `;
+export const InfoLabel = styled.span` font-size: 11px; font-weight: 700; color: #0f172a; `;
+export const InfoValue = styled.div` font-size: 12px; color: #475569; `;
+export const CommentsBox = styled.div` margin-top: 8px; `;
+export const CommentsList = styled.div` display: flex; flex-direction: column; gap: 6px; `;
+export const CommentItem = styled.div` font-size: 11px; color: #334155; `;
+export const CommentText = styled.span` font-weight: 500; `;
+export const CommentMeta = styled.span` font-size: 10px; color: #94a3b8; margin-left: 6px; `;
+export const InlineInput = styled.input` flex: 1; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px; font-size: 11px; `;
+export const SendBtn = styled.button` background: #2563eb; color: #fff; border: none; border-radius: 6px; padding: 4px 8px; font-size: 11px; `;
+export const RatingBox = styled.div``;
+export const StarsRow = styled.div``;
+export const StarBtn = styled.button``;
+export const UserReviewBox = styled.div``;
+export const SubscriptionCard = styled.div``;
+export const SubscriptionBadge = styled.span``;
+export const PlansContainer = styled.div` display: flex; flex-direction: column; gap: 12px; `;
+export const PlanCard = styled.div` border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; background: #f8fafc; `;
+export const PlanHeader = styled.div` margin-bottom: 8px; `;
+export const PlanName = styled.h4` margin: 0; font-size: 14px; font-weight: 700; color: #0f172a; `;
+export const PlanPrice = styled.div` font-size: 18px; font-weight: 800; color: #2563eb; `;
+export const PlanDuration = styled.span` font-size: 11px; color: #64748b; `;
+export const PlanFeatures = styled.div` display: flex; flex-direction: column; gap: 4px; margin: 8px 0; `;
+export const PlanFeature = styled.div` font-size: 11px; color: #334155; display: flex; align-items: center; gap: 6px; `;
+export const SubscribeButton = styled.button` width: 100%; padding: 8px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; `;
+export const ActiveSubscriptionCard = styled.div` background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 10px 14px; `;
+export const SubscriptionInfo = styled.div` display: flex; align-items: center; gap: 10px; color: #065f46; font-size: 12px; `;
+export const SubscriptionRemaining = styled.div``;
+export const ProgressBar = styled.div``;
+export const UsageText = styled.span``;
+export const PricingInfo = styled.div``;
+export const ReelVideoPreview = styled.div``;
+export const ShareIconButton = styled.button` background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; `;
+export const ShareModalOverlay = styled.div` position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 16px; `;
+export const ShareModalBox = styled.div` background: #ffffff; border-radius: 20px; width: 100%; max-width: 420px; padding: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); .share-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; h3 { margin: 0; font-size: 15px; font-weight: 700; color: #0f172a; } button { background: none; border: none; color: #64748b; cursor: pointer; } } .share-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; } `;
+export const ShareOptionItem = styled.a` display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc; color: #0f172a; text-decoration: none; font-size: 12px; font-weight: 600; cursor: pointer; &:hover { background: #f1f5f9; } `;

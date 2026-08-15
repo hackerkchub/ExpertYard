@@ -8,6 +8,7 @@ import {
 } from "react-icons/fi";
 import APP_CONFIG from "../../../../config/appConfig";
 import AddBalancePopup from "../../components/AddBalancePopup/AddBalancePopup";
+import { uploadWorkspaceFile } from "../../../../shared/api/workspace.api";
 
 const userAuthHeaders = () => {
   const token = localStorage.getItem("token") || localStorage.getItem("userToken") || localStorage.getItem("user_token") || "";
@@ -360,14 +361,8 @@ export default function MasterServiceSlugPage() {
             try {
               const formData = new FormData();
               formData.append("file", doc.raw_file);
-              const uploadRes = await fetch("/api/workspace/upload-file", {
-                method: "POST",
-                headers: {
-                  Authorization: uploadHeaders.Authorization
-                },
-                body: formData
-              });
-              const uploadData = await uploadRes.json();
+              const uploadRes = await uploadWorkspaceFile(formData);
+              const uploadData = uploadRes.data;
               if (uploadData.success && uploadData.data?.file_url) {
                 return {
                   doc_type_key: doc.doc_type_key,

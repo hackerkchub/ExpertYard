@@ -26,7 +26,10 @@ import {
   confirmWorkspaceForm,
   updateWorkspaceStep,
   resolveWorkspaceFileUrl,
-  downloadWorkspaceFile
+  getWorkspaceFileBlob,
+  getWorkspaceDocumentBlob,
+  downloadWorkspaceFile,
+  downloadWorkspaceDocument
 } from "../../api/workspace.api";
 import "./Workspace.css";
 
@@ -49,6 +52,109 @@ export default function BookingWorkspaceShell() {
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [acceptingDelivery, setAcceptingDelivery] = useState(false);
   const [confirmingForm, setConfirmingForm] = useState(false);
+
+  // File Action & Lightbox Preview State
+  const [loadingAction, setLoadingAction] = useState({});
+  const [previewModal, setPreviewModal] = useState({
+    isOpen: false,
+    blobUrl: null,
+    fileName: "",
+    fileUrl: "",
+  });
+
+  const handleViewFile = async (docOrUrl, fileName = "Document", actionKey, docId = null) => {
+    if (loadingAction[actionKey]) return;
+    try {
+      setLoadingAction((prev) => ({ ...prev, [actionKey]: true }));
+
+      let blob = null;
+      let resolvedFileName = fileName || "Document";
+
+      const targetDocId = docId || (typeof docOrUrl === "object" ? docOrUrl.id : null);
+      const targetFileUrl = typeof docOrUrl === "string" ? docOrUrl : docOrUrl?.file_url;
+
+      if (bookingId && targetDocId) {
+        const res = await getWorkspaceDocumentBlob(bookingId, targetDocId, "view");
+        blob = res.blob;
+        if (res.fileName) resolvedFileName = res.fileName;
+      } else if (targetFileUrl) {
+        blob = await getWorkspaceFileBlob(targetFileUrl);
+      } else {
+        throw new Error("Document unavailable");
+      }
+
+      const blobUrl = window.URL.createObjectURL(blob);
+      setPreviewModal({
+        isOpen: true,
+        blobUrl,
+        fileName: resolvedFileName,
+        fileUrl: targetFileUrl || "",
+        docId: targetDocId
+      });
+    } catch (err) {
+      console.error("View document error:", err);
+      const msg = err?.response?.status === 403
+        ? "Access denied: You don't have permission to view this document."
+        : err?.response?.status === 404
+        ? "Document is no longer available on the server."
+        : "Unable to open this document. Please try again.";
+      alert(msg);
+    } finally {
+      setLoadingAction((prev) => ({ ...prev, [actionKey]: false }));
+    }
+  };
+
+  const handleDownloadFile = async (docOrUrl, fileName = "download", actionKey, docId = null) => {
+    if (loadingAction[actionKey]) return;
+    try {
+      setLoadingAction((prev) => ({ ...prev, [actionKey]: true }));
+
+      const targetDocId = docId || (typeof docOrUrl === "object" ? docOrUrl.id : null);
+      const targetFileUrl = typeof docOrUrl === "string" ? docOrUrl : docOrUrl?.file_url;
+
+      if (bookingId && targetDocId) {
+        await downloadWorkspaceDocument(bookingId, targetDocId, fileName);
+      } else if (targetFileUrl) {
+        await downloadWorkspaceFile(targetFileUrl, fileName);
+      } else {
+        throw new Error("Document unavailable for download.");
+      }
+    } catch (err) {
+      console.error("Download document error:", err);
+      const msg = err?.response?.status === 403
+        ? "Access denied: You don't have permission to download this document."
+        : err?.response?.status === 404
+        ? "Document file is no longer available on the server."
+        : "Unable to download this document. Please try again.";
+      alert(msg);
+    } finally {
+      setLoadingAction((prev) => ({ ...prev, [actionKey]: false }));
+    }
+  };
+
+  const handleClosePreviewModal = () => {
+    if (previewModal.blobUrl) {
+      window.URL.revokeObjectURL(previewModal.blobUrl);
+    }
+    setPreviewModal({
+      isOpen: false,
+      blobUrl: null,
+      fileName: "",
+      fileUrl: "",
+      docId: null
+    });
+  };
+
+  useEffect(() => {
+    if (previewModal.isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [previewModal.isOpen]);
 
   // User Role
   const userRaw = localStorage.getItem("user") || localStorage.getItem("userData");
@@ -395,20 +501,42 @@ export default function BookingWorkspaceShell() {
 
                     {file.file_url && (
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <a
-                          href={resolveWorkspaceFileUrl(file.file_url)}
-                          target="_blank"
-                          rel="noreferrer"
-                          style={{ fontSize: 12, color: "#6b46c1", fontWeight: 700, textDecoration: "none" }}
-                        >
-                          View
-                        </a>
                         <button
                           type="button"
-                          onClick={() => downloadWorkspaceFile(file.file_url, file.file_name || "deliverable")}
-                          style={{ padding: "6px 12px", background: "#6b46c1", color: "#fff", borderRadius: 6, fontSize: 12, fontWeight: 700, border: 0, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 }}
+                          disabled={loadingAction[`view_exp_${file.id || idx}`]}
+                          onClick={() => handleViewFile(file.file_url, file.file_name || "Deliverable File", `view_exp_${file.id || idx}`, file.id || "delivery")}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            fontSize: 12,
+                            color: "#6b46c1",
+                            fontWeight: 700,
+                            cursor: loadingAction[`view_exp_${file.id || idx}`] ? "not-allowed" : "pointer",
+                            padding: "4px 8px"
+                          }}
                         >
-                          <FiDownload size={13} /> Download
+                          {loadingAction[`view_exp_${file.id || idx}`] ? "Opening..." : "View"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={loadingAction[`dl_exp_${file.id || idx}`]}
+                          onClick={() => handleDownloadFile(file.file_url, file.file_name || "deliverable", `dl_exp_${file.id || idx}`, file.id || "delivery")}
+                          style={{
+                            padding: "6px 12px",
+                            background: "#6b46c1",
+                            color: "#fff",
+                            borderRadius: 6,
+                            fontSize: 12,
+                            fontWeight: 700,
+                            border: 0,
+                            cursor: loadingAction[`dl_exp_${file.id || idx}`] ? "not-allowed" : "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            opacity: loadingAction[`dl_exp_${file.id || idx}`] ? 0.7 : 1
+                          }}
+                        >
+                          <FiDownload size={13} /> {loadingAction[`dl_exp_${file.id || idx}`] ? "Downloading..." : "Download"}
                         </button>
                       </div>
                     )}
@@ -484,20 +612,42 @@ export default function BookingWorkspaceShell() {
                         </span>
                         {doc.file_url && (
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <a
-                              href={resolveWorkspaceFileUrl(doc.file_url)}
-                              target="_blank"
-                              rel="noreferrer"
-                              style={{ fontSize: 12, color: "#6b46c1", fontWeight: 700, textDecoration: "none" }}
-                            >
-                              View
-                            </a>
                             <button
                               type="button"
-                              onClick={() => downloadWorkspaceFile(doc.file_url, doc.file_name || doc.label || "document")}
-                              style={{ padding: "4px 10px", background: "#faf5ff", color: "#6b46c1", border: "1px solid #d8b4fe", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 }}
+                              disabled={loadingAction[`view_user_${doc.id || idx}`]}
+                              onClick={() => handleViewFile(doc.file_url, doc.file_name || doc.label || "Document", `view_user_${doc.id || idx}`, doc.id)}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                fontSize: 12,
+                                color: "#6b46c1",
+                                fontWeight: 700,
+                                cursor: loadingAction[`view_user_${doc.id || idx}`] ? "not-allowed" : "pointer",
+                                padding: "4px 8px"
+                              }}
                             >
-                              <FiDownload size={12} /> Download
+                              {loadingAction[`view_user_${doc.id || idx}`] ? "Opening..." : "View"}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={loadingAction[`dl_user_${doc.id || idx}`]}
+                              onClick={() => handleDownloadFile(doc.file_url, doc.file_name || doc.label || "document", `dl_user_${doc.id || idx}`, doc.id)}
+                              style={{
+                                padding: "4px 10px",
+                                background: "#faf5ff",
+                                color: "#6b46c1",
+                                border: "1px solid #d8b4fe",
+                                borderRadius: 6,
+                                fontSize: 12,
+                                fontWeight: 700,
+                                cursor: loadingAction[`dl_user_${doc.id || idx}`] ? "not-allowed" : "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 4,
+                                opacity: loadingAction[`dl_user_${doc.id || idx}`] ? 0.7 : 1
+                              }}
+                            >
+                              <FiDownload size={12} /> {loadingAction[`dl_user_${doc.id || idx}`] ? "Downloading..." : "Download"}
                             </button>
                           </div>
                         )}
@@ -691,6 +841,134 @@ export default function BookingWorkspaceShell() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* CANVAS FILE PREVIEW LIGHTBOX MODAL */}
+      {previewModal.isOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.75)",
+            backdropFilter: "blur(4px)",
+            zIndex: 100000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+          }}
+          onClick={handleClosePreviewModal}
+        >
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: 16,
+              width: "100%",
+              maxWidth: 820,
+              maxHeight: "90vh",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                padding: "14px 18px",
+                borderBottom: "1px solid #e2e8f0",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                background: "#f8fafc",
+              }}
+            >
+              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#0f172a", display: "flex", alignItems: "center", gap: 8 }}>
+                📄 {previewModal.fileName}
+              </h3>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <button
+                  type="button"
+                  disabled={loadingAction["modal_dl"]}
+                  onClick={() => handleDownloadFile(previewModal.fileUrl, previewModal.fileName, "modal_dl", previewModal.docId)}
+                  style={{
+                    padding: "6px 14px",
+                    background: "#6b46c1",
+                    color: "#ffffff",
+                    border: 0,
+                    borderRadius: 8,
+                    fontWeight: 800,
+                    fontSize: 12,
+                    cursor: loadingAction["modal_dl"] ? "not-allowed" : "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6
+                  }}
+                >
+                  <FiDownload size={13} /> {loadingAction["modal_dl"] ? "Downloading..." : "Download"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClosePreviewModal}
+                  style={{ background: "none", border: 0, cursor: "pointer", color: "#64748b", padding: 4 }}
+                >
+                  <FiX size={20} />
+                </button>
+              </div>
+            </div>
+
+            <div style={{ padding: 16, overflowY: "auto", flex: 1, display: "flex", justifyContent: "center", alignItems: "center", background: "#0f172a", minHeight: 350 }}>
+              {(() => {
+                const ext = (previewModal.fileName || previewModal.fileUrl || "").split(".").pop().toLowerCase();
+                if (["jpg", "jpeg", "png", "webp", "gif"].includes(ext)) {
+                  return (
+                    <img
+                      src={previewModal.blobUrl}
+                      alt={previewModal.fileName}
+                      style={{ maxWidth: "100%", maxHeight: "70vh", objectFit: "contain", borderRadius: 8 }}
+                    />
+                  );
+                }
+                if (ext === "pdf") {
+                  return (
+                    <iframe
+                      src={previewModal.blobUrl}
+                      title={previewModal.fileName}
+                      style={{ width: "100%", height: "65vh", border: 0, borderRadius: 8, background: "#ffffff" }}
+                    />
+                  );
+                }
+                return (
+                  <div style={{ textAlign: "center", padding: "2.5rem 1.5rem", color: "#94a3b8" }}>
+                    <p style={{ fontSize: "1rem", fontWeight: 700, marginBottom: 16, color: "#f8fafc" }}>
+                      Preview is not available for this file type.
+                    </p>
+                    <button
+                      type="button"
+                      disabled={loadingAction["modal_dl"]}
+                      onClick={() => handleDownloadFile(previewModal.fileUrl, previewModal.fileName, "modal_dl", previewModal.docId)}
+                      style={{
+                        padding: "8px 18px",
+                        background: "#6b46c1",
+                        color: "#ffffff",
+                        border: 0,
+                        borderRadius: 8,
+                        fontWeight: 800,
+                        fontSize: 13,
+                        cursor: loadingAction["modal_dl"] ? "not-allowed" : "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6
+                      }}
+                    >
+                      <FiDownload size={14} /> {loadingAction["modal_dl"] ? "Downloading..." : "Download File"}
+                    </button>
+                  </div>
+                );
+              })()}
+            </div>
           </div>
         </div>
       )}

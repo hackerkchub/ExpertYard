@@ -4,6 +4,8 @@ import {
     uploadWorkspaceFile,
     submitWorkspaceDelivery,
     acceptWorkspaceDelivery,
+    resolveWorkspaceFileUrl,
+    downloadWorkspaceFile,
 } from "../../../api/workspace.api";
 
 export default function DeliveryTab({ bookingId, workspace, snapshot, documents = [], permissions, onRefresh, currentUserRole }) {
@@ -90,38 +92,16 @@ export default function DeliveryTab({ bookingId, workspace, snapshot, documents 
   }
 
   const formatUrl = (url = "") => {
-    if (!url) return "#";
-    if (url.startsWith("blob:") || url.startsWith("data:")) return url;
-    if (url.startsWith("http://") || url.startsWith("https://")) return url;
-    const apiBase = APP_CONFIG.API_BASE_URL;
-    const backendOrigin = apiBase.replace(/\/api\/?$/, "");
-    return url.startsWith("/") ? `${backendOrigin}${url}` : `${backendOrigin}/${url}`;
+    return resolveWorkspaceFileUrl(url);
   };
 
   const handleDownloadFile = async (url, fileName) => {
     if (!url || url === "#") return alert("No valid download URL available.");
     try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("Network response was not ok");
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = fileName || "download";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(blobUrl);
+      await downloadWorkspaceFile(url, fileName);
     } catch (err) {
-      console.warn("Direct blob download failed, falling back to direct anchor:", err);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName || "download";
-      a.target = "_blank";
-      a.rel = "noreferrer";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      console.error("Delivery tab download error:", err);
+      alert("Unable to download this document. Please try again.");
     }
   };
 

@@ -33,22 +33,121 @@ export const resolveWorkspaceFileUrl = (fileUrl) => {
 };
 
 /**
- * Trigger direct browser file download without fetch/blob to avoid CORS errors
+ * Extract original filename from Content-Disposition header
  */
-export const downloadWorkspaceFile = (fileUrl, fileName = "download") => {
-  if (!fileUrl) return;
+export const extractFilenameFromHeader = (dispositionHeader, fallbackName = "document") => {
+  if (!dispositionHeader) return fallbackName;
+
+  // Try filename*=UTF-8''... format first
+  const utf8Match = dispositionHeader.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match && utf8Match[1]) {
+    try {
+      return decodeURIComponent(utf8Match[1]);
+    } catch {}
+  }
+
+  // Fallback to filename="..." format
+  const match = dispositionHeader.match(/filename="?([^";]+)"?/i);
+  if (match && match[1]) {
+    return match[1].trim();
+  }
+
+  return fallbackName;
+};
+
+/**
+ * Retrieve workspace document file as Blob using authenticated API endpoint
+ */
+export const getWorkspaceDocumentBlob = async (bookingId, documentId, mode = "view") => {
+  if (!bookingId || !documentId) {
+    throw new Error("Missing bookingId or documentId");
+  }
+
+  const endpoint = `/workspace/${bookingId}/documents/${documentId}/file?mode=${mode}`;
+  const response = await axios.get(endpoint, {
+    responseType: "blob",
+    skipLoader: true,
+  });
+
+  const disposition = response.headers ? response.headers["content-disposition"] : null;
+  const fileName = extractFilenameFromHeader(disposition, "document");
+
+  return {
+    blob: response.data,
+    fileName,
+    contentType: response.headers ? response.headers["content-type"] : null,
+  };
+};
+
+/**
+ * Trigger authenticated file download for workspace document
+ */
+export const downloadWorkspaceDocument = async (bookingId, documentId, fallbackName = "download") => {
+  const { blob, fileName } = await getWorkspaceDocumentBlob(bookingId, documentId, "download");
+  const blobUrl = window.URL.createObjectURL(blob);
+
+  const finalName = fileName || fallbackName || "download";
+  const anchor = document.createElement("a");
+  anchor.style.display = "none";
+  anchor.href = blobUrl;
+  anchor.download = finalName;
+
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+
+  setTimeout(() => {
+    window.URL.revokeObjectURL(blobUrl);
+  }, 1000);
+};
+
+/**
+ * Retrieve workspace file as a Blob using authenticated axiosInstance
+ * Backward compatible with fileUrl or (bookingId, documentId)
+ */
+export const getWorkspaceFileBlob = async (fileUrl, bookingId = null, documentId = null) => {
+  if (bookingId && documentId) {
+    const res = await getWorkspaceDocumentBlob(bookingId, documentId, "view");
+    return res.blob;
+  }
+
+  if (!fileUrl) throw new Error("No file URL or document identifier provided.");
 
   const resolvedUrl = resolveWorkspaceFileUrl(fileUrl);
-  if (!resolvedUrl) return;
+
+  const response = await axios.get(resolvedUrl, {
+    responseType: "blob",
+    skipLoader: true,
+  });
+
+  return response.data;
+};
+
+/**
+ * Trigger direct browser file download using authenticated Blob
+ */
+export const downloadWorkspaceFile = async (fileUrl, fileName = "download", bookingId = null, documentId = null) => {
+  if (bookingId && documentId) {
+    return downloadWorkspaceDocument(bookingId, documentId, fileName);
+  }
+
+  if (!fileUrl) return;
+
+  const blob = await getWorkspaceFileBlob(fileUrl);
+  const blobUrl = window.URL.createObjectURL(blob);
 
   const anchor = document.createElement("a");
   anchor.style.display = "none";
-  anchor.href = resolvedUrl;
+  anchor.href = blobUrl;
   anchor.download = fileName || "download";
 
   document.body.appendChild(anchor);
   anchor.click();
-  anchor.remove();
+  document.body.removeChild(anchor);
+
+  setTimeout(() => {
+    window.URL.revokeObjectURL(blobUrl);
+  }, 1000);
 };
 
 /* =====================================================

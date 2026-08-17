@@ -5,6 +5,11 @@ import {
     uploadWorkspaceDocument,
     replaceWorkspaceDocument,
     verifyWorkspaceDocument,
+    resolveWorkspaceFileUrl,
+    getWorkspaceFileBlob,
+    getWorkspaceDocumentBlob,
+    downloadWorkspaceFile,
+    downloadWorkspaceDocument
 } from "../../../api/workspace.api";
 
 export default function DocumentsTab({ bookingId, documents = [], snapshot, permissions, onRefresh, currentUserRole }) {
@@ -12,9 +17,75 @@ export default function DocumentsTab({ bookingId, documents = [], snapshot, perm
   const [fileName, setFileName] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileUrlInput, setFileUrlInput] = useState("");
+  const [loadingAction, setLoadingAction] = useState({});
   const [previewDoc, setPreviewDoc] = useState(null);
   const [replacingDocId, setReplacingDocId] = useState(null);
   const [replaceFile, setReplaceFile] = useState(null);
+
+  const handleOpenDocPreview = async (doc) => {
+    const actionKey = `view_${doc.id}`;
+    if (loadingAction[actionKey]) return;
+    try {
+      setLoadingAction((prev) => ({ ...prev, [actionKey]: true }));
+      let blob = null;
+      let fileName = doc.file_name || "Document";
+
+      if (bookingId && doc.id) {
+        const res = await getWorkspaceDocumentBlob(bookingId, doc.id, "view");
+        blob = res.blob;
+        if (res.fileName) fileName = res.fileName;
+      } else if (doc.file_url) {
+        blob = await getWorkspaceFileBlob(doc.file_url);
+      } else {
+        throw new Error("Document unavailable");
+      }
+
+      const blobUrl = window.URL.createObjectURL(blob);
+      setPreviewDoc({ ...doc, blobUrl, fileName });
+    } catch (err) {
+      console.error("View document error:", err);
+      const msg = err?.response?.status === 403
+        ? "Access denied: You don't have permission to view this document."
+        : err?.response?.status === 404
+        ? "Document is no longer available on the server."
+        : "Unable to open this document. Please try again.";
+      alert(msg);
+    } finally {
+      setLoadingAction((prev) => ({ ...prev, [actionKey]: false }));
+    }
+  };
+
+  const handleDownloadDoc = async (doc) => {
+    const actionKey = `dl_${doc.id}`;
+    if (loadingAction[actionKey]) return;
+    try {
+      setLoadingAction((prev) => ({ ...prev, [actionKey]: true }));
+      if (bookingId && doc.id) {
+        await downloadWorkspaceDocument(bookingId, doc.id, doc.file_name || "document");
+      } else if (doc.file_url) {
+        await downloadWorkspaceFile(doc.file_url, doc.file_name || "document");
+      } else {
+        throw new Error("Document unavailable");
+      }
+    } catch (err) {
+      console.error("Download document error:", err);
+      const msg = err?.response?.status === 403
+        ? "Access denied: You don't have permission to download this document."
+        : err?.response?.status === 404
+        ? "Document file is no longer available on the server."
+        : "Unable to download this document. Please try again.";
+      alert(msg);
+    } finally {
+      setLoadingAction((prev) => ({ ...prev, [actionKey]: false }));
+    }
+  };
+
+  const handleClosePreview = () => {
+    if (previewDoc && previewDoc.blobUrl) {
+      window.URL.revokeObjectURL(previewDoc.blobUrl);
+    }
+    setPreviewDoc(null);
+  };
 
   const clientDocuments = (documents || []).filter((d) => {
     const role = String(d.uploaded_by_role || "").trim().toUpperCase();
@@ -126,42 +197,16 @@ export default function DocumentsTab({ bookingId, documents = [], snapshot, perm
   };
 
   const formatUrl = (url = "") => {
-    if (!url) return "#";
-    if (url.startsWith("blob:") || url.startsWith("data:")) {
-      return url;
-    }
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      return url;
-    }
-    const apiBase = APP_CONFIG.API_BASE_URL;
-    const backendOrigin = apiBase.replace(/\/api\/?$/, "");
-    return url.startsWith("/") ? `${backendOrigin}${url}` : `${backendOrigin}/${url}`;
+    return resolveWorkspaceFileUrl(url);
   };
 
   const handleDownloadFile = async (url, fileName) => {
     if (!url || url === "#") return alert("No valid download URL available.");
     try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("Network response was not ok");
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = fileName || "download";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(blobUrl);
+      await downloadWorkspaceFile(url, fileName);
     } catch (err) {
-      console.warn("Direct blob download failed, falling back to direct anchor:", err);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName || "download";
-      a.target = "_blank";
-      a.rel = "noreferrer";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      console.error("Document tab download error:", err);
+      alert("Unable to download this document. Please try again.");
     }
   };
 
@@ -272,17 +317,19 @@ export default function DocumentsTab({ bookingId, documents = [], snapshot, perm
                         <>
                           <button
                             type="button"
-                            onClick={() => setPreviewDoc({ ...doc, fullUrl })}
-                            style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.35rem 0.75rem', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer' }}
+                            disabled={loadingAction[`view_${doc.id}`]}
+                            onClick={() => handleOpenDocPreview(doc)}
+                            style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.35rem 0.75rem', fontWeight: '700', fontSize: '0.8rem', cursor: loadingAction[`view_${doc.id}`] ? 'not-allowed' : 'pointer' }}
                           >
-                            👁️ View
+                            👁️ {loadingAction[`view_${doc.id}`] ? "Opening..." : "View"}
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleDownloadFile(fullUrl, doc.file_name)}
-                            style={{ background: '#059669', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.35rem 0.75rem', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer' }}
+                            disabled={loadingAction[`dl_${doc.id}`]}
+                            onClick={() => handleDownloadDoc(doc)}
+                            style={{ background: '#059669', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.35rem 0.75rem', fontWeight: '700', fontSize: '0.8rem', cursor: loadingAction[`dl_${doc.id}`] ? 'not-allowed' : 'pointer' }}
                           >
-                            ⬇️ Download
+                            ⬇️ {loadingAction[`dl_${doc.id}`] ? "Downloading..." : "Download"}
                           </button>
                         </>
                       ) : (
@@ -340,7 +387,7 @@ export default function DocumentsTab({ bookingId, documents = [], snapshot, perm
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(4px)',
-          display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 999999, padding: '1rem'
+          display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100000, padding: '1rem'
         }}>
           <div style={{
             background: '#ffffff', borderRadius: '12px', maxWidth: '850px', width: '100%',
@@ -348,11 +395,11 @@ export default function DocumentsTab({ bookingId, documents = [], snapshot, perm
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', pb: '0.75rem', marginBottom: '1rem' }}>
               <div>
-                <h3 style={{ margin: 0, color: '#0f172a' }}>{previewDoc.file_name}</h3>
+                <h3 style={{ margin: 0, color: '#0f172a' }}>{previewDoc.fileName || previewDoc.file_name}</h3>
                 <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Uploaded by {previewDoc.uploaded_by_role}</span>
               </div>
               <button
-                onClick={() => setPreviewDoc(null)}
+                onClick={handleClosePreview}
                 style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', fontWeight: '800' }}
               >
                 ✕
@@ -361,34 +408,35 @@ export default function DocumentsTab({ bookingId, documents = [], snapshot, perm
 
             {/* Document / Image Content Preview */}
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #cbd5e1', padding: '1rem', marginBottom: '1.25rem' }}>
-              {isImage(previewDoc.fullUrl, previewDoc.file_name) ? (
+              {isImage(previewDoc.blobUrl || previewDoc.file_name, previewDoc.fileName || previewDoc.file_name) ? (
                 <img
-                  src={previewDoc.fullUrl}
-                  alt={previewDoc.file_name}
+                  src={previewDoc.blobUrl}
+                  alt={previewDoc.fileName || previewDoc.file_name}
                   style={{ maxWidth: '100%', maxHeight: '60vh', objectFit: 'contain', borderRadius: '6px' }}
                 />
-              ) : isPdf(previewDoc.fullUrl, previewDoc.file_name) ? (
+              ) : isPdf(previewDoc.blobUrl || previewDoc.file_name, previewDoc.fileName || previewDoc.file_name) ? (
                 <object
-                  data={previewDoc.fullUrl}
+                  data={previewDoc.blobUrl}
                   type="application/pdf"
                   style={{ width: '100%', height: '60vh', border: 'none', borderRadius: '6px' }}
                 >
                   <iframe
-                    src={previewDoc.fullUrl}
-                    title={previewDoc.file_name}
+                    src={previewDoc.blobUrl}
+                    title={previewDoc.fileName || previewDoc.file_name}
                     style={{ width: '100%', height: '60vh', border: 'none', borderRadius: '6px' }}
                   />
                 </object>
               ) : (
                 <div style={{ textAlign: 'center', padding: '2rem' }}>
                   <p style={{ color: '#475569', fontSize: '1rem', marginBottom: '1rem' }}>
-                    📄 Document File: <strong>{previewDoc.file_name}</strong>
+                    📄 Document File: <strong>{previewDoc.fileName || previewDoc.file_name}</strong>
                   </p>
                   <button
-                    onClick={() => handleDownloadFile(previewDoc.fullUrl, previewDoc.file_name)}
+                    disabled={loadingAction[`dl_${previewDoc.id}`]}
+                    onClick={() => handleDownloadDoc(previewDoc)}
                     style={{ padding: '0.65rem 1.25rem', background: '#059669', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: '700', cursor: 'pointer' }}
                   >
-                    ⬇️ Download File to View
+                    ⬇️ {loadingAction[`dl_${previewDoc.id}`] ? "Downloading..." : "Download File to View"}
                   </button>
                 </div>
               )}
@@ -396,20 +444,13 @@ export default function DocumentsTab({ bookingId, documents = [], snapshot, perm
 
             {/* Action Bar */}
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-              <a
-                href={previewDoc.fullUrl}
-                target="_blank"
-                rel="noreferrer"
-                style={{ padding: '0.6rem 1.25rem', background: '#f1f5f9', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: '6px', fontWeight: '700', textDecoration: 'none' }}
-              >
-                🔗 Open Direct Link
-              </a>
               <button
                 type="button"
-                onClick={() => handleDownloadFile(previewDoc.fullUrl, previewDoc.file_name)}
+                disabled={loadingAction[`dl_${previewDoc.id}`]}
+                onClick={() => handleDownloadDoc(previewDoc)}
                 style={{ padding: '0.6rem 1.25rem', background: '#059669', color: '#ffffff', border: 'none', borderRadius: '6px', fontWeight: '700', cursor: 'pointer' }}
               >
-                ⬇️ Download Document
+                ⬇️ {loadingAction[`dl_${previewDoc.id}`] ? "Downloading..." : "Download Document"}
               </button>
             </div>
           </div>

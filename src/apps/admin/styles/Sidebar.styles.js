@@ -25,7 +25,7 @@ export const Side = styled.aside`
   top: 0;
   left: 0;
   height: 100vh;
-  width: ${props => props.collapsed ? '80px' : '280px'};
+  width: ${props => props.$collapsed ? '80px' : '280px'};
   background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -36,9 +36,9 @@ export const Side = styled.aside`
 
   /* Mobile Styles */
   @media (max-width: 768px) {
-    width: ${props => props.collapsed ? '80px' : '260px'};
-    transform: ${props => props.mobileOpen ? 'translateX(0)' : 'translateX(-100%)'};
-    box-shadow: ${props => props.mobileOpen ? '4px 0 30px rgba(0, 0, 0, 0.3)' : 'none'};
+    width: ${props => props.$collapsed ? '80px' : '260px'};
+    transform: ${props => props.$mobileOpen ? 'translateX(0)' : 'translateX(-100%)'};
+    box-shadow: ${props => props.$mobileOpen ? '4px 0 30px rgba(0, 0, 0, 0.3)' : 'none'};
   }
 
   /* Desktop hover effect */
@@ -57,7 +57,7 @@ export const Logo = styled.div`
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
 
-  ${props => props.collapsed && css`
+  ${props => props.$collapsed && css`
     padding: 24px 16px;
     justify-content: center;
   `}
@@ -97,7 +97,7 @@ export const LogoText = styled.div`
     background-clip: text;
   }
 
-  ${props => props.collapsed && css`
+  ${props => props.$collapsed && css`
     display: none;
   `}
 `;
@@ -132,7 +132,7 @@ export const CollapseBtn = styled.button`
     transition: transform 0.3s ease;
   }
 
-  ${props => props.collapsed && css`
+  ${props => props.$collapsed && css`
     svg {
       transform: rotate(180deg);
     }
@@ -168,7 +168,7 @@ export const ScrollableArea = styled.div`
     }
   }
 
-  ${props => props.collapsed && css`
+  ${props => props.$collapsed && css`
     padding: 8px 0;
   `}
 `;
@@ -181,7 +181,7 @@ export const BottomFixedArea = styled.div`
   backdrop-filter: blur(10px);
   width: 100%;
   
-  ${props => props.collapsed && css`
+  ${props => props.$collapsed && css`
     text-align: center;
   `}
 `;
@@ -208,7 +208,7 @@ export const SectionTitle = styled.div`
     padding-top: 8px;
   }
 
-  ${props => props.collapsed && css`
+  ${props => props.$collapsed && css`
     text-align: center;
     padding: 16px 0 8px;
     font-size: 10px;
@@ -222,7 +222,7 @@ export const SectionTitle = styled.div`
     display: none;
   }
 
-  ${props => props.collapsed && css`
+  ${props => props.$collapsed && css`
     svg {
       display: inline-block;
       width: 16px;
@@ -280,7 +280,7 @@ export const MenuItem = styled(NavLink)`
   }
 
   /* Collapsed State */
-  ${props => props.collapsed && css`
+  ${props => props.$collapsed && css`
     padding: 14px 0;
     justify-content: center;
 
@@ -344,7 +344,7 @@ export const MenuItem = styled(NavLink)`
       font-size: 10px;
     }
 
-    ${props => props.collapsed && css`
+    ${props => props.$collapsed && css`
       right: 4px;
       top: 4px;
       transform: none;
@@ -354,7 +354,7 @@ export const MenuItem = styled(NavLink)`
       padding: 0 4px;
     `}
 
-    ${props => props.hasBadge && css`
+    ${props => props.$hasBadge && css`
       &::after {
         content: '';
         position: absolute;
@@ -433,7 +433,7 @@ export const UserInfo = styled.div`
   padding: 16px 20px;
   width: 100%;
 
-  ${props => props.collapsed && css`
+  ${props => props.$collapsed && css`
     padding: 16px 0;
     text-align: center;
   `}
@@ -459,7 +459,7 @@ export const UserAvatar = styled.div`
   font-size: 16px;
   flex-shrink: 0;
 
-  ${props => props.collapsed && css`
+  ${props => props.$collapsed && css`
     margin: 0 auto;
   `}
 `;
@@ -470,7 +470,7 @@ export const UserName = styled.div`
   color: #f1f5f9;
   white-space: nowrap;
 
-  ${props => props.collapsed && css`
+  ${props => props.$collapsed && css`
     display: none;
   `}
 `;
@@ -480,7 +480,7 @@ export const UserRole = styled.div`
   color: #64748b;
   white-space: nowrap;
 
-  ${props => props.collapsed && css`
+  ${props => props.$collapsed && css`
     display: none;
   `}
 `;

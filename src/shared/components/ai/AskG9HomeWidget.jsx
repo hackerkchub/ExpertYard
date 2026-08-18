@@ -17,7 +17,8 @@ import {
   ChevronRight,
   ShieldCheck,
 } from "lucide-react";
-import { askG9Api } from "../../api/userApi/ai.api";
+import { askG9Api, trackAIClickApi } from "../../api/userApi/ai.api";
+import useChatRequest from "../../hooks/useChatRequest";
 
 const SUGGESTIONS = [
   "Indore me property dispute lawyer",
@@ -28,6 +29,7 @@ const SUGGESTIONS = [
 
 export default function AskG9HomeWidget({ onOpenModal }) {
   const navigate = useNavigate();
+  const { startChat, ChatPopups } = useChatRequest();
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [aiResult, setAiResult] = useState(null);
@@ -101,7 +103,32 @@ export default function AskG9HomeWidget({ onOpenModal }) {
     }
   };
 
-  const handleActionClick = (action) => {
+  const getExpertSlug = (expert) => {
+    if (expert?.slug) return expert.slug;
+    if (expert?.expert_slug) return expert.expert_slug;
+    if (expert?.name) {
+      return expert.name
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-');
+    }
+    return expert?.expert_id || expert?.id || "";
+  };
+
+  const handleActionClick = (action, expertId = null, serviceId = null, rankPos = null, expertObj = null) => {
+    if (aiResult?.message_id) {
+      trackAIClickApi(aiResult.message_id, expertId, serviceId, rankPos).catch(() => {});
+    }
+
+    if (expertObj || action.type === "navigate" || action.expert_slug) {
+      const slug = action.expert_slug || getExpertSlug(expertObj);
+      if (slug) {
+        navigate(`/user/experts/${slug}`);
+        return;
+      }
+    }
+
     if (action.url) {
       navigate(action.url);
     }
@@ -236,10 +263,11 @@ export default function AskG9HomeWidget({ onOpenModal }) {
             alignItems: "center",
             gap: "6px",
             boxShadow: "0 4px 12px rgba(0,0,128,0.25)",
+            opacity: loading ? 0.75 : 1,
           }}
         >
-          <Send size={16} />
-          <span>Ask AI</span>
+          {loading ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
+          <span>{loading ? "Searching..." : "Ask AI"}</span>
         </button>
       </form>
 
@@ -277,9 +305,37 @@ export default function AskG9HomeWidget({ onOpenModal }) {
 
       {/* Loading Indicator */}
       {loading && (
-        <div style={{ padding: "20px 0 10px 0", display: "flex", alignItems: "center", gap: "10px", color: "#000080", fontWeight: 600, fontSize: "0.9rem" }}>
-          <RefreshCw size={18} className="animate-spin" />
-          <span>Ask G9 AI is searching G9Expert live database...</span>
+        <div style={{ padding: "16px 0 10px 0", display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#000080", fontWeight: 700, fontSize: "0.9rem" }}>
+            <RefreshCw size={18} className="animate-spin" />
+            <span>Ask G9 AI is searching database...</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "12px" }}>
+            {[1, 2].map((sk) => (
+              <div
+                key={sk}
+                style={{
+                  background: "#ffffff",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "14px",
+                  padding: "14px",
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.03)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                }}
+              >
+                <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                  <div style={{ width: "46px", height: "46px", borderRadius: "50%", background: "#e2e8f0" }} />
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <div style={{ height: "14px", width: "45%", background: "#cbd5e1", borderRadius: "4px" }} />
+                    <div style={{ height: "10px", width: "70%", background: "#e2e8f0", borderRadius: "4px" }} />
+                  </div>
+                </div>
+                <div style={{ height: "32px", width: "100%", background: "#f8fafc", borderRadius: "8px" }} />
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -394,36 +450,29 @@ export default function AskG9HomeWidget({ onOpenModal }) {
                       </div>
                     </div>
 
-                    {/* Actions */}
-                    {exp.actions && exp.actions.length > 0 && (
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "12px", paddingTop: "10px", borderTop: "1px solid #f1f5f9" }}>
-                        {exp.actions.map((act, aIdx) => (
-                          <button
-                            key={aIdx}
-                            onClick={() => handleActionClick(act)}
-                            style={{
-                              padding: "6px 12px",
-                              borderRadius: "8px",
-                              border: "none",
-                              background: act.variant === "primary" ? "#000080" : act.variant === "success" ? "#16a34a" : act.variant === "accent" ? "#9333ea" : "#f1f5f9",
-                              color: act.variant === "secondary" ? "#334155" : "#ffffff",
-                              fontSize: "0.75rem",
-                              fontWeight: 700,
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px",
-                            }}
-                          >
-                            {act.type === "chat" && <MessageSquare size={12} />}
-                            {act.type === "call" && <Phone size={12} />}
-                            {act.type === "video_call" && <Video size={12} />}
-                            {act.type === "navigate" && <User size={12} />}
-                            {act.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                    {/* Actions — ONLY View Profile */}
+                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "12px", paddingTop: "10px", borderTop: "1px solid #f1f5f9" }}>
+                      <button
+                        onClick={() => handleActionClick({ type: "navigate" }, exp.expert_id || exp.id, null, eIdx + 1, exp)}
+                        style={{
+                          padding: "8px 16px",
+                          borderRadius: "10px",
+                          border: "none",
+                          background: "linear-gradient(135deg, #000080 0%, #1e3a8a 100%)",
+                          color: "#ffffff",
+                          fontSize: "0.8rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          boxShadow: "0 2px 6px rgba(0,0,128,0.2)",
+                        }}
+                      >
+                        <span>View Profile</span>
+                        <ChevronRight size={14} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -480,6 +529,7 @@ export default function AskG9HomeWidget({ onOpenModal }) {
           )}
         </div>
       )}
+      <ChatPopups />
     </section>
   );
 }

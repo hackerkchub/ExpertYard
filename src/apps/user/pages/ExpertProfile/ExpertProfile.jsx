@@ -494,10 +494,30 @@ const ExpertProfilePage = () => {
   [userId, reviews]
   );
 
+  const totalConsultationsCount = useMemo(() => {
+    return Number(
+      profile?.total_consultations ??
+      profile?.consultation_count ??
+      expertData?.total_consultations ??
+      expertData?.consultation_count ??
+      0
+    );
+  }, [profile, expertData]);
+
+  const displayExperienceYears = useMemo(() => {
+    return (
+      profile?.experience_years ??
+      profile?.experience ??
+      totalExperienceText ??
+      "0"
+    );
+  }, [profile, totalExperienceText]);
+
   const formattedAvgRating = useMemo(() => {
-    const numericRating = Number(avgRating);
-    return Number.isFinite(numericRating) ? numericRating.toFixed(1) : "0.0";
-  }, [avgRating]);
+    const raw = avgRating ?? profile?.avg_rating ?? profile?.rating ?? expertData?.avg_rating ?? 0;
+    const numeric = Number(raw);
+    return Number.isFinite(numeric) && numeric > 0 ? numeric.toFixed(1) : "0.0";
+  }, [avgRating, profile, expertData]);
 
   // Get pricing modes from expert price data
   const pricingModes = useMemo(() => {
@@ -1408,18 +1428,18 @@ const ExpertProfilePage = () => {
 
               <QuickStats>
                 <StatItem>
-                  <span className="stat-value">{followersCount.toLocaleString()}</span>
-                  <span className="stat-label">Followers</span>
+                  <span className="stat-value">{totalConsultationsCount}</span>
+                  <span className="stat-label">Consultations</span>
                 </StatItem>
                 <StatItem>
                   <span className="stat-value">
                     <FiStar color="#f59e0b" size={13} fill="#f59e0b" />
                     {formattedAvgRating}
                   </span>
-                  <span className="stat-label">Rating</span>
+                  <span className="stat-label">Rating ({totalReviews})</span>
                 </StatItem>
                 <StatItem>
-                  <span className="stat-value">{profile.experience || "0"}+ Yrs</span>
+                  <span className="stat-value">{displayExperienceYears}+ Yrs</span>
                   <span className="stat-label">Experience</span>
                 </StatItem>
               </QuickStats>
@@ -1445,10 +1465,10 @@ const ExpertProfilePage = () => {
                   ⭐ Top Rated
                 </span>
                 <span style={{ background: "#eff6ff", color: "#1e40af", border: "1px solid #dbeafe", padding: "3px 8px", borderRadius: 8, fontSize: 11, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                  🛡️ {profile.experience || "0"}+ Years Exp.
+                  🛡️ {displayExperienceYears}+ Years Exp.
                 </span>
                 <span style={{ background: "#ecfdf5", color: "#065f46", border: "1px solid #d1fae5", padding: "3px 8px", borderRadius: 8, fontSize: 11, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                  🛡️ {totalReviews}+ Consultations
+                  🛡️ {totalConsultationsCount} Consultations
                 </span>
               </div>
             </HeroBioSection>

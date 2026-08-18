@@ -8,6 +8,14 @@ import {
   DialogActions,
   DialogContentText,
   Typography,
+  Chip,
+  Box,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  TextField,
+  MenuItem
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -23,12 +31,24 @@ import {
   History as HistoryIcon,
   SupportAgent as SupportIcon,
   ChevronRight as ChevronRightIcon,
+  Tune as TuneIcon,
+  Category as CategoryIcon,
+  LocationOn as LocationIcon,
+  AttachMoney as MoneyIcon,
+  Translate as LanguageIcon
 } from '@mui/icons-material';
 import {
   getUserProfileApi,
   updateUserProfileApi,
   deleteUserProfileApi
 } from '../../../../shared/api/userApi/auth.api';
+import {
+  getUserPreferencesApi,
+  updateUserPreferencesApi,
+  fetchCatalogCategoriesApi,
+  fetchCatalogSubcategoriesApi,
+  fetchCatalogServicesApi
+} from '../../../../shared/api/userApi/userPreferences.api';
 import { useAuth } from '../../../../shared/context/UserAuthContext';
 import OtpModal from '../../../expert/components/OtpModal';
 import { APP_CONFIG } from '../../../../config/appConfig';
@@ -122,6 +142,30 @@ const UserProfile = () => {
   
   const [errors, setErrors] = useState({});
 
+  // User Preferences State
+  const [userPreferences, setUserPreferences] = useState({
+    preferredLanguage: '',
+    defaultLocation: { city: '', pincode: '' },
+    maxBudget: null,
+    categories: [],
+    subcategories: [],
+    services: []
+  });
+  const [prefDialogOpen, setPrefDialogOpen] = useState(false);
+  const [loadingCatalog, setLoadingCatalog] = useState(false);
+  const [catalogCategories, setCatalogCategories] = useState([]);
+  const [catalogSubcategories, setCatalogSubcategories] = useState([]);
+  const [catalogServices, setCatalogServices] = useState([]);
+  const [prefForm, setPrefForm] = useState({
+    preferredLanguage: '',
+    city: '',
+    pincode: '',
+    maxBudget: '',
+    categoryIds: [],
+    subcategoryIds: [],
+    serviceIds: []
+  });
+
   useEffect(() => {
     fetchUserProfile();
   }, []);
@@ -129,7 +173,10 @@ const UserProfile = () => {
   const fetchUserProfile = async () => {
     try {
       setLoading(true);
-      const response = await getUserProfileApi();
+      const [response, prefResponse] = await Promise.all([
+        getUserProfileApi(),
+        getUserPreferencesApi()
+      ]);
       
       if (response.success) {
         const fullNameParts = response.data.full_name.split(' ');
@@ -151,12 +198,99 @@ const UserProfile = () => {
       } else {
         showSnackbar('Failed to load profile', 'error');
       }
+
+      if (prefResponse && prefResponse.success && prefResponse.data) {
+        setUserPreferences(prefResponse.data);
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
       showSnackbar(getErrorMessage(error, 'Error loading profile'), 'error');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOpenPrefDialog = async () => {
+    setPrefDialogOpen(true);
+    setLoadingCatalog(true);
+    try {
+      const [cats, subs, servs] = await Promise.all([
+        fetchCatalogCategoriesApi(),
+        fetchCatalogSubcategoriesApi(),
+        fetchCatalogServicesApi()
+      ]);
+      setCatalogCategories(cats || []);
+      setCatalogSubcategories(subs || []);
+      setCatalogServices(servs || []);
+
+      setPrefForm({
+        preferredLanguage: userPreferences.preferredLanguage || '',
+        city: userPreferences.defaultLocation?.city || '',
+        pincode: userPreferences.defaultLocation?.pincode || '',
+        maxBudget: userPreferences.maxBudget !== null && userPreferences.maxBudget !== undefined ? userPreferences.maxBudget : '',
+        categoryIds: (userPreferences.categories || []).map(c => c.id),
+        subcategoryIds: (userPreferences.subcategories || []).map(s => s.id),
+        serviceIds: (userPreferences.services || []).map(ms => ms.id)
+      });
+    } catch (e) {
+      console.error('Catalog fetch error:', e);
+    } finally {
+      setLoadingCatalog(false);
+    }
+  };
+
+  const handleSavePreferences = async () => {
+    try {
+      setLoadingCatalog(true);
+      const payload = {
+        preferredLanguage: prefForm.preferredLanguage || null,
+        defaultLocation: {
+          city: prefForm.city || null,
+          pincode: prefForm.pincode || null
+        },
+        maxBudget: prefForm.maxBudget !== '' ? Number(prefForm.maxBudget) : null,
+        categoryIds: prefForm.categoryIds,
+        subcategoryIds: prefForm.subcategoryIds,
+        serviceIds: prefForm.serviceIds
+      };
+
+      const res = await updateUserPreferencesApi(payload);
+      if (res.success) {
+        showSnackbar('Interests & preferences updated!', 'success');
+        setUserPreferences(res.data);
+        setPrefDialogOpen(false);
+      } else {
+        showSnackbar(res.message || 'Failed to update preferences', 'error');
+      }
+    } catch (err) {
+      showSnackbar(getErrorMessage(err, 'Error updating preferences'), 'error');
+    } finally {
+      setLoadingCatalog(false);
+    }
+  };
+
+  const toggleCategorySelection = (catId) => {
+    setPrefForm(prev => {
+      const exists = prev.categoryIds.includes(catId);
+      const newCatIds = exists ? prev.categoryIds.filter(id => id !== catId) : [...prev.categoryIds, catId];
+      return { ...prev, categoryIds: newCatIds };
+    });
+  };
+
+  const toggleSubcategorySelection = (subId) => {
+    setPrefForm(prev => {
+      const exists = prev.subcategoryIds.includes(subId);
+      const newSubIds = exists ? prev.subcategoryIds.filter(id => id !== subId) : [...prev.subcategoryIds, subId];
+      return { ...prev, subcategoryIds: newSubIds };
+    });
+  };
+
+  const toggleServiceSelection = (serviceId) => {
+    setPrefForm(prev => {
+      const exists = prev.serviceIds.includes(serviceId);
+      const newServiceIds = exists ? prev.serviceIds.filter(id => id !== serviceId) : [...prev.serviceIds, serviceId];
+      return { ...prev, serviceIds: newServiceIds };
+    });
   };
 
   const handleEditClick = () => {
@@ -508,6 +642,101 @@ const UserProfile = () => {
             </ProfileCard>
           )}
 
+          {/* My Interests & Preferences Card */}
+          {!editing && (
+            <ProfileCard variant="outlined" sx={{ mt: 3 }}>
+              <StyledCardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <TuneIcon color="primary" /> My Interests & Preferences
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<EditIcon />}
+                    onClick={handleOpenPrefDialog}
+                    sx={{ borderRadius: 2 }}
+                  >
+                    Edit Interests
+                  </Button>
+                </Box>
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                  Choose your interested categories, preferred location, and budget so G9Expert can personalize your discovery experience.
+                </Typography>
+
+                <Grid container spacing={2}>
+                  {/* Interested Categories */}
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <CategoryIcon fontSize="small" color="action" /> Interested Categories
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {userPreferences.categories && userPreferences.categories.length > 0 ? (
+                        userPreferences.categories.map((cat) => (
+                          <Chip key={cat.id} label={cat.name} color="primary" variant="outlined" size="small" />
+                        ))
+                      ) : (
+                        <Typography variant="caption" color="textSecondary">No categories selected (Click Edit to select)</Typography>
+                      )}
+                    </Box>
+                  </Grid>
+
+                  {/* Interested Subcategories & Services */}
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <CategoryIcon fontSize="small" color="action" /> Subcategories & Services
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {userPreferences.subcategories && userPreferences.subcategories.length > 0 && (
+                        userPreferences.subcategories.map((sub) => (
+                          <Chip key={`sub-${sub.id}`} label={sub.name} color="secondary" variant="outlined" size="small" />
+                        ))
+                      )}
+                      {userPreferences.services && userPreferences.services.length > 0 && (
+                        userPreferences.services.map((srv) => (
+                          <Chip key={`srv-${srv.id}`} label={srv.title} color="info" variant="outlined" size="small" />
+                        ))
+                      )}
+                      {(!userPreferences.subcategories || userPreferences.subcategories.length === 0) &&
+                       (!userPreferences.services || userPreferences.services.length === 0) && (
+                        <Typography variant="caption" color="textSecondary">No specific services selected</Typography>
+                      )}
+                    </Box>
+                  </Grid>
+
+                  {/* Location & Preferences Summary */}
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 0.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <LocationIcon fontSize="small" color="action" /> Default Location
+                    </Typography>
+                    <Typography variant="body2">
+                      {userPreferences.defaultLocation?.city || 'Not set'}
+                      {userPreferences.defaultLocation?.pincode ? ` (${userPreferences.defaultLocation.pincode})` : ''}
+                    </Typography>
+                  </Grid>
+
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 0.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <LanguageIcon fontSize="small" color="action" /> Preferred Language
+                    </Typography>
+                    <Typography variant="body2">
+                      {userPreferences.preferredLanguage || 'Any / Default'}
+                    </Typography>
+                  </Grid>
+
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 0.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <MoneyIcon fontSize="small" color="action" /> Max Budget Limit
+                    </Typography>
+                    <Typography variant="body2">
+                      {userPreferences.maxBudget ? `₹${userPreferences.maxBudget}` : 'No Limit'}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </StyledCardContent>
+            </ProfileCard>
+          )}
+
           {!editing && (
             <MobileShortcutGrid aria-label="Profile quick actions">
               <MobileShortcutButton type="button" onClick={handleEditClick}>
@@ -751,7 +980,172 @@ const UserProfile = () => {
         </StyledSnackbar>
       </ProfileContainer>
 
-      {/* OTP Modal */}
+        {/* Edit Interests & Preferences Modal Dialog */}
+        <Dialog
+          open={prefDialogOpen}
+          onClose={() => setPrefDialogOpen(false)}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
+        >
+          <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <TuneIcon color="primary" /> Edit My Interests & Preferences
+          </DialogTitle>
+          <DialogContent dividers>
+            {loadingCatalog ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                <CircularProgress size={40} />
+              </Box>
+            ) : (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, py: 1 }}>
+                {/* 1. Category Selection */}
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                    1. Select Categories of Interest
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary" sx={{ mb: 1.5 }}>
+                    Click to select or deselect categories:
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {catalogCategories.map((cat) => {
+                      const isSelected = prefForm.categoryIds.includes(cat.id);
+                      return (
+                        <Chip
+                          key={`cat-sel-${cat.id}`}
+                          label={cat.name}
+                          onClick={() => toggleCategorySelection(cat.id)}
+                          color={isSelected ? "primary" : "default"}
+                          variant={isSelected ? "filled" : "outlined"}
+                          sx={{ fontWeight: isSelected ? 600 : 400, cursor: 'pointer' }}
+                        />
+                      );
+                    })}
+                  </Box>
+                </Box>
+
+                {/* 2. Subcategory Selection */}
+                {catalogSubcategories.length > 0 && (
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                      2. Select Subcategories (Optional)
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {catalogSubcategories.map((sub) => {
+                        const isSelected = prefForm.subcategoryIds.includes(sub.id);
+                        return (
+                          <Chip
+                            key={`sub-sel-${sub.id}`}
+                            label={sub.name}
+                            onClick={() => toggleSubcategorySelection(sub.id)}
+                            color={isSelected ? "secondary" : "default"}
+                            variant={isSelected ? "filled" : "outlined"}
+                            size="small"
+                            sx={{ cursor: 'pointer' }}
+                          />
+                        );
+                      })}
+                    </Box>
+                  </Box>
+                )}
+
+                {/* 3. Specific Master Services */}
+                {catalogServices.length > 0 && (
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                      3. Select Specific Services (Optional)
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {catalogServices.slice(0, 20).map((srv) => {
+                        const isSelected = prefForm.serviceIds.includes(srv.id);
+                        return (
+                          <Chip
+                            key={`srv-sel-${srv.id}`}
+                            label={srv.title}
+                            onClick={() => toggleServiceSelection(srv.id)}
+                            color={isSelected ? "info" : "default"}
+                            variant={isSelected ? "filled" : "outlined"}
+                            size="small"
+                            sx={{ cursor: 'pointer' }}
+                          />
+                        );
+                      })}
+                    </Box>
+                  </Box>
+                )}
+
+                {/* 4. Location, Language, Budget */}
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                    4. Location, Language & Budget Preferences
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Default City"
+                        value={prefForm.city}
+                        onChange={(e) => setPrefForm({ ...prefForm, city: e.target.value })}
+                        placeholder="e.g. Indore"
+                        size="small"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Default Pincode"
+                        value={prefForm.pincode}
+                        onChange={(e) => setPrefForm({ ...prefForm, pincode: e.target.value })}
+                        placeholder="e.g. 452001"
+                        size="small"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        select
+                        fullWidth
+                        label="Preferred Language"
+                        value={prefForm.preferredLanguage}
+                        onChange={(e) => setPrefForm({ ...prefForm, preferredLanguage: e.target.value })}
+                        size="small"
+                      >
+                        <MenuItem value="">Any / Default</MenuItem>
+                        <MenuItem value="Hindi">Hindi</MenuItem>
+                        <MenuItem value="English">English</MenuItem>
+                        <MenuItem value="Hinglish">Hinglish</MenuItem>
+                      </TextField>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        type="number"
+                        label="Max Budget Limit (₹)"
+                        value={prefForm.maxBudget}
+                        onChange={(e) => setPrefForm({ ...prefForm, maxBudget: e.target.value })}
+                        placeholder="e.g. 500"
+                        size="small"
+                      />
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setPrefDialogOpen(false)} variant="outlined">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSavePreferences}
+              variant="contained"
+              disabled={loadingCatalog}
+              startIcon={<SaveIcon />}
+            >
+              Save Preferences
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* OTP Modal */}
       {showOtp && (
         <OtpModal
           email={editForm.email}

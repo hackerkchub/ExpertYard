@@ -19,6 +19,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { askG9Api } from "../../api/userApi/ai.api";
+import useChatRequest from "../../hooks/useChatRequest";
 
 const DEFAULT_SUGGESTIONS = [
   "Indore me property dispute ke liye lawyer chahiye",
@@ -29,6 +30,7 @@ const DEFAULT_SUGGESTIONS = [
 
 export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
   const navigate = useNavigate();
+  const { startChat, ChatPopups } = useChatRequest();
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -137,7 +139,26 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
     }
   };
 
-  const handleActionClick = (action) => {
+  const getExpertSlug = (expert) => {
+    if (expert?.slug) return expert.slug;
+    if (expert?.expert_slug) return expert.expert_slug;
+    if (expert?.name) {
+      return expert.name
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-');
+    }
+    return expert?.expert_id || expert?.id || "";
+  };
+
+  const handleActionClick = (action, expert = null) => {
+    const slug = action.expert_slug || getExpertSlug(expert);
+    if (slug) {
+      onClose();
+      navigate(`/user/experts/${slug}`);
+      return;
+    }
     if (action.url) {
       onClose();
       navigate(action.url);
@@ -397,36 +418,29 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
                             </div>
                           </div>
 
-                          {/* Action Buttons */}
-                          {exp.actions && exp.actions.length > 0 && (
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "10px", paddingTop: "8px", borderTop: "1px solid #f1f5f9" }}>
-                              {exp.actions.map((act, aIdx) => (
-                                <button
-                                  key={aIdx}
-                                  onClick={() => handleActionClick(act)}
-                                  style={{
-                                    padding: "6px 12px",
-                                    borderRadius: "8px",
-                                    border: "none",
-                                    background: act.variant === "primary" ? "#000080" : act.variant === "success" ? "#16a34a" : act.variant === "accent" ? "#9333ea" : "#f1f5f9",
-                                    color: act.variant === "secondary" ? "#334155" : "#ffffff",
-                                    fontSize: "0.75rem",
-                                    fontWeight: 700,
-                                    cursor: "pointer",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "4px",
-                                  }}
-                                >
-                                  {act.type === "chat" && <MessageSquare size={12} />}
-                                  {act.type === "call" && <Phone size={12} />}
-                                  {act.type === "video_call" && <Video size={12} />}
-                                  {act.type === "navigate" && <User size={12} />}
-                                  {act.label}
-                                </button>
-                              ))}
-                            </div>
-                          )}
+                          {/* Action Buttons — ONLY View Profile */}
+                          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px", paddingTop: "8px", borderTop: "1px solid #f1f5f9" }}>
+                            <button
+                              onClick={() => handleActionClick({ type: "navigate" }, exp)}
+                              style={{
+                                padding: "8px 16px",
+                                borderRadius: "10px",
+                                border: "none",
+                                background: "linear-gradient(135deg, #000080 0%, #1e3a8a 100%)",
+                                color: "#ffffff",
+                                fontSize: "0.8rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "6px",
+                                boxShadow: "0 2px 6px rgba(0,0,128,0.2)",
+                              }}
+                            >
+                              <span>View Profile</span>
+                              <ChevronRight size={14} />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -482,9 +496,18 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
           )}
 
           {loading && (
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#64748b", fontSize: "0.85rem" }}>
-              <RefreshCw size={16} className="animate-spin" />
-              <span>Ask G9 AI is searching G9Expert database...</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "14px", background: "#ffffff", borderRadius: "14px", border: "1px solid #cbd5e1", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#000080", fontSize: "0.85rem", fontWeight: 700 }}>
+                <RefreshCw size={16} className="animate-spin" />
+                <span>Ask G9 AI is searching database...</span>
+              </div>
+              <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                <div style={{ width: "42px", height: "42px", borderRadius: "50%", background: "#e2e8f0" }} />
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <div style={{ height: "14px", width: "40%", background: "#cbd5e1", borderRadius: "4px" }} />
+                  <div style={{ height: "10px", width: "70%", background: "#e2e8f0", borderRadius: "4px" }} />
+                </div>
+              </div>
             </div>
           )}
 
@@ -545,14 +568,16 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
                 display: "flex",
                 alignItems: "center",
                 gap: "6px",
+                opacity: loading ? 0.75 : 1,
               }}
             >
-              <Send size={16} />
-              <span>Ask</span>
+              {loading ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
+              <span>{loading ? "Searching..." : "Ask"}</span>
             </button>
           </form>
         </div>
       </div>
+      <ChatPopups />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
@@ -10,6 +10,8 @@ import { generateToken } from "../../../firebase/generateToken";
 import useFCM from "../../../hooks/useFCM";
 import { PublicExpertProvider } from "../context/PublicExpertContext";
 import ChatLauncher from "../components/ai-chat/ChatLauncher";
+import PreferenceOnboardingModal from "../../../shared/components/Onboarding/PreferenceOnboardingModal";
+import { getUserPreferencesApi } from "../../../shared/api/userApi/userPreferences.api";
 
 const generateId = () => {
   if (
@@ -23,8 +25,9 @@ const generateId = () => {
 };
 
 export default function UserRouteBoundary() {
-  const { user } = useAuth();
+  const { user, isLoggedIn } = useAuth();
   const location = useLocation();
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const showChatLauncher =
     location.pathname === "/user" || location.pathname === "/user/";
@@ -37,6 +40,42 @@ export default function UserRouteBoundary() {
       localStorage.setItem("chat_session", sessionToken);
     }
   }, []);
+
+  // Check if logged in user has preferences configured; if not, trigger onboarding
+  useEffect(() => {
+    if (!isLoggedIn || !user?.id) {
+      setShowOnboarding(false);
+      return;
+    }
+
+    let isMounted = true;
+
+    const checkPreferences = async () => {
+      try {
+        const res = await getUserPreferencesApi();
+        if (isMounted && res?.success && res?.data) {
+          const pref = res.data;
+          const hasCategories = Array.isArray(pref.categories) && pref.categories.length > 0;
+          const hasSubcategories = Array.isArray(pref.subcategories) && pref.subcategories.length > 0;
+          const hasLocation = Boolean(pref.defaultLocation?.city);
+
+          if (!hasCategories && !hasSubcategories && !hasLocation) {
+            setShowOnboarding(true);
+          } else {
+            setShowOnboarding(false);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to check user preferences for onboarding:", err);
+      }
+    };
+
+    checkPreferences();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isLoggedIn, user?.id]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -91,7 +130,13 @@ export default function UserRouteBoundary() {
       <PublicExpertProvider>
         <Outlet />
         {showChatLauncher && <ChatLauncher />}
+        <PreferenceOnboardingModal
+          isOpen={showOnboarding}
+          onClose={() => setShowOnboarding(false)}
+          onSaveSuccess={() => setShowOnboarding(false)}
+        />
       </PublicExpertProvider>
     </>
   );
 }
+

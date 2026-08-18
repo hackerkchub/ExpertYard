@@ -32,6 +32,7 @@ const AdminCustomServiceApprovalPage = lazy(() => import("../pages/AdminCustomSe
 const AdminWorkspaceMonitoringPage = lazy(() => import("../pages/AdminWorkspaceMonitoringPage"));
 const AdminWorkspaceDetailPage = lazy(() => import("../pages/AdminWorkspaceDetailPage"));
 const AdminServiceAnalyticsPage = lazy(() => import("../pages/AdminServiceAnalyticsPage"));
+const AdminAIDiscoveryAnalyticsPage = lazy(() => import("../pages/AdminAIDiscoveryAnalyticsPage"));
 const SendToUsersPage = lazy(() => import("../pages/notifications/SendToUsersPage"));
 const SendToExpertsPage = lazy(() => import("../pages/notifications/SendToExpertsPage"));
 const LegalManagement = lazy(() => import("../pages/LegalManagement/LegalManagement"));
@@ -78,6 +79,7 @@ export default function AdminAppRoutes() {
           <Route path="workspace-monitoring" element={withLazyRoute(<AdminWorkspaceMonitoringPage/>)}/>
           <Route path="workspace/:bookingId" element={withLazyRoute(<AdminWorkspaceDetailPage/>)}/>
           <Route path="service-analytics" element={withLazyRoute(<AdminServiceAnalyticsPage/>)}/>
+          <Route path="ai-analytics" element={withLazyRoute(<AdminAIDiscoveryAnalyticsPage/>)}/>
           <Route path="notifications/users" element={withLazyRoute(<SendToUsersPage />)} />
           <Route path="notifications/experts" element={withLazyRoute(<SendToExpertsPage />)} />
           <Route path="legal-management" element={withLazyRoute(<LegalManagement/>)}/>

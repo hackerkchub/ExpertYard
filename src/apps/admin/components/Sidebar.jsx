@@ -79,6 +79,12 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
       ]
     },
     {
+      section: "AI Discovery",
+      items: [
+        { path: "/admin/ai-analytics", icon: FiBarChart2, label: "Analytics" },
+      ]
+    },
+    {
       section: "Service Management",
       items: [
         { path: "/admin/master-services/list", icon: FiLayers, label: "All Master Services" },
@@ -93,64 +99,25 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
       icon: FiFileText,
       label: "Legal Management",
     },
-        { path: "/admin/pricing-rules", icon: FiDollarSign, label: "Pricing Rules" },
-        { path: "/admin/service-templates", icon: FiLayers, label: "Service Templates" },
-        { path: "/admin/expert-approval", icon: FiCheckCircle, label: "Expert Approval Queue" },
-        { path: "/admin/custom-service-approval", icon: FiCheckCircle, label: "Custom Service Approval" },
-        { path: "/admin/workspace-monitoring", icon: FiBarChart2, label: "Workspace Monitor" },
-        { path: "/admin/service-analytics", icon: FiBarChart2, label: "Service Analytics" },
       ]
     },
     {
-      section: "Experts",
+      section: "User Management",
       items: [
-        { 
-          path: "/admin/expert-management", 
-          icon: FiUsers, 
-          label: "All Experts",
-          badge: null 
-        },
-        {
-          path: "/admin/deleted-experts",
-          icon: FiArchive,
-          label: "Deleted Experts",
-        },
-        { 
-          path: "/admin/reels-management", 
-          icon: FiCheckCircle, 
-          label: "Reels Mod",
-        },
+        { path: "/admin/users", icon: FiUsers, label: "Users List" },
+        { path: "/admin/expert-approvals", icon: FiCheckCircle, label: "Expert Approvals", badge: notifications.pendingApprovals },
       ]
     },
-   {
-  section: "Finance",
-  items: [
     {
-      path: "/admin/finance",
-      icon: FiBarChart2,
-      label: "Finance Dashboard",
-    },
-    {
-      path: "/admin/payout-management",
-      icon: FiDollarSign,
-      label: "Payouts",
-    },
-    {
-      path: "/admin/membership-plan",
-      icon: FiCreditCard,
-      label: "Membership Plans",
-    },
-  ]
-},
-    {
-      section: "Notifications",
+      section: "Finance & Earnings",
       items: [
-        { path: "/admin/notifications/users", icon: FiBell, label: "Send to Users" },
-        { path: "/admin/notifications/experts", icon: FiBell, label: "Send to Experts" },
+        { path: "/admin/transactions", icon: FiDollarSign, label: "Transactions" },
+        { path: "/admin/payouts", icon: FiCreditCard, label: "Payout Requests", badge: notifications.pendingPayouts },
+        { path: "/admin/earnings", icon: FiBarChart2, label: "Platform Earnings" },
       ]
     },
     {
-      section: "System",
+      section: "System & Support",
       items: [
         { path: "/admin/settings", icon: FiSettings, label: "Settings" },
         { path: "/admin/help", icon: FiHelpCircle, label: "Help" },
@@ -169,29 +136,29 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
         <FiMenu />
       </MobileToggle>
 
-      <Side ref={ref} collapsed={collapsed} mobileOpen={mobileOpen}>
+      <Side ref={ref} $collapsed={collapsed} $mobileOpen={mobileOpen}>
         {/* Logo Section */}
-        <Logo collapsed={collapsed}>
+        <Logo $collapsed={collapsed}>
           <LogoIcon>AD</LogoIcon>
-          <LogoText collapsed={collapsed}>
+          <LogoText $collapsed={collapsed}>
             Admin<span>Panel</span>
           </LogoText>
         </Logo>
 
         {/* Collapse Button */}
         <CollapseBtn 
-          collapsed={collapsed} 
+          $collapsed={collapsed} 
           onClick={() => setCollapsed((c) => !c)}
         >
           <FiMenu />
         </CollapseBtn>
 
         {/* Scrollable Navigation Area */}
-        <ScrollableArea collapsed={collapsed}>
+        <ScrollableArea $collapsed={collapsed}>
           <Menu>
             {menuItems.map((section, idx) => (
               <React.Fragment key={idx}>
-                <SectionTitle collapsed={collapsed}>
+                <SectionTitle $collapsed={collapsed}>
                   {collapsed ? "•••" : section.section}
                 </SectionTitle>
                 
@@ -199,10 +166,10 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
                   <MenuItem
                     key={itemIdx}
                     to={item.path}
-                    collapsed={collapsed}
+                    $collapsed={collapsed}
                     className={({ isActive }) => isActive ? "active" : ""}
                     onClick={handleCloseMobile}
-                    hasBadge={item.badge > 0}
+                    $hasBadge={item.badge > 0}
                   >
                     <item.icon />
                     <span>{item.label}</span>
@@ -217,8 +184,8 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
         </ScrollableArea>
 
         {/* Fixed Bottom Area with User Info and Logout */}
-        <BottomFixedArea collapsed={collapsed}>
-          <UserInfo collapsed={collapsed}>
+        <BottomFixedArea $collapsed={collapsed}>
+          <UserInfo $collapsed={collapsed}>
             <div style={{ 
               display: 'flex', 
               alignItems: 'center', 
@@ -226,7 +193,7 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
               flexDirection: collapsed ? 'column' : 'row',
               width: '100%'
             }}>
-              <UserAvatar collapsed={collapsed}>
+              <UserAvatar $collapsed={collapsed}>
                 A
               </UserAvatar>
               

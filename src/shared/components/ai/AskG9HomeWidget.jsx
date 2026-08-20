@@ -6,25 +6,24 @@ import {
   Mic,
   MicOff,
   User,
-  Phone,
-  Video,
-  MessageSquare,
   Star,
   MapPin,
   Bot,
   RefreshCw,
   X,
   ChevronRight,
-  ShieldCheck,
+  HelpCircle,
+  Briefcase,
+  AlertCircle
 } from "lucide-react";
 import { askG9Api, trackAIClickApi } from "../../api/userApi/ai.api";
 import useChatRequest from "../../hooks/useChatRequest";
 
-const SUGGESTIONS = [
+const DEFAULT_SUGGESTIONS = [
   "Indore me property dispute lawyer",
   "GST Registration karwana hai",
   "Doctor video call consultation",
-  "Income tax filing consultant under 1000",
+  "PAN card banwana hai",
 ];
 
 export default function AskG9HomeWidget({ onOpenModal }) {
@@ -35,15 +34,29 @@ export default function AskG9HomeWidget({ onOpenModal }) {
   const [aiResult, setAiResult] = useState(null);
   const [conversationId, setConversationId] = useState(null);
   const [isListening, setIsListening] = useState(false);
+  const [showAllExperts, setShowAllExperts] = useState(false);
+  const [showAllServices, setShowAllServices] = useState(false);
+
+  // Out-of-order request tracking
+  const reqIdRef = useRef(0);
   const widgetRef = useRef(null);
 
   const handleSubmitPrompt = async (textToSend) => {
     const queryText = (textToSend || prompt).trim();
     if (!queryText || loading) return;
 
+    const currentReqId = ++reqIdRef.current;
+    setAiResult(null);
+    setPrompt("");
+    setShowAllExperts(false);
+    setShowAllServices(false);
     setLoading(true);
+
     try {
       const data = await askG9Api(queryText, conversationId);
+
+      // Guard against out-of-order stale responses
+      if (currentReqId !== reqIdRef.current) return;
 
       if (data?.success) {
         if (data.conversation_id) {
@@ -51,27 +64,49 @@ export default function AskG9HomeWidget({ onOpenModal }) {
         }
 
         setAiResult({
+          message_id: data.message_id,
           prompt: queryText,
           message: data.message || "Here are your search results:",
           intent: data.intent,
           needs_clarification: data.needs_clarification,
+          result_mode: data.result_mode || (data.needs_clarification ? "CLARIFICATION" : "EXACT"),
           clarifying_question: data.clarifying_question,
           clarifying_options: data.clarifying_options || [],
+          suggestions: data.suggestions || data.clarifying_options || [],
           experts: data.experts || [],
           services: data.services || [],
           categories: data.categories || [],
         });
+      } else {
+        setAiResult({
+          prompt: queryText,
+          message: data?.message || "We couldn't complete your search right now. Please try again.",
+          result_mode: "ERROR",
+          experts: [],
+          services: [],
+          categories: [],
+        });
       }
     } catch (err) {
-      console.error("Ask G9 Widget Search Error:", err);
+      if (currentReqId !== reqIdRef.current) return;
+      console.error("[ASK_G9][WIDGET] Search Error:", err);
+      setAiResult({
+        prompt: queryText,
+        message: "We couldn't complete your search right now. Please try again.",
+        result_mode: "ERROR",
+        experts: [],
+        services: [],
+        categories: [],
+      });
     } finally {
-      setLoading(false);
+      if (currentReqId === reqIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
   const startVoiceInput = () => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       alert("Voice input is not supported in your browser. Please type your query.");
@@ -89,7 +124,7 @@ export default function AskG9HomeWidget({ onOpenModal }) {
       recognition.onerror = () => setIsListening(false);
 
       recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
+        const transcript = event.results[0][0]?.transcript;
         if (transcript) {
           setPrompt(transcript);
           handleSubmitPrompt(transcript);
@@ -98,7 +133,7 @@ export default function AskG9HomeWidget({ onOpenModal }) {
 
       recognition.start();
     } catch (err) {
-      console.error("Voice input error:", err);
+      console.error("[ASK_G9][WIDGET] Voice Input Error:", err);
       setIsListening(false);
     }
   };
@@ -135,6 +170,7 @@ export default function AskG9HomeWidget({ onOpenModal }) {
   };
 
   const clearResult = () => {
+    reqIdRef.current++;
     setAiResult(null);
     setPrompt("");
   };
@@ -154,7 +190,7 @@ export default function AskG9HomeWidget({ onOpenModal }) {
         transition: "all 0.3s ease",
       }}
     >
-      {/* Widget Header */}
+      {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <div
@@ -173,7 +209,7 @@ export default function AskG9HomeWidget({ onOpenModal }) {
           </div>
           <div>
             <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#000080" }}>
-              Ask G9 
+              Ask G9 <span style={{ fontSize: "0.75rem", background: "#fbbf24", color: "#000080", padding: "2px 6px", borderRadius: "10px", fontWeight: 800, marginLeft: "4px" }}>AI</span>
             </h3>
           </div>
         </div>
@@ -200,7 +236,7 @@ export default function AskG9HomeWidget({ onOpenModal }) {
         )}
       </div>
 
-      {/* Input Bar */}
+      {/* Search Input Bar */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -215,6 +251,7 @@ export default function AskG9HomeWidget({ onOpenModal }) {
           placeholder="Ask G9 AI (e.g. 'Indore me property lawyer', 'GST registration')..."
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
+          disabled={loading}
           style={{
             flex: 1,
             padding: "14px 18px",
@@ -231,13 +268,14 @@ export default function AskG9HomeWidget({ onOpenModal }) {
           type="button"
           className="ask-g9-voice-btn"
           onClick={startVoiceInput}
+          disabled={loading}
           style={{
             padding: "13px 14px",
             borderRadius: "14px",
             border: "1.5px solid #cbd5e1",
             background: isListening ? "#fee2e2" : "#f8fafc",
             color: isListening ? "#dc2626" : "#64748b",
-            cursor: "pointer",
+            cursor: loading ? "not-allowed" : "pointer",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -263,7 +301,7 @@ export default function AskG9HomeWidget({ onOpenModal }) {
             alignItems: "center",
             gap: "6px",
             boxShadow: "0 4px 12px rgba(0,0,128,0.25)",
-            opacity: loading ? 0.75 : 1,
+            opacity: loading || !prompt.trim() ? 0.75 : 1,
           }}
         >
           {loading ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
@@ -271,13 +309,13 @@ export default function AskG9HomeWidget({ onOpenModal }) {
         </button>
       </form>
 
-      {/* Quick Suggestion Chips */}
-      {!aiResult && (
+      {/* Initial Suggestions */}
+      {!aiResult && !loading && (
         <div className="ask-g9-chip-container" style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "12px" }}>
           <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748b", display: "flex", alignItems: "center", alignSelf: "center", flexShrink: 0 }}>
             Try asking:
           </span>
-          {SUGGESTIONS.map((sug, idx) => (
+          {DEFAULT_SUGGESTIONS.map((sug, idx) => (
             <button
               key={idx}
               className="ask-g9-chip-btn"
@@ -303,43 +341,47 @@ export default function AskG9HomeWidget({ onOpenModal }) {
         </div>
       )}
 
-      {/* Loading Indicator */}
+      {/* Compact Professional Loading UI */}
       {loading && (
-        <div style={{ padding: "16px 0 10px 0", display: "flex", flexDirection: "column", gap: "12px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#000080", fontWeight: 700, fontSize: "0.9rem" }}>
-            <RefreshCw size={18} className="animate-spin" />
-            <span>Ask G9 AI is searching database...</span>
+        <div
+          style={{
+            margin: "14px 0",
+            padding: "12px 16px",
+            borderRadius: "14px",
+            background: "linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%)",
+            border: "1px solid #bfdbfe",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            boxShadow: "0 2px 8px rgba(0, 0, 128, 0.04)",
+          }}
+        >
+          <div
+            style={{
+              width: "34px",
+              height: "34px",
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #000080 0%, #1e3a8a 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <Sparkles size={18} color="#ffffff" className="animate-spin" />
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "12px" }}>
-            {[1, 2].map((sk) => (
-              <div
-                key={sk}
-                style={{
-                  background: "#ffffff",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "14px",
-                  padding: "14px",
-                  boxShadow: "0 2px 6px rgba(0,0,0,0.03)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "10px",
-                }}
-              >
-                <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                  <div style={{ width: "46px", height: "46px", borderRadius: "50%", background: "#e2e8f0" }} />
-                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
-                    <div style={{ height: "14px", width: "45%", background: "#cbd5e1", borderRadius: "4px" }} />
-                    <div style={{ height: "10px", width: "70%", background: "#e2e8f0", borderRadius: "4px" }} />
-                  </div>
-                </div>
-                <div style={{ height: "32px", width: "100%", background: "#f8fafc", borderRadius: "8px" }} />
-              </div>
-            ))}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ margin: 0, fontSize: "0.88rem", color: "#1e3a8a", fontWeight: 700 }}>
+              Finding the right experts…
+            </p>
+            <p style={{ margin: "2px 0 0 0", fontSize: "0.76rem", color: "#64748b" }}>
+              Analyzing requirement & checking verified profiles
+            </p>
           </div>
         </div>
       )}
 
-      {/* INLINE AI RESULTS CONTAINER (Category section pushes down below) */}
+      {/* AI RESULT CONTAINER */}
       {aiResult && !loading && (
         <div
           style={{
@@ -349,40 +391,59 @@ export default function AskG9HomeWidget({ onOpenModal }) {
             animation: "fadeIn 0.3s ease-out",
           }}
         >
-          <div style={{ background: "#eff6ff", borderRadius: "14px", padding: "14px 16px", marginBottom: "14px", border: "1px solid #bfdbfe" }}>
-            <p style={{ margin: 0, fontSize: "0.95rem", color: "#1e3a8a", lineHeight: 1.5, fontWeight: 600 }}>
-              💡 {aiResult.message}
-            </p>
+          {/* AI Message & Dynamic Clarification / Suggestion Chips */}
+          <div
+            style={{
+              background: aiResult.result_mode === "CLARIFICATION" || aiResult.needs_clarification ? "#fffbeb" : "#eff6ff",
+              borderRadius: "14px",
+              padding: "14px 16px",
+              marginBottom: "14px",
+              border: aiResult.result_mode === "CLARIFICATION" || aiResult.needs_clarification ? "1px solid #fde68a" : "1px solid #bfdbfe",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+              {aiResult.result_mode === "CLARIFICATION" || aiResult.needs_clarification ? (
+                <HelpCircle size={18} color="#d97706" style={{ marginTop: "2px", flexShrink: 0 }} />
+              ) : (
+                <Bot size={18} color="#2563eb" style={{ marginTop: "2px", flexShrink: 0 }} />
+              )}
+              <p style={{ margin: 0, fontSize: "0.95rem", color: "#334155", lineHeight: 1.5, fontWeight: 500 }}>
+                {aiResult.message}
+              </p>
+            </div>
 
-            {/* Clarifying Option Chips */}
-            {aiResult.clarifying_options && aiResult.clarifying_options.length > 0 && (
+            {/* Dynamic Grounded Category / Suggestion Chips */}
+            {((aiResult.suggestions && aiResult.suggestions.length > 0) || (aiResult.clarifying_options && aiResult.clarifying_options.length > 0)) && (
               <div style={{ marginTop: "12px", display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#1e3a8a", width: "100%" }}>
-                  Select an option to refine search:
-                </span>
-                {aiResult.clarifying_options.map((opt, oIdx) => (
-                  <button
-                    key={oIdx}
-                    className="ask-g9-chip-btn"
-                    onClick={() => {
-                      setPrompt(opt);
-                      handleSubmitPrompt(opt);
-                    }}
-                    style={{
-                      padding: "6px 14px",
-                      borderRadius: "20px",
-                      border: "1px solid #2563eb",
-                      background: "#ffffff",
-                      color: "#2563eb",
-                      fontSize: "0.8rem",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      boxShadow: "0 2px 4px rgba(37,99,235,0.1)",
-                    }}
-                  >
-                    + {opt}
-                  </button>
-                ))}
+                {(aiResult.suggestions.length > 0 ? aiResult.suggestions : aiResult.clarifying_options).map((opt, oIdx) => {
+                  const optLabel = typeof opt === "string" ? opt : opt.label || opt.query;
+                  const optQuery = typeof opt === "string" ? opt : opt.query || opt.label;
+                  return (
+                    <button
+                      key={oIdx}
+                      onClick={() => {
+                        setPrompt(optQuery);
+                        handleSubmitPrompt(optQuery);
+                      }}
+                      style={{
+                        padding: "8px 14px",
+                        borderRadius: "20px",
+                        border: aiResult.result_mode === "CLARIFICATION" || aiResult.needs_clarification ? "1px solid #d97706" : "1px solid #2563eb",
+                        background: aiResult.result_mode === "CLARIFICATION" || aiResult.needs_clarification ? "#fef3c7" : "#eff6ff",
+                        color: aiResult.result_mode === "CLARIFICATION" || aiResult.needs_clarification ? "#b45309" : "#1d4ed8",
+                        fontSize: "0.82rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                      }}
+                    >
+                      <span>💡</span> {optLabel}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -394,120 +455,144 @@ export default function AskG9HomeWidget({ onOpenModal }) {
                 Matched Verified Experts ({aiResult.experts.length})
               </h4>
               <div className="ask-g9-expert-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "12px" }}>
-                {aiResult.experts.map((exp, eIdx) => (
-                  <div
-                    key={eIdx}
-                    style={{
-                      background: "#ffffff",
-                      border: "1px solid #e2e8f0",
-                      borderRadius: "14px",
-                      padding: "14px",
-                      boxShadow: "0 4px 6px -1px rgba(0,0,0,0.04)",
-                    }}
-                  >
-                    <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                      {exp.profile_photo ? (
-                        <img
-                          src={exp.profile_photo}
-                          alt={exp.name}
-                          style={{ width: "46px", height: "46px", borderRadius: "50%", objectFit: "cover" }}
-                        />
-                      ) : (
-                        <div
-                          style={{
-                            width: "46px",
-                            height: "46px",
-                            borderRadius: "50%",
-                            background: "#e2e8f0",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <User size={22} color="#64748b" />
-                        </div>
-                      )}
+                {(showAllExperts ? aiResult.experts : aiResult.experts.slice(0, 2)).map((exp, eIdx) => {
+                  const canonicalSlug = exp.slug || exp.expert_slug || getExpertSlug(exp);
+                  return (
+                    <div
+                      key={eIdx}
+                      style={{
+                        background: "#ffffff",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "14px",
+                        padding: "14px",
+                        boxShadow: "0 4px 6px -1px rgba(0,0,0,0.04)",
+                      }}
+                    >
+                      <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                        {exp.profile_photo ? (
+                          <img
+                            src={exp.profile_photo}
+                            alt={exp.name}
+                            style={{ width: "46px", height: "46px", borderRadius: "50%", objectFit: "cover" }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: "46px",
+                              height: "46px",
+                              borderRadius: "50%",
+                              background: "#e2e8f0",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <User size={22} color="#64748b" />
+                          </div>
+                        )}
 
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <h5 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {exp.name}
-                        </h5>
-                        <p style={{ margin: "2px 0 0 0", fontSize: "0.75rem", color: "#64748b" }}>
-                          {exp.position}
-                        </p>
-                        <div style={{ display: "flex", gap: "10px", alignItems: "center", marginTop: "4px", fontSize: "0.75rem" }}>
-                          {exp.avg_rating > 0 && (
-                            <span style={{ color: "#d97706", fontWeight: 700, display: "flex", alignItems: "center", gap: "2px" }}>
-                              <Star size={12} fill="#d97706" /> {exp.avg_rating}
-                            </span>
-                          )}
-                          {exp.location && (
-                            <span style={{ color: "#64748b", display: "flex", alignItems: "center", gap: "2px" }}>
-                              <MapPin size={12} /> {exp.location}
-                            </span>
-                          )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <h5 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {exp.name}
+                          </h5>
+                          <p style={{ margin: "2px 0 0 0", fontSize: "0.75rem", color: "#64748b" }}>
+                            {exp.position} {exp.category_name ? `• ${exp.category_name}` : ""}
+                          </p>
+                          <div style={{ display: "flex", gap: "10px", alignItems: "center", marginTop: "4px", fontSize: "0.75rem" }}>
+                            {exp.avg_rating > 0 && (
+                              <span style={{ color: "#d97706", fontWeight: 700, display: "flex", alignItems: "center", gap: "2px" }}>
+                                <Star size={12} fill="#d97706" /> {exp.avg_rating}
+                              </span>
+                            )}
+                            {exp.location && (
+                              <span style={{ color: "#64748b", display: "flex", alignItems: "center", gap: "2px" }}>
+                                <MapPin size={12} /> {exp.location}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Actions — ONLY View Profile */}
-                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "12px", paddingTop: "10px", borderTop: "1px solid #f1f5f9" }}>
-                      <button
-                        onClick={() => handleActionClick({ type: "navigate" }, exp.expert_id || exp.id, null, eIdx + 1, exp)}
-                        style={{
-                          padding: "8px 16px",
-                          borderRadius: "10px",
-                          border: "none",
-                          background: "linear-gradient(135deg, #000080 0%, #1e3a8a 100%)",
-                          color: "#ffffff",
-                          fontSize: "0.8rem",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          boxShadow: "0 2px 6px rgba(0,0,128,0.2)",
-                        }}
-                      >
-                        <span>View Profile</span>
-                        <ChevronRight size={14} />
-                      </button>
+                      {/* View Profile Primary Action ONLY */}
+                      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "12px", paddingTop: "10px", borderTop: "1px solid #f1f5f9" }}>
+                        <button
+                          onClick={() => handleActionClick({ type: "navigate", expert_slug: canonicalSlug }, exp.expert_id || exp.id, null, eIdx + 1, exp)}
+                          style={{
+                            padding: "8px 16px",
+                            borderRadius: "10px",
+                            border: "none",
+                            background: "linear-gradient(135deg, #000080 0%, #1e3a8a 100%)",
+                            color: "#ffffff",
+                            fontSize: "0.8rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            boxShadow: "0 2px 6px rgba(0,0,128,0.2)",
+                          }}
+                        >
+                          <span>View Profile</span>
+                          <ChevronRight size={14} />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
+              {!showAllExperts && aiResult.experts.length > 2 && (
+                <button
+                  onClick={() => setShowAllExperts(true)}
+                  style={{
+                    marginTop: "10px",
+                    width: "100%",
+                    padding: "8px",
+                    borderRadius: "10px",
+                    border: "1px dashed #2563eb",
+                    background: "#eff6ff",
+                    color: "#1d4ed8",
+                    fontSize: "0.8rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  View {aiResult.experts.length - 2} more experts
+                </button>
+              )}
             </div>
           )}
 
-          {/* Service Cards */}
+          {/* Service Cards Grid */}
           {aiResult.services && aiResult.services.length > 0 && (
             <div style={{ marginTop: "16px" }}>
               <h4 style={{ margin: "0 0 10px 0", fontSize: "0.95rem", color: "#0f172a", fontWeight: 800 }}>
                 Matched Services ({aiResult.services.length})
               </h4>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "10px" }}>
-                {aiResult.services.map((srv, sIdx) => (
-                  <div
-                    key={sIdx}
-                    style={{
-                      background: "#ffffff",
-                      border: "1px solid #e2e8f0",
-                      borderRadius: "12px",
-                      padding: "12px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <div>
-                      <h5 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700 }}>{srv.title}</h5>
-                      <p style={{ margin: "2px 0 0 0", fontSize: "0.75rem", color: "#64748b" }}>
-                        {srv.category_name} {srv.price ? `• ₹${srv.price}` : ""}
-                      </p>
-                    </div>
-                    {srv.actions && srv.actions[0] && (
+                {(showAllServices ? aiResult.services : aiResult.services.slice(0, 2)).map((srv, sIdx) => {
+                  const srvSlug = srv.slug || "";
+                  const srvUrl = srvSlug ? `/user/service-details/${srvSlug}` : `/user/all-services`;
+                  return (
+                    <div
+                      key={sIdx}
+                      style={{
+                        background: "#ffffff",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "12px",
+                        padding: "12px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div>
+                        <h5 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700 }}>{srv.title}</h5>
+                        <p style={{ margin: "2px 0 0 0", fontSize: "0.75rem", color: "#64748b" }}>
+                          {srv.category_name} {srv.price ? `• ₹${srv.price}` : ""}
+                        </p>
+                      </div>
                       <button
-                        onClick={() => handleActionClick(srv.actions[0])}
+                        onClick={() => handleActionClick({ type: "navigate", url: srvUrl }, null, srv.id, sIdx + 1)}
                         style={{
                           padding: "6px 14px",
                           borderRadius: "8px",
@@ -519,12 +604,31 @@ export default function AskG9HomeWidget({ onOpenModal }) {
                           cursor: "pointer",
                         }}
                       >
-                        Book
+                        Book Service
                       </button>
-                    )}
-                  </div>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
+              {!showAllServices && aiResult.services.length > 2 && (
+                <button
+                  onClick={() => setShowAllServices(true)}
+                  style={{
+                    marginTop: "10px",
+                    width: "100%",
+                    padding: "8px",
+                    borderRadius: "10px",
+                    border: "1px dashed #2563eb",
+                    background: "#eff6ff",
+                    color: "#1d4ed8",
+                    fontSize: "0.8rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  View {aiResult.services.length - 2} more services
+                </button>
+              )}
             </div>
           )}
         </div>

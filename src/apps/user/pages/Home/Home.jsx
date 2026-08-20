@@ -41,6 +41,7 @@ import HomeSkeleton from "./components/HomeSkeleton";
 import { HomeLeftSidebar, HomeRightSidebar } from "./components/HomeSidebars";
 import AskG9Modal from "../../../../shared/components/ai/AskG9Modal";
 import AskG9HomeWidget from "../../../../shared/components/ai/AskG9HomeWidget";
+import MobileBottomNav from "./components/MobileBottomNav";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useCategory } from "../../../../shared/context/CategoryContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
@@ -330,6 +331,23 @@ export default function Home() {
   const [askG9Prompt, setAskG9Prompt] = useState("");
   const [selectedLocation, setSelectedLocation] = useState(null);
   const loadMoreRef = useRef(null);
+  const footerRef = useRef(null);
+  const [isNearFooter, setIsNearFooter] = useState(false);
+
+  useEffect(() => {
+    const el = footerRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return undefined;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsNearFooter(entry.isIntersecting);
+      },
+      { rootMargin: "0px 0px -50px 0px", threshold: 0.05 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   const [items, setItems] = useState([]);
   const [mobileServices, setMobileServices] = useState([]);
   const [expertTipsPosts, setExpertTipsPosts] = useState([]);
@@ -574,7 +592,7 @@ export default function Home() {
   }, [dashboardData.categories, selectedCategory]);
 
   return (
-    <main className="home-feed-page home-page-container">
+    <main className="home-feed-page home-page-container g9-home-page">
       <HomeHeader
         isLoggedIn={isLoggedIn}
         user={user}
@@ -686,10 +704,10 @@ export default function Home() {
           balance={balance}
           onLogin={openLogin}
           onLogout={logout}
+          isNearFooter={isNearFooter}
         />
 
         <section className="home-center-column">
-          <HomeSearch onSearch={handleSearch} selectedCategoryName={selectedCategory?.name || ""} />
           <section className="home-hero-card" aria-label="G9Expert Marketplace Hero">
             <div className="desktop-hero-layout">
               <div className="desktop-hero-left">
@@ -775,7 +793,7 @@ export default function Home() {
                 <span>Trusted by 500,000+ Users</span>
               </div>
 
-              {/* Headline (Solid colors, NO gradients) */}
+              {/* Headline */}
               <h1 className="mobile-hero-title">
                 Find &amp; Consult <br />
                 <span className="mobile-hero-blue-text">Verified Experts</span>
@@ -783,10 +801,10 @@ export default function Home() {
 
               {/* Subtitle */}
               <p className="mobile-hero-subtitle">
-                Chat, call, or book top-rated expert services instantly with G9Expert.
+                Get expert help instantly.
               </p>
 
-              {/* Action Grid (Solid 4 Column Cards) */}
+              {/* Action Grid (2x2 Grid Cards with Icons & Short Titles) */}
               <div className="mobile-hero-action-grid">
                 {/* Action 1: Chat */}
                 <button 
@@ -795,8 +813,9 @@ export default function Home() {
                   onClick={() => navigate("/user/call-chat?page=1&mode=chat")}
                 >
                   <div className="hero-card-icon-wrap chat-icon-wrap">
-                    <MessageSquare size={22} color="#60a5fa" fill="none" />
+                    <MessageSquare size={20} color="#1E3A8A" fill="none" />
                   </div>
+                  <span className="hero-card-label">Instant Chat</span>
                 </button>
 
                 {/* Action 2: Call */}
@@ -806,8 +825,9 @@ export default function Home() {
                   onClick={() => navigate("/user/call-chat?page=1&mode=call")}
                 >
                   <div className="hero-card-icon-wrap call-icon-wrap">
-                    <PhoneCall size={22} color="#34d399" fill="none" />
+                    <PhoneCall size={20} color="#059669" fill="none" />
                   </div>
+                  <span className="hero-card-label">Audio Call</span>
                 </button>
 
                 {/* Action 3: Video */}
@@ -817,8 +837,9 @@ export default function Home() {
                   onClick={() => navigate("/user/call-chat?page=1&mode=video")}
                 >
                   <div className="hero-card-icon-wrap video-icon-wrap">
-                    <Video size={22} color="#a78bfa" fill="none" />
+                    <Video size={20} color="#6366F1" fill="none" />
                   </div>
+                  <span className="hero-card-label">Video Call</span>
                 </button>
 
                 {/* Action 4: Service */}
@@ -828,17 +849,18 @@ export default function Home() {
                   onClick={() => navigate("/user/all-services")}
                 >
                   <div className="hero-card-icon-wrap service-icon-wrap">
-                    <BriefcaseBusiness size={22} color="#fbbf24" fill="none" />
+                    <BriefcaseBusiness size={20} color="#F59E0B" fill="none" />
                   </div>
+                  <span className="hero-card-label">Services</span>
                 </button>
               </div>
             </div>
           </section>
 
-          {/* ASK G9 AI PROMPT WIDGET (BELOW HERO & ABOVE CATEGORY SECTION) */}
+          {/* ASK G9 AI SEARCH WIDGET (SOLE HOMEPAGE SEARCH) */}
           <AskG9HomeWidget onOpenModal={() => setAskG9Open(true)} />
 
-          {/* CATEGORIES SLIDER (NO CHANGES) */}
+          {/* CATEGORIES SLIDER */}
           <CategoryChips
             categories={categories}
             selectedCategory={selectedCategory}
@@ -880,19 +902,23 @@ export default function Home() {
               </section>
             </div>
           )}
-
-       
-          <div className="desktop-only-footer-wrapper">
-            <Footer />
-          </div>
         </section>
 
         <HomeRightSidebar
           experts={dashboardData.categories.flatMap((c) => c.experts || []).slice(0, 5)}
           services={dashboardData.categories.flatMap((c) => c.services || []).slice(0, 5)}
           balance={balance}
+          isNearFooter={isNearFooter}
         />
       </div>
+
+      {/* FULL WIDTH FOOTER OUTSIDE DESKTOP SHELL */}
+      <div ref={footerRef} className="full-width-footer-wrapper">
+        <Footer />
+      </div>
+
+      {/* MOBILE BOTTOM NAV BAR */}
+      <MobileBottomNav />
 
       <AskG9Modal
         isOpen={askG9Open}

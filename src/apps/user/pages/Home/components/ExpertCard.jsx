@@ -43,34 +43,33 @@ export default function ExpertCard({ expert }) {
         </div>
 
             <div className="expert-card-info">
-        <Link to={expertProfileLink} className="expert-card-name-row">
-          <span className="expert-card-name">{name || "Verified Expert"}</span>
-          <CheckCircle2 size={14} className="verified-icon" />
-        </Link>
+          <Link to={expertProfileLink} className="expert-card-name-row">
+            <span className="expert-card-name">{name || "Verified Expert"}</span>
+            <CheckCircle2 size={14} className="verified-icon" />
+          </Link>
 
-        <p className="expert-card-position">{position || "Consultant & Advisor"}</p>
-      </div>
-{/* 
-        <div className="expert-card-rating">
-          <Star size={12} className="star-icon" />
-          <span className="rating-num">{ratingVal}</span>
-          <span className="rating-count">({reviewsCount})</span>
-        </div> */}
-      </div>
+          <p className="expert-card-position">{position || "Consultant & Advisor"}</p>
 
-  
+          <div className="expert-card-rating">
+            <Star size={12} className="star-icon" fill="#FBBF24" color="#FBBF24" />
+            <span className="rating-num">{ratingVal}</span>
+            <span className="rating-count">({reviewsCount})</span>
+          </div>
+        </div>
+      </div>
 
       <div className="expert-card-actions">
-        <Link to={`/user/chat?expertId=${id}`} className="expert-action-btn chat-btn">
+        <Link to={`/user/chat?expertId=${id}`} className="expert-action-btn chat-btn" title="Start Chat">
           <MessageCircle size={14} />
-          <span>{chat_per_minute ? `₹${chat_per_minute}/m` : ""}</span>
+          <span>{chat_per_minute ? `₹${chat_per_minute}/m` : "Chat"}</span>
         </Link>
 
-        <Link to={`/user/experts/${slug || id}?tab=call`} className="expert-action-btn call-btn">
+        <Link to={`/user/experts/${slug || id}?tab=call`} className="expert-action-btn call-btn" title="Start Audio Call">
           <PhoneCall size={14} />
-          <span>{call_per_minute ? `₹${call_per_minute}/m` : ""}</span>
+          <span>{call_per_minute ? `₹${call_per_minute}/m` : "Call"}</span>
         </Link>
       </div>
     </div>
   );
 }
+

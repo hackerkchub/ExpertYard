@@ -37,6 +37,12 @@ export const updateUserProfileApi = async (payload) => {
   return data;
 };
 
+// UPDATE PROFESSION
+export const updateUserProfessionApi = async (profession) => {
+  const { data } = await api.patch("/user/profession", { profession });
+  return data;
+};
+
 /* ========================= */
 /* ❌ DELETE PROFILE */
 /* ========================= */

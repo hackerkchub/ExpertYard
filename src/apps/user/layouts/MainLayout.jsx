@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import Footer from "../components/Footer/Footer";
@@ -69,6 +69,22 @@ export default function MainLayout() {
     });
   };
 
+  const [isNearFooter, setIsNearFooter] = useState(false);
+  const footerRef = useRef(null);
+
+  useEffect(() => {
+    const el = footerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsNearFooter(entry.isIntersecting);
+      },
+      { threshold: 0.01, rootMargin: "0px 0px 50px 0px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [location.pathname]);
+
   // For Home page - render with its own layout (Home component handles its own footer)
   if (isUserHome) {
     return (
@@ -94,10 +110,21 @@ export default function MainLayout() {
       (location.pathname.startsWith("/user/category/") && location.pathname.endsWith("/experts"))
     );
 
+  // Pages where Left Sidebar is intentionally absent
+  const isNoLeftSidebarPage = 
+    isCallChatPage ||
+    location.pathname.startsWith("/user/my-inquiries") ||
+    location.pathname === "/user/my-inquiries" ||
+    location.pathname.startsWith("/user/notifications") ||
+    location.pathname === "/user/notifications" ||
+    location.pathname.startsWith("/user/chat") ||
+    location.pathname === "/user/chat" ||
+    isExpertProfilePage;
+
   // Desktop layout for non-home pages
   if (isDesktop) {
     return (
-      <div className={`desktop-layout-wrapper ${isCallChatPage ? "is-call-chat-layout" : ""}`}>
+      <div className={`desktop-layout-wrapper ${isNoLeftSidebarPage ? "is-call-chat-layout" : ""}`}>
         <div className="desktop-only-header">
           <HomeHeader
             onMenuOpen={() => {}}
@@ -114,23 +141,24 @@ export default function MainLayout() {
             user={user}
           />
         </div>
-        <div className={`home-desktop-shell layout--full-content ${isCallChatPage ? "no-left-sidebar-shell" : ""}`}>
-          {!isCallChatPage && (
+        <div className={`home-desktop-shell layout--full-content ${isNoLeftSidebarPage ? "no-left-sidebar-shell" : ""}`}>
+          {!isNoLeftSidebarPage && (
             <HomeLeftSidebar
               isLoggedIn={isLoggedIn}
               user={user}
               balance={balance}
               onLogin={openLogin}
               onLogout={logout}
+              isNearFooter={isNearFooter}
             />
           )}
-          <main className={`home-center-column ${isCallChatPage ? "full-width-center-column" : ""}`}>
+          <main className={`home-center-column ${isNoLeftSidebarPage ? "full-width-center-column no-sidebar" : ""}`}>
             <Outlet />
           </main>
         </div>
         {/* Step 3: Desktop Footer - hidden on Reels, My Inquiries, Chat pages */}
         {!isNoFooterPage && (
-          <div className="default-footer-container">
+          <div className="full-width-footer-wrapper" ref={footerRef}>
             <Footer />
           </div>
         )}

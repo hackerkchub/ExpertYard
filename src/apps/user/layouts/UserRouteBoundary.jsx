@@ -10,8 +10,7 @@ import { generateToken } from "../../../firebase/generateToken";
 import useFCM from "../../../hooks/useFCM";
 import { PublicExpertProvider } from "../context/PublicExpertContext";
 import ChatLauncher from "../components/ai-chat/ChatLauncher";
-import PreferenceOnboardingModal from "../../../shared/components/Onboarding/PreferenceOnboardingModal";
-import { getUserPreferencesApi } from "../../../shared/api/userApi/userPreferences.api";
+import ProfessionOnboardingModal from "../../../shared/components/Onboarding/ProfessionOnboardingModal";
 
 const generateId = () => {
   if (
@@ -29,6 +28,9 @@ export default function UserRouteBoundary() {
   const location = useLocation();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
+  // Invoke useFCM hook at top level of function component
+  useFCM();
+
   const showChatLauncher =
     location.pathname === "/user" || location.pathname === "/user/";
 
@@ -41,41 +43,20 @@ export default function UserRouteBoundary() {
     }
   }, []);
 
-  // Check if logged in user has preferences configured; if not, trigger onboarding
+  // Check if logged in user has profession set; if missing, trigger profession onboarding popup
   useEffect(() => {
     if (!isLoggedIn || !user?.id) {
       setShowOnboarding(false);
       return;
     }
 
-    let isMounted = true;
-
-    const checkPreferences = async () => {
-      try {
-        const res = await getUserPreferencesApi();
-        if (isMounted && res?.success && res?.data) {
-          const pref = res.data;
-          const hasCategories = Array.isArray(pref.categories) && pref.categories.length > 0;
-          const hasSubcategories = Array.isArray(pref.subcategories) && pref.subcategories.length > 0;
-          const hasLocation = Boolean(pref.defaultLocation?.city);
-
-          if (!hasCategories && !hasSubcategories && !hasLocation) {
-            setShowOnboarding(true);
-          } else {
-            setShowOnboarding(false);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to check user preferences for onboarding:", err);
-      }
-    };
-
-    checkPreferences();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isLoggedIn, user?.id]);
+    const needsProfession = !user?.profession || !String(user.profession).trim();
+    if (needsProfession) {
+      setShowOnboarding(true);
+    } else {
+      setShowOnboarding(false);
+    }
+  }, [isLoggedIn, user?.id, user?.profession]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -100,23 +81,11 @@ export default function UserRouteBoundary() {
     generateToken("user");
   }, [user?.id]);
 
-  useFCM((data) => {
-    if (data.type === "VOICE_CALL") {
-      window.dispatchEvent(new CustomEvent("incoming_call", { detail: data }));
-    }
-
-    if (data.type === "CHAT_REQUEST") {
-      window.dispatchEvent(new CustomEvent("incoming_chat", { detail: data }));
-    }
-  });
-
   useEffect(() => {
     const handleResume = (data) => {
-      window.dispatchEvent(
-        new CustomEvent("go_to_call_page", {
-          detail: data.callId,
-        })
-      );
+      if (data?.callId) {
+        window.location.href = `/user/voice-call?channelName=${data.channelName}&token=${data.agoraToken}&callId=${data.callId}`;
+      }
     };
 
     socket.on("call:resume_data", handleResume);
@@ -130,13 +99,11 @@ export default function UserRouteBoundary() {
       <PublicExpertProvider>
         <Outlet />
         {showChatLauncher && <ChatLauncher />}
-        <PreferenceOnboardingModal
+        <ProfessionOnboardingModal
           isOpen={showOnboarding}
           onClose={() => setShowOnboarding(false)}
-          onSaveSuccess={() => setShowOnboarding(false)}
         />
       </PublicExpertProvider>
     </>
   );
 }
-

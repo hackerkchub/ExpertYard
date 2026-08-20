@@ -54,15 +54,7 @@ const HomeHeader = React.memo(function HomeHeader({
             <img src={logo} alt="G9Expert" />
           </Link>
 
-          <div className="home-header-search">
-            <GlobalSearchBar
-              className="home-global-search"
-              placeholder="Search experts, services, categories..."
-            />
-            <button type="button" className="home-header-filter" onClick={onFilterOpen} aria-label="Open search filters">
-              <SlidersHorizontal size={16} />
-            </button>
-          </div>
+          {/* Search bar removed from HomeHeader on homepage route to make Ask G9 AI the single discovery search experience */}
 
           {/* Right Actions Group (Location, Notification, Wallet, Profile) */}
           <div className="home-header-right-actions">

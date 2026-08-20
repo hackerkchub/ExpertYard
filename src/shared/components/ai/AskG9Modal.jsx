@@ -7,16 +7,12 @@ import {
   MicOff,
   X,
   User,
-  Phone,
-  Video,
-  MessageSquare,
-  Briefcase,
   Star,
   MapPin,
   Bot,
   RefreshCw,
-  ExternalLink,
   ChevronRight,
+  HelpCircle,
 } from "lucide-react";
 import { askG9Api } from "../../api/userApi/ai.api";
 import useChatRequest from "../../hooks/useChatRequest";
@@ -36,6 +32,8 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
   const [loading, setLoading] = useState(false);
   const [conversationId, setConversationId] = useState(null);
   const [isListening, setIsListening] = useState(false);
+
+  const reqIdRef = useRef(0);
   const chatEndRef = useRef(null);
 
   useEffect(() => {
@@ -56,6 +54,7 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
     const queryText = (textToSend || prompt).trim();
     if (!queryText || loading) return;
 
+    const currentReqId = ++reqIdRef.current;
     const userMsg = { role: "user", text: queryText };
     setMessages((prev) => [...prev, userMsg]);
     setPrompt("");
@@ -63,6 +62,8 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
 
     try {
       const data = await askG9Api(queryText, conversationId);
+
+      if (currentReqId !== reqIdRef.current) return;
 
       if (data?.success) {
         if (data.conversation_id) {
@@ -74,8 +75,10 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
           text: data.message || "Here are your search results:",
           intent: data.intent,
           needs_clarification: data.needs_clarification,
+          result_mode: data.result_mode || (data.needs_clarification ? "CLARIFICATION" : "EXACT"),
           clarifying_question: data.clarifying_question,
           clarifying_options: data.clarifying_options || [],
+          suggestions: data.suggestions || data.clarifying_options || [],
           experts: data.experts || [],
           services: data.services || [],
           categories: data.categories || [],
@@ -87,27 +90,29 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
           ...prev,
           {
             role: "assistant",
-            text: data?.message || "Sorry, I couldn't process that. Please try again.",
+            text: data?.message || "We couldn't complete your search right now. Please try again.",
           },
         ]);
       }
     } catch (err) {
-      console.error("Ask G9 API Error:", err);
+      if (currentReqId !== reqIdRef.current) return;
+      console.error("[ASK_G9][MODAL] Search Error:", err);
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          text: "Something went wrong while communicating with Ask G9 AI. Please try again.",
+          text: "We couldn't complete your search right now. Please try again.",
         },
       ]);
     } finally {
-      setLoading(false);
+      if (currentReqId === reqIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
   const startVoiceInput = () => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       alert("Voice input is not supported in your browser. Please type your query.");
@@ -116,7 +121,7 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
 
     try {
       const recognition = new SpeechRecognition();
-      recognition.lang = "hi-IN"; // Supports Hindi / Hinglish / English
+      recognition.lang = "hi-IN";
       recognition.continuous = false;
       recognition.interimResults = false;
 
@@ -125,7 +130,7 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
       recognition.onerror = () => setIsListening(false);
 
       recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
+        const transcript = event.results[0][0]?.transcript;
         if (transcript) {
           setPrompt(transcript);
           handleSendPrompt(transcript);
@@ -134,7 +139,7 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
 
       recognition.start();
     } catch (err) {
-      console.error("Speech Recognition Error:", err);
+      console.error("[ASK_G9][MODAL] Voice Input Error:", err);
       setIsListening(false);
     }
   };
@@ -197,7 +202,8 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="ask-g9-modal-drag-handle" />
-        {/* Modal Header */}
+        
+        {/* Header */}
         <div
           style={{
             padding: "16px 20px",
@@ -327,9 +333,9 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
                     maxWidth: "85%",
                     padding: "12px 16px",
                     borderRadius: msg.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-                    background: msg.role === "user" ? "#000080" : "#ffffff",
+                    background: msg.role === "user" ? "#000080" : msg.result_mode === "CLARIFICATION" || msg.needs_clarification ? "#fffbeb" : "#ffffff",
                     color: msg.role === "user" ? "#ffffff" : "#0f172a",
-                    border: msg.role === "user" ? "none" : "1px solid #e2e8f0",
+                    border: msg.role === "user" ? "none" : msg.result_mode === "CLARIFICATION" || msg.needs_clarification ? "1px solid #fde68a" : "1px solid #e2e8f0",
                     fontSize: "0.9rem",
                     lineHeight: 1.5,
                     boxShadow: msg.role === "user" ? "none" : "0 2px 4px rgba(0,0,0,0.03)",
@@ -337,141 +343,169 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
                 >
                   {msg.text}
 
-                  {/* Clarifying Chips */}
-                  {msg.clarifying_options && msg.clarifying_options.length > 0 && (
+                  {/* Clarifying & Suggestion Chips */}
+                  {((msg.suggestions && msg.suggestions.length > 0) || (msg.clarifying_options && msg.clarifying_options.length > 0)) && (
                     <div style={{ marginTop: "12px", display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                      {msg.clarifying_options.map((opt, oIdx) => (
-                        <button
-                          key={oIdx}
-                          onClick={() => handleSendPrompt(opt)}
-                          style={{
-                            padding: "6px 12px",
-                            borderRadius: "20px",
-                            border: "1px solid #2563eb",
-                            background: "#eff6ff",
-                            color: "#2563eb",
-                            fontSize: "0.8rem",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                          }}
-                        >
-                          + {opt}
-                        </button>
-                      ))}
+                      {(msg.suggestions?.length > 0 ? msg.suggestions : msg.clarifying_options).map((opt, oIdx) => {
+                        const optLabel = typeof opt === "string" ? opt : opt.label || opt.query;
+                        const optQuery = typeof opt === "string" ? opt : opt.query || opt.label;
+                        return (
+                          <button
+                            key={oIdx}
+                            onClick={() => handleSendPrompt(optQuery)}
+                            style={{
+                              padding: "6px 12px",
+                              borderRadius: "20px",
+                              border: msg.result_mode === "CLARIFICATION" || msg.needs_clarification ? "1px solid #d97706" : "1px solid #2563eb",
+                              background: msg.result_mode === "CLARIFICATION" || msg.needs_clarification ? "#fef3c7" : "#eff6ff",
+                              color: msg.result_mode === "CLARIFICATION" || msg.needs_clarification ? "#b45309" : "#2563eb",
+                              fontSize: "0.8rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                          >
+                            💡 {optLabel}
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
 
                   {/* Matching Expert Cards */}
                   {msg.experts && msg.experts.length > 0 && (
                     <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "10px" }}>
-                      {msg.experts.map((exp, eIdx) => (
-                        <div
-                          key={eIdx}
-                          style={{
-                            border: "1px solid #cbd5e1",
-                            borderRadius: "12px",
-                            padding: "12px",
-                            background: "#ffffff",
-                            color: "#0f172a",
-                          }}
-                        >
-                          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                            {exp.profile_photo ? (
-                              <img
-                                src={exp.profile_photo}
-                                alt={exp.name}
-                                style={{ width: "48px", height: "48px", borderRadius: "50%", objectFit: "cover" }}
-                              />
-                            ) : (
-                              <div
-                                style={{
-                                  width: "48px",
-                                  height: "48px",
-                                  borderRadius: "50%",
-                                  background: "#e2e8f0",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                }}
-                              >
-                                <User size={24} color="#64748b" />
-                              </div>
-                            )}
+                      {(msg.showAllExperts ? msg.experts : msg.experts.slice(0, 2)).map((exp, eIdx) => {
+                        const canonicalSlug = exp.slug || exp.expert_slug || getExpertSlug(exp);
+                        return (
+                          <div
+                            key={eIdx}
+                            style={{
+                              border: "1px solid #cbd5e1",
+                              borderRadius: "12px",
+                              padding: "12px",
+                              background: "#ffffff",
+                              color: "#0f172a",
+                            }}
+                          >
+                            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                              {exp.profile_photo ? (
+                                <img
+                                  src={exp.profile_photo}
+                                  alt={exp.name}
+                                  style={{ width: "48px", height: "48px", borderRadius: "50%", objectFit: "cover" }}
+                                />
+                              ) : (
+                                <div
+                                  style={{
+                                    width: "48px",
+                                    height: "48px",
+                                    borderRadius: "50%",
+                                    background: "#e2e8f0",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  <User size={24} color="#64748b" />
+                                </div>
+                              )}
 
-                            <div style={{ flex: 1 }}>
-                              <h5 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700 }}>{exp.name}</h5>
-                              <p style={{ margin: "2px 0 0 0", fontSize: "0.75rem", color: "#64748b" }}>
-                                {exp.position} {exp.category_name ? `• ${exp.category_name}` : ""}
-                              </p>
-                              <div style={{ display: "flex", gap: "10px", alignItems: "center", marginTop: "4px", fontSize: "0.75rem" }}>
-                                {exp.avg_rating > 0 && (
-                                  <span style={{ color: "#d97706", fontWeight: 700, display: "flex", alignItems: "center", gap: "2px" }}>
-                                    <Star size={12} fill="#d97706" /> {exp.avg_rating}
-                                  </span>
-                                )}
-                                {exp.location && (
-                                  <span style={{ color: "#64748b", display: "flex", alignItems: "center", gap: "2px" }}>
-                                    <MapPin size={12} /> {exp.location}
-                                  </span>
-                                )}
+                              <div style={{ flex: 1 }}>
+                                <h5 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700 }}>{exp.name}</h5>
+                                <p style={{ margin: "2px 0 0 0", fontSize: "0.75rem", color: "#64748b" }}>
+                                  {exp.position} {exp.category_name ? `• ${exp.category_name}` : ""}
+                                </p>
+                                <div style={{ display: "flex", gap: "10px", alignItems: "center", marginTop: "4px", fontSize: "0.75rem" }}>
+                                  {exp.avg_rating > 0 && (
+                                    <span style={{ color: "#d97706", fontWeight: 700, display: "flex", alignItems: "center", gap: "2px" }}>
+                                      <Star size={12} fill="#d97706" /> {exp.avg_rating}
+                                    </span>
+                                  )}
+                                  {exp.location && (
+                                    <span style={{ color: "#64748b", display: "flex", alignItems: "center", gap: "2px" }}>
+                                      <MapPin size={12} /> {exp.location}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
 
-                          {/* Action Buttons — ONLY View Profile */}
-                          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px", paddingTop: "8px", borderTop: "1px solid #f1f5f9" }}>
-                            <button
-                              onClick={() => handleActionClick({ type: "navigate" }, exp)}
-                              style={{
-                                padding: "8px 16px",
-                                borderRadius: "10px",
-                                border: "none",
-                                background: "linear-gradient(135deg, #000080 0%, #1e3a8a 100%)",
-                                color: "#ffffff",
-                                fontSize: "0.8rem",
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "6px",
-                                boxShadow: "0 2px 6px rgba(0,0,128,0.2)",
-                              }}
-                            >
-                              <span>View Profile</span>
-                              <ChevronRight size={14} />
-                            </button>
+                            {/* Primary View Profile Action ONLY */}
+                            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px", paddingTop: "8px", borderTop: "1px solid #f1f5f9" }}>
+                              <button
+                                onClick={() => handleActionClick({ type: "navigate", expert_slug: canonicalSlug }, exp)}
+                                style={{
+                                  padding: "8px 16px",
+                                  borderRadius: "10px",
+                                  border: "none",
+                                  background: "linear-gradient(135deg, #000080 0%, #1e3a8a 100%)",
+                                  color: "#ffffff",
+                                  fontSize: "0.8rem",
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "6px",
+                                  boxShadow: "0 2px 6px rgba(0,0,128,0.2)",
+                                }}
+                              >
+                                <span>View Profile</span>
+                                <ChevronRight size={14} />
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
+                      {!msg.showAllExperts && msg.experts.length > 2 && (
+                        <button
+                          onClick={() => {
+                            setMessages(prev => prev.map((m, idx) => idx === index ? { ...m, showAllExperts: true } : m));
+                          }}
+                          style={{
+                            padding: "8px",
+                            borderRadius: "10px",
+                            border: "1px dashed #2563eb",
+                            background: "#eff6ff",
+                            color: "#1d4ed8",
+                            fontSize: "0.8rem",
+                            fontWeight: 700,
+                            cursor: "pointer"
+                          }}
+                        >
+                          View {msg.experts.length - 2} more experts
+                        </button>
+                      )}
                     </div>
                   )}
 
                   {/* Matching Service Cards */}
                   {msg.services && msg.services.length > 0 && (
                     <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                      {msg.services.map((srv, sIdx) => (
-                        <div
-                          key={sIdx}
-                          style={{
-                            border: "1px solid #cbd5e1",
-                            borderRadius: "10px",
-                            padding: "10px 12px",
-                            background: "#ffffff",
-                            color: "#0f172a",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                          }}
-                        >
-                          <div>
-                            <h5 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700 }}>{srv.title}</h5>
-                            <p style={{ margin: "2px 0 0 0", fontSize: "0.75rem", color: "#64748b" }}>
-                              {srv.category_name} {srv.price ? `• ₹${srv.price}` : ""}
-                            </p>
-                          </div>
-                          {srv.actions && srv.actions[0] && (
+                      {(msg.showAllServices ? msg.services : msg.services.slice(0, 2)).map((srv, sIdx) => {
+                        const srvSlug = srv.slug || "";
+                        const srvUrl = srvSlug ? `/user/service-details/${srvSlug}` : `/user/all-services`;
+                        return (
+                          <div
+                            key={sIdx}
+                            style={{
+                              border: "1px solid #cbd5e1",
+                              borderRadius: "10px",
+                              padding: "10px 12px",
+                              background: "#ffffff",
+                              color: "#0f172a",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <div>
+                              <h5 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700 }}>{srv.title}</h5>
+                              <p style={{ margin: "2px 0 0 0", fontSize: "0.75rem", color: "#64748b" }}>
+                                {srv.category_name} {srv.price ? `• ₹${srv.price}` : ""}
+                              </p>
+                            </div>
                             <button
-                              onClick={() => handleActionClick(srv.actions[0])}
+                              onClick={() => handleActionClick({ type: "navigate", url: srvUrl })}
                               style={{
                                 padding: "6px 12px",
                                 borderRadius: "8px",
@@ -485,9 +519,28 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
                             >
                               Book Now
                             </button>
-                          )}
-                        </div>
-                      ))}
+                          </div>
+                        );
+                      })}
+                      {!msg.showAllServices && msg.services.length > 2 && (
+                        <button
+                          onClick={() => {
+                            setMessages(prev => prev.map((m, idx) => idx === index ? { ...m, showAllServices: true } : m));
+                          }}
+                          style={{
+                            padding: "8px",
+                            borderRadius: "10px",
+                            border: "1px dashed #2563eb",
+                            background: "#eff6ff",
+                            color: "#1d4ed8",
+                            fontSize: "0.8rem",
+                            fontWeight: 700,
+                            cursor: "pointer"
+                          }}
+                        >
+                          View {msg.services.length - 2} more services
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -496,17 +549,40 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
           )}
 
           {loading && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "14px", background: "#ffffff", borderRadius: "14px", border: "1px solid #cbd5e1", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#000080", fontSize: "0.85rem", fontWeight: 700 }}>
-                <RefreshCw size={16} className="animate-spin" />
-                <span>Ask G9 AI is searching database...</span>
+            <div
+              style={{
+                margin: "10px 0",
+                padding: "12px 16px",
+                borderRadius: "14px",
+                background: "linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%)",
+                border: "1px solid #bfdbfe",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                boxShadow: "0 2px 8px rgba(0, 0, 128, 0.04)",
+              }}
+            >
+              <div
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "50%",
+                  background: "linear-gradient(135deg, #000080 0%, #1e3a8a 100%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <Sparkles size={16} color="#ffffff" className="animate-spin" />
               </div>
-              <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                <div style={{ width: "42px", height: "42px", borderRadius: "50%", background: "#e2e8f0" }} />
-                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <div style={{ height: "14px", width: "40%", background: "#cbd5e1", borderRadius: "4px" }} />
-                  <div style={{ height: "10px", width: "70%", background: "#e2e8f0", borderRadius: "4px" }} />
-                </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ margin: 0, fontSize: "0.85rem", color: "#1e3a8a", fontWeight: 700 }}>
+                  Finding the right experts…
+                </p>
+                <p style={{ margin: "2px 0 0 0", fontSize: "0.74rem", color: "#64748b" }}>
+                  Analyzing requirement & checking verified profiles
+                </p>
               </div>
             </div>
           )}
@@ -528,6 +604,7 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
               placeholder="Ask anything (e.g. Indore me lawyer, GST registration)..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
+              disabled={loading}
               style={{
                 flex: 1,
                 padding: "12px 16px",
@@ -541,13 +618,14 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
             <button
               type="button"
               onClick={startVoiceInput}
+              disabled={loading}
               style={{
                 padding: "12px",
                 borderRadius: "12px",
                 border: "1px solid #cbd5e1",
                 background: isListening ? "#fee2e2" : "#f8fafc",
                 color: isListening ? "#dc2626" : "#64748b",
-                cursor: "pointer",
+                cursor: loading ? "not-allowed" : "pointer",
               }}
               title="Voice Input"
             >
@@ -568,7 +646,7 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
                 display: "flex",
                 alignItems: "center",
                 gap: "6px",
-                opacity: loading ? 0.75 : 1,
+                opacity: loading || !prompt.trim() ? 0.75 : 1,
               }}
             >
               {loading ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}

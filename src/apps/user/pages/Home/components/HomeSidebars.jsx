@@ -20,7 +20,7 @@ import {
   Package,
 } from "lucide-react";
 import logo from "../../../../../assets/logo.webp";
-import { getAllServices } from "../../../../../shared/api/service.api";
+import { APP_CONFIG } from "../../../../../config/appConfig";
 
 // Helper function to get initials from name
 const getInitials = (name = "") => {
@@ -53,20 +53,13 @@ const navItems = [
   { label: "Settings", to: "/user/user-profile", icon: Settings },
 ];
 
-const trendingServicesData = [
-  { title: "Income Tax Filing", subtitle: "by CA Experts", price: "₹ 1,499" },
-  { title: "Business Registration", subtitle: "by Legal Advisors", price: "₹ 2,999" },
-  { title: "Birth Chart Analysis", subtitle: "by Astrologers", price: "₹ 499" },
-  { title: "Logo & Brand Design", subtitle: "by Branding Experts", price: "₹ 2,499" },
-];
-
 const recommendedExpertsData = [
   { name: "Himanshu Dhote", position: "Finance Consultant", price: "₹ 50/min", rating: "4.9", reviews: "124" },
   { name: "Acharya Nishu kaushik", position: "Astrologer", price: "₹ 40/min", rating: "4.8", reviews: "98" },
   { name: "Dr. Amit Srivastava", position: "Psychologist", price: "₹ 65/min", rating: "4.9", reviews: "156" },
 ];
 
-export function HomeLeftSidebar({ isLoggedIn = false, user, balance = 0, onLogin, onLogout }) {
+export function HomeLeftSidebar({ isLoggedIn = false, user, balance = 0, onLogin, onLogout, isNearFooter = false }) {
   const accountName = isLoggedIn
     ? user?.first_name || user?.name || "G9Expert User"
     : "G9Expert";
@@ -75,7 +68,7 @@ export function HomeLeftSidebar({ isLoggedIn = false, user, balance = 0, onLogin
     : "Login to manage consultations";
 
   return (
-    <aside className="home-left-sidebar" aria-label="Home navigation">
+    <aside className={`home-left-sidebar ${isNearFooter ? "sidebar-near-footer" : ""}`} aria-label="Home navigation">
       {/* LOGO - Fixed at Top */}
       <Link className="home-sidebar-logo" to="/user" aria-label="G9Expert home">
         <img src={logo} alt="G9Expert" />
@@ -128,60 +121,55 @@ export function HomeLeftSidebar({ isLoggedIn = false, user, balance = 0, onLogin
   );
 }
 
-export function HomeRightSidebar({ experts = [], services = [], balance = 0 }) {
+export function HomeRightSidebar({ experts = [], balance = 0, isNearFooter = false }) {
   const [showBonus, setShowBonus] = React.useState(true);
   const walletAmount = Math.floor(Number(balance || 0));
 
-  const [dynamicServices, setDynamicServices] = React.useState([]);
+  const [masterServices, setMasterServices] = React.useState([]);
   const [loadingServices, setLoadingServices] = React.useState(true);
 
   React.useEffect(() => {
     let active = true;
-    const loadServices = async () => {
+    const loadMasterServices = async () => {
       try {
         setLoadingServices(true);
-        const response = await getAllServices();
-        const payload = response?.data?.data || response?.data || [];
+        const response = await fetch(`${APP_CONFIG.API_BASE_URL}/master-services/public`);
+        const data = await response.json();
+        const list = data?.success && Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
         if (active) {
-          if (Array.isArray(payload) && payload.length > 0) {
-            setDynamicServices(payload.slice(0, 4));
-          } else {
-            setDynamicServices([]);
-          }
+          setMasterServices(list.slice(0, 4));
         }
       } catch (err) {
-        console.error("Trending services load failed", err);
+        console.error("Trending master services load failed", err);
         if (active) {
-          setDynamicServices([]);
+          setMasterServices([]);
         }
       } finally {
         if (active) setLoadingServices(false);
       }
     };
-    loadServices();
+    loadMasterServices();
     return () => {
       active = false;
     };
   }, []);
 
   const getServiceSubtitle = (svc) => {
+    if (svc.subcategory_name) return svc.subcategory_name;
+    if (svc.category_name) return svc.category_name;
     if (svc.subtitle) return svc.subtitle;
-    const provider = svc.expert_name || svc.expert?.name || svc.category_name || svc.category || "Legal Advisors";
-    return provider.startsWith("by ") ? provider : `by ${provider}`;
+    return "Verified Service";
   };
 
   const formatPrice = (svc) => {
-    if (svc.price === undefined || svc.price === null) {
+    const p = svc.starting_price ?? svc.price ?? svc.offer_price;
+    if (p === undefined || p === null) {
       return "View Price";
     }
-    if (typeof svc.price === "string" && svc.price.includes("₹")) {
-      return svc.price;
+    if (typeof p === "string" && p.includes("₹")) {
+      return p;
     }
-    const displayPrice = svc.offer_price || svc.price;
-    if (displayPrice === undefined || displayPrice === null) {
-      return "View Price";
-    }
-    return `₹ ${Math.round(Number(displayPrice))}`;
+    return `₹ ${Math.round(Number(p))}`;
   };
 
   const TrendingServicesSkeleton = () => (
@@ -199,12 +187,10 @@ export function HomeRightSidebar({ experts = [], services = [], balance = 0 }) {
     </>
   );
 
-  // Determine actual items, slice to 3
   const finalExperts = experts;
-  const finalServices = dynamicServices.length > 0 ? dynamicServices : services;
 
   return (
-    <aside className="home-right-sidebar" aria-label="Home suggestions">
+    <aside className={`home-right-sidebar ${isNearFooter ? "sidebar-near-footer" : ""}`} aria-label="Home suggestions">
       {/* 1. Trending Services Card */}
       <section className="home-widget home-trending-widget">
         <div className="home-widget-head">
@@ -214,14 +200,15 @@ export function HomeRightSidebar({ experts = [], services = [], balance = 0 }) {
         <div className="home-widget-list">
           {loadingServices ? (
             <TrendingServicesSkeleton />
-          ) : finalServices.length > 0 ? (
-            finalServices.slice(0, 4).map((svc, idx) => {
-              const isReal = svc.id || svc.service_id;
-              const linkTo = isReal ? `/user/service-details/${svc.slug || svc.id}` : "#";
-              const image = svc.image || svc.image_url || svc.category_image || svc.icon;
+          ) : masterServices.length > 0 ? (
+            masterServices.map((svc, idx) => {
+              const title = svc.title || svc.name || svc.master_service_name || "Master Service";
+              const slug = svc.slug || svc.id;
+              const linkTo = slug ? `/user/all-master-services` : "/user/all-services";
+              const image = svc.icon || svc.icon_url || svc.image || svc.image_url;
               return (
                 <Link
-                  key={idx}
+                  key={svc.id || idx}
                   to={linkTo}
                   className="home-widget-item service-item"
                   style={{ textDecoration: "none", color: "inherit", display: "flex", alignItems: "center", width: "100%" }}
@@ -243,7 +230,7 @@ export function HomeRightSidebar({ experts = [], services = [], balance = 0 }) {
                     )}
                   </div>
                   <div className="item-details">
-                    <h3>{svc.title || svc.name}</h3>
+                    <h3>{title}</h3>
                     <p>{getServiceSubtitle(svc)}</p>
                   </div>
                   <div className="item-price">{formatPrice(svc)}</div>
@@ -252,7 +239,7 @@ export function HomeRightSidebar({ experts = [], services = [], balance = 0 }) {
             })
           ) : (
             <div style={{ padding: "16px", color: "#64748b", fontSize: "12px", textAlign: "center", fontWeight: "600" }}>
-              No trending services available right now.
+              No trending master services available right now.
             </div>
           )}
         </div>

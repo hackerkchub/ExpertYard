@@ -135,6 +135,14 @@ export const AuthProvider = ({ children }) => {
     setRefreshKey((prev) => prev + 1);
   };
 
+  const updateUser = (updatedUserData) => {
+    setUser((prev) => {
+      const merged = { ...prev, ...updatedUserData };
+      localStorage.setItem(USER_KEY, JSON.stringify(merged));
+      return merged;
+    });
+  };
+
   const value = useMemo(
     () => ({
       token,
@@ -143,6 +151,7 @@ export const AuthProvider = ({ children }) => {
       isLoggedIn: Boolean(token),
       login,
       logout,
+      updateUser,
     }),
     [token, user, refreshKey]
   );

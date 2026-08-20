@@ -31,24 +31,16 @@ import {
   History as HistoryIcon,
   SupportAgent as SupportIcon,
   ChevronRight as ChevronRightIcon,
-  Tune as TuneIcon,
-  Category as CategoryIcon,
+  Work as WorkIcon,
   LocationOn as LocationIcon,
-  AttachMoney as MoneyIcon,
-  Translate as LanguageIcon
+  CheckCircle as CheckIcon
 } from '@mui/icons-material';
 import {
   getUserProfileApi,
   updateUserProfileApi,
+  updateUserProfessionApi,
   deleteUserProfileApi
 } from '../../../../shared/api/userApi/auth.api';
-import {
-  getUserPreferencesApi,
-  updateUserPreferencesApi,
-  fetchCatalogCategoriesApi,
-  fetchCatalogSubcategoriesApi,
-  fetchCatalogServicesApi
-} from '../../../../shared/api/userApi/userPreferences.api';
 import { useAuth } from '../../../../shared/context/UserAuthContext';
 import OtpModal from '../../../expert/components/OtpModal';
 import { APP_CONFIG } from '../../../../config/appConfig';
@@ -91,6 +83,19 @@ import {
   MobileShortcutButton,
 } from './UserProfile.styles';
 
+const PROFESSIONS = [
+  "Student",
+  "Engineer",
+  "Doctor",
+  "Business Owner",
+  "Working Professional",
+  "Freelancer",
+  "Teacher",
+  "Government Employee",
+  "Homemaker",
+  "Other"
+];
+
 // Helper function to get error message
 const getErrorMessage = (error, fallback = "Something went wrong") => {
   return (
@@ -103,7 +108,7 @@ const getErrorMessage = (error, fallback = "Something went wrong") => {
 
 const UserProfile = () => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, updateUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -123,48 +128,33 @@ const UserProfile = () => {
     full_name: '',
     email: '',
     phone: '',
-    referral_code: ''
+    referral_code: '',
+    profession: '',
+    location: ''
   });
   
   const [editForm, setEditForm] = useState({
     first_name: '',
     last_name: '',
     email: '',
-    phone: ''
+    phone: '',
+    location: ''
   });
   
   const [originalForm, setOriginalForm] = useState({
     first_name: '',
     last_name: '',
     email: '',
-    phone: ''
+    phone: '',
+    location: ''
   });
   
   const [errors, setErrors] = useState({});
 
-  // User Preferences State
-  const [userPreferences, setUserPreferences] = useState({
-    preferredLanguage: '',
-    defaultLocation: { city: '', pincode: '' },
-    maxBudget: null,
-    categories: [],
-    subcategories: [],
-    services: []
-  });
-  const [prefDialogOpen, setPrefDialogOpen] = useState(false);
-  const [loadingCatalog, setLoadingCatalog] = useState(false);
-  const [catalogCategories, setCatalogCategories] = useState([]);
-  const [catalogSubcategories, setCatalogSubcategories] = useState([]);
-  const [catalogServices, setCatalogServices] = useState([]);
-  const [prefForm, setPrefForm] = useState({
-    preferredLanguage: '',
-    city: '',
-    pincode: '',
-    maxBudget: '',
-    categoryIds: [],
-    subcategoryIds: [],
-    serviceIds: []
-  });
+  // Profession Dialog State
+  const [professionDialogOpen, setProfessionDialogOpen] = useState(false);
+  const [selectedProfession, setSelectedProfession] = useState('');
+  const [savingProfession, setSavingProfession] = useState(false);
 
   useEffect(() => {
     fetchUserProfile();
@@ -173,34 +163,34 @@ const UserProfile = () => {
   const fetchUserProfile = async () => {
     try {
       setLoading(true);
-      const [response, prefResponse] = await Promise.all([
-        getUserProfileApi(),
-        getUserPreferencesApi()
-      ]);
+      const response = await getUserProfileApi();
       
-      if (response.success) {
-        const fullNameParts = response.data.full_name.split(' ');
+      if (response.success && response.data) {
+        const fullName = response.data.full_name || '';
+        const fullNameParts = fullName.split(' ');
         const firstName = fullNameParts[0] || '';
         const lastName = fullNameParts.slice(1).join(' ') || '';
         
-        setUserData(response.data);
+        setUserData({
+          ...response.data,
+          profession: response.data.profession || '',
+          location: response.data.location || 'Indore, Madhya Pradesh'
+        });
+        
         const newForm = {
           first_name: firstName,
           last_name: lastName,
-          email: response.data.email,
-          phone: response.data.phone
+          email: response.data.email || '',
+          phone: response.data.phone || '',
+          location: response.data.location || 'Indore, Madhya Pradesh'
         };
         setEditForm(newForm);
         setOriginalForm(newForm);
+        setSelectedProfession(response.data.profession || '');
         
-        // No verification needed initially since values haven't changed
         setNeedsVerification({ email: false, phone: false });
       } else {
         showSnackbar('Failed to load profile', 'error');
-      }
-
-      if (prefResponse && prefResponse.success && prefResponse.data) {
-        setUserPreferences(prefResponse.data);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -210,97 +200,11 @@ const UserProfile = () => {
     }
   };
 
-  const handleOpenPrefDialog = async () => {
-    setPrefDialogOpen(true);
-    setLoadingCatalog(true);
-    try {
-      const [cats, subs, servs] = await Promise.all([
-        fetchCatalogCategoriesApi(),
-        fetchCatalogSubcategoriesApi(),
-        fetchCatalogServicesApi()
-      ]);
-      setCatalogCategories(cats || []);
-      setCatalogSubcategories(subs || []);
-      setCatalogServices(servs || []);
-
-      setPrefForm({
-        preferredLanguage: userPreferences.preferredLanguage || '',
-        city: userPreferences.defaultLocation?.city || '',
-        pincode: userPreferences.defaultLocation?.pincode || '',
-        maxBudget: userPreferences.maxBudget !== null && userPreferences.maxBudget !== undefined ? userPreferences.maxBudget : '',
-        categoryIds: (userPreferences.categories || []).map(c => c.id),
-        subcategoryIds: (userPreferences.subcategories || []).map(s => s.id),
-        serviceIds: (userPreferences.services || []).map(ms => ms.id)
-      });
-    } catch (e) {
-      console.error('Catalog fetch error:', e);
-    } finally {
-      setLoadingCatalog(false);
-    }
-  };
-
-  const handleSavePreferences = async () => {
-    try {
-      setLoadingCatalog(true);
-      const payload = {
-        preferredLanguage: prefForm.preferredLanguage || null,
-        defaultLocation: {
-          city: prefForm.city || null,
-          pincode: prefForm.pincode || null
-        },
-        maxBudget: prefForm.maxBudget !== '' ? Number(prefForm.maxBudget) : null,
-        categoryIds: prefForm.categoryIds,
-        subcategoryIds: prefForm.subcategoryIds,
-        serviceIds: prefForm.serviceIds
-      };
-
-      const res = await updateUserPreferencesApi(payload);
-      if (res.success) {
-        showSnackbar('Interests & preferences updated!', 'success');
-        setUserPreferences(res.data);
-        setPrefDialogOpen(false);
-      } else {
-        showSnackbar(res.message || 'Failed to update preferences', 'error');
-      }
-    } catch (err) {
-      showSnackbar(getErrorMessage(err, 'Error updating preferences'), 'error');
-    } finally {
-      setLoadingCatalog(false);
-    }
-  };
-
-  const toggleCategorySelection = (catId) => {
-    setPrefForm(prev => {
-      const exists = prev.categoryIds.includes(catId);
-      const newCatIds = exists ? prev.categoryIds.filter(id => id !== catId) : [...prev.categoryIds, catId];
-      return { ...prev, categoryIds: newCatIds };
-    });
-  };
-
-  const toggleSubcategorySelection = (subId) => {
-    setPrefForm(prev => {
-      const exists = prev.subcategoryIds.includes(subId);
-      const newSubIds = exists ? prev.subcategoryIds.filter(id => id !== subId) : [...prev.subcategoryIds, subId];
-      return { ...prev, subcategoryIds: newSubIds };
-    });
-  };
-
-  const toggleServiceSelection = (serviceId) => {
-    setPrefForm(prev => {
-      const exists = prev.serviceIds.includes(serviceId);
-      const newServiceIds = exists ? prev.serviceIds.filter(id => id !== serviceId) : [...prev.serviceIds, serviceId];
-      return { ...prev, serviceIds: newServiceIds };
-    });
-  };
-
   const handleEditClick = () => {
     setEditing(true);
-    setErrors({});
-    // Reset verification needs - no fields need verification initially
-    setNeedsVerification({ email: false, phone: false });
   };
 
-  const handleCancelEdit = () => {
+  const handleCancelClick = () => {
     setEditForm(originalForm);
     setEditing(false);
     setErrors({});
@@ -314,140 +218,144 @@ const UserProfile = () => {
       [name]: value
     }));
     
-    // Check if email or phone changed from original
-    if (name === 'email') {
-      const isChanged = value !== originalForm.email;
-      setNeedsVerification(prev => ({ ...prev, email: isChanged }));
-    }
-    if (name === 'phone') {
-      const isChanged = value !== originalForm.phone;
-      setNeedsVerification(prev => ({ ...prev, phone: isChanged }));
-    }
-    
     if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+
+    if (name === 'email' && value !== originalForm.email) {
+      setNeedsVerification(prev => ({ ...prev, email: true }));
+    } else if (name === 'email' && value === originalForm.email) {
+      setNeedsVerification(prev => ({ ...prev, email: false }));
+    }
+
+    if (name === 'phone' && value !== originalForm.phone) {
+      setNeedsVerification(prev => ({ ...prev, phone: true }));
+    } else if (name === 'phone' && value === originalForm.phone) {
+      setNeedsVerification(prev => ({ ...prev, phone: false }));
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-    
-    if (!editForm.first_name.trim()) {
-      newErrors.first_name = 'First name is required';
-    }
-    
-    if (!editForm.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(editForm.email)) {
-      newErrors.email = 'Email is invalid';
-    }
-    
-    if (!editForm.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    } else if (!/^[0-9+\-\s()]{10,}$/.test(editForm.phone)) {
-      newErrors.phone = 'Phone number is invalid';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const handleVerifyClick = async (type) => {
+    const value = type === 'email' ? editForm.email : editForm.phone;
+    if (!value) return;
 
-  // Open OTP modal
-  const openOtp = async (type) => {
-    if (type === "email" && !editForm.email) {
-      showSnackbar("Please enter an email address.", "error");
-      return;
-    }
-    
-    if (type === "phone" && !editForm.phone) {
-      showSnackbar("Please enter a phone number.", "error");
-      return;
-    }
-
+    setLoadingType(type);
     try {
-      setLoadingType(type);
-      let apiUrl = "";
-      let payload = {};
-
-      if (type === "email") {
-        apiUrl = `${APP_CONFIG.API_BASE_URL}/otp/email/send`;
-        payload = { email: editForm.email.trim().toLowerCase(), userType: "user", purpose: "account_verify" };
-      } else {
-        apiUrl = `${APP_CONFIG.API_BASE_URL}/otp/sms/send`;
-        const sanitizedPhone = editForm.phone.replace(/\D/g, "");
-        payload = { countryCode: "91", mobile: sanitizedPhone, userType: "user", purpose: "account_verify" };
-      }
-
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      const response = await fetch(`${APP_CONFIG.API_BASE_URL}/auth/send-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          [type]: value,
+          type: type,
+          userType: 'user',
+          purpose: 'account_verify'
+        })
       });
 
       const data = await response.json();
-
-      if (data.success) {
+      if (data.success || response.ok) {
         setVerifyType(type);
         setShowOtp(true);
+        showSnackbar(`OTP sent to your ${type}`, 'info');
       } else {
-        showSnackbar(data?.message || "Failed to send OTP", "error");
+        showSnackbar(data.message || `Failed to send OTP to ${type}`, 'error');
       }
     } catch (error) {
-      showSnackbar(getErrorMessage(error, "Server error while sending OTP."), "error");
+      console.error(`Error sending OTP to ${type}:`, error);
+      showSnackbar(`Error sending OTP to ${type}`, 'error');
     } finally {
       setLoadingType(null);
     }
   };
 
-  // Handle OTP verification success
   const handleOtpVerifySuccess = () => {
-    setNeedsVerification(prev => ({
-      ...prev,
-      [verifyType]: false
-    }));
     setShowOtp(false);
-    showSnackbar(`${verifyType === "email" ? "Email" : "Phone"} verified successfully`, "success");
+    if (verifyType === 'email') {
+      setNeedsVerification(prev => ({ ...prev, email: false }));
+      showSnackbar('Email verified successfully!', 'success');
+    } else if (verifyType === 'phone') {
+      setNeedsVerification(prev => ({ ...prev, phone: false }));
+      showSnackbar('Phone number verified successfully!', 'success');
+    }
+    setVerifyType(null);
   };
 
-  const handleSave = async () => {
-    if (!validateForm()) {
-      return;
+  const validateForm = () => {
+    const newErrors = {};
+    if (!editForm.first_name.trim()) {
+      newErrors.first_name = 'First name is required';
     }
-    
-    // Check if changed fields are verified
-    if (needsVerification.email) {
-      showSnackbar('Please verify your new email address first', 'error');
-      return;
+    if (!editForm.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(editForm.email)) {
+      newErrors.email = 'Invalid email format';
     }
-    
-    if (needsVerification.phone) {
-      showSnackbar('Please verify your new phone number first', 'error');
-      return;
+    if (!editForm.phone.trim()) {
+      newErrors.phone = 'Phone number is required';
     }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSaveClick = async () => {
+    if (!validateForm()) return;
     
     try {
+      setLoading(true);
       const payload = {
         first_name: editForm.first_name.trim(),
         last_name: editForm.last_name.trim(),
-        email: editForm.email.trim().toLowerCase(),
-        phone: editForm.phone.trim()
+        email: editForm.email.trim(),
+        phone: editForm.phone.trim(),
+        location: editForm.location.trim()
       };
       
       const response = await updateUserProfileApi(payload);
-      
       if (response.success) {
-        showSnackbar('Profile updated successfully!', 'success');
-        await fetchUserProfile();
+        showSnackbar('Profile updated successfully', 'success');
         setEditing(false);
+        await fetchUserProfile();
       } else {
         showSnackbar(response.message || 'Failed to update profile', 'error');
       }
     } catch (error) {
       console.error('Error updating profile:', error);
       showSnackbar(getErrorMessage(error, 'Error updating profile'), 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Profession Dialog & Update Handlers
+  const handleOpenProfessionDialog = () => {
+    setSelectedProfession(userData.profession || '');
+    setProfessionDialogOpen(true);
+  };
+
+  const handleSaveProfession = async () => {
+    if (!selectedProfession) {
+      showSnackbar('Please select a profession', 'warning');
+      return;
+    }
+
+    setSavingProfession(true);
+    try {
+      const res = await updateUserProfessionApi(selectedProfession);
+      if (res?.success) {
+        showSnackbar('Profession updated successfully!', 'success');
+        setUserData(prev => ({ ...prev, profession: selectedProfession }));
+        if (typeof updateUser === 'function' && res.data) {
+          updateUser(res.data);
+        }
+        setProfessionDialogOpen(false);
+      } else {
+        showSnackbar(res?.message || 'Failed to update profession', 'error');
+      }
+    } catch (err) {
+      console.error('Error updating profession:', err);
+      showSnackbar(getErrorMessage(err, 'Failed to update profession'), 'error');
+    } finally {
+      setSavingProfession(false);
     }
   };
 
@@ -457,23 +365,23 @@ const UserProfile = () => {
 
   const handleDeleteConfirm = async () => {
     try {
+      setLoading(true);
       const response = await deleteUserProfileApi();
-
       if (response.success) {
-        showSnackbar("Your account has been deleted successfully", "success");
-        setDeleteDialogOpen(false);
-        
-        await logout();
-        
+        showSnackbar('Profile deleted successfully', 'success');
         setTimeout(() => {
-          window.location.href = "/user/auth";
-        }, 1200);
+          logout();
+          navigate('/user/auth');
+        }, 1500);
       } else {
-        showSnackbar(response.message || "Failed to delete profile", "error");
+        showSnackbar(response.message || 'Failed to delete profile', 'error');
       }
     } catch (error) {
-      console.error("Error deleting profile:", error);
-      showSnackbar(getErrorMessage(error, "Error deleting profile"), "error");
+      console.error('Error deleting profile:', error);
+      showSnackbar(getErrorMessage(error, 'Error deleting profile'), 'error');
+    } finally {
+      setLoading(false);
+      setDeleteDialogOpen(false);
     }
   };
 
@@ -481,17 +389,15 @@ const UserProfile = () => {
     setDeleteDialogOpen(false);
   };
 
-  // Sign Out handlers
   const handleSignOutClick = () => {
     setSignOutDialogOpen(true);
   };
 
   const handleSignOutConfirm = async () => {
     try {
-      showSnackbar("Logging out...", "success");
-      await logout();
       setSignOutDialogOpen(false);
-      
+      showSnackbar("Signing out...", "info");
+      logout();
       setTimeout(() => {
         window.location.href = "/user/auth";
       }, 500);
@@ -501,30 +407,16 @@ const UserProfile = () => {
     }
   };
 
-  const handleSignOutCancel = () => {
-    setSignOutDialogOpen(false);
-  };
-
-  const showSnackbar = (message, severity = 'success') => {
-    setSnackbar({ open: true, message, severity });
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
-  };
-
-  // Check if save should be disabled
   const isSaveDisabled = () => {
     if (loading) return true;
-    // Check if any field that needs verification is pending
     if (needsVerification.email) return true;
     if (needsVerification.phone) return true;
-    // Check if any actual changes were made
     const hasChanges = 
       editForm.first_name !== originalForm.first_name ||
       editForm.last_name !== originalForm.last_name ||
       editForm.email !== originalForm.email ||
-      editForm.phone !== originalForm.phone;
+      editForm.phone !== originalForm.phone ||
+      editForm.location !== originalForm.location;
     return !hasChanges;
   };
 
@@ -553,7 +445,8 @@ const UserProfile = () => {
                   className="edit-btn"
                   color="primary" 
                   onClick={handleEditClick}
-                  aria-label="edit"
+                  aria-label="edit profile"
+                  title="Edit Profile"
                 >
                   <EditIcon />
                 </StyledIconButton>
@@ -561,7 +454,8 @@ const UserProfile = () => {
                   className="delete-btn"
                   color="error" 
                   onClick={handleDeleteClick}
-                  aria-label="delete"
+                  aria-label="delete account"
+                  title="Delete Account"
                 >
                   <DeleteIcon />
                 </StyledIconButton>
@@ -570,6 +464,7 @@ const UserProfile = () => {
                   color="warning" 
                   onClick={handleSignOutClick}
                   aria-label="sign out"
+                  title="Sign Out"
                 >
                   <LogoutIcon />
                 </StyledIconButton>
@@ -587,7 +482,7 @@ const UserProfile = () => {
                   </StyledAvatar>
                   <UserInfo>
                     <UserName variant="h4">
-                      {userData.full_name}
+                      {userData.full_name || 'G9Expert User'}
                     </UserName>
                     <MobileUserMeta>
                       {userData.email && <span>{userData.email}</span>}
@@ -604,6 +499,7 @@ const UserProfile = () => {
                 </AvatarSection>
 
                 <InfoGrid container spacing={3}>
+                  {/* Email */}
                   <Grid item xs={12} md={6}>
                     <InfoItem>
                       <InfoLabel variant="subtitle2">
@@ -611,10 +507,12 @@ const UserProfile = () => {
                         Email Address
                       </InfoLabel>
                       <InfoValue variant="body1">
-                        {userData.email}
+                        {userData.email || 'Not provided'}
                       </InfoValue>
                     </InfoItem>
                   </Grid>
+
+                  {/* Phone */}
                   <Grid item xs={12} md={6}>
                     <InfoItem>
                       <InfoLabel variant="subtitle2">
@@ -622,10 +520,58 @@ const UserProfile = () => {
                         Phone Number
                       </InfoLabel>
                       <InfoValue variant="body1">
-                        {userData.phone}
+                        {userData.phone || 'Not provided'}
                       </InfoValue>
                     </InfoItem>
                   </Grid>
+
+                  {/* Profession */}
+                  <Grid item xs={12} md={6}>
+                    <InfoItem>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <InfoLabel variant="subtitle2">
+                          <WorkIcon fontSize="small" color="primary" />
+                          Profession
+                        </InfoLabel>
+                        <Button 
+                          size="small" 
+                          startIcon={<EditIcon fontSize="inherit" />}
+                          onClick={handleOpenProfessionDialog}
+                          sx={{ fontSize: '0.75rem', py: 0.2 }}
+                        >
+                          {userData.profession ? 'Change' : 'Add'}
+                        </Button>
+                      </Box>
+                      <InfoValue variant="body1" sx={{ fontWeight: 600, color: userData.profession ? '#0f172a' : '#64748b' }}>
+                        {userData.profession ? (
+                          <Chip 
+                            label={userData.profession} 
+                            color="primary" 
+                            size="small" 
+                            variant="outlined" 
+                            sx={{ fontWeight: 600, mt: 0.5 }} 
+                          />
+                        ) : (
+                          'Not set (Click Add to specify profession)'
+                        )}
+                      </InfoValue>
+                    </InfoItem>
+                  </Grid>
+
+                  {/* Location */}
+                  <Grid item xs={12} md={6}>
+                    <InfoItem>
+                      <InfoLabel variant="subtitle2">
+                        <LocationIcon fontSize="small" color="primary" />
+                        Location
+                      </InfoLabel>
+                      <InfoValue variant="body1">
+                        {userData.location || 'Indore, Madhya Pradesh'}
+                      </InfoValue>
+                    </InfoItem>
+                  </Grid>
+
+                  {/* User ID */}
                   <Grid item xs={12}>
                     <InfoItem>
                       <InfoLabel variant="subtitle2">
@@ -642,106 +588,16 @@ const UserProfile = () => {
             </ProfileCard>
           )}
 
-          {/* My Interests & Preferences Card */}
-          {!editing && (
-            <ProfileCard variant="outlined" sx={{ mt: 3 }}>
-              <StyledCardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <TuneIcon color="primary" /> My Interests & Preferences
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<EditIcon />}
-                    onClick={handleOpenPrefDialog}
-                    sx={{ borderRadius: 2 }}
-                  >
-                    Edit Interests
-                  </Button>
-                </Box>
-                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                  Choose your interested categories, preferred location, and budget so G9Expert can personalize your discovery experience.
-                </Typography>
-
-                <Grid container spacing={2}>
-                  {/* Interested Categories */}
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <CategoryIcon fontSize="small" color="action" /> Interested Categories
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {userPreferences.categories && userPreferences.categories.length > 0 ? (
-                        userPreferences.categories.map((cat) => (
-                          <Chip key={cat.id} label={cat.name} color="primary" variant="outlined" size="small" />
-                        ))
-                      ) : (
-                        <Typography variant="caption" color="textSecondary">No categories selected (Click Edit to select)</Typography>
-                      )}
-                    </Box>
-                  </Grid>
-
-                  {/* Interested Subcategories & Services */}
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <CategoryIcon fontSize="small" color="action" /> Subcategories & Services
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {userPreferences.subcategories && userPreferences.subcategories.length > 0 && (
-                        userPreferences.subcategories.map((sub) => (
-                          <Chip key={`sub-${sub.id}`} label={sub.name} color="secondary" variant="outlined" size="small" />
-                        ))
-                      )}
-                      {userPreferences.services && userPreferences.services.length > 0 && (
-                        userPreferences.services.map((srv) => (
-                          <Chip key={`srv-${srv.id}`} label={srv.title} color="info" variant="outlined" size="small" />
-                        ))
-                      )}
-                      {(!userPreferences.subcategories || userPreferences.subcategories.length === 0) &&
-                       (!userPreferences.services || userPreferences.services.length === 0) && (
-                        <Typography variant="caption" color="textSecondary">No specific services selected</Typography>
-                      )}
-                    </Box>
-                  </Grid>
-
-                  {/* Location & Preferences Summary */}
-                  <Grid item xs={12} sm={4}>
-                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 0.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <LocationIcon fontSize="small" color="action" /> Default Location
-                    </Typography>
-                    <Typography variant="body2">
-                      {userPreferences.defaultLocation?.city || 'Not set'}
-                      {userPreferences.defaultLocation?.pincode ? ` (${userPreferences.defaultLocation.pincode})` : ''}
-                    </Typography>
-                  </Grid>
-
-                  <Grid item xs={12} sm={4}>
-                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 0.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <LanguageIcon fontSize="small" color="action" /> Preferred Language
-                    </Typography>
-                    <Typography variant="body2">
-                      {userPreferences.preferredLanguage || 'Any / Default'}
-                    </Typography>
-                  </Grid>
-
-                  <Grid item xs={12} sm={4}>
-                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 0.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <MoneyIcon fontSize="small" color="action" /> Max Budget Limit
-                    </Typography>
-                    <Typography variant="body2">
-                      {userPreferences.maxBudget ? `₹${userPreferences.maxBudget}` : 'No Limit'}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </StyledCardContent>
-            </ProfileCard>
-          )}
-
           {!editing && (
             <MobileShortcutGrid aria-label="Profile quick actions">
               <MobileShortcutButton type="button" onClick={handleEditClick}>
                 <span><EditIcon /></span>
                 <strong>Edit Profile</strong>
+                <ChevronRightIcon />
+              </MobileShortcutButton>
+              <MobileShortcutButton type="button" onClick={handleOpenProfessionDialog}>
+                <span><WorkIcon /></span>
+                <strong>Update Profession</strong>
                 <ChevronRightIcon />
               </MobileShortcutButton>
               <MobileShortcutButton type="button" onClick={() => navigate('/user/wallet')}>
@@ -767,7 +623,7 @@ const UserProfile = () => {
             </MobileShortcutGrid>
           )}
 
-          {/* Edit Mode */}
+          {/* Edit Mode Form */}
           {editing && (
             <StyledForm component="form" noValidate>
               <Grid container spacing={3}>
@@ -796,101 +652,95 @@ const UserProfile = () => {
                   />
                 </Grid>
                 
-                <Grid item xs={12}>
-                  <Grid container spacing={2} alignItems="flex-start">
-                    <Grid item xs={12} sm={8}>
-                      <StyledTextField
-                        fullWidth
-                        label="Email Address *"
-                        name="email"
-                        type="email"
-                        value={editForm.email}
-                        onChange={handleInputChange}
-                        error={!!errors.email}
-                        helperText={errors.email}
-                        disabled={loading}
-                        variant="outlined"
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                      <VerifyButton
-                        type="button"
-                        onClick={() => openOtp("email")}
-                        disabled={
-                          loadingType === "email" || 
-                          !editForm.email || 
-                          editForm.email === originalForm.email
-                        }
-                        $verified={!needsVerification.email}
-                        fullWidth
-                      >
-                        {!needsVerification.email ? "Verified" : 
-                         loadingType === "email" ? "Sending..." : "Verify Email"}
-                      </VerifyButton>
-                    </Grid>
-                  </Grid>
-                  {needsVerification.email && editForm.email !== originalForm.email && (
-                    <Typography variant="caption" color="warning.main" sx={{ mt: 1, display: 'block' }}>
-                      Verify this new email address before saving
+                <Grid item xs={12} md={6}>
+                  <StyledTextField
+                    fullWidth
+                    label="Email Address *"
+                    name="email"
+                    type="email"
+                    value={editForm.email}
+                    onChange={handleInputChange}
+                    error={!!errors.email}
+                    helperText={errors.email}
+                    disabled={loading}
+                    variant="outlined"
+                    InputProps={{
+                      endAdornment: needsVerification.email ? (
+                        <VerifyButton
+                          size="small"
+                          onClick={() => handleVerifyClick('email')}
+                          disabled={loadingType === 'email' || !editForm.email}
+                        >
+                          {loadingType === 'email' ? <CircularProgress size={16} /> : 'Verify'}
+                        </VerifyButton>
+                      ) : null
+                    }}
+                  />
+                  {needsVerification.email && (
+                    <Typography variant="caption" color="warning.main" sx={{ mt: 0.5, display: 'block' }}>
+                      Email changed. Please verify before saving.
+                    </Typography>
+                  )}
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <StyledTextField
+                    fullWidth
+                    label="Phone Number *"
+                    name="phone"
+                    value={editForm.phone}
+                    onChange={handleInputChange}
+                    error={!!errors.phone}
+                    helperText={errors.phone}
+                    disabled={loading}
+                    variant="outlined"
+                    InputProps={{
+                      endAdornment: needsVerification.phone ? (
+                        <VerifyButton
+                          size="small"
+                          onClick={() => handleVerifyClick('phone')}
+                          disabled={loadingType === 'phone' || !editForm.phone}
+                        >
+                          {loadingType === 'phone' ? <CircularProgress size={16} /> : 'Verify'}
+                        </VerifyButton>
+                      ) : null
+                    }}
+                  />
+                  {needsVerification.phone && (
+                    <Typography variant="caption" color="warning.main" sx={{ mt: 0.5, display: 'block' }}>
+                      Phone number changed. Please verify before saving.
                     </Typography>
                   )}
                 </Grid>
 
                 <Grid item xs={12}>
-                  <Grid container spacing={2} alignItems="flex-start">
-                    <Grid item xs={12} sm={8}>
-                      <StyledTextField
-                        fullWidth
-                        label="Phone Number *"
-                        name="phone"
-                        value={editForm.phone}
-                        onChange={handleInputChange}
-                        error={!!errors.phone}
-                        helperText={errors.phone}
-                        disabled={loading}
-                        variant="outlined"
-                        placeholder="+1234567890"
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                      <VerifyButton
-                        type="button"
-                        onClick={() => openOtp("phone")}
-                        disabled={
-                          loadingType === "phone" || 
-                          !editForm.phone || 
-                          editForm.phone === originalForm.phone
-                        }
-                        $verified={!needsVerification.phone}
-                        fullWidth
-                      >
-                        {!needsVerification.phone ? "Verified" : 
-                         loadingType === "phone" ? "Sending..." : "Verify Phone"}
-                      </VerifyButton>
-                    </Grid>
-                  </Grid>
-                  {needsVerification.phone && editForm.phone !== originalForm.phone && (
-                    <Typography variant="caption" color="warning.main" sx={{ mt: 1, display: 'block' }}>
-                      Verify this new phone number before saving
-                    </Typography>
-                  )}
+                  <StyledTextField
+                    fullWidth
+                    label="Location"
+                    name="location"
+                    value={editForm.location}
+                    onChange={handleInputChange}
+                    disabled={loading}
+                    variant="outlined"
+                    placeholder="e.g. Indore, Madhya Pradesh"
+                  />
                 </Grid>
               </Grid>
 
               <FormActions>
                 <CancelButton
                   variant="outlined"
-                  onClick={handleCancelEdit}
-                  startIcon={<CancelIcon />}
+                  onClick={handleCancelClick}
                   disabled={loading}
+                  startIcon={<CancelIcon />}
                 >
                   Cancel
                 </CancelButton>
                 <SaveButton
                   variant="contained"
-                  onClick={handleSave}
-                  startIcon={<SaveIcon />}
+                  onClick={handleSaveClick}
                   disabled={isSaveDisabled()}
+                  startIcon={<SaveIcon />}
                 >
                   Save Changes
                 </SaveButton>
@@ -898,254 +748,110 @@ const UserProfile = () => {
             </StyledForm>
           )}
         </StyledPaper>
-
-        {/* Delete Confirmation Dialog */}
-        <StyledDialog
-          open={deleteDialogOpen}
-          onClose={handleDeleteCancel}
-          aria-labelledby="delete-dialog-title"
-        >
-          <DialogTitleStyled id="delete-dialog-title">
-            Delete Account?
-          </DialogTitleStyled>
-          <DialogContentStyled>
-            <DialogContentText>
-              Are you sure you want to permanently delete your account?
-            </DialogContentText>
-            <WarningText variant="body2">
-              This action cannot be undone. All your data will be lost forever.
-            </WarningText>
-          </DialogContentStyled>
-          <DialogActions>
-            <CancelButton onClick={handleDeleteCancel} variant="outlined">
-              Cancel
-            </CancelButton>
-            <SaveButton 
-              onClick={handleDeleteConfirm} 
-              color="error" 
-              variant="contained"
-              sx={{ background: 'linear-gradient(135deg, #f56565, #e53e3e) !important' }}
-            >
-              Delete Permanently
-            </SaveButton>
-          </DialogActions>
-        </StyledDialog>
-
-        {/* Sign Out Confirmation Dialog */}
-        <StyledDialog
-          open={signOutDialogOpen}
-          onClose={handleSignOutCancel}
-          aria-labelledby="signout-dialog-title"
-        >
-          <DialogTitleStyled id="signout-dialog-title" sx={{ color: '#ed6c02 !important' }}>
-            Sign Out?
-          </DialogTitleStyled>
-          <DialogContentStyled>
-            <DialogContentText>
-              Are you sure you want to sign out of your account?
-            </DialogContentText>
-            <WarningText variant="body2" sx={{ color: '#ed6c02 !important', background: 'rgba(237, 108, 2, 0.05)' }}>
-              You'll need to login again to access your account.
-            </WarningText>
-          </DialogContentStyled>
-          <DialogActions>
-            <CancelButton onClick={handleSignOutCancel} variant="outlined">
-              Stay Signed In
-            </CancelButton>
-            <SaveButton 
-              onClick={handleSignOutConfirm} 
-              variant="contained"
-              sx={{ background: 'linear-gradient(135deg, #ed6c02, #f59e0b) !important' }}
-            >
-              Sign Out
-            </SaveButton>
-          </DialogActions>
-        </StyledDialog>
-
-        {/* Snackbar for notifications */}
-        <StyledSnackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert 
-            onClose={handleCloseSnackbar} 
-            severity={snackbar.severity} 
-            variant="filled"
-            sx={{ width: '100%' }}
-          >
-            {snackbar.message}
-          </Alert>
-        </StyledSnackbar>
       </ProfileContainer>
 
-        {/* Edit Interests & Preferences Modal Dialog */}
-        <Dialog
-          open={prefDialogOpen}
-          onClose={() => setPrefDialogOpen(false)}
-          maxWidth="md"
-          fullWidth
-          PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
-        >
-          <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <TuneIcon color="primary" /> Edit My Interests & Preferences
-          </DialogTitle>
-          <DialogContent dividers>
-            {loadingCatalog ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                <CircularProgress size={40} />
-              </Box>
-            ) : (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, py: 1 }}>
-                {/* 1. Category Selection */}
-                <Box>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                    1. Select Categories of Interest
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary" sx={{ mb: 1.5 }}>
-                    Click to select or deselect categories:
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {catalogCategories.map((cat) => {
-                      const isSelected = prefForm.categoryIds.includes(cat.id);
-                      return (
-                        <Chip
-                          key={`cat-sel-${cat.id}`}
-                          label={cat.name}
-                          onClick={() => toggleCategorySelection(cat.id)}
-                          color={isSelected ? "primary" : "default"}
-                          variant={isSelected ? "filled" : "outlined"}
-                          sx={{ fontWeight: isSelected ? 600 : 400, cursor: 'pointer' }}
-                        />
-                      );
-                    })}
-                  </Box>
-                </Box>
+      {/* Edit Profession Dialog */}
+      <Dialog
+        open={professionDialogOpen}
+        onClose={() => !savingProfession && setProfessionDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, pb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <WorkIcon color="primary" /> Select Your Profession
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2, fontSize: '0.875rem' }}>
+            Select your profession to personalize your G9Expert experience.
+          </DialogContentText>
+          <TextField
+            select
+            fullWidth
+            label="Profession"
+            value={selectedProfession}
+            onChange={(e) => setSelectedProfession(e.target.value)}
+            disabled={savingProfession}
+            variant="outlined"
+          >
+            {PROFESSIONS.map((prof) => (
+              <MenuItem key={prof} value={prof}>
+                {prof}
+              </MenuItem>
+            ))}
+          </TextField>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button 
+            onClick={() => setProfessionDialogOpen(false)} 
+            disabled={savingProfession}
+            variant="outlined"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSaveProfession}
+            variant="contained"
+            disabled={savingProfession || !selectedProfession}
+            startIcon={savingProfession ? <CircularProgress size={16} /> : <CheckIcon />}
+          >
+            {savingProfession ? "Saving..." : "Save Profession"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-                {/* 2. Subcategory Selection */}
-                {catalogSubcategories.length > 0 && (
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                      2. Select Subcategories (Optional)
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {catalogSubcategories.map((sub) => {
-                        const isSelected = prefForm.subcategoryIds.includes(sub.id);
-                        return (
-                          <Chip
-                            key={`sub-sel-${sub.id}`}
-                            label={sub.name}
-                            onClick={() => toggleSubcategorySelection(sub.id)}
-                            color={isSelected ? "secondary" : "default"}
-                            variant={isSelected ? "filled" : "outlined"}
-                            size="small"
-                            sx={{ cursor: 'pointer' }}
-                          />
-                        );
-                      })}
-                    </Box>
-                  </Box>
-                )}
+      {/* Delete Confirmation Dialog */}
+      <StyledDialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        aria-labelledby="delete-dialog-title"
+      >
+        <DialogTitleStyled id="delete-dialog-title">
+          Delete Profile
+        </DialogTitleStyled>
+        <DialogContentStyled>
+          <DialogContentText>
+            Are you sure you want to delete your profile? This action cannot be undone and all your data will be permanently removed.
+          </DialogContentText>
+          <WarningText variant="caption">
+            Warning: You will lose access to all your account information, chat history, and saved preferences.
+          </WarningText>
+        </DialogContentStyled>
+        <DialogActions sx={{ padding: '16px 24px' }}>
+          <Button onClick={handleDeleteCancel} disabled={loading} variant="outlined">
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteConfirm} disabled={loading} color="error" variant="contained">
+            Delete Profile
+          </Button>
+        </DialogActions>
+      </StyledDialog>
 
-                {/* 3. Specific Master Services */}
-                {catalogServices.length > 0 && (
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                      3. Select Specific Services (Optional)
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {catalogServices.slice(0, 20).map((srv) => {
-                        const isSelected = prefForm.serviceIds.includes(srv.id);
-                        return (
-                          <Chip
-                            key={`srv-sel-${srv.id}`}
-                            label={srv.title}
-                            onClick={() => toggleServiceSelection(srv.id)}
-                            color={isSelected ? "info" : "default"}
-                            variant={isSelected ? "filled" : "outlined"}
-                            size="small"
-                            sx={{ cursor: 'pointer' }}
-                          />
-                        );
-                      })}
-                    </Box>
-                  </Box>
-                )}
+      {/* Sign Out Confirmation Dialog */}
+      <StyledDialog
+        open={signOutDialogOpen}
+        onClose={() => setSignOutDialogOpen(false)}
+        aria-labelledby="signout-dialog-title"
+      >
+        <DialogTitleStyled id="signout-dialog-title">
+          Sign Out
+        </DialogTitleStyled>
+        <DialogContentStyled>
+          <DialogContentText>
+            Are you sure you want to sign out of your G9Expert account?
+          </DialogContentText>
+        </DialogContentStyled>
+        <DialogActions sx={{ padding: '16px 24px' }}>
+          <Button onClick={() => setSignOutDialogOpen(false)} variant="outlined">
+            Cancel
+          </Button>
+          <Button onClick={handleSignOutConfirm} color="warning" variant="contained">
+            Sign Out
+          </Button>
+        </DialogActions>
+      </StyledDialog>
 
-                {/* 4. Location, Language, Budget */}
-                <Box>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                    4. Location, Language & Budget Preferences
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Default City"
-                        value={prefForm.city}
-                        onChange={(e) => setPrefForm({ ...prefForm, city: e.target.value })}
-                        placeholder="e.g. Indore"
-                        size="small"
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Default Pincode"
-                        value={prefForm.pincode}
-                        onChange={(e) => setPrefForm({ ...prefForm, pincode: e.target.value })}
-                        placeholder="e.g. 452001"
-                        size="small"
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        select
-                        fullWidth
-                        label="Preferred Language"
-                        value={prefForm.preferredLanguage}
-                        onChange={(e) => setPrefForm({ ...prefForm, preferredLanguage: e.target.value })}
-                        size="small"
-                      >
-                        <MenuItem value="">Any / Default</MenuItem>
-                        <MenuItem value="Hindi">Hindi</MenuItem>
-                        <MenuItem value="English">English</MenuItem>
-                        <MenuItem value="Hinglish">Hinglish</MenuItem>
-                      </TextField>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        type="number"
-                        label="Max Budget Limit (₹)"
-                        value={prefForm.maxBudget}
-                        onChange={(e) => setPrefForm({ ...prefForm, maxBudget: e.target.value })}
-                        placeholder="e.g. 500"
-                        size="small"
-                      />
-                    </Grid>
-                  </Grid>
-                </Box>
-              </Box>
-            )}
-          </DialogContent>
-          <DialogActions sx={{ p: 2 }}>
-            <Button onClick={() => setPrefDialogOpen(false)} variant="outlined">
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSavePreferences}
-              variant="contained"
-              disabled={loadingCatalog}
-              startIcon={<SaveIcon />}
-            >
-              Save Preferences
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* OTP Modal */}
+      {/* OTP Modal */}
       {showOtp && (
         <OtpModal
           email={editForm.email}
@@ -1157,6 +863,21 @@ const UserProfile = () => {
           onSuccess={handleOtpVerifySuccess}
         />
       )}
+
+      {/* Snackbar Notifications */}
+      <StyledSnackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+      >
+        <Alert 
+          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))} 
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </StyledSnackbar>
     </>
   );
 };

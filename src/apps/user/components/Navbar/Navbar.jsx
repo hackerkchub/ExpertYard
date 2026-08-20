@@ -124,6 +124,7 @@ const Navbar = () => {
   });
 
   const userBtnRef = useRef(null);
+  const isUserHome = location.pathname === "/user" || location.pathname === "/user/";
   const showMobileBack = location.pathname !== "/user";
   const mobileHeaderTitle = getMobileHeaderTitle(location.pathname);
   const isSearchRoute = location.pathname === "/user/search";
@@ -342,21 +343,25 @@ const Navbar = () => {
             )}
           </HeaderCategoryMenuShell>
 
-          <HeaderSearch>
-            <GlobalSearchBar
-              className="navbar-global-search"
-              placeholder="Search experts, services, categories..."
-            />
-          </HeaderSearch>
+          {!isUserHome && (
+            <HeaderSearch>
+              <GlobalSearchBar
+                className="navbar-global-search"
+                placeholder="Search experts, services, categories..."
+              />
+            </HeaderSearch>
+          )}
 
-          <HeaderDesktopIconButton
-            type="button"
-            onClick={() => handleNav("/user/search")}
-            aria-label="Open search filters"
-            title="Filters"
-          >
-            <FiSliders />
-          </HeaderDesktopIconButton>
+          {!isUserHome && (
+            <HeaderDesktopIconButton
+              type="button"
+              onClick={() => handleNav("/user/search")}
+              aria-label="Open search filters"
+              title="Filters"
+            >
+              <FiSliders />
+            </HeaderDesktopIconButton>
+          )}
 
           <div className="desktop-only-location" style={{ marginLeft: "12px", marginRight: "12px" }}>
             <LocationSelector onLocationSelect={(loc) => {
@@ -364,7 +369,7 @@ const Navbar = () => {
             }} />
           </div>
 
-          {!showMobileBack && !isSearchRoute && (
+          {!isUserHome && !showMobileBack && !isSearchRoute && (
             <MobileIcon onClick={() => navigate("/user/search")} aria-label="Open search page">
               <FiSearch size={20} />
             </MobileIcon>

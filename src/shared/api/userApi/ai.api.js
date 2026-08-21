@@ -1,10 +1,16 @@
 import api from "./axiosInstance";
 
-export const askG9Api = async (prompt, conversation_id = null) => {
-  const response = await api.post("/ai/ask-g9", {
-    prompt,
-    conversation_id,
-  }, { skipLoader: true });
+export const askG9Api = async (prompt, conversation_id = null, options = {}) => {
+  const response = await api.post(
+    "/ai/ask-g9",
+    {
+      prompt,
+      conversation_id,
+      remove_filter: options.remove_filter || null,
+      reset_context: options.reset_context || false,
+    },
+    { skipLoader: true, signal: options.signal }
+  );
   return response.data;
 };
 

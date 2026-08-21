@@ -110,8 +110,15 @@ export default function MainLayout() {
       (location.pathname.startsWith("/user/category/") && location.pathname.endsWith("/experts"))
     );
 
+  const isSearchPage =
+    location.pathname === "/user/search" ||
+    location.pathname.startsWith("/user/search?") ||
+    location.pathname === "/search" ||
+    location.pathname.startsWith("/search?");
+
   // Pages where Left Sidebar is intentionally absent
   const isNoLeftSidebarPage = 
+    isSearchPage ||
     isCallChatPage ||
     location.pathname.startsWith("/user/my-inquiries") ||
     location.pathname === "/user/my-inquiries" ||

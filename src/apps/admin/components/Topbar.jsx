@@ -67,7 +67,7 @@ export default function Topbar({ setMobileOpen }) {
             <FiBell size={20} />
           </IconButton>
 
-          <DropMenu show={openNotif} width="240px">
+          <DropMenu $show={openNotif} $width="240px">
             <DropItem>New expert registered</DropItem>
             <DropItem>3 pending approvals</DropItem>
             <DropItem>Server running smoothly</DropItem>
@@ -85,7 +85,7 @@ export default function Topbar({ setMobileOpen }) {
             <FiUser size={20} />
           </IconButton>
 
-          <DropMenu show={openProfile}>
+          <DropMenu $show={openProfile}>
             <DropItem>My Profile</DropItem>
             <DropItem>Settings</DropItem>
             <DropItem>Logout</DropItem>

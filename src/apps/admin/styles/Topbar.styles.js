@@ -106,8 +106,8 @@ export const DropMenu = styled.div`
   position: absolute;
   right: 0;
   top: 40px;
-  width: ${(p) => p.width || "200px"};
-  display: ${(p) => (p.show ? "block" : "none")};
+  width: ${(p) => p.$width || p.width || "200px"};
+  display: ${(p) => (p.$show !== undefined ? (p.$show ? "block" : "none") : (p.show ? "block" : "none"))};
   background: rgba(18, 24, 38, 0.95);
   backdrop-filter: blur(12px);
   border-radius: 10px;

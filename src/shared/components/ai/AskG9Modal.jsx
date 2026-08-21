@@ -61,6 +61,7 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
     setLoading(true);
 
     try {
+      console.log(`[ASK_G9][FE_REQUEST] requestId=${currentReqId} conversationId="${conversationId || "none"}" message="${queryText}" messageCount=${messages.length}`);
       const data = await askG9Api(queryText, conversationId);
 
       if (currentReqId !== reqIdRef.current) return;
@@ -69,6 +70,8 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
         if (data.conversation_id) {
           setConversationId(data.conversation_id);
         }
+
+        console.log(`[ASK_G9][FE_SERVICE_RENDER] responseServiceCount=${data.services?.length || 0} responseServiceIds=${JSON.stringify((data.services || []).map(s => s.id))}`);
 
         const aiMsg = {
           role: "assistant",

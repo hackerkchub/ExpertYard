@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { askG9Api, trackAIClickApi } from "../../api/userApi/ai.api";
 import useChatRequest from "../../hooks/useChatRequest";
+import { buildUserSearchPath } from "../../../apps/user/components/search/searchUtils";
 
 const DEFAULT_SUGGESTIONS = [
   "Indore me property dispute lawyer",
@@ -41,69 +42,13 @@ export default function AskG9HomeWidget({ onOpenModal }) {
   const reqIdRef = useRef(0);
   const widgetRef = useRef(null);
 
-  const handleSubmitPrompt = async (textToSend) => {
+  const handleSubmitPrompt = (textToSend) => {
     const queryText = (textToSend || prompt).trim();
-    if (!queryText || loading) return;
-
-    const currentReqId = ++reqIdRef.current;
-    setAiResult(null);
+    if (!queryText) return;
     setPrompt("");
-    setShowAllExperts(false);
-    setShowAllServices(false);
-    setLoading(true);
-
-    try {
-      const data = await askG9Api(queryText, conversationId);
-
-      // Guard against out-of-order stale responses
-      if (currentReqId !== reqIdRef.current) return;
-
-      if (data?.success) {
-        if (data.conversation_id) {
-          setConversationId(data.conversation_id);
-        }
-
-        setAiResult({
-          message_id: data.message_id,
-          prompt: queryText,
-          message: data.message || "Here are your search results:",
-          intent: data.intent,
-          needs_clarification: data.needs_clarification,
-          result_mode: data.result_mode || (data.needs_clarification ? "CLARIFICATION" : "EXACT"),
-          clarifying_question: data.clarifying_question,
-          clarifying_options: data.clarifying_options || [],
-          suggestions: data.suggestions || data.clarifying_options || [],
-          experts: data.experts || [],
-          services: data.services || [],
-          categories: data.categories || [],
-        });
-      } else {
-        setAiResult({
-          prompt: queryText,
-          message: data?.message || "We couldn't complete your search right now. Please try again.",
-          result_mode: "ERROR",
-          experts: [],
-          services: [],
-          categories: [],
-        });
-      }
-    } catch (err) {
-      if (currentReqId !== reqIdRef.current) return;
-      console.error("[ASK_G9][WIDGET] Search Error:", err);
-      setAiResult({
-        prompt: queryText,
-        message: "We couldn't complete your search right now. Please try again.",
-        result_mode: "ERROR",
-        experts: [],
-        services: [],
-        categories: [],
-      });
-    } finally {
-      if (currentReqId === reqIdRef.current) {
-        setLoading(false);
-      }
-    }
+    navigate(buildUserSearchPath(queryText));
   };
+
 
   const startVoiceInput = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;

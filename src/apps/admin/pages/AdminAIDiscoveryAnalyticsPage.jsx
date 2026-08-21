@@ -118,11 +118,20 @@ export default function AdminAIDiscoveryAnalyticsPage() {
         getAIAnalyticsConversionFunnel(params)
       ]);
 
-      if (ovRes?.success) setOverview(ovRes.data);
-      if (tsRes?.success) setTimeseries(tsRes.data?.timeseries || []);
-      if (rkRes?.success) setRanks(rkRes.data?.ranks || []);
-      if (expRes?.success) setExperiments(expRes.data?.experiments || []);
-      if (fnRes?.success) setFunnel(fnRes.data?.funnel || []);
+      const extractArray = (res, key) => {
+        if (!res) return [];
+        if (Array.isArray(res)) return res;
+        if (Array.isArray(res.data)) return res.data;
+        if (res.data && Array.isArray(res.data[key])) return res.data[key];
+        if (Array.isArray(res[key])) return res[key];
+        return [];
+      };
+
+      if (ovRes?.success) setOverview(ovRes.data || null);
+      if (tsRes?.success) setTimeseries(extractArray(tsRes, "timeseries"));
+      if (rkRes?.success) setRanks(extractArray(rkRes, "ranks"));
+      if (expRes?.success) setExperiments(extractArray(expRes, "experiments"));
+      if (fnRes?.success) setFunnel(extractArray(fnRes, "funnel"));
     } catch (err) {
       console.error("[AI_ANALYTICS_DASHBOARD][FETCH_ERROR]", err);
       if (typeof err === "string" && (err.includes("Access denied") || err.includes("403"))) {
@@ -510,29 +519,35 @@ export default function AdminAIDiscoveryAnalyticsPage() {
             </div>
 
             <div className="funnel-container">
-              {funnel.map((step, idx) => {
-                const maxCount = funnel[0]?.count || 1;
-                const widthPct = Math.max(8, Math.min(100, (step.count / maxCount) * 100));
+              {Array.isArray(funnel) && funnel.length > 0 ? (
+                funnel.map((step, idx) => {
+                  const maxCount = funnel[0]?.count || 1;
+                  const widthPct = Math.max(8, Math.min(100, (step.count / maxCount) * 100));
 
-                return (
-                  <div key={idx} className="funnel-step">
-                    <div className="funnel-step-num">{idx + 1}</div>
-                    <div className="funnel-step-info">
-                      <div className="funnel-step-title">{step.step}</div>
-                      <div className="funnel-step-meta">
-                        <span>Count: <strong>{step.count?.toLocaleString("en-IN")}</strong></span>
-                        <span>Step Rate: <strong>{step.conversion_rate}%</strong></span>
-                        <span className={`kpi-badge ${step.attribution_type === "exact" ? "exact" : "approx"}`}>
-                          {step.attribution_type}
-                        </span>
+                  return (
+                    <div key={idx} className="funnel-step">
+                      <div className="funnel-step-num">{idx + 1}</div>
+                      <div className="funnel-step-info">
+                        <div className="funnel-step-title">{step.step}</div>
+                        <div className="funnel-step-meta">
+                          <span>Count: <strong>{step.count?.toLocaleString("en-IN")}</strong></span>
+                          <span>Step Rate: <strong>{step.conversion_rate}%</strong></span>
+                          <span className={`kpi-badge ${step.attribution_type === "exact" ? "exact" : "approx"}`}>
+                            {step.attribution_type}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="funnel-bar-wrap">
+                        <div className="funnel-bar-fill" style={{ width: `${widthPct}%` }} />
                       </div>
                     </div>
-                    <div className="funnel-bar-wrap">
-                      <div className="funnel-bar-fill" style={{ width: `${widthPct}%` }} />
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              ) : (
+                <div style={{ padding: "1.2rem", textAlign: "center", color: "#64748b", fontSize: "0.88rem" }}>
+                  No conversion funnel steps available for the selected time range.
+                </div>
+              )}
             </div>
           </section>
         </>

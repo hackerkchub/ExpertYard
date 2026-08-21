@@ -1,735 +1,601 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FiArrowLeft, FiArrowRight, FiBriefcase, FiGrid, FiSearch, FiStar, FiUser, FiX } from "react-icons/fi";
+import {
+  Sparkles,
+  Search,
+  X,
+  MapPin,
+  Star,
+  ArrowLeft,
+  RefreshCw,
+  SlidersHorizontal,
+  RotateCcw,
+  UserCheck,
+  AlertCircle,
+  HelpCircle,
+  Briefcase,
+  CheckCircle2,
+  HelpCircle as HelpIcon,
+  ChevronRight,
+  Mic
+} from "lucide-react";
 
-import {
-  globalSearch,
-} from "../../../../shared/api/userApi/searchV2.api";
-import {
-  searchWithLocation
-} from "../../../../shared/api/userApi/locationDiscovery.api";
-import { getAllServices } from "../../../../shared/api/service.api";
-import { useCategory } from "../../../../shared/context/CategoryContext";
-import { usePublicExpert } from "../../context/PublicExpertContext";
-import {
-  asArray,
-  getLocationDisplayName,
-  getCategoryResultPath,
-  getExpertPath,
-  getInitials,
-  getStoredLocationQuery,
-  getPayload,
-  getResultPath,
-  getSubcategoryResultPath,
-  normalizeGlobalResults,
-  normalizeSearchTerm,
-} from "../../components/search/searchUtils";
+import { askG9Api } from "../../../../shared/api/userApi/ai.api";
+import { getExpertPath, getInitials } from "../../components/search/searchUtils";
 import "./SearchResultsPage.css";
 
-const DESKTOP_TABS = [
-  { key: "all", label: "All" },
-  { key: "experts", label: "Experts" },
-  { key: "categories", label: "Categories" },
-  { key: "services", label: "Services" },
-  { key: "locations", label: "Locations" },
-  { key: "subcategories", label: "Subcategories" },
-];
-const MOBILE_TABS = [
-  { key: "all", label: "All" },
-  { key: "experts", label: "Experts" },
-  { key: "categories", label: "Categories" },
-  { key: "services", label: "Services" },
-  { key: "locations", label: "Locations" },
-  { key: "subcategories", label: "Subcategories" },
-];
-const MOBILE_QUERY = "(max-width: 767px)";
+// Helper: Dynamically resolve expert profile image URL with backend origin handling
+export const resolveExpertProfileImage = (expert) => {
+  if (!expert || typeof expert !== "object") return null;
+  const rawUrl = expert.profile_photo || expert.profile_image || expert.image_url || expert.avatar || expert.photo;
+  if (!rawUrl || typeof rawUrl !== "string") return null;
 
-const getSearchParamObject = (value = "", paramName = "q") => {
-  const query = normalizeSearchTerm(value);
-  return query ? { [paramName]: query } : {};
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return null;
+
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("data:")) {
+    return trimmed;
+  }
+
+  // Prepend API base URL host if relative path like /uploads/photo.jpg
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+  const cleanBase = baseUrl.replace(/\/api\/?$/, "").replace(/\/$/, "");
+  const cleanPath = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+
+  return `${cleanBase}${cleanPath}`;
 };
 
-const getList = (response, key) => {
-  const payload = getPayload(response);
-  return asArray(payload[key] || payload.results || payload.items || payload);
-};
-
-function useIsMobileSearchPage() {
-  const [isMobile, setIsMobile] = useState(() => (
-    typeof window !== "undefined" ? window.matchMedia(MOBILE_QUERY).matches : false
-  ));
-
-  useEffect(() => {
-    if (typeof window === "undefined") return undefined;
-
-    const media = window.matchMedia(MOBILE_QUERY);
-    const handleChange = () => setIsMobile(media.matches);
-    handleChange();
-
-    if (media.addEventListener) {
-      media.addEventListener("change", handleChange);
-      return () => media.removeEventListener("change", handleChange);
+const getOrCreateSessionConvId = () => {
+  try {
+    let convId = sessionStorage.getItem("g9_search_session_id");
+    if (!convId) {
+      convId = `conv_search_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      sessionStorage.setItem("g9_search_session_id", convId);
     }
-
-    media.addListener(handleChange);
-    return () => media.removeListener(handleChange);
-  }, []);
-
-  return isMobile;
-}
-
-const getServicePath = (service) =>
-  `/user/service/${service?.slug || service?.service_slug || service?.id}`;
-
-const getServiceName = (service) =>
-  service?.title || service?.name || service?.service_name || "Expert Service";
-
-const getServiceImage = (service) =>
-  service?.image || service?.service_image || service?.thumbnail || service?.image_url;
-
-const matchesQuery = (service, query) => {
-  const normalized = query.toLowerCase();
-  return [
-    service?.title,
-    service?.name,
-    service?.service_name,
-    service?.description,
-    service?.category_name,
-    service?.category,
-    service?.tags,
-    service?.skills,
-  ]
-    .flat()
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase()
-    .includes(normalized);
+    return convId;
+  } catch {
+    return `conv_search_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+  }
 };
 
-const SearchResultsPage = () => {
+export default function SearchResultsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const isMobile = useIsMobileSearchPage();
-  const inputRef = useRef(null);
-  const { categories, loading: categoriesLoading } = useCategory();
-  const { experts, expertsLoading } = usePublicExpert();
-  const urlQuery = normalizeSearchTerm(searchParams.get("q") || "");
-  const urlLocation = normalizeSearchTerm(searchParams.get("location") || "");
-  const activeUrlQuery = urlQuery || urlLocation;
-  const [queryInput, setQueryInput] = useState(activeUrlQuery);
-  const [activeTab, setActiveTab] = useState("all");
-  const [page, setPage] = useState(1);
-  const [results, setResults] = useState({
-    experts: [],
-    categories: [],
-    subcategories: [],
-    services: [],
-    locations: [],
-  });
-  const [services, setServices] = useState([]);
-  const [servicesLoading, setServicesLoading] = useState(false);
+
+  const urlQuery = searchParams.get("q") || "";
+  const [searchInput, setSearchInput] = useState(urlQuery);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const [selectedLoc, setSelectedLoc] = useState(() => {
-    try {
-      const saved = localStorage.getItem("last_selected_location");
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
-  const [fallbackInfo, setFallbackInfo] = useState({ used: false, reason: null });
 
-  const servicesRef = useRef([]);
-  const latestRequestRef = useRef(0);
+  const [experts, setExperts] = useState([]);
+  const [services, setServices] = useState([]);
+  const [activeFilters, setActiveFilters] = useState([]);
+  const [intentSummary, setIntentSummary] = useState("");
+  const [aiUnderstanding, setAiUnderstanding] = useState("");
+  const [didYouMean, setDidYouMean] = useState(null);
+  const [message, setMessage] = useState("");
+  const [needsClarification, setNeedsClarification] = useState(false);
+  const [clarifyingOptions, setClarifyingOptions] = useState([]);
 
-  useEffect(() => {
-    document.body.classList.add("g9-search-route");
-    window.setTimeout(() => inputRef.current?.focus(), 120);
+  // Voice recognition and image fallback states
+  const [isListening, setIsListening] = useState(false);
+  const [failedImageIds, setFailedImageIds] = useState({});
+  const recognitionRef = useRef(null);
 
-    return () => {
-      document.body.classList.remove("g9-search-route");
-    };
-  }, []);
-
-  useEffect(() => {
-    setQueryInput(activeUrlQuery);
-    setPage(1);
-  }, [activeUrlQuery]);
-
-  useEffect(() => {
-    const q = normalizeSearchTerm(queryInput);
-
-    if (q === activeUrlQuery) {
-      return undefined;
-    }
-
-    const timer = window.setTimeout(() => {
-      setActiveTab("all");
-      setPage(1);
-
-      if (q) {
-        setSearchParams(getSearchParamObject(q));
-      } else {
-        setSearchParams({});
-      }
-    }, 300);
-
-    return () => window.clearTimeout(timer);
-  }, [activeUrlQuery, queryInput, setSearchParams]);
-
-  useEffect(() => {
-    const handleLocChange = (e) => {
-      setPage(1);
-      setResults((prev) => ({ ...prev, experts: [] }));
-      setSelectedLoc(e.detail);
-    };
-
-    window.addEventListener("g9-location-changed", handleLocChange);
-    return () => window.removeEventListener("g9-location-changed", handleLocChange);
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-
-    const loadServices = async () => {
-      try {
-        setServicesLoading(true);
-        const response = await getAllServices();
-        const payload = response?.data?.data || response?.data || [];
-        if (active) {
-          setServices(Array.isArray(payload) ? payload : []);
-          servicesRef.current = Array.isArray(payload) ? payload : [];
-        }
-      } catch (err) {
-        console.error("Search services load failed", err);
-        if (active) {
-          setServices([]);
-          servicesRef.current = [];
-        }
-      } finally {
-        if (active) setServicesLoading(false);
-      }
-    };
-
-    loadServices();
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  const selectedLocKey = useMemo(() => {
-    if (!selectedLoc) return "";
-    return `${selectedLoc.type || ""}-${selectedLoc.city || ""}-${selectedLoc.area || ""}-${selectedLoc.pincode || ""}-${selectedLoc.latitude || ""}-${selectedLoc.longitude || ""}`;
-  }, [selectedLoc]);
-
-  useEffect(() => {
-    const q = activeUrlQuery;
-    if (!q) {
-      setResults({ experts: [], categories: [], subcategories: [], services: [], locations: [] });
-      setFallbackInfo({ used: false, reason: null });
-      return undefined;
-    }
-
-    const requestId = latestRequestRef.current + 1;
-    latestRequestRef.current = requestId;
-    const controller = new AbortController();
-
-    const loadSearchResults = async () => {
-      try {
-        setLoading(true);
-        setError(false);
-
-        const expertParams = {
-          q,
-          page,
-          limit: 20,
-          signal: controller.signal
-        };
-
-        if (urlLocation) {
-          expertParams.location = urlLocation;
-          expertParams.location_mode = "local";
-        } else if (selectedLoc) {
-          if (selectedLoc.type === "coordinates") {
-            expertParams.lat = selectedLoc.latitude;
-            expertParams.lng = selectedLoc.longitude;
-            expertParams.location_mode = "nearby";
-          } else if (selectedLoc.type === "global") {
-            expertParams.location_mode = "global";
-          } else {
-            expertParams.city = selectedLoc.city;
-            expertParams.area = selectedLoc.area;
-            expertParams.pincode = selectedLoc.pincode;
-            expertParams.location_mode = "local";
-          }
-        } else {
-          expertParams.location_mode = "global";
-        }
-
-        const [expertsRes, globalRes] = await Promise.all([
-          searchWithLocation(expertParams),
-          globalSearch({
-            q,
-            page: 1,
-            limit: 20,
-            location: urlLocation || getStoredLocationQuery() || undefined,
-            signal: controller.signal,
-          }),
-        ]);
-
-        if (latestRequestRef.current !== requestId) return;
-
-        const expertsPayload = expertsRes?.data || {};
-        const rawExperts = expertsPayload.data || [];
-        const globalResults = normalizeGlobalResults(globalRes);
-        const seenExperts = new Set();
-        const uniqueExperts = [];
-        for (const item of [...asArray(rawExperts), ...asArray(globalResults.experts)]) {
-          const id = item?.slug || item?.expert_slug || item?.id || item?.expert_id || item?.expertId || item?.user_id;
-          const key = id || item?.name || item?.expert_name || JSON.stringify(item);
-          if (key && !seenExperts.has(key)) {
-            seenExperts.add(key);
-            uniqueExperts.push(item);
-          }
-        }
-
-        const seenServices = new Set();
-        const uniqueServices = [];
-        for (const item of [...asArray(globalResults.services), ...servicesRef.current.filter((service) => matchesQuery(service, q))]) {
-          const id = item?.id || item?.service_id || item?.serviceId || item?.slug || item?.service_slug;
-          const key = id || item?.title || item?.name || JSON.stringify(item);
-          if (key && !seenServices.has(key)) {
-            seenServices.add(key);
-            uniqueServices.push(item);
-          }
-        }
-
-        setResults({
-          experts: uniqueExperts,
-          categories: getList({ data: globalResults.categories }, "categories"),
-          subcategories: getList({ data: globalResults.subcategories }, "subcategories"),
-          services: uniqueServices.slice(0, 20),
-          locations: asArray(globalResults.locations),
-        });
-
-        setFallbackInfo({
-          used: expertsPayload.fallback_used || false,
-          reason: expertsPayload.fallback_reason || null
-        });
-      } catch (err) {
-        if (controller.signal?.aborted || latestRequestRef.current !== requestId) return;
-        console.error("Search failed:", err);
-        setResults({ experts: [], categories: [], subcategories: [], services: [], locations: [] });
-        setError(true);
-      } finally {
-        if (!controller.signal?.aborted && latestRequestRef.current === requestId) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadSearchResults();
-
-    return () => {
-      controller.abort();
-    };
-  }, [activeUrlQuery, page, selectedLocKey, urlLocation]);
-
-  const counts = useMemo(
-    () => ({
-      all:
-        results.experts.length +
-        results.categories.length +
-        results.subcategories.length +
-        results.services.length +
-        results.locations.length,
-      experts: results.experts.length,
-      categories: results.categories.length,
-      subcategories: results.subcategories.length,
-      services: results.services.length,
-      locations: results.locations.length,
-    }),
-    [results]
-  );
-
-  const visibleTabs = isMobile ? MOBILE_TABS : DESKTOP_TABS;
-
-  const recommendedExperts = useMemo(
-    () => (Array.isArray(experts) ? experts.slice(0, 8) : []),
-    [experts]
-  );
-
-  const recommendedCategories = useMemo(
-    () => (Array.isArray(categories) ? categories.slice(0, 10) : []),
-    [categories]
-  );
-
-  const recommendedServices = useMemo(
-    () => services.slice(0, 8),
-    [services]
-  );
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const q = normalizeSearchTerm(queryInput);
-    setActiveTab("all");
-    setPage(1);
-    if (!q) {
-      setSearchParams({});
+  // Microphone Voice Search Handler (Shared Home Page Speech Recognition logic)
+  const startVoiceSearch = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Voice search is not supported in this browser.");
       return;
     }
-    setSearchParams(getSearchParamObject(q));
+
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = "en-IN";
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map((result) => result[0])
+          .map((result) => result.transcript)
+          .join("");
+        setSearchInput(transcript);
+      };
+
+      recognition.onerror = (err) => {
+        console.warn("[VOICE_SEARCH] Error:", err?.error || err);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      console.error("[VOICE_SEARCH] Failed to start:", err);
+      setIsListening(false);
+    }
   };
 
-  const clearSearch = () => {
-    setQueryInput("");
-    setActiveTab("all");
-    setPage(1);
-    setSearchParams({});
-    inputRef.current?.focus();
+  const handleImageError = (expId) => {
+    setFailedImageIds((prev) => ({ ...prev, [expId]: true }));
   };
 
-  const renderExpertCard = (expert) => {
-    const name = expert?.name || expert?.full_name || expert?.expert_name || "Verified Expert";
-    const image = expert?.profile_photo || expert?.profile_image || expert?.image_url;
-    const rating = expert?.rating || expert?.avg_rating || expert?.average_rating;
+  // Race condition & request sequence safeguards
+  const requestIdRef = useRef(0);
+  const abortControllerRef = useRef(null);
+  const searchInputRef = useRef(null);
 
-    return (
-      <button
-        type="button"
-        className="search-page-card search-page-card--expert"
-        key={`expert-${expert?.id || expert?.expert_id || name}`}
-        onClick={() => navigate(getExpertPath(expert))}
-      >
-        <span className="search-page-card__avatar">
-          {image ? <img src={image} alt={name} loading="lazy" /> : <span>{getInitials(name)}</span>}
-        </span>
-        <span className="search-page-card__body">
-          <strong>{name}</strong>
-          <small>{expert?.position || expert?.speciality || expert?.subcategory_name || "G9 Experts professional"}</small>
-          <span className="search-page-card__meta">
-            {(expert?.location || expert?.city) && (
-              <span>
-                {expert.location || (expert.area ? `${expert.area}, ${expert.city}` : expert.city)}
-              </span>
-            )}
-            {expert?.distance_km != null && <span>📍 {expert.distance_km} km</span>}
-            {rating && (
-              <span>
-                <FiStar aria-hidden="true" /> {rating}
-              </span>
-            )}
-          </span>
-        </span>
-        <span className="search-page-card__action">View Profile</span>
-      </button>
-    );
+  const executeSearch = useCallback(async (queryText, options = {}) => {
+    const currentReqId = ++requestIdRef.current;
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    setLoading(true);
+    // Stale result protection: Clear previous results immediately
+    setExperts([]);
+    setServices([]);
+    setError(false);
+    setDidYouMean(null);
+
+    try {
+      const convId = getOrCreateSessionConvId();
+      console.log(`[ASK_G9][FE_REQUEST] requestId=${currentReqId} conversationId="${convId}" message="${queryText}"`);
+      const data = await askG9Api(queryText, convId, {
+        remove_filter: options.remove_filter || null,
+        reset_context: options.reset_context || false,
+        signal: controller.signal,
+      });
+
+      if (currentReqId !== requestIdRef.current) return;
+
+      if (data?.success) {
+        if (data.conversation_id) {
+          sessionStorage.setItem("g9_search_session_id", data.conversation_id);
+        }
+        console.log(`[ASK_G9][FE_SERVICE_RENDER] responseServiceCount=${data.services?.length || 0} responseServiceIds=${JSON.stringify((data.services || []).map(s => s.id))}`);
+        setExperts(data.experts || []);
+        setServices(data.services || []);
+        setActiveFilters(data.active_filters || []);
+        setIntentSummary(data.intent_summary || "");
+        setAiUnderstanding(data.ai_understanding || data.message || "Search results");
+        setDidYouMean(data.did_you_mean || null);
+        setMessage(data.message || "");
+        setClarifyingOptions(data.clarifying_options || []);
+        setNeedsClarification(data.needs_clarification || false);
+      } else {
+        setError(true);
+        setMessage(data?.message || "Failed to load search results.");
+      }
+    } catch (err) {
+      if (controller.signal?.aborted || currentReqId !== requestIdRef.current) return;
+      console.error("[SEARCH_PAGE] Search error:", err);
+      setError(true);
+      setMessage("We encountered an error while searching. Please try again.");
+    } finally {
+      if (currentReqId === requestIdRef.current) {
+        setLoading(false);
+      }
+    }
+  }, []);
+
+  // Re-run search whenever URL q parameter changes
+  useEffect(() => {
+    if (urlQuery) {
+      setSearchInput(urlQuery);
+      executeSearch(urlQuery);
+    } else {
+      setSearchInput("");
+      setExperts([]);
+      setServices([]);
+      setActiveFilters([]);
+      setIntentSummary("");
+      setAiUnderstanding("");
+      setDidYouMean(null);
+      setMessage("");
+      setNeedsClarification(false);
+      setClarifyingOptions([]);
+      setError(false);
+      setLoading(false);
+    }
+  }, [urlQuery, executeSearch]);
+
+  const handleSearchSubmit = (e) => {
+    e?.preventDefault();
+    const q = searchInput.trim();
+    if (!q) return;
+    setSearchParams({ q });
+    executeSearch(q);
   };
 
-  const renderCategoryCard = (category) => {
-    const name = category?.name || category?.title || "Expert Category";
-
-    return (
-      <button
-        type="button"
-        className="search-page-card"
-        key={`category-${category?.id || category?.slug || name}`}
-        onClick={() => navigate(getCategoryResultPath(category))}
-      >
-        <span className="search-page-card__avatar search-page-card__avatar--icon">
-          {category?.image_url ? <img src={category.image_url} alt={name} loading="lazy" /> : <FiGrid />}
-        </span>
-        <span className="search-page-card__body">
-          <strong>{name}</strong>
-          <small>{category?.meta_desc || category?.description || "Explore verified experts in this category."}</small>
-        </span>
-        <span className="search-page-card__action">Explore</span>
-      </button>
-    );
+  const handleRemoveFilter = (filterKey) => {
+    executeSearch("", { remove_filter: filterKey });
   };
 
-  const renderSubcategoryCard = (subcategory) => {
-    const name = subcategory?.name || subcategory?.title || "Expert Service";
+  const handleNewSearch = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    requestIdRef.current++;
 
-    return (
-      <button
-        type="button"
-        className="search-page-card"
-        key={`subcategory-${subcategory?.id || subcategory?.subcategory_id || name}`}
-        onClick={() => navigate(getSubcategoryResultPath(subcategory))}
-      >
-        <span className="search-page-card__avatar search-page-card__avatar--icon">
-          <FiUser />
-        </span>
-        <span className="search-page-card__body">
-          <strong>{name}</strong>
-          <small>{subcategory?.category_name || subcategory?.parent_category_name || "Browse related experts."}</small>
-        </span>
-        <span className="search-page-card__action">
-          Explore <FiArrowRight />
-        </span>
-      </button>
-    );
+    sessionStorage.removeItem("g9_search_session_id");
+    setSearchInput("");
+    setExperts([]);
+    setServices([]);
+    setActiveFilters([]);
+    setIntentSummary("");
+    setAiUnderstanding("");
+    setDidYouMean(null);
+    setMessage("");
+    setNeedsClarification(false);
+    setClarifyingOptions([]);
+    setError(false);
+    setLoading(false);
+
+    setSearchParams({}, { replace: true });
+
+    setTimeout(() => {
+      if (searchInputRef.current) {
+        searchInputRef.current.focus();
+      }
+    }, 50);
   };
 
-  const renderLocationCard = (location) => {
-    const name = getLocationDisplayName(location) || "Location";
-    const detail = [
-      location?.area && location?.city ? location.city : "",
-      location?.state,
-      location?.pincode,
-    ].filter(Boolean).join(", ");
-
-    return (
-      <button
-        type="button"
-        className="search-page-card"
-        key={`location-${location?.id || location?.pincode || name}`}
-        onClick={() => {
-          const formatted = {
-            city: location?.city || "",
-            area: location?.area || "",
-            state: location?.state || "",
-            country: location?.country || "",
-            pincode: location?.pincode || "",
-            latitude: location?.latitude ? Number(location.latitude) : null,
-            longitude: location?.longitude ? Number(location.longitude) : null,
-            type: location?.type || "city",
-            displayName: name,
-          };
-          localStorage.setItem("last_selected_location", JSON.stringify(formatted));
-          window.dispatchEvent(new CustomEvent("g9-location-changed", { detail: formatted }));
-          navigate(getResultPath("locations", location));
-        }}
-      >
-        <span className="search-page-card__avatar search-page-card__avatar--icon">
-          <FiSearch />
-        </span>
-        <span className="search-page-card__body">
-          <strong>{name}</strong>
-          <small>{detail || "Search experts in this location"}</small>
-        </span>
-        <span className="search-page-card__action">
-          Search <FiArrowRight />
-        </span>
-      </button>
-    );
+  const handleCategoryFilterClick = (queryVal) => {
+    setSearchInput(queryVal);
+    setSearchParams({ q: queryVal });
+    executeSearch(queryVal);
   };
 
-  const renderServiceCard = (service) => {
-    const name = getServiceName(service);
-    const image = getServiceImage(service);
-    const price = service?.price || service?.amount || service?.service_price;
+  return (
+    <div className="g9-fullwidth-search-container">
+      {/* Search Header Bar */}
+      <header className="g9-search-header-bar">
+        <button
+          type="button"
+          className="g9-search-back-btn"
+          onClick={() => navigate("/user")}
+          aria-label="Back to home"
+        >
+          <ArrowLeft size={20} />
+        </button>
 
-    return (
-      <button
-        type="button"
-        className="search-page-card"
-        key={`service-${service?.id || service?.slug || name}`}
-        onClick={() => navigate(getServicePath(service))}
-      >
-        <span className="search-page-card__avatar search-page-card__avatar--icon">
-          {image ? <img src={image} alt={name} loading="lazy" /> : <FiBriefcase />}
-        </span>
-        <span className="search-page-card__body">
-          <strong>{name}</strong>
-          <small>{service?.category_name || service?.category || "Book a verified expert service"}</small>
-          <span className="search-page-card__meta">
-            {price != null && price !== "" && <span>Rs {Math.floor(Number(price) || 0)}</span>}
-          </span>
-        </span>
-        <span className="search-page-card__action">
-          View <FiArrowRight />
-        </span>
-      </button>
-    );
-  };
+        <form className="g9-main-search-form" onSubmit={handleSearchSubmit}>
+          <Search size={20} className="g9-search-input-icon" />
+          <input
+            ref={searchInputRef}
+            type="text"
+            className="g9-main-search-input"
+            placeholder={isListening ? "Listening... Speak your query..." : "Search experts, services, categories..."}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
+          {searchInput && (
+            <button
+              type="button"
+              className="g9-search-clear-btn"
+              onClick={() => setSearchInput("")}
+              aria-label="Clear input"
+            >
+              <X size={18} />
+            </button>
+          )}
 
-  const renderSection = (key, title, items, renderer) => {
-    if (activeTab !== "all" && activeTab !== key) return null;
-    if (!loading && items.length === 0) return null;
+          {/* Microphone Voice Search Button */}
+          <button
+            type="button"
+            className={`g9-search-mic-btn ${isListening ? "listening" : ""}`}
+            onClick={startVoiceSearch}
+            title={isListening ? "Listening... Click to stop" : "Voice Search"}
+            aria-label="Voice Search"
+          >
+            <Mic size={18} className={isListening ? "animate-pulse" : ""} />
+          </button>
 
-    return (
-      <section className="search-page-section">
-        <div className="search-page-section__top">
-          <h2>{title}</h2>
-          <span>{items.length}</span>
-        </div>
-        {key === "experts" && fallbackInfo.used && (
-          <div className="location-fallback-warning" style={{
-            margin: "0 0 16px",
-            padding: "12px 16px",
-            background: "#fffbeb",
-            border: "1px solid #fef3c7",
-            borderRadius: "12px",
-            color: "#b45309",
-            fontSize: "13px"
-          }}>
-            ⚠️ {fallbackInfo.reason}
+          <button type="submit" className="g9-search-action-submit-btn" disabled={loading}>
+            {loading ? <RefreshCw size={18} className="animate-spin" /> : <Search size={18} />}
+            <span>Search</span>
+          </button>
+        </form>
+
+        <button
+          type="button"
+          className="g9-reset-search-btn"
+          onClick={handleNewSearch}
+          title="Reset search session"
+        >
+          <RotateCcw size={16} />
+          <span>New Search</span>
+        </button>
+      </header>
+
+      {/* "Did You Mean?" Typo Suggestion Banner */}
+      {didYouMean && !loading && (
+        <div className="g9-did-you-mean-banner">
+          <div className="g9-did-you-mean-text">
+            <HelpIcon size={18} color="#0284c7" />
+            <span>Did you mean <strong>"{didYouMean.suggested}"</strong>?</span>
           </div>
-        )}
-        <div className="search-page-grid">
-          {loading
-            ? Array.from({ length: key === "experts" ? 6 : 3 }).map((_, index) => (
-                <div className="search-page-skeleton" key={`${key}-skeleton-${index}`} />
-              ))
-            : items.map(renderer)}
+          <button
+            type="button"
+            className="g9-did-you-mean-btn"
+            onClick={() => handleCategoryFilterClick(didYouMean.suggested)}
+          >
+            Search "{didYouMean.suggested}"
+          </button>
         </div>
-      </section>
-    );
-  };
+      )}
 
-  const hasAnyResult = counts.all > 0;
-  const showingRecommendations = !activeUrlQuery.trim();
-  const recommendationsLoading = categoriesLoading || expertsLoading || servicesLoading;
-  const showMobileRecommendations = isMobile && showingRecommendations;
-
-  const renderRecommendations = () => (
-    <div className="search-page-recommendations">
-      <section className="search-page-recommendation-section">
-        <div className="search-page-section__top">
-          <h2>Recommended for You</h2>
-          <span>{recommendedExperts.length}</span>
-        </div>
-        <div className="search-page-recommendation-list">
-          {recommendationsLoading && recommendedExperts.length === 0
-            ? Array.from({ length: 4 }).map((_, index) => <div className="search-page-skeleton" key={`expert-rec-${index}`} />)
-            : recommendedExperts.map(renderExpertCard)}
-        </div>
-      </section>
-
-      {recommendedCategories.length > 0 && (
-        <section className="search-page-chip-section">
-          <div className="search-page-section__top">
-            <h2>Popular Categories</h2>
+      {/* AI Understanding Banner */}
+      {aiUnderstanding && !loading && (
+        <div className="g9-ai-understanding-banner">
+          <div className="g9-ai-badge">
+            <Sparkles size={16} />
+            <span>Ask G9 AI</span>
           </div>
-          <div className="search-page-chip-row">
-            {recommendedCategories.map((category) => {
-              const name = category?.name || category?.title || "Category";
-              return (
+          {intentSummary && <p className="g9-ai-intent-summary">"{intentSummary}"</p>}
+          <p className="g9-ai-text">{aiUnderstanding}</p>
+        </div>
+      )}
+
+      {/* Active Filter Chips Bar */}
+      {activeFilters.length > 0 && (
+        <div className="g9-active-filters-bar">
+          <span className="g9-filters-label">Active Filters:</span>
+          <div className="g9-chips-wrapper">
+            {activeFilters.map((chip) => (
+              <span key={chip.key} className="g9-filter-chip">
+                <span>{chip.label}</span>
                 <button
                   type="button"
-                  key={`category-rec-${category?.id || category?.slug || name}`}
-                  onClick={() => navigate(getCategoryResultPath(category))}
+                  className="g9-chip-remove"
+                  onClick={() => handleRemoveFilter(chip.key)}
+                  aria-label={`Remove filter ${chip.label}`}
                 >
-                  {name}
+                  <X size={14} />
                 </button>
+              </span>
+            ))}
+            <button
+              type="button"
+              className="g9-clear-all-chip"
+              onClick={handleNewSearch}
+            >
+              Reset All
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Related Services Section (Shown when matching services exist) */}
+      {!loading && !error && services.length > 0 && (
+        <section className="g9-related-services-section">
+          <div className="g9-section-header">
+            <h3 className="g9-section-title">
+              <Briefcase size={18} />
+              <span>Related Services</span>
+            </h3>
+          </div>
+          <div className="g9-services-grid">
+            {services.map((service) => (
+              <div
+                key={`service-${service.id || service.slug}`}
+                className="g9-service-card"
+                onClick={() => navigate(`/user/service-details/${service.slug || service.id}`)}
+              >
+                <div className="g9-service-info">
+                  <h4>{service.title || service.name}</h4>
+                  <p>{service.description || service.category_name}</p>
+                  {service.price && <span className="g9-service-price">₹{service.price}</span>}
+                </div>
+                <ChevronRight size={16} className="g9-service-arrow" />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Expert Results Section */}
+      <section className="g9-expert-results-section">
+        {!loading && experts.length > 0 && (
+          <div className="g9-results-sub-header">
+            <div className="g9-results-count-title">
+              <h3>Expert Results</h3>
+              <span className="g9-count-tag">Showing {experts.length} verified experts</span>
+            </div>
+          </div>
+        )}
+
+        {/* Loading State Skeleton */}
+        {loading && (
+          <div className="g9-skeleton-grid">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+              <div key={n} className="g9-skeleton-card">
+                <div className="g9-skeleton-avatar" />
+                <div className="g9-skeleton-body">
+                  <div className="g9-skeleton-line short" />
+                  <div className="g9-skeleton-line medium" />
+                  <div className="g9-skeleton-line long" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Needs Clarification State */}
+        {!loading && needsClarification && (
+          <div className="g9-clarification-box">
+            <div className="g9-clarification-header">
+              <HelpCircle size={22} color="#000080" />
+              <h3>{message || "What specific expert or service are you looking for?"}</h3>
+            </div>
+            {clarifyingOptions.length > 0 && (
+              <div className="g9-clarification-options">
+                {clarifyingOptions.map((opt, idx) => {
+                  const label = typeof opt === "string" ? opt : opt.label || opt.query;
+                  const queryVal = typeof opt === "string" ? opt : opt.query || opt.label;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      className="g9-option-btn"
+                      onClick={() => handleCategoryFilterClick(queryVal)}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Error State */}
+        {!loading && error && (
+          <div className="g9-search-error-box">
+            <AlertCircle size={32} color="#dc2626" />
+            <p>{message || "We encountered an issue fetching search results."}</p>
+            <button type="button" className="g9-retry-btn" onClick={() => executeSearch(urlQuery)}>
+              Retry Search
+            </button>
+          </div>
+        )}
+
+        {/* Expert Cards Grid */}
+        {!loading && !error && experts.length > 0 && (
+          <div className="g9-expert-grid">
+            {experts.map((expert) => {
+              const name = expert.name || expert.full_name || "Verified Expert";
+              const expId = expert.expert_id || expert.id || expert.slug;
+              const photoUrl = !failedImageIds[expId] ? resolveExpertProfileImage(expert) : null;
+              const rating = expert.avg_rating || expert.rating || expert.average_rating;
+              const reviews = expert.total_reviews || expert.review_count || 0;
+              const position = expert.position || expert.speciality || expert.subcategory_name || "G9 Expert Professional";
+              const locationText = expert.location || (expert.city ? (expert.area ? `${expert.area}, ${expert.city}` : expert.city) : "");
+              const expertSlug = expert.slug || expert.expert_slug || expert.id || expert.expert_id;
+              const matchPct = expert.match_percentage || "95% Match";
+              const matchReasons = expert.match_reasons || [];
+
+              return (
+                <div key={`expert-${expert.expert_id || expert.id || expertSlug}`} className="g9-expert-card">
+                  <div className="g9-expert-card-top-bar">
+                    <span className="g9-relevance-chip" title="Search relevance score">
+                      <CheckCircle2 size={12} />
+                      <span>{matchPct}</span>
+                    </span>
+                  </div>
+
+                  <div className="g9-expert-card-header">
+                    <div className="g9-expert-avatar">
+                      {photoUrl ? (
+                        <img
+                          src={photoUrl}
+                          alt={name}
+                          loading="lazy"
+                          onError={() => handleImageError(expId)}
+                        />
+                      ) : (
+                        <span>{getInitials(name)}</span>
+                      )}
+                    </div>
+
+                    <div className="g9-expert-info">
+                      <div className="g9-expert-name-row">
+                        <h4 className="g9-expert-name">{name}</h4>
+                        {expert.is_subscribed && (
+                          <span className="g9-verified-badge" title="Verified Expert">
+                            <UserCheck size={14} />
+                          </span>
+                        )}
+                      </div>
+                      <p className="g9-expert-position">{position}</p>
+                      {expert.category_name && (
+                        <span className="g9-category-tag">{expert.category_name}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Match Reasons Tags */}
+                  {matchReasons.length > 0 && (
+                    <div className="g9-match-reasons-chips">
+                      {matchReasons.map((reason, rIdx) => (
+                        <span key={rIdx} className="g9-reason-chip">
+                          ✓ {reason}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="g9-expert-card-body">
+                    {locationText && (
+                      <div className="g9-expert-meta-item">
+                        <MapPin size={14} />
+                        <span>{locationText}</span>
+                      </div>
+                    )}
+                    {rating > 0 && (
+                      <div className="g9-expert-meta-item">
+                        <Star size={14} className="g9-star-icon" />
+                        <span>{rating} ({reviews} reviews)</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Single View Profile Action Button (No Call/Chat buttons on search page) */}
+                  <div className="g9-expert-card-footer">
+                    <button
+                      type="button"
+                      className="g9-expert-view-profile-btn"
+                      onClick={() => navigate(getExpertPath(expert))}
+                    >
+                      View Profile
+                    </button>
+                  </div>
+                </div>
               );
             })}
           </div>
-        </section>
-      )}
+        )}
 
-      {recommendedServices.length > 0 && (
-        <section className="search-page-recommendation-section">
-          <div className="search-page-section__top">
-            <h2>Popular Services</h2>
-            <span>{recommendedServices.length}</span>
+        {/* Controlled Empty State */}
+        {!loading && !error && !needsClarification && experts.length === 0 && services.length === 0 && (
+          <div className="g9-empty-state-card">
+            <AlertCircle size={40} className="g9-empty-icon" />
+            <h3>No matching experts found</h3>
+            <p className="g9-empty-desc">
+              {aiUnderstanding || "We couldn't find any experts matching your active search constraints."}
+            </p>
+            <div className="g9-empty-actions">
+              {activeFilters.length > 0 && (
+                <button type="button" className="g9-empty-btn" onClick={handleNewSearch}>
+                  <RotateCcw size={16} />
+                  <span>Start New Search</span>
+                </button>
+              )}
+            </div>
           </div>
-          <div className="search-page-recommendation-list">
-            {recommendedServices.map(renderServiceCard)}
-          </div>
-        </section>
-      )}
-
-      {!recommendationsLoading && recommendedExperts.length === 0 && recommendedCategories.length === 0 && recommendedServices.length === 0 && (
-        <div className="search-page-state">Search for experts, services, or categories</div>
-      )}
+        )}
+      </section>
     </div>
   );
-
-  return (
-    <main className="search-page">
-      <section className="search-page-hero">
-        <div className="search-page-mobile-top">
-          <button type="button" onClick={() => navigate(-1)} aria-label="Go back">
-            <FiArrowLeft />
-          </button>
-          <span>Search</span>
-        </div>
-        <h1>Search G9 Experts</h1>
-        <form className="search-page-form" onSubmit={handleSubmit}>
-          <FiSearch aria-hidden="true" />
-          <input
-            ref={inputRef}
-            value={queryInput}
-            onChange={(event) => setQueryInput(event.target.value)}
-            placeholder="Search experts, services, categories..."
-            aria-label="Search G9 Experts"
-          />
-          {queryInput ? (
-            <button type="button" className="search-page-clear" onClick={clearSearch} aria-label="Clear search">
-              <FiX />
-            </button>
-          ) : null}
-          <button type="submit" className="search-page-submit">Search</button>
-        </form>
-      </section>
-
-      {!isMobile && (
-        <div className="search-page-tabs" role="tablist" aria-label="Search result types">
-          {visibleTabs.map((tab) => (
-            <button
-              type="button"
-              key={tab.key}
-              className={activeTab === tab.key ? "search-page-tab search-page-tab--active" : "search-page-tab"}
-              onClick={() => setActiveTab(tab.key)}
-            >
-              {tab.label}
-              <span>{counts[tab.key]}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {error ? (
-        <div className="search-page-state">Search is temporarily unavailable. Please try again.</div>
-      ) : showMobileRecommendations ? (
-        renderRecommendations()
-      ) : showingRecommendations ? (
-        <div className="search-page-state">Start with a search term to find G9 Experts services.</div>
-      ) : !loading && !hasAnyResult ? (
-        <div className="search-page-state">No results found. Try searching another service.</div>
-      ) : (
-        <>
-          {isMobile && (
-            <div className="search-page-tabs" role="tablist" aria-label="Search result types">
-              {visibleTabs.map((tab) => (
-                <button
-                  type="button"
-                  key={tab.key}
-                  className={activeTab === tab.key ? "search-page-tab search-page-tab--active" : "search-page-tab"}
-                  onClick={() => setActiveTab(tab.key)}
-                >
-                  {tab.label}
-                  <span>{counts[tab.key]}</span>
-                </button>
-              ))}
-            </div>
-          )}
-          {renderSection("experts", "Experts", results.experts, renderExpertCard)}
-          {renderSection("categories", "Categories", results.categories, renderCategoryCard)}
-          {renderSection("services", "Services", results.services, renderServiceCard)}
-          {renderSection("locations", "Locations", results.locations, renderLocationCard)}
-          {renderSection("subcategories", "Subcategories", results.subcategories, renderSubcategoryCard)}
-
-          {(activeTab === "all" || activeTab === "experts") && results.experts.length >= 20 && (
-            <div className="search-page-pagination">
-              <button type="button" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>
-                Previous
-              </button>
-              <span>Page {page}</span>
-              <button type="button" onClick={() => setPage((current) => current + 1)}>
-                Next
-              </button>
-            </div>
-          )}
-        </>
-      )}
-    </main>
-  );
-};
-
-export default SearchResultsPage;
+}

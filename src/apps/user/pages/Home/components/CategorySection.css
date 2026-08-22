@@ -44,5 +44,10 @@
   .category-block-section {
     padding: var(--g9-card-padding, 14px);
     margin-bottom: var(--g9-section-margin-y, 20px);
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
   }
 }

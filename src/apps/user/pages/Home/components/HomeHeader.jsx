@@ -115,17 +115,17 @@ const HomeHeader = React.memo(function HomeHeader({
             onClick={onMenuOpen} 
             aria-label="Open menu" 
           >
-            <Menu size={24} strokeWidth={2} color="#ffffff" fill="none" className="header-outlined-icon" />
+            <Menu size={24} strokeWidth={2} color="#0f172a" fill="none" className="header-outlined-icon" />
           </button>
 
           {/* Center: Location */}
           <div className="mobile-header-location-box" onClick={onLocationSelect}>
             <div className="mobile-header-location-top">
               <span className="location-delivering-label">Delivering to</span>
-              <ChevronDown size={10} className="location-caret-icon" color="#94a3b8" />
+              <ChevronDown size={10} className="location-caret-icon" color="#64748b" />
             </div>
             <div className="mobile-header-location-bottom">
-              <MapPin size={16} className="location-pin-icon" fill="#facc15" color="#facc15" />
+              <MapPin size={16} className="location-pin-icon" fill="#f59e0b" color="#f59e0b" />
               <div className="mobile-header-location-selector-wrap">
                 <LocationSelector onLocationSelect={onLocationSelect} fallbackText="Indore, Madhya Pradesh" />
               </div>
@@ -142,7 +142,7 @@ const HomeHeader = React.memo(function HomeHeader({
               aria-label="Open wallet"
               title="Wallet Balance"
             >
-              <Wallet size={22} strokeWidth={1.8} color="#ffffff" fill="none" className="header-outlined-icon" />
+              <Wallet size={22} strokeWidth={1.8} color="#0f172a" fill="none" className="header-outlined-icon" />
               {walletAmount > 0 ? (
                 <span className="mobile-wallet-dot" />
               ) : (
@@ -157,7 +157,7 @@ const HomeHeader = React.memo(function HomeHeader({
               onClick={onNotificationOpen} 
               aria-label="Open notifications"
             >
-              <Bell size={22} strokeWidth={1.8} color="#ffffff" fill="none" className="header-outlined-icon" />
+              <Bell size={22} strokeWidth={1.8} color="#0f172a" fill="none" className="header-outlined-icon" />
               <span className="mobile-bell-badge">3</span>
             </button>
           </div>

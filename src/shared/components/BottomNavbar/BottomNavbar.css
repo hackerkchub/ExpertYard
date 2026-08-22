@@ -28,12 +28,12 @@
     width: 100% !important;
     max-width: 100% !important;
     z-index: 10010 !important;
-    background: rgba(11, 17, 32, 0.94) !important;
-    backdrop-filter: blur(16px) !important;
-    -webkit-backdrop-filter: blur(16px) !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
     border: none !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4) !important;
+    border-top: 1px solid #e2e8f0 !important;
+    box-shadow: 0 -2px 12px rgba(15, 23, 42, 0.06) !important;
     padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px)) !important;
     height: auto !important;
     box-sizing: border-box !important;
@@ -50,7 +50,7 @@
     width: 100%;
     margin: 0 auto;
     display: flex;
-    justify-content: space-between;
+    justify-content: space-around;
     align-items: center;
     position: relative;
   }
@@ -64,7 +64,7 @@
     align-items: center;
     justify-content: center;
     gap: 3px;
-    height: 52px;
+    height: 50px;
     text-decoration: none;
     cursor: pointer;
     background: transparent;
@@ -73,12 +73,12 @@
     margin: 0;
     -webkit-tap-highlight-color: transparent;
     outline: none;
-    transition: transform 0.15s ease;
+    transition: color 0.15s ease;
   }
 
   .nav-btn:active,
   .nav-item:active {
-    transform: scale(0.92);
+    transform: none;
   }
 
   .nav-btn .aura {
@@ -88,44 +88,44 @@
   /* Icon Wrapper */
   .nav-btn .icon-wrapper {
     position: relative;
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #94a3b8;
-    transition: color 0.15s ease, transform 0.15s ease;
+    color: #64748b;
+    transition: color 0.15s ease;
   }
 
   .nav-btn.active .icon-wrapper {
-    color: #3b82f6;
+    color: #000080;
   }
 
   /* Special Talk Button */
   .nav-btn.talk-btn .icon-wrapper {
-    width: 32px;
-    height: 32px;
-    background: #1e293b;
-    border: 1px solid #475569;
-    border-radius: 50%;
-    color: #fbbf24;
-    transition: all 0.15s ease;
+    width: 26px;
+    height: 26px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    color: #64748b;
+    transition: color 0.15s ease;
   }
 
   .nav-btn.talk-btn.active .icon-wrapper {
-    background: #fbbf24;
-    border-color: #fbbf24;
-    color: #0b1120;
-    box-shadow: 0 0 12px rgba(251, 191, 36, 0.4);
+    background: transparent;
+    border-color: transparent;
+    color: #000080;
+    box-shadow: none;
   }
 
   /* Label Text */
   .nav-btn .nav-label {
     position: static !important;
-    font-size: 10px !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.2px !important;
-    color: #94a3b8 !important;
+    font-size: 10.5px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.1px !important;
+    color: #64748b !important;
     opacity: 1 !important;
     transform: none !important;
     white-space: nowrap !important;
@@ -133,11 +133,17 @@
   }
 
   .nav-btn.active .nav-label {
-    color: #3b82f6 !important;
+    color: #000080 !important;
+    font-weight: 700 !important;
   }
 
   .nav-btn.talk-btn .nav-label {
-    color: #fbbf24 !important;
+    color: #64748b !important;
+  }
+
+  .nav-btn.talk-btn.active .nav-label {
+    color: #000080 !important;
+    font-weight: 700 !important;
   }
 
   /* Reels Live Badge */
@@ -149,7 +155,7 @@
     height: 7px;
     background: #ec4899;
     border-radius: 50%;
-    border: 1.5px solid #0b1120;
+    border: 1.5px solid #ffffff;
     z-index: 20;
   }
 

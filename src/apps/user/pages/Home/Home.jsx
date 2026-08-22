@@ -917,9 +917,6 @@ export default function Home() {
         <Footer />
       </div>
 
-      {/* MOBILE BOTTOM NAV BAR */}
-      <MobileBottomNav />
-
       <AskG9Modal
         isOpen={askG9Open}
         onClose={() => setAskG9Open(false)}

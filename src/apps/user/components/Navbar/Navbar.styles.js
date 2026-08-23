@@ -1450,6 +1450,19 @@ export const MobileItem = styled.div`
   transition: all 0.15s ease-in-out;
   -webkit-tap-highlight-color: transparent;
 
+  ${(props) =>
+    props.$active &&
+    `
+    background: linear-gradient(90deg, rgba(30, 58, 138, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+    color: #ffffff;
+    font-weight: 700;
+    border-left: 3px solid #fbbf24;
+
+    svg {
+      color: #fbbf24;
+    }
+  `}
+
   svg {
     flex: 0 0 auto;
     font-size: 20px;

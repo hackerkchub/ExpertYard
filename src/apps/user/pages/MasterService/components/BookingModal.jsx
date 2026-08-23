@@ -22,8 +22,7 @@ export default function BookingModal({
   const basePrice = Number(selectedExpert.custom_price || service.base_price || 0);
   const offerPrice = selectedExpert.offer_price ? Number(selectedExpert.offer_price) : null;
   const effectiveBase = offerPrice && offerPrice > 0 ? offerPrice : basePrice;
-  const gstAmount = Math.round(effectiveBase * 0.18);
-  const totalPayable = effectiveBase + gstAmount;
+  const totalPayable = effectiveBase;
 
   return (
     <div className="msp-modal-overlay" onClick={onClose}>
@@ -177,12 +176,8 @@ export default function BookingModal({
             {/* PAYMENT SUMMARY BREAKDOWN */}
             <div className="msp-payment-breakdown-card">
               <div className="msp-breakdown-row">
-                <span>Service Base Price</span>
+                <span>Service Price</span>
                 <span className="font-mono">₹{effectiveBase.toLocaleString("en-IN")}</span>
-              </div>
-              <div className="msp-breakdown-row">
-                <span>GST (18%)</span>
-                <span className="font-mono">₹{gstAmount.toLocaleString("en-IN")}</span>
               </div>
               <hr className="msp-breakdown-divider" />
               <div className="msp-breakdown-row msp-breakdown-total">

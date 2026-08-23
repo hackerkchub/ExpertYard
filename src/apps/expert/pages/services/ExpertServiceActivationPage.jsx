@@ -21,6 +21,27 @@ const apiFetch = async (path, options = {}) => {
   return await fetch(primaryUrl, options);
 };
 
+const renderPricingDisplay = (customPrice, offerPrice) => {
+  const cPrice = Number(customPrice || 0);
+  const oPrice = Number(offerPrice || 0);
+  const hasValidOffer = !isNaN(oPrice) && oPrice > 0 && oPrice < cPrice;
+
+  if (hasValidOffer) {
+    return (
+      <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap" }}>
+        <strong style={{ color: "#059669" }}>₹{oPrice.toFixed(2)}</strong>
+        <span style={{ fontSize: 11, color: "#94a3b8", textDecoration: "line-through", fontWeight: 500 }}>
+          ₹{cPrice.toFixed(2)}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <strong style={{ color: "#059669" }}>₹{cPrice.toFixed(2)}</strong>
+  );
+};
+
 export default function ExpertServiceActivationPage() {
   const navigate = useNavigate();
   const { expertData } = useExpert();
@@ -679,8 +700,7 @@ export default function ExpertServiceActivationPage() {
                           </span>
                         </Td>
                         <Td>
-                          <strong style={{ color: "#059669" }}>₹{act.custom_price}</strong>
-                          {act.offer_price && <span style={{ fontSize: 11, color: "#94a3b8", textDecoration: "line-through", marginLeft: 6 }}>₹{act.offer_price}</span>}
+                          {renderPricingDisplay(act.custom_price, act.offer_price)}
                           <div style={{ fontSize: 11, color: "#64748b" }}>Base: ₹{act.base_price}</div>
                         </Td>
                         <Td>

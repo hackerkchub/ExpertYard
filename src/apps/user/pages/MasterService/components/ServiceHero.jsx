@@ -84,7 +84,7 @@ export default function ServiceHero({
           </div>
         </div>
 
-        {/* PRICE & GST DISPLAY */}
+        {/* PRICE DISPLAY */}
         <div className="msp-hero-price-box">
           <div>
             <div className="msp-price-label">Starting Service Fee</div>
@@ -92,7 +92,7 @@ export default function ServiceHero({
               ₹{displayMinPrice.toLocaleString("en-IN")}
             </div>
             <div className="msp-price-gst">
-              + 18% GST • Includes full workspace tools & delivery
+              Includes full workspace tools & delivery
             </div>
           </div>
           <div className="msp-value-tag">Best Value Guaranteed</div>

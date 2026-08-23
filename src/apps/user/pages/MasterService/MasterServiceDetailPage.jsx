@@ -224,7 +224,7 @@ export default function MasterServiceDetailPage() {
           <aside style={{ alignSelf: "start", position: "sticky", top: 20, background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, padding: 18 }}>
             <div style={{ color: "#667085", fontSize: 14 }}>Service price starts at</div>
             <div style={{ color: "#027a48", fontSize: 28, fontWeight: 900 }}>{money(service.base_price)}</div>
-            <p style={{ color: "#667085", lineHeight: 1.55 }}>Final pricing depends on the expert selected and includes GST in the booking review.</p>
+            <p style={{ color: "#667085", lineHeight: 1.55 }}>Final pricing depends on the expert selected in the booking review.</p>
             <button
               type="button"
               onClick={() => document.getElementById("available-experts")?.scrollIntoView({ behavior: "smooth" })}

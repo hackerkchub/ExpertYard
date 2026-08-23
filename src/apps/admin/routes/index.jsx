@@ -11,6 +11,7 @@ const CategoryManagement = lazy(() => import("../pages/CategoryManagement"));
 const SubCategoryManagement = lazy(() =>
   import("../pages/SubcategoryManagement")
 );
+const SubscribedExpertsAccessPage = lazy(() => import("../pages/SubscribedExpertsAccessPage"));
 const ExpertManagement = lazy(() => import("../pages/ExpertManagement"));
 const ExpertApproval = lazy(() => import("../pages/ExpertApproval"));
 const PayoutManagement = lazy(() => import("../pages/PayoutManagement"));
@@ -55,6 +56,7 @@ export default function AdminAppRoutes() {
             element={withLazyRoute(<SubCategoryManagement />)}
           />
           <Route path="expert-management" element={withLazyRoute(<ExpertManagement />)} />
+          <Route path="subscribed-experts" element={withLazyRoute(<SubscribedExpertsAccessPage />)} />
           <Route path="deleted-experts" element={withLazyRoute(<DeletedExperts />)} />
           <Route path="expert-approval" element={withLazyRoute(<ExpertApproval />)} />
           <Route path="payout-management" element={withLazyRoute(<PayoutManagement />)} />

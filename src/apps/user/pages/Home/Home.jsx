@@ -17,6 +17,7 @@ import {
   Sparkles,
   Star,
   Share2,
+  User,
   UserRound,
   Wallet,
   X,
@@ -612,7 +613,17 @@ export default function Home() {
           <aside className="home-menu-panel" aria-label="Home menu">
             {/* Gmail App Header Banner */}
             <div className="home-menu-head">
-              <div className="home-menu-profile">
+              <div
+                className="home-menu-profile"
+                style={{ cursor: "pointer" }}
+                onClick={() => {
+                  navigate(isLoggedIn ? "/user/user-profile" : "/user/auth");
+                  setMenuOpen(false);
+                }}
+                role="button"
+                tabIndex={0}
+                title="View Profile"
+              >
                 <div className="home-menu-avatar">
                   {user?.profile_photo ? (
                     <img src={user.profile_photo} alt={user?.name || "User"} />
@@ -682,10 +693,23 @@ export default function Home() {
               <div className="home-menu-section-title">Account</div>
 
               {isLoggedIn ? (
-                <button type="button" className="home-menu-item logout-item" onClick={() => { logout(); setMenuOpen(false); }}>
-                  <LogOut size={20} className="menu-item-icon" />
-                  <span>Logout</span>
-                </button>
+                <>
+                  <button
+                    type="button"
+                    className={`home-menu-item ${location.pathname === "/user/user-profile" ? "active" : ""}`}
+                    onClick={() => {
+                      navigate("/user/user-profile");
+                      setMenuOpen(false);
+                    }}
+                  >
+                    <User size={20} className="menu-item-icon" />
+                    <span>Profile</span>
+                  </button>
+                  <button type="button" className="home-menu-item logout-item" onClick={() => { logout(); setMenuOpen(false); }}>
+                    <LogOut size={20} className="menu-item-icon" />
+                    <span>Logout</span>
+                  </button>
+                </>
               ) : (
                 <button type="button" className="home-menu-item login-item" onClick={() => { openLogin(); setMenuOpen(false); }}>
                   <LogIn size={20} className="menu-item-icon" />

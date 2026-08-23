@@ -485,7 +485,13 @@ const Navbar = () => {
             <MobileMenu>
               <MobileMenuHeader>
                 {isLoggedIn && user ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', minWidth: 0 }}>
+                  <div
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', minWidth: 0, cursor: 'pointer' }}
+                    onClick={() => handleNav("/user/user-profile")}
+                    role="button"
+                    tabIndex={0}
+                    title="View Profile"
+                  >
                     <div style={{
                       width: 44,
                       height: 44,
@@ -534,6 +540,7 @@ const Navbar = () => {
                 {primaryMenuItems.map((item) => (
                   <MobileItem
                     key={item.label}
+                    $active={location.pathname === item.path || (item.path !== "/user" && location.pathname.startsWith(item.path))}
                     className={item.mobileOnly ? "mobile-only-menu-item" : undefined}
                     onClick={() => handleNav(item.path)}
                   >
@@ -545,11 +552,17 @@ const Navbar = () => {
 
               <MobileMenuSection>
                 <MobileMenuTitle>Account</MobileMenuTitle>
-                <MobileItem onClick={() => handleNav("/user/my-services")}>
+                <MobileItem
+                  $active={location.pathname === "/user/my-services" || location.pathname === "/user/my-orders" || location.pathname === "/user/my-bookings"}
+                  onClick={() => handleNav("/user/my-services")}
+                >
                   <FiPackage />
                   My Orders
                 </MobileItem>
-                <MobileItem onClick={() => handleNav("/user/wallet")}>
+                <MobileItem
+                  $active={location.pathname === "/user/wallet"}
+                  onClick={() => handleNav("/user/wallet")}
+                >
                   <FaWallet />
                   {t("common.wallet")}
                   {isLoggedIn && balance > 0 && <MenuWalletValue>Rs {Math.floor(balance)}</MenuWalletValue>}
@@ -557,13 +570,16 @@ const Navbar = () => {
 
                 {isLoggedIn ? (
                   <>
+                    <MobileItem
+                      $active={location.pathname === "/user/user-profile"}
+                      onClick={() => handleNav("/user/user-profile")}
+                    >
+                      <FiUser />
+                      {t("nav.profile")}
+                    </MobileItem>
                     <MobileItem onClick={shareReferral}>
                       <FiShare2 />
                       {t("Share")}
-                    </MobileItem>
-                    <MobileItem ref={userBtnRef} onClick={togglePopup}>
-                      <FiUser />
-                      {t("nav.profile")}
                     </MobileItem>
                   </>
                 ) : (

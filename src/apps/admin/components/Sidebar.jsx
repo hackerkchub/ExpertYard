@@ -1,21 +1,32 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import {
   FiHome,
   FiLayers,
   FiGrid,
   FiUsers,
+  FiUserCheck,
+  FiUserX,
   FiCheckCircle,
   FiMenu,
   FiDollarSign,
   FiLogOut,
-  FiSettings,
-  FiHelpCircle,
   FiCreditCard,
   FiBarChart2,
   FiImage,
   FiArchive,
   FiBell,
   FiFileText,
+  FiFilm,
+  FiList,
+  FiGitCommit,
+  FiTag,
+  FiCopy,
+  FiActivity,
+  FiPieChart,
+  FiCpu,
+  FiShield,
+  FiSend,
 } from "react-icons/fi";
 import {
   Side,
@@ -44,6 +55,7 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
     pendingPayouts: 5,
   });
   const ref = useRef();
+  const location = useLocation();
 
   const handleCloseMobile = () => setMobileOpen(false);
 
@@ -68,66 +80,85 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
     return () => window.removeEventListener('resize', handleResize);
   }, [mobileOpen, setMobileOpen]);
 
+  const isPathActive = (itemPath) => {
+    const currentPath = location.pathname;
+    if (currentPath === itemPath) return true;
+    
+    // Nested route active state matching
+    if (itemPath === "/admin/expert-management" && (currentPath.startsWith("/admin/expert/") || currentPath === "/admin/expert-management")) return true;
+    if (itemPath === "/admin/master-services/list" && currentPath.startsWith("/admin/master-services/")) return true;
+    if (itemPath === "/admin/form-builder" && currentPath.startsWith("/admin/form-builder")) return true;
+    if (itemPath === "/admin/workflow-builder" && currentPath.startsWith("/admin/workflow-builder")) return true;
+    if (itemPath === "/admin/document-builder" && currentPath.startsWith("/admin/document-builder")) return true;
+    if (itemPath === "/admin/pricing-rules" && currentPath.startsWith("/admin/pricing-rules")) return true;
+    if (itemPath === "/admin/workspace-monitoring" && currentPath.startsWith("/admin/workspace/")) return true;
+    
+    return false;
+  };
+
   const menuItems = [
     {
-      section: "Main",
+      section: "Main Overview & Catalog",
       items: [
         { path: "/admin/dashboard", icon: FiHome, label: "Dashboard" },
         { path: "/admin/category-management", icon: FiLayers, label: "Categories" },
         { path: "/admin/sub-category-management", icon: FiGrid, label: "Sub Categories" },
         { path: "/admin/banner", icon: FiImage, label: "Banners" },
+        { path: "/admin/reels-management", icon: FiFilm, label: "Reels & Media" },
       ]
     },
     {
-      section: "AI Discovery",
+      section: "Expert & User Operations",
       items: [
-        { path: "/admin/ai-analytics", icon: FiBarChart2, label: "Analytics" },
+        { path: "/admin/expert-management", icon: FiUsers, label: "Experts List" },
+        { path: "/admin/subscribed-experts", icon: FiUserCheck, label: "Subscribed Experts" },
+        { path: "/admin/expert-approval", icon: FiCheckCircle, label: "Expert Approvals", badge: notifications.pendingApprovals },
+        { path: "/admin/deleted-experts", icon: FiUserX, label: "Deleted Experts" },
       ]
     },
     {
-      section: "Service Management",
+      section: "Master Service Engine",
       items: [
         { path: "/admin/master-services/list", icon: FiLayers, label: "All Master Services" },
         { path: "/admin/master-services", icon: FiGrid, label: "+ Create Master Service" },
-        { path: "/admin/form-builder", icon: FiGrid, label: "Dynamic Form Builder" },
-        { path: "/admin/workflow-builder", icon: FiBarChart2, label: "Workflow Builder" },
+        { path: "/admin/custom-service-approval", icon: FiCheckCircle, label: "Custom Service Approvals" },
+        { path: "/admin/form-builder", icon: FiList, label: "Dynamic Form Builder" },
+        { path: "/admin/workflow-builder", icon: FiGitCommit, label: "Workflow Builder" },
         { path: "/admin/document-builder", icon: FiArchive, label: "Document Builder" },
-
-         // ✅ New Menu
-    {
-      path: "/admin/legal-management",
-      icon: FiFileText,
-      label: "Legal Management",
-    },
+        { path: "/admin/pricing-rules", icon: FiTag, label: "Pricing Rules" },
+        { path: "/admin/service-templates", icon: FiCopy, label: "Service Templates" },
       ]
     },
     {
-      section: "User Management",
+      section: "Live Workspaces & Analytics",
       items: [
-        { path: "/admin/users", icon: FiUsers, label: "Users List" },
-        { path: "/admin/expert-approvals", icon: FiCheckCircle, label: "Expert Approvals", badge: notifications.pendingApprovals },
+        { path: "/admin/workspace-monitoring", icon: FiActivity, label: "Workspace Monitoring" },
+        { path: "/admin/service-analytics", icon: FiPieChart, label: "Service Analytics" },
+        { path: "/admin/ai-analytics", icon: FiCpu, label: "AI Discovery Analytics" },
       ]
     },
     {
-      section: "Finance & Earnings",
+      section: "Finance & Subscriptions",
       items: [
-        { path: "/admin/transactions", icon: FiDollarSign, label: "Transactions" },
-        { path: "/admin/payouts", icon: FiCreditCard, label: "Payout Requests", badge: notifications.pendingPayouts },
-        { path: "/admin/earnings", icon: FiBarChart2, label: "Platform Earnings" },
+        { path: "/admin/finance", icon: FiDollarSign, label: "Finance & Earnings" },
+        { path: "/admin/payout-management", icon: FiCreditCard, label: "Payout Requests", badge: notifications.pendingPayouts },
+        { path: "/admin/membership-plan", icon: FiShield, label: "Membership & Plans" },
       ]
     },
     {
-      section: "System & Support",
+      section: "Notifications & Legal",
       items: [
-        { path: "/admin/settings", icon: FiSettings, label: "Settings" },
-        { path: "/admin/help", icon: FiHelpCircle, label: "Help" },
+        { path: "/admin/notifications/users", icon: FiBell, label: "User Notifications" },
+        { path: "/admin/notifications/experts", icon: FiSend, label: "Expert Notifications" },
+        { path: "/admin/legal-management", icon: FiFileText, label: "Legal Management" },
       ]
     }
   ];
 
   const handleLogout = () => {
-    // Add logout logic here
-    console.log("Logging out...");
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("adminToken");
+    window.location.href = "/admin/login";
   };
 
   return (
@@ -167,7 +198,7 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
                     key={itemIdx}
                     to={item.path}
                     $collapsed={collapsed}
-                    className={({ isActive }) => isActive ? "active" : ""}
+                    className={({ isActive }) => (isActive || isPathActive(item.path)) ? "active" : ""}
                     onClick={handleCloseMobile}
                     $hasBadge={item.badge > 0}
                   >

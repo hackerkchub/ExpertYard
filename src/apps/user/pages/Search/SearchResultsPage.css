@@ -535,6 +535,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .g9-expert-name {
@@ -545,12 +547,15 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
 }
 
 .g9-verified-badge {
   color: #2563eb;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .g9-expert-position {
@@ -558,6 +563,8 @@
   font-size: 0.85rem;
   color: #64748b;
   font-weight: 500;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .g9-category-tag {
@@ -568,6 +575,10 @@
   color: #475569;
   padding: 2px 8px;
   border-radius: 6px;
+  max-width: 100%;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  box-sizing: border-box;
 }
 
 /* Match Reasons Chips */
@@ -819,11 +830,16 @@
 
 @media (max-width: 768px) {
   .g9-fullwidth-search-container {
-    padding: calc(var(--navbar-height, 70px) + 16px) 14px max(80px, env(safe-area-inset-bottom));
+    /* Mobile header already inserts space via NavbarSpacer in MainLayout; 14px padding creates controlled spacing */
+    padding: 14px 14px max(80px, env(safe-area-inset-bottom));
   }
 
   .g9-search-header-bar {
     gap: 8px;
+    margin-bottom: 14px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .g9-search-back-btn {
@@ -835,10 +851,13 @@
   .g9-main-search-form {
     padding: 4px 6px 4px 12px;
     border-radius: 14px;
+    flex: 1;
+    min-width: 0;
   }
 
   .g9-main-search-input {
     font-size: 0.88rem;
+    min-width: 0;
   }
 
   .g9-search-action-submit-btn span {
@@ -859,23 +878,62 @@
     border-radius: 10px;
   }
 
+  .g9-services-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .g9-service-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .g9-service-info {
+    flex: 1;
+    min-width: 0;
+  }
+
   .g9-expert-grid {
     grid-template-columns: 1fr;
     gap: 16px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .g9-expert-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
   }
 
   .g9-skeleton-grid {
     grid-template-columns: 1fr;
+    width: 100%;
+    max-width: 100%;
   }
 
   .g9-ai-understanding-banner {
     padding: 12px 16px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .g9-did-you-mean-banner {
     flex-direction: column;
     align-items: flex-start;
     padding: 10px 14px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .g9-did-you-mean-btn {
@@ -886,8 +944,13 @@
 
 @media (max-width: 430px) {
   .g9-fullwidth-search-container {
+    padding-top: 10px;
     padding-left: 10px;
     padding-right: 10px;
+  }
+
+  .g9-search-header-bar {
+    margin-bottom: 12px;
   }
 
   .g9-expert-card {
@@ -912,5 +975,31 @@
   .g9-expert-view-profile-btn {
     padding: 10px;
     font-size: 0.86rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .g9-fullwidth-search-container {
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 8px;
+  }
+
+  .g9-search-header-bar {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .g9-main-search-form {
+    padding-left: 8px;
+    padding-right: 4px;
+  }
+
+  .g9-expert-card {
+    padding: 12px;
+  }
+
+  .g9-expert-card-header {
+    gap: 10px;
   }
 }

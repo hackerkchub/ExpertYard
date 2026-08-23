@@ -21,6 +21,27 @@ const apiFetch = async (path, options = {}) => {
   return await fetch(primaryUrl, options);
 };
 
+const renderPricingDisplay = (customPrice, offerPrice) => {
+  const cPrice = Number(customPrice || 0);
+  const oPrice = Number(offerPrice || 0);
+  const hasValidOffer = !isNaN(oPrice) && oPrice > 0 && oPrice < cPrice;
+
+  if (hasValidOffer) {
+    return (
+      <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap" }}>
+        <strong style={{ color: "#059669", fontSize: "1.2rem" }}>₹{oPrice.toFixed(2)}</strong>
+        <span style={{ fontSize: 12, color: "#94a3b8", textDecoration: "line-through", fontWeight: 500 }}>
+          ₹{cPrice.toFixed(2)}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <strong style={{ color: "#059669", fontSize: "1.2rem" }}>₹{cPrice.toFixed(2)}</strong>
+  );
+};
+
 // Scroll lock utility
 const useScrollLock = (isLocked) => {
   useEffect(() => {
@@ -459,8 +480,7 @@ export default function MyServices() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div>
                       <div style={{ fontSize: 11, color: "#64748b" }}>Your Price</div>
-                      <strong style={{ color: "#059669", fontSize: "1.2rem" }}>₹{act.custom_price}</strong>
-                      {act.offer_price && <span style={{ fontSize: 11, color: "#94a3b8", textDecoration: "line-through", marginLeft: 6 }}>₹{act.offer_price}</span>}
+                      {renderPricingDisplay(act.custom_price, act.offer_price)}
                     </div>
                     <div>
                       <div style={{ fontSize: 11, color: "#64748b" }}>SLA Delivery</div>
@@ -513,19 +533,20 @@ export default function MyServices() {
 
         {/* FULL EDIT MODAL WITH ALL 4 ADMIN OS MODULES */}
         {editingActivation && (
-          <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15,23,42,0.65)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 100000, padding: "12px", boxSizing: "border-box" }}>
-            <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 750, maxHeight: "min(90vh, 90dvh)", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", boxSizing: "border-box" }}>
+          <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15,23,42,0.65)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 100000, padding: "16px", boxSizing: "border-box" }}>
+            <div style={{ background: "#ffffff", borderRadius: 16, width: "100%", maxWidth: 720, maxHeight: "min(88vh, 850px)", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 25px 50px -12px rgba(15,23,42,0.25)", boxSizing: "border-box" }}>
               
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", borderBottom: "1px solid #f1f5f9", paddingBottom: "1rem" }}>
+              {/* MODAL HEADER */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "1.25rem 1.5rem 1rem", borderBottom: "1px solid #e2e8f0", background: "#ffffff", flexShrink: 0 }}>
                 <div>
-                  <h3 style={{ margin: 0, color: "#0f172a", fontSize: "1.3rem" }}>Manage Master Service: {editingActivation.master_service_title}</h3>
-                  <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Admin Base Price: ₹{editingActivation.base_price} • GST {editingActivation.gst_percent || 18}% • Commission {editingActivation.commission_percent || 0}%</div>
+                  <h3 style={{ margin: 0, color: "#0f172a", fontSize: "1.2rem", fontWeight: 800 }}>Manage Master Service: {editingActivation.master_service_title}</h3>
+                  <div style={{ fontSize: 12, color: "#64748b", marginTop: 4, fontWeight: 500 }}>Admin Base Price: ₹{editingActivation.base_price} • Commission {editingActivation.commission_percent || 0}%</div>
                 </div>
-                <button type="button" onClick={() => setEditingActivation(null)} style={{ background: "#f1f5f9", border: 0, padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 700 }}>✕</button>
+                <button type="button" onClick={() => setEditingActivation(null)} style={{ background: "#f1f5f9", border: 0, width: 32, height: 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#64748b", fontWeight: 800, fontSize: 16, flexShrink: 0 }} title="Close Modal">✕</button>
               </div>
 
               {/* TABS FOR ALL 4 ADMIN MODULES */}
-              <div style={{ display: "flex", borderBottom: "2px solid #e2e8f0", gap: 8, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", borderBottom: "1px solid #e2e8f0", padding: "0 1.5rem", gap: 4, background: "#f8fafc", overflowX: "auto", flexShrink: 0 }}>
                 {[
                   { id: "overview", label: "⚙️ Overview & Pricing" },
                   { id: "documents", label: `📄 Admin Docs (${editDocSpecs.length})` },
@@ -537,14 +558,15 @@ export default function MyServices() {
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
                     style={{
-                      padding: "8px 12px",
+                      padding: "10px 14px",
                       border: 0,
                       borderBottom: activeTab === tab.id ? "3px solid #2563eb" : "3px solid transparent",
                       background: "transparent",
                       color: activeTab === tab.id ? "#2563eb" : "#64748b",
-                      fontWeight: 700,
+                      fontWeight: activeTab === tab.id ? 800 : 600,
                       fontSize: 13,
-                      cursor: "pointer"
+                      cursor: "pointer",
+                      whiteSpace: "nowrap"
                     }}
                   >
                     {tab.label}
@@ -552,160 +574,162 @@ export default function MyServices() {
                 ))}
               </div>
 
-              <form onSubmit={handleEditSubmit} style={{ display: "grid", gap: "1rem" }}>
-                
-                {/* TAB 1: OVERVIEW & PRICING */}
-                {activeTab === "overview" && (
-                  <div style={{ display: "grid", gap: "1rem" }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <form onSubmit={handleEditSubmit} style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden", margin: 0 }}>
+                <div style={{ flex: 1, overflowY: "auto", padding: "1.25rem 1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                  
+                  {/* TAB 1: OVERVIEW & PRICING */}
+                  {activeTab === "overview" && (
+                    <div style={{ display: "grid", gap: "1rem" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                        <label style={labelStyle}>
+                          Your Custom Price (₹)
+                          <input
+                            type="number"
+                            value={editForm.custom_price}
+                            onChange={(e) => setEditForm({ ...editForm, custom_price: e.target.value })}
+                            required
+                            style={inputStyle}
+                          />
+                        </label>
+                        <label style={labelStyle}>
+                          Offer Price (₹)
+                          <input
+                            type="number"
+                            value={editForm.offer_price}
+                            onChange={(e) => setEditForm({ ...editForm, offer_price: e.target.value })}
+                            style={inputStyle}
+                          />
+                        </label>
+                      </div>
+
                       <label style={labelStyle}>
-                        Your Custom Price (₹)
+                        Delivery SLA (Days)
                         <input
                           type="number"
-                          value={editForm.custom_price}
-                          onChange={(e) => setEditForm({ ...editForm, custom_price: e.target.value })}
+                          value={editForm.delivery_time_days}
+                          onChange={(e) => setEditForm({ ...editForm, delivery_time_days: e.target.value })}
                           required
                           style={inputStyle}
                         />
                       </label>
+
                       <label style={labelStyle}>
-                        Offer Price (₹)
-                        <input
-                          type="number"
-                          value={editForm.offer_price}
-                          onChange={(e) => setEditForm({ ...editForm, offer_price: e.target.value })}
+                        Custom Service Bio / Pitch
+                        <textarea
+                          value={editForm.custom_bio}
+                          onChange={(e) => setEditForm({ ...editForm, custom_bio: e.target.value })}
+                          rows={3}
                           style={inputStyle}
                         />
                       </label>
-                    </div>
 
-                    <label style={labelStyle}>
-                      Delivery SLA (Days)
-                      <input
-                        type="number"
-                        value={editForm.delivery_time_days}
-                        onChange={(e) => setEditForm({ ...editForm, delivery_time_days: e.target.value })}
-                        required
-                        style={inputStyle}
-                      />
-                    </label>
-
-                    <label style={labelStyle}>
-                      Custom Service Bio / Pitch
-                      <textarea
-                        value={editForm.custom_bio}
-                        onChange={(e) => setEditForm({ ...editForm, custom_bio: e.target.value })}
-                        rows={3}
-                        style={inputStyle}
-                      />
-                    </label>
-
-                    {editingActivation.full_description && (
-                      <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "0.85rem", borderRadius: 8 }}>
-                        <strong style={{ fontSize: 12, color: "#334155" }}>Admin Service Description & Scope:</strong>
-                        <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b", lineHeight: 1.4 }}>{editingActivation.full_description}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* TAB 2: ADMIN DOCUMENTS SPECIFICATIONS */}
-                {activeTab === "documents" && (
-                  <div style={{ display: "grid", gap: "0.75rem" }}>
-                    <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>Admin document specifications required from users. Edit instructions or add expert document requirements.</p>
-                    {editDocSpecs.map((doc, idx) => (
-                      <div key={doc.id || idx} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "0.75rem", display: "grid", gap: 6 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontWeight: 700, color: "#1e293b", fontSize: 13 }}>📄 {doc.label}</span>
-                          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                            <label style={{ fontSize: 12, color: "#334155", display: "flex", gap: 4, alignItems: "center", cursor: "pointer" }}>
-                              <input type="checkbox" checked={doc.is_mandatory} onChange={() => handleToggleDocMandatory(idx)} /> Mandatory
-                            </label>
-                            <button type="button" onClick={() => setEditDocSpecs(editDocSpecs.filter((_, i) => i !== idx))} style={{ background: "#fef2f2", color: "#b42318", border: 0, padding: "2px 6px", borderRadius: 4, fontSize: 11, cursor: "pointer" }}>Remove</button>
-                          </div>
+                      {editingActivation.full_description && (
+                        <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "0.85rem", borderRadius: 8 }}>
+                          <strong style={{ fontSize: 12, color: "#334155" }}>Admin Service Description & Scope:</strong>
+                          <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b", lineHeight: 1.4 }}>{editingActivation.full_description}</p>
                         </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* TAB 2: ADMIN DOCUMENTS SPECIFICATIONS */}
+                  {activeTab === "documents" && (
+                    <div style={{ display: "grid", gap: "0.75rem" }}>
+                      <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>Admin document specifications required from users. Edit instructions or add expert document requirements.</p>
+                      {editDocSpecs.map((doc, idx) => (
+                        <div key={doc.id || idx} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "0.75rem", display: "grid", gap: 6 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontWeight: 700, color: "#1e293b", fontSize: 13 }}>📄 {doc.label}</span>
+                            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                              <label style={{ fontSize: 12, color: "#334155", display: "flex", gap: 4, alignItems: "center", cursor: "pointer" }}>
+                                <input type="checkbox" checked={doc.is_mandatory} onChange={() => handleToggleDocMandatory(idx)} /> Mandatory
+                              </label>
+                              <button type="button" onClick={() => setEditDocSpecs(editDocSpecs.filter((_, i) => i !== idx))} style={{ background: "#fef2f2", color: "#b42318", border: 0, padding: "2px 6px", borderRadius: 4, fontSize: 11, cursor: "pointer" }}>Remove</button>
+                            </div>
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Custom expert instructions for this document..."
+                            value={doc.instructions}
+                            onChange={(e) => { const copy = [...editDocSpecs]; copy[idx].instructions = e.target.value; setEditDocSpecs(copy); }}
+                            style={{ ...inputStyle, fontSize: 12, padding: "4px 8px" }}
+                          />
+                        </div>
+                      ))}
+                      <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
                         <input
                           type="text"
-                          placeholder="Custom expert instructions for this document..."
-                          value={doc.instructions}
-                          onChange={(e) => { const copy = [...editDocSpecs]; copy[idx].instructions = e.target.value; setEditDocSpecs(copy); }}
-                          style={{ ...inputStyle, fontSize: 12, padding: "4px 8px" }}
+                          placeholder="Add custom document specification..."
+                          value={newDocLabel}
+                          onChange={(e) => setNewDocLabel(e.target.value)}
+                          style={{ ...inputStyle, flex: 1, fontSize: 13 }}
                         />
+                        <button type="button" onClick={handleAddCustomDoc} style={{ padding: "6px 14px", background: "#059669", color: "#fff", border: 0, borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>+ Add Doc</button>
                       </div>
-                    ))}
-                    <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                      <input
-                        type="text"
-                        placeholder="Add custom document specification..."
-                        value={newDocLabel}
-                        onChange={(e) => setNewDocLabel(e.target.value)}
-                        style={{ ...inputStyle, flex: 1, fontSize: 13 }}
-                      />
-                      <button type="button" onClick={handleAddCustomDoc} style={{ padding: "6px 14px", background: "#059669", color: "#fff", border: 0, borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>+ Add Doc</button>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* TAB 3: ADMIN DYNAMIC FORM FIELDS */}
-                {activeTab === "form" && (
-                  <div style={{ display: "grid", gap: "0.75rem" }}>
-                    <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>Admin user submission input fields. Customize labels or required flags.</p>
-                    {editFormFields.map((f, idx) => (
-                      <div key={f.id || idx} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div>
-                          <strong style={{ fontSize: 13, color: "#1e293b" }}>📋 {f.field_label}</strong>
-                          <span style={{ fontSize: 11, color: "#64748b", marginLeft: 6 }}>({f.field_type})</span>
+                  {/* TAB 3: ADMIN DYNAMIC FORM FIELDS */}
+                  {activeTab === "form" && (
+                    <div style={{ display: "grid", gap: "0.75rem" }}>
+                      <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>Admin user submission input fields. Customize labels or required flags.</p>
+                      {editFormFields.map((f, idx) => (
+                        <div key={f.id || idx} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div>
+                            <strong style={{ fontSize: 13, color: "#1e293b" }}>📋 {f.field_label}</strong>
+                            <span style={{ fontSize: 11, color: "#64748b", marginLeft: 6 }}>({f.field_type})</span>
+                          </div>
+                          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                            <label style={{ fontSize: 12, color: "#334155", display: "flex", gap: 4, alignItems: "center", cursor: "pointer" }}>
+                              <input type="checkbox" checked={f.is_required} onChange={() => handleToggleFieldRequired(idx)} /> Required
+                            </label>
+                            <button type="button" onClick={() => setEditFormFields(editFormFields.filter((_, i) => i !== idx))} style={{ background: "#fef2f2", color: "#b42318", border: 0, padding: "2px 6px", borderRadius: 4, fontSize: 11, cursor: "pointer" }}>Remove</button>
+                          </div>
                         </div>
-                        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                          <label style={{ fontSize: 12, color: "#334155", display: "flex", gap: 4, alignItems: "center", cursor: "pointer" }}>
-                            <input type="checkbox" checked={f.is_required} onChange={() => handleToggleFieldRequired(idx)} /> Required
-                          </label>
-                          <button type="button" onClick={() => setEditFormFields(editFormFields.filter((_, i) => i !== idx))} style={{ background: "#fef2f2", color: "#b42318", border: 0, padding: "2px 6px", borderRadius: 4, fontSize: 11, cursor: "pointer" }}>Remove</button>
-                        </div>
+                      ))}
+                      <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                        <input
+                          type="text"
+                          placeholder="Add custom input field label..."
+                          value={newFieldLabel}
+                          onChange={(e) => setNewFieldLabel(e.target.value)}
+                          style={{ ...inputStyle, flex: 1, fontSize: 13 }}
+                        />
+                        <button type="button" onClick={handleAddCustomField} style={{ padding: "6px 14px", background: "#2563eb", color: "#fff", border: 0, borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>+ Add Field</button>
                       </div>
-                    ))}
-                    <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                      <input
-                        type="text"
-                        placeholder="Add custom input field label..."
-                        value={newFieldLabel}
-                        onChange={(e) => setNewFieldLabel(e.target.value)}
-                        style={{ ...inputStyle, flex: 1, fontSize: 13 }}
-                      />
-                      <button type="button" onClick={handleAddCustomField} style={{ padding: "6px 14px", background: "#2563eb", color: "#fff", border: 0, borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>+ Add Field</button>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* TAB 4: ADMIN VISUAL WORKFLOW STEPS */}
-                {activeTab === "workflow" && (
-                  <div style={{ display: "grid", gap: "0.75rem" }}>
-                    <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>Admin execution steps and milestone triggers.</p>
-                    {editWorkflowSteps.map((st, idx) => (
-                      <div key={st.id || idx} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div>
-                          <strong style={{ fontSize: 13, color: "#1e293b" }}>Step {st.step_order || idx+1}: {st.step_label}</strong>
-                          <div style={{ fontSize: 11, color: "#64748b" }}>Turnaround SLA: {st.estimated_days || 1} Days</div>
+                  {/* TAB 4: ADMIN VISUAL WORKFLOW STEPS */}
+                  {activeTab === "workflow" && (
+                    <div style={{ display: "grid", gap: "0.75rem" }}>
+                      <p style={{ margin: 0, fontSize: 13, color: "#64748b" }}>Admin execution steps and milestone triggers.</p>
+                      {editWorkflowSteps.map((st, idx) => (
+                        <div key={st.id || idx} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div>
+                            <strong style={{ fontSize: 13, color: "#1e293b" }}>Step {st.step_order || idx+1}: {st.step_label}</strong>
+                            <div style={{ fontSize: 11, color: "#64748b" }}>Turnaround SLA: {st.estimated_days || 1} Days</div>
+                          </div>
+                          <button type="button" onClick={() => setEditWorkflowSteps(editWorkflowSteps.filter((_, i) => i !== idx))} style={{ background: "#fef2f2", color: "#b42318", border: 0, padding: "2px 6px", borderRadius: 4, fontSize: 11, cursor: "pointer" }}>Remove</button>
                         </div>
-                        <button type="button" onClick={() => setEditWorkflowSteps(editWorkflowSteps.filter((_, i) => i !== idx))} style={{ background: "#fef2f2", color: "#b42318", border: 0, padding: "2px 6px", borderRadius: 4, fontSize: 11, cursor: "pointer" }}>Remove</button>
+                      ))}
+                      <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                        <input
+                          type="text"
+                          placeholder="Add custom execution step..."
+                          value={newStepLabel}
+                          onChange={(e) => setNewStepLabel(e.target.value)}
+                          style={{ ...inputStyle, flex: 1, fontSize: 13 }}
+                        />
+                        <button type="button" onClick={handleAddWorkflowStep} style={{ padding: "6px 14px", background: "#ca8a04", color: "#fff", border: 0, borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>+ Add Step</button>
                       </div>
-                    ))}
-                    <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                      <input
-                        type="text"
-                        placeholder="Add custom execution step..."
-                        value={newStepLabel}
-                        onChange={(e) => setNewStepLabel(e.target.value)}
-                        style={{ ...inputStyle, flex: 1, fontSize: 13 }}
-                      />
-                      <button type="button" onClick={handleAddWorkflowStep} style={{ padding: "6px 14px", background: "#ca8a04", color: "#fff", border: 0, borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>+ Add Step</button>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
-                <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: "0.5rem", borderTop: "1px solid #f1f5f9", paddingTop: "1rem" }}>
-                  <button type="button" onClick={() => setEditingActivation(null)} style={{ padding: "0.65rem 1.25rem", background: "#f1f5f9", border: "1px solid #cbd5e1", borderRadius: 8, fontWeight: 700, cursor: "pointer" }}>Cancel</button>
-                  <button type="submit" disabled={submitting} style={{ padding: "0.65rem 1.5rem", background: "#2563eb", color: "#fff", border: 0, borderRadius: 8, fontWeight: 800, cursor: "pointer" }}>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, padding: "1rem 1.5rem", borderTop: "1px solid #e2e8f0", background: "#ffffff", flexShrink: 0 }}>
+                  <button type="button" onClick={() => setEditingActivation(null)} style={{ padding: "0.6rem 1.25rem", background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: 8, fontWeight: 700, color: "#475569", fontSize: 13, cursor: "pointer" }}>Cancel</button>
+                  <button type="submit" disabled={submitting} style={{ padding: "0.6rem 1.5rem", background: "#2563eb", color: "#ffffff", border: 0, borderRadius: 8, fontWeight: 800, fontSize: 13, cursor: "pointer" }}>
                     {submitting ? "Saving..." : "Save Service & Document Details"}
                   </button>
                 </div>

@@ -349,8 +349,7 @@ export default function MasterServiceSlugPage() {
     const basePrice = Number(selectedExpertForBooking.custom_price || service.base_price || 0);
     const offerPrice = selectedExpertForBooking.offer_price ? Number(selectedExpertForBooking.offer_price) : null;
     const effectiveBase = offerPrice && offerPrice > 0 ? offerPrice : basePrice;
-    const gstAmount = Math.round(effectiveBase * 0.18);
-    const totalPayable = effectiveBase + gstAmount;
+    const totalPayable = effectiveBase;
 
     if (walletBalance < totalPayable) {
       const deficit = totalPayable - walletBalance;

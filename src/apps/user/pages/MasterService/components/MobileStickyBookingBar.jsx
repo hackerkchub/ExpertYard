@@ -12,8 +12,7 @@ export default function MobileStickyBookingBar({
       <div className="msp-mobile-bar-price-col">
         <span className="msp-mobile-bar-label">Starting Fee</span>
         <div className="msp-mobile-bar-price">
-          ₹{displayMinPrice.toLocaleString("en-IN")}{" "}
-          <span className="msp-mobile-bar-gst">+ GST</span>
+          ₹{displayMinPrice.toLocaleString("en-IN")}
         </div>
       </div>
 

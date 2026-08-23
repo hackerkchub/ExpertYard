@@ -784,10 +784,12 @@ export default function BookingWorkspaceShell() {
                 <strong style={{ color: "#0f172a" }}>{formatCurrency(effectiveBaseAmount)}</strong>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "space-between", color: "#475569" }}>
-                <span>GST ({financial?.gst_rate_percent || 18}%):</span>
-                <strong style={{ color: "#0f172a" }}>{formatCurrency(gstAmount)}</strong>
-              </div>
+              {gstAmount > 0 && (
+                <div style={{ display: "flex", justifyContent: "space-between", color: "#475569" }}>
+                  <span>GST ({financial?.gst_rate_percent || 18}%):</span>
+                  <strong style={{ color: "#0f172a" }}>{formatCurrency(gstAmount)}</strong>
+                </div>
+              )}
 
               <div style={{ borderTop: "1px dashed #cbd5e1", paddingTop: 6, display: "flex", justifyContent: "space-between", fontSize: 14, fontWeight: 900, color: "#0f172a" }}>
                 <span>Total Paid:</span>

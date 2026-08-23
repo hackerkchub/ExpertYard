@@ -59,7 +59,9 @@ export default function OverviewTab({ workspace, snapshot, documents = [], role,
         <div className="card-box" style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
           <h4 style={{ margin: '0 0 0.5rem 0', color: '#1e293b' }}>Payment Breakdown</h4>
           <p style={{ margin: '0.25rem 0', fontSize: '0.9rem', color: '#475569' }}><strong>Base Amount:</strong> ₹{fin.effective_base_amount || fin.base_amount || 0}</p>
-          <p style={{ margin: '0.25rem 0', fontSize: '0.9rem', color: '#475569' }}><strong>GST (18%):</strong> ₹{fin.gst_amount || 0}</p>
+          {Number(fin.gst_amount) > 0 && (
+            <p style={{ margin: '0.25rem 0', fontSize: '0.9rem', color: '#475569' }}><strong>GST ({fin.gst_rate_percent || 18}%):</strong> ₹{fin.gst_amount}</p>
+          )}
           <p style={{ margin: '0.5rem 0 0 0', fontSize: '1.1rem', fontWeight: '800', color: '#166534' }}>
             Total Paid: ₹{fin.total_amount || 0}
           </p>

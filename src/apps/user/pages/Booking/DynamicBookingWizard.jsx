@@ -342,8 +342,7 @@ export default function DynamicBookingWizard() {
   const basePrice = Number(selectedExpert?.custom_price || selectedExpert?.price_per_unit || service?.base_price || 0);
   const offerPrice = selectedExpert?.offer_price ? Number(selectedExpert.offer_price) : null;
   const effectiveBase = offerPrice && offerPrice > 0 ? offerPrice : basePrice;
-  const gstAmount = Math.round(effectiveBase * 0.18);
-  const totalPayable = effectiveBase + gstAmount;
+  const totalPayable = effectiveBase;
 
   // Form Fields & Document Specs lists
   const formFields = service?.form_fields || service?.form_schema || [];
@@ -970,12 +969,8 @@ export default function DynamicBookingWizard() {
                 <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 14, padding: "1.15rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                   <h4 style={{ margin: 0, color: "#0f172a", fontSize: "0.95rem", fontWeight: 800 }}>PRICE BREAKDOWN</h4>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#475569" }}>
-                    <span>Base Service Fee:</span>
+                    <span>Service Price:</span>
                     <strong style={{ color: "#0f172a" }}>₹{effectiveBase}</strong>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#475569" }}>
-                    <span>GST Tax (18%):</span>
-                    <strong style={{ color: "#0f172a" }}>₹{gstAmount}</strong>
                   </div>
                   <div style={{ borderTop: "1px dashed #cbd5e1", paddingTop: 8, display: "flex", justifyContent: "space-between", fontSize: "1.15rem", fontWeight: 900, color: "#0f172a" }}>
                     <span>Total Amount Payable:</span>
@@ -1114,12 +1109,8 @@ export default function DynamicBookingWizard() {
 
               <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", color: "#475569" }}>
-                  <span>Base Fee:</span>
+                  <span>Service Fee:</span>
                   <strong>₹{effectiveBase}</strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", color: "#475569" }}>
-                  <span>GST (18%):</span>
-                  <strong>₹{gstAmount}</strong>
                 </div>
                 <div style={{ borderTop: "1px dashed #cbd5e1", paddingTop: 6, display: "flex", justifyContent: "space-between", fontSize: 14, fontWeight: 900, color: "#0f172a" }}>
                   <span>Total Payable:</span>

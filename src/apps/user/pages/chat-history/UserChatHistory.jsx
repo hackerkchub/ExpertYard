@@ -2,6 +2,8 @@
 // 🎨 PREMIUM POLISHED VERSION - Blue Theme with Chat & Call Tabs
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
+import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
+import { useLoader } from "../../../../shared/loaders/LoaderContext";
 import {
   FiMessageSquare,
   FiClock,
@@ -933,16 +935,7 @@ export const UserChatHistory = () => {
   }
 
   if (isLoading()) {
-    return (
-      <PremiumContainer>
-        <PageContainer>
-          <LoadingSpinner>
-            <div className="spinner"></div>
-            <p>Loading your {activeMainTab} history...</p>
-          </LoadingSpinner>
-        </PageContainer>
-      </PremiumContainer>
-    );
+    return null;
   }
 
   return (

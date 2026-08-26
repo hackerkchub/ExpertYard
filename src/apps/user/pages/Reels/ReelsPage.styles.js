@@ -30,6 +30,16 @@ export const Container = styled.div`
     height: 100dvh;
     min-height: 100dvh;
   }
+
+  @media (min-width: 992px) {
+    background: #090d16;
+    height: calc(100vh - 72px) !important;
+    min-height: calc(100vh - 72px) !important;
+    max-height: calc(100vh - 72px) !important;
+    margin: 0;
+    padding: 0;
+    align-items: stretch;
+  }
 `;
 
 export const ReelsFeed = styled.div`
@@ -52,8 +62,13 @@ export const ReelsFeed = styled.div`
     padding: 18px 22px;
   }
 
-  @media (min-width: 1024px) {
-    padding: 0 clamp(28px, 4vw, 76px);
+  @media (min-width: 992px) {
+    padding: 0 16px;
+    height: 100% !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
   }
 `;
 
@@ -78,22 +93,19 @@ export const ReelWrapper = styled.div`
   }
 
   @media (min-width: 992px) {
-    display: grid;
-    grid-template-columns: minmax(330px, 520px) minmax(300px, 380px);
-    height: 100%;
-    min-height: 100%;
-    max-height: 100%;
-    width: min(100%, 980px);
+    display: flex !important;
+    justify-content: center;
+    align-items: stretch !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    max-height: 100% !important;
+    flex-shrink: 0 !important;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    width: 100%;
     max-width: 980px;
     margin: 0 auto;
-    gap: 20px;
-  }
-
-  @media (min-width: 1200px) {
-    grid-template-columns: minmax(360px, 540px) minmax(320px, 420px);
-    width: min(100%, 1060px);
-    max-width: 1060px;
-    gap: 24px;
+    gap: 16px;
   }
 `;
 
@@ -114,7 +126,12 @@ export const PlayerSection = styled.div`
   }
 
   @media (min-width: 992px) {
-    width: 100%;
+    flex: 0 0 auto;
+    width: auto;
+    height: 100% !important;
+    display: flex;
+    align-items: stretch !important;
+    justify-content: center;
   }
 `;
 
@@ -139,10 +156,16 @@ export const VideoContainer = styled.div`
     box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
   }
 
-  @media (min-width: 1200px) {
-    height: min(100%, calc(100svh - 48px));
-    max-height: 900px;
-    max-width: min(100%, calc((100svh - 48px) * 0.5625));
+  @media (min-width: 992px) {
+    aspect-ratio: auto;
+    width: clamp(460px, 34vw, 530px);
+    min-width: 440px;
+    max-width: 530px;
+    height: 100% !important;
+    max-height: 100% !important;
+    border-radius: 24px;
+    border: 1px solid #1f2937;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
   }
 `;
 
@@ -321,18 +344,25 @@ export const DesktopSidebar = styled.div`
   @media (min-width: 992px) {
     display: flex;
     flex-direction: column;
-    min-width: 0;
-    height: min(100%, calc(100svh - 58px));
-    max-height: 860px;
-    overflow-y: auto;
-    background: rgba(12, 17, 28, 0.86);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 22px;
-    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
-    backdrop-filter: blur(16px);
-    padding: clamp(18px, 2vw, 24px);
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.24) transparent;
+    flex: 0 0 420px;
+    width: 420px;
+    max-width: 420px;
+    min-width: 360px;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden;
+    background: #121212;
+    border: 1px solid #27272a;
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    padding: 0;
+    gap: 0;
+    color: #ffffff;
+  }
+
+  @media (min-width: 992px) and (max-width: 1200px) {
+    flex: 0 0 380px;
+    width: 380px;
   }
 `;
 
@@ -378,7 +408,10 @@ export const ActionColumn = styled.div`
   }
 
   @media (min-width: 992px) {
-    display: none !important;
+    display: flex !important;
+    right: 14px;
+    bottom: 30px;
+    gap: 12px;
   }
 `;
 
@@ -392,7 +425,7 @@ export const ActionButton = styled.button`
   display: flex;
   justify-content: center;
   align-items: center;
-  color: ${props => props.active ? "#ff5a72" : "#ffffff"};
+  color: ${props => (props.$active || props.active) ? "#ff5a72" : "#ffffff"};
   cursor: pointer;
   transition: transform 0.2s, background-color 0.2s, border-color 0.2s;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -518,7 +551,7 @@ export const MobileCommentsBackdrop = styled.div`
   background: rgba(0, 0, 0, 0.48);
 
   @media (min-width: 992px) {
-    display: none;
+    display: none !important;
   }
 `;
 
@@ -530,15 +563,21 @@ export const MobileCommentsPanel = styled.div`
   border-radius: 20px 20px 0 0;
   border: 1px solid #27272a;
   padding: 16px;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 82px);
   display: flex;
   flex-direction: column;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
   overflow: hidden;
 
   @media (max-width: 767px) {
     height: min(68dvh, calc(100dvh - 96px));
     padding-bottom: 16px;
     border-radius: 20px;
+  }
+
+  @media (min-width: 992px) {
+    border-radius: 24px !important;
+    height: 560px !important;
+    max-height: 80vh !important;
   }
 `;
 
@@ -583,10 +622,10 @@ export const CtaRow = styled.div`
 `;
 
 export const CtaButton = styled.button`
-  background: ${props => props.variant === "primary" ? "linear-gradient(135deg, #ffffff, #dbeafe)" : "rgba(18, 18, 20, 0.76)"};
-  border: 1px solid ${props => props.variant === "primary" ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.22)"};
+  background: ${props => (props.$variant || props.variant) === "primary" ? "linear-gradient(135deg, #ffffff, #dbeafe)" : "rgba(18, 18, 20, 0.76)"};
+  border: 1px solid ${props => (props.$variant || props.variant) === "primary" ? "rgba(255, 255, 255, 0.85)" : "rgba(255, 255, 255, 0.22)"};
   backdrop-filter: blur(10px);
-  color: ${props => props.variant === "primary" ? "#000080" : "#ffffff"};
+  color: ${props => (props.$variant || props.variant) === "primary" ? "#000080" : "#ffffff"};
   padding: 8px 4px;
   border-radius: 12px;
   font-size: 10px;
@@ -609,7 +648,7 @@ export const CtaButton = styled.button`
 
   &:hover {
     transform: translateY(-2px);
-    background: ${props => props.variant === "primary" ? "#ffffff" : "rgba(255, 255, 255, 0.25)"};
+    background: ${props => (props.$variant || props.variant) === "primary" ? "#ffffff" : "rgba(255, 255, 255, 0.25)"};
   }
 `;
 

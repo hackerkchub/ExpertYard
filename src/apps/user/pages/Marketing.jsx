@@ -178,12 +178,6 @@ const Marketing = () => {
     <Page>
       <Hero>
         <HeroInner>
-          <Breadcrumb aria-label="Breadcrumb">
-            <Link to="/user">Home</Link>
-            <span>/</span>
-            <span>Marketing</span>
-          </Breadcrumb>
-
           <HeroGrid>
             <HeroContent>
               <Eyebrow>
@@ -356,15 +350,20 @@ const Page = styled.main`
 
   background: var(--marketing-bg);
   color: var(--marketing-ink);
-  overflow: hidden;
   padding-bottom: clamp(44px, 7vw, 88px);
 `;
 
 const Hero = styled.section`
   position: relative;
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  margin: 16px auto 0;
+  max-width: 1140px;
+  width: calc(100% - 32px);
   color: #ffffff;
   background: linear-gradient(135deg, #000080 0%, #07075c 58%, #030329 100%);
-  padding: clamp(48px, 7vw, 86px) 18px clamp(46px, 7vw, 78px);
+  padding: clamp(36px, 5vw, 56px) clamp(20px, 4vw, 44px);
+  box-shadow: 0 20px 50px rgba(0, 0, 128, 0.18);
 
   &::before {
     content: "";
@@ -376,29 +375,19 @@ const Hero = styled.section`
     background: rgba(255, 193, 7, 0.16);
     pointer-events: none;
   }
+
+  @media (max-width: 768px) {
+    border-radius: 18px !important;
+    width: calc(100% - 24px);
+    margin-top: 12px;
+  }
 `;
 
 const HeroInner = styled.div`
   position: relative;
   z-index: 1;
-  width: min(1120px, 100%);
+  width: 100%;
   margin: 0 auto;
-`;
-
-const Breadcrumb = styled.nav`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: clamp(24px, 4vw, 34px);
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 0.9rem;
-
-  a {
-    color: #ffffff;
-    text-decoration: none;
-    font-weight: 700;
-  }
 `;
 
 const HeroGrid = styled.div`
@@ -420,29 +409,35 @@ const Eyebrow = styled.span`
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff4c7;
-  font-size: 0.83rem;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff !important;
+  font-size: 0.85rem;
   font-weight: 800;
+
+  svg {
+    color: #60a5fa !important;
+    stroke: #60a5fa !important;
+  }
 `;
 
 const HeroTitle = styled.h1`
   margin: 16px 0 0;
-  color: #ffffff;
-  font-size: clamp(2.15rem, 5vw, 4.15rem);
-  line-height: 1.06;
-  letter-spacing: 0;
+  color: #ffffff !important;
+  font-size: clamp(2rem, 4.5vw, 3.8rem) !important;
+  line-height: 1.08 !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.01em !important;
 `;
 
 const HeroText = styled.p`
   max-width: 720px;
   margin: 18px 0 0;
-  color: rgba(255, 255, 255, 0.86);
-  font-size: clamp(1rem, 2vw, 1.16rem);
-  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.92) !important;
+  font-size: clamp(1rem, 2vw, 1.14rem) !important;
+  line-height: 1.75 !important;
 `;
 
 const HeroActions = styled.div`
@@ -470,39 +465,52 @@ const BaseLink = styled(Link)`
 `;
 
 const PrimaryLink = styled(BaseLink)`
-  color: #111827;
+  color: #000080 !important;
   background: linear-gradient(135deg, #ffd23f, #ffc107);
-  border: 1px solid rgba(255, 193, 7, 0.72);
-  box-shadow: 0 16px 34px rgba(255, 193, 7, 0.24);
+  border: 1px solid rgba(255, 193, 7, 0.85);
+  box-shadow: 0 14px 32px rgba(255, 193, 7, 0.28);
+  font-weight: 850;
+
+  svg {
+    color: #000080 !important;
+    stroke: #000080 !important;
+  }
 `;
 
 const SecondaryLink = styled(BaseLink)`
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+
+  svg {
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+  }
 `;
 
 const HighlightPanel = styled.div`
   display: grid;
   gap: 12px;
-  padding: clamp(16px, 3vw, 22px);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18);
-  backdrop-filter: blur(14px);
+  padding: clamp(18px, 3vw, 24px);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.16);
+  backdrop-filter: blur(12px);
 `;
 
 const HighlightItem = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 58px;
-  padding: 12px;
+  min-height: 56px;
+  padding: 12px 14px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #ffffff !important;
   font-weight: 800;
+  font-size: 0.95rem;
 
   span {
     width: 38px;
@@ -511,26 +519,31 @@ const HighlightItem = styled.div`
     align-items: center;
     justify-content: center;
     flex: 0 0 auto;
-    border-radius: 14px;
-    color: #111827;
-    background: var(--marketing-gold);
+    border-radius: 12px;
+    color: #000080 !important;
+    background: linear-gradient(135deg, #ffd23f, #ffc107);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+
+    svg {
+      color: #000080 !important;
+      stroke: #000080 !important;
+    }
   }
 `;
 
 const Container = styled.div`
-  width: min(1120px, calc(100% - 32px));
-  margin: 0 auto;
+  width: min(1140px, calc(100% - 32px));
+  margin: 28px auto 0;
   display: grid;
-  gap: clamp(28px, 5vw, 48px);
-  padding-top: clamp(34px, 6vw, 72px);
+  gap: clamp(24px, 4vw, 40px);
 `;
 
 const Section = styled.section`
   padding: clamp(22px, 4vw, 34px);
-  border: 1px solid var(--marketing-border);
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 20px !important;
+  background: #ffffff !important;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05) !important;
 `;
 
 const SectionHeader = styled.div`
@@ -538,15 +551,16 @@ const SectionHeader = styled.div`
 
   h2 {
     margin: 8px 0 0;
-    color: var(--marketing-primary);
+    color: #000080 !important;
     font-size: clamp(1.45rem, 3vw, 2.15rem);
     line-height: 1.18;
-    letter-spacing: 0;
+    letter-spacing: -0.01em;
+    font-weight: 850;
   }
 
   p {
     margin: 12px 0 0;
-    color: var(--marketing-muted);
+    color: #475569 !important;
     line-height: 1.75;
   }
 `;
@@ -554,11 +568,11 @@ const SectionHeader = styled.div`
 const Kicker = styled.span`
   display: inline-flex;
   width: fit-content;
-  color: var(--marketing-primary);
+  color: #000080 !important;
   font-size: 0.82rem;
   font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 0;
+  letter-spacing: 0.02em;
 `;
 
 const CardGrid = styled.div`
@@ -578,21 +592,22 @@ const CardGrid = styled.div`
 const Card = styled.article`
   min-width: 0;
   height: 100%;
-  padding: 18px;
-  border: 1px solid rgba(0, 0, 128, 0.08);
-  border-radius: 20px;
-  background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  padding: 20px;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 18px !important;
+  background: #ffffff !important;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
 
   h3 {
     margin: 14px 0 8px;
-    color: var(--marketing-ink);
-    font-size: 1.02rem;
+    color: #000080 !important;
+    font-size: 1.05rem;
+    font-weight: 800;
   }
 
   p {
     margin: 0;
-    color: var(--marketing-muted);
+    color: #475569 !important;
     font-size: 0.94rem;
     line-height: 1.65;
   }
@@ -604,11 +619,17 @@ const IconBubble = styled.span`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 16px;
-  color: #ffd23f;
-  background: linear-gradient(135deg, var(--marketing-primary), var(--marketing-primary-dark));
-  box-shadow: 0 12px 26px rgba(0, 0, 128, 0.22);
-  font-size: 1.18rem;
+  border-radius: 14px;
+  color: #000080 !important;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+  font-size: 1.25rem;
+
+  svg {
+    color: #000080 !important;
+    stroke: #000080 !important;
+  }
 `;
 
 const SplitSection = styled(Section)`
@@ -636,11 +657,11 @@ const Checklist = styled.ul`
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    padding: 14px;
-    border: 1px solid #edf2f7;
-    border-radius: 16px;
-    background: #f8fafc;
-    color: #374151;
+    padding: 14px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #ffffff;
+    color: #1e293b !important;
     line-height: 1.55;
     font-weight: 700;
   }
@@ -648,7 +669,8 @@ const Checklist = styled.ul`
   svg {
     flex: 0 0 auto;
     margin-top: 2px;
-    color: var(--marketing-primary);
+    color: #2563eb !important;
+    stroke: #2563eb !important;
   }
 `;
 
@@ -675,7 +697,7 @@ const StepNumber = styled.strong`
   position: absolute;
   top: 14px;
   right: 16px;
-  color: rgba(0, 0, 128, 0.12);
+  color: rgba(0, 0, 128, 0.12) !important;
   font-size: 2rem;
   line-height: 1;
 `;
@@ -684,10 +706,10 @@ const TrustSection = styled.section`
   display: grid;
   gap: 24px;
   padding: clamp(24px, 5vw, 42px);
-  border-radius: 28px;
+  border-radius: 24px !important;
   color: #ffffff;
   background: linear-gradient(135deg, #000080 0%, #08085b 58%, #02022a 100%);
-  box-shadow: 0 24px 60px rgba(0, 0, 128, 0.2);
+  box-shadow: 0 20px 50px rgba(0, 0, 128, 0.2);
 
   @media (min-width: 900px) {
     grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
@@ -698,19 +720,20 @@ const TrustSection = styled.section`
 const TrustCopy = styled.div`
   h2 {
     margin: 8px 0 0;
-    color: #ffffff;
+    color: #ffffff !important;
     font-size: clamp(1.55rem, 3vw, 2.35rem);
     line-height: 1.18;
+    font-weight: 850;
   }
 
   p {
     margin: 12px 0 0;
-    color: rgba(255, 255, 255, 0.82);
+    color: rgba(255, 255, 255, 0.92) !important;
     line-height: 1.75;
   }
 
   ${Kicker} {
-    color: #fff4c7;
+    color: #fff4c7 !important;
   }
 `;
 
@@ -727,43 +750,50 @@ const TrustPoint = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 56px;
+  min-height: 54px;
   padding: 12px 14px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff !important;
   font-weight: 800;
 
   svg {
     flex: 0 0 auto;
-    color: var(--marketing-gold);
+    color: #ffc107 !important;
+    stroke: #ffc107 !important;
   }
 `;
 
 const FinalCta = styled(TrustSection)`
-  background: #ffffff;
-  color: var(--marketing-ink);
-  border: 1px solid var(--marketing-border);
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+  background: #ffffff !important;
+  color: #111827;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
 
   h2 {
     margin: 8px 0 0;
-    color: var(--marketing-primary);
+    color: #000080 !important;
     font-size: clamp(1.55rem, 3vw, 2.35rem);
     line-height: 1.18;
+    font-weight: 850;
   }
 
   p {
     margin: 12px 0 0;
-    color: var(--marketing-muted);
+    color: #475569 !important;
     line-height: 1.75;
   }
 
   ${SecondaryLink} {
-    color: var(--marketing-primary);
-    background: #ffffff;
-    border-color: rgba(0, 0, 128, 0.2);
+    color: #000080 !important;
+    background: #f8fafc;
+    border: 1px solid rgba(0, 0, 128, 0.2);
+
+    svg {
+      color: #000080 !important;
+      stroke: #000080 !important;
+    }
   }
 `;
 

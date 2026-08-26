@@ -8,8 +8,8 @@
   width: 100%;
   max-width: 1360px;
   margin: 0 auto;
-  /* Top padding ensures search content starts BELOW fixed navbar */
-  padding: calc(var(--navbar-height, 80px) + 24px) 24px max(80px, env(safe-area-inset-bottom));
+  /* Controlled top padding for desktop search page (header offset is provided by MainLayout) */
+  padding: 8px 24px max(80px, env(safe-area-inset-bottom));
   font-family: inherit;
   color: #1e293b;
   min-height: 85vh;
@@ -819,10 +819,6 @@
    -------------------------------------------------------------------------- */
 
 @media (max-width: 1024px) {
-  .g9-fullwidth-search-container {
-    padding-top: calc(var(--navbar-height, 70px) + 20px);
-  }
-
   .g9-expert-grid {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   }
@@ -830,22 +826,22 @@
 
 @media (max-width: 768px) {
   .g9-fullwidth-search-container {
-    /* Mobile header already inserts space via NavbarSpacer in MainLayout; 14px padding creates controlled spacing */
-    padding: 14px 14px max(80px, env(safe-area-inset-bottom));
+    /* Mobile header inserts space via NavbarSpacer in MainLayout; 20px padding creates controlled breathing space below mobile header */
+    padding: 20px 16px max(80px, env(safe-area-inset-bottom));
   }
 
   .g9-search-header-bar {
     gap: 8px;
-    margin-bottom: 14px;
+    margin-top: 4px;
+    margin-bottom: 18px;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
   }
 
+  /* Duplicate back button hidden on mobile since mobile header Navbar already provides top back button */
   .g9-search-back-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
+    display: none !important;
   }
 
   .g9-main-search-form {

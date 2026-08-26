@@ -52,10 +52,9 @@ export default function ServiceProcess({ workflowSteps }) {
         {stepsToRender.map((s, idx) => {
           const IconComp = s.icon;
           const isLast = idx === stepsToRender.length - 1;
-          const isActive = idx === 0;
           return (
             <React.Fragment key={idx}>
-              <div className={`msp-process-step-item ${isActive ? "msp-step-active" : ""}`}>
+              <div className="msp-process-step-item">
                 <div className="msp-step-num-badge">
                   <span>{s.step}</span>
                 </div>
@@ -75,9 +74,8 @@ export default function ServiceProcess({ workflowSteps }) {
       <div className="msp-process-timeline-mobile">
         {stepsToRender.map((s, idx) => {
           const IconComp = s.icon;
-          const isActive = idx === 0;
           return (
-            <div key={idx} className={`msp-mobile-step-row ${isActive ? "msp-step-active" : ""}`}>
+            <div key={idx} className="msp-mobile-step-row">
               <div className="msp-mobile-step-left">
                 <div className="msp-mobile-step-badge">{s.step}</div>
                 {idx < stepsToRender.length - 1 && <div className="msp-mobile-step-line" />}

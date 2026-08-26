@@ -21,9 +21,6 @@ import {
 } from "../../../../shared/utils/categoryRoutes";
 import {
   PageContainer,
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbSeparator,
   CategoryDetailHero,
   CategoryHeroCopy,
   CategoryKicker,
@@ -236,14 +233,6 @@ export default function SubcategoryPage() {
 
   return (
     <PageContainer className="subcategory-page">
-      <Breadcrumb>
-        <BreadcrumbItem onClick={() => navigate("/user")}>Home</BreadcrumbItem>
-        <BreadcrumbSeparator><FiChevronRight /></BreadcrumbSeparator>
-        <BreadcrumbItem onClick={() => navigate("/user/categories")}>Categories</BreadcrumbItem>
-        <BreadcrumbSeparator><FiChevronRight /></BreadcrumbSeparator>
-        <BreadcrumbItem $active>{matchedCategory?.name || "Category"}</BreadcrumbItem>
-      </Breadcrumb>
-
       <CategoryDetailHero>
         <CategoryHeroCopy>
           <CategoryKicker>Expert Category</CategoryKicker>

@@ -15,16 +15,16 @@ const api = axios.create({
   },
 });
 
-/* REQUEST */
+/* REQUEST INTERCEPTOR */
 api.interceptors.request.use(
   (config) => {
-
-    if (!config.skipLoader) {
+    // Only trigger global loader if explicitly requested via showGlobalLoader or useGlobalLoader
+    if (config?.showGlobalLoader || config?.useGlobalLoader) {
+      config._loaderActive = true;
       loader?.showLoader();
     }
 
     const token = localStorage.getItem("user_token");
-
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -32,32 +32,30 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
-
-    loader?.hideLoader();
-
+    if (error?.config?._loaderActive) {
+      error.config._loaderActive = false;
+      loader?.hideLoader();
+    }
     return Promise.reject(error);
   }
 );
 
-/* RESPONSE */
+/* RESPONSE INTERCEPTOR */
 api.interceptors.response.use(
   (response) => {
-
-    if (!response.config.skipLoader) {
+    if (response?.config?._loaderActive) {
+      response.config._loaderActive = false;
       loader?.hideLoader();
     }
-
     return response;
   },
-
   (error) => {
-
-    if (!error.config?.skipLoader) {
+    if (error?.config?._loaderActive) {
+      error.config._loaderActive = false;
       loader?.hideLoader();
     }
-
-    // 🔥 Full axios error preserve karo
     return Promise.reject(error);
   }
 );
+
 export default api;

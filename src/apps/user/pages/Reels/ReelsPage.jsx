@@ -28,6 +28,7 @@ import { useAuth } from "../../../../shared/context/UserAuthContext";
 import useChatRequest from "../../../../shared/hooks/useChatRequest";
 import {
   getReelsFeedApi,
+  getReelByIdApi,
   getReelBySlugApi,
   logReelViewApi,
   likeReelApi,
@@ -243,6 +244,53 @@ export default function ReelsPage() {
   const snapTimerRef = useRef(null);
   const snapLockRef = useRef(false);
   const playFeedbackTimerRef = useRef(null);
+  const allReelsPoolRef = useRef([]);
+
+  // Utility to shuffle an array (Fisher-Yates)
+  const shuffleArray = useCallback((array) => {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }, []);
+
+  // Infinite loop: append a reshuffled batch of reels when reaching near the end
+  const appendMoreReels = useCallback(() => {
+    const pool = allReelsPoolRef.current;
+    if (!pool || pool.length === 0) return;
+
+    setReels((prevReels) => {
+      if (prevReels.length === 0) return prevReels;
+      const lastReel = prevReels[prevReels.length - 1];
+
+      let shuffled = shuffleArray(pool);
+
+      // Prevent immediate duplicate if first item of new shuffle matches last reel
+      if (shuffled.length > 1 && String(shuffled[0].id) === String(lastReel.id)) {
+        const temp = shuffled[0];
+        shuffled[0] = shuffled[1];
+        shuffled[1] = temp;
+      }
+
+      return [...prevReels, ...shuffled];
+    });
+  }, [shuffleArray]);
+
+  const snapToReel = useCallback((index, behavior = "smooth") => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const target = container.querySelector(`[data-index="${index}"]`);
+    if (!target) return;
+
+    snapLockRef.current = true;
+    target.scrollIntoView({ block: "start", behavior });
+    window.setTimeout(() => {
+      snapLockRef.current = false;
+    }, 420);
+  }, []);
 
   useEffect(() => {
     document.body.classList.add("g9-reels-page-active");
@@ -269,27 +317,102 @@ export default function ReelsPage() {
   }, [activeIdx]);
 
   useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (window.innerWidth < 992) return;
+      if (["INPUT", "TEXTAREA"].includes(e.target?.tagName)) return;
+      if (e.key === "ArrowDown" || e.key === "PageDown") {
+        if (activeIdx < reels.length - 1) {
+          e.preventDefault();
+          snapToReel(activeIdx + 1);
+          setShowDesktopComments(false);
+        }
+      } else if (e.key === "ArrowUp" || e.key === "PageUp") {
+        if (activeIdx > 0) {
+          e.preventDefault();
+          snapToReel(activeIdx - 1);
+          setShowDesktopComments(false);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeIdx, reels.length, snapToReel]);
+
+  // Initial Reel Loading: Clicked Reel locked at Index 0 & Remaining Shuffled
+  useEffect(() => {
     const fetchReels = async () => {
       setLoading(true);
+      setActiveIdx(0);
       try {
-        let list = [];
-        const params = { user_id: user?.id || null, limit: 15, offset: 0 };
+        const searchParams = new URLSearchParams(location.search);
+        const targetIdOrSlug =
+          slug ||
+          searchParams.get("id") ||
+          searchParams.get("slug") ||
+          searchParams.get("reel_id") ||
+          searchParams.get("reelId") ||
+          location.state?.id ||
+          location.state?.reelId ||
+          location.state?.slug;
 
-        if (slug) {
-          const singleRes = await getReelBySlugApi(slug, params);
-          if (singleRes.data && singleRes.data.success && singleRes.data.data) {
-            list.push(singleRes.data.data);
+        const params = { user_id: user?.id || null, limit: 50, offset: 0 };
+        const feedRes = await getReelsFeedApi(params);
+        let feedList = [];
+
+        if (feedRes.data && feedRes.data.success) {
+          feedList = feedRes.data.data || [];
+        }
+
+        let clickedReel = null;
+
+        if (targetIdOrSlug) {
+          clickedReel = feedList.find(
+            (r) =>
+              String(r.id) === String(targetIdOrSlug) ||
+              String(r.slug) === String(targetIdOrSlug)
+          );
+
+          if (!clickedReel) {
+            try {
+              const isNumeric = /^\d+$/.test(String(targetIdOrSlug));
+              const singleRes = isNumeric
+                ? await getReelByIdApi(targetIdOrSlug)
+                : await getReelBySlugApi(targetIdOrSlug, params);
+
+              if (singleRes.data && singleRes.data.success && singleRes.data.data) {
+                clickedReel = singleRes.data.data;
+              }
+            } catch (singleErr) {
+              console.warn("Could not fetch single reel by identifier:", targetIdOrSlug, singleErr);
+            }
           }
         }
 
-        const feedRes = await getReelsFeedApi(params);
-        if (feedRes.data && feedRes.data.success) {
-          const feedList = feedRes.data.data || [];
-          const filteredFeed = feedList.filter(item => !list.some(r => r.id === item.id));
-          list = [...list, ...filteredFeed];
+        let remaining = feedList;
+        if (clickedReel) {
+          remaining = feedList.filter((r) => String(r.id) !== String(clickedReel.id));
         }
 
-        setReels(list);
+        const shuffledRemaining = shuffleArray(remaining);
+
+        let initialList = [];
+        if (clickedReel) {
+          initialList = [clickedReel, ...shuffledRemaining];
+        } else {
+          initialList = shuffleArray(feedList);
+        }
+
+        const fullPool = clickedReel
+          ? [clickedReel, ...remaining]
+          : feedList;
+        allReelsPoolRef.current = fullPool;
+
+        setReels(initialList);
+
+        if (containerRef.current) {
+          containerRef.current.scrollTop = 0;
+        }
       } catch (err) {
         console.error("Error loading reels:", err);
       } finally {
@@ -298,21 +421,14 @@ export default function ReelsPage() {
     };
 
     fetchReels();
-  }, [slug, user?.id]);
+  }, [slug, location.search, location.state, user?.id, shuffleArray]);
 
-  const snapToReel = useCallback((index, behavior = "smooth") => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const target = container.querySelector(`[data-index="${index}"]`);
-    if (!target) return;
-
-    snapLockRef.current = true;
-    target.scrollIntoView({ block: "start", behavior });
-    window.setTimeout(() => {
-      snapLockRef.current = false;
-    }, 420);
-  }, []);
+  // Infinite Scroll Trigger: Auto-append reshuffled pool when within 3 reels of the end
+  useEffect(() => {
+    if (reels.length > 0 && activeIdx >= reels.length - 3) {
+      appendMoreReels();
+    }
+  }, [activeIdx, reels.length, appendMoreReels]);
 
   const snapToNearestReel = useCallback(() => {
     const container = containerRef.current;
@@ -405,8 +521,13 @@ export default function ReelsPage() {
 
         if (visibleEntries[0]) {
           const index = parseInt(visibleEntries[0].target.getAttribute("data-index"), 10);
-          setActiveIdx(index);
-          setShowDesktopComments(false);
+          setActiveIdx((prevIdx) => {
+            if (prevIdx !== index) {
+              setShowDesktopComments(false);
+              return index;
+            }
+            return prevIdx;
+          });
         }
       },
       {
@@ -643,18 +764,28 @@ export default function ReelsPage() {
       navigate("/user/auth", { state: { from: location } });
       return;
     }
-    if (!newComment.trim()) return;
+    const commentText = newComment.trim();
+    if (!commentText) return;
 
     try {
-      const res = await addCommentApi(reelId, { user_id: user.id, comment: newComment });
+      const res = await addCommentApi(reelId, { user_id: user.id, comment: commentText });
       setNewComment("");
-      if (res.data?.success && res.data?.data) {
-        if (res.data.data.comment) {
-          setComments((prev) => [res.data.data.comment, ...prev]);
-        }
+      if (res.data?.success) {
+        const returnedComment = res.data?.data?.comment || res.data?.data;
+        const normalized = {
+          id: returnedComment?.id || Date.now(),
+          user_id: user?.id,
+          user_name: returnedComment?.user_name || user?.name || user?.full_name || user?.username || "User",
+          user_profile_photo: returnedComment?.user_profile_photo || user?.profile_picture || user?.profile_photo || null,
+          comment: returnedComment?.comment || commentText,
+          created_at: returnedComment?.created_at || new Date().toISOString()
+        };
+
+        setComments((prev) => [normalized, ...prev]);
+
         updateReelById(reelId, (item) => ({
           ...item,
-          comments_count: res.data.data.comments_count ?? Number(item.comments_count || 0) + 1
+          comments_count: res.data?.data?.comments_count ?? Number(item.comments_count || 0) + 1
         }));
       }
     } catch (err) {
@@ -753,10 +884,32 @@ export default function ReelsPage() {
 
   const currentReel = reels[activeIdx];
 
+  const handleDesktopWheel = useCallback((e) => {
+    if (window.innerWidth < 992) return;
+    if (
+      e.target.closest('.desktop-sidebar-card') ||
+      e.target.closest('.desktop-scrollable-content') ||
+      e.target.closest('.desktop-expert-header-box') ||
+      e.target.closest('.desktop-fixed-actions-footer') ||
+      e.target.closest('.mobile-comments-panel')
+    ) {
+      return;
+    }
+    if (snapLockRef.current) return;
+
+    if (e.deltaY > 30 && activeIdx < reels.length - 1) {
+      snapToReel(activeIdx + 1);
+      setShowDesktopComments(false);
+    } else if (e.deltaY < -30 && activeIdx > 0) {
+      snapToReel(activeIdx - 1);
+      setShowDesktopComments(false);
+    }
+  }, [activeIdx, reels.length, snapToReel]);
+
   return (
     <Container>
       <ReelsPageGlobalStyle />
-      {ChatPopups}
+      {typeof ChatPopups === "function" ? <ChatPopups /> : ChatPopups}
       {currentReel && (
         <Helmet>
           <title>{`${currentReel.title} | G9Expert Reel`}</title>
@@ -781,12 +934,17 @@ export default function ReelsPage() {
       ) : reels.length === 0 ? (
         <div className="reels-empty-state">
           <h3>No Reels Available</h3>
-          <p>Please check back later.</p>
+          <p>Check back later for expert video consultations.</p>
         </div>
       ) : (
-        <ReelsFeed ref={containerRef} onScroll={handleReelsScroll}>
+        <ReelsFeed ref={containerRef} onScroll={handleReelsScroll} onWheel={handleDesktopWheel}>
           {reels.map((reel, index) => (
-            <ReelWrapper key={reel.id} data-index={index} className="reel-slide">
+            <ReelWrapper
+              key={reel.id}
+              data-index={index}
+              className={`reel-slide ${index === activeIdx ? 'active-desktop-reel' : ''}`}
+              $isActive={index === activeIdx}
+            >
               {(() => {
                 const displayName = getReelDisplayName(reel);
                 const expertId = getReelExpertId(reel);
@@ -797,13 +955,6 @@ export default function ReelsPage() {
                   <>
                     {/* VIDEO SECTION */}
                     <PlayerSection>
-                      <SoundToggle onClick={(event) => {
-                        event.stopPropagation();
-                        setIsMuted(!isMuted);
-                      }}>
-                        {isMuted ? <FiVolumeX size={20} /> : <FiVolume2 size={20} />}
-                      </SoundToggle>
-
                       <VideoContainer onClick={(event) => handleVideoToggle(event, reel, index)}>
                         <VideoElement
                           ref={(el) => {
@@ -860,7 +1011,7 @@ export default function ReelsPage() {
                           </ActionButton>
                           <ActionLabel>Audio</ActionLabel>
 
-                          <ActionButton active={reel.is_liked} disabled={pendingActions[`like-${reel.id}`]} onClick={(event) => {
+                          <ActionButton $active={reel.is_liked} disabled={pendingActions[`like-${reel.id}`]} onClick={(event) => {
                             event.stopPropagation();
                             handleLike(reel, index);
                           }}>
@@ -871,12 +1022,15 @@ export default function ReelsPage() {
                           <ActionButton onClick={(event) => {
                             event.stopPropagation();
                             openComments(reel);
+                            if (window.innerWidth >= 992) {
+                              toggleDesktopComments(reel);
+                            }
                           }}>
                             <FiMessageCircle />
                           </ActionButton>
                           <ActionLabel>{reel.comments_count}</ActionLabel>
 
-                          <ActionButton active={reel.is_saved} disabled={pendingActions[`save-${reel.id}`]} onClick={(event) => {
+                          <ActionButton $active={reel.is_saved} disabled={pendingActions[`save-${reel.id}`]} onClick={(event) => {
                             event.stopPropagation();
                             handleSave(reel, index);
                           }}>
@@ -903,13 +1057,13 @@ export default function ReelsPage() {
 
                         {/* CTA Buttons - Mobile Only */}
                         <CtaRow onClick={(event) => event.stopPropagation()}>
-                          <CtaButton variant="primary" onClick={(event) => {
+                          <CtaButton $variant="primary" onClick={(event) => {
                             event.stopPropagation();
                             handleChatCTA(expertId);
                           }}>
                             <FiMessageSquare /> Chat
                           </CtaButton>
-                          <CtaButton variant="primary" onClick={(event) => {
+                          <CtaButton $variant="primary" onClick={(event) => {
                             event.stopPropagation();
                             handleCallCTA(expertId);
                           }}>
@@ -932,165 +1086,174 @@ export default function ReelsPage() {
                     </PlayerSection>
 
                     {/* DESKTOP SIDEBAR - Only visible on desktop */}
-                    <DesktopSidebar>
-                      {/* Expert Info */}
-                      <DesktopHeader>
-                        <div className="desktop-expert-avatar-wrapper">
-                          {renderExpertAvatar(reel, { onClick: () => handleProfileCTA(reel) })}
-                          <span className="desktop-online-dot"></span>
-                        </div>
-                        <div className="desktop-expert-info">
-                          <NameText onClick={() => handleProfileCTA(reel)}>{displayName}</NameText>
-                          <div className="desktop-expert-meta">
-                            <span className="desktop-expert-rating">
-                              <FiStar size={14} fill="#FBBF24" color="#FBBF24" /> {rating}
-                            </span>
-                            <span className="desktop-expert-exp">
-                              <FiClock size={14} /> {experience} yrs
-                            </span>
-                          </div>
-                          {reel.category_name && <CategoryTag>{reel.category_name}</CategoryTag>}
-                        </div>
-                      </DesktopHeader>
-
-                      {/* Video Details */}
-                      <DesktopInfo>
-                        <TitleText>{reel.title}</TitleText>
-                        {reel.caption && <CaptionText>{reel.caption}</CaptionText>}
-                      </DesktopInfo>
-
-                      {/* Statistics */}
-                      <div className="desktop-stats-row">
-                        <div className="desktop-stat-card">
-                          <FiHeart className="stat-icon liked" />
-                          <span className="stat-value">{reel.likes_count || 0}</span>
-                          <span className="stat-label">Likes</span>
-                        </div>
-                        <div className="desktop-stat-card">
-                          <FiEye className="stat-icon" />
-                          <span className="stat-value">{reel.views_count || 0}</span>
-                          <span className="stat-label">Views</span>
-                        </div>
-                        <div className="desktop-stat-card">
-                          <FiMessageCircle className="stat-icon" />
-                          <span className="stat-value">{reel.comments_count || 0}</span>
-                          <span className="stat-label">Comments</span>
-                        </div>
-                        <div className="desktop-stat-card">
-                          <FiBookmark className="stat-icon" />
-                          <span className="stat-value">{reel.saves_count || 0}</span>
-                          <span className="stat-label">Saves</span>
-                        </div>
-                      </div>
-
-                      <SectionDivider />
-
-                      {/* Quick Actions */}
-                      <div className="desktop-actions-grid">
-                        <button 
-                          className={`desktop-action-btn ${reel.is_liked ? 'active liked' : ''}`}
-                          disabled={pendingActions[`like-${reel.id}`]}
-                          onClick={() => handleLike(reel, index)}
-                        >
-                          <FiHeart fill={reel.is_liked ? "currentColor" : "none"} />
-                          <span>{reel.is_liked ? "Liked" : "Like"}</span>
-                        </button>
-                        <button 
-                          className={`desktop-action-btn ${reel.is_saved ? 'active saved' : ''}`}
-                          disabled={pendingActions[`save-${reel.id}`]}
-                          onClick={() => handleSave(reel, index)}
-                        >
-                          <FiBookmark fill={reel.is_saved ? "currentColor" : "none"} />
-                          <span>{reel.is_saved ? "Saved" : "Save"}</span>
-                        </button>
-                        <button className="desktop-action-btn" onClick={() => handleShare(reel)}>
-                          <FiShare2 />
-                          <span>Share</span>
-                        </button>
-                        <button className="desktop-action-btn" onClick={() => handleReport(reel)}>
-                          <FiAlertTriangle />
-                          <span>Report</span>
-                        </button>
-                      </div>
-
-                      <SectionDivider />
-
-                      {/* CTA Buttons */}
-                      <div className="desktop-cta-grid">
-                        <button className="desktop-cta-btn primary" onClick={() => handleChatCTA(expertId)}>
-                          <FiMessageSquare /> Chat with Expert
-                        </button>
-                        <button className="desktop-cta-btn primary" onClick={() => handleCallCTA(expertId)}>
-                          <FiPhone /> Call Now
-                        </button>
-                        <button className="desktop-cta-btn secondary" onClick={() => handleProfileCTA(reel)}>
-                          <FiUser /> View Profile
-                        </button>
-                        <button className="desktop-cta-btn secondary" onClick={() => handleProfileCTA(reel, { scrollToBooking: true })}>
-                          <FiCalendar /> Book Consultation
-                        </button>
-                      </div>
-
-                      <SectionDivider />
-
-                      {/* Comments Toggle */}
-                      <div className="desktop-comments-toggle">
-                        <button 
-                          className="desktop-comments-toggle-btn"
-                          onClick={() => toggleDesktopComments(reel)}
-                        >
-                          <FiMessageCircle size={18} />
-                          <span>Comments ({reel.comments_count || 0})</span>
-                          {showDesktopComments && commentsReelId === reel.id ? 
-                            <FiChevronUp size={18} /> : 
-                            <FiChevronDown size={18} />
-                          }
-                        </button>
-                      </div>
-
-                      {showDesktopComments && commentsReelId === reel.id && (
-                        <div className="desktop-comments-expanded">
-                          <div className="desktop-comments-list">
-                            {loadingComments ? (
-                              <div className="desktop-comments-loading">
-                                <Spinner style={{ width: "24px", height: "24px" }} />
+                    <DesktopSidebar className="desktop-sidebar-card">
+                      {/* 1. EXPERT INFORMATION HEADER (Fixed Top Horizontal Row) */}
+                      <div className="desktop-expert-header-box">
+                        <div className="desktop-expert-header-row">
+                          <div className="desktop-expert-header-left">
+                            <div className="desktop-expert-avatar-wrapper">
+                              {renderExpertAvatar(reel, { onClick: () => handleProfileCTA(reel) })}
+                            </div>
+                            <div className="desktop-expert-info">
+                              <NameText onClick={() => handleProfileCTA(reel)} className="desktop-expert-name">
+                                {displayName}
+                              </NameText>
+                              <div className="desktop-expert-category">
+                                {reel.category_name || "G9 Expert Consultant"}
                               </div>
+                              <div className="desktop-expert-meta">
+                                <span className="desktop-expert-rating">
+                                  <FiStar size={13} fill="#FBBF24" color="#FBBF24" /> {rating}
+                                </span>
+                                <span className="desktop-expert-meta-sep">|</span>
+                                <span className="desktop-expert-exp">
+                                  <FiClock size={13} /> {experience} Yrs Exp
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="desktop-expert-header-right">
+                            <span className="desktop-online-indicator" title="Online"></span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 2. MIDDLE SCROLLABLE SECTION (Always visible underneath) */}
+                      <div className="desktop-scrollable-content">
+                        <div>
+                          <TitleText style={{ fontSize: '16px', fontWeight: '700', color: '#ffffff', lineHeight: '1.4', marginBottom: '10px' }}>
+                            {reel.title}
+                          </TitleText>
+                          {reel.caption && (
+                            <p style={{ color: '#d4d4d8', fontSize: '13px', lineHeight: '1.5', margin: '0 0 10px' }}>
+                              {reel.caption}
+                            </p>
+                          )}
+                          {reel.category_name && (
+                            <div className="flex flex-wrap gap-2 mt-2" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: '12px', fontWeight: '600', color: '#60a5fa', background: 'rgba(96, 165, 250, 0.1)', padding: '3px 8px', borderRadius: '6px' }}>
+                                #{reel.category_name.replace(/\s+/g, '')}
+                              </span>
+                              <span style={{ fontSize: '12px', fontWeight: '600', color: '#60a5fa', background: 'rgba(96, 165, 250, 0.1)', padding: '3px 8px', borderRadius: '6px' }}>
+                                #G9Expert
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Reel Insights / Statistics Box */}
+                        <div className="desktop-insights-box">
+                          <h3 className="desktop-insights-title">Reel Insights</h3>
+                          
+                          <div className="desktop-stats-grid" style={{ paddingBottom: 0, marginBottom: 0, borderBottom: 'none' }}>
+                            <div className="desktop-stat-item" onClick={() => handleLike(reel, index)} style={{ cursor: 'pointer' }}>
+                              <FiHeart className="stat-icon" style={{ color: reel.is_liked ? '#ef4444' : '#3b82f6' }} />
+                              <span className="stat-val">{reel.likes_count || 0}</span>
+                              <span className="stat-lbl">Likes</span>
+                            </div>
+                            <div className="desktop-stat-item">
+                              <FiEye className="stat-icon" />
+                              <span className="stat-val">{reel.views_count || 0}</span>
+                              <span className="stat-lbl">Views</span>
+                            </div>
+                            <div className="desktop-stat-item" onClick={() => toggleDesktopComments(reel)} style={{ cursor: 'pointer' }}>
+                              <FiMessageCircle className="stat-icon" style={{ color: '#3b82f6' }} />
+                              <span className="stat-val">{reel.comments_count || 0}</span>
+                              <span className="stat-lbl">Comments</span>
+                            </div>
+                            <div className="desktop-stat-item" onClick={() => handleSave(reel, index)} style={{ cursor: 'pointer' }}>
+                              <FiBookmark className="stat-icon" style={{ color: reel.is_saved ? '#3b82f6' : '#9ca3af' }} />
+                              <span className="stat-val">{reel.saves_count || 0}</span>
+                              <span className="stat-lbl">Saves</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 3. FLOATING OVERLAY COMMENTS MODAL (Appears floating over the expert panel on desktop) */}
+                      {showDesktopComments && commentsReelId === reel.id && (
+                        <div className="desktop-right-comments-card">
+                          <div className="desktop-comments-header">
+                            <span>Comments ({reel.comments_count || comments.length || 0})</span>
+                            <button className="desktop-comments-header-close" type="button" onClick={() => setShowDesktopComments(false)}>
+                              <FiX size={18} />
+                            </button>
+                          </div>
+                          
+                          <div className="desktop-comments-body">
+                            {loadingComments ? (
+                              <Spinner style={{ margin: "30px auto", width: "24px", height: "24px" }} />
                             ) : comments.length === 0 ? (
-                              <p className="desktop-comments-empty">No comments yet. Start the conversation!</p>
+                              <p style={{ color: "#a1a1aa", fontSize: "13px", textAlign: "center", margin: "auto 0" }}>
+                                No comments yet. Be the first to start the conversation!
+                              </p>
                             ) : (
-                              comments.slice(0, 3).map((comment) => (
-                                <div key={comment.id} className="desktop-comment-item">
-                                  <img 
-                                    src={comment.user_profile_photo || "https://placehold.co/40x40"} 
-                                    alt={comment.user_name || "User"}
-                                    className="desktop-comment-avatar"
-                                  />
-                                  <div className="desktop-comment-content">
-                                    <span className="desktop-comment-name">{comment.user_name || "User"}</span>
-                                    <p className="desktop-comment-text">{comment.comment}</p>
+                              comments.map((c) => (
+                                <div className="desktop-comment-item" key={c.id}>
+                                  {c.user_profile_photo ? (
+                                    <img className="desktop-comment-avatar" src={c.user_profile_photo} alt={c.user_name || "User"} />
+                                  ) : (
+                                    <div className="desktop-comment-avatar-fallback">
+                                      {getInitials(c.user_name || "U")}
+                                    </div>
+                                  )}
+                                  <div className="desktop-comment-main">
+                                    <div className="desktop-comment-user-row">
+                                      <span className="desktop-comment-user">{c.user_name || "User"}</span>
+                                      <span className="desktop-comment-time">{c.created_at ? new Date(c.created_at).toLocaleDateString() : ""}</span>
+                                    </div>
+                                    <p className="desktop-comment-text">{c.comment}</p>
+                                    {Number(c.user_id) === Number(user?.id) && (
+                                      <div className="desktop-comment-actions">
+                                        <button
+                                          type="button"
+                                          className="desktop-comment-reply-btn delete-btn"
+                                          onClick={() => handleDeleteComment(c.id, reel.id)}
+                                        >
+                                          Delete
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               ))
                             )}
-                            {comments.length > 3 && (
-                              <button className="desktop-view-more-btn" onClick={() => openComments(reel)}>
-                                View all {comments.length} comments
-                              </button>
-                            )}
                           </div>
-                          
-                          <form className="desktop-comment-form" onSubmit={(e) => handleCommentSubmit(e, reel.id)}>
+
+                          <form className="desktop-comments-footer-input" onSubmit={(e) => handleCommentSubmit(e, reel.id)}>
                             <input
                               type="text"
-                              placeholder="Write a comment..."
+                              className="desktop-comment-input"
+                              placeholder="Add a comment..."
                               value={newComment}
                               onChange={(e) => setNewComment(e.target.value)}
-                              className="desktop-comment-input"
                             />
-                            <button type="submit" className="desktop-comment-submit">Post</button>
+                            <button type="submit" className="desktop-comment-post-btn" disabled={!newComment.trim()}>
+                              Post
+                            </button>
                           </form>
                         </div>
                       )}
+
+                      {/* 4. CONSULTATION ACTIONS (Fixed Bottom Footer) */}
+                      <div className="desktop-fixed-actions-footer">
+                        <div className="desktop-cta-row-primary">
+                          <button className="btn-chat-now" onClick={() => handleChatCTA(expertId)}>
+                            <FiMessageSquare size={18} /> Chat Now
+                          </button>
+                          <button className="btn-call-now" onClick={() => handleCallCTA(expertId)}>
+                            <FiPhone size={18} /> Call Now
+                          </button>
+                        </div>
+                        <div className="desktop-cta-row-secondary">
+                          <button className="btn-view-profile" onClick={() => handleProfileCTA(reel)}>
+                            View Profile
+                          </button>
+                          <button className="btn-book-consult" onClick={() => handleProfileCTA(reel, { scrollToBooking: true })}>
+                            Book Consult
+                          </button>
+                        </div>
+                      </div>
                     </DesktopSidebar>
                   </>
                 );

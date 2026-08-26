@@ -28,9 +28,10 @@ function TipCard({ post }) {
     }
   };
 
-  const expertRef = post.expert_slug || post.expert_id;
+  const expertRef = post.expert_slug || post.expertSlug || post.expert_id || post.expertId || post.expert?.slug || post.expert?.id || post.slug;
+  const postId = post.id || post.post_id || post.postId;
   const postLink = expertRef
-    ? `/user/experts/${expertRef}?tab=posts&postId=${post.id}`
+    ? `/user/experts/${expertRef}?tab=posts&postId=${postId}`
     : `/user/call-chat?page=1`;
 
   const handleCardClick = (e) => {
@@ -39,6 +40,13 @@ function TipCard({ post }) {
       return;
     }
     navigate(postLink);
+  };
+
+  const handleExpertClick = (e) => {
+    e.stopPropagation();
+    if (expertRef) {
+      navigate(`/user/experts/${expertRef}`);
+    }
   };
 
   const categoryTag = post.category_name || post.category || "Expert Advice";
@@ -62,7 +70,7 @@ function TipCard({ post }) {
 
       {/* 2. CARD CONTENT */}
       <div className="tip-content">
-        <div className="tip-expert-row">
+        <div className="tip-expert-row" onClick={handleExpertClick} style={{ cursor: "pointer" }}>
           <img
             src={post.profile_photo || FALLBACK_AVATAR}
             alt={post.expert_name || "Advisor"}

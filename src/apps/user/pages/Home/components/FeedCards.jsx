@@ -37,8 +37,8 @@ const money = (value) => {
 
 const expertPath = (data) => `/user/experts/${data.expert_slug || data.slug || data.expert_id || data.id}`;
 const servicePath = (data) => `/user/service-details/${data.slug || data.service_id || data.id}`;
-const chatPath = (data) => `/user/call-chat?page=1&mode=chat&expert_id=${data.expert_id || data.id}`;
-const callPath = (data) => `/user/call-chat?page=1&mode=call&expert_id=${data.expert_id || data.id}`;
+const chatPath = (data) => `${expertPath(data)}?action=chat`;
+const callPath = (data) => `${expertPath(data)}?action=call`;
 
 function Avatar({ src, name }) {
   if (src) {

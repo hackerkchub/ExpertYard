@@ -22,7 +22,7 @@ export const PageWrap = styled.div`
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
-  padding: 16px clamp(12px, 2vw, 24px);
+  padding: 6px clamp(12px, 2vw, 24px);
   background: #f8fafc;
   min-height: 100vh;
   font-family: "Inter", "Rubik", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
@@ -53,12 +53,14 @@ export const PageWrap = styled.div`
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border-bottom: 1px solid #f1f5f9;
-    padding: 10px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 8px 14px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 10px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
   }
 
   .top-back-btn {
@@ -66,15 +68,19 @@ export const PageWrap = styled.div`
     height: 32px;
     border-radius: 50%;
     background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #cbd5e1;
     color: #334155;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
-    font-weight: 700;
     cursor: pointer;
     transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+  @media (max-width: 768px) {
+    .top-back-btn {
+      display: none !important;
+    }
   }
   .top-back-btn:active {
     transform: scale(0.95);
@@ -85,10 +91,11 @@ export const PageWrap = styled.div`
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
     color: #0f172a;
     letter-spacing: -0.2px;
+    margin-right: auto;
   }
 
   .top-verified-icon {
@@ -101,13 +108,14 @@ export const PageWrap = styled.div`
     height: 32px;
     border-radius: 50%;
     background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #cbd5e1;
     color: #475569;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
+    flex-shrink: 0;
   }
   .top-share-btn:active {
     transform: scale(0.95);
@@ -118,15 +126,15 @@ export const PageWrap = styled.div`
   .profile-page-layout-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 16px;
     width: 100%;
-    margin-top: 12px;
+    margin-top: 8px;
   }
 
   @media (min-width: 1024px) {
     .profile-page-layout-grid {
       grid-template-columns: minmax(0, 1fr) 360px;
-      gap: 24px;
+      gap: 20px;
       align-items: start;
     }
   }
@@ -134,7 +142,7 @@ export const PageWrap = styled.div`
   .profile-layout-main-col {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     min-width: 0;
     width: 100%;
   }

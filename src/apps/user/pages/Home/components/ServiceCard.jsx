@@ -1,6 +1,6 @@
 import React from "react";
-import { Link } from "react-router-dom";
-import {Medal, CheckCircle, QrCode } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Medal, CheckCircle, QrCode } from "lucide-react";
 import "./ServiceCard.css";
 
 const truncateTitle = (rawTitle) => {
@@ -13,6 +13,7 @@ const truncateTitle = (rawTitle) => {
 };
 
 export default function ServiceCard({ service }) {
+  const navigate = useNavigate();
   if (!service) return null;
 
   const {
@@ -41,14 +42,34 @@ export default function ServiceCard({ service }) {
   const reqNum = numMatches ? numMatches.join("").slice(-5) : "36920";
   const formattedReq = `REQ / ${reqNum || "36920"}`;
   const detailLink = slug ? `/user/service-details/${slug}` : `/user/service-details/${rawId}`;
+  const bookLink = `${detailLink}?action=book`;
 
   const categoryLabel = category_name || "Community Partner";
   const providerLabel = provider_name || expert_name || "Himanshu Dhote";
 
   const coverImage = service.cover_image || service.image || service.image_url || "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&auto=format&fit=crop&q=80";
 
+  const handleCardClick = (e) => {
+    if (e.target.closest(".ticket-book-button") || e.target.closest("button") || e.target.closest("a")) {
+      return;
+    }
+    navigate(detailLink);
+  };
+
+  const handleBookClick = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    navigate(bookLink);
+  };
+
   return (
-    <div className="home-service-card service-ticket-card">
+    <div 
+      className="home-service-card service-ticket-card"
+      onClick={handleCardClick}
+      style={{ cursor: "pointer" }}
+      role="button"
+      tabIndex={0}
+    >
       {/* Top Section with Dynamic Service Cover Image */}
       <div className="ticket-dark-header ticket-dynamic-image-header">
         <img
@@ -62,7 +83,6 @@ export default function ServiceCard({ service }) {
             e.target.src = "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&auto=format&fit=crop&q=80";
           }}
         />
-        
       </div>
 
       {/* Bottom White Section */}
@@ -77,7 +97,7 @@ export default function ServiceCard({ service }) {
             <span className="ticket-price-value">₹{displayPrice}</span>
           </div>
 
-          <Link to={detailLink} className="ticket-book-button">
+          <Link to={bookLink} className="ticket-book-button" onClick={handleBookClick}>
             <span>Book</span>
           </Link>
         </div>
@@ -85,3 +105,4 @@ export default function ServiceCard({ service }) {
     </div>
   );
 }
+

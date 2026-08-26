@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import APP_CONFIG from "../../../../config/appConfig";
 import AddBalancePopup from "../../components/AddBalancePopup/AddBalancePopup";
 import { uploadWorkspaceFile } from "../../../../shared/api/workspace.api";
+import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
+import { useLoader } from "../../../../shared/loaders/LoaderContext";
 
 // Sub-components
 import ServiceHero from "./components/ServiceHero";
@@ -166,10 +168,13 @@ export default function MasterServiceSlugPage() {
     }
   }, [service?.id, service?.category_id]);
 
+  const { startLoading, stopLoading } = useLoader();
+
   useEffect(() => {
     if (!targetSlug) return;
     const fetchServiceAndExperts = async () => {
       try {
+        startLoading();
         setLoading(true);
         setError("");
         
@@ -192,14 +197,33 @@ export default function MasterServiceSlugPage() {
           setError(data.message || "Master service not found.");
         }
       } catch (err) {
-        setError(err.message || "Error loading service page.");
+        setError("Failed to connect to server.");
       } finally {
         setLoading(false);
+        stopLoading();
       }
     };
 
     fetchServiceAndExperts();
-  }, [targetSlug]);
+  }, [targetSlug, startLoading, stopLoading]);
+
+  // Auto-open booking modal when navigated with ?action=book
+  const autoBookHandledRef = useRef(false);
+  useEffect(() => {
+    if (loading || !service || autoBookHandledRef.current) return;
+    const params = new URLSearchParams(location.search);
+    const action = params.get("action") || params.get("autoAction");
+    if (action === "book" || params.get("book") === "true") {
+      autoBookHandledRef.current = true;
+      setTimeout(() => {
+        if (experts && experts.length > 1) {
+          setShowSelectExpertModal(true);
+        } else {
+          handleOpenBookingModal(experts?.[0] || null);
+        }
+      }, 300);
+    }
+  }, [loading, service, experts, location.search]);
 
   // Open Booking Modal & Refresh Wallet Balance
   const handleOpenBookingModal = async (exp) => {
@@ -464,15 +488,7 @@ export default function MasterServiceSlugPage() {
   ];
 
   if (loading) {
-    return (
-      <div className="msp-loading-screen">
-        <div className="msp-loading-box">
-          <div className="msp-loading-spinner">⚡</div>
-          <h3 className="msp-loading-title">Loading Master Service Marketplace...</h3>
-          <p className="msp-loading-sub">Fetching details, verified experts & workspace specs...</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   if (error || !service) {
@@ -560,21 +576,6 @@ export default function MasterServiceSlugPage() {
         .msp-loading-sub, .msp-error-text { margin: 0; color: #64748b; font-size: 14px; line-height: 1.5; }
         .msp-error-btn { display: inline-block; margin-top: 1.25rem; text-decoration: none; }
 
-        /* BREADCRUMB */
-        .msp-breadcrumb {
-          font-size: 13px;
-          color: #64748b;
-          display: flex;
-          gap: 8px;
-          align-items: center;
-          flex-wrap: wrap;
-        }
-        .msp-breadcrumb a {
-          color: #2563eb;
-          text-decoration: none;
-          font-weight: 600;
-        }
-        .msp-breadcrumb a:hover { text-decoration: underline; }
 
         /* HERO CARD */
         .msp-hero-card {
@@ -1102,6 +1103,17 @@ export default function MasterServiceSlugPage() {
           gap: 8px;
           position: relative;
           z-index: 1;
+          padding: 12px 10px;
+          border-radius: 16px;
+          border: 1px solid transparent;
+          transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+          cursor: pointer;
+        }
+        .msp-process-step-item:hover {
+          background-color: #eff6ff;
+          border-color: #bfdbfe;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.06);
         }
         .msp-step-num-badge {
           background: #f1f5f9;
@@ -1115,7 +1127,9 @@ export default function MasterServiceSlugPage() {
           justify-content: center;
           font-weight: 900;
           font-size: 13px;
+          transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
         }
+        .msp-process-step-item:hover .msp-step-num-badge,
         .msp-step-active .msp-step-num-badge {
           background: #2563eb;
           color: #ffffff;
@@ -1137,11 +1151,14 @@ export default function MasterServiceSlugPage() {
           align-items: center;
           justify-content: center;
           font-size: 20px;
+          transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
         }
+        .msp-process-step-item:hover .msp-step-icon-wrapper,
         .msp-step-active .msp-step-icon-wrapper {
-          background: #eff6ff;
+          background: #ffffff;
           color: #2563eb;
-          border-color: #bfdbfe;
+          border-color: #93c5fd;
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
         }
         .msp-step-done .msp-step-icon-wrapper {
           background: #ecfdf5;
@@ -1154,7 +1171,7 @@ export default function MasterServiceSlugPage() {
           flex: 0 0 60px;
           height: 2px;
           background: #e2e8f0;
-          margin-top: 36px;
+          margin-top: 26px;
         }
         .msp-process-timeline-mobile { display: none; }
 
@@ -1535,7 +1552,6 @@ export default function MasterServiceSlugPage() {
 
         /* TABLET & MOBILE (<900px / <768px) */
         @media (max-width: 900px) {
-          .msp-breadcrumb { display: none !important; }
           .msp-hero-card {
             grid-template-columns: 1fr;
             padding: 1.5rem;
@@ -1606,6 +1622,16 @@ export default function MasterServiceSlugPage() {
           .msp-mobile-step-row {
             display: flex;
             gap: 14px;
+            padding: 8px 10px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            transition: background-color 0.25s ease, border-color 0.25s ease;
+          }
+          @media (hover: hover) {
+            .msp-mobile-step-row:hover {
+              background-color: #eff6ff;
+              border-color: #bfdbfe;
+            }
           }
           .msp-mobile-step-left {
             display: flex;
@@ -1743,21 +1769,6 @@ export default function MasterServiceSlugPage() {
       `}</style>
 
       <div className="msp-container">
-        {/* BREADCRUMB NAVIGATION */}
-        <nav className="msp-breadcrumb">
-          <Link to="/">Home</Link>
-          <span>/</span>
-          <Link to="/all-services">Master Services</Link>
-          {service.category_name && (
-            <>
-              <span>/</span>
-              <span>{service.category_name}</span>
-            </>
-          )}
-          <span>/</span>
-          <strong>{service.title}</strong>
-        </nav>
-
         {/* 🌟 SERVICE HERO */}
         <ServiceHero
           service={service}

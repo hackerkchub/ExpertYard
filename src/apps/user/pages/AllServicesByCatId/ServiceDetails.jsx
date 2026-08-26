@@ -79,7 +79,7 @@ const ServiceDetail = () => {
 
   const fetchServiceData = useCallback(async () => {
     try {
-      const res = await axios.get(`${APP_CONFIG.API_BASE_URL}/services/s/${slug}`);
+      const res = await api.get(`/services/s/${slug}`, { showGlobalLoader: true });
       if (res.data?.success) {
         const freshData = res.data.data;
         setService(freshData);
@@ -197,7 +197,7 @@ const ServiceDetail = () => {
     }
   };
 
-  if (loading && !service) return <S.LoaderWrapper><S.Spinner /> Loading...</S.LoaderWrapper>;
+  if (loading && !service) return null;
   if (!service) return <S.ErrorState>Service not found.</S.ErrorState>;
 
   return (

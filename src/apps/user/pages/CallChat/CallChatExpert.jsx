@@ -598,6 +598,7 @@ export default function UserExpertsPage() {
       if (latestRequestRef.current !== requestId) return;
 
       const rawData = response.data || [];
+      console.log("[CALL_CHAT][API_DATA_COUNT]", rawData.length, "total:", response?.total);
       const seen = new Set();
       const unique = [];
       for (const item of rawData) {
@@ -607,6 +608,7 @@ export default function UserExpertsPage() {
           unique.push(item);
         }
       }
+      console.log("[CALL_CHAT][STATE_COUNT]", unique.length);
       setExperts(unique);
       setTotalExperts(response.total || 0);
       setTotalPages(response.totalPages || 1);
@@ -941,6 +943,7 @@ export default function UserExpertsPage() {
   }, [cardExperts, gender]);
 
   const filteredCardExperts = useMemo(() => {
+    console.log("[CALL_CHAT][FILTERED_COUNT]", cardExperts.length);
     return cardExperts;
   }, [cardExperts]);
 
@@ -1545,13 +1548,16 @@ export default function UserExpertsPage() {
                     const shownPrice = discountedPrice > 0 ? discountedPrice : basePrice;
                     const languageText = getLanguageText(exp.languages);
                     
-                    let allowedByAdmin = false;
+                    let allowedByAdmin = true;
                     if (tab === "chat") {
-                      allowedByAdmin = isEnabledFlag(exp.effective_access?.show_chat_button ?? exp.effective_access?.can_chat ?? exp.show_chat_button ?? exp.showChatButton ?? exp.can_chat ?? exp.canChat);
+                      const val = exp.effective_access?.show_chat_button ?? exp.effective_access?.can_chat ?? exp.show_chat_button ?? exp.showChatButton ?? exp.can_chat ?? exp.canChat;
+                      allowedByAdmin = val !== undefined && val !== null ? isEnabledFlag(val) : true;
                     } else if (tab === "video") {
-                      allowedByAdmin = isEnabledFlag(exp.effective_access?.show_video_button ?? exp.effective_access?.can_video_call ?? exp.effective_access?.video_call_enabled ?? exp.show_video_button ?? exp.showVideoButton ?? exp.can_video_call ?? exp.canVideoCall ?? exp.video_call_enabled ?? exp.videoCallEnabled ?? exp.allow_video_call ?? exp.allow_video ?? exp.can_video ?? true);
+                      const val = exp.effective_access?.show_video_button ?? exp.effective_access?.can_video_call ?? exp.effective_access?.video_call_enabled ?? exp.show_video_button ?? exp.showVideoButton ?? exp.can_video_call ?? exp.canVideoCall ?? exp.video_call_enabled ?? exp.videoCallEnabled ?? exp.allow_video_call ?? exp.allow_video ?? exp.can_video;
+                      allowedByAdmin = val !== undefined && val !== null ? isEnabledFlag(val) : true;
                     } else {
-                      allowedByAdmin = isEnabledFlag(exp.effective_access?.show_call_button ?? exp.effective_access?.can_call ?? exp.show_call_button ?? exp.showCallButton ?? exp.can_call ?? exp.canCall);
+                      const val = exp.effective_access?.show_call_button ?? exp.effective_access?.can_call ?? exp.show_call_button ?? exp.showCallButton ?? exp.can_call ?? exp.canCall;
+                      allowedByAdmin = val !== undefined && val !== null ? isEnabledFlag(val) : true;
                     }
 
                     const isVideoTab = tab === "video";

@@ -11,16 +11,16 @@ export const updateExpertProfileApi = (formData) => {
 };
 
 /* ================= ALL PROFILES ================= */
-export const getExpertsProfileListApi = async () => {
-  const { data } = await api.get("/expert-profile/list");
+export const getExpertsProfileListApi = async (options = {}) => {
+  const { data } = await api.get("/expert-profile/list", { showGlobalLoader: true, ...options });
   return data;
 };
 
 /* ================= GET BY EXPERT ID ================= */
-export const getExpertProfileApi = (expertId) => {
-  return api.get(`/expert-profile/expert/${expertId}`);
+export const getExpertProfileApi = (expertId, options = {}) => {
+  return api.get(`/expert-profile/expert/${expertId}`, { showGlobalLoader: true, ...options });
 };
 
-export const getExpertBySlugApi = (slug) => {
-  return api.get(`/expert-profile/slug/${slug}`);
+export const getExpertBySlugApi = (slug, options = {}) => {
+  return api.get(`/expert-profile/slug/${slug}`, { showGlobalLoader: true, ...options });
 };

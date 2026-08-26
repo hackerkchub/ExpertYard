@@ -1,28 +1,18 @@
-import styled, { css } from "styled-components";
+import { createPortal } from "react-dom";
+import PremiumCenterLoader from "../shared/components/Loader/PremiumCenterLoader";
+import { useLoader } from "../shared/loaders/LoaderContext";
 
-import Loader from "../shared/components/Loader/Loader";
+export default function RouteFallback() {
+  const { isAppBooting, isGlobalPageLoading } = useLoader();
 
-const Wrapper = styled.div`
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  ${({ $variant }) =>
-    $variant === "app"
-      ? css`
-          min-height: 100vh;
-          padding: 24px;
-        `
-      : css`
-          min-height: 320px;
-          padding: 32px 16px;
-        `}
-`;
+  // Suppress PremiumCenterLoader during initial app boot or if GlobalLoader overlay is already active
+  if (isAppBooting || isGlobalPageLoading) return null;
+  if (typeof document === "undefined") return null;
 
-export default function RouteFallback({ variant = "page" }) {
-  return (
-    <Wrapper $variant={variant}>
-      <Loader />
-    </Wrapper>
+  return createPortal(
+    <div className="g9-premium-loader-overlay">
+      <PremiumCenterLoader />
+    </div>,
+    document.body
   );
 }

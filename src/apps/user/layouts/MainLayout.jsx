@@ -148,7 +148,7 @@ export default function MainLayout() {
             user={user}
           />
         </div>
-        <div className={`home-desktop-shell layout--full-content ${isNoLeftSidebarPage ? "no-left-sidebar-shell" : ""}`}>
+        <div className={`home-desktop-shell layout--full-content ${isNoLeftSidebarPage ? "no-left-sidebar-shell" : ""} ${isReelsPage ? "is-reels-layout" : ""}`}>
           {!isNoLeftSidebarPage && (
             <HomeLeftSidebar
               isLoggedIn={isLoggedIn}

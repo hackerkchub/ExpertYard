@@ -3,9 +3,6 @@ import { APP_CONFIG } from "../../config/appConfig";
 
 let loader = null;
 
-/* ===============================
-   INJECT GLOBAL LOADER
-================================ */
 export const injectLoader = (_loader) => {
   loader = _loader;
 };
@@ -18,9 +15,6 @@ const api = axios.create({
   },
 });
 
-/* ===============================
-   HELPER: GET ROLE FROM ROUTE
-================================ */
 const getRoleFromRoute = () => {
   const path = window.location.pathname;
 
@@ -28,12 +22,9 @@ const getRoleFromRoute = () => {
   if (path.startsWith("/user")) return "user";
   if (path.startsWith("/expert")) return "expert";
 
-  return null; // fallback
+  return null;
 };
 
-/* ===============================
-   HELPER: CLEAN CONFLICT TOKENS
-================================ */
 const cleanConflictingTokens = (activeRole) => {
   if (activeRole === "admin") {
     localStorage.removeItem("user_token");
@@ -47,14 +38,12 @@ const cleanConflictingTokens = (activeRole) => {
   }
 };
 
-/* ===============================
-   REQUEST INTERCEPTOR
-================================ */
+/* REQUEST INTERCEPTOR */
 api.interceptors.request.use(
   (config) => {
-
-    /* GLOBAL LOADER START */
-    if (!config.skipLoader) {
+    // Only trigger global loader if explicitly requested via showGlobalLoader or useGlobalLoader
+    if (config?.showGlobalLoader || config?.useGlobalLoader) {
+      config._loaderActive = true;
       loader?.showLoader();
     }
 
@@ -67,100 +56,70 @@ api.interceptors.request.use(
     let token = null;
     let role = null;
 
-    /* ===============================
-       ROUTE BASED TOKEN SELECTION
-    ============================== */
-
     if (routeRole === "admin" && adminToken) {
       token = adminToken;
       role = "admin";
       cleanConflictingTokens("admin");
-    }
-    else if (routeRole === "user" && userToken) {
+    } else if (routeRole === "user" && userToken) {
       token = userToken;
       role = "user";
       cleanConflictingTokens("user");
-    }
-    else if (routeRole === "expert" && expertToken) {
+    } else if (routeRole === "expert" && expertToken) {
       token = expertToken;
       role = "expert";
       cleanConflictingTokens("expert");
-    }
-    else {
-
-      /* ===============================
-         FALLBACK (SAFE MODE)
-      ============================== */
-
+    } else {
       if (adminToken) {
         token = adminToken;
         role = "admin";
         cleanConflictingTokens("admin");
-      }
-      else if (userToken) {
+      } else if (userToken) {
         token = userToken;
         role = "user";
         cleanConflictingTokens("user");
-      }
-      else if (expertToken) {
+      } else if (expertToken) {
         token = expertToken;
         role = "expert";
         cleanConflictingTokens("expert");
       }
-
     }
 
-    /* ===============================
-       ATTACH HEADERS
-    ============================== */
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       config.headers["x-client-role"] = role;
     }
 
     return config;
-
   },
   (error) => {
-    loader?.hideLoader();
+    if (error?.config?._loaderActive) {
+      error.config._loaderActive = false;
+      loader?.hideLoader();
+    }
     return Promise.reject(error);
   }
 );
 
-/* ===============================
-   RESPONSE INTERCEPTOR
-================================ */
+/* RESPONSE INTERCEPTOR */
 api.interceptors.response.use(
-
   (response) => {
-
-    /* GLOBAL LOADER STOP */
-    if (!response.config.skipLoader) {
+    if (response?.config?._loaderActive) {
+      response.config._loaderActive = false;
       loader?.hideLoader();
     }
-
     return response;
   },
-
   (error) => {
-
-    if (!error.config?.skipLoader) {
+    if (error?.config?._loaderActive) {
+      error.config._loaderActive = false;
       loader?.hideLoader();
     }
 
     const status = error?.response?.status;
-
-    /* ===============================
-       TOKEN EXPIRED / UNAUTHORIZED
-    ============================== */
     if (status === 401) {
-
       localStorage.removeItem("admin_token");
       localStorage.removeItem("expert_token");
       localStorage.removeItem("user_token");
-
-      // optional redirect
-      // window.location.href = "/login";
     }
 
     return Promise.reject(

@@ -56,9 +56,6 @@ import {
   PremiumBadge,
   TrendingTag,
   EmptyState,
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbSeparator,
   CtaBlock,
   CtaButton,
   SeoContent
@@ -161,13 +158,6 @@ const Categories = () => {
 
   return (
     <PageContainer className="category-page">
-      {/* 1. Breadcrumb - Desktop only or subtle on mobile */}
-      <Breadcrumb>
-        <BreadcrumbItem onClick={() => navigate('/')}>{t("common.home")}</BreadcrumbItem>
-        <BreadcrumbSeparator><FiChevronRight /></BreadcrumbSeparator>
-        <BreadcrumbItem active>{t("common.categories")}</BreadcrumbItem>
-      </Breadcrumb>
-
       <MainContent>
        
         {/* 5. Header Actions - Grid/List Toggle */}

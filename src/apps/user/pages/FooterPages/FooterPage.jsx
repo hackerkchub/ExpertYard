@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   FiArrowRight,
@@ -25,10 +25,10 @@ import {
 
 import { useSeo } from "../../../../shared/seo/useSeo";
 import { SITE_CONFIG, toAbsoluteUrl } from "../../../../shared/seo/siteConfig";
+import { buildUserSearchPath } from "../../components/search/searchUtils";
 import { getFooterPage, getFooterPageAction } from "./footerPageData";
 import {
   Badge,
-  Breadcrumb,
   CardsGrid,
   CheckItem,
   Checklist,
@@ -253,7 +253,15 @@ const SectionRenderer = ({ section }) => {
 const FooterPage = ({ pageKey }) => {
   const page = getFooterPage(pageKey);
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
+
+  const handleSearchSubmit = (event) => {
+    if (event) event.preventDefault();
+    const trimmed = (query || "").trim();
+    if (!trimmed) return;
+    navigate(buildUserSearchPath(trimmed));
+  };
 
   const prefix = `footerPages.${page?.key || pageKey}`;
   const translate = (key, defaultValue = "") => t(`${prefix}.${key}`, { defaultValue });
@@ -398,19 +406,13 @@ const FooterPage = ({ pageKey }) => {
     <Page>
       <Hero>
         <HeroInner>
-          <Breadcrumb aria-label={t("footerPages.common.breadcrumb")}>
-            <Link to="/user">{t("common.home")}</Link>
-            <span>/</span>
-            <span>{copy.title}</span>
-          </Breadcrumb>
-
           <HeroContent>
             <Eyebrow>{copy.label}</Eyebrow>
             <Title>{copy.title}</Title>
             <Subtitle>{copy.subtitle}</Subtitle>
 
             {copy.searchPlaceholder ? (
-              <SearchBox role="search">
+              <SearchBox role="search" onSubmit={handleSearchSubmit}>
                 <input
                   type="search"
                   value={query}
@@ -418,9 +420,9 @@ const FooterPage = ({ pageKey }) => {
                   placeholder={copy.searchPlaceholder}
                   aria-label={t("footerPages.common.searchAria", { page: copy.title })}
                 />
-                <span aria-hidden="true">
+                <button type="submit" aria-label="Search">
                   <FiSearch />
-                </span>
+                </button>
               </SearchBox>
             ) : null}
 

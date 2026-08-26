@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import {
   Bell,
   BriefcaseBusiness,
@@ -122,6 +122,7 @@ export function HomeLeftSidebar({ isLoggedIn = false, user, balance = 0, onLogin
 }
 
 export function HomeRightSidebar({ experts = [], balance = 0, isNearFooter = false }) {
+  const navigate = useNavigate();
   const [showBonus, setShowBonus] = React.useState(true);
   const walletAmount = Math.floor(Number(balance || 0));
 
@@ -204,7 +205,7 @@ export function HomeRightSidebar({ experts = [], balance = 0, isNearFooter = fal
             masterServices.map((svc, idx) => {
               const title = svc.title || svc.name || svc.master_service_name || "Master Service";
               const slug = svc.slug || svc.id;
-              const linkTo = slug ? `/user/all-master-services` : "/user/all-services";
+              const linkTo = slug ? `/user/service/${slug}` : "/user/all-services";
               const image = svc.icon || svc.icon_url || svc.image || svc.image_url;
               return (
                 <Link
@@ -255,18 +256,51 @@ export function HomeRightSidebar({ experts = [], balance = 0, isNearFooter = fal
           {finalExperts.length > 0 ? (
             finalExperts.slice(0, 3).map((exp, idx) => {
               const isReal = exp.expert_id || exp.id;
-              const name = isReal ? (exp.name || exp.expert_name) : exp.name;
-              const pos = isReal ? (exp.category_name || exp.position) : exp.position;
-              const price = isReal ? `₹ ${Math.round(Number(exp.call_per_minute || 0))}/min` : exp.price;
+              const targetExpertId = exp.expert_id || exp.id;
+              const name = isReal ? (exp.name || exp.expert_name || "Verified Expert") : (exp.name || "Verified Expert");
+              const pos = isReal ? (exp.category_name || exp.position || "Expert Consultant") : (exp.position || "Expert Consultant");
+              
+              const rawCallRate = exp.call_per_minute ?? exp.call_rate ?? exp.voice_call_rate ?? exp.rate;
+              const numCallRate = rawCallRate !== undefined && rawCallRate !== null ? Math.round(Number(rawCallRate)) : null;
+              const priceDisplay = numCallRate !== null && numCallRate > 0 ? `₹ ${numCallRate}/min` : (exp.price || "₹ 10/min");
+
               const rating = isReal ? Number(exp.avg_rating || 4.8).toFixed(1) : exp.rating;
               const reviews = isReal ? (exp.total_reviews || "120") : exp.reviews;
               const slug = isReal ? (exp.expert_slug || exp.slug || exp.id) : "";
               const profilePhoto = isReal ? exp.profile_photo : null;
               const initials = getInitials(name);
               const validPhoto = hasValidPhoto(profilePhoto);
+              const profileUrl = slug ? `/user/experts/${slug}` : (targetExpertId ? `/user/experts/${targetExpertId}` : "/user/call-chat?page=1");
+
+              const handleDirectCall = (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                if (targetExpertId) {
+                  navigate(`/user/voice-call/${targetExpertId}`, {
+                    state: {
+                      fromProfile: false,
+                      pricingMode: "per_minute",
+                      callPrice: numCallRate || 10,
+                      expertName: name,
+                      expertImage: profilePhoto,
+                    },
+                  });
+                } else {
+                  navigate("/user/call-chat?page=1&mode=call");
+                }
+              };
+
+              const handleCardClick = () => {
+                navigate(profileUrl);
+              };
 
               return (
-                <div key={idx} className="home-widget-item expert-item">
+                <div 
+                  key={idx} 
+                  className="home-widget-item expert-item" 
+                  onClick={handleCardClick}
+                  style={{ cursor: "pointer" }}
+                >
                   <div className="expert-avatar-box">
                     {validPhoto ? (
                       <img src={profilePhoto} alt={name} className="expert-avatar" />
@@ -291,7 +325,7 @@ export function HomeRightSidebar({ experts = [], balance = 0, isNearFooter = fal
                     )}
                   </div>
                   <div className="item-details">
-                    <Link to={slug ? `/user/experts/${slug}` : "#"} className="expert-name-link">
+                    <Link to={profileUrl} className="expert-name-link" style={{ textDecoration: "none" }} onClick={(e) => e.stopPropagation()}>
                       <h3>{name}</h3>
                     </Link>
                     <p>{pos}</p>
@@ -301,16 +335,18 @@ export function HomeRightSidebar({ experts = [], balance = 0, isNearFooter = fal
                     </div>
                   </div>
                   <div className="expert-action-col">
-                    <div className="item-price">{price}</div>
-                    <Link 
-                      to={isReal ? `/user/call-chat?page=1&mode=call&expert_id=${exp.expert_id || exp.id}` : "/user/call-chat?page=1&mode=call"} 
+                    <div className="item-price">{priceDisplay}</div>
+                    <button
+                      type="button" 
                       className="call-btn-pill"
-                      aria-label="Start voice call"
-                      title="Start voice call"
+                      onClick={handleDirectCall}
+                      aria-label={`Direct call with ${name}`}
+                      title={`Direct call with ${name}`}
+                      style={{ border: 0, outline: 0, cursor: "pointer" }}
                     >
                       <Phone size={11} fill="currentColor" />
-                      <span>{price || "--"}</span>
-                    </Link>
+                      <span>Call</span>
+                    </button>
                   </div>
                 </div>
               );

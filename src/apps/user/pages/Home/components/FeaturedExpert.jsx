@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Star, BadgeCheck, Phone, MessageCircle } from "lucide-react";
 import { normalizeVideoCallPrice } from "../../../../../shared/utils/normalizeExpertPrice";
 
@@ -8,12 +8,22 @@ import { normalizeVideoCallPrice } from "../../../../../shared/utils/normalizeEx
 // ============================================
 
 const FeaturedExpertCard = React.memo(({ expert }) => {
+  const navigate = useNavigate();
   const videoCallPrice = normalizeVideoCallPrice(expert);
   const chatPrice = expert.chat_price || expert.chat_rate || expert.chat_per_minute || expert.chatPricePerMinute || 0;
   const callPrice = expert.call_price || expert.call_rate || expert.call_per_minute || expert.callPricePerMinute || 0;
 
+  const expertProfileLink = expert.slug ? `/user/experts/${expert.slug}` : `/user/experts/${expert.id}`;
+  const chatLink = `${expertProfileLink}?action=chat`;
+  const callLink = `${expertProfileLink}?action=call`;
+
+  const handleCardClick = (e) => {
+    if (e.target.closest("button") || e.target.closest("a")) return;
+    navigate(expertProfileLink);
+  };
+
   return (
-    <div className="featured-card home-card">
+    <div className="featured-card home-card" onClick={handleCardClick} style={{ cursor: "pointer" }}>
       <div className="featured-top">
         <div className="featured-avatar">
           <img
@@ -23,7 +33,9 @@ const FeaturedExpertCard = React.memo(({ expert }) => {
         </div>
 
         <div className="featured-content">
-          <h3>{expert.name}</h3>
+          <Link to={expertProfileLink} onClick={(e) => e.stopPropagation()} style={{ textDecoration: "none", color: "inherit" }}>
+            <h3>{expert.name}</h3>
+          </Link>
           <p>{expert.position}</p>
 
           <div className="featured-rating">
@@ -62,12 +74,24 @@ const FeaturedExpertCard = React.memo(({ expert }) => {
       </div>
 
       <div className="featured-buttons">
-        <Link to={`/user/chat/${expert.id}`} className="featured-chat-btn" aria-label="Start chat consultation" title="Start chat consultation">
+        <Link 
+          to={chatLink} 
+          className="featured-chat-btn" 
+          aria-label="Start chat consultation" 
+          title="Start chat consultation"
+          onClick={(e) => e.stopPropagation()}
+        >
           <MessageCircle size={18} />
           {chatPrice > 0 ? `\u20B9${chatPrice}/min` : "--"}
         </Link>
 
-        <Link to={`/user/call/${expert.id}`} className="featured-call-btn" aria-label="Start voice call" title="Start voice call">
+        <Link 
+          to={callLink} 
+          className="featured-call-btn" 
+          aria-label="Start voice call" 
+          title="Start voice call"
+          onClick={(e) => e.stopPropagation()}
+        >
           <Phone size={18} />
           {callPrice > 0 ? `\u20B9${callPrice}/min` : "--"}
         </Link>

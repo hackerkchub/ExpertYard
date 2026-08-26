@@ -120,14 +120,6 @@ export default function MasterServiceDetailPage() {
         }}
       >
         <div style={{ maxWidth: 1120, margin: "0 auto" }}>
-          <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 12 }}>
-            <Link to="/user" style={{ color: "#fff", textDecoration: "none" }}>Home</Link>
-            {" / "}
-            <Link to="/user/categories" style={{ color: "#fff", textDecoration: "none" }}>
-              {service.category_name || "Categories"}
-            </Link>
-            {service.subcategory_name ? ` / ${service.subcategory_name}` : ""}
-          </div>
           <h1 style={{ fontSize: "clamp(2rem, 5vw, 3.4rem)", margin: "0 0 0.75rem", maxWidth: 760 }}>
             {service.title}
           </h1>

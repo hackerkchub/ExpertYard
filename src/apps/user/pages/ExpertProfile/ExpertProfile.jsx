@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from "react"
 import { createPortal } from "react-dom";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
+import { useLoader } from "../../../../shared/loaders/LoaderContext";
 import {
   FiArrowLeft,
   FiPhoneCall,
@@ -1271,6 +1273,47 @@ const ExpertProfilePage = () => {
     }
   }, [numericExpertId, loadFollowersAndReviews]);
 
+  // Auto action & tab focus parameter listener
+  const autoProfileActionHandledRef = useRef(false);
+  useEffect(() => {
+    if (!numericExpertId || profileLoading) return;
+    const params = new URLSearchParams(routerLocation.search);
+    const action = params.get("action") || params.get("autoAction");
+    const tabParam = params.get("tab");
+
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+
+    if (action && !autoProfileActionHandledRef.current) {
+      if (action === "chat") {
+        autoProfileActionHandledRef.current = true;
+        setTimeout(() => handleStart("chat"), 350);
+      } else if (action === "call") {
+        autoProfileActionHandledRef.current = true;
+        setTimeout(() => handleStart("call"), 350);
+      }
+    }
+  }, [numericExpertId, profileLoading, routerLocation.search, handleStart]);
+
+  // Scroll to targeted post when opened via post link (?tab=posts&postId=123)
+  useEffect(() => {
+    const params = new URLSearchParams(routerLocation.search);
+    const postIdParam = params.get("postId") || params.get("post_id");
+    if (postIdParam && activeTab === "posts" && posts.length > 0) {
+      const timer = setTimeout(() => {
+        const el = document.getElementById(`post-${postIdParam}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.style.transition = "all 0.4s ease";
+          el.style.outline = "2px solid #2563eb";
+          el.style.boxShadow = "0 0 20px rgba(37, 99, 235, 0.35)";
+        }
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [posts, activeTab, routerLocation.search]);
+
   const handleStarClick = useCallback((rating) => setUserRating(rating), []);
 
   const getInitials = (name = "") => {
@@ -1381,7 +1424,7 @@ const ExpertProfilePage = () => {
   const activeConsultDetails = useMemo(() => getConsultDetails(selectedConsultType), [getConsultDetails, selectedConsultType]);
 
   if (profileLoading || priceLoading) {
-    return <div style={{ padding: 40, textAlign: "center", color: "#64748b" }}><Spinner /><p style={{ marginTop: 12 }}>Loading expert profile...</p></div>;
+    return null;
   }
 
   if (!expertData?.profile) {
@@ -1393,7 +1436,7 @@ const ExpertProfilePage = () => {
       {/* 1. STICKY TOP NAVIGATION BAR */}
       <div className="profile-top-header-bar">
         <button type="button" onClick={() => navigate(-1)} className="top-back-btn" aria-label="Go Back">
-          ‹
+          <FiArrowLeft size={18} />
         </button>
         <div className="top-header-title">
           <span className="top-header-name">{profile.name}</span>
@@ -1841,7 +1884,7 @@ const ExpertProfilePage = () => {
                       const postId = getPostId(post);
                       const isLiked = liked[postId];
                       return (
-                        <PostCard key={postId} onClick={() => setSelectedPostForModal(post)} style={{ cursor: "pointer" }}>
+                        <PostCard id={`post-${postId}`} key={postId} onClick={() => setSelectedPostForModal(post)} style={{ cursor: "pointer" }}>
                           {post.image_url && <PostImage src={post.image_url} alt={post.title} />}
                           <PostHeader><PostTitle>{post.title}</PostTitle></PostHeader>
                           {post.description && <PostDescription>{post.description}</PostDescription>}

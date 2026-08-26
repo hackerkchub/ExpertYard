@@ -1,11 +1,12 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Star, MessageCircle, PhoneCall, CheckCircle2 } from "lucide-react";
 import "./ExpertCard.css";
 
 const FALLBACK_AVATAR = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80";
 
 export default function ExpertCard({ expert }) {
+  const navigate = useNavigate();
   if (!expert) return null;
 
   const {
@@ -24,9 +25,36 @@ export default function ExpertCard({ expert }) {
   const ratingVal = Number(avg_rating || 4.9).toFixed(1);
   const reviewsCount = total_reviews || 28;
   const expertProfileLink = slug ? `/user/experts/${slug}` : `/user/experts/${id}`;
+  const chatLink = `${expertProfileLink}?action=chat`;
+  const callLink = `${expertProfileLink}?action=call`;
+
+  const handleCardClick = (e) => {
+    if (e.target.closest(".expert-action-btn") || e.target.closest("button") || e.target.closest("a")) {
+      return;
+    }
+    navigate(expertProfileLink);
+  };
+
+  const handleChatClick = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    navigate(chatLink);
+  };
+
+  const handleCallClick = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    navigate(callLink);
+  };
 
   return (
-    <div className="home-expert-card">
+    <div 
+      className="home-expert-card"
+      onClick={handleCardClick}
+      style={{ cursor: "pointer" }}
+      role="button"
+      tabIndex={0}
+    >
       <div className="expert-card-top">
         <div className="expert-avatar-wrap">
           <img
@@ -42,8 +70,12 @@ export default function ExpertCard({ expert }) {
           <span className={`expert-status-dot ${is_online ? "online" : "offline"}`} title={is_online ? "Online Now" : "Offline"} />
         </div>
 
-            <div className="expert-card-info">
-          <Link to={expertProfileLink} className="expert-card-name-row">
+        <div className="expert-card-info">
+          <Link 
+            to={expertProfileLink} 
+            className="expert-card-name-row"
+            onClick={(e) => e.stopPropagation()}
+          >
             <span className="expert-card-name">{name || "Verified Expert"}</span>
             <CheckCircle2 size={14} className="verified-icon" />
           </Link>
@@ -59,12 +91,22 @@ export default function ExpertCard({ expert }) {
       </div>
 
       <div className="expert-card-actions">
-        <Link to={`/user/chat?expertId=${id}`} className="expert-action-btn chat-btn" title="Start Chat">
+        <Link 
+          to={chatLink} 
+          className="expert-action-btn chat-btn" 
+          onClick={handleChatClick}
+          title="Start Chat"
+        >
           <MessageCircle size={14} />
           <span>{chat_per_minute ? `₹${chat_per_minute}/m` : "Chat"}</span>
         </Link>
 
-        <Link to={`/user/experts/${slug || id}?tab=call`} className="expert-action-btn call-btn" title="Start Audio Call">
+        <Link 
+          to={callLink} 
+          className="expert-action-btn call-btn" 
+          onClick={handleCallClick}
+          title="Start Audio Call"
+        >
           <PhoneCall size={14} />
           <span>{call_per_minute ? `₹${call_per_minute}/m` : "Call"}</span>
         </Link>
@@ -72,4 +114,5 @@ export default function ExpertCard({ expert }) {
     </div>
   );
 }
+
 

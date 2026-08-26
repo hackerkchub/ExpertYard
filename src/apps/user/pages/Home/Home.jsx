@@ -734,76 +734,120 @@ export default function Home() {
         <section className="home-center-column">
           <section className="home-hero-card" aria-label="G9Expert Marketplace Hero">
             <div className="desktop-hero-layout">
+              {/* LEFT CONTENT */}
               <div className="desktop-hero-left">
                 <span className="home-hero-eyebrow">
                   <ShieldCheck size={14} />
                   Trusted by <strong className="gold-text">500,000+</strong> Users
                 </span>
+
                 <h1 className="desktop-hero-title">
                   Find Trusted Experts <br /> for <span className="home-hero-highlight">Every Problem</span>
                 </h1>
+
                 <p className="desktop-hero-subtitle">
                   Chat, call, or book services from verified experts across 50+ categories.
                 </p>
 
-                <div className="desktop-hero-actions-container">
-                  <button type="button" className="desktop-hero-action-btn chat-btn" onClick={() => navigate("/user/call-chat?page=1&mode=chat")}>
-                    <span className="action-btn-icon"><MessageCircle size={18} /></span>
+                {/* 2x2 ACTION BUTTONS GRID */}
+                <div className="desktop-hero-actions-grid">
+                  <button type="button" className="desktop-action-btn chat-btn" onClick={() => navigate("/user/call-chat?page=1&mode=chat")}>
+                    <MessageCircle size={16} />
                     <span>Chat</span>
                   </button>
-                  <button type="button" className="desktop-hero-action-btn call-btn" onClick={() => navigate("/user/call-chat?page=1&mode=call")}>
-                    <span className="action-btn-icon"><PhoneCall size={18} /></span>
+
+                  <button type="button" className="desktop-action-btn call-btn" onClick={() => navigate("/user/call-chat?page=1&mode=call")}>
+                    <PhoneCall size={16} />
                     <span>Call</span>
                   </button>
-                  <button type="button" className="desktop-hero-action-btn video-btn" onClick={() => navigate("/user/call-chat?page=1&mode=video")}>
-                    <span className="action-btn-icon"><Video size={18} /></span>
+
+                  <button type="button" className="desktop-action-btn video-btn" onClick={() => navigate("/user/call-chat?page=1&mode=video")}>
+                    <Video size={16} />
                     <span>Video Call</span>
                   </button>
-                  <button type="button" className="desktop-hero-action-btn service-btn" onClick={() => navigate("/user/all-services")}>
-                    <span className="action-btn-icon"><BriefcaseBusiness size={18} /></span>
+
+                  <button type="button" className="desktop-action-btn service-btn" onClick={() => navigate("/user/all-services")}>
+                    <BriefcaseBusiness size={16} />
                     <span>Book Service</span>
                   </button>
                 </div>
               </div>
 
+              {/* RIGHT CONTENT: INTEGRATED INFORMATION PANEL */}
               <div className="desktop-hero-right">
-                <div className="hero-floating-visual-container">
-                  <div className="glowing-orb orb-1"></div>
-                  <div className="glowing-orb orb-2"></div>
-
-                  <div className="floating-card card-expert">
-                    <div className="card-avatar-wrapper">
-                      <span>GE</span>
-                      <span className="status-dot online"></span>
+                <div className="hero-trust-info-panel">
+                  {/* TOP ROW: Instant Chat & Audio Call */}
+                  <div className="info-panel-top-row">
+                    <div className="info-chip">
+                      <div className="info-chip-icon chip-blue">
+                        <MessageCircle size={14} />
+                      </div>
+                      <div className="info-chip-text">
+                        <strong>Instant Chat</strong>
+                        <span>&lt; 60s response</span>
+                      </div>
                     </div>
-                    <div className="card-info">
-                      <h4>Verified Advisor</h4>
-                      <p>Legal, Medical &amp; Tax</p>
-                    </div>
-                    <span className="rating-pill">★ 4.9</span>
-                  </div>
 
-                  <div className="floating-card card-chat">
-                    <div className="chat-bubble-icon">💬</div>
-                    <div className="card-info">
-                      <h4>Instant Chat</h4>
-                      <p>60s connection</p>
-                    </div>
-                  </div>
-
-                  <div className="floating-card card-call">
-                    <div className="call-bubble-icon">📞</div>
-                    <div className="card-info">
-                      <h4>Encrypted Call</h4>
-                      <p>100% private</p>
+                    <div className="info-chip">
+                      <div className="info-chip-icon chip-green">
+                        <PhoneCall size={14} />
+                      </div>
+                      <div className="info-chip-text">
+                        <strong>Audio Call</strong>
+                        <span>100% Private</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="floating-card card-video">
-                    <div className="video-bubble-icon">🎥</div>
-                    <div className="card-info">
-                      <h4>Video Call</h4>
-                      <p>Face-to-face consultation</p>
+                  {/* CENTER EMBLEM BADGE */}
+                  <div className="info-panel-center-badge">
+                    <div className="center-shield-wrap">
+                      <ShieldCheck size={20} color="#818CF8" />
+                    </div>
+                    <div className="center-badge-text">
+                      <strong>✓ Verified Network</strong>
+                      <span>500+ Certified Advisors</span>
+                    </div>
+                  </div>
+
+                  {/* MIDDLE ROW: HD Video & 50+ Services */}
+                  <div className="info-panel-middle-row">
+                    <div className="info-chip">
+                      <div className="info-chip-icon chip-purple">
+                        <Video size={14} />
+                      </div>
+                      <div className="info-chip-text">
+                        <strong>HD Video</strong>
+                        <span>Face-to-face</span>
+                      </div>
+                    </div>
+
+                    <div className="info-chip">
+                      <div className="info-chip-icon chip-amber">
+                        <BriefcaseBusiness size={14} />
+                      </div>
+                      <div className="info-chip-text">
+                        <strong>50+ Services</strong>
+                        <span>Legal, Tax, Health</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* BOTTOM MICRO-STATS BAR */}
+                  <div className="info-panel-stats-bar">
+                    <div className="panel-stat-item">
+                      <strong>500K+</strong>
+                      <span>Trusted Users</span>
+                    </div>
+                    <div className="panel-stat-sep"></div>
+                    <div className="panel-stat-item">
+                      <strong>4.9★</strong>
+                      <span>Avg Rating</span>
+                    </div>
+                    <div className="panel-stat-sep"></div>
+                    <div className="panel-stat-item">
+                      <strong>&lt; 60s</strong>
+                      <span>Avg Connect</span>
                     </div>
                   </div>
                 </div>
@@ -828,7 +872,7 @@ export default function Home() {
                 Get expert help instantly.
               </p>
 
-              {/* Action Grid (2x2 Grid Cards with Icons & Short Titles) */}
+              {/* Action Grid (4 Horizontal Action Buttons) */}
               <div className="mobile-hero-action-grid">
                 {/* Action 1: Chat */}
                 <button 
@@ -837,9 +881,9 @@ export default function Home() {
                   onClick={() => navigate("/user/call-chat?page=1&mode=chat")}
                 >
                   <div className="hero-card-icon-wrap chat-icon-wrap">
-                    <MessageSquare size={20} color="#1E3A8A" fill="none" />
+                    <MessageSquare size={20} color="#FFFFFF" strokeWidth={2.2} />
                   </div>
-                  <span className="hero-card-label">Instant Chat</span>
+                  <span className="hero-card-label">Chat</span>
                 </button>
 
                 {/* Action 2: Call */}
@@ -849,9 +893,9 @@ export default function Home() {
                   onClick={() => navigate("/user/call-chat?page=1&mode=call")}
                 >
                   <div className="hero-card-icon-wrap call-icon-wrap">
-                    <PhoneCall size={20} color="#059669" fill="none" />
+                    <PhoneCall size={20} color="#FFFFFF" strokeWidth={2.2} />
                   </div>
-                  <span className="hero-card-label">Audio Call</span>
+                  <span className="hero-card-label">Call</span>
                 </button>
 
                 {/* Action 3: Video */}
@@ -861,9 +905,9 @@ export default function Home() {
                   onClick={() => navigate("/user/call-chat?page=1&mode=video")}
                 >
                   <div className="hero-card-icon-wrap video-icon-wrap">
-                    <Video size={20} color="#6366F1" fill="none" />
+                    <Video size={20} color="#FFFFFF" strokeWidth={2.2} />
                   </div>
-                  <span className="hero-card-label">Video Call</span>
+                  <span className="hero-card-label">Video</span>
                 </button>
 
                 {/* Action 4: Service */}
@@ -873,9 +917,9 @@ export default function Home() {
                   onClick={() => navigate("/user/all-services")}
                 >
                   <div className="hero-card-icon-wrap service-icon-wrap">
-                    <BriefcaseBusiness size={20} color="#F59E0B" fill="none" />
+                    <BriefcaseBusiness size={20} color="#FFFFFF" strokeWidth={2.2} />
                   </div>
-                  <span className="hero-card-label">Services</span>
+                  <span className="hero-card-label">Service</span>
                 </button>
               </div>
             </div>

@@ -21,7 +21,7 @@ import { APP_CONFIG } from "../config/appConfig";
 import useNativeIncomingCall from "../shared/hooks/useNativeIncomingCall";
 import LegalManager from "../shared/components/Legal/LegalManager";
 import { useAuth } from "../shared/context/UserAuthContext";
-// import KeyboardDiagnosticOverlay from "../shared/components/KeyboardDiagnosticOverlay";
+import { useLoader } from "../shared/loaders/LoaderContext";
 import { setNativeKeyboardMode, isAndroid10 } from "../shared/utils/nativeKeyboardBridge";
 
 const UserAppRoutes =
@@ -81,15 +81,19 @@ export default function AppRouter() {
     [location.pathname]
   );
 
+  const { finishAppBoot } = useLoader();
+
   const hideSplash = useCallback(() => {
     setShowSplash(false);
-  }, []);
+    finishAppBoot();
+  }, [finishAppBoot]);
 
   useEffect(() => {
     if (isCallScreenPath(location.pathname)) {
       setShowSplash(false);
+      finishAppBoot();
     }
-  }, [location.pathname]);
+  }, [location.pathname, finishAppBoot]);
 
   // Push notification setup
   useEffect(() => {

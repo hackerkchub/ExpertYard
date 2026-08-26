@@ -18,6 +18,8 @@ import {
   FiDownload,
 } from "react-icons/fi";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
+import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
+import { useLoader } from "../../../../shared/loaders/LoaderContext";
 import { usePublicExpert } from "../../context/PublicExpertContext";
 import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 import * as S from "./AllServices.style";
@@ -40,12 +42,10 @@ const AllServices = () => {
 
   const fetchAllServices = useCallback(async () => {
       try {
-        // Background fetch: User ko purana data dikhta rahega tab tak naya load hoga
-        const res = await axios.get(`${APP_CONFIG.API_BASE_URL}/services`);
+        const res = await api.get(`/services`, { showGlobalLoader: true });
         if (res.data && res.data.success) {
           const freshData = res.data.data || [];
           setServices(freshData);
-          // Update cache for next time
           localStorage.setItem("expert_services_cache", JSON.stringify(freshData));
         }
       } catch (err) {
@@ -119,16 +119,9 @@ const AllServices = () => {
     });
   }, [activeCategory, searchTerm, services]);
 
-  // Professional Skeleton Loader
+  // Professional Loader
   if (loading && services.length === 0) {
-    return (
-      <S.PageContainer className="all-services-page">
-        <S.LoaderContainer>
-          <div className="spinner"></div>
-          <p>Fetching Professional Services...</p>
-        </S.LoaderContainer>
-      </S.PageContainer>
-    );
+    return null;
   }
 
   return (

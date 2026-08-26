@@ -15,11 +15,11 @@ const adminApi = axios.create({
   },
 });
 
-/* REQUEST */
+/* REQUEST INTERCEPTOR */
 adminApi.interceptors.request.use(
   (config) => {
-
-    if (!config.skipLoader) {
+    if (config?.showGlobalLoader || config?.useGlobalLoader) {
+      config._loaderActive = true;
       loader?.showLoader();
     }
 
@@ -32,26 +32,28 @@ adminApi.interceptors.request.use(
     return config;
   },
   (error) => {
-
-    loader?.hideLoader();
+    if (error?.config?._loaderActive) {
+      error.config._loaderActive = false;
+      loader?.hideLoader();
+    }
 
     return Promise.reject(error);
   }
 );
 
-/* RESPONSE */
+/* RESPONSE INTERCEPTOR */
 adminApi.interceptors.response.use(
   (response) => {
-
-    if (!response.config.skipLoader) {
+    if (response?.config?._loaderActive) {
+      response.config._loaderActive = false;
       loader?.hideLoader();
     }
 
     return response;
   },
   (error) => {
-
-    if (!error.config?.skipLoader) {
+    if (error?.config?._loaderActive) {
+      error.config._loaderActive = false;
       loader?.hideLoader();
     }
 

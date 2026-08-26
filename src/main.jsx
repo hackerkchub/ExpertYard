@@ -122,37 +122,29 @@ if (!isNativeApp && "serviceWorker" in navigator) {
   });
 }
 
+import { LoaderProvider } from "./shared/loaders/LoaderContext";
+
 /* ================= REACT APP ================= */
 
 function startReact() {
   ReactDOM.createRoot(document.getElementById("root")).render(
     <HelmetProvider>
-  <ThemeProvider theme={theme}>
-    <GlobalStyles />
-
-    <CategoryProvider>
-
-      <BrowserRouter>
-
-        <AuthProvider>
-
-          <WalletProvider>
-
-            <LegalProvider>
-
-              <AppRouter />
-
-            </LegalProvider>
-
-          </WalletProvider>
-
-        </AuthProvider>
-
-      </BrowserRouter>
-
-    </CategoryProvider>
-
-  </ThemeProvider>
-</HelmetProvider>
+      <ThemeProvider theme={theme}>
+        <GlobalStyles />
+        <LoaderProvider>
+          <CategoryProvider>
+            <BrowserRouter>
+              <AuthProvider>
+                <WalletProvider>
+                  <LegalProvider>
+                    <AppRouter />
+                  </LegalProvider>
+                </WalletProvider>
+              </AuthProvider>
+            </BrowserRouter>
+          </CategoryProvider>
+        </LoaderProvider>
+      </ThemeProvider>
+    </HelmetProvider>
   );
-}
+}

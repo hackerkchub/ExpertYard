@@ -7,6 +7,7 @@ import { getSubCategoriesApi } from "../../../../shared/api/expertapi/category.a
 import { useCategory } from "../../../../shared/context/CategoryContext";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import NeedHelpForm from "../../components/NeedHelpForm/NeedHelpForm";
+import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
 import { useSeo } from "../../../../shared/seo/useSeo";
 import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/leadTracking";
 import {
@@ -260,11 +261,7 @@ export default function SubcategoryPage() {
         </SectionHeader>
 
         {loading || isInitialCategoryLoading ? (
-          <LoadingGrid>
-            {Array.from({ length: 6 }).map((_, index) => (
-              <SkeletonCard key={index} />
-            ))}
-          </LoadingGrid>
+          <PremiumCenterLoader />
         ) : error ? (
           <EmptyStateBox>
             <EmptyStateTitle>Unable to load subcategories</EmptyStateTitle>

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import SEOHead from "../../../../shared/components/SEO/SEOHead";
+import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
 
 const asArray = (value) => {
   if (Array.isArray(value)) return value;
@@ -81,7 +82,7 @@ export default function MasterServiceDetailPage() {
     `/user/booking/${service.slug}${activationId ? `?expertActivationId=${activationId}` : ""}`;
 
   if (loading) {
-    return <div style={{ padding: "4rem", textAlign: "center" }}>Loading service details...</div>;
+    return <PremiumCenterLoader />;
   }
 
   if (error || !service) {

@@ -21,6 +21,7 @@ import {
 } from "react-icons/fi";
 import AddBalancePopup from "../../components/AddBalancePopup/AddBalancePopup";
 import { uploadWorkspaceFile } from "../../../../shared/api/workspace.api";
+import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
 
 const WIZARD_CANVAS_STYLES = `
   @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -517,13 +518,7 @@ export default function DynamicBookingWizard() {
   };
 
   if (loading) {
-    return (
-      <div style={{ minHeight: "80vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: 16 }}>
-        <style dangerouslySetInnerHTML={{ __html: WIZARD_CANVAS_STYLES }} />
-        <div style={{ width: 44, height: 44, border: "4px solid #e2e8f0", borderTopColor: "#6b46c1", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-        <p style={{ color: "#64748b", fontWeight: 600, fontSize: "0.95rem" }}>Loading Booking Details...</p>
-      </div>
-    );
+    return <PremiumCenterLoader />;
   }
 
   if (bookingError && !service) {

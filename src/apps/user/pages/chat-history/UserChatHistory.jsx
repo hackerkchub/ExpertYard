@@ -935,7 +935,7 @@ export const UserChatHistory = () => {
   }
 
   if (isLoading()) {
-    return null;
+    return <PremiumCenterLoader />;
   }
 
   return (

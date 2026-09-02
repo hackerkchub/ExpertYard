@@ -27,6 +27,7 @@ import {
   FiCpu,
   FiShield,
   FiSend,
+  FiMessageSquare,
 } from "react-icons/fi";
 import {
   Side,
@@ -85,6 +86,7 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
     if (currentPath === itemPath) return true;
     
     // Nested route active state matching
+    if (itemPath === "/admin/inquiries" && currentPath.startsWith("/admin/inquiries")) return true;
     if (itemPath === "/admin/expert-management" && (currentPath.startsWith("/admin/expert/") || currentPath === "/admin/expert-management")) return true;
     if (itemPath === "/admin/master-services/list" && currentPath.startsWith("/admin/master-services/")) return true;
     if (itemPath === "/admin/form-builder" && currentPath.startsWith("/admin/form-builder")) return true;
@@ -110,6 +112,7 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
     {
       section: "Expert & User Operations",
       items: [
+        { path: "/admin/inquiries", icon: FiMessageSquare, label: "Inquiries" },
         { path: "/admin/expert-management", icon: FiUsers, label: "Experts List" },
         { path: "/admin/subscribed-experts", icon: FiUserCheck, label: "Subscribed Experts" },
         { path: "/admin/expert-approval", icon: FiCheckCircle, label: "Expert Approvals", badge: notifications.pendingApprovals },
@@ -148,8 +151,9 @@ export default function Sidebar({ mobileOpen, setMobileOpen }) {
     {
       section: "Notifications & Legal",
       items: [
-        { path: "/admin/notifications/users", icon: FiBell, label: "User Notifications" },
-        { path: "/admin/notifications/experts", icon: FiSend, label: "Expert Notifications" },
+        { path: "/admin/notifications", icon: FiBell, label: "Admin Inbox" },
+        { path: "/admin/notifications/users", icon: FiSend, label: "User Broadcast" },
+        { path: "/admin/notifications/experts", icon: FiSend, label: "Expert Broadcast" },
         { path: "/admin/legal-management", icon: FiFileText, label: "Legal Management" },
       ]
     }

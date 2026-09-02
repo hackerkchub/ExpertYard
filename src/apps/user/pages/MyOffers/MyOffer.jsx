@@ -7,6 +7,7 @@ import {
   FiStar,
   FiSend
 } from "react-icons/fi";
+import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
 
 import {
   PageWrap,
@@ -303,11 +304,7 @@ export default function MyOffer() {
 
   /* ================== UI ================== */
   if (loading) {
-    return (
-      <PageWrap>
-        <Container>Loading offers...</Container>
-      </PageWrap>
-    );
+    return <PremiumCenterLoader />;
   }
 
   return (

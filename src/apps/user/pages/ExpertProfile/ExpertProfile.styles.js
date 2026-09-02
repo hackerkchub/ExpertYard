@@ -757,9 +757,14 @@ export const ExperienceCertificate = styled.a`
 
 /* Post Feed Grid */
 export const PostGrid = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+
+  @media (max-width: 767px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 `;
 
 export const PostCard = styled.div`
@@ -770,6 +775,8 @@ export const PostCard = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  box-sizing: border-box;
+  overflow: hidden;
 `;
 
 export const PostHeader = styled.div`
@@ -793,10 +800,20 @@ export const PostDescription = styled.p`
 `;
 
 export const PostImage = styled.img`
+  display: block;
   width: 100%;
-  max-height: 240px;
-  object-fit: cover;
+  max-width: 100%;
+  height: 240px;
+  max-height: 260px;
+  object-fit: contain;
+  background: #0f172a;
   border-radius: 10px;
+  margin: 0 auto;
+
+  @media (max-width: 767px) {
+    height: auto;
+    max-height: 320px;
+  }
 `;
 
 export const PostStats = styled.div`

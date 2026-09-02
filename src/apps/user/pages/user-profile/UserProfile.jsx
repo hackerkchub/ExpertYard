@@ -42,6 +42,7 @@ import {
   deleteUserProfileApi
 } from '../../../../shared/api/userApi/auth.api';
 import { useAuth } from '../../../../shared/context/UserAuthContext';
+import PremiumCenterLoader from '../../../../shared/components/Loader/PremiumCenterLoader';
 import OtpModal from '../../../expert/components/OtpModal';
 import { APP_CONFIG } from '../../../../config/appConfig';
 
@@ -108,12 +109,17 @@ const getErrorMessage = (error, fallback = "Something went wrong") => {
 
 const UserProfile = () => {
   const navigate = useNavigate();
-  const { logout, updateUser } = useAuth();
+  const { isLoggedIn, logout, updateUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [signOutDialogOpen, setSignOutDialogOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  
+  const showSnackbar = (message, severity = 'success') => {
+    setSnackbar({ open: true, message, severity });
+  };
   
   // OTP states
   const [showOtp, setShowOtp] = useState(false);
@@ -157,8 +163,21 @@ const UserProfile = () => {
   const [savingProfession, setSavingProfession] = useState(false);
 
   useEffect(() => {
+    if (!isLoggedIn) {
+      setUserData({
+        id: '',
+        full_name: '',
+        email: '',
+        phone: '',
+        referral_code: '',
+        profession: '',
+        location: ''
+      });
+      navigate('/user/auth', { replace: true });
+      return;
+    }
     fetchUserProfile();
-  }, []);
+  }, [isLoggedIn, navigate]);
 
   const fetchUserProfile = async () => {
     try {
@@ -394,16 +413,26 @@ const UserProfile = () => {
   };
 
   const handleSignOutConfirm = async () => {
+    if (signingOut) return;
     try {
-      setSignOutDialogOpen(false);
+      setSigningOut(true);
       showSnackbar("Signing out...", "info");
-      logout();
-      setTimeout(() => {
-        window.location.href = "/user/auth";
-      }, 500);
+      setUserData({
+        id: '',
+        full_name: '',
+        email: '',
+        phone: '',
+        referral_code: '',
+        profession: '',
+        location: ''
+      });
+      setSignOutDialogOpen(false);
+      await logout();
+      navigate('/user/auth', { replace: true });
     } catch (error) {
       console.error("Error signing out:", error);
       showSnackbar(getErrorMessage(error, "Error signing out"), "error");
+      setSigningOut(false);
     }
   };
 
@@ -421,11 +450,7 @@ const UserProfile = () => {
   };
 
   if (loading) {
-    return (
-      <LoadingContainer>
-        <CircularProgress size={60} thickness={4} />
-      </LoadingContainer>
-    );
+    return <PremiumCenterLoader />;
   }
 
   return (
@@ -542,7 +567,7 @@ const UserProfile = () => {
                           {userData.profession ? 'Change' : 'Add'}
                         </Button>
                       </Box>
-                      <InfoValue variant="body1" sx={{ fontWeight: 600, color: userData.profession ? '#0f172a' : '#64748b' }}>
+                      <InfoValue component="div" variant="body1" sx={{ fontWeight: 600, color: userData.profession ? '#0f172a' : '#64748b' }}>
                         {userData.profession ? (
                           <Chip 
                             label={userData.profession} 
@@ -830,7 +855,7 @@ const UserProfile = () => {
       {/* Sign Out Confirmation Dialog */}
       <StyledDialog
         open={signOutDialogOpen}
-        onClose={() => setSignOutDialogOpen(false)}
+        onClose={() => !signingOut && setSignOutDialogOpen(false)}
         aria-labelledby="signout-dialog-title"
       >
         <DialogTitleStyled id="signout-dialog-title">
@@ -842,11 +867,20 @@ const UserProfile = () => {
           </DialogContentText>
         </DialogContentStyled>
         <DialogActions sx={{ padding: '16px 24px' }}>
-          <Button onClick={() => setSignOutDialogOpen(false)} variant="outlined">
+          <Button 
+            onClick={() => setSignOutDialogOpen(false)} 
+            disabled={signingOut} 
+            variant="outlined"
+          >
             Cancel
           </Button>
-          <Button onClick={handleSignOutConfirm} color="warning" variant="contained">
-            Sign Out
+          <Button 
+            onClick={handleSignOutConfirm} 
+            disabled={signingOut} 
+            color="warning" 
+            variant="contained"
+          >
+            {signingOut ? "Signing Out..." : "Sign Out"}
           </Button>
         </DialogActions>
       </StyledDialog>

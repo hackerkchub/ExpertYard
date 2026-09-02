@@ -9,6 +9,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { APP_CONFIG } from "../../../../config/appConfig";
 import { socket, connectSocket } from "../../../../shared/api/socket";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
+import g9Logo from "../../../../assets/logo.webp";
 
 // Animations
 const fadeIn = keyframes`
@@ -326,6 +327,27 @@ const ExpertAvatar = styled.div`
   @media (max-width: 768px) {
     width: 44px;
     height: 44px;
+  }
+`;
+
+const SupportAvatarWrap = styled.div`
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+
+  img {
+    width: 78%;
+    height: 78%;
+    object-fit: contain;
+    object-position: center;
+    display: block;
   }
 `;
 
@@ -1297,10 +1319,31 @@ export default function UserInquiriesPage() {
 
   const isInactive = selectedInquiry?.status === "closed" || selectedInquiry?.status === "rejected";
 
+  const isAdminInquiry = (inquiry) => {
+    if (!inquiry) return false;
+    return (
+      !inquiry.expert_id ||
+      Boolean(inquiry.master_service_id) ||
+      !inquiry.expert_name ||
+      inquiry.expert_name === "Expert" ||
+      inquiry.expert_name === "G9 Support Team"
+    );
+  };
+
+  const getInquiryDisplayName = (inquiry) => {
+    if (isAdminInquiry(inquiry)) {
+      return "G9 Support Team";
+    }
+    return inquiry.expert_name || "Expert";
+  };
+
   // Get the display name for a message
   const getMessageSenderName = (msg) => {
     if (msg.sender_type === "user") {
       return "You";
+    }
+    if (msg.sender_type === "admin" || (msg.sender_type !== "expert" && isAdminInquiry(selectedInquiry))) {
+      return "G9 Support Team";
     }
     return selectedInquiry?.expert_name || "Expert";
   };
@@ -1367,7 +1410,11 @@ export default function UserInquiriesPage() {
                   onClick={() => handleSelectInquiry(item)}
                 >
                   <ExpertAvatar>
-                    {item.expert_photo ? (
+                    {isAdminInquiry(item) ? (
+                      <SupportAvatarWrap>
+                        <img src={g9Logo} alt="G9 Support Team" />
+                      </SupportAvatarWrap>
+                    ) : item.expert_photo ? (
                       <ExpertPhoto src={item.expert_photo} alt={item.expert_name} />
                     ) : (
                       <ExpertPhotoFallback>{getInitials(item.expert_name)}</ExpertPhotoFallback>
@@ -1376,14 +1423,14 @@ export default function UserInquiriesPage() {
                   <ItemContent>
                     <ItemHeader>
                       <ExpertName>
-                        {item.expert_name}
+                        {getInquiryDisplayName(item)}
                         <VerifiedBadge><FiCheckCircle size={12} /></VerifiedBadge>
                       </ExpertName>
                       <StatusBadge $status={item.status}>{item.status}</StatusBadge>
                     </ItemHeader>
                     <CategoryTag>
                       <FiTag size={12} />
-                      {item.category_name || "Expert"}
+                      {isAdminInquiry(item) ? "G9 Support Team" : item.category_name || "Expert"}
                     </CategoryTag>
                     <SubjectText>{item.subject}</SubjectText>
                     <MessagePreview>{item.message}</MessagePreview>
@@ -1413,11 +1460,23 @@ export default function UserInquiriesPage() {
                     <FiArrowLeft size={20} />
                   </HeaderBackBtn>
                   <HeaderAvatar onClick={() => setShowInfoCards((prev) => !prev)}>
-                    {getInitials(selectedInquiry.expert_name)}
+                    {isAdminInquiry(selectedInquiry) ? (
+                      <SupportAvatarWrap>
+                        <img src={g9Logo} alt="G9 Support Team" />
+                      </SupportAvatarWrap>
+                    ) : selectedInquiry.expert_photo ? (
+                      <img
+                        src={selectedInquiry.expert_photo}
+                        alt={selectedInquiry.expert_name}
+                        style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                      />
+                    ) : (
+                      getInitials(selectedInquiry.expert_name)
+                    )}
                   </HeaderAvatar>
                   <div style={{ marginLeft: 4 }}>
                     <div className="inquiry-header-title" style={{ fontWeight: 600, fontSize: "0.95rem", color: "#111b21" }}>
-                      {selectedInquiry.expert_name}
+                      {getInquiryDisplayName(selectedInquiry)}
                     </div>
                     <div className="inquiry-header-status" style={{ fontSize: "0.72rem", color: "#667781" }}>
                       {selectedInquiry.status}
@@ -1432,13 +1491,22 @@ export default function UserInquiriesPage() {
                   {selectedInquiry.status !== "closed" && selectedInquiry.status !== "rejected" && (
                     <ActionPill onClick={handleCloseInquiry}>Close</ActionPill>
                   )}
-                  <ActionPill 
-                    $primary 
-                    onClick={() => navigate(`/user/experts/${selectedInquiry.expert_slug || selectedInquiry.expert_id}`)}
-                  >
-                    <FiBriefcase size={12} style={{ marginRight: 4 }} />
-                    Profile
-                  </ActionPill>
+                  {!isAdminInquiry(selectedInquiry) && (
+                    <ActionPill 
+                      $primary 
+                      onClick={() => {
+                        const targetSlug = selectedInquiry.expert_slug || selectedInquiry.slug;
+                        if (targetSlug) {
+                          navigate(`/user/experts/${targetSlug}`);
+                        } else if (selectedInquiry.expert_id) {
+                          navigate(`/user/experts/${selectedInquiry.expert_id}`);
+                        }
+                      }}
+                    >
+                      <FiBriefcase size={12} style={{ marginRight: 4 }} />
+                      Profile
+                    </ActionPill>
+                  )}
                 </HeaderActions>
               </WhatsAppHeader>
 
@@ -1448,13 +1516,13 @@ export default function UserInquiriesPage() {
                   <CardsGrid>
                     <ModernCard>
                       <CardHeader>
-                        <FiUser color="#00a884" /> Expert Overview
+                        <FiUser color="#00a884" /> {isAdminInquiry(selectedInquiry) ? "Support Team Overview" : "Expert Overview"}
                       </CardHeader>
                       <CardRow>
-                        <span>Name:</span> <strong>{selectedInquiry.expert_name}</strong>
+                        <span>Name:</span> <strong>{getInquiryDisplayName(selectedInquiry)}</strong>
                       </CardRow>
                       <CardRow>
-                        <span>Specialization:</span> <strong>{selectedInquiry.category_name || "General"}</strong>
+                        <span>Specialization:</span> <strong>{isAdminInquiry(selectedInquiry) ? "G9 Platform Support" : selectedInquiry.category_name || "General"}</strong>
                       </CardRow>
                     </ModernCard>
 

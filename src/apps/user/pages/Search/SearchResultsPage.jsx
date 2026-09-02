@@ -20,6 +20,8 @@ import {
   Mic
 } from "lucide-react";
 
+import { useAuth } from "../../../../shared/context/UserAuthContext";
+import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
 import { askG9Api } from "../../../../shared/api/userApi/ai.api";
 import { getExpertPath, getInitials } from "../../components/search/searchUtils";
 import "./SearchResultsPage.css";
@@ -426,21 +428,8 @@ export default function SearchResultsPage() {
           </div>
         )}
 
-        {/* Loading State Skeleton */}
-        {loading && (
-          <div className="g9-skeleton-grid">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-              <div key={n} className="g9-skeleton-card">
-                <div className="g9-skeleton-avatar" />
-                <div className="g9-skeleton-body">
-                  <div className="g9-skeleton-line short" />
-                  <div className="g9-skeleton-line medium" />
-                  <div className="g9-skeleton-line long" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Loading State */}
+        {loading && <PremiumCenterLoader />}
 
         {/* Needs Clarification State */}
         {!loading && needsClarification && (

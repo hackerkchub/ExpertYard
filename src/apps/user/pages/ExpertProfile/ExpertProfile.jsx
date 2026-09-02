@@ -443,7 +443,7 @@ const ExpertProfilePage = () => {
   const [selectedPricingMode, setSelectedPricingMode] = useState("per_minute");
   
   // Selected consultation option state for mobile sticky CTA & desktop sidebar
-  const [selectedConsultType, setSelectedConsultType] = useState("video");
+  const [selectedConsultType, setSelectedConsultType] = useState("chat");
 
   // Subscription states
   const [plans, setPlans] = useState([]);
@@ -629,12 +629,12 @@ const ExpertProfilePage = () => {
     if (hasInitializedConsultTypeRef.current) return;
     if (!displayPrices.hasPerMinute && !displayPrices.hasSession && !displayPrices.hasSubscription) return;
 
-    if (showProfileVideoButton && displayPrices.hasPerMinute) {
-      setSelectedConsultType("video");
+    if (showProfileChatButton && displayPrices.hasPerMinute) {
+      setSelectedConsultType("chat");
     } else if (showProfileCallButton && displayPrices.hasPerMinute) {
       setSelectedConsultType("call");
-    } else if (showProfileChatButton && displayPrices.hasPerMinute) {
-      setSelectedConsultType("chat");
+    } else if (showProfileVideoButton && displayPrices.hasPerMinute) {
+      setSelectedConsultType("video");
     } else if (displayPrices.hasSession) {
       setSelectedConsultType("session");
     } else if (displayPrices.hasSubscription) {
@@ -643,18 +643,18 @@ const ExpertProfilePage = () => {
       setSelectedConsultType("inquiry");
     }
     hasInitializedConsultTypeRef.current = true;
-  }, [showProfileVideoButton, showProfileCallButton, showProfileChatButton, displayPrices]);
+  }, [showProfileChatButton, showProfileCallButton, showProfileVideoButton, displayPrices]);
 
   // Handle pricing mode tab change with auto-selection of consult option
   const handlePricingModeChange = useCallback((mode) => {
     setSelectedPricingMode(mode);
     if (mode === "per_minute") {
-      if (showProfileVideoButton && displayPrices.hasPerMinute) {
-        setSelectedConsultType("video");
+      if (showProfileChatButton && displayPrices.hasPerMinute) {
+        setSelectedConsultType("chat");
       } else if (showProfileCallButton && displayPrices.hasPerMinute) {
         setSelectedConsultType("call");
-      } else if (showProfileChatButton && displayPrices.hasPerMinute) {
-        setSelectedConsultType("chat");
+      } else if (showProfileVideoButton && displayPrices.hasPerMinute) {
+        setSelectedConsultType("video");
       } else {
         setSelectedConsultType("inquiry");
       }
@@ -663,7 +663,7 @@ const ExpertProfilePage = () => {
     } else if (mode === "subscription") {
       setSelectedConsultType("subscription");
     }
-  }, [showProfileVideoButton, showProfileCallButton, showProfileChatButton, displayPrices]);
+  }, [showProfileChatButton, showProfileCallButton, showProfileVideoButton, displayPrices]);
 
   // Lead tracking
   useEffect(() => {
@@ -1424,7 +1424,7 @@ const ExpertProfilePage = () => {
   const activeConsultDetails = useMemo(() => getConsultDetails(selectedConsultType), [getConsultDetails, selectedConsultType]);
 
   if (profileLoading || priceLoading) {
-    return null;
+    return <PremiumCenterLoader />;
   }
 
   if (!expertData?.profile) {
@@ -1433,20 +1433,6 @@ const ExpertProfilePage = () => {
 
   return (
     <PageWrap className="expert-profile-page-container">
-      {/* 1. STICKY TOP NAVIGATION BAR */}
-      <div className="profile-top-header-bar">
-        <button type="button" onClick={() => navigate(-1)} className="top-back-btn" aria-label="Go Back">
-          <FiArrowLeft size={18} />
-        </button>
-        <div className="top-header-title">
-          <span className="top-header-name">{profile.name}</span>
-          <FiCheckCircle size={15} className="top-verified-icon" title="Verified Expert" />
-        </div>
-        <button type="button" onClick={handleShareProfile} className="top-share-btn" title="Share Profile" aria-label="Share Profile">
-          <FiShare2 size={16} />
-        </button>
-      </div>
-
       {/* MAIN LAYOUT GRID (DESKTOP 12-COLUMN: LEFT 8 COLS, RIGHT 4 COLS) */}
       <div className="profile-page-layout-grid">
         
@@ -1600,24 +1586,24 @@ const ExpertProfilePage = () => {
 
               {selectedPricingMode === "per_minute" && displayPrices.hasPerMinute && (
                 <PerMinuteGrid>
-                  {showProfileVideoButton && (
+                  {showProfileChatButton && (
                     <PricingCard
-                      $active={selectedConsultType === "video"}
-                      $borderColor="#2563eb"
-                      $bg={selectedConsultType === "video" ? "#eff6ff" : "#f8fafc"}
-                      onClick={() => setSelectedConsultType("video")}
+                      $active={selectedConsultType === "chat"}
+                      $borderColor="#8b5cf6"
+                      $bg={selectedConsultType === "chat" ? "#f5f3ff" : "#f8fafc"}
+                      onClick={() => setSelectedConsultType("chat")}
                     >
                       <div className="card-header-row">
                         <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                          <FiVideo color="#2563eb" size={14} /> Video Call
+                          <FiMessageSquare color="#8b5cf6" size={14} /> Instant Chat
                         </span>
-                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#2563eb" }} />
+                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#8b5cf6" }} />
                       </div>
-                      <div className="card-price">
-                        {hasActiveSubscription ? "Free" : `₹${displayPrices.videoCallPrice}`}
+                      <div className="card-price" style={{ color: "#7c3aed" }}>
+                        {hasActiveSubscription ? "Free" : `₹${displayPrices.chatPrice}`}
                         {!hasActiveSubscription && <span className="card-subtext"> / min</span>}
                       </div>
-                      <span className="card-subtext">HD Video + Audio</span>
+                      <span className="card-subtext">Text & File Sharing</span>
                     </PricingCard>
                   )}
 
@@ -1642,24 +1628,24 @@ const ExpertProfilePage = () => {
                     </PricingCard>
                   )}
 
-                  {showProfileChatButton && (
+                  {showProfileVideoButton && (
                     <PricingCard
-                      $active={selectedConsultType === "chat"}
-                      $borderColor="#8b5cf6"
-                      $bg={selectedConsultType === "chat" ? "#f5f3ff" : "#f8fafc"}
-                      onClick={() => setSelectedConsultType("chat")}
+                      $active={selectedConsultType === "video"}
+                      $borderColor="#2563eb"
+                      $bg={selectedConsultType === "video" ? "#eff6ff" : "#f8fafc"}
+                      onClick={() => setSelectedConsultType("video")}
                     >
                       <div className="card-header-row">
                         <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                          <FiMessageSquare color="#8b5cf6" size={14} /> Instant Chat
+                          <FiVideo color="#2563eb" size={14} /> Video Call
                         </span>
-                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#8b5cf6" }} />
+                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#2563eb" }} />
                       </div>
-                      <div className="card-price" style={{ color: "#7c3aed" }}>
-                        {hasActiveSubscription ? "Free" : `₹${displayPrices.chatPrice}`}
+                      <div className="card-price">
+                        {hasActiveSubscription ? "Free" : `₹${displayPrices.videoCallPrice}`}
                         {!hasActiveSubscription && <span className="card-subtext"> / min</span>}
                       </div>
-                      <span className="card-subtext">Text & File Sharing</span>
+                      <span className="card-subtext">HD Video + Audio</span>
                     </PricingCard>
                   )}
 
@@ -1794,7 +1780,7 @@ const ExpertProfilePage = () => {
             {activeTab === "experience" && (
               <TabContent>
                 {loadingExperience ? (
-                  <LoadingReviews><Spinner /><p>Loading experience...</p></LoadingReviews>
+                  <PremiumCenterLoader />
                 ) : experienceList.length === 0 ? (
                   <NoReviews><FiBriefcase size={36} color="#cbd5e1" /><h4>No experience records</h4></NoReviews>
                 ) : (
@@ -1820,7 +1806,7 @@ const ExpertProfilePage = () => {
             {activeTab === "services" && (
               <TabContent>
                 {loadingServices ? (
-                  <LoadingReviews><Spinner /><p>Loading services...</p></LoadingReviews>
+                  <PremiumCenterLoader />
                 ) : expertServices.length === 0 ? (
                   <NoReviews><FiBriefcase size={36} color="#cbd5e1" /><h4>No active services listed</h4></NoReviews>
                 ) : (
@@ -1875,7 +1861,7 @@ const ExpertProfilePage = () => {
             {activeTab === "posts" && (
               <TabContent>
                 {loadingPosts ? (
-                  <LoadingReviews><Spinner /><p>Loading posts...</p></LoadingReviews>
+                  <PremiumCenterLoader />
                 ) : posts.length === 0 ? (
                   <NoReviews><FiImage size={36} color="#cbd5e1" /><h4>No posts yet</h4></NoReviews>
                 ) : (
@@ -1935,7 +1921,7 @@ const ExpertProfilePage = () => {
             {activeTab === "reels" && (
               <TabContent>
                 {loadingReels ? (
-                  <LoadingReviews><Spinner /><p>Loading reels...</p></LoadingReviews>
+                  <PremiumCenterLoader />
                 ) : reels.length === 0 ? (
                   <NoReviews><FiVideo size={36} color="#cbd5e1" /><h4>No reels uploaded</h4></NoReviews>
                 ) : (
@@ -2000,7 +1986,7 @@ const ExpertProfilePage = () => {
                 <RecentReviewsTitle><FiMessageSquare size={14} /> Reviews Feed ({reviews.length})</RecentReviewsTitle>
                 <ReviewList>
                   {loadingReviews ? (
-                    <LoadingReviews><Spinner /><p>Loading reviews...</p></LoadingReviews>
+                    <PremiumCenterLoader />
                   ) : reviews.length === 0 ? (
                     <NoReviews><FiStar size={36} color="#cbd5e1" /><h4>No reviews yet</h4></NoReviews>
                   ) : (
@@ -2058,23 +2044,23 @@ const ExpertProfilePage = () => {
             {/* Mode 1: Per Minute 2x2 Grid */}
             {selectedPricingMode === "per_minute" && displayPrices.hasPerMinute && (
               <PerMinuteGrid>
-                {showProfileVideoButton && (
+                {showProfileChatButton && (
                   <PricingCard
-                    $active={selectedConsultType === "video"}
-                    $borderColor="#2563eb"
-                    $bg={selectedConsultType === "video" ? "#eff6ff" : "#f8fafc"}
-                    onClick={() => setSelectedConsultType("video")}
+                    $active={selectedConsultType === "chat"}
+                    $borderColor="#8b5cf6"
+                    $bg={selectedConsultType === "chat" ? "#f5f3ff" : "#f8fafc"}
+                    onClick={() => setSelectedConsultType("chat")}
                   >
                     <div className="card-header-row">
                       <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                        <FiVideo color="#2563eb" size={14} /> Video Call
+                        <FiMessageSquare color="#8b5cf6" size={14} /> Instant Chat
                       </span>
                     </div>
-                    <div className="card-price">
-                      {hasActiveSubscription ? "Free" : `₹${displayPrices.videoCallPrice}`}
+                    <div className="card-price" style={{ color: "#7c3aed" }}>
+                      {hasActiveSubscription ? "Free" : `₹${displayPrices.chatPrice}`}
                       {!hasActiveSubscription && <span className="card-subtext"> / min</span>}
                     </div>
-                    <span className="card-subtext">HD Video + Audio</span>
+                    <span className="card-subtext">Text & File Sharing</span>
                   </PricingCard>
                 )}
 
@@ -2098,23 +2084,23 @@ const ExpertProfilePage = () => {
                   </PricingCard>
                 )}
 
-                {showProfileChatButton && (
+                {showProfileVideoButton && (
                   <PricingCard
-                    $active={selectedConsultType === "chat"}
-                    $borderColor="#8b5cf6"
-                    $bg={selectedConsultType === "chat" ? "#f5f3ff" : "#f8fafc"}
-                    onClick={() => setSelectedConsultType("chat")}
+                    $active={selectedConsultType === "video"}
+                    $borderColor="#2563eb"
+                    $bg={selectedConsultType === "video" ? "#eff6ff" : "#f8fafc"}
+                    onClick={() => setSelectedConsultType("video")}
                   >
                     <div className="card-header-row">
                       <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                        <FiMessageSquare color="#8b5cf6" size={14} /> Instant Chat
+                        <FiVideo color="#2563eb" size={14} /> Video Call
                       </span>
                     </div>
-                    <div className="card-price" style={{ color: "#7c3aed" }}>
-                      {hasActiveSubscription ? "Free" : `₹${displayPrices.chatPrice}`}
+                    <div className="card-price">
+                      {hasActiveSubscription ? "Free" : `₹${displayPrices.videoCallPrice}`}
                       {!hasActiveSubscription && <span className="card-subtext"> / min</span>}
                     </div>
-                    <span className="card-subtext">Text & File Sharing</span>
+                    <span className="card-subtext">HD Video + Audio</span>
                   </PricingCard>
                 )}
 
@@ -2234,7 +2220,7 @@ const ExpertProfilePage = () => {
             </div>
             
             {loadingPlans ? (
-              <div style={{ textAlign: "center", padding: 30 }}><Spinner /><p style={{ marginTop: 12, color: "#64748b" }}>Loading plans...</p></div>
+              <PremiumCenterLoader />
             ) : plans.length === 0 ? (
               <div style={{ textAlign: "center", padding: 30 }}><p style={{ color: "#64748b" }}>No subscription plans available for this expert.</p></div>
             ) : (

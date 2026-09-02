@@ -39,6 +39,7 @@ import CategorySection from "./components/CategorySection";
 import ReelsSection from "./components/ReelsSection";
 import ExpertTipsSection from "./components/ExpertTipsSection";
 import HomeSkeleton from "./components/HomeSkeleton";
+import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
 import { HomeLeftSidebar, HomeRightSidebar } from "./components/HomeSidebars";
 import AskG9Modal from "../../../../shared/components/ai/AskG9Modal";
 import AskG9HomeWidget from "../../../../shared/components/ai/AskG9HomeWidget";
@@ -938,7 +939,7 @@ export default function Home() {
 
           {/* REDESIGNED HOMEPAGE CONTENT */}
           {loadingDashboard ? (
-            <HomeSkeleton />
+            <PremiumCenterLoader />
           ) : (
             <div className="homepage-redesign-feed">
               {/* CATEGORY WISE HOMEPAGE SECTIONS */}

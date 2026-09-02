@@ -142,9 +142,10 @@ export default function MainLayout() {
             onNotificationOpen={() => navigate("/user/notifications")}
             onWalletOpen={() => navigate("/user/wallet")}
             onFilterOpen={() => navigate("/user/search")}
+            onLogin={openLogin}
+            onLogout={logout}
             balance={balance}
             isLoggedIn={isLoggedIn}
-            onLogout={logout}
             user={user}
           />
         </div>

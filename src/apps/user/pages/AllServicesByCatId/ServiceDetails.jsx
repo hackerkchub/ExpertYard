@@ -18,6 +18,7 @@ import { FaWallet } from "react-icons/fa";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../../shared/context/WalletContext";
 import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
+import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
 import { fireAlert } from "../../../../shared/utils/lazyNotifications";
 import { deductWalletApi } from "../../../../shared/api/userApi/walletApi";
 import api from "../../../../shared/api/axiosInstance";
@@ -197,7 +198,7 @@ const ServiceDetail = () => {
     }
   };
 
-  if (loading && !service) return null;
+  if (loading && !service) return <PremiumCenterLoader />;
   if (!service) return <S.ErrorState>Service not found.</S.ErrorState>;
 
   return (

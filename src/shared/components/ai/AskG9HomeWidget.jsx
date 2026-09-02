@@ -188,7 +188,6 @@ export default function AskG9HomeWidget({ onOpenModal }) {
           handleSubmitPrompt();
         }}
         className="ask-g9-form-row"
-        style={{ display: "flex", gap: "8px", alignItems: "center", position: "relative" }}
       >
         <input
           type="text"
@@ -197,61 +196,28 @@ export default function AskG9HomeWidget({ onOpenModal }) {
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           disabled={loading}
-          style={{
-            flex: 1,
-            padding: "14px 18px",
-            borderRadius: "14px",
-            border: "1.5px solid #cbd5e1",
-            fontSize: "0.95rem",
-            outline: "none",
-            background: "#ffffff",
-            boxShadow: "inset 0 1px 2px rgba(0,0,0,0.03)",
-          }}
         />
 
-        <button
-          type="button"
-          className="ask-g9-voice-btn"
-          onClick={startVoiceInput}
-          disabled={loading}
-          style={{
-            padding: "13px 14px",
-            borderRadius: "14px",
-            border: "1.5px solid #cbd5e1",
-            background: isListening ? "#fee2e2" : "#f8fafc",
-            color: isListening ? "#dc2626" : "#64748b",
-            cursor: loading ? "not-allowed" : "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          title="Voice Search"
-        >
-          {isListening ? <MicOff size={18} /> : <Mic size={18} />}
-        </button>
+        <div className="ask-g9-action-btns">
+          <button
+            type="button"
+            className={`ask-g9-voice-btn ${isListening ? "is-listening" : ""}`}
+            onClick={startVoiceInput}
+            disabled={loading}
+            title="Voice Search"
+          >
+            {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+          </button>
 
-        <button
-          type="submit"
-          className="ask-g9-submit-btn"
-          disabled={loading || !prompt.trim()}
-          style={{
-            padding: "14px 22px",
-            borderRadius: "14px",
-            border: "none",
-            background: "linear-gradient(135deg, #000080 0%, #1e3a8a 100%)",
-            color: "#ffffff",
-            fontWeight: 700,
-            cursor: loading || !prompt.trim() ? "not-allowed" : "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            boxShadow: "0 4px 12px rgba(0,0,128,0.25)",
-            opacity: loading || !prompt.trim() ? 0.75 : 1,
-          }}
-        >
-          {loading ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
-          <span>{loading ? "Searching..." : "Ask AI"}</span>
-        </button>
+          <button
+            type="submit"
+            className="ask-g9-submit-btn"
+            disabled={loading || !prompt.trim()}
+          >
+            {loading ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
+            <span>{loading ? "Searching..." : "Ask AI"}</span>
+          </button>
+        </div>
       </form>
 
       {/* Initial Suggestions */}

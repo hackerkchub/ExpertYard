@@ -1,11 +1,12 @@
 import React from "react";
-import { FiZap, FiCheckCircle } from "react-icons/fi";
+import { FiZap, FiCheckCircle, FiMessageSquare } from "react-icons/fi";
 
 export default function MobileStickyBookingBar({
   displayMinPrice,
   isAlreadyBooked,
   onBookClick,
-  onOpenWorkspaceClick
+  onOpenWorkspaceClick,
+  onSendInquiry
 }) {
   return (
     <div className="msp-mobile-sticky-bar">
@@ -16,12 +17,22 @@ export default function MobileStickyBookingBar({
         </div>
       </div>
 
-      <div className="msp-mobile-bar-action-col">
+      <div className="msp-mobile-bar-action-col" style={{ display: "flex", gap: "8px" }}>
+        <button
+          type="button"
+          className="msp-mobile-bar-btn"
+          onClick={onSendInquiry}
+          style={{ background: "#ffffff", color: "#0f172a", border: "1px solid #cbd5e1", flex: 1, minWidth: "90px" }}
+        >
+          <FiMessageSquare size={15} /> Inquire
+        </button>
+
         {isAlreadyBooked ? (
           <button
             type="button"
             className="msp-mobile-bar-btn msp-mobile-bar-active"
             onClick={onOpenWorkspaceClick}
+            style={{ flex: 1 }}
           >
             <FiCheckCircle size={16} /> Active Booking
           </button>
@@ -30,6 +41,7 @@ export default function MobileStickyBookingBar({
             type="button"
             className="msp-mobile-bar-btn msp-mobile-bar-primary"
             onClick={onBookClick}
+            style={{ flex: 1 }}
           >
             <FiZap size={16} /> Book Service
           </button>

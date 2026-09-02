@@ -23,6 +23,7 @@ import {
   FiX
 } from "react-icons/fi";
 import Swal from "sweetalert2";
+import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
 import { APP_CONFIG } from "../../../../config/appConfig";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import useChatRequest from "../../../../shared/hooks/useChatRequest";
@@ -246,6 +247,17 @@ export default function ReelsPage() {
   const playFeedbackTimerRef = useRef(null);
   const allReelsPoolRef = useRef([]);
 
+  // One-gesture navigation lock refs
+  const isNavigatingRef = useRef(false);
+  const lastNavTimeRef = useRef(0);
+  const wheelLockTimeoutRef = useRef(null);
+  const touchStartYRef = useRef(null);
+  const activeIdxRef = useRef(activeIdx);
+
+  useEffect(() => {
+    activeIdxRef.current = activeIdx;
+  }, [activeIdx]);
+
   // Utility to shuffle an array (Fisher-Yates)
   const shuffleArray = useCallback((array) => {
     const arr = [...array];
@@ -285,12 +297,46 @@ export default function ReelsPage() {
     const target = container.querySelector(`[data-index="${index}"]`);
     if (!target) return;
 
+    isNavigatingRef.current = true;
     snapLockRef.current = true;
+    lastNavTimeRef.current = Date.now();
+
+    if (wheelLockTimeoutRef.current) {
+      window.clearTimeout(wheelLockTimeoutRef.current);
+    }
+
     target.scrollIntoView({ block: "start", behavior });
-    window.setTimeout(() => {
+
+    wheelLockTimeoutRef.current = window.setTimeout(() => {
       snapLockRef.current = false;
-    }, 420);
+      isNavigatingRef.current = false;
+    }, 550);
   }, []);
+
+  const navigateToReel = useCallback((direction) => {
+    const now = Date.now();
+    if (isNavigatingRef.current || snapLockRef.current || now - lastNavTimeRef.current < 500) {
+      return false;
+    }
+
+    const currentIdx = activeIdxRef.current;
+    let targetIdx = currentIdx;
+
+    if (direction === "next" && currentIdx < reels.length - 1) {
+      targetIdx = currentIdx + 1;
+    } else if (direction === "prev" && currentIdx > 0) {
+      targetIdx = currentIdx - 1;
+    } else {
+      return false;
+    }
+
+    if (targetIdx !== currentIdx) {
+      setShowDesktopComments(false);
+      snapToReel(targetIdx);
+      return true;
+    }
+    return false;
+  }, [reels.length, snapToReel]);
 
   useEffect(() => {
     document.body.classList.add("g9-reels-page-active");
@@ -305,8 +351,118 @@ export default function ReelsPage() {
       if (playFeedbackTimerRef.current) {
         window.clearTimeout(playFeedbackTimerRef.current);
       }
+      if (wheelLockTimeoutRef.current) {
+        window.clearTimeout(wheelLockTimeoutRef.current);
+      }
     };
   }, []);
+
+  // Wheel / Trackpad One-Gesture Lock Listener
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return undefined;
+
+    const handleWheelEvent = (e) => {
+      if (
+        e.target.closest('.desktop-sidebar-card') ||
+        e.target.closest('.desktop-scrollable-content') ||
+        e.target.closest('.desktop-expert-header-box') ||
+        e.target.closest('.desktop-fixed-actions-footer') ||
+        e.target.closest('.mobile-comments-panel') ||
+        e.target.closest('.desktop-comments-expanded') ||
+        e.target.closest('textarea') ||
+        e.target.closest('input') ||
+        e.target.closest('.MuiDialog-root')
+      ) {
+        return;
+      }
+
+      e.preventDefault();
+
+      const delta = e.deltaY;
+      if (Math.abs(delta) < 20) return;
+
+      if (delta > 0) {
+        navigateToReel("next");
+      } else if (delta < 0) {
+        navigateToReel("prev");
+      }
+    };
+
+    container.addEventListener("wheel", handleWheelEvent, { passive: false });
+
+    return () => {
+      container.removeEventListener("wheel", handleWheelEvent);
+    };
+  }, [navigateToReel]);
+
+  // Touch Swipe One-Gesture Lock Listener
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return undefined;
+
+    const handleTouchStart = (e) => {
+      if (e.touches.length === 1) {
+        touchStartYRef.current = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchEnd = (e) => {
+      if (touchStartYRef.current === null || e.changedTouches.length === 0) return;
+      const touchEndY = e.changedTouches[0].clientY;
+      const diffY = touchStartYRef.current - touchEndY;
+      touchStartYRef.current = null;
+
+      if (
+        e.target.closest('.mobile-comments-panel') ||
+        e.target.closest('.desktop-scrollable-content') ||
+        e.target.closest('textarea') ||
+        e.target.closest('input')
+      ) {
+        return;
+      }
+
+      if (Math.abs(diffY) > 40) {
+        if (diffY > 0) {
+          navigateToReel("next");
+        } else {
+          navigateToReel("prev");
+        }
+      }
+    };
+
+    container.addEventListener("touchstart", handleTouchStart, { passive: true });
+    container.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener("touchstart", handleTouchStart);
+      container.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [navigateToReel]);
+
+  // Keyboard ArrowDown / ArrowUp Listener
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (
+        e.target.tagName === 'INPUT' ||
+        e.target.tagName === 'TEXTAREA' ||
+        e.target.isContentEditable
+      ) {
+        return;
+      }
+
+      if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+        e.preventDefault();
+        navigateToReel('next');
+      } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+        e.preventDefault();
+        navigateToReel('prev');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigateToReel]);
 
   useEffect(() => {
     setManualPausedReelIds(new Set());
@@ -432,7 +588,7 @@ export default function ReelsPage() {
 
   const snapToNearestReel = useCallback(() => {
     const container = containerRef.current;
-    if (!container || snapLockRef.current) return;
+    if (!container || snapLockRef.current || isNavigatingRef.current) return;
 
     const slides = Array.from(container.querySelectorAll(".reel-slide"));
     if (!slides.length) return;
@@ -884,28 +1040,6 @@ export default function ReelsPage() {
 
   const currentReel = reels[activeIdx];
 
-  const handleDesktopWheel = useCallback((e) => {
-    if (window.innerWidth < 992) return;
-    if (
-      e.target.closest('.desktop-sidebar-card') ||
-      e.target.closest('.desktop-scrollable-content') ||
-      e.target.closest('.desktop-expert-header-box') ||
-      e.target.closest('.desktop-fixed-actions-footer') ||
-      e.target.closest('.mobile-comments-panel')
-    ) {
-      return;
-    }
-    if (snapLockRef.current) return;
-
-    if (e.deltaY > 30 && activeIdx < reels.length - 1) {
-      snapToReel(activeIdx + 1);
-      setShowDesktopComments(false);
-    } else if (e.deltaY < -30 && activeIdx > 0) {
-      snapToReel(activeIdx - 1);
-      setShowDesktopComments(false);
-    }
-  }, [activeIdx, reels.length, snapToReel]);
-
   return (
     <Container>
       <ReelsPageGlobalStyle />
@@ -928,19 +1062,17 @@ export default function ReelsPage() {
       )}
 
       {loading ? (
-        <LoadingOverlay>
-          <Spinner />
-        </LoadingOverlay>
+        <PremiumCenterLoader />
       ) : reels.length === 0 ? (
         <div className="reels-empty-state">
           <h3>No Reels Available</h3>
           <p>Check back later for expert video consultations.</p>
         </div>
       ) : (
-        <ReelsFeed ref={containerRef} onScroll={handleReelsScroll} onWheel={handleDesktopWheel}>
+        <ReelsFeed ref={containerRef}>
           {reels.map((reel, index) => (
             <ReelWrapper
-              key={reel.id}
+              key={`${reel.id}-${index}`}
               data-index={index}
               className={`reel-slide ${index === activeIdx ? 'active-desktop-reel' : ''}`}
               $isActive={index === activeIdx}

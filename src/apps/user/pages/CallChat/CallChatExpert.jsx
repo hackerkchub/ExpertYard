@@ -9,6 +9,7 @@ import {
   FiMessageSquare, FiPhoneCall, FiGlobe, FiMapPin, FiVideo
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
 
 import {
   PageWrap,
@@ -1486,13 +1487,7 @@ export default function UserExpertsPage() {
 
           <ExpertsWrap>
             {loading && experts.length === 0 ? (
-              <LoaderRow>
-                <SkeletonGrid>
-                  {Array.from({ length: 8 }).map((_, index) => (
-                    <SkeletonCard key={index} />
-                  ))}
-                </SkeletonGrid>
-              </LoaderRow>
+              <PremiumCenterLoader />
             ) : error ? (
               <EmptyState>
                 <FiXCircle size={48} color="#ef4444" />

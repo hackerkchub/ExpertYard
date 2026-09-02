@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FiShield, FiClock, FiCheckCircle, FiZap, FiChevronDown, FiChevronUp, FiFolder } from "react-icons/fi";
+import { FiShield, FiClock, FiCheckCircle, FiZap, FiChevronDown, FiChevronUp, FiFolder, FiMessageSquare } from "react-icons/fi";
 
 const DEFAULT_SERVICE_IMAGE = "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&auto=format&fit=crop&q=80";
 
@@ -12,6 +12,7 @@ export default function ServiceHero({
   isAlreadyBooked,
   onBookClick,
   onViewExpertsClick,
+  onSendInquiry,
   getServiceImageUrl
 }) {
   const imageUrl = getServiceImageUrl
@@ -124,6 +125,15 @@ export default function ServiceHero({
             onClick={onViewExpertsClick}
           >
             View Verified Experts
+          </button>
+
+          <button
+            type="button"
+            className="msp-btn-secondary"
+            onClick={onSendInquiry}
+            style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+          >
+            <FiMessageSquare size={16} /> Send Inquiry
           </button>
         </div>
       </div>

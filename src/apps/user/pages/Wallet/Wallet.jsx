@@ -17,6 +17,7 @@ import { useWallet } from "../../../../shared/context/WalletContext";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { getWalletHistoryApi, getUserSpendingHistoryApi } from "../../../../shared/api/userApi/walletApi";
 import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
+import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
 
 const formatCurrency = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(amount);
 
@@ -229,7 +230,7 @@ const WalletPage = () => {
     }
   };
 
-  if (loading) return <LoadingState><RiMoneyRupeeCircleFill size={40} /><p>Loading wallet...</p></LoadingState>;
+  if (loading) return <PremiumCenterLoader />;
   if (error) return <ErrorState><p>{error}</p><AddBalanceBtn onClick={fetchWalletData}>Retry</AddBalanceBtn></ErrorState>;
 
   return (

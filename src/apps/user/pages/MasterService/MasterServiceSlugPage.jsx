@@ -17,6 +17,7 @@ import MobileStickyBookingBar from "./components/MobileStickyBookingBar";
 import ActiveBookingNotice from "./components/ActiveBookingNotice";
 import SelectExpertModal from "./components/SelectExpertModal";
 import BookingModal from "./components/BookingModal";
+import ServiceInquiryModal from "./components/ServiceInquiryModal";
 
 const userAuthHeaders = () => {
   const token = localStorage.getItem("token") || localStorage.getItem("userToken") || localStorage.getItem("user_token") || "";
@@ -87,6 +88,10 @@ export default function MasterServiceSlugPage() {
   const [showActiveBookingDialog, setShowActiveBookingDialog] = useState(false);
   const [showSelectExpertModal, setShowSelectExpertModal] = useState(false);
 
+  // Service Inquiry Modal State & User Profile Context
+  const [showInquiryModal, setShowInquiryModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
   // Related Services
   const [relatedServices, setRelatedServices] = useState([]);
 
@@ -102,7 +107,7 @@ export default function MasterServiceSlugPage() {
   // Lock body scroll when any modal or sheet is open
   useEffect(() => {
     const isAnyModalOpen = Boolean(
-      selectedExpertForBooking || showSelectExpertModal || showActiveBookingDialog || showRechargePopup
+      selectedExpertForBooking || showSelectExpertModal || showActiveBookingDialog || showRechargePopup || showInquiryModal
     );
 
     if (isAnyModalOpen) {
@@ -114,7 +119,7 @@ export default function MasterServiceSlugPage() {
     return () => {
       document.body.style.overflow = "";
     };
-  }, [selectedExpertForBooking, showSelectExpertModal, showActiveBookingDialog, showRechargePopup]);
+  }, [selectedExpertForBooking, showSelectExpertModal, showActiveBookingDialog, showRechargePopup, showInquiryModal]);
 
   const fetchWalletBalance = async () => {
     try {
@@ -136,7 +141,11 @@ export default function MasterServiceSlugPage() {
     const userRaw = localStorage.getItem("user") || localStorage.getItem("userData");
     let userId = null;
     try {
-      if (userRaw) userId = JSON.parse(userRaw)?.id;
+      if (userRaw) {
+        const parsed = JSON.parse(userRaw);
+        userId = parsed?.id;
+        setCurrentUser(parsed);
+      }
     } catch (e) {}
 
     if (userId) {
@@ -178,8 +187,18 @@ export default function MasterServiceSlugPage() {
         setLoading(true);
         setError("");
         
-        const res = await apiFetch(`/api/services/master/${targetSlug}`);
-        const data = await res.json();
+        let res = await apiFetch(`/api/services/master/slug/${targetSlug}`);
+        let data = await res.json().catch(() => ({}));
+
+        if (!data.success || !data.data) {
+          res = await apiFetch(`/api/services/master/${targetSlug}`);
+          data = await res.json().catch(() => ({}));
+        }
+
+        if (!data.success || !data.data) {
+          res = await apiFetch(`/api/services/master/public/${targetSlug}`);
+          data = await res.json().catch(() => ({}));
+        }
         
         if (data.success && data.data) {
           const svc = data.data;
@@ -187,7 +206,7 @@ export default function MasterServiceSlugPage() {
 
           // Fetch active experts for this master service
           const expRes = await apiFetch(`/api/expert-activations/master-service/${svc.id}/experts`);
-          const expData = await expRes.json();
+          const expData = await expRes.json().catch(() => ({}));
           if (expData.success) {
             setExperts(expData.data || []);
           } else {
@@ -205,7 +224,7 @@ export default function MasterServiceSlugPage() {
     };
 
     fetchServiceAndExperts();
-  }, [targetSlug, startLoading, stopLoading]);
+  }, [targetSlug]);
 
   // Auto-open booking modal when navigated with ?action=book
   const autoBookHandledRef = useRef(false);
@@ -488,7 +507,7 @@ export default function MasterServiceSlugPage() {
   ];
 
   if (loading) {
-    return null;
+    return <PremiumCenterLoader />;
   }
 
   if (error || !service) {
@@ -514,11 +533,41 @@ export default function MasterServiceSlugPage() {
   };
 
   const handleHeroPrimaryBookClick = () => {
+    const token = localStorage.getItem("token") || localStorage.getItem("userToken") || localStorage.getItem("user_token");
+    const userRaw = localStorage.getItem("user") || localStorage.getItem("userData");
+    let user = null;
+    try { if (userRaw) user = JSON.parse(userRaw); } catch(e) {}
+
+    if (!token || !user) {
+      const redirectPath = `${location.pathname}${location.search}${location.hash}`;
+      navigate(`/user/auth?redirect=${encodeURIComponent(redirectPath)}`, {
+        state: { from: location },
+      });
+      return;
+    }
+
     if (experts && experts.length > 0) {
       setShowSelectExpertModal(true);
     } else {
       handleOpenBookingModal(primaryExpert);
     }
+  };
+
+  const handleOpenInquiryModal = () => {
+    const token = localStorage.getItem("token") || localStorage.getItem("userToken") || localStorage.getItem("user_token");
+    const userRaw = localStorage.getItem("user") || localStorage.getItem("userData");
+    let user = null;
+    try { if (userRaw) user = JSON.parse(userRaw); } catch(e) {}
+
+    if (!token || !user) {
+      const redirectPath = `${location.pathname}${location.search}${location.hash}`;
+      navigate(`/user/auth?redirect=${encodeURIComponent(redirectPath)}`, {
+        state: { from: location },
+      });
+      return;
+    }
+
+    setShowInquiryModal(true);
   };
 
   const handleHeroViewExpertsClick = () => {
@@ -1087,15 +1136,42 @@ export default function MasterServiceSlugPage() {
         .msp-badge-opt { background: #f8fafc; color: #64748b; }
 
         /* HOW IT WORKS / SERVICE PROCESS */
+        .msp-process-card {
+          position: relative;
+          overflow: hidden;
+        }
         .msp-process-timeline-desktop {
           display: flex;
           align-items: flex-start;
-          justify-content: space-between;
+          justify-content: flex-start;
           position: relative;
-          padding: 10px 0;
+          padding: 10px 4px 16px 4px;
+          overflow-x: auto;
+          overflow-y: hidden;
+          scroll-behavior: smooth;
+          -webkit-overflow-scrolling: touch;
+          gap: 0;
+          box-sizing: border-box;
+          width: 100%;
+        }
+        .msp-process-timeline-desktop::-webkit-scrollbar {
+          height: 6px;
+        }
+        .msp-process-timeline-desktop::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 999px;
+        }
+        .msp-process-timeline-desktop::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 999px;
+        }
+        .msp-process-timeline-desktop::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
         }
         .msp-process-step-item {
-          flex: 1;
+          flex: 0 0 190px;
+          min-width: 170px;
+          max-width: 210px;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -1108,12 +1184,14 @@ export default function MasterServiceSlugPage() {
           border: 1px solid transparent;
           transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
           cursor: pointer;
+          box-sizing: border-box;
         }
-        .msp-process-step-item:hover {
+        .msp-process-step-item:hover,
+        .msp-process-step-item.msp-step-active {
           background-color: #eff6ff;
           border-color: #bfdbfe;
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.06);
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
         }
         .msp-step-num-badge {
           background: #f1f5f9;
@@ -1165,13 +1243,19 @@ export default function MasterServiceSlugPage() {
           color: #047857;
           border-color: #a7f3d0;
         }
-        .msp-step-title { margin: 0; font-size: 14px; font-weight: 800; color: #0f172a; }
-        .msp-step-desc { margin: 0; font-size: 12px; color: #64748b; line-height: 1.45; max-width: 180px; }
+        .msp-step-title { margin: 0; font-size: 14px; font-weight: 800; color: #0f172a; word-break: break-word; }
+        .msp-step-desc { margin: 0; font-size: 12px; color: #64748b; line-height: 1.45; width: 100%; max-width: 180px; word-break: break-word; }
         .msp-step-connector {
-          flex: 0 0 60px;
+          flex: 0 0 36px;
+          min-width: 24px;
           height: 2px;
-          background: #e2e8f0;
+          background: #cbd5e1;
           margin-top: 26px;
+          align-self: flex-start;
+          transition: background-color 0.25s ease;
+        }
+        .msp-step-connector-done {
+          background: #34d399;
         }
         .msp-process-timeline-mobile { display: none; }
 
@@ -1778,6 +1862,7 @@ export default function MasterServiceSlugPage() {
           isAlreadyBooked={isAlreadyBooked}
           onBookClick={handleHeroPrimaryBookClick}
           onViewExpertsClick={handleHeroViewExpertsClick}
+          onSendInquiry={handleOpenInquiryModal}
           getServiceImageUrl={getServiceImageUrl}
         />
 
@@ -1834,6 +1919,7 @@ export default function MasterServiceSlugPage() {
             navigate(`/user/workspace/${activeUserBooking.booking_id || activeUserBooking.id}`);
           }
         }}
+        onSendInquiry={handleOpenInquiryModal}
       />
 
       {/* 💳 BOOKING & WALLET PAYMENT MODAL */}
@@ -1853,6 +1939,16 @@ export default function MasterServiceSlugPage() {
           bookingError={bookingError}
           bookingInProgress={bookingInProgress}
           onConfirmWalletBooking={handleConfirmWalletBooking}
+        />
+      )}
+
+      {/* 💬 SERVICE INQUIRY MODAL */}
+      {showInquiryModal && (
+        <ServiceInquiryModal
+          service={service}
+          user={currentUser}
+          onClose={() => setShowInquiryModal(false)}
+          onLoginClick={() => navigate("/login")}
         />
       )}
 

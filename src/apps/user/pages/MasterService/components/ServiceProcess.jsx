@@ -29,6 +29,7 @@ const DEFAULT_STEPS = [
 ];
 
 export default function ServiceProcess({ workflowSteps }) {
+  const [activeStepIndex, setActiveStepIndex] = React.useState(0);
   const hasCustomSteps = Array.isArray(workflowSteps) && workflowSteps.length > 0;
 
   const stepsToRender = hasCustomSteps
@@ -42,19 +43,35 @@ export default function ServiceProcess({ workflowSteps }) {
 
   return (
     <div className="msp-section-card msp-process-card">
-      <h3 className="msp-section-title">
-        <FiCheckCircle className="msp-section-title-icon msp-icon-emerald" />
-        How It Works — Step-by-Step Fulfillment Process
-      </h3>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <h3 className="msp-section-title" style={{ margin: 0 }}>
+          <FiCheckCircle className="msp-section-title-icon msp-icon-emerald" />
+          How It Works — Step-by-Step Fulfillment Process
+        </h3>
+        {stepsToRender.length > 4 && (
+          <span className="msp-process-scroll-hint" style={{ fontSize: 11, fontWeight: 700, color: "#2563eb", background: "#eff6ff", padding: "3px 8px", borderRadius: 999, border: "1px solid #bfdbfe" }}>
+            Scroll steps →
+          </span>
+        )}
+      </div>
 
       {/* DESKTOP HORIZONTAL CONNECTED TIMELINE */}
       <div className="msp-process-timeline-desktop">
         {stepsToRender.map((s, idx) => {
           const IconComp = s.icon;
           const isLast = idx === stepsToRender.length - 1;
+          const isActive = idx === activeStepIndex;
+          const isDone = idx < activeStepIndex;
+          const statusClass = isActive ? "msp-step-active" : isDone ? "msp-step-done" : "";
+
           return (
             <React.Fragment key={idx}>
-              <div className="msp-process-step-item">
+              <div
+                className={`msp-process-step-item ${statusClass}`}
+                onClick={() => setActiveStepIndex(idx)}
+                role="button"
+                tabIndex={0}
+              >
                 <div className="msp-step-num-badge">
                   <span>{s.step}</span>
                 </div>
@@ -64,7 +81,7 @@ export default function ServiceProcess({ workflowSteps }) {
                 <h4 className="msp-step-title">{s.title}</h4>
                 <p className="msp-step-desc">{s.desc}</p>
               </div>
-              {!isLast && <div className="msp-step-connector" />}
+              {!isLast && <div className={`msp-step-connector ${isDone ? "msp-step-connector-done" : ""}`} />}
             </React.Fragment>
           );
         })}
@@ -74,8 +91,13 @@ export default function ServiceProcess({ workflowSteps }) {
       <div className="msp-process-timeline-mobile">
         {stepsToRender.map((s, idx) => {
           const IconComp = s.icon;
+          const isActive = idx === activeStepIndex;
           return (
-            <div key={idx} className="msp-mobile-step-row">
+            <div
+              key={idx}
+              className={`msp-mobile-step-row ${isActive ? "msp-step-active" : ""}`}
+              onClick={() => setActiveStepIndex(idx)}
+            >
               <div className="msp-mobile-step-left">
                 <div className="msp-mobile-step-badge">{s.step}</div>
                 {idx < stepsToRender.length - 1 && <div className="msp-mobile-step-line" />}

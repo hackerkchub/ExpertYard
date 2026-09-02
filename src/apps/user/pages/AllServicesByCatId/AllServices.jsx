@@ -121,7 +121,7 @@ const AllServices = () => {
 
   // Professional Loader
   if (loading && services.length === 0) {
-    return null;
+    return <PremiumCenterLoader />;
   }
 
   return (

@@ -9,6 +9,7 @@ import { useAuth } from "../../../../shared/context/UserAuthContext";
 import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 import * as S from "./MyBookings.style";
 import { APP_CONFIG } from "../../../../config/appConfig";
+import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
 
 const getServiceImageUrl = (url) => {
   if (!url) return "https://placehold.co/100x100?text=Master+Service";
@@ -94,14 +95,7 @@ const MyBookings = () => {
     </S.PageContainer>
   );
 
-  if (loading) return (
-    <S.PageContainer>
-      <div style={{ textAlign: "center", padding: "80px 20px" }}>
-        <div style={{ fontSize: 36, marginBottom: 12, animation: "pulse 1.5s infinite" }}>⚙️</div>
-        <div style={{ fontWeight: 800, color: "#1e293b", fontSize: "1.1rem" }}>Syncing your orders & active services...</div>
-      </div>
-    </S.PageContainer>
-  );
+  if (loading) return <PremiumCenterLoader />;
 
   return (
     <S.PageContainer style={{ background: "#f8fafc", minHeight: "100vh", padding: "1rem 0.75rem 4rem" }}>

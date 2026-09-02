@@ -1,3 +1,5 @@
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   ArcSvg,
   CardContainer,
@@ -9,9 +11,28 @@ import {
   OverlayWrapper,
 } from "./PremiumCenterLoader.styles";
 
+// Singleton active instance counter to guarantee exactly ONE global loader overlay on screen
+let activeLoaderCount = 0;
+
 export default function PremiumCenterLoader({ exiting = false }) {
-  return (
-    <OverlayWrapper role="status" aria-live="polite">
+  const [isPrimary, setIsPrimary] = useState(false);
+
+  useEffect(() => {
+    activeLoaderCount += 1;
+    if (activeLoaderCount === 1) {
+      setIsPrimary(true);
+    }
+    return () => {
+      activeLoaderCount = Math.max(0, activeLoaderCount - 1);
+    };
+  }, []);
+
+  if (!isPrimary || typeof document === "undefined") {
+    return null;
+  }
+
+  const content = (
+    <OverlayWrapper role="status" aria-live="polite" className="g9-global-loader-overlay-fixed">
       <CardContainer $exiting={exiting}>
         <GlassCard>
           <GraphicContainer>
@@ -59,4 +80,6 @@ export default function PremiumCenterLoader({ exiting = false }) {
       </CardContainer>
     </OverlayWrapper>
   );
+
+  return createPortal(content, document.body);
 }

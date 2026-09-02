@@ -36,7 +36,9 @@ const AdminServiceAnalyticsPage = lazy(() => import("../pages/AdminServiceAnalyt
 const AdminAIDiscoveryAnalyticsPage = lazy(() => import("../pages/AdminAIDiscoveryAnalyticsPage"));
 const SendToUsersPage = lazy(() => import("../pages/notifications/SendToUsersPage"));
 const SendToExpertsPage = lazy(() => import("../pages/notifications/SendToExpertsPage"));
+const AdminNotificationsInboxPage = lazy(() => import("../pages/notifications/AdminNotificationsInboxPage"));
 const LegalManagement = lazy(() => import("../pages/LegalManagement/LegalManagement"));
+const AdminInquiriesPage = lazy(() => import("../pages/AdminInquiriesPage"));
 
 const withLazyRoute = (node) => <LazyRoute>{node}</LazyRoute>;
 
@@ -50,6 +52,8 @@ export default function AdminAppRoutes() {
         <Route element={<AdminLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={withLazyRoute(<Dashboard />)} />
+          <Route path="inquiries" element={withLazyRoute(<AdminInquiriesPage />)} />
+          <Route path="notifications" element={withLazyRoute(<AdminNotificationsInboxPage />)} />
           <Route path="category-management" element={withLazyRoute(<CategoryManagement />)} />
           <Route
             path="sub-category-management"

@@ -5,6 +5,7 @@ import { useCategory } from "../../../../shared/context/CategoryContext";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import MobileSelect from "../../components/MobileSelect/MobileSelect";
 import { useSeo } from "../../../../shared/seo/useSeo";
+import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
 import { toAbsoluteUrl } from "../../../../shared/seo/siteConfig";
 import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/leadTracking";
 import {
@@ -142,7 +143,7 @@ const Categories = () => {
     structuredData: categoriesStructuredData,
   });
 
-  if (loading) return null; // Or show your SkeletonGrid here
+  if (loading) return <PremiumCenterLoader />;
 
   const handleCategoryClick = (cat) => {
     trackLeadEvent(

@@ -289,6 +289,7 @@ export default function MasterServicesManagement() {
       is_trending: Boolean(service.is_trending),
       is_popular: Boolean(service.is_popular),
       is_active: service.is_active === 0 ? 0 : 1,
+      status: service.status || (service.is_active === 1 ? "active" : "draft"),
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -516,9 +517,18 @@ export default function MasterServicesManagement() {
 
           <label style={labelStyle}>
             Publish Status
-            <select value={formData.is_active} onChange={(event) => updateField("is_active", Number(event.target.value))} style={inputStyle}>
-              <option value={1}>Published (Active)</option>
-              <option value={0}>Draft (Inactive)</option>
+            <select
+              value={formData.status || (Number(formData.is_active) === 1 ? "active" : "draft")}
+              onChange={(event) => {
+                const val = event.target.value;
+                updateField("status", val);
+                updateField("is_active", (val === "active" || val === "published") ? 1 : 0);
+              }}
+              style={inputStyle}
+            >
+              <option value="active">Active (Published)</option>
+              <option value="draft">Draft</option>
+              <option value="inactive">Inactive</option>
             </select>
           </label>
         </div>

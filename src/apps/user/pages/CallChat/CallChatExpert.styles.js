@@ -33,7 +33,7 @@ export const PageWrap = styled.div`
   overflow-x: hidden;
 
   .desktop-call-chat-top-bar {
-    display: none;
+    display: none !important;
   }
 
   @media (min-width: 768px) {

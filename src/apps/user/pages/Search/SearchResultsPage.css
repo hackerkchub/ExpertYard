@@ -9,7 +9,7 @@
   max-width: 1360px;
   margin: 0 auto;
   /* Controlled top padding for desktop search page (header offset is provided by MainLayout) */
-  padding: 8px 24px max(80px, env(safe-area-inset-bottom));
+  padding: 8px 24px 32px;
   font-family: inherit;
   color: #1e293b;
   min-height: 85vh;
@@ -827,7 +827,7 @@
 @media (max-width: 768px) {
   .g9-fullwidth-search-container {
     /* Mobile header inserts space via NavbarSpacer in MainLayout; 20px padding creates controlled breathing space below mobile header */
-    padding: 20px 16px max(80px, env(safe-area-inset-bottom));
+    padding: 20px 16px 24px;
   }
 
   .g9-search-header-bar {

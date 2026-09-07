@@ -55,11 +55,25 @@ const getSocketUrl = () => {
   return `http://localhost:${BACKEND_PORT}`;
 };
 
+const getFrontendBaseUrl = () => {
+  if (import.meta.env.VITE_FRONTEND_BASE_URL) {
+    return import.meta.env.VITE_FRONTEND_BASE_URL.replace(/\/+$/, "");
+  }
+  if (import.meta.env.VITE_SITE_URL) {
+    return import.meta.env.VITE_SITE_URL.replace(/\/+$/, "");
+  }
+  if (typeof window !== "undefined" && window.location?.origin) {
+    return window.location.origin.replace(/\/+$/, "");
+  }
+  return "https://g9expert.com";
+};
+
 export const APP_CONFIG = {
   APP_NAME: import.meta.env.VITE_APP_NAME || "G9Expert",
   APP_TYPE: import.meta.env.VITE_APP_TYPE || "web",
   API_BASE_URL: getApiBaseUrl(),
   SOCKET_URL: getSocketUrl(),
+  FRONTEND_BASE_URL: getFrontendBaseUrl(),
   REQUEST_TIMEOUT: Number(import.meta.env.VITE_REQUEST_TIMEOUT || 30000),
   DEFAULT_BACKEND_IP,
   BACKEND_PORT,

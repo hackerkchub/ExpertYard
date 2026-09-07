@@ -29,7 +29,7 @@ const DEFAULT_STEPS = [
 ];
 
 export default function ServiceProcess({ workflowSteps }) {
-  const [activeStepIndex, setActiveStepIndex] = React.useState(0);
+  const [hoveredStepIndex, setHoveredStepIndex] = React.useState(null);
   const hasCustomSteps = Array.isArray(workflowSteps) && workflowSteps.length > 0;
 
   const stepsToRender = hasCustomSteps
@@ -60,15 +60,15 @@ export default function ServiceProcess({ workflowSteps }) {
         {stepsToRender.map((s, idx) => {
           const IconComp = s.icon;
           const isLast = idx === stepsToRender.length - 1;
-          const isActive = idx === activeStepIndex;
-          const isDone = idx < activeStepIndex;
-          const statusClass = isActive ? "msp-step-active" : isDone ? "msp-step-done" : "";
+          const isHovered = idx === hoveredStepIndex;
+          const statusClass = isHovered ? "msp-step-active" : "";
 
           return (
             <React.Fragment key={idx}>
               <div
                 className={`msp-process-step-item ${statusClass}`}
-                onClick={() => setActiveStepIndex(idx)}
+                onMouseEnter={() => setHoveredStepIndex(idx)}
+                onMouseLeave={() => setHoveredStepIndex(null)}
                 role="button"
                 tabIndex={0}
               >
@@ -81,7 +81,7 @@ export default function ServiceProcess({ workflowSteps }) {
                 <h4 className="msp-step-title">{s.title}</h4>
                 <p className="msp-step-desc">{s.desc}</p>
               </div>
-              {!isLast && <div className={`msp-step-connector ${isDone ? "msp-step-connector-done" : ""}`} />}
+              {!isLast && <div className="msp-step-connector" />}
             </React.Fragment>
           );
         })}
@@ -91,12 +91,15 @@ export default function ServiceProcess({ workflowSteps }) {
       <div className="msp-process-timeline-mobile">
         {stepsToRender.map((s, idx) => {
           const IconComp = s.icon;
-          const isActive = idx === activeStepIndex;
+          const isHovered = idx === hoveredStepIndex;
           return (
             <div
               key={idx}
-              className={`msp-mobile-step-row ${isActive ? "msp-step-active" : ""}`}
-              onClick={() => setActiveStepIndex(idx)}
+              className={`msp-mobile-step-row ${isHovered ? "msp-step-active" : ""}`}
+              onMouseEnter={() => setHoveredStepIndex(idx)}
+              onMouseLeave={() => setHoveredStepIndex(null)}
+              onTouchStart={() => setHoveredStepIndex(idx)}
+              onTouchEnd={() => setHoveredStepIndex(null)}
             >
               <div className="msp-mobile-step-left">
                 <div className="msp-mobile-step-badge">{s.step}</div>

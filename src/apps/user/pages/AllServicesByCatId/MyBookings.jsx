@@ -10,6 +10,7 @@ import useNetworkReconnect from "../../../../shared/hooks/useNetworkReconnect";
 import * as S from "./MyBookings.style";
 import { APP_CONFIG } from "../../../../config/appConfig";
 import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
+import ServiceInquiryModal from "../MasterService/components/ServiceInquiryModal";
 
 const getServiceImageUrl = (url) => {
   if (!url) return "https://placehold.co/100x100?text=Master+Service";
@@ -27,6 +28,7 @@ const MyBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("active"); // "active" | "history"
+  const [selectedInquiryBooking, setSelectedInquiryBooking] = useState(null);
 
   const fetchMyBookings = useCallback(async () => {
     const activeUserId = user?.id || JSON.parse(localStorage.getItem("user") || "{}")?.id;
@@ -77,133 +79,106 @@ const MyBookings = () => {
     );
   });
 
-  const displayedBookings = activeTab === "active" ? activeBookings : historyBookings;
+  const displayBookings = activeTab === "active" ? activeBookings : historyBookings;
 
-  if (!isLoggedIn) return (
-    <S.PageContainer>
-      <S.EmptyState style={{ border: "none", boxShadow: "0 10px 25px rgba(0,0,0,0.05)", borderRadius: 20 }}>
-        <div style={{ fontSize: 44, marginBottom: 12 }}>🔒</div>
-        <h3 style={{ fontSize: "1.25rem", color: "#0f172a", fontWeight: 800 }}>Authentication Required</h3>
-        <p style={{ color: "#64748b", fontSize: "0.9rem" }}>Please login to view your active orders and service history.</p>
-        <button 
-          onClick={() => navigate("/user/auth")}
-          style={{ marginTop: 14, padding: "10px 24px", background: "#2563eb", color: "#fff", border: 0, borderRadius: 12, fontWeight: 800, cursor: "pointer", boxShadow: "0 4px 12px rgba(37,99,235,0.25)" }}
-        >
-          Go to Login
-        </button>
-      </S.EmptyState>
-    </S.PageContainer>
-  );
-
-  if (loading) return <PremiumCenterLoader />;
+  if (loading) {
+    return <PremiumCenterLoader text="Loading your orders & services..." />;
+  }
 
   return (
-    <S.PageContainer style={{ background: "#f8fafc", minHeight: "100vh", padding: "1rem 0.75rem 4rem" }}>
-      <S.ContentWrapper style={{ maxWidth: 860, margin: "0 auto" }}>
-        
-        {/* FLUTTER NATIVE APP HEADER (HIDDEN ON MOBILE VERSION ONLY) */}
+    <S.PageContainer>
+      <S.ContentWrapper>
+        {/* Header Bar */}
         <S.HeaderBar>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              style={{
-                background: "#f1f5f9",
-                border: "1px solid #cbd5e1",
-                borderRadius: "50%",
-                width: 36,
-                height: 36,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer"
-              }}
-            >
-              <FiArrowLeft size={18} color="#0f172a" />
-            </button>
-            <div>
-              <h1 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 900, color: "#0f172a" }}>My Orders</h1>
-              <div style={{ fontSize: 11, color: "#64748b", fontWeight: 700, marginTop: 1 }}>
-                Fulfillment & Service Management
-              </div>
-            </div>
-          </div>
-
+          <S.HeaderSection>
+            <S.Title>My Orders & Service Workspaces</S.Title>
+            <S.Subtitle>Track status, contact assigned experts, submit inquiries, or open workspace</S.Subtitle>
+          </S.HeaderSection>
           <button
-            type="button"
             onClick={fetchMyBookings}
             style={{
-              background: "#eff6ff",
-              color: "#2563eb",
-              border: "1px solid #bfdbfe",
-              borderRadius: "12px",
-              padding: "6px 12px",
-              fontWeight: 700,
-              fontSize: 12,
               display: "flex",
               alignItems: "center",
-              gap: 4,
+              gap: 6,
+              padding: "8px 14px",
+              borderRadius: 12,
+              background: "#f1f5f9",
+              border: "1px solid #cbd5e1",
+              fontSize: 13,
+              fontWeight: 700,
+              color: "#334155",
               cursor: "pointer"
             }}
           >
-            <FiRefreshCw size={13} /> Refresh
+            <FiRefreshCw size={14} /> Refresh
           </button>
         </S.HeaderBar>
 
-        {/* FLUTTER-STYLE SEGMENTED TAB SWITCHER (PROPORTIONED FOR MOBILE & DESKTOP) */}
+        {/* Tab Switcher */}
         <S.TabSwitcher>
           <S.TabButton
-            type="button"
             $active={activeTab === "active"}
             onClick={() => setActiveTab("active")}
           >
-            <span>⚡ Active Orders</span>
+            <FiZap size={15} /> Active Orders
             <S.TabCountBadge $active={activeTab === "active"} $type="active">
               {activeBookings.length}
             </S.TabCountBadge>
           </S.TabButton>
-
           <S.TabButton
-            type="button"
             $active={activeTab === "history"}
             onClick={() => setActiveTab("history")}
           >
-            <span>📜 Order History</span>
+            <FiCheckCircle size={15} /> Order History
             <S.TabCountBadge $active={activeTab === "history"} $type="history">
               {historyBookings.length}
             </S.TabCountBadge>
           </S.TabButton>
         </S.TabSwitcher>
 
-        {/* TAB CONTENT VIEW */}
-        {displayedBookings.length === 0 ? (
-          <S.EmptyState style={{ border: "1px solid #e2e8f0", borderRadius: 20, boxShadow: "0 4px 12px rgba(0,0,0,0.03)" }}>
-            <div className="icon" style={{ fontSize: 40, marginBottom: 8 }}>
-              {activeTab === "active" ? "⚡" : "📜"}
-            </div>
-            <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#0f172a", margin: "0 0 6px" }}>
-              {activeTab === "active" ? "No Active Orders Right Now" : "No Past Order History"}
-            </h3>
-            <p style={{ color: "#64748b", fontSize: "0.88rem", margin: 0 }}>
+        {displayBookings.length === 0 ? (
+          <S.EmptyState>
+            <div className="icon">📦</div>
+            <h3>{activeTab === "active" ? "No Active Orders" : "No Completed Orders"}</h3>
+            <p>
               {activeTab === "active"
-                ? "You don't have any ongoing service fulfillment orders."
-                : "Your completed and cancelled orders will be archived here."}
+                ? "You don't have any active orders right now. Explore master services to book an expert."
+                : "You haven't completed any master service orders yet."}
             </p>
-            {activeTab === "active" && (
-              <button 
-                onClick={() => navigate("/user/all-services")}
-                style={{ marginTop: 16, padding: "10px 20px", background: "#2563eb", color: "#fff", border: 0, borderRadius: 10, fontWeight: 800, cursor: "pointer", fontSize: 13 }}
-              >
-                Browse Master Services
-              </button>
-            )}
           </S.EmptyState>
         ) : (
-          <S.BookingList style={{ display: "grid", gap: "1rem" }}>
-            {displayedBookings.map((booking) => {
-              const isCompleted = ["COMPLETED", "CANCELLED", "completed", "cancelled"].includes(booking.status);
+          <S.BookingList>
+            {displayBookings.map((booking) => {
+              const statusClean = String(booking.status || "").toLowerCase();
+              const stepKey = String(booking.current_step_key || "").toUpperCase();
+
+              const isTrulyCompleted = statusClean === "completed" || stepKey === "COMPLETED" || statusClean === "closed" || stepKey === "CLOSED";
+              const isTrulyCancelled = statusClean === "cancelled" || stepKey === "CANCELLED";
+
+              // Check expert assignment type
+              const assignmentType = booking.assignment_type || (booking.expert_id ? "expert" : "admin_queue");
+              const isRealExpert = Boolean(booking.expert_id && assignmentType === "expert");
+              const isAdminHandled = assignmentType === "admin_handled";
+              const isAdminQueue = assignmentType === "admin_queue" || (!isRealExpert && !isAdminHandled);
+
               const bookingDate = booking.created_at || booking.booking_date;
               const hasPendingReq = booking.expert_status_request;
+
+              const displayExpertName = isRealExpert
+                ? (booking.expert_name || "Assigned Expert")
+                : isAdminHandled
+                ? "G9Expert Support Team"
+                : "Awaiting Admin Assignment";
+
+              const statusBadgeText = isTrulyCompleted
+                ? "COMPLETED"
+                : isTrulyCancelled
+                ? "CANCELLED"
+                : isAdminQueue
+                ? "AWAITING EXPERT ASSIGNMENT"
+                : isAdminHandled
+                ? "MANAGED BY SUPPORT"
+                : stepKey ? stepKey.replace(/_/g, " ") : (booking.status || "CONFIRMED").toUpperCase();
 
               return (
                 <S.BookingCard key={booking.id} style={{ display: "grid", gap: 14, borderRadius: 20, border: "1px solid #e2e8f0", boxShadow: "0 4px 14px rgba(15, 23, 42, 0.04)" }}>
@@ -232,8 +207,8 @@ const MyBookings = () => {
                             ⚠️ Cancellation Requested (Pending Admin)
                           </span>
                         ) : (
-                          <S.StatusBadge status={booking.status} style={{ fontSize: "0.75rem", padding: "3px 10px", borderRadius: 8, fontWeight: 800, textTransform: "uppercase" }}>
-                            {booking.status}
+                          <S.StatusBadge status={statusBadgeText} style={{ fontSize: "0.75rem", padding: "3px 10px", borderRadius: 8, fontWeight: 800, textTransform: "uppercase" }}>
+                            {statusBadgeText}
                           </S.StatusBadge>
                         )}
                       </div>
@@ -246,7 +221,7 @@ const MyBookings = () => {
                           <FiCalendar size={13} /> <span>{bookingDate ? new Date(bookingDate).toLocaleDateString() : "Recent"}</span>
                         </div>
                         <div className="meta-item" style={{ fontSize: 12 }}>
-                          <span>Expert: <strong style={{ color: "#1e293b" }}>{booking.expert_name || "Assigned Expert"}</strong></span>
+                          <span>Expert: <strong style={{ color: "#1e293b" }}>{displayExpertName}</strong></span>
                         </div>
                       </S.MetaGrid>
 
@@ -259,17 +234,17 @@ const MyBookings = () => {
                     </S.BookingInfo>
                   </div>
 
-                  {/* FLUTTER ACTION FUNNEL */}
+                  {/* ACTION FUNNEL */}
                   <div style={{ borderTop: "1px dashed #e2e8f0", paddingTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                      {!isCompleted && booking.expert_id ? (
+                      {!isTrulyCompleted && !isTrulyCancelled && isRealExpert ? (
                         <>
                           <button
                             type="button"
                             onClick={() => navigate(`/user/chat?expert_id=${booking.expert_id}`)}
-                            style={{ padding: "6px 14px", background: "#2563eb", color: "#fff", border: 0, borderRadius: 8, fontWeight: 800, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, boxShadow: "0 2px 6px rgba(37,99,235,0.2)" }}
+                            style={{ padding: "6px 14px", background: "#6b46c1", color: "#fff", border: 0, borderRadius: 8, fontWeight: 800, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, boxShadow: "0 2px 6px rgba(107,70,193,0.2)" }}
                           >
-                            <FiMessageSquare size={13} /> Chat
+                            <FiMessageSquare size={13} /> Chat with Expert
                           </button>
                           <button
                             type="button"
@@ -285,9 +260,21 @@ const MyBookings = () => {
                             <FiPhone size={13} /> Voice Call
                           </button>
                         </>
-                      ) : (
+                      ) : !isTrulyCompleted && !isTrulyCancelled ? (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedInquiryBooking(booking)}
+                          style={{ padding: "6px 14px", background: "#6b46c1", color: "#fff", border: 0, borderRadius: 8, fontWeight: 800, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, boxShadow: "0 2px 6px rgba(107,70,193,0.2)" }}
+                        >
+                          <FiMessageSquare size={13} /> Submit Inquiry
+                        </button>
+                      ) : isTrulyCompleted ? (
                         <span style={{ fontSize: "11px", color: "#065f46", background: "#ecfdf5", padding: "5px 10px", borderRadius: 8, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
                           🔒 Service Completed & Closed
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: "11px", color: "#991b1b", background: "#fee2e2", padding: "5px 10px", borderRadius: 8, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
+                          ❌ Booking Cancelled
                         </span>
                       )}
 
@@ -316,6 +303,20 @@ const MyBookings = () => {
           </S.BookingList>
         )}
       </S.ContentWrapper>
+
+      {/* SERVICE DETAIL INQUIRY MODAL REUSE */}
+      {selectedInquiryBooking && (
+        <ServiceInquiryModal
+          service={{
+            id: selectedInquiryBooking.master_service_id || selectedInquiryBooking.service_id || 1,
+            title: selectedInquiryBooking.service_title || "Master Service",
+            booking_id: selectedInquiryBooking.booking_id || selectedInquiryBooking.id,
+          }}
+          bookingId={selectedInquiryBooking.booking_id || selectedInquiryBooking.id}
+          user={user}
+          onClose={() => setSelectedInquiryBooking(null)}
+        />
+      )}
     </S.PageContainer>
   );
 };

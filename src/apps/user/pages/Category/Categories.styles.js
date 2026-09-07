@@ -326,11 +326,11 @@ export const MainContent = styled.main`
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
-    padding: 12px 12px var(--mobile-bottom-nav-reserved-space, 92px);
+    padding: 12px 12px 20px;
   }
 
   ${media.sm} {
-    padding: 12px 12px var(--mobile-bottom-nav-reserved-space, 92px);
+    padding: 12px 12px 20px;
   }
 `;
 

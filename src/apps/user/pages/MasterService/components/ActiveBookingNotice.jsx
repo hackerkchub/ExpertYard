@@ -11,6 +11,9 @@ export default function ActiveBookingNotice({
   const navigate = useNavigate();
   if (!activeUserBooking) return null;
 
+  const isRealExp = activeUserBooking.expert_id > 0 && activeUserBooking.expert_name && !["Verified Expert", "Assigned Expert", "Unassigned Expert"].includes(activeUserBooking.expert_name);
+  const expDisplayName = isRealExp ? activeUserBooking.expert_name : "Awaiting Expert Assignment";
+
   return (
     <>
       {/* INLINE BANNER CARD */}
@@ -25,7 +28,7 @@ export default function ActiveBookingNotice({
               <strong className="msp-active-status-badge">
                 {activeUserBooking.status}
               </strong>{" "}
-              • Expert: <strong>{activeUserBooking.expert_name || "Assigned Expert"}</strong>
+              • Expert: <strong>{expDisplayName}</strong>
             </div>
           </div>
           <span className="msp-active-tag">Active Order In Progress</span>

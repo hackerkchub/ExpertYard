@@ -234,6 +234,23 @@ export const EmptyState = styled.div`
   p { color: #666; }
 `;
 
+export const HeaderSection = styled.div`
+  margin-bottom: 1.5rem;
+`;
+
+export const Title = styled.h1`
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0;
+`;
+
+export const Subtitle = styled.p`
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+`;
+
 export const HeaderBar = styled.div`
   display: flex;
   justify-content: space-between;

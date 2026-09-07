@@ -264,12 +264,13 @@ export default function MasterServiceSlugPage() {
       return;
     }
     
-    // Fallback top expert if direct click
-    const targetExpert = exp || experts[0] || {
-      id: service?.expert_id || 1,
-      expert_id: service?.expert_id || 1,
-      expert_name: service?.expert_name || "Top Verified Expert",
-      custom_price: service?.base_price || 999
+    // Fallback expert resolution (Unassigned / Admin Queue if no expert explicitly selected)
+    const targetExpert = exp || {
+      id: 0,
+      expert_id: 0,
+      expert_name: "Our Team Will Assign",
+      is_unassigned: true,
+      custom_price: service?.base_price || 0
     };
 
     setSelectedExpertForBooking(targetExpert);
@@ -452,12 +453,31 @@ export default function MasterServiceSlugPage() {
 
       const data = await res.json();
       if (data.success) {
+        const resData = data.data || data;
+        const selExpId = Number(selectedExpertForBooking?.expert_id || selectedExpertForBooking?.id || 0);
+        const selExpName = String(selectedExpertForBooking?.expert_name || selectedExpertForBooking?.name || "").trim();
+        const isSelExpValid = selExpId > 0 && selExpName && !["verified expert", "assigned expert", "unassigned expert", "our team will assign", "awaiting admin assignment"].includes(selExpName.toLowerCase());
+
+        const finalExpId = Number(resData?.expert_id ?? (isSelExpValid ? selExpId : 0));
+        const finalExpName = resData?.expert_name || resData?.assigned_expert_name || (isSelExpValid ? selExpName : null);
+        const finalExpAvatar = resData?.profile_photo || resData?.profile_image || (isSelExpValid ? (selectedExpertForBooking?.profile_photo || selectedExpertForBooking?.profile_image) : null);
+        
+        const isAssigned = Boolean(
+          finalExpId > 0 &&
+          finalExpName &&
+          !["verified expert", "assigned expert", "unassigned expert", "our team will assign", "awaiting admin assignment"].includes(String(finalExpName).toLowerCase()) &&
+          (resData?.assignment_type ? resData?.assignment_type === "expert" : true)
+        );
+
         setCompletedBooking({
-          booking_id: data.data?.booking_id || data.booking_id,
-          workspace_id: data.data?.workspace_id || data.workspace_id,
-          expert_id: selectedExpertForBooking.expert_id || selectedExpertForBooking.id,
-          expert_name: selectedExpertForBooking.expert_name || selectedExpertForBooking.name,
-          total_amount: totalPayable
+          booking_id: resData?.booking_id || resData?.id,
+          workspace_id: resData?.workspace_id || resData?.booking_id || resData?.id,
+          expert_id: isAssigned ? finalExpId : null,
+          expert_name: isAssigned ? finalExpName : null,
+          profile_photo: isAssigned ? finalExpAvatar : null,
+          assignment_type: resData?.assignment_type || (isAssigned ? "expert" : "admin_queue"),
+          total_amount: totalPayable,
+          raw_data: resData
         });
         await fetchWalletBalance();
       } else {
@@ -494,7 +514,7 @@ export default function MasterServiceSlugPage() {
     },
     {
       q: "What is the turnaround SLA for this service?",
-      a: `The standard delivery SLA is ${service?.delivery_time_days || 1} business day(s). Verified experts commit to strict turnaround times with automated progress updates.`
+      a: `This service is delivered with Fast Service guarantee. Our assigned experts commit to prompt delivery with automated progress updates.`
     },
     {
       q: "Can I communicate directly with the assigned expert?",
@@ -1651,7 +1671,7 @@ export default function MasterServiceSlugPage() {
 
         @media (max-width: 768px) {
           .msp-root {
-            padding: 1rem 0.75rem calc(110px + env(safe-area-inset-bottom, 0px));
+            padding: 1rem 0.75rem 60px;
           }
           .msp-container {
             gap: 1.25rem;
@@ -1711,11 +1731,10 @@ export default function MasterServiceSlugPage() {
             border: 1px solid transparent;
             transition: background-color 0.25s ease, border-color 0.25s ease;
           }
-          @media (hover: hover) {
-            .msp-mobile-step-row:hover {
-              background-color: #eff6ff;
-              border-color: #bfdbfe;
-            }
+          .msp-mobile-step-row:hover,
+          .msp-mobile-step-row.msp-step-active {
+            background-color: #eff6ff;
+            border-color: #bfdbfe;
           }
           .msp-mobile-step-left {
             display: flex;
@@ -1812,7 +1831,7 @@ export default function MasterServiceSlugPage() {
             position: fixed;
             left: 0;
             right: 0;
-            bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+            bottom: calc(62px + env(safe-area-inset-bottom, 0px));
             background: #ffffff;
             border-top: 1px solid #e2e8f0;
             padding: 8px 16px;

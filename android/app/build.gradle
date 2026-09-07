@@ -30,12 +30,12 @@ android {
 
     targetSdkVersion rootProject.ext.targetSdkVersion
 
-    versionCode 1
+    versionCode 3
 
     versionName "1.0.0"
 
     buildConfigField "String", "APP_TYPE", "\"web\""
-     buildConfigField "String", "API_BASE_URL", "\"https://softmaxs.com/api\""
+    buildConfigField "String", "API_BASE_URL", "\"https://api.guidexa.in/api\""
 
     manifestPlaceholders = [
         appLabel: "G9Expert"
@@ -49,14 +49,12 @@ productFlavors {
 
         applicationId "com.g9expert.user"
 
-        versionNameSuffix "-user"
-
         manifestPlaceholders = [
                 appLabel: "G9Expert User"
         ]
 
         buildConfigField "String", "APP_TYPE", "\"user\""
-        buildConfigField "String", "API_BASE_URL", "\"https://softmaxs.com/api\""
+        buildConfigField "String", "API_BASE_URL", "\"https://api.guidexa.in/api\""
     }
 
     expert {

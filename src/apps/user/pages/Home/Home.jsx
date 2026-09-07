@@ -198,8 +198,8 @@ const getInitials = (name = "") => {
 
 // Check if there's a valid profile photo
 const hasValidPhoto = (photo) => {
-  return photo && 
-    !photo.includes("default") && 
+  return photo &&
+    !photo.includes("default") &&
     !photo.includes("placeholder") &&
     !photo.includes("avatar") &&
     photo.length > 10;
@@ -287,7 +287,7 @@ function HomeRatingsReviews({ isMobile }) {
           setReviews(res.data.data);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => { active = false; };
   }, []);
 
@@ -364,7 +364,7 @@ export default function Home() {
   const [tipComments, setTipComments] = useState({});
   const [commentTextByPost, setCommentTextByPost] = useState({});
 
-  const fetchFeed = useCallback(({ cursor, append } = {}) => {}, []);
+  const fetchFeed = useCallback(({ cursor, append } = {}) => { }, []);
   const handleTargetCategorySelect = (category) => {
     setSelectedCategory(category);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -508,7 +508,7 @@ export default function Home() {
     const list = items
       .filter((item) => item.type === "service_post" || item.type === "service_offer")
       .map((item) => item.data);
-    
+
     if (list.length === 0 && mobileServices && mobileServices.length > 0) {
       return mobileServices.map(s => ({
         id: s.id,
@@ -520,7 +520,7 @@ export default function Home() {
         image: s.image || s.image_url,
       }));
     }
-    
+
     if (list.length === 0) {
       return [
         { id: 1, title: "Income Tax & ITR Filing", price: 1499, expert_name: "CA Manoj Kumar", avg_rating: 4.8, slug: "" },
@@ -553,12 +553,12 @@ export default function Home() {
       .filter((item) => item.type === "expert_post")
       .map((item) => normalizeExpertTipPost(item.data));
   }, [expertTipsPosts, items]);
-  
+
   const desktopCategories = useMemo(() => {
     const source = Array.isArray(categories) ? categories : [];
     return [...source].sort((a, b) => Number(a.display_order || 0) - Number(b.display_order || 0));
   }, [categories]);
-  
+
   const featuredExpert = suggestedExperts[0]?.data || {};
   const featuredService = trendingServices[0]?.data || {};
   const featuredExpertName = featuredExpert.name || featuredExpert.expert_name || "Dr. Ananya Sharma";
@@ -876,8 +876,8 @@ export default function Home() {
               {/* Action Grid (4 Horizontal Action Buttons) */}
               <div className="mobile-hero-action-grid">
                 {/* Action 1: Chat */}
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="mobile-hero-card"
                   onClick={() => navigate("/user/call-chat?page=1&mode=chat")}
                 >
@@ -888,8 +888,8 @@ export default function Home() {
                 </button>
 
                 {/* Action 2: Call */}
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="mobile-hero-card"
                   onClick={() => navigate("/user/call-chat?page=1&mode=call")}
                 >
@@ -900,8 +900,8 @@ export default function Home() {
                 </button>
 
                 {/* Action 3: Video */}
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="mobile-hero-card"
                   onClick={() => navigate("/user/call-chat?page=1&mode=video")}
                 >
@@ -912,8 +912,8 @@ export default function Home() {
                 </button>
 
                 {/* Action 4: Service */}
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="mobile-hero-card"
                   onClick={() => navigate("/user/all-services")}
                 >

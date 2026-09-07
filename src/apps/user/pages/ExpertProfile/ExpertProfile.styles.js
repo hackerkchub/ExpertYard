@@ -41,7 +41,7 @@ export const PageWrap = styled.div`
 
   /* Mobile container adjustments */
   @media (max-width: 1023px) {
-    padding: 0 0 calc(90px + env(safe-area-inset-bottom, 0px)) 0 !important;
+    padding: 0 0 20px 0 !important;
     background: #ffffff !important;
   }
 
@@ -1118,7 +1118,7 @@ export const MobileStickyBottomBar = styled.div`
     bottom: 0 !important;
     width: 100vw !important;
     max-width: 100vw !important;
-    z-index: 2147483647 !important;
+    z-index: 9999 !important;
     background: #ffffff !important;
     border-top: 1px solid #e2e8f0 !important;
     padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)) !important;

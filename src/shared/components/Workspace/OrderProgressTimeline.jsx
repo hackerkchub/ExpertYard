@@ -31,8 +31,6 @@ export default function OrderProgressTimeline({
   const currentStepKey = String(workspace?.current_step_key || "SUBMITTED").toUpperCase();
   const bookingStatus = String(workspace?.booking_status || workspace?.status || "").toUpperCase();
   const expStatusReq = workspace?.expert_status_request;
-  const expertName = snapshot?.expert?.expert_name || workspace?.expert_name || "Assigned Expert";
-
   // Check state completion & cancellation
   const isCompleted = currentStepKey === "COMPLETED" || bookingStatus === "COMPLETED";
   const isCancelled = currentStepKey === "CANCELLED" || bookingStatus === "CANCELLED";
@@ -42,6 +40,17 @@ export default function OrderProgressTimeline({
   const rejectedDocs = (documents || []).filter((d) => String(d.status).toUpperCase() === "REJECTED");
   const hasRejectedDocs = rejectedDocs.length > 0;
   const isActionRequired = (hasRejectedDocs || expStatusReq === "CANCELLED_REQUESTED" || workspace?.action_required === true) && !isCompleted && !isCancelled;
+
+  // Assignment Type Flags
+  const assignmentType = workspace?.assignment_type || (workspace?.expert_id && Number(workspace.expert_id) > 0 ? "expert" : "admin_queue");
+  const isRealExpert = assignmentType === "expert" && Boolean(workspace?.expert_id && Number(workspace?.expert_id) > 0);
+  const isAdminHandled = assignmentType === "admin_handled";
+  const isAdminQueue = !isRealExpert && !isAdminHandled;
+
+  // Clean Expert Name
+  const rawExpertName = String(workspace?.expert_name || snapshot?.expert?.expert_name || "").trim();
+  const cleanExpertName = rawExpertName.replace(/awaiting admin assignment/i, "").replace(/managed by g9expert support team/i, "").trim();
+  const expertName = isRealExpert ? (cleanExpertName || "Assigned Expert") : "";
 
   // Standard step definitions & semantic descriptions
   const stepPipeline = [
@@ -63,17 +72,35 @@ export default function OrderProgressTimeline({
     },
     {
       key: "EXPERT_ASSIGNED",
-      title: "Expert Assigned",
-      completedDesc: `${expertName} accepted & assigned to your order`,
-      currentDesc: `${expertName} has been assigned to your order.`,
-      upcomingDesc: "Matching with verified subject-matter expert"
+      title: isAdminQueue
+        ? "Awaiting Expert Assignment"
+        : isAdminHandled
+        ? "Admin Support Assigned"
+        : "Expert Assigned",
+      completedDesc: isAdminQueue
+        ? "Reviewing requirements for expert matching"
+        : isAdminHandled
+        ? "Managed by G9Expert Support Team"
+        : `${expertName} accepted & assigned to your order`,
+      currentDesc: isAdminQueue
+        ? "Our Admin Team is reviewing your requirements and will assign the best expert for your service shortly."
+        : isAdminHandled
+        ? "Your service order is directly managed and processed by our internal G9Expert Support Team."
+        : `${expertName} has been assigned to your order.`,
+      upcomingDesc: isAdminQueue
+        ? "Matching with verified subject-matter expert"
+        : isAdminHandled
+        ? "G9Expert Support Team execution"
+        : "Matching with verified subject-matter expert"
     },
     {
       key: "IN_REVIEW",
-      title: "Expert Working",
+      title: isAdminHandled ? "Support Execution" : "Expert Working",
       completedDesc: "Service execution & drafting completed",
-      currentDesc: `Your expert (${expertName}) is currently preparing your service.`,
-      upcomingDesc: "Expert execution & milestone preparation"
+      currentDesc: isAdminHandled
+        ? "G9Expert Support Team is preparing your service deliverables."
+        : `Your expert (${expertName}) is currently preparing your service.`,
+      upcomingDesc: "Execution & milestone preparation"
     },
     {
       key: "DELIVERED",
@@ -146,7 +173,7 @@ export default function OrderProgressTimeline({
         class: "state-delivered",
         label: "🎉 SERVICE DELIVERED (PENDING ACCEPTANCE)",
         title: "Service Ready for Review",
-        desc: "Your expert has uploaded the final deliverables. Please review and accept to complete the order.",
+        desc: "Your deliverable files are ready. Please review and accept to complete the order.",
         badgeClass: "opt-badge-amber",
         badgeText: "READY FOR REVIEW"
       };
@@ -161,7 +188,27 @@ export default function OrderProgressTimeline({
         badgeText: "COMPLETED"
       };
     }
-    if (currentStepKey === "EXPERT_ASSIGNED") {
+    if (isAdminQueue) {
+      return {
+        class: "state-initial",
+        label: "🟡 CURRENT ORDER STATUS",
+        title: "Awaiting Expert Assignment",
+        desc: "Our Admin Team is reviewing your requirements and will assign the best expert for your service shortly.",
+        badgeClass: "opt-badge-amber",
+        badgeText: "AWAITING ASSIGNMENT"
+      };
+    }
+    if (isAdminHandled) {
+      return {
+        class: "state-initial",
+        label: "🛡️ CURRENT ORDER STATUS",
+        title: "Managed by G9Expert Support Team",
+        desc: "Our support team is handling your service. You can contact Admin through an inquiry if you need any assistance.",
+        badgeClass: "opt-badge-purple",
+        badgeText: "ADMIN HANDLED"
+      };
+    }
+    if (currentStepKey === "EXPERT_ASSIGNED" || isRealExpert) {
       return {
         class: "",
         label: "🟡 CURRENT ORDER STATUS",
@@ -185,7 +232,7 @@ export default function OrderProgressTimeline({
       class: "state-initial",
       label: "● CURRENT ORDER STATUS",
       title: "Order Placed & Confirmed",
-      desc: "Your booking and payment are confirmed. Expert assignment is active.",
+      desc: "Your booking and payment are confirmed.",
       badgeClass: "opt-badge-purple",
       badgeText: "ORDER PLACED"
     };

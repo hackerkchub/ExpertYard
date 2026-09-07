@@ -5,6 +5,7 @@ import { Capacitor } from "@capacitor/core";
 
 import { socket } from "../shared/api/socket";
 import BottomNavbar from "../shared/components/BottomNavbar/BottomNavbar";
+import AskG9FloatingAssistant from "../shared/components/ai/AskG9FloatingAssistant";
 import NetworkStatus from "../shared/components/NetworkStatus/NetworkStatus";
 import SplashScreen from "../shared/components/SplashScreen";
 import { ExpertProvider } from "../shared/context/ExpertContext";
@@ -63,7 +64,7 @@ const isCallScreenPath = (pathname = "") => {
 export default function AppRouter() {
   useNativeIncomingCall();
   useSoundInit();
-  
+
   const location = useLocation();
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
@@ -220,7 +221,7 @@ export default function AppRouter() {
       ) : null}
 
       <NetworkStatus />
-      
+
       {/* Temporary Diagnostic Overlay for Android 10 Keyboard Telemetry */}
       {/* <KeyboardDiagnosticOverlay /> */}
 
@@ -297,7 +298,7 @@ export default function AppRouter() {
                 />
               </Route>
             </Route>
-            
+
             {UserAppRoutes && (
               <Route
                 path="/user/*"
@@ -308,7 +309,7 @@ export default function AppRouter() {
                 }
               />
             )}
-            
+
             {ExpertAppRoutes && (
               <Route
                 path="/expert/*"
@@ -321,7 +322,7 @@ export default function AppRouter() {
                 }
               />
             )}
-            
+
             {AdminAppRoutes && (
               <Route
                 path="/admin/*"
@@ -332,12 +333,13 @@ export default function AppRouter() {
                 }
               />
             )}
-            
+
             <Route path="*" element={<RootRedirect />} />
           </Routes>
         </AppGuard>
       </div>
 
+      <AskG9FloatingAssistant />
       {showNavbar && !pathname.startsWith("/expert") && <BottomNavbar />}
     </div>
   );

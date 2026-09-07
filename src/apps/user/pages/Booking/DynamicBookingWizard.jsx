@@ -634,8 +634,8 @@ export default function DynamicBookingWizard() {
                 </div>
 
                 {experts.length === 0 ? (
-                  <div style={{ padding: "1.25rem", background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0", textAlign: "center", color: "#64748b", fontSize: 13 }}>
-                    Standard platform expert will be assigned upon booking confirmation.
+                  <div style={{ padding: "1.25rem", background: "#f0fdf4", borderRadius: 12, border: "1px solid #bbf7d0", textAlign: "center", color: "#166534", fontSize: 13, fontWeight: 600 }}>
+                    ℹ️ No individual expert is currently available. Our Admin Team will assign the best specialist for your request upon booking confirmation.
                   </div>
                 ) : (
                   <div style={{ display: "grid", gap: 12 }}>
@@ -951,8 +951,10 @@ export default function DynamicBookingWizard() {
                     <strong style={{ color: "#0f172a" }}>{service?.title}</strong>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                    <span style={{ color: "#64748b" }}>Assigned Expert:</span>
-                    <strong style={{ color: "#6b46c1" }}>{selectedExpert?.expert_name || selectedExpert?.name}</strong>
+                    <span style={{ color: "#64748b" }}>Expert Assignment:</span>
+                    <strong style={{ color: Number(selectedExpert?.expert_id || selectedExpert?.id || 0) > 0 && selectedExpert?.expert_name && selectedExpert?.expert_name.toLowerCase() !== "verified expert" ? "#6b46c1" : "#0f172a" }}>
+                      {Number(selectedExpert?.expert_id || selectedExpert?.id || 0) > 0 && selectedExpert?.expert_name && selectedExpert?.expert_name.toLowerCase() !== "verified expert" ? selectedExpert.expert_name : "Our Team Will Assign"}
+                    </strong>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
                     <span style={{ color: "#64748b" }}>Customer:</span>
@@ -1037,9 +1039,29 @@ export default function DynamicBookingWizard() {
 
                 <div>
                   <h2 style={{ margin: 0, color: "#0f172a", fontSize: "1.6rem", fontWeight: 900 }}>ORDER CONFIRMED!</h2>
-                  <p style={{ margin: "6px 0 0", color: "#64748b", fontSize: "0.95rem" }}>
-                    Your request has been assigned to <strong>{selectedExpert?.expert_name || selectedExpert?.name}</strong>.
-                  </p>
+                  {(() => {
+                    const wizardExpId = Number(completedBooking?.expert_id || selectedExpert?.expert_id || selectedExpert?.id || 0);
+                    const wizardExpName = String(completedBooking?.expert_name || selectedExpert?.expert_name || selectedExpert?.name || "").trim();
+                    const isWizardAssigned = wizardExpId > 0 && wizardExpName && !["verified expert", "assigned expert", "unassigned expert", "our team will assign", "awaiting admin assignment"].includes(wizardExpName.toLowerCase());
+
+                    if (isWizardAssigned) {
+                      return (
+                        <p style={{ margin: "6px 0 0", color: "#64748b", fontSize: "0.95rem" }}>
+                          Your selected expert, <strong>{wizardExpName}</strong>, will work on your service shortly.
+                        </p>
+                      );
+                    }
+                    return (
+                      <>
+                        <p style={{ margin: "6px 0 0", color: "#0f172a", fontSize: "0.95rem", fontWeight: 800 }}>
+                          Our team will assign the best expert for your service shortly.
+                        </p>
+                        <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "0.85rem" }}>
+                          Your request has been received successfully and is now being reviewed by our team.
+                        </p>
+                      </>
+                    );
+                  })()}
                 </div>
 
                 <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 14, padding: "1.25rem", display: "flex", flexDirection: "column", gap: 8, maxWidth: 460, margin: "0 auto", width: "100%", textAlign: "left" }}>
@@ -1052,8 +1074,15 @@ export default function DynamicBookingWizard() {
                     <strong style={{ color: "#0f172a" }}>{service?.title}</strong>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                    <span style={{ color: "#64748b" }}>Assigned Expert:</span>
-                    <strong style={{ color: "#0f172a" }}>{selectedExpert?.expert_name || selectedExpert?.name}</strong>
+                    <span style={{ color: "#64748b" }}>Expert Assignment:</span>
+                    <strong style={{ color: "#0f172a" }}>
+                      {(() => {
+                        const wizardExpId = Number(completedBooking?.expert_id || selectedExpert?.expert_id || selectedExpert?.id || 0);
+                        const wizardExpName = String(completedBooking?.expert_name || selectedExpert?.expert_name || selectedExpert?.name || "").trim();
+                        const isWizardAssigned = wizardExpId > 0 && wizardExpName && !["verified expert", "assigned expert", "unassigned expert", "our team will assign", "awaiting admin assignment"].includes(wizardExpName.toLowerCase());
+                        return isWizardAssigned ? wizardExpName : "Our Team Will Assign";
+                      })()}
+                    </strong>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
                     <span style={{ color: "#64748b" }}>Total Amount Paid:</span>
@@ -1094,13 +1123,13 @@ export default function DynamicBookingWizard() {
                 <div style={{ fontSize: 13, fontWeight: 800, color: "#0f172a", marginTop: 2 }}>{service?.title}</div>
               </div>
 
-              {selectedExpert && (
-                <div style={{ borderBottom: "1px solid #f1f5f9", paddingBottom: "0.85rem" }}>
-                  <div style={{ fontSize: 11, color: "#64748b", textTransform: "uppercase", fontWeight: 700 }}>Assigned Expert</div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: "#6b46c1", marginTop: 2 }}>{selectedExpert.expert_name || selectedExpert.name}</div>
-                  <div style={{ fontSize: 12, color: "#059669", fontWeight: 700, marginTop: 2 }}>⚡ {selectedExpert.delivery_time_days || 1} Days SLA Delivery</div>
+              <div style={{ borderBottom: "1px solid #f1f5f9", paddingBottom: "0.85rem" }}>
+                <div style={{ fontSize: 11, color: "#64748b", textTransform: "uppercase", fontWeight: 700 }}>Expert Assignment</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: Number(selectedExpert?.expert_id || selectedExpert?.id || 0) > 0 && selectedExpert?.expert_name && selectedExpert?.expert_name.toLowerCase() !== "verified expert" ? "#6b46c1" : "#0f172a", marginTop: 2 }}>
+                  {Number(selectedExpert?.expert_id || selectedExpert?.id || 0) > 0 && selectedExpert?.expert_name && selectedExpert?.expert_name.toLowerCase() !== "verified expert" ? (selectedExpert.expert_name || selectedExpert.name) : "Our Team Will Assign"}
                 </div>
-              )}
+                <div style={{ fontSize: 12, color: "#059669", fontWeight: 700, marginTop: 2 }}>⚡ Fast Service</div>
+              </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", color: "#475569" }}>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
 import { FiX, FiMail, FiPhone, FiUser, FiInfo, FiSend } from "react-icons/fi";
@@ -17,21 +18,27 @@ const slideUp = keyframes`
 
 const Overlay = styled.div`
   position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(4px);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 999999;
   animation: ${fadeIn} 0.2s ease-out;
   padding: 16px;
+  box-sizing: border-box;
 
   @media (max-width: 768px) {
     align-items: flex-end;
     padding: 0;
-    min-height: 100dvh;
-    z-index: 30000;
   }
 `;
 
@@ -39,17 +46,18 @@ const ModalContent = styled.div`
   background: #ffffff;
   border-radius: 20px;
   width: 100%;
-  max-width: 500px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-width: 520px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   animation: ${slideUp} 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  max-height: 90vh;
+  max-height: 88vh;
+  max-height: 88dvh;
 
   @media (max-width: 768px) {
-    height: min(92dvh, 760px);
-    max-height: 92dvh;
+    height: min(90dvh, 760px);
+    max-height: 90dvh;
     border-radius: 24px 24px 0 0;
     width: 100%;
   }
@@ -387,17 +395,22 @@ export default function InquiryModal({ isOpen, onClose, expert }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  // Auto-populate logged in user profile details
   useEffect(() => {
-    if (user) {
+    if (user && isOpen) {
+      const name = user.name || user.full_name || `${user.first_name || ""} ${user.last_name || ""}`.trim() || "";
+      const email = user.email || "";
+      const mobile = user.mobile || user.phone || "";
       setFormData(prev => ({
         ...prev,
-        name: user.name || "",
-        email: user.email || "",
-        mobile: user.mobile || "",
+        name: prev.name || name,
+        email: prev.email || email,
+        mobile: prev.mobile || mobile,
       }));
     }
-  }, [user]);
+  }, [user, isOpen]);
 
+  // Lock body scroll when modal is open
   useEffect(() => {
     if (!isOpen) return undefined;
 
@@ -412,7 +425,7 @@ export default function InquiryModal({ isOpen, onClose, expert }) {
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !expert) return null;
 
   const handleTextChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -474,7 +487,7 @@ export default function InquiryModal({ isOpen, onClose, expert }) {
           Authorization: token ? `Bearer ${token}` : "",
         },
         body: JSON.stringify({
-          expert_id: expert.id,
+          expert_id: expert.id || expert.expert_id,
           subject: formData.subject,
           message: formData.message,
           preferred_contact_method: formData.contactMethod,
@@ -498,7 +511,7 @@ export default function InquiryModal({ isOpen, onClose, expert }) {
     }
   };
 
-  return (
+  const modalJSX = (
     <Overlay onClick={onClose}>
       <ModalContent onClick={e => e.stopPropagation()}>
         <Header>
@@ -541,17 +554,26 @@ export default function InquiryModal({ isOpen, onClose, expert }) {
             <Form id="inquiry-form" onSubmit={handleSubmit}>
               <FormGroup>
                 <Label>Expert</Label>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px", background: "#f8fafc", borderRadius: "10px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "14px", padding: "12px 16px", background: "#f8fafc", borderRadius: "12px", border: "1px solid #e2e8f0" }}>
                   {expert.profile_photo ? (
-                    <img src={expert.profile_photo} alt={expert.name} style={{ width: "40px", height: "40px", borderRadius: "50%", objectFit: "cover" }} />
+                    <img
+                      src={expert.profile_photo}
+                      alt={expert.name || expert.expert_name || "Expert"}
+                      style={{ width: "46px", height: "46px", borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "2px solid #2563eb" }}
+                      onError={(e) => { e.target.src = "https://via.placeholder.com/46?text=Expert"; }}
+                    />
                   ) : (
-                    <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "#e2e8f0", display: "flex", alignItems: "center", justify: "center", fontWeight: "bold" }}>
-                      {expert.name ? expert.name[0] : "E"}
+                    <div style={{ width: "46px", height: "46px", borderRadius: "50%", background: "#dbeafe", color: "#1e40af", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "1.2rem", flexShrink: 0 }}>
+                      {expert.name || expert.expert_name ? (expert.name || expert.expert_name)[0] : "E"}
                     </div>
                   )}
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#0f172a" }}>{expert.name}</div>
-                    <div style={{ fontSize: "0.8rem", color: "#64748b" }}>{expert.category_name || "Expert"}</div>
+                  <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                    <div style={{ fontWeight: 800, fontSize: "1rem", color: "#0f172a", lineHeight: 1.3 }}>
+                      {expert.name || expert.expert_name || "Verified Expert"}
+                    </div>
+                    <div style={{ fontSize: "0.825rem", color: "#64748b", fontWeight: 600, marginTop: "2px" }}>
+                      {expert.position || expert.category_name || "Expert"}
+                    </div>
                   </div>
                 </div>
               </FormGroup>
@@ -694,4 +716,6 @@ export default function InquiryModal({ isOpen, onClose, expert }) {
       </ModalContent>
     </Overlay>
   );
+
+  return createPortal(modalJSX, document.body);
 }

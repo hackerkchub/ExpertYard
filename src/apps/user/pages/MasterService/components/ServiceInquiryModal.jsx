@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FiX, FiSend, FiMessageSquare, FiAlertCircle, FiCheckCircle, FiClock, FiPhone, FiMail } from "react-icons/fi";
 import APP_CONFIG from "../../../../../config/appConfig";
+import { useAuth } from "../../../../../shared/context/UserAuthContext";
 
 const API_BASE = APP_CONFIG.API_BASE_URL;
 
@@ -18,18 +19,30 @@ const apiFetch = async (path, options = {}) => {
   return await fetch(primaryUrl, options);
 };
 
-export default function ServiceInquiryModal({ service, onClose, user, onLoginClick }) {
+export default function ServiceInquiryModal({ service, bookingId, onClose, user, onLoginClick }) {
   if (!service) return null;
 
+  const authContext = useAuth();
+  const currentUser = user || authContext?.user;
+
+  const getInitialName = (u) => u?.name || u?.full_name || `${u?.first_name || ""} ${u?.last_name || ""}`.trim() || "";
+  const getInitialEmail = (u) => u?.email || "";
+  const getInitialMobile = (u) => u?.mobile || u?.phone || "";
+
+  const targetBookingId = bookingId || service?.booking_id || null;
   const token = localStorage.getItem("token") || localStorage.getItem("userToken") || localStorage.getItem("user_token") || "";
 
   // User details auto-populate
-  const [userName, setUserName] = useState(user?.name || user?.first_name || "");
-  const [userEmail, setUserEmail] = useState(user?.email || "");
-  const [userMobile, setUserMobile] = useState(user?.mobile || user?.phone || "");
+  const [userName, setUserName] = useState(() => getInitialName(currentUser));
+  const [userEmail, setUserEmail] = useState(() => getInitialEmail(currentUser));
+  const [userMobile, setUserMobile] = useState(() => getInitialMobile(currentUser));
 
   // Form fields
-  const [subject, setSubject] = useState(`Inquiry regarding ${service.title || service.name || "Service"}`);
+  const [subject, setSubject] = useState(
+    targetBookingId
+      ? `Inquiry regarding Booking #${targetBookingId}`
+      : `Inquiry regarding ${service.title || service.name || "Service"}`
+  );
   const [inquiryType, setInquiryType] = useState("Service Related Question");
   const [preferredContactMethod, setPreferredContactMethod] = useState("Phone Call");
   const [preferredContactTime, setPreferredContactTime] = useState("Morning (9 AM - 12 PM)");
@@ -40,14 +53,19 @@ export default function ServiceInquiryModal({ service, onClose, user, onLoginCli
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // Sync user profile when user prop changes
+  // Sync user profile when user prop or authContext changes
   useEffect(() => {
-    if (user) {
-      if (!userName) setUserName(user.name || user.first_name || "");
-      if (!userEmail) setUserEmail(user.email || "");
-      if (!userMobile) setUserMobile(user.mobile || user.phone || "");
+    const u = user || authContext?.user;
+    if (u) {
+      const name = getInitialName(u);
+      const email = getInitialEmail(u);
+      const mobile = getInitialMobile(u);
+
+      if (!userName && name) setUserName(name);
+      if (!userEmail && email) setUserEmail(email);
+      if (!userMobile && mobile) setUserMobile(mobile);
     }
-  }, [user]);
+  }, [user, authContext?.user]);
 
   // Escape key handler to close modal
   useEffect(() => {
@@ -114,6 +132,7 @@ export default function ServiceInquiryModal({ service, onClose, user, onLoginCli
         headers: userAuthHeaders(),
         body: JSON.stringify({
           master_service_id: service.id,
+          booking_id: targetBookingId,
           expert_id: null,
           subject: finalSubject,
           message: trimmedMsg,
@@ -145,6 +164,120 @@ export default function ServiceInquiryModal({ service, onClose, user, onLoginCli
 
   return (
     <div className="msp-modal-overlay" onClick={onClose}>
+      <style>{`
+        .msp-modal-overlay {
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          z-index: 100000 !important;
+          background: rgba(15, 23, 42, 0.75) !important;
+          backdrop-filter: blur(8px) !important;
+          -webkit-backdrop-filter: blur(8px) !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          padding: 1rem !important;
+          box-sizing: border-box !important;
+        }
+        .msp-modal-box {
+          position: relative !important;
+          z-index: 100001 !important;
+          background: #ffffff !important;
+          border: 1px solid #e2e8f0 !important;
+          border-radius: 24px !important;
+          padding: 1.75rem !important;
+          width: 100% !important;
+          max-width: 620px !important;
+          max-height: 88vh !important;
+          overflow-y: auto !important;
+          -webkit-overflow-scrolling: touch !important;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 1.25rem !important;
+          box-sizing: border-box !important;
+        }
+        .msp-modal-drag-handle { display: none; }
+        .msp-modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          border-bottom: 1px solid #f1f5f9;
+          padding-bottom: 12px;
+        }
+        .msp-modal-title { margin: 0; color: #0f172a; font-size: 1.25rem; font-weight: 800; }
+        .msp-modal-subtitle { font-size: 13px; color: #64748b; margin-top: 2px; }
+        .msp-modal-close-btn {
+          background: #f1f5f9;
+          color: #64748b;
+          border: 0;
+          border-radius: 50%;
+          width: 32px;
+          height: 32px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 800;
+          transition: background 0.15s ease;
+        }
+        .msp-modal-close-btn:hover {
+          background: #e2e8f0;
+          color: #0f172a;
+        }
+        .msp-btn-primary {
+          background: #2563eb;
+          color: #ffffff;
+          border: 0;
+          border-radius: 10px;
+          padding: 10px 20px;
+          font-weight: 700;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          transition: background 0.15s ease;
+        }
+        .msp-btn-primary:hover:not(:disabled) {
+          background: #1d4ed8;
+        }
+        .msp-btn-secondary {
+          background: #f1f5f9;
+          color: #475569;
+          border: 1px solid #cbd5e1;
+          border-radius: 10px;
+          padding: 10px 18px;
+          font-weight: 700;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          transition: background 0.15s ease;
+        }
+        .msp-btn-secondary:hover:not(:disabled) {
+          background: #e2e8f0;
+          color: #0f172a;
+        }
+        .msp-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 4px 10px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 700;
+        }
+        .msp-badge-blue {
+          background: #eff6ff;
+          color: #2563eb;
+          border: 1px solid #bfdbfe;
+        }
+      `}</style>
       <div
         className="msp-modal-box"
         style={{ maxWidth: "620px" }}

@@ -284,8 +284,9 @@ export const acceptWorkspaceDelivery = (bookingId) => {
 /**
  * Get all workspace monitoring records
  */
-export const getAdminWorkspaceMonitor = () => {
-  return axios.get(`/workspace/admin/monitor`);
+export const getAdminWorkspaceMonitor = (queue = null) => {
+  const url = queue ? `/workspace/admin/monitor?queue=${encodeURIComponent(queue)}` : `/workspace/admin/monitor`;
+  return axios.get(url);
 };
 
 /**
@@ -296,17 +297,20 @@ export const getWorkspaceExpertsList = () => {
 };
 
 /**
- * Reassign workspace expert
+ * Reassign workspace expert or set Admin Handling
  */
 export const reassignWorkspaceExpert = (
   bookingId,
-  expertId
+  expertId = null,
+  isAdminHandling = false
 ) => {
+  const payload = isAdminHandling
+    ? { is_admin_handling: true }
+    : { expert_id: expertId };
+
   return axios.patch(
     `/workspace/${bookingId}/reassign-expert`,
-    {
-      expert_id: expertId,
-    }
+    payload
   );
 };
 

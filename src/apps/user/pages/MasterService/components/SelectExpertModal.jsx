@@ -52,7 +52,7 @@ export default function SelectExpertModal({
                       </span>
                     </div>
                     <div className="msp-select-exp-meta">
-                      {exp.position || "Verified Expert"} • SLA: {expSla} Day(s)
+                      {exp.position || "Expert"} • Fast Service
                     </div>
                   </div>
                 </div>

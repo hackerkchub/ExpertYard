@@ -2186,7 +2186,7 @@ const ExpertProfilePage = () => {
       </div>
 
       {/* MOBILE STICKY BOTTOM CONSULTATION CTA BAR (PORTAL TO DOCUMENT.BODY) */}
-      {typeof document !== "undefined" &&
+      {!isInquiryModalOpen && typeof document !== "undefined" &&
         createPortal(
           <MobileStickyBottomBar>
             <div className="cta-info-col">

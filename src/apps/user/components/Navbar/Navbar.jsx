@@ -82,7 +82,14 @@ const getMobileHeaderTitle = (pathname) => {
   if (pathname === "/user/wallet") return "Wallet";
   if (pathname === "/user/user-profile") return "Profile";
   if (pathname === "/user/chat-history" || pathname.startsWith("/user/chat-history/")) return "History";
-  if (pathname.startsWith("/user/service-details/")) return "Service Details";
+  if (
+    pathname.startsWith("/user/service-details/") ||
+    pathname.startsWith("/user/service/") ||
+    pathname.startsWith("/user/services/") ||
+    pathname.startsWith("/services/") ||
+    pathname.startsWith("/service/") ||
+    pathname.includes("/master-services/")
+  ) return "Service Detail";
   if (pathname.startsWith("/user/category/") || pathname.startsWith("/user/categories/")) return "Categories";
   if (pathname === "/user/my-offers") return "Offers";
   if (pathname === "/user/my-orders" || pathname === "/user/my-bookings" || pathname === "/user/my-services") return "My Orders";

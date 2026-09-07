@@ -54,9 +54,9 @@ export default function ExpertCard({ expert, serviceBasePrice, onBookExpert }) {
         </div>
 
         <div className="msp-exp-sla-col">
-          <div className="msp-exp-sla-label">Turnaround</div>
+          <div className="msp-exp-sla-label">Speed</div>
           <div className="msp-exp-sla-val">
-            <FiClock style={{ fontSize: 12 }} /> {expSla} Day(s)
+            <FiClock style={{ fontSize: 12 }} /> Fast Service
           </div>
         </div>
 

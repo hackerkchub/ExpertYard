@@ -36,7 +36,7 @@ export default function ServiceHero({
             </span>
           )}
           <span className="msp-badge msp-badge-amber">
-            ⚡ {service.delivery_time_days || 1} Day SLA
+            ⚡ Fast Service
           </span>
           <span className="msp-badge msp-badge-green">
             ✓ Verified Service
@@ -73,7 +73,7 @@ export default function ServiceHero({
         <div className="msp-trust-indicators">
           <div className="msp-trust-item">
             <FiClock className="msp-trust-icon msp-icon-amber" />
-            <span>Guaranteed {service.delivery_time_days || 1}-Day SLA</span>
+            <span>Fast Service Delivery</span>
           </div>
           <div className="msp-trust-item">
             <FiShield className="msp-trust-icon msp-icon-blue" />

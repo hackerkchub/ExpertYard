@@ -16,6 +16,7 @@ import {
 import { socket } from "../../../../shared/api/socket";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import { usePublicExpert as useExpert } from "../../context/PublicExpertContext";
+import { getExpertProfileByExpertIdApi } from "../../../../shared/api/expertapi/expert.api";
 import useChatTimer from "../../../../shared/hooks/useChatTimer";
 import { saveActiveChatSession, clearActiveChatSession } from "../../../../shared/utils/chatSession";
 import { hotToast } from "../../../../shared/utils/lazyNotifications";
@@ -460,6 +461,65 @@ const EmptyStateContainer = styled.div`
   background: #ffffff;
 `;
 
+const ServiceEmptyCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+  max-width: 440px;
+  width: 92%;
+  padding: 28px 24px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9edef;
+  text-align: center;
+  gap: 12px;
+  animation: ${fadeIn} 0.25s ease-out;
+`;
+
+const ServiceBadgePill = styled.span`
+  display: inline-block;
+  background: #e6f4ea;
+  color: #137333;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 6px 14px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  margin-top: 4px;
+`;
+
+const ServiceEmptyTitle = styled.h3`
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111b21;
+`;
+
+const ServiceEmptyMainMsg = styled.h4`
+  margin: 4px 0 0 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #00a884;
+`;
+
+const ServiceEmptyDesc = styled.p`
+  margin: 0;
+  font-size: 0.88rem;
+  color: #54656f;
+  line-height: 1.45;
+`;
+
+const ServiceEmptySupport = styled.p`
+  margin: 4px 0 0 0;
+  font-size: 0.8rem;
+  color: #8696a0;
+  line-height: 1.4;
+`;
+
 const getInitials = (name) => {
   if (!name) return "E";
   return name
@@ -571,17 +631,129 @@ export default function Chat() {
     return chatData?.pricing_mode === "subscription" && remaining == null;
   }, [chatData, getRemainingMinutes]);
 
-  const fetchChatDetails = useCallback(async () => {
-    const searchParams = new URLSearchParams(location.search);
-    const queryExpertId = searchParams.get("expert_id") || searchParams.get("expertId");
-    let activeRoomId = room_id || location.state?.room_id;
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const queryExpertId = useMemo(() => searchParams.get("expert_id") || searchParams.get("expertId"), [searchParams]);
 
-    if (!activeRoomId && queryExpertId && user?.id) {
-      activeRoomId = `chat_${user.id}_${queryExpertId}`;
+  const targetExpId = useMemo(() => {
+    const rawId = chatData?.expert_id || queryExpertId;
+    return rawId && Number(rawId) > 0 ? Number(rawId) : null;
+  }, [chatData?.expert_id, queryExpertId]);
+
+  const [resolvedExpert, setResolvedExpert] = useState(null);
+  const [isFetchingExpert, setIsFetchingExpert] = useState(false);
+
+  useEffect(() => {
+    if (!targetExpId) {
+      setResolvedExpert(null);
+      setIsFetchingExpert(false);
+      return;
     }
 
-    if (!activeRoomId) {
-      setError("Unable to load chat: missing room ID or expert parameter.");
+    if (chatData?.expert_name && Number(chatData?.expert_id) === Number(targetExpId)) {
+      setResolvedExpert({
+        id: Number(targetExpId),
+        name: chatData.expert_name,
+        avatar: chatData.expert_avatar || "",
+        title: chatData.expert_title || chatData.expert_position || "",
+      });
+      setIsFetchingExpert(false);
+      return;
+    }
+
+    const contextExp = (experts || []).find(
+      (e) => Number(e.id) === Number(targetExpId) || Number(e.expert_id) === Number(targetExpId)
+    );
+    if (contextExp && (contextExp.name || contextExp.expert_name)) {
+      setResolvedExpert({
+        id: Number(targetExpId),
+        name: contextExp.name || contextExp.expert_name,
+        avatar: contextExp.profile_photo || contextExp.avatar || contextExp.profile_picture || "",
+        title: contextExp.position || contextExp.title || "",
+      });
+      setIsFetchingExpert(false);
+      return;
+    }
+
+    if (
+      expertData &&
+      (Number(expertData.id) === Number(targetExpId) || Number(expertData.expert_id) === Number(targetExpId) || Number(expertData.expertId) === Number(targetExpId)) &&
+      (expertData.name || expertData.position)
+    ) {
+      setResolvedExpert({
+        id: Number(targetExpId),
+        name: expertData.name || "Expert",
+        avatar: expertData.profile_photo || expertData.avatar || expertData.profile_picture || expertData.profile_image || "",
+        title: expertData.position || expertData.title || "",
+      });
+      setIsFetchingExpert(false);
+      return;
+    }
+
+    let isMounted = true;
+    setIsFetchingExpert(true);
+
+    getExpertProfileByExpertIdApi(targetExpId)
+      .then((res) => {
+        if (!isMounted) return;
+        const data = res?.data || res?.profile || res;
+        if (data && (data.name || data.expert_name || data.user_name)) {
+          setResolvedExpert({
+            id: Number(targetExpId),
+            name: data.name || data.expert_name || data.user_name,
+            avatar: data.profile_photo || data.avatar || data.profile_picture || data.profile_image || "",
+            title: data.position || data.title || "",
+          });
+        } else {
+          setResolvedExpert({
+            id: Number(targetExpId),
+            name: "Expert",
+            avatar: "",
+            title: "",
+          });
+        }
+      })
+      .catch((err) => {
+        if (!isMounted) return;
+        console.warn("Failed to fetch expert profile for chat:", err);
+        setResolvedExpert({
+          id: Number(targetExpId),
+          name: "Expert",
+          avatar: "",
+          title: "",
+        });
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsFetchingExpert(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [targetExpId, chatData?.expert_id, chatData?.expert_name, experts, expertData]);
+
+  const effectiveRoomId = useMemo(() => {
+    if (room_id) return room_id;
+    if (location.state?.room_id) return location.state.room_id;
+    if (user?.id) {
+      if (queryExpertId && Number(queryExpertId) > 0) {
+        return `chat_${user.id}_${queryExpertId}`;
+      }
+      const bId = location.state?.bookingId || searchParams.get("booking_id");
+      if (bId) {
+        return `chat_service_${user.id}_${bId}`;
+      }
+      return `chat_service_${user.id}`;
+    }
+    return chatData?.room_id || null;
+  }, [room_id, location.state, user?.id, queryExpertId, searchParams, chatData]);
+
+  const fetchChatDetails = useCallback(async () => {
+    const targetRoomId = effectiveRoomId;
+
+    if (!targetRoomId) {
+      setError("Unable to load chat: missing room ID or user session.");
       setChatData(null);
       setMessages([]);
       setSessionActive(false);
@@ -593,32 +765,40 @@ export default function Chat() {
       setLoading(true);
       setError("");
       const token = localStorage.getItem("token") || localStorage.getItem("user_token") || localStorage.getItem("userToken") || "";
-      if (!token) {
-        throw new Error("Login required to open this chat.");
+
+      let resultData = null;
+      if (token) {
+        try {
+          const response = await fetch(`${APP_CONFIG.API_BASE_URL}/chat/details/${targetRoomId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            cache: "no-cache",
+          });
+
+          if (response.ok) {
+            const resJson = await response.json();
+            if (resJson.success && resJson.data) {
+              resultData = resJson.data;
+            }
+          }
+        } catch (fetchErr) {
+          console.warn("API fetch warning:", fetchErr);
+        }
       }
 
-      const response = await fetch(`${APP_CONFIG.API_BASE_URL}/chat/details/${activeRoomId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        cache: "no-cache",
-      });
+      // 🟢 NO CONVERSATION YET IS NORMAL! Initialize clean Service Chat state
+      const session = resultData?.session || {
+        room_id: targetRoomId,
+        user_id: user?.id,
+        expert_id: queryExpertId && Number(queryExpertId) > 0 ? Number(queryExpertId) : null,
+        is_active: 1,
+        pricing_mode: "subscription",
+        is_new_conversation: true,
+      };
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText || "Chat not found"}`);
-      }
-
-      const result = await response.json();
-      if (!result.success || !result.data) {
-        throw new Error(result.message || "Chat session not found");
-      }
-
-      const { session, messages: fetchedMessages } = result.data;
-      if (!session) {
-        throw new Error("No session data found");
-      }
+      const fetchedMessages = resultData?.messages || [];
 
       setChatData(session);
       setMessages(
@@ -639,7 +819,7 @@ export default function Chat() {
         }))
       );
 
-      setSessionActive(Number(session.is_active) === 1);
+      setSessionActive(session ? Number(session.is_active) === 1 : true);
       if (session?.end_time) setEndTime(session.end_time);
       else if (location.state?.endTime) setEndTime(location.state.endTime);
       else setEndTime(null);
@@ -647,22 +827,22 @@ export default function Chat() {
       setError("");
     } catch (err) {
       console.error("❌ Chat fetch error:", err);
-      setError(err.message || "Chat session not found");
+      setError(err.message || "Unable to load chat");
       setChatData(null);
       setMessages([]);
       setSessionActive(false);
     } finally {
       setLoading(false);
     }
-  }, [room_id, location.state?.endTime]);
+  }, [effectiveRoomId, location.state?.endTime, queryExpertId, user?.id]);
 
-  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
-  const queryExpertId = searchParams.get("expert_id") || searchParams.get("expertId");
-  const effectiveRoomId = useMemo(() => {
-    return room_id || location.state?.room_id || (user?.id && queryExpertId ? `chat_${user.id}_${queryExpertId}` : null) || chatData?.room_id;
-  }, [room_id, location.state, user?.id, queryExpertId, chatData]);
+  const isRealExpertChat = useMemo(() => {
+    const isExpertAssignment = chatData?.assignment_type ? chatData.assignment_type === "expert" : true;
+    return Boolean(targetExpId && targetExpId > 0 && isExpertAssignment);
+  }, [targetExpId, chatData?.assignment_type]);
 
   const isServiceChat = useMemo(() => {
+    if (!isRealExpertChat) return true;
     const activeRoom = room_id || effectiveRoomId;
     return (
       String(activeRoom || "").startsWith("chat_") ||
@@ -670,7 +850,7 @@ export default function Chat() {
       location.state?.fromService ||
       location.state?.fromWorkspace
     );
-  }, [room_id, effectiveRoomId, chatData, location.state]);
+  }, [isRealExpertChat, room_id, effectiveRoomId, chatData, location.state]);
 
   const navigateBackOrPrevious = useCallback(() => {
     const returnUrl = location.state?.returnUrl || location.state?.fromUrl;
@@ -1125,13 +1305,85 @@ export default function Chat() {
     }
   }, [chatData, sessionActive, room_id, effectiveRoomId]);
 
-  const expertInfo = useMemo(() => {
-    if (!chatData) return null;
-    return {
-      name: chatData.expert_name || expertData?.name || "Expert",
-      avatar: chatData.expert_avatar || expertData?.avatar,
+  const [isExpertOnline, setIsExpertOnline] = useState(false);
+
+  useEffect(() => {
+    const targetExpertId = chatData?.expert_id || queryExpertId;
+    if (!isRealExpertChat || !targetExpertId) return;
+
+    const numericExpertId = Number(targetExpertId);
+
+    const handleExpertStatus = (data = {}) => {
+      if (Number(data.expertId || data.expert_id) === numericExpertId) {
+        setIsExpertOnline(Boolean(data.online));
+      }
     };
-  }, [chatData, expertData]);
+
+    const handleExpertOnline = (data = {}) => {
+      if (Number(data.expert_id || data.expertId) === numericExpertId) {
+        setIsExpertOnline(true);
+      }
+    };
+
+    const handleExpertOffline = (data = {}) => {
+      if (Number(data.expert_id || data.expertId) === numericExpertId) {
+        setIsExpertOnline(false);
+      }
+    };
+
+    socket.emit("check_expert_online", { expertId: numericExpertId });
+    socket.on("expert_status", handleExpertStatus);
+    socket.on("expert_online", handleExpertOnline);
+    socket.on("expert_offline", handleExpertOffline);
+
+    return () => {
+      socket.off("expert_status", handleExpertStatus);
+      socket.off("expert_online", handleExpertOnline);
+      socket.off("expert_offline", handleExpertOffline);
+    };
+  }, [isRealExpertChat, chatData?.expert_id, queryExpertId]);
+
+  const expertInfo = useMemo(() => {
+    if (resolvedExpert && Number(resolvedExpert.id) === Number(targetExpId)) {
+      return resolvedExpert;
+    }
+    if (chatData && chatData.expert_name && Number(chatData.expert_id) === Number(targetExpId)) {
+      return {
+        id: Number(targetExpId),
+        name: chatData.expert_name,
+        avatar: chatData.expert_avatar,
+        title: chatData.expert_title,
+      };
+    }
+    const contextExp = (experts || []).find(
+      (e) => Number(e.id) === Number(targetExpId) || Number(e.expert_id) === Number(targetExpId)
+    );
+    if (contextExp && (contextExp.name || contextExp.expert_name)) {
+      return {
+        id: Number(targetExpId),
+        name: contextExp.name || contextExp.expert_name,
+        avatar: contextExp.profile_photo || contextExp.avatar || contextExp.profile_picture || "",
+        title: contextExp.position || contextExp.title || "",
+      };
+    }
+    if (
+      expertData &&
+      (Number(expertData.id) === Number(targetExpId) || Number(expertData.expert_id) === Number(targetExpId) || Number(expertData.expertId) === Number(targetExpId)) &&
+      (expertData.name || expertData.position)
+    ) {
+      return {
+        id: Number(targetExpId),
+        name: expertData.name || "Expert",
+        avatar: expertData.profile_photo || expertData.avatar || expertData.profile_picture || expertData.profile_image || "",
+        title: expertData.position || expertData.title || "",
+      };
+    }
+    return {
+      id: targetExpId ? Number(targetExpId) : null,
+      name: targetExpId ? (isFetchingExpert ? "Loading expert..." : "Expert") : "Service Q&A Chat",
+      avatar: "",
+    };
+  }, [resolvedExpert, chatData, experts, expertData, targetExpId, isFetchingExpert]);
 
   const isChatDisabled = useMemo(() => {
     return (sessionActive === false && !isServiceChat) || loading;
@@ -1159,46 +1411,46 @@ export default function Chat() {
   return (
     <PageWrap>
       <Toaster position="top-center" />
-      {chatData && expertInfo ? (
+      {chatData ? (
         <>
-          {/* WHATSAPP STICKY HEADER (SAFE AREA TOP COMPLIANT) */}
+          {/* STICKY HEADER */}
           <HeaderBar className="chat-header-bar">
             <HeaderLeft>
               <HeaderBackBtn onClick={handleBack}>
                 <FiArrowLeft size={20} />
               </HeaderBackBtn>
               <HeaderAvatarWrap>
-                {expertInfo.avatar ? (
+                {isRealExpertChat && expertInfo?.avatar ? (
                   <HeaderAvatar src={getMediaUrl(expertInfo.avatar)} alt={expertInfo.name} />
-                ) : (
+                ) : isRealExpertChat && expertInfo?.name ? (
                   <HeaderAvatarPlaceholder>{getInitials(expertInfo.name)}</HeaderAvatarPlaceholder>
+                ) : (
+                  <HeaderAvatarPlaceholder style={{ background: "linear-gradient(135deg, #00a884 0%, #008069 100%)", fontSize: "1.1rem" }}>
+                    💬
+                  </HeaderAvatarPlaceholder>
                 )}
-                <OnlineDot />
+                {isRealExpertChat && isExpertOnline && <OnlineDot />}
               </HeaderAvatarWrap>
               <HeaderTitleGroup>
-                <HeaderName>{expertInfo.name}</HeaderName>
+                <HeaderName>
+                  {isRealExpertChat ? expertInfo?.name || "Loading expert..." : "Service Q&A Chat"}
+                </HeaderName>
                 <HeaderSubtext>
-                  {isServiceChat
-                    ? "🟢 Service Communication (Active)"
-                    : sessionActive
-                    ? "🟢 Active Paid Chat"
-                    : "🔴 Ended"}
+                  {isRealExpertChat
+                    ? isExpertOnline
+                      ? "🟢 Online"
+                      : "🔴 Offline"
+                    : "FREE SERVICE CHAT"}
                 </HeaderSubtext>
               </HeaderTitleGroup>
             </HeaderLeft>
 
             <HeaderActions>
-              {!isServiceChat && !isUnlimited && sessionActive === true && endTime && (
+              {isRealExpertChat && !isUnlimited && sessionActive === true && endTime && (
                 <TimerPill $color={getTimerColor()}>
                   <FiClock size={12} />
                   <span>{formatted}</span>
                 </TimerPill>
-              )}
-
-              {!isServiceChat && (
-                <EndChatPill onClick={handleEndChat} disabled={isChatDisabled}>
-                  <FiX size={14} /> End
-                </EndChatPill>
               )}
             </HeaderActions>
           </HeaderBar>
@@ -1206,11 +1458,18 @@ export default function Chat() {
           {/* MESSAGES AREA */}
           <MessagesArea>
             {messages.length === 0 ? (
-              <EmptyStateContainer>
-                <span style={{ fontSize: "2rem" }}>💬</span>
-                <h4 style={{ margin: 0, color: "#111b21" }}>Start your conversation</h4>
-                <p style={{ margin: 0, fontSize: "0.85rem" }}>Say hello to get started</p>
-              </EmptyStateContainer>
+              <ServiceEmptyCard>
+                <div style={{ fontSize: "2.4rem", marginBottom: "2px" }}>💬</div>
+                <ServiceEmptyTitle>Service Q&A Chat</ServiceEmptyTitle>
+                <ServiceEmptyMainMsg>Have a question about this service?</ServiceEmptyMainMsg>
+                <ServiceEmptyDesc>
+                  Ask anything related to your service, requirements, documents, process, or order.
+                </ServiceEmptyDesc>
+                <ServiceBadgePill>FREE SERVICE CHAT</ServiceBadgePill>
+                <ServiceEmptySupport>
+                  This chat is free and is available for service-related questions and assistance.
+                </ServiceEmptySupport>
+              </ServiceEmptyCard>
             ) : (
               messages.map((msg) => {
                 const isMine = msg.sender_type === "user";
@@ -1307,7 +1566,9 @@ export default function Chat() {
                     ? "Chat ended"
                     : uploading
                     ? "Uploading image..."
-                    : "Type a message..."
+                    : isRealExpertChat
+                    ? "Type a message..."
+                    : "Ask a question about your service..."
                 }
                 disabled={isChatDisabled || uploading}
               />

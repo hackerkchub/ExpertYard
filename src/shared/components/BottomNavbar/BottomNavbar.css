@@ -1,8 +1,7 @@
 :root {
-  --nav-height: 60px;
-  --mobile-bottom-nav-gap: 8px;
+  --nav-height: 62px;
   --mobile-bottom-nav-reserved-space: calc(
-    var(--nav-height) + var(--mobile-bottom-nav-gap) + 16px + env(safe-area-inset-bottom, 0px)
+    var(--nav-height) + env(safe-area-inset-bottom, 0px)
   );
   --nav-bg: #0b1120;
 }
@@ -13,13 +12,20 @@
 
 @media (max-width: 767px) {
   :root {
-    --nav-height: 60px;
+    --nav-height: 62px;
     --mobile-bottom-nav-reserved-space: calc(
-      var(--nav-height) + 12px + env(safe-area-inset-bottom, 0px)
+      var(--nav-height) + env(safe-area-inset-bottom, 0px)
     );
   }
 
   .bottom-nav {
+    --bottom-nav-bg: rgba(255, 255, 255, 0.96);
+    --bottom-nav-border: #e2e8f0;
+    --bottom-nav-shadow: 0 -2px 12px rgba(15, 23, 42, 0.06);
+    --bottom-nav-icon: #64748b;
+    --bottom-nav-label: #64748b;
+    --bottom-nav-active: #000080;
+
     display: block !important;
     position: fixed !important;
     bottom: 0 !important;
@@ -28,17 +34,28 @@
     width: 100% !important;
     max-width: 100% !important;
     z-index: 10010 !important;
-    background: rgba(255, 255, 255, 0.96) !important;
+    background: var(--bottom-nav-bg) !important;
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
     border: none !important;
-    border-top: 1px solid #e2e8f0 !important;
-    box-shadow: 0 -2px 12px rgba(15, 23, 42, 0.06) !important;
-    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px)) !important;
+    border-top: 1px solid var(--bottom-nav-border) !important;
+    box-shadow: var(--bottom-nav-shadow) !important;
+    padding: 6px 4px max(6px, env(safe-area-inset-bottom, 0px)) !important;
     height: auto !important;
     box-sizing: border-box !important;
     overscroll-behavior-y: none;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .bottom-nav {
+      --bottom-nav-bg: rgba(15, 23, 42, 0.96);
+      --bottom-nav-border: rgba(255, 255, 255, 0.1);
+      --bottom-nav-shadow: 0 -2px 16px rgba(0, 0, 0, 0.4);
+      --bottom-nav-icon: #94a3b8;
+      --bottom-nav-label: #94a3b8;
+      --bottom-nav-active: #38bdf8;
+    }
   }
 
   .bottom-nav.expert-chat-mobile-hidden {
@@ -93,12 +110,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #64748b;
+    color: var(--bottom-nav-icon);
     transition: color 0.15s ease;
   }
 
   .nav-btn.active .icon-wrapper {
-    color: #000080;
+    color: var(--bottom-nav-active);
   }
 
   /* Special Talk Button */
@@ -108,14 +125,14 @@
     background: transparent;
     border: none;
     border-radius: 0;
-    color: #64748b;
+    color: var(--bottom-nav-icon);
     transition: color 0.15s ease;
   }
 
   .nav-btn.talk-btn.active .icon-wrapper {
     background: transparent;
     border-color: transparent;
-    color: #000080;
+    color: var(--bottom-nav-active);
     box-shadow: none;
   }
 
@@ -125,7 +142,7 @@
     font-size: 10.5px !important;
     font-weight: 500 !important;
     letter-spacing: 0.1px !important;
-    color: #64748b !important;
+    color: var(--bottom-nav-label) !important;
     opacity: 1 !important;
     transform: none !important;
     white-space: nowrap !important;
@@ -133,16 +150,16 @@
   }
 
   .nav-btn.active .nav-label {
-    color: #000080 !important;
+    color: var(--bottom-nav-active) !important;
     font-weight: 700 !important;
   }
 
   .nav-btn.talk-btn .nav-label {
-    color: #64748b !important;
+    color: var(--bottom-nav-label) !important;
   }
 
   .nav-btn.talk-btn.active .nav-label {
-    color: #000080 !important;
+    color: var(--bottom-nav-active) !important;
     font-weight: 700 !important;
   }
 

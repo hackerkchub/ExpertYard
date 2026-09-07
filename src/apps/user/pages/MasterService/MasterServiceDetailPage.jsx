@@ -253,7 +253,7 @@ export default function MasterServiceDetailPage() {
                         Rating {Number(expert.avg_rating || 0).toFixed(1)} | {expert.total_experience || 0}+ yrs | {expert.completed_orders || 0} orders
                       </div>
                       <div style={{ color: "#667085", marginTop: 4 }}>
-                        {expert.languages || "English, Hindi"} | Delivery in {expert.delivery_time_days || 1} day(s) | {expert.online_status ? "Online" : "Available"}
+                        {expert.languages || "English, Hindi"} | Fast Service | {expert.online_status ? "Online" : "Available"}
                       </div>
                       {expert.custom_bio && <p style={{ margin: "8px 0 0", color: "#344054" }}>{expert.custom_bio}</p>}
                     </div>

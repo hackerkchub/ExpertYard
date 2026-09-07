@@ -31,6 +31,7 @@ export default function AdminWorkspaceMonitoringPage() {
     useState(null);
 
   const [targetExpertId, setTargetExpertId] = useState("");
+  const [isAdminHandlingMode, setIsAdminHandlingMode] = useState(false);
   const [reassigning, setReassigning] = useState(false);
 
   /* =====================================================
@@ -42,21 +43,21 @@ export default function AdminWorkspaceMonitoringPage() {
       setLoading(true);
 
       const response = await getAdminWorkspaceMonitor();
-      const data = response?.data;
+      const resData = response?.data;
 
-      if (data?.success) {
-        setWorkspaces(data.data || []);
+      if (resData?.success) {
+        const rawData = resData.data;
+        const list = Array.isArray(rawData)
+          ? rawData
+          : (Array.isArray(rawData?.workspaces) ? rawData.workspaces : []);
+        setWorkspaces(list);
       } else {
-        console.error(
-          "Workspace monitor error:",
-          data?.message
-        );
+        console.error("Workspace monitor error:", resData?.message);
+        setWorkspaces([]);
       }
     } catch (err) {
-      console.error(
-        "Error fetching workspaces:",
-        err
-      );
+      console.error("Error fetching workspaces:", err);
+      setWorkspaces([]);
     } finally {
       setLoading(false);
     }
@@ -72,7 +73,7 @@ export default function AdminWorkspaceMonitoringPage() {
       const data = response?.data;
 
       if (data?.success) {
-        setExpertsList(data.data || []);
+        setExpertsList(Array.isArray(data.data) ? data.data : []);
       } else {
         console.error(
           "Experts list error:",
@@ -152,18 +153,18 @@ export default function AdminWorkspaceMonitoringPage() {
      🔄 OPEN REASSIGN MODAL
   ===================================================== */
 
-  const handleOpenReassignModal = (ws) => {
+  const handleOpenReassignModal = (ws, defaultAdminHandling = false) => {
     setSelectedWsForReassign(ws);
-
+    setIsAdminHandlingMode(defaultAdminHandling || ws?.assignment_type === "admin_handled");
     setTargetExpertId(
-      ws?.expert_id
+      ws?.expert_id && Number(ws.expert_id) > 0
         ? String(ws.expert_id)
         : ""
     );
   };
 
   /* =====================================================
-     👨‍💼 SAVE EXPERT REASSIGNMENT
+     👨‍💼 SAVE EXPERT REASSIGNMENT / ADMIN HANDLING
   ===================================================== */
 
   const handleSaveReassignment = async () => {
@@ -174,42 +175,29 @@ export default function AdminWorkspaceMonitoringPage() {
     try {
       setReassigning(true);
 
-      const bookingId =
-        selectedWsForReassign.booking_id;
+      const bookingId = selectedWsForReassign.booking_id;
+      const expertId = targetExpertId ? Number(targetExpertId) : null;
 
-      const expertId = targetExpertId
-        ? Number(targetExpertId)
-        : null;
-
-      const response =
-        await reassignWorkspaceExpert(
-          bookingId,
-          expertId
-        );
+      const response = await reassignWorkspaceExpert(
+        bookingId,
+        isAdminHandlingMode ? null : expertId,
+        isAdminHandlingMode
+      );
 
       const data = response?.data;
 
       if (data?.success) {
         setSelectedWsForReassign(null);
         setTargetExpertId("");
+        setIsAdminHandlingMode(false);
 
         await fetchWorkspaces();
       } else {
-        alert(
-          data?.message ||
-            "Reassignment failed."
-        );
+        alert(data?.message || "Reassignment failed.");
       }
     } catch (err) {
-      console.error(
-        "Expert reassignment error:",
-        err
-      );
-
-      alert(
-        err?.response?.data?.message ||
-          "Error reassigning expert."
-      );
+      console.error("Expert reassignment error:", err);
+      alert(err?.response?.data?.message || "Error reassigning expert.");
     } finally {
       setReassigning(false);
     }
@@ -220,10 +208,11 @@ export default function AdminWorkspaceMonitoringPage() {
   ===================================================== */
 
   const filteredWorkspaces = useMemo(() => {
+    const safeWorkspaces = Array.isArray(workspaces) ? workspaces : [];
     const normalizedSearch =
       searchTerm.trim().toLowerCase();
 
-    return workspaces.filter((ws) => {
+    return safeWorkspaces.filter((ws) => {
       const matchesSearch =
         String(ws.booking_id || "")
           .toLowerCase()
@@ -251,8 +240,12 @@ export default function AdminWorkspaceMonitoringPage() {
 
       const matchesStatus =
         statusFilter === "ALL" ||
-        (ws.current_step_key || "")
-          .toUpperCase() === statusFilter;
+        (statusFilter === "AWAITING_ADMIN_ASSIGNMENT" || statusFilter === "ADMIN_QUEUE"
+          ? ws.assignment_type === "admin_queue" ||
+            (ws.current_step_key || "").toUpperCase() === "AWAITING_ADMIN_ASSIGNMENT" ||
+            !ws.expert_id ||
+            ws.expert_id === 0
+          : (ws.current_step_key || "").toUpperCase() === statusFilter);
 
       return (
         matchesSearch &&
@@ -270,41 +263,45 @@ export default function AdminWorkspaceMonitoringPage() {
   ===================================================== */
 
   const stats = useMemo(() => {
-    const total = workspaces.length;
+    const safeWorkspaces = Array.isArray(workspaces) ? workspaces : [];
+    const total = safeWorkspaces.length;
 
-    const submitted = workspaces.filter(
+    const adminQueue = safeWorkspaces.filter(
       (w) =>
-        (w.current_step_key || "")
-          .toUpperCase() === "SUBMITTED"
+        w.assignment_type === "admin_queue" ||
+        (w.current_step_key || "").toUpperCase() === "AWAITING_ADMIN_ASSIGNMENT" ||
+        !w.expert_id ||
+        w.expert_id === 0
     ).length;
 
-    const assigned = workspaces.filter(
+    const submitted = safeWorkspaces.filter(
       (w) =>
-        (w.current_step_key || "")
-          .toUpperCase() ===
-        "EXPERT_ASSIGNED"
+        (w.current_step_key || "").toUpperCase() === "SUBMITTED"
     ).length;
 
-    const inReview = workspaces.filter(
+    const assigned = safeWorkspaces.filter(
       (w) =>
-        (w.current_step_key || "")
-          .toUpperCase() === "IN_REVIEW"
+        (w.current_step_key || "").toUpperCase() === "EXPERT_ASSIGNED"
     ).length;
 
-    const delivered = workspaces.filter(
+    const inReview = safeWorkspaces.filter(
       (w) =>
-        (w.current_step_key || "")
-          .toUpperCase() === "DELIVERED"
+        (w.current_step_key || "").toUpperCase() === "IN_REVIEW"
     ).length;
 
-    const completed = workspaces.filter(
+    const delivered = safeWorkspaces.filter(
       (w) =>
-        (w.current_step_key || "")
-          .toUpperCase() === "COMPLETED"
+        (w.current_step_key || "").toUpperCase() === "DELIVERED"
+    ).length;
+
+    const completed = safeWorkspaces.filter(
+      (w) =>
+        (w.current_step_key || "").toUpperCase() === "COMPLETED"
     ).length;
 
     return {
       total,
+      adminQueue,
       submitted,
       assigned,
       inReview,
@@ -783,27 +780,31 @@ export default function AdminWorkspaceMonitoringPage() {
             }}
           >
             <option value="ALL">
-              All Lifecycle Statuses
+              All Lifecycle Statuses ({stats.total})
+            </option>
+
+            <option value="AWAITING_ADMIN_ASSIGNMENT">
+              ⚠️ Awaiting Admin Assignment ({stats.adminQueue || 0})
             </option>
 
             <option value="SUBMITTED">
-              1. SUBMITTED
+              1. SUBMITTED ({stats.submitted || 0})
             </option>
 
             <option value="EXPERT_ASSIGNED">
-              2. EXPERT_ASSIGNED
+              2. EXPERT_ASSIGNED ({stats.assigned || 0})
             </option>
 
             <option value="IN_REVIEW">
-              3. IN_REVIEW (In Progress)
+              3. IN_REVIEW / In Progress ({stats.inReview || 0})
             </option>
 
             <option value="DELIVERED">
-              4. DELIVERED
+              4. DELIVERED ({stats.delivered || 0})
             </option>
 
             <option value="COMPLETED">
-              5. COMPLETED
+              5. COMPLETED ({stats.completed || 0})
             </option>
 
             <option value="CANCELLED">
@@ -1262,14 +1263,17 @@ export default function AdminWorkspaceMonitoringPage() {
                             <button
                               onClick={() =>
                                 handleOpenReassignModal(
-                                  ws
+                                  ws,
+                                  false
                                 )
                               }
                               style={{
                                 padding:
                                   "0.4rem 0.65rem",
                                 background:
-                                  "#0284c7",
+                                  ws.assignment_type === "admin_queue" || ws.expert_id === 0
+                                    ? "#059669"
+                                    : "#0284c7",
                                 color:
                                   "#fff",
                                 border:
@@ -1284,8 +1288,39 @@ export default function AdminWorkspaceMonitoringPage() {
                                   "pointer",
                               }}
                             >
-                              🔄 Reassign Expert
+                              👤 Assign Expert
                             </button>
+
+                            {(ws.assignment_type === "admin_queue" || ws.expert_id === 0 || ws.assignment_type !== "admin_handled") && (
+                              <button
+                                onClick={() =>
+                                  handleOpenReassignModal(
+                                    ws,
+                                    true
+                                  )
+                                }
+                                style={{
+                                  padding:
+                                    "0.4rem 0.65rem",
+                                  background:
+                                    "#7c3aed",
+                                  color:
+                                    "#fff",
+                                  border:
+                                    "none",
+                                  borderRadius:
+                                    "6px",
+                                  fontSize:
+                                    "0.8rem",
+                                  fontWeight:
+                                    "700",
+                                  cursor:
+                                    "pointer",
+                                }}
+                              >
+                                🛡️ Admin Handling
+                              </button>
+                            )}
 
                             <select
                               defaultValue=""
@@ -1476,63 +1511,95 @@ export default function AdminWorkspaceMonitoringPage() {
               </div>
             </div>
 
-            <div
-              style={{
-                marginBottom:
-                  "1.25rem",
-              }}
-            >
+            <div style={{ marginBottom: "1rem" }}>
               <label
                 style={{
                   display: "block",
                   fontSize: "0.85rem",
                   fontWeight: "700",
-                  marginBottom:
-                    "0.35rem",
+                  marginBottom: "0.5rem",
                   color: "#1e293b",
                 }}
               >
-                Select Target Expert:
+                Fulfillment Strategy:
               </label>
+              <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+                <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "#1e293b", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                  <input
+                    type="radio"
+                    name="handling_mode"
+                    checked={!isAdminHandlingMode}
+                    onChange={() => setIsAdminHandlingMode(false)}
+                  />
+                  👤 Assign Expert
+                </label>
+                <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "#7c3aed", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                  <input
+                    type="radio"
+                    name="handling_mode"
+                    checked={isAdminHandlingMode}
+                    onChange={() => setIsAdminHandlingMode(true)}
+                  />
+                  🛡️ Process as Admin Handling (Internally Managed)
+                </label>
+              </div>
+            </div>
 
-              <select
-                value={targetExpertId}
-                onChange={(e) =>
-                  setTargetExpertId(
-                    e.target.value
-                  )
-                }
+            {!isAdminHandlingMode ? (
+              <div
                 style={{
-                  width: "100%",
-                  padding: "0.65rem",
-                  borderRadius: "8px",
-                  border:
-                    "1px solid #cbd5e1",
-                  fontSize: "0.9rem",
-                  background: "#fff",
+                  marginBottom: "1.25rem",
                 }}
               >
-                <option value="">
-                  ❌ Remove Expert / Leave
-                  Unassigned
-                </option>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.85rem",
+                    fontWeight: "700",
+                    marginBottom: "0.35rem",
+                    color: "#1e293b",
+                  }}
+                >
+                  Select Target Expert:
+                </label>
 
-                {expertsList.map(
-                  (exp) => (
-                    <option
-                      key={exp.id}
-                      value={exp.id}
-                    >
-                      {exp.name} (ID #
-                      {exp.id} -{" "}
-                      {exp.phone ||
-                        exp.email}
-                      )
-                    </option>
-                  )
-                )}
-              </select>
-            </div>
+                <select
+                  value={targetExpertId}
+                  onChange={(e) =>
+                    setTargetExpertId(
+                      e.target.value
+                    )
+                  }
+                  style={{
+                    width: "100%",
+                    padding: "0.65rem",
+                    borderRadius: "8px",
+                    border: "1px solid #cbd5e1",
+                    fontSize: "0.9rem",
+                    background: "#fff",
+                  }}
+                >
+                  <option value="">
+                    ❌ Leave Unassigned (Admin Queue)
+                  </option>
+
+                  {expertsList.map(
+                    (exp) => (
+                      <option
+                        key={exp.id}
+                        value={exp.id}
+                      >
+                        {exp.name} (ID #{exp.id} - {exp.phone || exp.email})
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
+            ) : (
+              <div style={{ padding: "0.85rem", background: "#f3e8ff", borderRadius: "8px", border: "1px solid #d8b4fe", color: "#6b21a8", fontSize: "0.82rem", marginBottom: "1.25rem" }}>
+                🛡️ <strong>Admin Handling Mode:</strong> This booking will be managed directly by the internal G9Expert Support Team. No expert payout will be calculated upon order completion.
+              </div>
+            )}
 
             <div
               style={{

@@ -2593,9 +2593,24 @@ body {
   height: 100dvh !important;
   display: flex !important;
   flex-direction: column !important;
-  background: #0f172a !important; /* Sleek Dark Black */
-  color: #f8fafc !important;
-  box-shadow: 12px 0 45px rgba(0, 0, 0, 0.6) !important;
+  --drawer-bg: #ffffff;
+  --drawer-head-bg: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  --drawer-text: #0f172a;
+  --drawer-subtext: #64748b;
+  --drawer-icon: #64748b;
+  --drawer-divider: #e2e8f0;
+  --drawer-close-bg: rgba(15, 23, 42, 0.06);
+  --drawer-close-text: #64748b;
+  --drawer-item-text: #1e293b;
+  --drawer-active-bg: #eef2ff;
+  --drawer-active-text: #000080;
+  --drawer-active-border: #000080;
+  --drawer-active-icon: #000080;
+  --drawer-border: #e2e8f0;
+  --drawer-shadow: 12px 0 45px rgba(15, 23, 42, 0.15);
+  background: var(--drawer-bg) !important;
+  color: var(--drawer-text) !important;
+  box-shadow: var(--drawer-shadow) !important;
   border-radius: 0 16px 16px 0 !important;
   overflow: hidden !important;
   padding: 0 !important;
@@ -2603,7 +2618,27 @@ body {
   gap: 0 !important;
   font-family: "Google Sans", "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
   animation: slideInDrawer 0.22s cubic-bezier(0, 0, 0.2, 1) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-right: 1px solid var(--drawer-border) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .home-menu-panel {
+    --drawer-bg: #0f172a;
+    --drawer-head-bg: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+    --drawer-text: #ffffff;
+    --drawer-subtext: #94a3b8;
+    --drawer-icon: #94a3b8;
+    --drawer-divider: rgba(255, 255, 255, 0.08);
+    --drawer-close-bg: rgba(255, 255, 255, 0.1);
+    --drawer-close-text: #94a3b8;
+    --drawer-item-text: #f1f5f9;
+    --drawer-active-bg: linear-gradient(90deg, rgba(30, 58, 138, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+    --drawer-active-text: #ffffff;
+    --drawer-active-border: #fbbf24;
+    --drawer-active-icon: #fbbf24;
+    --drawer-border: rgba(255, 255, 255, 0.08);
+    --drawer-shadow: 12px 0 45px rgba(0, 0, 0, 0.6);
+  }
 }
 
 @keyframes slideInDrawer {
@@ -2611,17 +2646,17 @@ body {
   to { transform: translateX(0); }
 }
 
-/* Gmail Dark Header Banner */
+/* Gmail Header Banner */
 .home-menu-head {
   padding: max(16px, calc(12px + env(safe-area-inset-top))) 16px 16px 16px !important;
-  background: linear-gradient(135deg, #020617 0%, #0f172a 100%) !important;
-  color: #ffffff !important;
+  background: var(--drawer-head-bg) !important;
+  color: var(--drawer-text) !important;
   display: flex !important;
   align-items: flex-start !important;
   justify-content: space-between !important;
   gap: 12px !important;
   flex-shrink: 0 !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-bottom: 1px solid var(--drawer-divider) !important;
 }
 
 .home-menu-profile {
@@ -2665,7 +2700,7 @@ body {
 
 .home-menu-user-info strong {
   font-family: "Google Sans", "Roboto", sans-serif !important;
-  color: #ffffff !important;
+  color: var(--drawer-text) !important;
   font-size: 15px !important;
   font-weight: 600 !important;
   letter-spacing: 0.1px !important;
@@ -2681,7 +2716,7 @@ body {
   font-size: 12px !important;
   font-weight: 400 !important;
   letter-spacing: 0.2px !important;
-  color: #94a3b8 !important;
+  color: var(--drawer-subtext) !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
@@ -2705,9 +2740,9 @@ body {
   width: 32px !important;
   height: 32px !important;
   border-radius: 50% !important;
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: var(--drawer-close-bg) !important;
   border: none !important;
-  color: #94a3b8 !important;
+  color: var(--drawer-close-text) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -2717,11 +2752,11 @@ body {
 }
 
 .home-menu-close-btn:active {
-  background: rgba(255, 255, 255, 0.2) !important;
-  color: #ffffff !important;
+  background: var(--drawer-close-bg) !important;
+  color: var(--drawer-text) !important;
 }
 
-/* Gmail Dark Scrollable Menu Body with Custom Touch Scrolling */
+/* Scrollable Menu Body */
 .home-menu-scrollable-body {
   flex: 1 !important;
   overflow-y: auto !important;
@@ -2731,33 +2766,33 @@ body {
   display: flex !important;
   flex-direction: column !important;
   scrollbar-width: none !important;
-  background: #0f172a !important;
+  background: var(--drawer-bg) !important;
 }
 
 .home-menu-scrollable-body::-webkit-scrollbar {
   display: none !important;
 }
 
-/* Gmail Dark Section Header Spec */
+/* Section Header Spec */
 .home-menu-section-title {
   font-family: "Google Sans", "Roboto", sans-serif !important;
   font-size: 12px !important;
   font-weight: 600 !important;
-  color: #94a3b8 !important;
+  color: var(--drawer-subtext) !important;
   text-transform: uppercase !important;
   letter-spacing: 0.8px !important;
   padding: 16px 16px 6px 16px !important;
   margin-top: 4px !important;
 }
 
-/* Gmail Dark Divider Spec */
+/* Divider Spec */
 .home-menu-divider {
   height: 1px !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: var(--drawer-divider) !important;
   margin: 8px 0 !important;
 }
 
-/* Gmail Dark Drawer Pill Menu Item Spec */
+/* Drawer Pill Menu Item Spec */
 .home-menu-item {
   display: flex !important;
   align-items: center !important;
@@ -2769,7 +2804,7 @@ body {
   border: none !important;
   border-radius: 0 24px 24px 0 !important;
   background: transparent !important;
-  color: #f1f5f9 !important;
+  color: var(--drawer-item-text) !important;
   font-family: "Google Sans", "Roboto", sans-serif !important;
   font-size: 14px !important;
   font-weight: 500 !important;
@@ -2782,27 +2817,27 @@ body {
 }
 
 .home-menu-item .menu-item-icon {
-  color: #94a3b8 !important;
+  color: var(--drawer-icon) !important;
   flex-shrink: 0 !important;
   transition: color 0.15s ease !important;
 }
 
 .home-menu-item:active {
   transform: scale(0.98) !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: var(--drawer-close-bg) !important;
 }
 
 .home-menu-item.active,
 .home-menu-item:hover {
-  background: linear-gradient(90deg, rgba(30, 58, 138, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
-  color: #ffffff !important;
+  background: var(--drawer-active-bg) !important;
+  color: var(--drawer-active-text) !important;
   font-weight: 700 !important;
-  border-left: 3px solid #fbbf24 !important;
+  border-left: 3px solid var(--drawer-active-border) !important;
 }
 
 .home-menu-item.active .menu-item-icon,
 .home-menu-item:hover .menu-item-icon {
-  color: #fbbf24 !important;
+  color: var(--drawer-active-icon) !important;
 }
 
 .home-menu-item.logout-item:active,
@@ -4155,24 +4190,61 @@ body {
   }
 
   .mobile-header-only {
+    --mheader-bg: #ffffff;
+    --mheader-text: #0f172a;
+    --mheader-subtext: #64748b;
+    --mheader-border: #e2e8f0;
+    --mheader-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 0 !important;
-    background: #ffffff !important; /* Clean light header */
+    padding: env(safe-area-inset-top, 0px) 0 0 0 !important;
+    background: var(--mheader-bg) !important;
     position: sticky !important;
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
     z-index: 1000 !important;
-    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-    height: 58px !important;
-    min-height: 58px !important;
+    box-shadow: var(--mheader-shadow) !important;
+    border-bottom: 1px solid var(--mheader-border) !important;
+    height: calc(58px + env(safe-area-inset-top, 0px)) !important;
+    min-height: calc(58px + env(safe-area-inset-top, 0px)) !important;
     box-sizing: border-box !important;
+  }
+
+  .mobile-header-only .header-outlined-icon,
+  .mobile-header-only button svg,
+  .mobile-header-only .mobile-header-icon-btn svg {
+    stroke: var(--mheader-text) !important;
+    color: var(--mheader-text) !important;
+  }
+
+  .mobile-header-location-box .location-delivering-label {
+    color: var(--mheader-subtext) !important;
+  }
+
+  .mobile-header-location-box .location-caret-icon {
+    color: var(--mheader-subtext) !important;
+    stroke: var(--mheader-subtext) !important;
+  }
+
+  .mobile-header-only .g9-location-trigger-chip,
+  .mobile-header-only .g9-location-trigger-chip .location-name {
+    color: var(--mheader-text) !important;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .mobile-header-only {
+      --mheader-bg: #111827;
+      --mheader-text: #ffffff;
+      --mheader-subtext: #94a3b8;
+      --mheader-border: rgba(255, 255, 255, 0.08);
+      --mheader-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    }
   }
 
   /* Mobile Search Input Section */
@@ -8849,7 +8921,7 @@ img {
   .location-delivering-label {
     font-size: 10px !important;
     font-weight: 700 !important;
-    color: #64748b !important;
+    color: var(--mheader-subtext, #64748b) !important;
     letter-spacing: 0.5px !important;
     text-transform: uppercase !important;
     opacity: 1 !important;
@@ -8883,7 +8955,7 @@ img {
     margin: 0 !important;
     height: auto !important;
     box-shadow: none !important;
-    color: #0f172a !important;
+    color: var(--mheader-text, #0f172a) !important;
     font-size: 13px !important;
     font-weight: 700 !important;
     max-width: 100% !important;
@@ -8894,7 +8966,7 @@ img {
   }
 
   .mobile-header-only .g9-location-trigger-chip .location-name {
-    color: #0f172a !important;
+    color: var(--mheader-text, #0f172a) !important;
     font-size: 13px !important;
     font-weight: 700 !important;
     max-width: 100% !important;
@@ -9691,7 +9763,7 @@ img {
   .g9-home-page.home-feed-page.home-page-container {
     padding-top: 0 !important;
     margin-top: 0 !important;
-    min-height: 100vh !important;
+    min-height: 100dvh !important;
     display: flex !important;
     flex-direction: column !important;
     background: #f8fafc !important;
@@ -9702,7 +9774,9 @@ img {
     left: 0 !important;
     right: 0 !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding-top: env(safe-area-inset-top, 0px) !important;
+    height: calc(58px + env(safe-area-inset-top, 0px)) !important;
+    min-height: calc(58px + env(safe-area-inset-top, 0px)) !important;
     width: 100% !important;
     max-width: 100% !important;
     position: sticky !important;

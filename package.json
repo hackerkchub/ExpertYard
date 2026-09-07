@@ -9,7 +9,7 @@
     "build:user": "vite build --mode user",
     "build:expert": "vite build --mode expert",
     "preview": "vite preview",
-    "android:user": "npm run build:user && npx cap copy android && cd android && gradlew.bat assembleUserRelease",
+    "android:user": "npm run build:user && npx cap copy android && cd android && gradlew.bat bundleUserRelease assembleUserRelease && echo. && echo ======================================== && echo  G9Expert USER RELEASE BUILD SUCCESSFUL && echo ======================================== && echo. && echo AAB: && echo android/app/build/outputs/bundle/userRelease/app-user-release.aab && echo. && echo APK: && echo android/app/build/outputs/apk/user/release/app-user-release.apk",
     "android:expert": "npm run build:expert && npx cap copy android && cd android && gradlew.bat assembleExpertRelease",
     "lint": "eslint .",
     "make:page": "node scripts/makePage.js",

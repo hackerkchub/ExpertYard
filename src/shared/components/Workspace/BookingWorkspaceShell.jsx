@@ -18,6 +18,8 @@ import {
   FiX
 } from "react-icons/fi";
 import OrderProgressTimeline from "./OrderProgressTimeline";
+import ServiceInquiryModal from "../../../apps/user/pages/MasterService/components/ServiceInquiryModal";
+import { useAuth } from "../../context/UserAuthContext";
 import {
   getWorkspace,
   uploadWorkspaceFile,
@@ -36,6 +38,7 @@ import "./Workspace.css";
 export default function BookingWorkspaceShell() {
   const { bookingId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // State Management
   const [workspace, setWorkspace] = useState(null);
@@ -47,6 +50,7 @@ export default function BookingWorkspaceShell() {
 
   // Modal / Action State
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showInquiryModal, setShowInquiryModal] = useState(false);
   const [docFile, setDocFile] = useState(null);
   const [docLabel, setDocLabel] = useState("");
   const [uploadingDoc, setUploadingDoc] = useState(false);
@@ -294,14 +298,22 @@ export default function BookingWorkspaceShell() {
   const handleTimelineAction = (actionType) => {
     if (actionType === "upload_document") {
       setShowUploadModal(true);
+    } else if (actionType === "inquiry" || actionType === "submit_inquiry") {
+      setShowInquiryModal(true);
     } else if (actionType === "chat") {
-      const expId = snapshot?.expert?.expert_id || workspace?.expert_id;
-      if (expId) navigate(`/user/chat?expert_id=${expId}`);
-      else alert("Expert assignment in progress.");
+      const expId = workspace?.expert_id && Number(workspace.expert_id) > 0 ? workspace.expert_id : snapshot?.expert?.expert_id;
+      if (isRealExpert && expId && Number(expId) > 0) {
+        navigate(`/user/chat?expert_id=${expId}`);
+      } else {
+        setShowInquiryModal(true);
+      }
     } else if (actionType === "call") {
-      const expId = snapshot?.expert?.expert_id || workspace?.expert_id;
-      if (expId) navigate(`/user/voice-call/${expId}`);
-      else alert("Expert assignment in progress.");
+      const expId = workspace?.expert_id && Number(workspace.expert_id) > 0 ? workspace.expert_id : snapshot?.expert?.expert_id;
+      if (isRealExpert && expId && Number(expId) > 0) {
+        navigate(`/user/voice-call/${expId}`);
+      } else {
+        setShowInquiryModal(true);
+      }
     } else if (actionType === "view_delivery") {
       const el = document.getElementById("canvas-delivery-section");
       if (el) el.scrollIntoView({ behavior: "smooth" });
@@ -340,6 +352,21 @@ export default function BookingWorkspaceShell() {
 
   // Communication Availability Rule: ONLY Active orders!
   const canContactExpert = !isCompleted && !isCancelled;
+
+  // Assignment Type Flags
+  const assignmentType = workspace?.assignment_type || (workspace?.expert_id && Number(workspace.expert_id) > 0 ? "expert" : "admin_queue");
+  const isRealExpert = assignmentType === "expert" && Boolean(workspace?.expert_id && Number(workspace?.expert_id) > 0);
+  const isAdminHandled = assignmentType === "admin_handled";
+  const isAdminQueue = !isRealExpert && !isAdminHandled;
+
+  // Clean Expert Name & Position (Never allow placeholder strings to act as expert names when isRealExpert is true)
+  const rawExpertName = String(workspace?.expert_name || snapshot?.expert?.expert_name || "").trim();
+  const cleanExpertName = rawExpertName.replace(/awaiting admin assignment/i, "").replace(/managed by g9expert support team/i, "").trim();
+  const displayExpertName = isRealExpert ? (cleanExpertName || "Assigned Expert") : "";
+
+  const rawPosition = String(snapshot?.expert?.position || workspace?.position || "").trim();
+  const cleanPosition = rawPosition.replace(/our admin team is matching/i, "").replace(/g9expert internal support team/i, "").trim();
+  const displayExpertPosition = isRealExpert ? (cleanPosition || "Verified Platform Expert") : "";
 
   // Filter Document lists
   const rejectedDocs = documents.filter((d) => String(d.status).toUpperCase() === "REJECTED");
@@ -439,6 +466,26 @@ export default function BookingWorkspaceShell() {
            ========================================================================= */}
         <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
           
+          {/* FALLBACK ADMIN QUEUE BANNER */}
+          {isAdminQueue && (
+            <div style={{ background: "#eff6ff", border: "1.5px solid #bfdbfe", color: "#1e40af", borderRadius: 14, padding: "12px 16px", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 18 }}>🕒</span>
+              <div>
+                <strong style={{ color: "#1d4ed8" }}>Awaiting Expert Assignment</strong> — Our Admin Team is reviewing your requirements and will assign the best expert for your service shortly.
+              </div>
+            </div>
+          )}
+
+          {/* ADMIN HANDLED BANNER */}
+          {isAdminHandled && (
+            <div style={{ background: "#f3e8ff", border: "1.5px solid #d8b4fe", color: "#6b21a8", borderRadius: 14, padding: "12px 16px", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 18 }}>🛡️</span>
+              <div>
+                <strong style={{ color: "#7e22ce" }}>Managed by G9Expert Support Team</strong> — Our support team is handling your service. You can contact Admin through an inquiry if you need any assistance.
+              </div>
+            </div>
+          )}
+
           {/* COMPLETE ORDER PROGRESS JOURNEY */}
           <OrderProgressTimeline
             workspace={workspace}
@@ -714,54 +761,101 @@ export default function BookingWorkspaceShell() {
            ========================================================================= */}
         <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
           
-          {/* ASSIGNED EXPERT CARD */}
+          {/* ASSIGNED EXPERT / ADMIN ASSIGNMENT CARD */}
           <div className="canvas-card">
             <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#0f172a", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.75rem" }}>
-              Assigned Expert
+              {isAdminQueue ? "Expert Assignment" : isAdminHandled ? "Assigned Support" : "Assigned Expert"}
             </h3>
 
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: "0.25rem" }}>
               <div style={{
-                width: 48,
-                height: 48,
+                width: 44,
+                height: 44,
                 borderRadius: "50%",
-                background: "#6b46c1",
-                color: "#fff",
+                background: isAdminHandled ? "#7c3aed" : isAdminQueue ? "#f59e0b" : "#6b46c1",
+                color: "#ffffff",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 fontWeight: 800,
                 fontSize: "1.1rem",
-                flexShrink: 0
+                flexShrink: 0,
+                overflow: "hidden"
               }}>
-                {(expertInfo.expert_name || workspace.expert_name || "E").slice(0, 2).toUpperCase()}
+                {isRealExpert ? (
+                  (snapshot?.expert?.profile_photo || workspace?.expert_photo) ? (
+                    <img
+                      src={snapshot?.expert?.profile_photo || workspace?.expert_photo}
+                      alt={displayExpertName}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  ) : (
+                    displayExpertName.slice(0, 2).toUpperCase()
+                  )
+                ) : isAdminHandled ? (
+                  <FiShield size={20} />
+                ) : (
+                  <FiClock size={20} />
+                )}
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontWeight: 800, fontSize: "0.98rem", color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {expertInfo.expert_name || workspace.expert_name || "Assigned Expert"}
+                  {isAdminHandled
+                    ? "Managed by G9Expert Support Team"
+                    : isAdminQueue
+                    ? "Awaiting Admin Assignment"
+                    : displayExpertName}
                 </div>
                 <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
-                  {expertInfo.position || "Verified Platform Expert"}
+                  {isAdminHandled
+                    ? "G9Expert Internal Support Team"
+                    : isAdminQueue
+                    ? "Our Admin Team is matching your request with a suitable expert."
+                    : displayExpertPosition}
                 </div>
               </div>
             </div>
 
-            {/* CALL + CHAT AVAILABILITY RULE: ONLY VISIBLE WHILE ORDER IS ACTIVE! */}
-            {canContactExpert && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: "0.5rem" }}>
+            {/* COMMUNICATIONS: INQUIRY FOR ADMIN QUEUE / ADMIN HANDLED, CHAT & CALL FOR REAL EXPERT */}
+            {!isRealExpert ? (
+              <div style={{ marginTop: "0.75rem" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowInquiryModal(true)}
+                  style={{
+                    width: "100%",
+                    background: "#6b46c1",
+                    color: "#ffffff",
+                    border: 0,
+                    padding: "10px",
+                    borderRadius: 8,
+                    fontWeight: 800,
+                    fontSize: 13,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6
+                  }}
+                >
+                  <FiMessageSquare size={14} /> Submit Inquiry
+                </button>
+              </div>
+            ) : canContactExpert && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: "0.75rem" }}>
                 <button
                   type="button"
                   onClick={() => handleTimelineAction("chat")}
                   style={{ background: "#6b46c1", color: "#fff", border: 0, padding: "8px", borderRadius: 8, fontWeight: 800, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}
                 >
-                  <FiMessageSquare size={13} /> Chat
+                  <FiMessageSquare size={13} /> Chat with Expert
                 </button>
                 <button
                   type="button"
                   onClick={() => handleTimelineAction("call")}
                   style={{ background: "#ffffff", color: "#334155", border: "1px solid #cbd5e1", padding: "8px", borderRadius: 8, fontWeight: 800, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}
                 >
-                  <FiPhone size={13} /> Call
+                  <FiPhone size={13} /> Call Expert
                 </button>
               </div>
             )}
@@ -973,6 +1067,20 @@ export default function BookingWorkspaceShell() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* SERVICE INQUIRY MODAL FOR ADMIN QUEUE / ADMIN HANDLED */}
+      {showInquiryModal && (
+        <ServiceInquiryModal
+          service={{
+            id: workspace?.master_service_id || workspace?.service_id || 1,
+            title: masterServiceInfo?.title || workspace?.service_title || "Service Order",
+            booking_id: workspace?.booking_id || workspace?.id || bookingId
+          }}
+          bookingId={workspace?.booking_id || workspace?.id || bookingId}
+          user={user}
+          onClose={() => setShowInquiryModal(false)}
+        />
       )}
 
     </div>

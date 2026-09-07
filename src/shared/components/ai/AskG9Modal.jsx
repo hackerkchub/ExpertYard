@@ -14,14 +14,133 @@ import {
   ChevronRight,
   HelpCircle,
 } from "lucide-react";
-import { askG9Api } from "../../api/userApi/ai.api";
+import { sendChatbotMessageApi } from "../../api/userApi/chatbot.api";
 import useChatRequest from "../../hooks/useChatRequest";
+import { APP_CONFIG } from "../../../config/appConfig";
+
+const isDangerousUrl = (urlStr) => {
+  if (!urlStr || typeof urlStr !== "string") return true;
+  const trimmed = urlStr.trim().toLowerCase();
+  if (
+    trimmed.startsWith("javascript:") ||
+    trimmed.startsWith("data:") ||
+    trimmed.startsWith("vbscript:") ||
+    trimmed.startsWith("file:")
+  ) {
+    return true;
+  }
+  return false;
+};
+
+const getFrontendBaseUrl = () => {
+  if (APP_CONFIG && APP_CONFIG.FRONTEND_BASE_URL) {
+    return APP_CONFIG.FRONTEND_BASE_URL.replace(/\/+$/, "");
+  }
+  if (typeof window !== "undefined" && window.location?.origin) {
+    return window.location.origin.replace(/\/+$/, "");
+  }
+  return "https://g9expert.com";
+};
+
+const resolveUrl = (rawUrl) => {
+  if (!rawUrl || isDangerousUrl(rawUrl)) {
+    return { isDangerous: true, fullUrl: null, internalPath: null, isInternal: false };
+  }
+
+  const trimmed = rawUrl.trim();
+  const baseUrl = getFrontendBaseUrl();
+
+  // Internal relative path starting with /
+  if (trimmed.startsWith("/")) {
+    return {
+      isDangerous: false,
+      isInternal: true,
+      internalPath: trimmed,
+      fullUrl: `${baseUrl}${trimmed}`,
+    };
+  }
+
+  // Absolute URL
+  try {
+    const parsed = new URL(trimmed, baseUrl);
+    const isSameOrigin = parsed.origin.toLowerCase() === baseUrl.toLowerCase();
+    if (isSameOrigin) {
+      return {
+        isDangerous: false,
+        isInternal: true,
+        internalPath: parsed.pathname + parsed.search + parsed.hash,
+        fullUrl: parsed.href,
+      };
+    }
+    return {
+      isDangerous: false,
+      isInternal: false,
+      internalPath: null,
+      fullUrl: parsed.href,
+    };
+  } catch {
+    return { isDangerous: true, fullUrl: null, internalPath: null, isInternal: false };
+  }
+};
+
+const SAFETY_NOTICE = `⚠️ Important Safety Notice:
+G9Expert kabhi bhi kisi individual ke personal mobile number, WhatsApp, UPI ID ya personally shared QR code par direct payment karne ke liye nahi kehta. Agar koi person G9Expert ke naam par aise payment ki demand kare, to payment na karein — ye fraud ho sakta hai. Payments sirf G9Expert ke official platform/payment flow ke through hi karein.`;
+
+const sanitizeAskG9ResponseText = (text, queryText = "") => {
+  if (!text || typeof text !== "string") return text;
+
+  const baseUrl = getFrontendBaseUrl();
+  const canonicalRegUrl = `${baseUrl}/expert/register`;
+
+  let cleaned = text;
+
+  // Replace any wrong domain expert.g9expert.com variants with canonical expert registration URL
+  cleaned = cleaned
+    .replace(/https?:\/\/expert\.g9expert\.com\/register\/?/gi, canonicalRegUrl)
+    .replace(/expert\.g9expert\.com\/register\/?/gi, canonicalRegUrl)
+    .replace(/https?:\/\/expert\.g9expert\.com\/?/gi, canonicalRegUrl)
+    .replace(/expert\.g9expert\.com\/?/gi, canonicalRegUrl);
+
+  // Completely remove "No Registration Fees", "registration is free", "koi charges nahi hai", etc.
+  cleaned = cleaned
+    .replace(/(?:no\s+registration\s+fees?:?\s*)?(?:expert\s+banne\s+ke\s+liye\s+)?koi\s+charges\s+nahi\s+hai[^\n.]*[.\n]?/gi, "")
+    .replace(/no\s+registration\s+fees?:?[^\n.]*[.\n]?/gi, "")
+    .replace(/registration\s+(?:is\s+)?free[^\n.]*[.\n]?/gi, "")
+    .replace(/free\s+of\s+cost\s+registration[^\n.]*[.\n]?/gi, "")
+    .replace(/there\s+(?:are\s+)?no\s+fees?\s+to\s+register[^\n.]*[.\n]?/gi, "");
+
+  cleaned = cleaned.replace(/\n{3,}/g, "\n\n").trim();
+
+  // Determine if the prompt/query or message text is about expert registration or payment/fees
+  const combinedCtx = `${queryText} ${cleaned}`.toLowerCase();
+  const isExpertRegQuery =
+    combinedCtx.includes("expert") &&
+    (combinedCtx.includes("register") || combinedCtx.includes("registration") || combinedCtx.includes("banna") || combinedCtx.includes("link"));
+
+  const isExpertRegOrPayment =
+    isExpertRegQuery ||
+    combinedCtx.includes("payment") ||
+    combinedCtx.includes("fee") ||
+    combinedCtx.includes("charge");
+
+  // Ensure explicit clickable Expert Registration link is present if user specifically asked for expert registration link
+  if (isExpertRegQuery && !cleaned.includes("/expert/register")) {
+    cleaned = `${cleaned}\n\n[Expert Registration Link](${canonicalRegUrl})`;
+  }
+
+  if (isExpertRegOrPayment && !cleaned.includes("Important Safety Notice")) {
+    cleaned = `${cleaned}\n\n${SAFETY_NOTICE}`;
+  }
+
+  return cleaned;
+};
 
 const DEFAULT_SUGGESTIONS = [
-  "Indore me property dispute ke liye lawyer chahiye",
-  "GST Registration karwana hai",
-  "Top rated CA for tax filing in Bhopal",
-  "Doctor for consultation on video call",
+  "GST expert chahiye",
+  "Mere orders dikhao",
+  "Mere wallet me kitne paise hain?",
+  "Mera booking status kya hai?",
+  "Income tax return service",
 ];
 
 export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
@@ -50,6 +169,164 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
 
   if (!isOpen) return null;
 
+  const parseTextWithFormatting = (str, keyPrefix = "") => {
+    if (!str) return [];
+
+    const baseUrl = getFrontendBaseUrl();
+
+    // Regex matching:
+    // Group 1 & 2: Markdown links [label](url)
+    // Group 3: Standalone absolute URLs http://... or https://...
+    // Group 4: Standalone internal relative paths starting with /
+    const combinedRegex = /\[([^\]]+)\]\(([^)]+)\)|(https?:\/\/[^\s<]+)|(\/(?:expert|user|experts|services|all-services|categories|category|subcategory|service-details|orders|bookings|inquiries|workspace|auth|profile|call-chat|reels|master-services)[a-zA-Z0-9\-\/_?=#]*)/g;
+
+    const elements = [];
+    let lastIndex = 0;
+    let match;
+
+    const parseBoldInText = (text, prefix) => {
+      if (!text) return [];
+      const boldParts = text.split(/(\*\*.*?\*\*)/g);
+      return boldParts.map((part, pIdx) => {
+        if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+          return (
+            <strong key={`${prefix}-b-${pIdx}`} style={{ fontWeight: 700 }}>
+              {part.slice(2, -2)}
+            </strong>
+          );
+        }
+        return part;
+      });
+    };
+
+    while ((match = combinedRegex.exec(str)) !== null) {
+      const matchIndex = match.index;
+
+      if (matchIndex > lastIndex) {
+        const plainText = str.substring(lastIndex, matchIndex);
+        elements.push(...parseBoldInText(plainText, `${keyPrefix}-t-${lastIndex}`));
+      }
+
+      let linkText = "";
+      let rawTargetUrl = "";
+      let isRawRelativePath = false;
+      let trailingPunctuation = "";
+
+      if (match[1] !== undefined && match[2] !== undefined) {
+        linkText = match[1];
+        rawTargetUrl = match[2];
+      } else if (match[3] !== undefined) {
+        rawTargetUrl = match[3];
+        const punctMatch = rawTargetUrl.match(/[.,;:!?]+$/);
+        if (punctMatch) {
+          trailingPunctuation = punctMatch[0];
+          rawTargetUrl = rawTargetUrl.slice(0, -trailingPunctuation.length);
+        }
+        linkText = rawTargetUrl;
+      } else if (match[4] !== undefined) {
+        rawTargetUrl = match[4];
+        isRawRelativePath = true;
+        const punctMatch = rawTargetUrl.match(/[.,;:!?]+$/);
+        if (punctMatch) {
+          trailingPunctuation = punctMatch[0];
+          rawTargetUrl = rawTargetUrl.slice(0, -trailingPunctuation.length);
+        }
+        linkText = `${baseUrl}${rawTargetUrl}`;
+      }
+
+      const resolved = resolveUrl(rawTargetUrl);
+
+      if (resolved.isDangerous) {
+        const displayText = linkText || rawTargetUrl;
+        elements.push(...parseBoldInText(displayText + trailingPunctuation, `${keyPrefix}-d-${matchIndex}`));
+      } else {
+        const fullHref = resolved.fullUrl;
+        const isInternal = resolved.isInternal;
+        const internalPath = resolved.internalPath;
+
+        elements.push(
+          <a
+            key={`${keyPrefix}-link-${matchIndex}`}
+            href={fullHref}
+            target={isInternal ? "_self" : "_blank"}
+            rel={isInternal ? undefined : "noopener noreferrer"}
+            onClick={(e) => {
+              if (isInternal && internalPath) {
+                e.preventDefault();
+                onClose();
+                navigate(internalPath);
+              }
+            }}
+            style={{
+              color: "#2563eb",
+              textDecoration: "underline",
+              fontWeight: 600,
+              wordBreak: "break-word",
+              cursor: "pointer",
+            }}
+          >
+            {parseBoldInText(linkText, `${keyPrefix}-lt-${matchIndex}`)}
+          </a>
+        );
+
+        if (trailingPunctuation) {
+          elements.push(trailingPunctuation);
+        }
+      }
+
+      lastIndex = combinedRegex.lastIndex;
+    }
+
+    if (lastIndex < str.length) {
+      const remainingText = str.substring(lastIndex);
+      elements.push(...parseBoldInText(remainingText, `${keyPrefix}-t-${lastIndex}`));
+    }
+
+    return elements;
+  };
+
+  const renderFormattedText = (text) => {
+    if (!text) return null;
+
+    const lines = text.split("\n");
+
+    return lines.map((line, lIdx) => {
+      const trimmed = line.trim();
+      if (!trimmed) return <div key={lIdx} style={{ height: "6px" }} />;
+
+      const isNumberedStep = /^\d+\.\s+/.test(trimmed);
+      const isBullet = /^[\bullet\-\*]\s+/.test(trimmed);
+
+      if (isNumberedStep) {
+        const stepMatch = trimmed.match(/^(\d+\.)\s+(.*)/);
+        const stepNum = stepMatch ? stepMatch[1] : "";
+        const stepContent = stepMatch ? stepMatch[2] : trimmed;
+        return (
+          <div key={lIdx} style={{ display: "flex", gap: "8px", marginTop: "6px", marginBottom: "4px" }}>
+            <span style={{ fontWeight: 800, color: "#000080", flexShrink: 0 }}>{stepNum}</span>
+            <div style={{ flex: 1 }}>{parseTextWithFormatting(stepContent, `line-${lIdx}`)}</div>
+          </div>
+        );
+      }
+
+      if (isBullet) {
+        const bulletContent = trimmed.replace(/^[\bullet\-\*]\s+/, "");
+        return (
+          <div key={lIdx} style={{ display: "flex", gap: "8px", marginTop: "4px", marginBottom: "4px" }}>
+            <span style={{ color: "#000080", flexShrink: 0, fontWeight: 700 }}>•</span>
+            <div style={{ flex: 1 }}>{parseTextWithFormatting(bulletContent, `line-${lIdx}`)}</div>
+          </div>
+        );
+      }
+
+      return (
+        <div key={lIdx} style={{ marginTop: lIdx > 0 ? "4px" : 0 }}>
+          {parseTextWithFormatting(trimmed, `line-${lIdx}`)}
+        </div>
+      );
+    });
+  };
+
   const handleSendPrompt = async (textToSend) => {
     const queryText = (textToSend || prompt).trim();
     if (!queryText || loading) return;
@@ -61,50 +338,59 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
     setLoading(true);
 
     try {
-      console.log(`[ASK_G9][FE_REQUEST] requestId=${currentReqId} conversationId="${conversationId || "none"}" message="${queryText}" messageCount=${messages.length}`);
-      const data = await askG9Api(queryText, conversationId);
+      console.log(`[GIA_ASSISTANT][FE_REQUEST] requestId=${currentReqId} conversationId="${conversationId || "none"}" message="${queryText}"`);
+      const response = await sendChatbotMessageApi({
+        message: queryText,
+        conversation_id: conversationId,
+      });
 
       if (currentReqId !== reqIdRef.current) return;
 
-      if (data?.success) {
-        if (data.conversation_id) {
-          setConversationId(data.conversation_id);
+      const resData = response?.data || response;
+
+      if (response?.success && resData) {
+        if (resData.conversation_id) {
+          setConversationId(resData.conversation_id);
         }
 
-        console.log(`[ASK_G9][FE_SERVICE_RENDER] responseServiceCount=${data.services?.length || 0} responseServiceIds=${JSON.stringify((data.services || []).map(s => s.id))}`);
+        const rawMsgText = resData.message || "Main aapki query process nahi kar pa rahi hoon.";
+        const msgText = sanitizeAskG9ResponseText(rawMsgText, queryText);
+        const isAuthRequired = resData.requires_auth || (typeof msgText === "string" && msgText.toLowerCase().includes("please log in"));
 
         const aiMsg = {
           role: "assistant",
-          text: data.message || "Here are your search results:",
-          intent: data.intent,
-          needs_clarification: data.needs_clarification,
-          result_mode: data.result_mode || (data.needs_clarification ? "CLARIFICATION" : "EXACT"),
-          clarifying_question: data.clarifying_question,
-          clarifying_options: data.clarifying_options || [],
-          suggestions: data.suggestions || data.clarifying_options || [],
-          experts: data.experts || [],
-          services: data.services || [],
-          categories: data.categories || [],
+          text: msgText,
+          experts: resData.experts || [],
+          services: resData.services || [],
+          actionLabel: isAuthRequired ? "Log In to Account" : null,
+          actionUrl: isAuthRequired ? "/user/auth" : null,
         };
 
         setMessages((prev) => [...prev, aiMsg]);
       } else {
+        const rawMsg = response?.message || "Main abhi aapki request process nahi kar pa rahi hoon. Kripya thodi der baad try karein.";
         setMessages((prev) => [
           ...prev,
           {
             role: "assistant",
-            text: data?.message || "We couldn't complete your search right now. Please try again.",
+            text: sanitizeAskG9ResponseText(rawMsg, queryText),
           },
         ]);
       }
     } catch (err) {
       if (currentReqId !== reqIdRef.current) return;
-      console.error("[ASK_G9][MODAL] Search Error:", err);
+      console.error("[GIA_ASSISTANT][MODAL] Chatbot Error:", err);
+      const isAuthError = err?.response?.status === 401 || err?.response?.status === 403;
+      const rawErrMsg = isAuthError
+        ? "Please log in to your account to view your private details."
+        : "Main abhi aapki request process nahi kar pa rahi hoon. Please thodi der baad try karein.";
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          text: "We couldn't complete your search right now. Please try again.",
+          text: sanitizeAskG9ResponseText(rawErrMsg, queryText),
+          actionLabel: isAuthError ? "Log In to Account" : null,
+          actionUrl: isAuthError ? "/user/auth" : null,
         },
       ]);
     } finally {
@@ -157,7 +443,7 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
         .replace(/[^a-z0-9\s-]/g, '')
         .replace(/\s+/g, '-');
     }
-    return expert?.expert_id || expert?.id || "";
+    return "";
   };
 
   const handleActionClick = (action, expert = null) => {
@@ -171,6 +457,28 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
       onClose();
       navigate(action.url);
     }
+  };
+
+  const getThinkingState = () => {
+    const lastUserMsg = [...messages].reverse().find(m => m.role === "user")?.text || prompt || "";
+    const q = lastUserMsg.toLowerCase().trim();
+
+    if (q.includes("expert") || q.includes("ca") || q.includes("lawyer") || q.includes("doctor")) {
+      return { title: "Gia is thinking...", subtitle: "" };
+    }
+    if (q.includes("service") || q.includes("pan") || q.includes("gst") || q.includes("itr") || q.includes("tax")) {
+      return { title: "Finding matching services…", subtitle: "Checking G9Expert catalog" };
+    }
+    if (q.includes("order") || q.includes("booking")) {
+      return { title: "Checking your order status…", subtitle: "Verifying booking details" };
+    }
+    if (q.includes("wallet") || q.includes("balance")) {
+      return { title: "Checking your wallet…", subtitle: "Retrieving latest balance" };
+    }
+    if (q.includes("workspace") || q.includes("document")) {
+      return { title: "Checking workspace…", subtitle: "Retrieving project files & timeline" };
+    }
+    return { title: "Gia is thinking...", subtitle: "" };
   };
 
   return (
@@ -205,19 +513,23 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="ask-g9-modal-drag-handle" />
-        
+
         {/* Header */}
         <div
           style={{
-            padding: "16px 20px",
+            padding: "12px 16px",
             background: "linear-gradient(135deg, #000080 0%, #1e3a8a 100%)",
             color: "#ffffff",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            flexShrink: 0,
+            minHeight: "56px",
+            gap: "10px",
+            boxShadow: "0 2px 8px rgba(0, 0, 128, 0.15)",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0, flex: 1 }}>
             <div
               style={{
                 width: "36px",
@@ -227,32 +539,48 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                flexShrink: 0,
               }}
             >
-              <Sparkles size={20} color="#fbbf24" />
+              <Sparkles size={18} color="#fbbf24" />
             </div>
-            <div>
-              <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 800 }}>
-                Ask G9 <span style={{ fontSize: "0.75rem", background: "#fbbf24", color: "#000080", padding: "2px 6px", borderRadius: "10px", fontWeight: 800, marginLeft: "6px" }}>AI</span>
+            <div style={{ minWidth: 0, flex: 1, display: "flex", alignItems: "center", gap: "8px" }}>
+              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#ffffff", lineHeight: 1.2 }}>
+                Ask G9
               </h3>
-              <p style={{ margin: 0, fontSize: "0.75rem", opacity: 0.85 }}>
-                Intelligent Search & Service Discovery
-              </p>
+              <span
+                style={{
+                  fontSize: "0.68rem",
+                  background: "#fbbf24",
+                  color: "#000080",
+                  padding: "2px 7px",
+                  borderRadius: "8px",
+                  fontWeight: 800,
+                  letterSpacing: "0.4px",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                AI Assistance : Gia
+              </span>
             </div>
           </div>
+
           <button
             onClick={onClose}
+            aria-label="Close Assistant"
             style={{
-              background: "rgba(255, 255, 255, 0.15)",
+              background: "rgba(255, 255, 255, 0.18)",
               border: "none",
               color: "#ffffff",
               borderRadius: "50%",
-              width: "32px",
-              height: "32px",
+              width: "34px",
+              height: "34px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               cursor: "pointer",
+              flexShrink: 0,
+              transition: "background 0.2s ease",
             }}
           >
             <X size={18} />
@@ -288,10 +616,10 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
                 <Bot size={32} color="#2563eb" />
               </div>
               <h4 style={{ margin: "0 0 6px 0", color: "#0f172a", fontSize: "1.1rem" }}>
-                What are you looking for today?
+                How can I help you with G9Expert?
               </h4>
               <p style={{ margin: "0 0 20px 0", color: "#64748b", fontSize: "0.85rem" }}>
-                Ask in English, Hindi, or Hinglish for experts, services, and location consultations.
+                Ask in English, Hindi, or Hinglish about service booking, orders, expert registration, or consultations.
               </p>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -344,7 +672,36 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
                     boxShadow: msg.role === "user" ? "none" : "0 2px 4px rgba(0,0,0,0.03)",
                   }}
                 >
-                  {msg.text}
+                  <div>{renderFormattedText(msg.text)}</div>
+
+                  {/* Action Button for Platform Navigation */}
+                  {msg.actionLabel && msg.actionUrl && (
+                    <div style={{ marginTop: "12px" }}>
+                      <button
+                        onClick={() => {
+                          onClose();
+                          navigate(msg.actionUrl);
+                        }}
+                        style={{
+                          padding: "8px 14px",
+                          borderRadius: "10px",
+                          background: "linear-gradient(135deg, #000080 0%, #1e3a8a 100%)",
+                          color: "#ffffff",
+                          border: "none",
+                          fontSize: "0.82rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          boxShadow: "0 2px 6px rgba(0,0,128,0.2)",
+                        }}
+                      >
+                        <span>{msg.actionLabel}</span>
+                        <ChevronRight size={14} />
+                      </button>
+                    </div>
+                  )}
 
                   {/* Clarifying & Suggestion Chips */}
                   {((msg.suggestions && msg.suggestions.length > 0) || (msg.clarifying_options && msg.clarifying_options.length > 0)) && (
@@ -484,48 +841,57 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
                   {/* Matching Service Cards */}
                   {msg.services && msg.services.length > 0 && (
                     <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                      {(msg.showAllServices ? msg.services : msg.services.slice(0, 2)).map((srv, sIdx) => {
-                        const srvSlug = srv.slug || "";
+                      {(msg.showAllServices ? msg.services : msg.services.slice(0, 3)).map((srv, sIdx) => {
+                        const srvSlug = srv.slug || srv.id || "";
                         const srvUrl = srvSlug ? `/user/service-details/${srvSlug}` : `/user/all-services`;
+                        const priceVal = srv.starting_price || srv.price || srv.min_price;
+
                         return (
                           <div
                             key={sIdx}
                             style={{
                               border: "1px solid #cbd5e1",
-                              borderRadius: "10px",
-                              padding: "10px 12px",
+                              borderRadius: "12px",
+                              padding: "12px",
                               background: "#ffffff",
                               color: "#0f172a",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "space-between",
+                              gap: "12px",
                             }}
                           >
-                            <div>
-                              <h5 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700 }}>{srv.title}</h5>
-                              <p style={{ margin: "2px 0 0 0", fontSize: "0.75rem", color: "#64748b" }}>
-                                {srv.category_name} {srv.price ? `• ₹${srv.price}` : ""}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <h5 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 700, color: "#0f172a" }}>
+                                {srv.title || srv.name}
+                              </h5>
+                              <p style={{ margin: "3px 0 0 0", fontSize: "0.76rem", color: "#64748b" }}>
+                                {srv.category_name ? `${srv.category_name} ` : ""}
+                                {priceVal > 0 ? `• Starting ₹${priceVal}` : ""}
+                                {srv.delivery_time_days ? ` • ${srv.delivery_time_days} days` : ""}
                               </p>
                             </div>
                             <button
                               onClick={() => handleActionClick({ type: "navigate", url: srvUrl })}
                               style={{
-                                padding: "6px 12px",
+                                padding: "7px 14px",
                                 borderRadius: "8px",
-                                background: "#000080",
+                                background: "linear-gradient(135deg, #000080 0%, #1e3a8a 100%)",
                                 color: "#ffffff",
                                 border: "none",
-                                fontSize: "0.75rem",
+                                fontSize: "0.78rem",
                                 fontWeight: 700,
                                 cursor: "pointer",
+                                whiteSpace: "nowrap",
+                                flexShrink: 0,
                               }}
                             >
-                              Book Now
+                              View Service
                             </button>
                           </div>
                         );
                       })}
-                      {!msg.showAllServices && msg.services.length > 2 && (
+                      {!msg.showAllServices && msg.services.length > 3 && (
                         <button
                           onClick={() => {
                             setMessages(prev => prev.map((m, idx) => idx === index ? { ...m, showAllServices: true } : m));
@@ -541,7 +907,7 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
                             cursor: "pointer"
                           }}
                         >
-                          View {msg.services.length - 2} more services
+                          View {msg.services.length - 3} more services
                         </button>
                       )}
                     </div>
@@ -581,11 +947,13 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ margin: 0, fontSize: "0.85rem", color: "#1e3a8a", fontWeight: 700 }}>
-                  Finding the right experts…
+                  {getThinkingState().title}
                 </p>
-                <p style={{ margin: "2px 0 0 0", fontSize: "0.74rem", color: "#64748b" }}>
-                  Analyzing requirement & checking verified profiles
-                </p>
+                {getThinkingState().subtitle ? (
+                  <p style={{ margin: "2px 0 0 0", fontSize: "0.74rem", color: "#64748b" }}>
+                    {getThinkingState().subtitle}
+                  </p>
+                ) : null}
               </div>
             </div>
           )}
@@ -604,7 +972,7 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
           >
             <input
               type="text"
-              placeholder="Ask anything (e.g. Indore me lawyer, GST registration)..."
+              placeholder="Ask G9 about booking, orders, registration, consultations..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               disabled={loading}

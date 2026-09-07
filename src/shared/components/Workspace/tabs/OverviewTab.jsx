@@ -69,10 +69,23 @@ export default function OverviewTab({ workspace, snapshot, documents = [], role,
 
         {/* Expert Info Card */}
         <div className="card-box" style={{ background: '#f8fafc', padding: '1.25rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-          <h4 style={{ margin: '0 0 0.5rem 0', color: '#1e293b' }}>Assigned Expert</h4>
-          <p style={{ margin: '0.25rem 0', fontSize: '0.9rem', color: '#475569' }}><strong>Name:</strong> {exp.expert_name || "Assigned Expert"}</p>
-          <p style={{ margin: '0.25rem 0', fontSize: '0.9rem', color: '#475569' }}><strong>Rating:</strong> ⭐ {exp.expert_rating || 5.0} / 5</p>
-          <p style={{ margin: '0.25rem 0', fontSize: '0.9rem', color: '#475569' }}><strong>Delivery Guarantee:</strong> {exp.delivery_time_days || 1} Day(s)</p>
+          <h4 style={{ margin: '0 0 0.5rem 0', color: '#1e293b' }}>
+            {workspace?.assignment_type === "admin_queue" || !workspace?.expert_id ? "Expert Assignment" : workspace?.assignment_type === "admin_handled" ? "Assigned Support" : "Assigned Expert"}
+          </h4>
+          <p style={{ margin: '0.25rem 0', fontSize: '0.9rem', color: '#475569' }}>
+            <strong>{workspace?.assignment_type === "admin_queue" || !workspace?.expert_id ? "Status:" : "Name:"}</strong>{" "}
+            {workspace?.assignment_type === "admin_queue" || !workspace?.expert_id
+              ? "Awaiting Expert Assignment"
+              : workspace?.assignment_type === "admin_handled"
+              ? "Managed by G9Expert Support Team"
+              : exp.expert_name || workspace?.expert_name || "Assigned Expert"}
+          </p>
+          {workspace?.assignment_type === "expert" && (
+            <>
+              <p style={{ margin: '0.25rem 0', fontSize: '0.9rem', color: '#475569' }}><strong>Rating:</strong> ⭐ {exp.expert_rating || 5.0} / 5</p>
+              <p style={{ margin: '0.25rem 0', fontSize: '0.9rem', color: '#475569' }}><strong>Delivery Speed:</strong> Fast Service</p>
+            </>
+          )}
         </div>
       </div>
 

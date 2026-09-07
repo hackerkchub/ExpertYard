@@ -24,17 +24,34 @@ export const Nav = styled.nav`
   }
 
   @media (max-width: 768px) {
-    background: #111827 !important;
-    border-bottom: none !important;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15) !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
+    padding-top: env(safe-area-inset-top, 0px) !important;
 
     &.user-common-mobile-header {
+      background: #ffffff !important;
+      border-bottom: 1px solid #e2e8f0 !important;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
+
+      * {
+        color: #0f172a !important;
+      }
+    }
+
+    @media (prefers-color-scheme: dark) {
       background: #111827 !important;
       border-bottom: none !important;
       box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15) !important;
 
-      * {
-        color: #ffffff !important;
+      &.user-common-mobile-header {
+        background: #111827 !important;
+        border-bottom: none !important;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15) !important;
+
+        * {
+          color: #ffffff !important;
+        }
       }
     }
   }
@@ -103,7 +120,7 @@ export const HeaderMobileTitle = styled.div`
     min-width: 0;
     flex: 1 1 auto;
     display: block;
-    color: #ffffff !important;
+    color: #0f172a !important;
     font-size: 17px;
     line-height: 1.2;
     font-weight: 700;
@@ -111,6 +128,10 @@ export const HeaderMobileTitle = styled.div`
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+
+    @media (prefers-color-scheme: dark) {
+      color: #ffffff !important;
+    }
   }
 
   @media (max-width: 420px) {
@@ -135,19 +156,32 @@ export const HeaderBackButton = styled.button`
     border: none !important;
     border-radius: 13px;
     background: transparent !important;
-    color: #ffffff !important;
+    color: #0f172a !important;
     cursor: pointer;
     box-shadow: none !important;
 
     &:hover, &:active {
-      background: rgba(255, 255, 255, 0.1) !important;
+      background: rgba(15, 23, 42, 0.06) !important;
     }
 
     svg {
       width: 19px;
       height: 19px;
+      color: #0f172a !important;
+      stroke: #0f172a !important;
+    }
+
+    @media (prefers-color-scheme: dark) {
       color: #ffffff !important;
-      stroke: #ffffff !important;
+
+      &:hover, &:active {
+        background: rgba(255, 255, 255, 0.1) !important;
+      }
+
+      svg {
+        color: #ffffff !important;
+        stroke: #ffffff !important;
+      }
     }
   }
 
@@ -578,11 +612,11 @@ export const NavbarSpacer = styled.div`
   }
 
   @media (max-width: 768px) {
-    height: 58px;
+    height: calc(64px + env(safe-area-inset-top, 0px));
   }
 
   @media (max-width: 480px) {
-    height: 50px;
+    height: calc(60px + env(safe-area-inset-top, 0px));
   }
 `;
 
@@ -1366,17 +1400,17 @@ export const MobileMenuHeader = styled.div`
   gap: 12px;
   min-height: 64px;
   padding: max(16px, calc(12px + env(safe-area-inset-top, 0px))) 16px 16px 18px;
-  background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
-  color: #ffffff;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  color: #0f172a;
   flex-shrink: 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid #e2e8f0;
 
   h4 {
-    color: #ffffff !important;
+    color: #0f172a !important;
   }
 
   span {
-    color: #94a3b8 !important;
+    color: #64748b !important;
   }
 
   button {
@@ -1384,8 +1418,8 @@ export const MobileMenuHeader = styled.div`
     height: 32px;
     border: none;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    color: #94a3b8;
+    background: rgba(15, 23, 42, 0.06);
+    color: #64748b;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -1394,8 +1428,32 @@ export const MobileMenuHeader = styled.div`
     transition: all 0.15s ease;
 
     &:active {
-      background: rgba(255, 255, 255, 0.2);
-      color: #ffffff;
+      background: rgba(15, 23, 42, 0.12);
+      color: #0f172a;
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+    color: #ffffff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+    h4 {
+      color: #ffffff !important;
+    }
+
+    span {
+      color: #94a3b8 !important;
+    }
+
+    button {
+      background: rgba(255, 255, 255, 0.1);
+      color: #94a3b8;
+
+      &:active {
+        background: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+      }
     }
   }
 `;
@@ -1441,7 +1499,7 @@ export const MobileItem = styled.div`
   padding: 0 16px 0 16px;
   border-radius: 0 24px 24px 0;
   margin: 2px 12px 2px 0;
-  color: #f1f5f9;
+  color: #1e293b;
   font-family: "Google Sans", "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 14px;
   font-weight: 500;
@@ -1453,32 +1511,65 @@ export const MobileItem = styled.div`
   ${(props) =>
     props.$active &&
     `
-    background: linear-gradient(90deg, rgba(30, 58, 138, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
-    color: #ffffff;
+    background: #eef2ff;
+    color: #000080;
     font-weight: 700;
-    border-left: 3px solid #fbbf24;
+    border-left: 3px solid #000080;
 
     svg {
-      color: #fbbf24;
+      color: #000080;
     }
   `}
 
   svg {
     flex: 0 0 auto;
     font-size: 20px;
-    color: #94a3b8;
+    color: #64748b;
     transition: color 0.15s ease;
   }
 
   &:hover,
   &:active {
-    background: linear-gradient(90deg, rgba(30, 58, 138, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
-    color: #ffffff;
+    background: #eef2ff;
+    color: #000080;
     font-weight: 700;
-    border-left: 3px solid #fbbf24;
+    border-left: 3px solid #000080;
 
     svg {
-      color: #fbbf24;
+      color: #000080;
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    color: #f1f5f9;
+
+    ${(props) =>
+      props.$active &&
+      `
+      background: linear-gradient(90deg, rgba(30, 58, 138, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+      color: #ffffff;
+      font-weight: 700;
+      border-left: 3px solid #fbbf24;
+
+      svg {
+        color: #fbbf24;
+      }
+    `}
+
+    svg {
+      color: #94a3b8;
+    }
+
+    &:hover,
+    &:active {
+      background: linear-gradient(90deg, rgba(30, 58, 138, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+      color: #ffffff;
+      font-weight: 700;
+      border-left: 3px solid #fbbf24;
+
+      svg {
+        color: #fbbf24;
+      }
     }
   }
 

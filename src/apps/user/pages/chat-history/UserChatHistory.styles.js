@@ -517,16 +517,16 @@ export const ChatHeader = styled.div`
   background: #ffffff;
 
   &:hover {
-    background: #000080 !important;
-    color: #ffffff !important;
+    background: #f8fafc;
+    box-shadow: 0 4px 14px rgba(0, 0, 128, 0.06);
 
-    h4, span, div, p, svg, .meta-item, .last-date, .expert-position {
-      color: #ffffff !important;
+    h4 {
+      color: #000080;
     }
 
-    .rate-badge, .status-badge, .pricing-badge, .expert-badge {
-      background: rgba(255, 255, 255, 0.2) !important;
-      color: #ffffff !important;
+    .chevron-icon {
+      color: #000080;
+      transform: translateX(2px);
     }
   }
 
@@ -833,11 +833,11 @@ export const ModalOverlay = styled.div`
   inset: 0;
   background: rgba(15, 23, 42, 0.5);
   backdrop-filter: blur(2px);
-  z-index: 1000;
+  z-index: 10005;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: max(16px, env(safe-area-inset-top, 0px)) 16px;
 `;
 
 export const ModalContent = styled.div`

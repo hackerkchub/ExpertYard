@@ -8,6 +8,8 @@ import {
   FiEyeOff,
   FiShield,
   FiAlertCircle,
+  FiKey,
+  FiRefreshCw,
 } from "react-icons/fi";
 import { MdAdminPanelSettings } from "react-icons/md";
 
@@ -27,7 +29,6 @@ import {
   PasswordToggle,
   OptionsRow,
   Checkbox,
-  ForgotPassword,
   LoginButton,
   Spinner,
   ErrorMessage,
@@ -35,7 +36,11 @@ import {
   FooterText,
   SecurityBadge,
 } from "../styles/AdminLogin.styles";
-import { adminLoginApi } from "../../../shared/api/admin/auth.api";
+import {
+  adminLoginApi,
+  adminVerifyMfaApi,
+  adminResendMfaApi,
+} from "../../../shared/api/admin/auth.api";
 
 const AdminLogin = () => {
   const [formData, setFormData] = useState({
@@ -46,81 +51,127 @@ const AdminLogin = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
+  const [successMsg, setSuccessMsg] = useState("");
+
+  // MFA State
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaToken, setMfaToken] = useState("");
+  const [otp, setOtp] = useState("");
+  const [resending, setResending] = useState(false);
+
   const navigate = useNavigate();
 
-  // Track window width for responsive adjustments
   useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-  const token = localStorage.getItem("admin_token");
-  if (token) {
-    navigate("/admin/dashboard", { replace: true });
-  }
-}, []);
+    const token = localStorage.getItem("admin_token");
+    if (token) {
+      navigate("/admin/dashboard", { replace: true });
+    }
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
-    // Clear error when user starts typing
     if (error) setError("");
   };
 
-  const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!formData.email || !formData.password) {
-    setError("Please enter both email and password");
-    return;
-  }
-
-  try {
-    setLoading(true);
-    setError("");
-
-    const res = await adminLoginApi(formData);
-
-    // ✅ TOKEN STORE
-    localStorage.setItem("admin_token", res.data.token);
-
-    // ✅ (optional) admin data store
-    // localStorage.setItem("adminData", JSON.stringify(res.data.admin));
-
-    // ✅ REMEMBER ME (optional logic)
-    if (rememberMe) {
-      localStorage.setItem("adminRemember", "true");
-    } else {
-      localStorage.removeItem("adminRemember");
+    if (!formData.email || !formData.password) {
+      setError("Please enter both email and password");
+      return;
     }
 
-    // ✅ REACT ROUTER REDIRECT (best practice)
-    navigate("/admin/dashboard", { replace: true });
+    try {
+      setLoading(true);
+      setError("");
+      setSuccessMsg("");
 
-  } catch (err) {
-    console.log("LOGIN ERROR →", err);
+      const res = await adminLoginApi(formData);
 
-    const message =
-      err?.response?.data?.message ||
-      err?.message ||
-      "Login failed. Please try again.";
+      if (res.data?.mfa_required) {
+        setMfaRequired(true);
+        setMfaToken(res.data.mfa_token);
+        setSuccessMsg(res.data.message || "MFA verification code sent to your email");
+        return;
+      }
 
-    setError(message);
-  } finally {
-    setLoading(false);
-  }
-};
+      if (res.data?.token) {
+        localStorage.setItem("admin_token", res.data.token);
+        if (rememberMe) {
+          localStorage.setItem("adminRemember", "true");
+        }
+        navigate("/admin/dashboard", { replace: true });
+      }
+    } catch (err) {
+      console.log("LOGIN ERROR →", err);
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Login failed. Please try again.";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-//   const handleForgotPassword = () => {
-//     // Implement forgot password functionality
-//     console.log("Forgot password clicked");
-//   };
+  const handleMfaSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!otp || otp.length < 4) {
+      setError("Please enter a valid MFA code");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+
+      const res = await adminVerifyMfaApi({
+        mfa_token: mfaToken,
+        otp: otp.trim(),
+      });
+
+      if (res.data?.token) {
+        localStorage.setItem("admin_token", res.data.token);
+        if (rememberMe) {
+          localStorage.setItem("adminRemember", "true");
+        }
+        navigate("/admin/dashboard", { replace: true });
+      }
+    } catch (err) {
+      console.log("MFA VERIFY ERROR →", err);
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "MFA verification failed. Please check your code.";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMfaResend = async () => {
+    try {
+      setResending(true);
+      setError("");
+      setSuccessMsg("");
+
+      const res = await adminResendMfaApi({ mfa_token: mfaToken });
+      setSuccessMsg(res.data?.message || "A new MFA code has been sent to your email");
+    } catch (err) {
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to resend MFA code";
+      setError(message);
+    } finally {
+      setResending(false);
+    }
+  };
 
   return (
     <LoginContainer>
@@ -133,7 +184,9 @@ const AdminLogin = () => {
             Admin<span>Panel</span>
           </LogoText>
           <Subtitle>
-            Sign in to access the admin dashboard
+            {mfaRequired
+              ? "Enter 2FA verification code sent to email"
+              : "Sign in to access the admin dashboard"}
           </Subtitle>
         </LogoSection>
 
@@ -144,89 +197,163 @@ const AdminLogin = () => {
           </ErrorMessage>
         )}
 
-        <Form onSubmit={handleSubmit}>
-          <FormGroup>
-            <Label>
-              <FiMail size={16} />
-              Email Address
-            </Label>
-            <InputWrapper>
-              <InputIcon>
-                <FiMail />
-              </InputIcon>
-              <Input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="abc@example.com"
-                disabled={loading}
-                autoComplete="email"
-              />
-            </InputWrapper>
-          </FormGroup>
+        {successMsg && !error && (
+          <div
+            style={{
+              padding: "10px 14px",
+              marginBottom: "16px",
+              borderRadius: "8px",
+              backgroundColor: "#eef2ff",
+              color: "#3730a3",
+              fontSize: "14px",
+              border: "1px solid #c7d2fe",
+            }}
+          >
+            {successMsg}
+          </div>
+        )}
 
-          <FormGroup>
-            <Label>
-              <FiLock size={16} />
-              Password
-            </Label>
-            <InputWrapper>
-              <InputIcon>
-                <FiLock />
-              </InputIcon>
-              <Input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="••••••••"
-                disabled={loading}
-                autoComplete="current-password"
-              />
-              <PasswordToggle
+        {!mfaRequired ? (
+          <Form onSubmit={handleLoginSubmit}>
+            <FormGroup>
+              <Label>
+                <FiMail size={16} />
+                Email Address
+              </Label>
+              <InputWrapper>
+                <InputIcon>
+                  <FiMail />
+                </InputIcon>
+                <Input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="abc@example.com"
+                  disabled={loading}
+                  autoComplete="email"
+                />
+              </InputWrapper>
+            </FormGroup>
+
+            <FormGroup>
+              <Label>
+                <FiLock size={16} />
+                Password
+              </Label>
+              <InputWrapper>
+                <InputIcon>
+                  <FiLock />
+                </InputIcon>
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  disabled={loading}
+                  autoComplete="current-password"
+                />
+                <PasswordToggle
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={loading}
+                >
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                </PasswordToggle>
+              </InputWrapper>
+            </FormGroup>
+
+            <OptionsRow>
+              <Checkbox>
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  disabled={loading}
+                />
+                Remember me
+              </Checkbox>
+            </OptionsRow>
+
+            <LoginButton type="submit" disabled={loading}>
+              {loading ? (
+                <>
+                  <Spinner />
+                  Authenticating...
+                </>
+              ) : (
+                <>
+                  Sign In
+                  <FiLogIn />
+                </>
+              )}
+            </LoginButton>
+          </Form>
+        ) : (
+          <Form onSubmit={handleMfaSubmit}>
+            <FormGroup>
+              <Label>
+                <FiKey size={16} />
+                MFA Verification Code
+              </Label>
+              <InputWrapper>
+                <InputIcon>
+                  <FiKey />
+                </InputIcon>
+                <Input
+                  type="text"
+                  name="otp"
+                  value={otp}
+                  onChange={(e) => {
+                    setOtp(e.target.value);
+                    if (error) setError("");
+                  }}
+                  placeholder="Enter 4-digit code"
+                  disabled={loading}
+                  maxLength={6}
+                  autoFocus
+                />
+              </InputWrapper>
+            </FormGroup>
+
+            <OptionsRow style={{ justifyContent: "flex-end", marginTop: "-8px" }}>
+              <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={loading}
+                onClick={handleMfaResend}
+                disabled={loading || resending}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#4f46e5",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
               >
-                {showPassword ? <FiEyeOff /> : <FiEye />}
-              </PasswordToggle>
-            </InputWrapper>
-          </FormGroup>
+                <FiRefreshCw size={14} className={resending ? "animate-spin" : ""} />
+                {resending ? "Resending..." : "Resend Code"}
+              </button>
+            </OptionsRow>
 
-          <OptionsRow>
-            <Checkbox>
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                disabled={loading}
-              />
-              Remember me
-            </Checkbox>
-            {/* <ForgotPassword
-              type="button"
-              onClick={handleForgotPassword}
-              disabled={loading}
-            >
-              Forgot Password?
-            </ForgotPassword> */}
-          </OptionsRow>
-
-          <LoginButton type="submit" disabled={loading}>
-            {loading ? (
-              <>
-                <Spinner />
-                Signing in...
-              </>
-            ) : (
-              <>
-                Sign In
-                <FiLogIn />
-              </>
-            )}
-          </LoginButton>
-        </Form>
+            <LoginButton type="submit" disabled={loading}>
+              {loading ? (
+                <>
+                  <Spinner />
+                  Verifying Code...
+                </>
+              ) : (
+                <>
+                  Verify & Continue
+                  <FiShield />
+                </>
+              )}
+            </LoginButton>
+          </Form>
+        )}
 
         <Footer>
           <FooterText>

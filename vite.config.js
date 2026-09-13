@@ -62,7 +62,12 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), devRobotsPlugin()],
 
+    esbuild: {
+      drop: mode === "production" ? ["console", "debugger"] : [],
+    },
+
     build: {
+      sourcemap: false,
       rollupOptions: {
         output: {
           manualChunks,

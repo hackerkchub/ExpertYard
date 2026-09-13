@@ -121,6 +121,16 @@ export default function ServiceInquiryModal({ service, bookingId, onClose, user,
       return;
     }
 
+    // Resolve canonical master_service_id and booking_id
+    const rawMasterServiceId = service?.id ?? service?.master_service_id ?? service?.service_id;
+    const targetMasterServiceId = rawMasterServiceId ? Number(rawMasterServiceId) : null;
+    const parsedBookingId = targetBookingId ? Number(targetBookingId) : null;
+
+    if (!targetMasterServiceId && !parsedBookingId) {
+      setError("Service information is missing. Please reopen the inquiry from the service page.");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -131,8 +141,9 @@ export default function ServiceInquiryModal({ service, bookingId, onClose, user,
         method: "POST",
         headers: userAuthHeaders(),
         body: JSON.stringify({
-          master_service_id: service.id,
-          booking_id: targetBookingId,
+          master_service_id: targetMasterServiceId,
+          service_id: targetMasterServiceId,
+          booking_id: parsedBookingId,
           expert_id: null,
           subject: finalSubject,
           message: trimmedMsg,

@@ -539,14 +539,15 @@ export default function SubscriptionPlan() {
       const options = {
         key: orderData.key_id,
         order_id: orderData.order_id,
-        amount: Math.round(Number(orderData.amount * 100)),
-        currency: "INR",
+        amount: orderData.amount, // Authoritative paise from backend
+        currency: orderData.currency || "INR",
         name: "G9Expert",
         description: `${selectedPlan.plan_name} - ${selectedDuration} Year(s)`,
-          webview_intent: true,
+        webview_intent: true,
         handler: async function(response) {
           try {
             const verifyRes = await verifyExpertPlanPaymentApi({
+              order_id: orderData.order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
               razorpay_signature: response.razorpay_signature

@@ -333,7 +333,7 @@ export default function MasterServiceSlugPage() {
     setShowRechargePopup(true);
   };
 
-  // Cashfree Order Creation for AddBalancePopup
+  // Razorpay Order Creation for AddBalancePopup
   const handleCreateRechargeOrder = async (amount) => {
     const res = await apiFetch("/api/wallet/create-order", {
       method: "POST",
@@ -343,7 +343,7 @@ export default function MasterServiceSlugPage() {
     return await res.json();
   };
 
-  // Cashfree Confirm for AddBalancePopup
+  // Razorpay Confirm for AddBalancePopup
   const handleConfirmRecharge = async (paymentDetails) => {
     const res = await apiFetch("/api/wallet/add", {
       method: "POST",

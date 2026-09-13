@@ -139,26 +139,34 @@ const formatDuration = (minutes = 0) => {
 // ✅ Group chat history by expert
 const groupChatByExpert = (rows = []) => {
   const map = rows.reduce((acc, chat) => {
-    const id = chat.expert_id;
+    const isAi = Boolean(
+      chat.is_ai_chat === 1 ||
+      chat.is_ai_chat === true ||
+      chat.is_ai_chat === "1" ||
+      (chat.room_id && String(chat.room_id).startsWith("ai_room"))
+    );
+
+    const id = isAi ? "ai_expert" : chat.expert_id;
     if (!id) return acc;
 
     if (!acc[id]) {
       acc[id] = {
-        expert_id: chat.expert_id,
-        expert_name: chat.expert_name,
-        expert_avatar: chat.expert_avatar,
-        expert_position: chat.expert_position,
+        expert_id: isAi ? "ai_expert" : chat.expert_id,
+        is_ai: isAi,
+        expert_name: isAi ? (chat.expert_name || "G9 AI Expert") : chat.expert_name,
+        expert_avatar: isAi ? null : chat.expert_avatar,
+        expert_position: isAi ? "AI Instant Assistant" : chat.expert_position,
         chat_per_minute: null,
         total_minutes: 0,
         total_spent: 0,
         last_end_time: chat.end_time,
         sessions: [],
-        rating: chat.expert_rating || 0,
+        rating: isAi ? 5.0 : (chat.expert_rating || 0),
         sessions_count: 0,
       };
     }
 
-    acc[id].sessions.push(chat);
+    acc[id].sessions.push({ ...chat, is_ai_chat: isAi ? 1 : (chat.is_ai_chat || 0) });
     acc[id].sessions_count++;
 
     const mins = Number(chat.duration_minutes || 0);
@@ -620,6 +628,7 @@ export const UserChatHistory = () => {
   // ✅ UPDATED: Avatar click handler with slug
   const handleAvatarClick = (expertId, e) => {
     e.stopPropagation();
+    if (expertId === "ai_expert" || expertId === "ai") return;
     const expert = expertById[Number(expertId)];
     if (expert?.slug) {
       navigate(`/user/experts/${expert.slug}`);
@@ -643,6 +652,22 @@ export const UserChatHistory = () => {
 
       // ✅ UPDATED: Added slug and improved avatar handling
       const merged = await Promise.all(grouped.map(async (c) => {
+        if (c.is_ai || c.expert_id === "ai_expert") {
+          return {
+            ...c,
+            expert_name: c.expert_name || "G9 AI Expert",
+            expert_position: "AI Instant Assistant",
+            expert_avatar: null,
+            is_ai: true,
+            chat_per_minute: 0,
+            call_per_minute: 0,
+            hasPerMinute: false,
+            hasSession: false,
+            hasPlans: false,
+            rating: 5.0,
+          };
+        }
+
         const expertId = Number(c.expert_id);
         const ctxExpert = expertById[expertId];
         const pricing = await fetchExpertPricing(expertId);
@@ -1286,7 +1311,11 @@ export const UserChatHistory = () => {
                       premium
                     >
                       <div className="chat-header-content">
-                        {c.expert_avatar ? (
+                        {c.is_ai || c.expert_id === "ai_expert" ? (
+                          <AvatarFallback style={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)", color: "#ffffff", fontSize: "1.2rem" }}>
+                            ⚡
+                          </AvatarFallback>
+                        ) : c.expert_avatar ? (
                           <Avatar
                             premium
                             src={c.expert_avatar}
@@ -1310,20 +1339,28 @@ export const UserChatHistory = () => {
                               <FiBriefcase size={12} />
                               <span className="expert-position">{c.expert_position}</span>
                             </ExpertBadge>
-                            {pricing.hasPerMinute && (
-                              <span className="pricing-badge per-minute">
-                                <BsChatLeftText size={10} /> ₹{pricing.chatPrice}/min
+                            {c.is_ai || c.expert_id === "ai_expert" ? (
+                              <span className="pricing-badge plans" style={{ background: "#6366f1", color: "#ffffff" }}>
+                                <FiZap size={10} /> AI Chat
                               </span>
-                            )}
-                            {pricing.hasSession && !pricing.hasPerMinute && (
-                              <span className="pricing-badge session">
-                                <FiBookOpen size={10} /> Session ₹{pricing.sessionPrice}
-                              </span>
-                            )}
-                            {pricing.hasPlans && !pricing.hasPerMinute && !pricing.hasSession && (
-                              <span className="pricing-badge plans">
-                                <FiZap size={10} /> Plans Available
-                              </span>
+                            ) : (
+                              <>
+                                {pricing.hasPerMinute && (
+                                  <span className="pricing-badge per-minute">
+                                    <BsChatLeftText size={10} /> ₹{pricing.chatPrice}/min
+                                  </span>
+                                )}
+                                {pricing.hasSession && !pricing.hasPerMinute && (
+                                  <span className="pricing-badge session">
+                                    <FiBookOpen size={10} /> Session ₹{pricing.sessionPrice}
+                                  </span>
+                                )}
+                                {pricing.hasPlans && !pricing.hasPerMinute && !pricing.hasSession && (
+                                  <span className="pricing-badge plans">
+                                    <FiZap size={10} /> Plans Available
+                                  </span>
+                                )}
+                              </>
                             )}
                           </div>
                           
@@ -1401,10 +1438,12 @@ export const UserChatHistory = () => {
                                     <span className="hide-on-mobile">View</span>
                                   </ViewChatButton>
                                   
-                                  <ChatAgainButton onClick={() => handleStartChat(c.expert_id)}>
-                                    <FiMessageSquare size={14} />
-                                    <span className="hide-on-mobile">Chat</span>
-                                  </ChatAgainButton>
+                                  {!c.is_ai && !s.is_ai_chat && (
+                                    <ChatAgainButton onClick={() => handleStartChat(c.expert_id)}>
+                                      <FiMessageSquare size={14} />
+                                      <span className="hide-on-mobile">Chat</span>
+                                    </ChatAgainButton>
+                                  )}
                                 </ActionButtons>
                               </SessionCard>
                             );
@@ -1627,16 +1666,21 @@ export const UserChatHistory = () => {
         </HistoryList>
 
         {/* Chat Details Modal */}
-        {!isMobileView && showDetails && selectedSession && (
+        {!isMobileView && showDetails && selectedSession && (() => {
+          const isModalAi = Boolean(selectedSession.is_ai_chat || selectedSession.is_ai || (selectedSession.room_id && String(selectedSession.room_id).startsWith("ai_room")));
+          return (
           <ModalOverlay onClick={() => setShowDetails(false)}>
             <ModalContent premium onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <div className="modal-user-info">
-                  {selectedSession.expert_avatar ? (
+                  {isModalAi ? (
+                    <AvatarFallback style={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)", color: "#ffffff", fontSize: "1.2rem" }}>
+                      ⚡
+                    </AvatarFallback>
+                  ) : selectedSession.expert_avatar ? (
                     <Avatar
                       premium
                       src={selectedSession.expert_avatar}
-                      // ✅ UPDATED: Modal Avatar click with slug
                       onClick={() => {
                         const expert = expertById[Number(selectedSession.expert_id)];
                         if (expert?.slug) {
@@ -1649,7 +1693,6 @@ export const UserChatHistory = () => {
                       }}
                     />
                   ) : (
-                    // ✅ UPDATED: AvatarFallback click with slug
                     <AvatarFallback 
                       style={{ cursor: "pointer" }} 
                       onClick={() => {
@@ -1663,7 +1706,7 @@ export const UserChatHistory = () => {
                     </AvatarFallback>
                   )}
                   <div>
-                    <h3>{selectedSession.expert_name || "Expert"}</h3>
+                    <h3>{isModalAi ? "G9 AI Expert" : (selectedSession.expert_name || "Expert")}</h3>
                     <div className="modal-meta">
                       <span>{formatDate(selectedSession.end_time)}</span>
                       <span>•</span>
@@ -1698,9 +1741,9 @@ export const UserChatHistory = () => {
                               )}
                             </UserMessageAvatar>
                             <div>
-                              <strong>{msg.sender_name}</strong>
+                              <strong>{msg.sender_type === "expert" && isModalAi ? "G9 AI Expert" : msg.sender_name}</strong>
                               <span className="sender-role">
-                                {msg.sender_type === "expert" ? "Expert" : "You"}
+                                {msg.sender_type === "expert" ? (isModalAi ? "G9 AI Expert" : "Expert") : "You"}
                               </span>
                             </div>
                           </div>
@@ -1735,7 +1778,8 @@ export const UserChatHistory = () => {
               </div>
             </ModalContent>
           </ModalOverlay>
-        )}
+          );
+        })()}
       </PageContainer>
       
       {/* Chat Popups from hook */}

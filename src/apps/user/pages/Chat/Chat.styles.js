@@ -911,6 +911,60 @@ export const EmptyChatMessage = styled.div`
   }
 `;
 
+export const EndChatBtn = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.1);
+
+  &:hover {
+    background: #dc2626;
+    color: #ffffff;
+    border-color: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(220, 38, 38, 0.25);
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+
+  @media (max-width: 480px) {
+    padding: 4px 8px;
+    font-size: 11px;
+    gap: 3px;
+  }
+`;
+
+export const ChatEndedBadge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  @media (max-width: 480px) {
+    padding: 3px 7px;
+    font-size: 10px;
+  }
+`;
+
 /* EMPTY EXPORTS (DON'T REMOVE) */
 export const PopoverContainer = styled.div``;
 export const ProfileDropdownContainer = styled.div``;

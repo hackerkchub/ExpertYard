@@ -205,10 +205,28 @@ const GuidexaExpertPlan = () => {
     if (expertId) fetchData();
   }, [expertId]);
 
-  // Cashfree payment handler
+  // Razorpay payment handler
   const handlePurchase = async (planId) => {
     try {
       setPurchasing(planId);
+
+      // Helper to load Razorpay script dynamically if needed
+      const loadScript = () => {
+        return new Promise((resolve) => {
+          if (window.Razorpay) return resolve(true);
+          const script = document.createElement("script");
+          script.src = "https://checkout.razorpay.com/v1/checkout.js";
+          script.async = true;
+          script.onload = () => resolve(true);
+          script.onerror = () => resolve(false);
+          document.body.appendChild(script);
+        });
+      };
+
+      const isLoaded = await loadScript();
+      if (!isLoaded || !window.Razorpay) {
+        throw new Error("Razorpay SDK failed to load. Please check your network connection.");
+      }
 
       const response = await createExpertPlanOrderApi({
         plan_id: planId
@@ -220,47 +238,51 @@ const GuidexaExpertPlan = () => {
         throw new Error(order.message || "Order creation failed");
       }
 
-      const { load } = await import("@cashfreepayments/cashfree-js");
-      
-      const cashfree = await load({
-        mode: order.environment || "sandbox"
-      });
+      const options = {
+        key: order.key_id,
+        order_id: order.order_id,
+        amount: order.amount,
+        currency: order.currency || "INR",
+        name: "G9Expert",
+        description: `Expert Plan Subscription (${order.plan_name || 'Membership'})`,
+        handler: async function (paymentResponse) {
+          try {
+            const verify = await verifyExpertPlanPaymentApi({
+              order_id: order.order_id,
+              razorpay_order_id: paymentResponse.razorpay_order_id,
+              razorpay_payment_id: paymentResponse.razorpay_payment_id,
+              razorpay_signature: paymentResponse.razorpay_signature
+            });
 
-      const result = await cashfree.checkout({
-        paymentSessionId: order.payment_session_id,
-        redirectTarget: "_modal"
-      });
+            if (verify.data.success) {
+              await refreshExpertData();
+              alert("Payment Successful! Your plan is now active.");
+              window.location.reload();
+            } else {
+              throw new Error(verify.data.message || "Payment verification failed");
+            }
+          } catch (verifyErr) {
+            alert(verifyErr.message || "Payment verification failed");
+          } finally {
+            setPurchasing(null);
+          }
+        },
+        theme: { color: "#6D28D9" },
+        modal: {
+          ondismiss: () => setPurchasing(null)
+        }
+      };
 
-      if (result?.error) {
-        throw new Error(result.error.message || "Payment failed");
-      }
-
-      const verify = await verifyExpertPlanPaymentApi({
-        order_id: order.order_id
-      });
-
-      if (verify.data.success) {
-  // Refresh expert profile and trial/subscription status
-  await refreshExpertData();
-
-  alert("Payment Successful! Your plan is now active.");
-
-  // Optional: navigate if required
-  // navigate("/expert/home", { replace: true });
-
-  window.location.reload();
-} else {
-        throw new Error(verify.data.message || "Payment verification failed");
-      }
+      const rzp = new window.Razorpay(options);
+      rzp.open();
 
     } catch (err) {
       console.error("Purchase error:", err);
       alert(
         err.message ||
         err.response?.data?.message ||
-        "Unable to process payment. Please try again."
+        "Payment process cancelled or failed"
       );
-    } finally {
       setPurchasing(null);
     }
   };

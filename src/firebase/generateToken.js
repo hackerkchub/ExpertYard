@@ -49,7 +49,7 @@ export const generateToken = async (role) => {
       return new Promise((resolve) => {
         PushNotifications.addListener("registration", async (token) => {
           try {
-            console.log("ANDROID FCM:", token.value);
+            console.log("ANDROID FCM token acquired");
 
             const existingToken = localStorage.getItem(storageKey);
             const existingOwner = localStorage.getItem(ownerKey);

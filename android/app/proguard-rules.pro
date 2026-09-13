@@ -1,21 +1,35 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# G9Expert ProGuard / R8 Hardening Rules
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Capacitor Framework Core & Plugins
+-keep class com.getcapacitor.** { *; }
+-keep class * extends com.getcapacitor.Plugin { *; }
+-keep class * extends com.getcapacitor.BridgeActivity { *; }
+-keep class * extends com.getcapacitor.Bridge { *; }
+-keepclassmembers class * {
+    @com.getcapacitor.PluginMethod public *;
+    @android.webkit.JavascriptInterface public *;
+}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# G9Expert Native Application & JS Bridge Interface
+-keep class com.g9expert.app.** { *; }
+-keepclassmembers class com.g9expert.app.MainActivity$NativeBridgeInterface {
+    public *;
+}
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Socket.io & OkHttp Networking Dependencies
+-keep class io.socket.** { *; }
+-keep class socketio.getbuffer.** { *; }
+-keep class okhttp3.** { *; }
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-dontwarn org.codehaus.mojo.animal_sniffer.**
+
+# Firebase Push Messaging Service
+-keep class com.google.firebase.messaging.** { *; }
+-dontwarn com.google.firebase.**
+
+# Preserve annotations, line numbers, and JavaScript interfaces for crash diagnostics
+-keepattributes SourceFile,LineNumberTable,*Annotation*,JavascriptInterface

@@ -24,6 +24,70 @@ import { APP_CONFIG } from "../../../../config/appConfig";
 import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
 import { presenceService } from "../../../../shared/services/presence/presenceService";
+import MarkdownIt from "markdown-it";
+import DOMPurify from "dompurify";
+
+const mdParser = new MarkdownIt({
+  html: false,
+  breaks: true,
+  linkify: true,
+});
+
+const FormattedMessageWrap = styled.div`
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #111b21;
+  word-break: break-word;
+
+  p {
+    margin: 0 0 6px 0;
+  }
+  p:last-child {
+    margin-bottom: 0;
+  }
+
+  strong, b {
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  h1, h2, h3, h4 {
+    margin: 8px 0 4px 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e1b4b;
+  }
+
+  ul, ol {
+    margin: 4px 0 6px 0;
+    padding-left: 18px;
+  }
+
+  li {
+    margin-bottom: 3px;
+  }
+
+  blockquote {
+    margin: 6px 0;
+    padding-left: 10px;
+    border-left: 3px solid #6366f1;
+    color: #475569;
+    font-style: italic;
+  }
+`;
+
+const FormattedChatMessage = ({ content }) => {
+  const sanitizedHtml = useMemo(() => {
+    if (!content) return "";
+    const raw = mdParser.render(String(content));
+    return DOMPurify.sanitize(raw, {
+      ALLOWED_TAGS: ["p", "strong", "b", "em", "i", "h1", "h2", "h3", "h4", "ul", "ol", "li", "br", "code", "pre", "a", "blockquote", "span"],
+      ALLOWED_ATTR: ["href", "target", "rel", "style", "class"],
+    });
+  }, [content]);
+
+  return <FormattedMessageWrap dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />;
+};
 
 /* ------------------ ANIMATIONS ------------------ */
 const fadeIn = keyframes`
@@ -216,6 +280,21 @@ const EndChatPill = styled.button`
     background: #dc2626;
   }
 `;
+
+const ChatEndedBadge = styled.div`
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  border-radius: 16px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+`;
+
 
 const MessagesArea = styled.div`
   flex: 1 1 auto;
@@ -639,10 +718,48 @@ export default function Chat() {
     return rawId && Number(rawId) > 0 ? Number(rawId) : null;
   }, [chatData?.expert_id, queryExpertId]);
 
+  const effectiveRoomId = useMemo(() => {
+    if (room_id) return room_id;
+    if (location.state?.room_id) return location.state.room_id;
+    if (user?.id) {
+      if (queryExpertId && Number(queryExpertId) > 0) {
+        return `chat_${user.id}_${queryExpertId}`;
+      }
+      const bId = location.state?.bookingId || searchParams.get("booking_id");
+      if (bId) {
+        return `chat_service_${user.id}_${bId}`;
+      }
+      return `chat_service_${user.id}`;
+    }
+    return chatData?.room_id || null;
+  }, [room_id, location.state, user?.id, queryExpertId, searchParams, chatData]);
+
+  const isAiChat = useMemo(() => {
+    return Boolean(
+      chatData?.is_ai_chat === 1 ||
+      chatData?.is_ai_chat === true ||
+      chatData?.is_ai_chat === "1" ||
+      location.state?.is_ai_chat === true ||
+      (effectiveRoomId && String(effectiveRoomId).startsWith("ai_room"))
+    );
+  }, [chatData?.is_ai_chat, location.state?.is_ai_chat, effectiveRoomId]);
+
   const [resolvedExpert, setResolvedExpert] = useState(null);
   const [isFetchingExpert, setIsFetchingExpert] = useState(false);
 
   useEffect(() => {
+    if (isAiChat) {
+      setResolvedExpert({
+        id: "ai",
+        name: chatData?.expert_name || "G9 AI Expert",
+        avatar: chatData?.expert_avatar || "",
+        title: chatData?.expert_title || "AI Instant Assistant",
+        isAi: true,
+      });
+      setIsFetchingExpert(false);
+      return;
+    }
+
     if (!targetExpId) {
       setResolvedExpert(null);
       setIsFetchingExpert(false);
@@ -731,23 +848,7 @@ export default function Chat() {
     return () => {
       isMounted = false;
     };
-  }, [targetExpId, chatData?.expert_id, chatData?.expert_name, experts, expertData]);
-
-  const effectiveRoomId = useMemo(() => {
-    if (room_id) return room_id;
-    if (location.state?.room_id) return location.state.room_id;
-    if (user?.id) {
-      if (queryExpertId && Number(queryExpertId) > 0) {
-        return `chat_${user.id}_${queryExpertId}`;
-      }
-      const bId = location.state?.bookingId || searchParams.get("booking_id");
-      if (bId) {
-        return `chat_service_${user.id}_${bId}`;
-      }
-      return `chat_service_${user.id}`;
-    }
-    return chatData?.room_id || null;
-  }, [room_id, location.state, user?.id, queryExpertId, searchParams, chatData]);
+  }, [isAiChat, targetExpId, chatData?.expert_id, chatData?.expert_name, chatData?.expert_avatar, chatData?.expert_title, experts, expertData]);
 
   const fetchChatDetails = useCallback(async () => {
     const targetRoomId = effectiveRoomId;
@@ -837,11 +938,13 @@ export default function Chat() {
   }, [effectiveRoomId, location.state?.endTime, queryExpertId, user?.id]);
 
   const isRealExpertChat = useMemo(() => {
+    if (isAiChat) return false;
     const isExpertAssignment = chatData?.assignment_type ? chatData.assignment_type === "expert" : true;
     return Boolean(targetExpId && targetExpId > 0 && isExpertAssignment);
-  }, [targetExpId, chatData?.assignment_type]);
+  }, [isAiChat, targetExpId, chatData?.assignment_type]);
 
   const isServiceChat = useMemo(() => {
+    if (isAiChat) return false;
     if (!isRealExpertChat) return true;
     const activeRoom = room_id || effectiveRoomId;
     return (
@@ -850,7 +953,7 @@ export default function Chat() {
       location.state?.fromService ||
       location.state?.fromWorkspace
     );
-  }, [isRealExpertChat, room_id, effectiveRoomId, chatData, location.state]);
+  }, [isAiChat, isRealExpertChat, room_id, effectiveRoomId, chatData, location.state]);
 
   const navigateBackOrPrevious = useCallback(() => {
     const returnUrl = location.state?.returnUrl || location.state?.fromUrl;
@@ -887,16 +990,17 @@ export default function Chat() {
       hotToast("info", "Service communication remains active throughout service fulfillment.", { id: "service-chat-info" });
       return;
     }
-    if (!room_id) return;
-    const ok = window.confirm("Are you sure you want to end this paid consultation chat?");
+    const targetRoom = room_id || effectiveRoomId;
+    if (!targetRoom) return;
+    const ok = window.confirm("Are you sure you want to end this chat consultation?");
     if (!ok) return;
 
     if (socket.connected) {
-      socket.emit("end_chat", { room_id });
+      socket.emit("end_chat", { room_id: targetRoom });
     }
     setSessionActive(false);
-    navigateBackOrPrevious();
-  }, [room_id, isServiceChat, navigateBackOrPrevious]);
+    clearActiveChatSession();
+  }, [room_id, effectiveRoomId, isServiceChat]);
 
   const handleBack = useCallback(() => {
     if (isServiceChat) {
@@ -1255,16 +1359,21 @@ export default function Chat() {
       );
     };
 
+    const handleAiTyping = (data = {}) => {
+      if (data.room_id && String(data.room_id) !== String(targetRoomId)) return;
+      setPeerTyping(Boolean(data.isTyping));
+    };
+
     socket.on("typing:start", handlePeerTypingStart);
     socket.on("typing:stop", handlePeerTypingStop);
+    socket.on("ai_typing", handleAiTyping);
     socket.on("messages:seen", handleMessagesSeen);
 
     const handleChatEnded = (data = {}) => {
       if (String(data.room_id) !== String(targetRoomId)) return;
       setSessionActive(false);
       clearActiveChatSession();
-      hotToast("success", "Chat ended");
-      navigateBackOrPrevious();
+      hotToast("success", "Chat session ended");
     };
 
     socket.on("chat_ended", handleChatEnded);
@@ -1276,6 +1385,7 @@ export default function Chat() {
       socket.off("message_sent", handleNewMessage);
       socket.off("typing:start", handlePeerTypingStart);
       socket.off("typing:stop", handlePeerTypingStop);
+      socket.off("ai_typing", handleAiTyping);
       socket.off("messages:seen", handleMessagesSeen);
       socket.off("chat_ended", handleChatEnded);
       socket.off("connect", joinChatRoom);
@@ -1420,7 +1530,11 @@ export default function Chat() {
                 <FiArrowLeft size={20} />
               </HeaderBackBtn>
               <HeaderAvatarWrap>
-                {isRealExpertChat && expertInfo?.avatar ? (
+                {isAiChat ? (
+                  <HeaderAvatarPlaceholder style={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)", fontSize: "1.2rem", color: "#ffffff" }}>
+                    ⚡
+                  </HeaderAvatarPlaceholder>
+                ) : isRealExpertChat && expertInfo?.avatar ? (
                   <HeaderAvatar src={getMediaUrl(expertInfo.avatar)} alt={expertInfo.name} />
                 ) : isRealExpertChat && expertInfo?.name ? (
                   <HeaderAvatarPlaceholder>{getInitials(expertInfo.name)}</HeaderAvatarPlaceholder>
@@ -1433,10 +1547,16 @@ export default function Chat() {
               </HeaderAvatarWrap>
               <HeaderTitleGroup>
                 <HeaderName>
-                  {isRealExpertChat ? expertInfo?.name || "Loading expert..." : "Service Q&A Chat"}
+                  {isAiChat
+                    ? "G9 AI Expert"
+                    : isRealExpertChat
+                    ? expertInfo?.name || "Loading expert..."
+                    : "Service Q&A Chat"}
                 </HeaderName>
                 <HeaderSubtext>
-                  {isRealExpertChat
+                  {isAiChat
+                    ? `⚡ ${chatData?.category_name || "AI Expert"} • ${chatData?.subcategory_name || "Category Specialist"}`
+                    : isRealExpertChat
                     ? isExpertOnline
                       ? "🟢 Online"
                       : "🔴 Offline"
@@ -1446,11 +1566,21 @@ export default function Chat() {
             </HeaderLeft>
 
             <HeaderActions>
-              {isRealExpertChat && !isUnlimited && sessionActive === true && endTime && (
+              {(isRealExpertChat || isAiChat) && !isUnlimited && sessionActive === true && endTime && (
                 <TimerPill $color={getTimerColor()}>
                   <FiClock size={12} />
                   <span>{formatted}</span>
                 </TimerPill>
+              )}
+              {(isRealExpertChat || isAiChat) && !isServiceChat && sessionActive === true && (
+                <EndChatPill onClick={handleEndChat}>
+                  End Chat
+                </EndChatPill>
+              )}
+              {(isRealExpertChat || isAiChat) && !isServiceChat && sessionActive === false && (
+                <ChatEndedBadge>
+                  Chat Ended
+                </ChatEndedBadge>
               )}
             </HeaderActions>
           </HeaderBar>
@@ -1458,18 +1588,30 @@ export default function Chat() {
           {/* MESSAGES AREA */}
           <MessagesArea>
             {messages.length === 0 ? (
-              <ServiceEmptyCard>
-                <div style={{ fontSize: "2.4rem", marginBottom: "2px" }}>💬</div>
-                <ServiceEmptyTitle>Service Q&A Chat</ServiceEmptyTitle>
-                <ServiceEmptyMainMsg>Have a question about this service?</ServiceEmptyMainMsg>
-                <ServiceEmptyDesc>
-                  Ask anything related to your service, requirements, documents, process, or order.
-                </ServiceEmptyDesc>
-                <ServiceBadgePill>FREE SERVICE CHAT</ServiceBadgePill>
-                <ServiceEmptySupport>
-                  This chat is free and is available for service-related questions and assistance.
-                </ServiceEmptySupport>
-              </ServiceEmptyCard>
+              isAiChat ? (
+                <ServiceEmptyCard style={{ border: "1px solid #e0e7ff", background: "#f5f3ff" }}>
+                  <div style={{ fontSize: "2.4rem", marginBottom: "2px" }}>⚡</div>
+                  <ServiceEmptyTitle style={{ color: "#4f46e5" }}>G9 AI Expert Connected</ServiceEmptyTitle>
+                  <ServiceEmptyMainMsg>Ask any question and receive instant AI expert guidance.</ServiceEmptyMainMsg>
+                  <ServiceEmptyDesc>
+                    Our G9 AI Expert is available 24/7 to provide instant step-by-step consultation in {chatData?.subcategory_name || chatData?.category_name || "your topic"}.
+                  </ServiceEmptyDesc>
+                  <ServiceBadgePill style={{ background: "#6366f1", color: "#ffffff" }}>INSTANT AI CONSULTATION</ServiceBadgePill>
+                </ServiceEmptyCard>
+              ) : (
+                <ServiceEmptyCard>
+                  <div style={{ fontSize: "2.4rem", marginBottom: "2px" }}>💬</div>
+                  <ServiceEmptyTitle>Service Q&A Chat</ServiceEmptyTitle>
+                  <ServiceEmptyMainMsg>Have a question about this service?</ServiceEmptyMainMsg>
+                  <ServiceEmptyDesc>
+                    Ask anything related to your service, requirements, documents, process, or order.
+                  </ServiceEmptyDesc>
+                  <ServiceBadgePill>FREE SERVICE CHAT</ServiceBadgePill>
+                  <ServiceEmptySupport>
+                    This chat is free and is available for service-related questions and assistance.
+                  </ServiceEmptySupport>
+                </ServiceEmptyCard>
+              )
             ) : (
               messages.map((msg) => {
                 const isMine = msg.sender_type === "user";
@@ -1489,7 +1631,7 @@ export default function Chat() {
                           />
                         </div>
                       )}
-                      {msg.message && <div>{msg.message}</div>}
+                      {msg.message && <FormattedChatMessage content={msg.message} />}
                       <MessageFooter>
                         <TimeStamp>
                           {msg.time}
@@ -1566,6 +1708,8 @@ export default function Chat() {
                     ? "Chat ended"
                     : uploading
                     ? "Uploading image..."
+                    : isAiChat
+                    ? "Ask your G9 AI Expert a question..."
                     : isRealExpertChat
                     ? "Type a message..."
                     : "Ask a question about your service..."

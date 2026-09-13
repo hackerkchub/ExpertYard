@@ -210,8 +210,14 @@ public class MainActivity extends BridgeActivity {
         }
 
         try {
+            boolean isDebuggable = (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+            WebView.setWebContentsDebuggingEnabled(isDebuggable);
+
             webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
-            Log.d(TAG, "✅ Disabled user gesture requirement for media playback");
+            webView.getSettings().setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+            webView.getSettings().setAllowFileAccessFromFileURLs(false);
+            webView.getSettings().setAllowUniversalAccessFromFileURLs(false);
+            Log.d(TAG, "✅ Applied WebView security settings (debuggable=" + isDebuggable + ", mixedContent=NEVER)");
 
             // Add JavascriptInterface for NativeBridge immediately
             webView.addJavascriptInterface(new NativeBridgeInterface(), "NativeBridgeManager_Native");

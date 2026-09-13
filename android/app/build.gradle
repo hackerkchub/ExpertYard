@@ -49,6 +49,8 @@ productFlavors {
 
         applicationId "com.g9expert.user"
 
+        versionCode 4
+
         manifestPlaceholders = [
                 appLabel: "G9Expert User"
         ]
@@ -69,7 +71,7 @@ productFlavors {
         ]
 
         buildConfigField "String", "APP_TYPE", "\"expert\""
-        buildConfigField "String", "API_BASE_URL", "\"https://softmaxs.com/api\""
+        buildConfigField "String", "API_BASE_URL", "\"https://api.guidexa.in/api\""
     }
 
 }
@@ -86,7 +88,7 @@ productFlavors {
     buildTypes {
         release {
             signingConfig signingConfigs.release
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }

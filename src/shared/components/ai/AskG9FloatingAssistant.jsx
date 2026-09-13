@@ -42,6 +42,24 @@ export function shouldShowAskG9(pathname = "", isMobile = false) {
     return false;
   }
 
+  // 3. NEVER render on Inquiry routes or Inquiry pages
+  if (
+    norm.includes("/inquiry") ||
+    norm.includes("/inquiries") ||
+    norm.startsWith("/user/my-inquiries") ||
+    norm.startsWith("/user/inquiry") ||
+    norm.startsWith("/user/inquiries") ||
+    norm.startsWith("/inquiry") ||
+    norm.startsWith("/inquiries")
+  ) {
+    return false;
+  }
+
+  // Hide when any inquiry modal is open in the DOM
+  if (typeof document !== "undefined" && (document.querySelector(".msp-modal-overlay") || document.querySelector(".inquiry-modal-overlay"))) {
+    return false;
+  }
+
   // 3. User Panel Mobile-specific exclusions (pages with fixed bottom action controls/CTAs)
   if (isMobile) {
     // Service Detail pages

@@ -204,11 +204,10 @@ const WalletPage = () => {
 
   const handleConfirmRecharge = async (paymentDetails) => {
     try {
-      const orderId = paymentDetails?.order_id;
-      if (!orderId) {
+      if (!paymentDetails || (!paymentDetails.order_id && !paymentDetails.razorpay_order_id)) {
         throw new Error("Missing Order ID for payment verification");
       }
-      const res = await addMoney({ order_id: orderId });
+      const res = await addMoney(paymentDetails);
       if (res?.success) {
         await fetchWalletData();
         return res;

@@ -17,6 +17,7 @@ import {
 import { sendChatbotMessageApi } from "../../api/userApi/chatbot.api";
 import useChatRequest from "../../hooks/useChatRequest";
 import { APP_CONFIG } from "../../../config/appConfig";
+import "./AskG9Modal.css";
 
 const isDangerousUrl = (urlStr) => {
   if (!urlStr || typeof urlStr !== "string") return true;
@@ -962,42 +963,28 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
         </div>
 
         {/* Input Bar Footer */}
-        <div style={{ padding: "12px 16px", background: "#ffffff", borderTop: "1px solid #e2e8f0" }}>
+        <div className="ask-g9-input-footer">
           <form
             onSubmit={(e) => {
               e.preventDefault();
               handleSendPrompt();
             }}
-            style={{ display: "flex", gap: "8px", alignItems: "center" }}
+            className="ask-g9-input-form"
           >
             <input
               type="text"
+              className="ask-g9-input-field"
               placeholder="Ask G9 about booking, orders, registration, consultations..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               disabled={loading}
-              style={{
-                flex: 1,
-                padding: "12px 16px",
-                borderRadius: "12px",
-                border: "1px solid #cbd5e1",
-                fontSize: "0.9rem",
-                outline: "none",
-              }}
             />
 
             <button
               type="button"
               onClick={startVoiceInput}
               disabled={loading}
-              style={{
-                padding: "12px",
-                borderRadius: "12px",
-                border: "1px solid #cbd5e1",
-                background: isListening ? "#fee2e2" : "#f8fafc",
-                color: isListening ? "#dc2626" : "#64748b",
-                cursor: loading ? "not-allowed" : "pointer",
-              }}
+              className={`ask-g9-mic-btn ${isListening ? "is-listening" : ""}`}
               title="Voice Input"
             >
               {isListening ? <MicOff size={18} /> : <Mic size={18} />}
@@ -1006,19 +993,7 @@ export default function AskG9Modal({ isOpen, onClose, initialPrompt = "" }) {
             <button
               type="submit"
               disabled={loading || !prompt.trim()}
-              style={{
-                padding: "12px 20px",
-                borderRadius: "12px",
-                border: "none",
-                background: "#000080",
-                color: "#ffffff",
-                fontWeight: 700,
-                cursor: loading || !prompt.trim() ? "not-allowed" : "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                opacity: loading || !prompt.trim() ? 0.75 : 1,
-              }}
+              className="ask-g9-send-btn"
             >
               {loading ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
               <span>{loading ? "Searching..." : "Ask"}</span>

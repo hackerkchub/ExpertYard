@@ -10,6 +10,8 @@ import android.content.Intent;
 
 import com.getcapacitor.BridgeActivity;
 import com.g9expert.app.bridge.NativeBridgeManager;
+import com.g9expert.app.update.G9ExpertAppUpdateManager;
+import com.g9expert.app.update.G9ExpertUpdateConfig;
 import android.view.WindowManager; 
 import android.graphics.Rect;
 import android.view.View;
@@ -54,6 +56,12 @@ public class MainActivity extends BridgeActivity {
 
         // 4. Dispatch pending call (state machine handles duplicate)
         dispatchPendingCall();
+
+        // 5. Initialize & trigger Google Play In-App Updates check
+        G9ExpertAppUpdateManager.getInstance().init(this);
+        if (G9ExpertUpdateConfig.isCheckOnLaunch()) {
+            G9ExpertAppUpdateManager.getInstance().checkForUpdate(this);
+        }
 
         Log.d(TAG, "onCreate - MainActivity initialization complete");
     }
@@ -114,6 +122,9 @@ public class MainActivity extends BridgeActivity {
         
         // Dispatch pending call (state machine handles duplicate)
         dispatchPendingCall();
+
+        // Resume / handle pending Play Store in-app updates
+        G9ExpertAppUpdateManager.getInstance().handleResume(this);
     }
 
     @Override
@@ -176,8 +187,17 @@ public class MainActivity extends BridgeActivity {
         super.onDestroy();
         Log.d(TAG, "onDestroy - Cleaning up");
         
+        // Clean up update listener
+        G9ExpertAppUpdateManager.getInstance().unregisterInstallStateListener();
+
         // Only clean up bridge reference, NEVER clear CallStore
         NativeBridgeManager.destroy();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        G9ExpertAppUpdateManager.getInstance().handleActivityResult(requestCode, resultCode, data);
     }
 
     /*
@@ -270,6 +290,15 @@ public class MainActivity extends BridgeActivity {
                 "    }," +
                 "    terminateNativeSession: function(callId) {" +
                 "      if (window.NativeBridgeManager_Native) { window.NativeBridgeManager_Native.terminateNativeSession(callId); }" +
+                "    }," +
+                "    getAppUpdateState: function() {" +
+                "      return window.NativeBridgeManager_Native ? window.NativeBridgeManager_Native.getAppUpdateState() : '{}';" +
+                "    }," +
+                "    checkForAppUpdate: function() {" +
+                "      if (window.NativeBridgeManager_Native) { window.NativeBridgeManager_Native.checkForAppUpdate(); }" +
+                "    }," +
+                "    completeAppUpdate: function() {" +
+                "      if (window.NativeBridgeManager_Native) { window.NativeBridgeManager_Native.completeAppUpdate(); }" +
                 "    }" +
                 "  };" +
                 "}" +
@@ -487,6 +516,30 @@ public class MainActivity extends BridgeActivity {
         public void terminateNativeSession(String callId) {
             Log.d(TAG, "📞 terminateNativeSession called from JS bridge for callId: " + callId);
             NativeBridgeManager.terminateNativeSession(callId);
+        }
+
+        /**
+         * Query current Google Play In-App Update state as JSON
+         */
+        @JavascriptInterface
+        public String getAppUpdateState() {
+            return G9ExpertAppUpdateManager.getInstance().getUpdateStateJson();
+        }
+
+        /**
+         * Manually trigger Google Play update check
+         */
+        @JavascriptInterface
+        public void checkForAppUpdate() {
+            G9ExpertAppUpdateManager.getInstance().checkForUpdate(MainActivity.this);
+        }
+
+        /**
+         * Execute flexible update completion (restart and apply update)
+         */
+        @JavascriptInterface
+        public void completeAppUpdate() {
+            G9ExpertAppUpdateManager.getInstance().completeUpdate();
         }
     }
 

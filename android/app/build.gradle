@@ -22,59 +22,46 @@ android {
     flavorDimensions "app"
 
 
-  defaultConfig {
-
-    applicationId "com.g9expert.app"
-
-    minSdkVersion rootProject.ext.minSdkVersion
-
-    targetSdkVersion rootProject.ext.targetSdkVersion
-
-    versionCode 3
-
-    versionName "1.0.0"
-
-    buildConfigField "String", "APP_TYPE", "\"web\""
-    buildConfigField "String", "API_BASE_URL", "\"https://api.guidexa.in/api\""
-
-    manifestPlaceholders = [
-        appLabel: "G9Expert"
-    ]
-}
-
-productFlavors {
-
-    user {
-        dimension "app"
-
-        applicationId "com.g9expert.user"
-
-        versionCode 4
+    defaultConfig {
+        applicationId "com.g9expert.app"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 5
+        versionName "1.0.1"
+        buildConfigField "String", "APP_TYPE", "\"web\""
+        buildConfigField "String", "API_BASE_URL", "\"https://api.guidexa.in/api\""
 
         manifestPlaceholders = [
+            appLabel: "G9Expert"
+        ]
+    }
+
+    productFlavors {
+        user {
+            dimension "app"
+            applicationId "com.g9expert.user"
+            versionCode 5
+            versionName "1.0.1"
+            manifestPlaceholders = [
                 appLabel: "G9Expert User"
-        ]
+            ]
+            buildConfigField "String", "APP_TYPE", "\"user\""
+            buildConfigField "String", "API_BASE_URL", "\"https://api.guidexa.in/api\""
+        }
 
-        buildConfigField "String", "APP_TYPE", "\"user\""
-        buildConfigField "String", "API_BASE_URL", "\"https://api.guidexa.in/api\""
-    }
-
-    expert {
-        dimension "app"
-
-        applicationId "com.g9expert.expert"
-
-        versionNameSuffix "-expert"
-
-        manifestPlaceholders = [
+        expert {
+            dimension "app"
+            applicationId "com.g9expert.expert"
+            versionCode 5
+            versionName "1.0.1"
+            versionNameSuffix "-expert"
+            manifestPlaceholders = [
                 appLabel: "G9Expert Expert"
-        ]
-
-        buildConfigField "String", "APP_TYPE", "\"expert\""
-        buildConfigField "String", "API_BASE_URL", "\"https://api.guidexa.in/api\""
+            ]
+            buildConfigField "String", "APP_TYPE", "\"expert\""
+            buildConfigField "String", "API_BASE_URL", "\"https://api.guidexa.in/api\""
+        }
     }
-
-}
     
     signingConfigs {
         release {
@@ -121,6 +108,7 @@ dependencies {
     implementation project(':capacitor-cordova-android-plugins')
 
     implementation 'com.google.firebase:firebase-messaging:25.0.1'
+    implementation 'com.google.android.play:app-update:2.1.0'
 
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"

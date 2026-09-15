@@ -33,3 +33,8 @@
 
 # Preserve annotations, line numbers, and JavaScript interfaces for crash diagnostics
 -keepattributes SourceFile,LineNumberTable,*Annotation*,JavascriptInterface
+
+# Google Play Core In-App Update SDK
+-keep class com.google.android.play.core.appupdate.** { *; }
+-keep class com.google.android.play.core.install.** { *; }
+

@@ -8,6 +8,9 @@ export const askG9Api = async (prompt, conversation_id = null, options = {}) => 
       conversation_id,
       remove_filter: options.remove_filter || null,
       reset_context: options.reset_context || false,
+      lat: options.lat || null,
+      lng: options.lng || null,
+      user_city: options.user_city || null,
     },
     { skipLoader: true, signal: options.signal }
   );

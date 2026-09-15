@@ -999,3 +999,24 @@
     gap: 10px;
   }
 }
+
+.g9-distance-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.g9-category-result-card {
+  border-left: 4px solid #000080 !important;
+}
+
+.g9-subcategory-result-card {
+  border-left: 4px solid #16a34a !important;
+}

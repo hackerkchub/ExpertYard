@@ -71,18 +71,36 @@ export default function SearchResultsPage() {
 
   const [experts, setExperts] = useState([]);
   const [services, setServices] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
   const [activeFilters, setActiveFilters] = useState([]);
   const [intentSummary, setIntentSummary] = useState("");
   const [aiUnderstanding, setAiUnderstanding] = useState("");
   const [didYouMean, setDidYouMean] = useState(null);
   const [message, setMessage] = useState("");
-  const [needsClarification, setNeedsClarification] = useState(false);
   const [clarifyingOptions, setClarifyingOptions] = useState([]);
+  const [needsClarification, setNeedsClarification] = useState(false);
+  const [locationMeta, setLocationMeta] = useState(null);
+  const [isLocating, setIsLocating] = useState(false);
 
   // Voice recognition and image fallback states
   const [isListening, setIsListening] = useState(false);
   const [failedImageIds, setFailedImageIds] = useState({});
   const recognitionRef = useRef(null);
+
+  // Browser Geolocation Helper for "Near Me" Searches
+  const getUserCoordinates = () =>
+    new Promise((resolve) => {
+      if (!navigator.geolocation) return resolve(null);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        (err) => {
+          console.warn("[GEOLOCATION] Geolocation failed/denied:", err?.message || err);
+          resolve(null);
+        },
+        { timeout: 6000, maximumAge: 60000 }
+      );
+    });
 
   // Microphone Voice Search Handler (Shared Home Page Speech Recognition logic)
   const startVoiceSearch = () => {
@@ -153,18 +171,43 @@ export default function SearchResultsPage() {
     abortControllerRef.current = controller;
 
     setLoading(true);
-    // Stale result protection: Clear previous results immediately
+    // Stale result protection: Clear all previous results and filter state immediately
     setExperts([]);
     setServices([]);
-    setError(false);
+    setCategories([]);
+    setSubcategories([]);
+    setActiveFilters([]);
+    setIntentSummary("");
+    setAiUnderstanding("");
     setDidYouMean(null);
+    setMessage("");
+    setNeedsClarification(false);
+    setClarifyingOptions([]);
+    setLocationMeta(null);
+    setError(false);
+
+    let lat = options.lat || null;
+    let lng = options.lng || null;
+
+    const isNearMeQuery = /\b(near me|nearby|closest|nearest|around me)\b/i.test(queryText);
+    if (isNearMeQuery && !lat && !lng) {
+      setIsLocating(true);
+      const coords = await getUserCoordinates();
+      setIsLocating(false);
+      if (coords) {
+        lat = coords.lat;
+        lng = coords.lng;
+      }
+    }
 
     try {
       const convId = getOrCreateSessionConvId();
-      console.log(`[ASK_G9][FE_REQUEST] requestId=${currentReqId} conversationId="${convId}" message="${queryText}"`);
+      console.log(`[ASK_G9][FE_REQUEST] requestId=${currentReqId} conversationId="${convId}" query="${queryText}" lat=${lat} lng=${lng}`);
       const data = await askG9Api(queryText, convId, {
         remove_filter: options.remove_filter || null,
         reset_context: options.reset_context || false,
+        lat,
+        lng,
         signal: controller.signal,
       });
 
@@ -174,9 +217,11 @@ export default function SearchResultsPage() {
         if (data.conversation_id) {
           sessionStorage.setItem("g9_search_session_id", data.conversation_id);
         }
-        console.log(`[ASK_G9][FE_SERVICE_RENDER] responseServiceCount=${data.services?.length || 0} responseServiceIds=${JSON.stringify((data.services || []).map(s => s.id))}`);
         setExperts(data.experts || []);
         setServices(data.services || []);
+        setCategories(data.categories || []);
+        setSubcategories(data.subcategories || []);
+        setLocationMeta(data.location || null);
         setActiveFilters(data.active_filters || []);
         setIntentSummary(data.intent_summary || "");
         setAiUnderstanding(data.ai_understanding || data.message || "Search results");
@@ -196,6 +241,7 @@ export default function SearchResultsPage() {
     } finally {
       if (currentReqId === requestIdRef.current) {
         setLoading(false);
+        setIsLocating(false);
       }
     }
   }, []);
@@ -389,13 +435,67 @@ export default function SearchResultsPage() {
         </div>
       )}
 
-      {/* Related Services Section (Shown when matching services exist) */}
+      {/* Matched Categories Section */}
+      {!loading && !error && categories.length > 0 && (
+        <section className="g9-related-services-section">
+          <div className="g9-section-header">
+            <h3 className="g9-section-title">
+              <SlidersHorizontal size={18} />
+              <span>Matched Categories</span>
+            </h3>
+          </div>
+          <div className="g9-services-grid">
+            {categories.map((cat) => (
+              <div
+                key={`cat-${cat.id || cat.slug}`}
+                className="g9-service-card g9-category-result-card"
+                onClick={() => handleCategoryFilterClick(cat.name)}
+              >
+                <div className="g9-service-info">
+                  <h4>{cat.name}</h4>
+                  <p>Category • Tap to filter experts</p>
+                </div>
+                <ChevronRight size={16} className="g9-service-arrow" />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Matched Subcategories Section */}
+      {!loading && !error && subcategories.length > 0 && (
+        <section className="g9-related-services-section">
+          <div className="g9-section-header">
+            <h3 className="g9-section-title">
+              <CheckCircle2 size={18} />
+              <span>Matched Subcategories</span>
+            </h3>
+          </div>
+          <div className="g9-services-grid">
+            {subcategories.map((sc) => (
+              <div
+                key={`subcat-${sc.id || sc.slug}`}
+                className="g9-service-card g9-subcategory-result-card"
+                onClick={() => handleCategoryFilterClick(sc.name)}
+              >
+                <div className="g9-service-info">
+                  <h4>{sc.name}</h4>
+                  <p>Specialized Domain • Tap to filter experts</p>
+                </div>
+                <ChevronRight size={16} className="g9-service-arrow" />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Related Services Section */}
       {!loading && !error && services.length > 0 && (
         <section className="g9-related-services-section">
           <div className="g9-section-header">
             <h3 className="g9-section-title">
               <Briefcase size={18} />
-              <span>Related Services</span>
+              <span>Matching Services</span>
             </h3>
           </div>
           <div className="g9-services-grid">
@@ -484,6 +584,7 @@ export default function SearchResultsPage() {
               const expertSlug = expert.slug || expert.expert_slug || expert.id || expert.expert_id;
               const matchPct = expert.match_percentage || "95% Match";
               const matchReasons = expert.match_reasons || [];
+              const distanceTag = expert.distance_text || (expert.distance_km != null ? `${expert.distance_km} km away` : null);
 
               return (
                 <div key={`expert-${expert.expert_id || expert.id || expertSlug}`} className="g9-expert-card">
@@ -492,6 +593,12 @@ export default function SearchResultsPage() {
                       <CheckCircle2 size={12} />
                       <span>{matchPct}</span>
                     </span>
+                    {distanceTag && (
+                      <span className="g9-distance-chip" title="Geographic Proximity">
+                        <MapPin size={12} />
+                        <span>{distanceTag}</span>
+                      </span>
+                    )}
                   </div>
 
                   <div className="g9-expert-card-header">
@@ -550,7 +657,6 @@ export default function SearchResultsPage() {
                     )}
                   </div>
 
-                  {/* Single View Profile Action Button (No Call/Chat buttons on search page) */}
                   <div className="g9-expert-card-footer">
                     <button
                       type="button"
@@ -567,12 +673,12 @@ export default function SearchResultsPage() {
         )}
 
         {/* Controlled Empty State */}
-        {!loading && !error && !needsClarification && experts.length === 0 && services.length === 0 && (
+        {!loading && !error && !needsClarification && experts.length === 0 && services.length === 0 && categories.length === 0 && subcategories.length === 0 && (
           <div className="g9-empty-state-card">
             <AlertCircle size={40} className="g9-empty-icon" />
-            <h3>No matching experts found</h3>
+            <h3>No matching results found</h3>
             <p className="g9-empty-desc">
-              {aiUnderstanding || "We couldn't find any experts matching your active search constraints."}
+              {aiUnderstanding || "We couldn't find any matching experts, services, or categories in the database."}
             </p>
             <div className="g9-empty-actions">
               {activeFilters.length > 0 && (

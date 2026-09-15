@@ -19,6 +19,7 @@ import {
 import { askG9Api, trackAIClickApi } from "../../api/userApi/ai.api";
 import useChatRequest from "../../hooks/useChatRequest";
 import { buildUserSearchPath } from "../../../apps/user/components/search/searchUtils";
+import "./AskG9Modal.css";
 
 const DEFAULT_SUGGESTIONS = [
   "Indore me property dispute lawyer",

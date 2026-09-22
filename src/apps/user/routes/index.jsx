@@ -1,5 +1,5 @@
 import lazyWithRetry from "../../../utils/lazyWithRetry";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
 
 import AppNotFound from "../../../routes/AppNotFound";
 import LazyRoute from "../../../routes/LazyRoute";
@@ -81,7 +81,8 @@ export default function UserAppRoutes() {
             <Route path="guidelines" element={withLazyRoute(<ExpertGuidelines />)} />
             <Route path="terms" element={withLazyRoute(<TermsAndConditions />)} />
             <Route path="subcategories/:categoryId" element={withLazyRoute(<SubcategoryPage />)} />
-            <Route path="privacy" element={withLazyRoute(<PrivacyPolicy />)} />
+            <Route path="privacy" element={<Navigate to="/privacy-policy" replace />} />
+            <Route path="privacy-policy" element={<Navigate to="/privacy-policy" replace />} />
             <Route path="refund-cancellation" element={withLazyRoute(<RefundCancellation />)} />
             <Route path="faq" element={withLazyRoute(<FAQ />)} />
             <Route path="contact" element={withLazyRoute(<ContactUs />)} />

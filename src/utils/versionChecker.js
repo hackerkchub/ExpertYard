@@ -1,4 +1,5 @@
 import { updateRecovery, getCurrentBuildId } from "./updateRecovery";
+import { updateCoordinator } from "./updateCoordinator";
 
 let isStarted = false;
 let checkIntervalId = null;
@@ -37,13 +38,8 @@ export async function checkServerVersion() {
     if (remoteBuildId && remoteBuildId !== currentBuildId) {
       console.log(`🆕 [G9 VersionChecker] New build detected on server! Current: "${currentBuildId}", Server: "${remoteBuildId}"`);
 
-      window.__G9_UPDATE_AVAILABLE__ = true;
-      window.__G9_REMOTE_BUILD_ID__ = remoteBuildId;
-
-      const transitionKey = `${currentBuildId}:${remoteBuildId}`;
-
-      // Trigger single controlled reload for build upgrade
-      await updateRecovery.performControlledReload("version_update", transitionKey);
+      // Notify update coordinator to verify remote build readiness (does NOT force immediate reload)
+      await updateCoordinator.notifyVersionDetected(remoteBuildId);
 
       return { updateAvailable: true, currentBuildId, remoteBuildId };
     }

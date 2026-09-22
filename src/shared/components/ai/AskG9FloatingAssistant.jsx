@@ -25,8 +25,8 @@ export function shouldShowAskG9(pathname = "", isMobile = false) {
   if (!pathname) return false;
   const norm = pathname.toLowerCase();
 
-  // 1. NEVER render in Admin Panel or Expert Panel
-  if (norm.startsWith("/admin") || norm.startsWith("/expert")) {
+  // 1. NEVER render in Admin Panel, Expert Panel, or Public Privacy Policy
+  if (norm.startsWith("/admin") || norm.startsWith("/expert") || norm.startsWith("/privacy")) {
     return false;
   }
 

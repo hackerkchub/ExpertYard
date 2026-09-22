@@ -10,6 +10,10 @@
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
+    # Serve static Privacy Policy directly without requiring JavaScript
+    RewriteRule ^privacy-policy/?$ /privacy-policy.html [L]
+    RewriteRule ^user/privacy/?$ /privacy-policy [R=301,L]
+
     # React Router fallback (Excluding /assets/ so missing hashed JS/CSS chunks return a true 404 instead of HTML)
     RewriteCond %{REQUEST_URI} !^/assets/
     RewriteRule . /index.html [L]

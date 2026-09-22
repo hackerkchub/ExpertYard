@@ -1,10 +1,11 @@
 import { lazy } from "react";
 import { updateRecovery, getCurrentBuildId } from "./updateRecovery";
+import { updateCoordinator } from "./updateCoordinator";
 
 /**
- * Enhanced lazy loader with build-aware single-recovery execution lock.
- * Catches dynamic import failures (e.g. when old hashed JS chunks are removed on deployment)
- * and triggers at most ONE safe reload per build identity to pull new build assets.
+ * Enhanced lazy loader with atomic deployment validation & build-aware recovery lock.
+ * Catches dynamic import failures (e.g. 404 when old hashed JS chunks are removed on new deployment).
+ * Verifies new build readiness BEFORE executing controlled reload, avoiding blank screens.
  */
 export function lazyWithRetry(componentImportFn) {
   return lazy(async () => {
@@ -25,28 +26,20 @@ export function lazyWithRetry(componentImportFn) {
       if (isChunkLoadFailure && typeof window !== "undefined") {
         const buildId = getCurrentBuildId();
 
-        // Check if single automatic recovery is permitted for this build
-        if (updateRecovery.canAttemptRecovery("chunk", buildId)) {
-          const reloaded = await updateRecovery.performControlledReload("chunk", buildId, async () => {
-            if ("serviceWorker" in navigator) {
-              try {
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                for (const reg of registrations) {
-                  await reg.update().catch(() => {});
-                }
-              } catch (e) {
-                console.warn("SW update error during chunk recovery:", e);
-              }
-            }
-          });
+        // Attempt safe update via coordinator (verifies remote build readiness first)
+        const updateExecuted = await updateCoordinator.requestControlledUpdate("chunk", buildId);
 
-          if (reloaded) {
-            return new Promise(() => {});
-          }
+        if (updateExecuted) {
+          // Failsafe: Wait for window reload with timeout to prevent infinite hanging
+          return new Promise((_, reject) => {
+            setTimeout(() => {
+              reject(error);
+            }, 3000);
+          });
         }
       }
 
-      // If already reloaded for this build or not a chunk error, rethrow for AppErrorBoundary
+      // If update not executed (or remote build not ready), throw for AppErrorBoundary visible fallback
       throw error;
     }
   });

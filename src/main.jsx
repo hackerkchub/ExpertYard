@@ -20,6 +20,7 @@ import { theme } from "./shared/styles/theme";
 
 import { updateRecovery, getCurrentBuildId } from "./utils/updateRecovery";
 import { versionChecker } from "./utils/versionChecker";
+import { updateCoordinator } from "./utils/updateCoordinator";
 
 if (typeof window !== "undefined") {
   window.__G9_BUILD_ID__ = typeof __G9_BUILD_ID__ !== "undefined" ? __G9_BUILD_ID__ : "dev";
@@ -130,15 +131,14 @@ if (!isNativeApp && "serviceWorker" in navigator) {
         });
       });
 
-      // Controlled single reload after new SW becomes active
+      // Controlled update coordination after new SW becomes active
       let refreshing = false;
 
       navigator.serviceWorker.addEventListener("controllerchange", () => {
         if (refreshing) return;
         refreshing = true;
 
-        const buildId = getCurrentBuildId();
-        updateRecovery.performControlledReload("sw", buildId);
+        updateCoordinator.notifyServiceWorkerUpdated();
       });
 
     } catch (err) {

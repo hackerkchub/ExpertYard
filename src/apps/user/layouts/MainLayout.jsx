@@ -116,10 +116,17 @@ export default function MainLayout() {
     location.pathname === "/search" ||
     location.pathname.startsWith("/search?");
 
+  const isPrivacyPage =
+    location.pathname === "/privacy-policy" ||
+    location.pathname.startsWith("/privacy-policy") ||
+    location.pathname === "/user/privacy" ||
+    location.pathname.startsWith("/user/privacy");
+
   // Pages where Left Sidebar is intentionally absent
   const isNoLeftSidebarPage = 
     isSearchPage ||
     isCallChatPage ||
+    isPrivacyPage ||
     location.pathname.startsWith("/user/my-inquiries") ||
     location.pathname === "/user/my-inquiries" ||
     location.pathname.startsWith("/user/notifications") ||
@@ -174,7 +181,7 @@ export default function MainLayout() {
     );
   }
 
-  // Mobile layout - Footer is hidden on mobile so only BottomNavbar shows
+  // Mobile layout
   return (
     <>
       {!isHideMobileHeader && (
@@ -183,6 +190,11 @@ export default function MainLayout() {
         </div>
       )}
       <Outlet />
+      {!isNoFooterPage && (
+        <div className="mobile-footer-wrapper">
+          <Footer />
+        </div>
+      )}
     </>
   );
 }

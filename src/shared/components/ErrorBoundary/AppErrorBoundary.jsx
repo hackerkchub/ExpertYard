@@ -1,6 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { updateRecovery, getCurrentBuildId } from "../../../utils/updateRecovery";
+import { updateCoordinator } from "../../../utils/updateCoordinator";
 
 const Wrapper = styled.main`
   min-height: 60vh;
@@ -60,7 +61,7 @@ export default class AppErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error, info) {
+  async componentDidCatch(error, info) {
     console.error(`${this.props.label || "App"} component error caught:`, error, info);
 
     const errorMessage = String(error?.message || error || "").toLowerCase();
@@ -74,8 +75,7 @@ export default class AppErrorBoundary extends React.Component {
 
     if (isChunkError && typeof window !== "undefined") {
       const buildId = getCurrentBuildId();
-      // Shares centralized lock with lazyWithRetry so duplicate reloads are prevented
-      updateRecovery.performControlledReload("chunk", buildId);
+      await updateCoordinator.requestControlledUpdate("boundary_chunk", buildId);
     }
   }
 

@@ -44,6 +44,7 @@ const AdminAppRoutes =
 const PublicCategoriesPage = lazyWithRetry(() => import("../apps/user/pages/Category/Categories"));
 const PublicCategoryPage = lazyWithRetry(() => import("../apps/user/pages/Subcategory/SubcategoryPage"));
 const PublicExpertListPage = lazyWithRetry(() => import("../apps/user/pages/ExpertList/ExpertList"));
+const PublicPrivacyPolicyPage = lazyWithRetry(() => import("../apps/user/pages/Privacy-Policy/PrivacyPolicy"));
 
 const APP_SHELL_STYLE = {
   width: "100%",
@@ -241,6 +242,14 @@ export default function AppRouter() {
             <Route path="/" element={<RootRedirect />} />
             <Route element={<UserRouteBoundary />}>
               <Route element={<MainLayout />}>
+                <Route
+                  path="/privacy-policy"
+                  element={
+                    <LazyRoute>
+                      <PublicPrivacyPolicyPage />
+                    </LazyRoute>
+                  }
+                />
                 <Route
                   path="/categories"
                   element={

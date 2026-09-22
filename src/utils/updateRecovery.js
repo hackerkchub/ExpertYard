@@ -1,13 +1,13 @@
 /**
  * Centralized Build-Aware Update & Recovery Lock System
  * Prevents repeat reloads, infinite reload loops, and tab reload storms.
- * Enforces exactly ONE automatic recovery per build identity / failure event.
+ * Enforces single automatic recovery per build transition event while preserving exact route URL.
  */
 
 const STORAGE_KEY = "g9_central_recovery_store";
 
 function getStorage() {
-  if (typeof window === "undefined" || !window.sessionStorage) return null;
+  if (typeof window === "undefined" || !window.sessionStorage) return {};
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : {};
@@ -47,7 +47,16 @@ export function getScopedRecoveryKey(type, identifier) {
 export function canAttemptRecovery(type, identifier) {
   const store = getStorage();
   const key = getScopedRecoveryKey(type, identifier);
-  return !store[key];
+  const entry = store[key];
+
+  if (!entry) return true;
+
+  // Allow retry if attempt was made over 2 minutes ago or build has changed
+  if (Date.now() - entry.timestamp > 120000) {
+    return true;
+  }
+
+  return false;
 }
 
 /**
@@ -64,15 +73,16 @@ export function markRecoveryAttempted(type, identifier) {
 }
 
 /**
- * Executes a controlled reload MAX ONCE per failure event / build update.
+ * Executes a controlled reload or route navigation to the target URL.
+ * Preserves exact route (pathname, search, hash).
  */
-export async function performControlledReload(type, identifier, beforeReloadFn) {
+export async function performControlledReload(type, identifier, beforeReloadFn, targetUrl) {
   if (typeof window === "undefined") return false;
 
   const key = getScopedRecoveryKey(type, identifier);
 
   if (!canAttemptRecovery(type, identifier)) {
-    console.log(`⏸️ [G9 Recovery Lock] Recovery already attempted for key "${key}". Skipping reload.`);
+    console.log(`⏸️ [G9 Recovery Lock] Recovery locked for key "${key}". Skipping reload.`);
     return false;
   }
 
@@ -87,8 +97,15 @@ export async function performControlledReload(type, identifier, beforeReloadFn) 
     }
   }
 
-  console.log(`♻️ [G9 Recovery Lock] Executing single controlled reload for key "${key}"...`);
-  window.location.reload();
+  const destination = targetUrl || window.location.href;
+  console.log(`♻️ [G9 Recovery Lock] Executing single controlled transition for key "${key}" to URL: "${destination}"...`);
+
+  if (targetUrl && targetUrl !== window.location.href) {
+    window.location.assign(destination);
+  } else {
+    window.location.reload();
+  }
+
   return true;
 }
 

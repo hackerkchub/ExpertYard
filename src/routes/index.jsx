@@ -19,6 +19,7 @@ import { shouldShowBottomNavbar } from "./routeShells";
 import AppGuard from "../core/AppGuard";
 import { APP_CONFIG } from "../config/appConfig";
 import lazyWithRetry from "../utils/lazyWithRetry";
+import { updateCoordinator } from "../utils/updateCoordinator";
 
 import useNativeIncomingCall from "../shared/hooks/useNativeIncomingCall";
 import LegalManager from "../shared/components/Legal/LegalManager";
@@ -90,6 +91,15 @@ export default function AppRouter() {
     setShowSplash(false);
     finishAppBoot();
   }, [finishAppBoot]);
+
+  // Automatic Build-Verified Route Transition Handler
+  useEffect(() => {
+    const updateState = updateCoordinator.getUpdateState();
+    if (updateState.isVerifiedReady) {
+      console.log("🔄 [G9 AppRouter] User navigated to route while verified build N+1 is ready. Performing safe transition...");
+      updateCoordinator.requestControlledUpdate("route_nav");
+    }
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     if (isCallScreenPath(location.pathname)) {

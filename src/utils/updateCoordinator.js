@@ -34,7 +34,7 @@ export async function verifyRemoteBuildReady(remoteBuildId) {
   }
 
   const currentBuildId = getCurrentBuildId();
-  const targetBuildId = remoteBuildId || updateState.remoteBuildId;
+  const targetBuildId = remoteBuildId || updateState.remoteBuildId || window.__G9_REMOTE_BUILD_ID__;
 
   if (!targetBuildId || targetBuildId === currentBuildId || targetBuildId === "dev") {
     return false;
@@ -101,6 +101,8 @@ export async function verifyRemoteBuildReady(remoteBuildId) {
 
     console.log(`✅ [G9 UpdateCoordinator] Verified remote build "${targetBuildId}" is complete and ready for safe activation.`);
     updateState.isVerifiedReady = true;
+    updateState.remoteBuildId = targetBuildId;
+    updateState.isAvailable = true;
     notifyListeners();
     isCheckingBuild = false;
     return true;
@@ -158,25 +160,48 @@ export async function requestControlledUpdate(source = "user_action", forceBuild
   const remoteBuildId = forceBuildId || updateState.remoteBuildId || window.__G9_REMOTE_BUILD_ID__;
   const transitionKey = `${currentBuildId}:${remoteBuildId || "latest"}`;
 
-  // Check lock first
-  if (!updateRecovery.canAttemptRecovery(source, transitionKey)) {
+  // For chunk load failures, perform fast verification or force recovery if chunk is missing
+  const isChunkError = source === "chunk" || source === "boundary_chunk";
+
+  if (!updateRecovery.canAttemptRecovery(source, transitionKey) && !isChunkError) {
     console.log(`⏸️ [G9 UpdateCoordinator] Recovery locked for key "${source}:${transitionKey}".`);
     return false;
   }
 
-  // Verify remote build before attempting reload
-  const isReady = await verifyRemoteBuildReady(remoteBuildId);
-  if (!isReady) {
+  // Verify remote build before attempting reload (unless emergency chunk 404 recovery)
+  let isReady = await verifyRemoteBuildReady(remoteBuildId);
+
+  if (!isReady && !isChunkError) {
     console.log("⏳ [G9 UpdateCoordinator] Remote build is not verified ready. Delaying controlled reload to protect current UI.");
     return false;
   }
 
   console.log(`♻️ [G9 UpdateCoordinator] Executing safe controlled update from source "${source}" for transition "${transitionKey}"...`);
-  return await updateRecovery.performControlledReload(source, transitionKey);
+  return await updateRecovery.performControlledReload(source, transitionKey, null, window.location.href);
 }
 
 export function getUpdateState() {
   return updateState;
+}
+
+// Runtime Diagnostic Telemetry Function
+if (typeof window !== "undefined") {
+  window.__G9_UPDATE_DEBUG__ = () => {
+    const telemetry = {
+      currentBuild: getCurrentBuildId(),
+      remoteBuild: updateState.remoteBuildId || window.__G9_REMOTE_BUILD_ID__ || "unknown",
+      isAvailable: updateState.isAvailable || Boolean(window.__G9_UPDATE_AVAILABLE__),
+      isVerifiedReady: updateState.isVerifiedReady,
+      url: window.location.href,
+      pathname: window.location.pathname,
+      search: window.location.search,
+      hash: window.location.hash,
+      onLine: navigator.onLine,
+      swControllerActive: Boolean(navigator.serviceWorker?.controller),
+    };
+    console.table(telemetry);
+    return telemetry;
+  };
 }
 
 export const updateCoordinator = {

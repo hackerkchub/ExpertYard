@@ -107,7 +107,7 @@ export default function LegalManager() {
             setPendingDocuments(docs);
 
             // Pending legal documents exist => lock application
-            const shouldLock = docs.length > 0;
+            const shouldLock = Array.isArray(docs) && docs.length > 0;
 
             setApplicationLocked(shouldLock);
             setIsOpen(shouldLock);
@@ -118,12 +118,13 @@ export default function LegalManager() {
             return docs;
 
         } catch (err) {
-            console.error("Failed to load legal documents:", err);
-            setError("please refresh it or open app again");
-            // Lock application on error for security
-            setApplicationLocked(true);
+            console.warn("⚠️ [LegalManager] Background legal document check temporarily unavailable:", err);
+            // Do NOT lock application on transient background network/deployment failure
+            setApplicationLocked(false);
+            setIsOpen(false);
+            setError(null);
 
-            throw err;
+            return [];
         }
     }, [
         loadPendingDocuments,
@@ -169,10 +170,11 @@ export default function LegalManager() {
             await refreshPendingDocuments();
 
         } catch (err) {
-            console.error("Failed to load legal documents:", err);
-            setError("please refresh it or app again open");
-            // Keep application locked on error for security
-            setApplicationLocked(true);
+            console.warn("⚠️ [LegalManager] Transient error checking legal documents during init:", err);
+            // Ensure application remains unlocked for normal app usage on network error
+            setApplicationLocked(false);
+            setIsOpen(false);
+            setError(null);
 
         } finally {
             setIsLoading(false);

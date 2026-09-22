@@ -14,6 +14,7 @@ import {
   Zap,
 } from "lucide-react";
 import APP_CONFIG from "../../../../config/appConfig";
+import SEOHead from "../../../../shared/components/SEO/SEOHead";
 import "./MasterServicesCatalogPage.css";
 
 const DEFAULT_SUBCAT_IMAGE =
@@ -210,6 +211,11 @@ export default function MasterServicesCatalogPage() {
 
   return (
     <div className="master-services-catalog-page">
+      <SEOHead
+        title="All Master Services Catalog | G9Expert"
+        description="Browse all verified master services on G9Expert across legal, tax, astrology, medical, career, and business consultation domains."
+        canonicalUrl="https://g9expert.com/user/all-services"
+      />
       {/* 1. HERO BANNER HEADER */}
       <header className="catalog-hero-section">
         <div className="catalog-hero-container">

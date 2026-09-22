@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+import { updateRecovery, getCurrentBuildId } from "../../../utils/updateRecovery";
 
 const Wrapper = styled.main`
   min-height: 60vh;
@@ -52,19 +53,34 @@ const Button = styled.button`
 export default class AppErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
   }
 
   componentDidCatch(error, info) {
-    console.error(`${this.props.label || "App"} crashed`, error, info);
+    console.error(`${this.props.label || "App"} component error caught:`, error, info);
+
+    const errorMessage = String(error?.message || error || "").toLowerCase();
+    const isChunkError =
+      error?.name === "ChunkLoadError" ||
+      errorMessage.includes("failed to fetch dynamically imported module") ||
+      errorMessage.includes("importing a module script failed") ||
+      errorMessage.includes("loading chunk") ||
+      errorMessage.includes("unexpected token") ||
+      errorMessage.includes("404");
+
+    if (isChunkError && typeof window !== "undefined") {
+      const buildId = getCurrentBuildId();
+      // Shares centralized lock with lazyWithRetry so duplicate reloads are prevented
+      updateRecovery.performControlledReload("chunk", buildId);
+    }
   }
 
   handleRetry = () => {
-    this.setState({ hasError: false });
+    this.setState({ hasError: false, error: null });
   };
 
   handleReload = () => {
@@ -80,7 +96,9 @@ export default class AppErrorBoundary extends React.Component {
       <Wrapper role="alert">
         <Panel>
           <Title>Something went wrong</Title>
-          <Copy>This section could not load correctly. Try again or reload the page.</Copy>
+          <Copy>
+            This page section could not load correctly. Try clicking below to refresh.
+          </Copy>
           <Actions>
             <Button type="button" onClick={this.handleRetry}>
               Try again

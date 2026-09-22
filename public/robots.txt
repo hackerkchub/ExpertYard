@@ -1,4 +1,35 @@
 User-agent: *
 Allow: /
+Allow: /service/
+Allow: /category/
+Allow: /user/experts/
+Allow: /user/all-services
+Disallow: /admin/
+Disallow: /expert/
+Disallow: /user/dashboard
+Disallow: /user/wallet
+Disallow: /user/bookings
+Disallow: /user/chat
+Disallow: /user/voice-call
+Disallow: /user/video-call
+Disallow: /user/inquiries
+Disallow: /user/notifications
+Disallow: /user/settings
+Disallow: /api/
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
 
 Sitemap: https://g9expert.com/sitemap.xml

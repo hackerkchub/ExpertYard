@@ -1,44 +1,45 @@
-import React, { lazy } from "react";
+import React from "react";
+import lazyWithRetry from "../../../utils/lazyWithRetry";
 import { Routes, Route, Navigate } from "react-router-dom";
 import AdminProtectedRoute from "./AdminProtectedRoute";
 import AdminLayout from "../layouts/adminLayout";
 import LazyRoute from "../../../routes/LazyRoute";
 import AppNotFound from "../../../routes/AppNotFound";
 
-const AdminLogin = lazy(() => import("../pages/AdminLogin"));
-const Dashboard = lazy(() => import("../pages/Dashboard"));
-const CategoryManagement = lazy(() => import("../pages/CategoryManagement"));
-const SubCategoryManagement = lazy(() =>
+const AdminLogin = lazyWithRetry(() => import("../pages/AdminLogin"));
+const Dashboard = lazyWithRetry(() => import("../pages/Dashboard"));
+const CategoryManagement = lazyWithRetry(() => import("../pages/CategoryManagement"));
+const SubCategoryManagement = lazyWithRetry(() =>
   import("../pages/SubcategoryManagement")
 );
-const SubscribedExpertsAccessPage = lazy(() => import("../pages/SubscribedExpertsAccessPage"));
-const ExpertManagement = lazy(() => import("../pages/ExpertManagement"));
-const ExpertApproval = lazy(() => import("../pages/ExpertApproval"));
-const PayoutManagement = lazy(() => import("../pages/PayoutManagement"));
-const ExpertDetail = lazy(() => import("../pages/ExpertDetail"));
-const MembershipPlan = lazy(() => import("../pages/mebership-plan"));
-const FinanceDashboard = lazy(() => import("../pages/FinanceDashboard"));
-const BannerManagement = lazy(() => import("../pages/BannerManagement"));
-const DeletedExperts = lazy(() => import("../pages/DeletedExperts"));
-const ReelsManagement = lazy(() => import("../pages/ReelsManagement"));
-const MasterServicesManagement = lazy(() => import("../pages/MasterServicesManagement"));
-const AdminAllMasterServicesPage = lazy(() => import("../pages/AdminAllMasterServicesPage"));
-const MasterServiceDetailsPage = lazy(() => import("../pages/MasterServiceDetailsPage"));
-const AdminFormBuilderPage = lazy(() => import("../pages/AdminFormBuilderPage"));
-const AdminWorkflowBuilderPage = lazy(() => import("../pages/AdminWorkflowBuilderPage"));
-const AdminDocumentBuilderPage = lazy(() => import("../pages/AdminDocumentBuilderPage"));
-const AdminPricingRulesPage = lazy(() => import("../pages/AdminPricingRulesPage"));
-const AdminServiceTemplatesPage = lazy(() => import("../pages/AdminServiceTemplatesPage"));
-const AdminCustomServiceApprovalPage = lazy(() => import("../pages/AdminCustomServiceApprovalPage"));
-const AdminWorkspaceMonitoringPage = lazy(() => import("../pages/AdminWorkspaceMonitoringPage"));
-const AdminWorkspaceDetailPage = lazy(() => import("../pages/AdminWorkspaceDetailPage"));
-const AdminServiceAnalyticsPage = lazy(() => import("../pages/AdminServiceAnalyticsPage"));
-const AdminAIDiscoveryAnalyticsPage = lazy(() => import("../pages/AdminAIDiscoveryAnalyticsPage"));
-const SendToUsersPage = lazy(() => import("../pages/notifications/SendToUsersPage"));
-const SendToExpertsPage = lazy(() => import("../pages/notifications/SendToExpertsPage"));
-const AdminNotificationsInboxPage = lazy(() => import("../pages/notifications/AdminNotificationsInboxPage"));
-const LegalManagement = lazy(() => import("../pages/LegalManagement/LegalManagement"));
-const AdminInquiriesPage = lazy(() => import("../pages/AdminInquiriesPage"));
+const SubscribedExpertsAccessPage = lazyWithRetry(() => import("../pages/SubscribedExpertsAccessPage"));
+const ExpertManagement = lazyWithRetry(() => import("../pages/ExpertManagement"));
+const ExpertApproval = lazyWithRetry(() => import("../pages/ExpertApproval"));
+const PayoutManagement = lazyWithRetry(() => import("../pages/PayoutManagement"));
+const ExpertDetail = lazyWithRetry(() => import("../pages/ExpertDetail"));
+const MembershipPlan = lazyWithRetry(() => import("../pages/mebership-plan"));
+const FinanceDashboard = lazyWithRetry(() => import("../pages/FinanceDashboard"));
+const BannerManagement = lazyWithRetry(() => import("../pages/BannerManagement"));
+const DeletedExperts = lazyWithRetry(() => import("../pages/DeletedExperts"));
+const ReelsManagement = lazyWithRetry(() => import("../pages/ReelsManagement"));
+const MasterServicesManagement = lazyWithRetry(() => import("../pages/MasterServicesManagement"));
+const AdminAllMasterServicesPage = lazyWithRetry(() => import("../pages/AdminAllMasterServicesPage"));
+const MasterServiceDetailsPage = lazyWithRetry(() => import("../pages/MasterServiceDetailsPage"));
+const AdminFormBuilderPage = lazyWithRetry(() => import("../pages/AdminFormBuilderPage"));
+const AdminWorkflowBuilderPage = lazyWithRetry(() => import("../pages/AdminWorkflowBuilderPage"));
+const AdminDocumentBuilderPage = lazyWithRetry(() => import("../pages/AdminDocumentBuilderPage"));
+const AdminPricingRulesPage = lazyWithRetry(() => import("../pages/AdminPricingRulesPage"));
+const AdminServiceTemplatesPage = lazyWithRetry(() => import("../pages/AdminServiceTemplatesPage"));
+const AdminCustomServiceApprovalPage = lazyWithRetry(() => import("../pages/AdminCustomServiceApprovalPage"));
+const AdminWorkspaceMonitoringPage = lazyWithRetry(() => import("../pages/AdminWorkspaceMonitoringPage"));
+const AdminWorkspaceDetailPage = lazyWithRetry(() => import("../pages/AdminWorkspaceDetailPage"));
+const AdminServiceAnalyticsPage = lazyWithRetry(() => import("../pages/AdminServiceAnalyticsPage"));
+const AdminAIDiscoveryAnalyticsPage = lazyWithRetry(() => import("../pages/AdminAIDiscoveryAnalyticsPage"));
+const SendToUsersPage = lazyWithRetry(() => import("../pages/notifications/SendToUsersPage"));
+const SendToExpertsPage = lazyWithRetry(() => import("../pages/notifications/SendToExpertsPage"));
+const AdminNotificationsInboxPage = lazyWithRetry(() => import("../pages/notifications/AdminNotificationsInboxPage"));
+const LegalManagement = lazyWithRetry(() => import("../pages/LegalManagement/LegalManagement"));
+const AdminInquiriesPage = lazyWithRetry(() => import("../pages/AdminInquiriesPage"));
 
 const withLazyRoute = (node) => <LazyRoute>{node}</LazyRoute>;
 

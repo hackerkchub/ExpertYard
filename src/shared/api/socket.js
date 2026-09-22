@@ -24,7 +24,7 @@ const getSocketBaseUrl = () => {
     apiUrl.hash = "";
     return apiUrl.origin;
   } catch {
-    return "https://api.guidexa.in";
+    return "https://softmaxs.com";
   }
 };
 

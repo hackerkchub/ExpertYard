@@ -26,10 +26,10 @@ android {
         applicationId "com.g9expert.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 5
-        versionName "1.0.1"
+        versionCode 6
+        versionName "1.0.0"
         buildConfigField "String", "APP_TYPE", "\"web\""
-        buildConfigField "String", "API_BASE_URL", "\"https://api.guidexa.in/api\""
+        buildConfigField "String", "API_BASE_URL", "\"https://softmaxs.com/api\""
 
         manifestPlaceholders = [
             appLabel: "G9Expert"
@@ -40,13 +40,13 @@ android {
         user {
             dimension "app"
             applicationId "com.g9expert.user"
-            versionCode 5
-            versionName "1.0.1"
+            versionCode 7
+            versionName "1.0.0"
             manifestPlaceholders = [
-                appLabel: "G9Expert User"
+                appLabel: "G9Expert – Find Experts"
             ]
             buildConfigField "String", "APP_TYPE", "\"user\""
-            buildConfigField "String", "API_BASE_URL", "\"https://api.guidexa.in/api\""
+            buildConfigField "String", "API_BASE_URL", "\"https://softmaxs.com/api\""
         }
 
         expert {

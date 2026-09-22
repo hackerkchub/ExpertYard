@@ -6,6 +6,7 @@ import { useAuth } from "../../../../shared/context/UserAuthContext";
 import MobileSelect from "../../components/MobileSelect/MobileSelect";
 import { useSeo } from "../../../../shared/seo/useSeo";
 import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
+import SEOHead from "../../../../shared/components/SEO/SEOHead";
 import { toAbsoluteUrl } from "../../../../shared/seo/siteConfig";
 import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/leadTracking";
 import {
@@ -158,7 +159,12 @@ const Categories = () => {
   };
 
   return (
-    <PageContainer className="category-page">
+    <PageContainer className="categories-page">
+      <SEOHead
+        title="All Expert Categories & Services | G9Expert"
+        description="Explore all verified expert consultation categories on G9Expert including legal, astrology, tax, health, career, and business advice."
+        canonicalUrl="https://g9expert.com/categories"
+      />
       <MainContent>
        
         {/* 5. Header Actions - Grid/List Toggle */}

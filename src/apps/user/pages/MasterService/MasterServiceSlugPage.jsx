@@ -18,6 +18,7 @@ import ActiveBookingNotice from "./components/ActiveBookingNotice";
 import SelectExpertModal from "./components/SelectExpertModal";
 import BookingModal from "./components/BookingModal";
 import ServiceInquiryModal from "./components/ServiceInquiryModal";
+import SEOHead from "../../../../shared/components/SEO/SEOHead";
 
 const userAuthHeaders = () => {
   const token = localStorage.getItem("token") || localStorage.getItem("userToken") || localStorage.getItem("user_token") || "";
@@ -599,6 +600,12 @@ export default function MasterServiceSlugPage() {
 
   return (
     <div className="msp-root">
+      <SEOHead
+        title={service.seo_title || `${service.title} Consultation | G9Expert`}
+        description={service.seo_description || service.short_description || `Book ${service.title} online with verified experts on G9Expert.`}
+        canonicalUrl={`https://g9expert.com/service/${service.slug}`}
+        ogImage={service.banner_url || service.thumbnail_url || DEFAULT_SERVICE_IMAGE}
+      />
       <style>{`
         /* =========================================================
            🎨 MASTER SERVICE PAGE — PRODUCTION DESIGN SYSTEM

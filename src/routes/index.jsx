@@ -1,4 +1,4 @@
-import { useCallback, useEffect, lazy, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { Capacitor } from "@capacitor/core";
@@ -18,6 +18,7 @@ import { shouldShowBottomNavbar } from "./routeShells";
 
 import AppGuard from "../core/AppGuard";
 import { APP_CONFIG } from "../config/appConfig";
+import lazyWithRetry from "../utils/lazyWithRetry";
 
 import useNativeIncomingCall from "../shared/hooks/useNativeIncomingCall";
 import LegalManager from "../shared/components/Legal/LegalManager";
@@ -27,22 +28,22 @@ import { setNativeKeyboardMode, isAndroid10 } from "../shared/utils/nativeKeyboa
 
 const UserAppRoutes =
   APP_CONFIG.APP_TYPE !== "expert"
-    ? lazy(() => import("../apps/user/routes"))
+    ? lazyWithRetry(() => import("../apps/user/routes"))
     : null;
 
 const ExpertAppRoutes =
   APP_CONFIG.APP_TYPE !== "user"
-    ? lazy(() => import("../apps/expert/routes"))
+    ? lazyWithRetry(() => import("../apps/expert/routes"))
     : null;
 
 const AdminAppRoutes =
   APP_CONFIG.APP_TYPE === "web"
-    ? lazy(() => import("../apps/admin/routes"))
+    ? lazyWithRetry(() => import("../apps/admin/routes"))
     : null;
 
-const PublicCategoriesPage = lazy(() => import("../apps/user/pages/Category/Categories"));
-const PublicCategoryPage = lazy(() => import("../apps/user/pages/Subcategory/SubcategoryPage"));
-const PublicExpertListPage = lazy(() => import("../apps/user/pages/ExpertList/ExpertList"));
+const PublicCategoriesPage = lazyWithRetry(() => import("../apps/user/pages/Category/Categories"));
+const PublicCategoryPage = lazyWithRetry(() => import("../apps/user/pages/Subcategory/SubcategoryPage"));
+const PublicExpertListPage = lazyWithRetry(() => import("../apps/user/pages/ExpertList/ExpertList"));
 
 const APP_SHELL_STYLE = {
   width: "100%",

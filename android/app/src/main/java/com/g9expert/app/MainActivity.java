@@ -51,6 +51,9 @@ public class MainActivity extends BridgeActivity {
         // 2. Inject APP_TYPE and NativeBridge interface
         injectNativeBridgeInterface();
 
+        // 2b. Check versionCode upgrade & clear stale WebView HTTP cache
+        checkAndClearWebViewCacheOnUpgrade();
+
         // 3. Handle incoming intent (e.g. from notification accept action)
         handleIntent(getIntent());
 
@@ -64,6 +67,24 @@ public class MainActivity extends BridgeActivity {
         }
 
         Log.d(TAG, "onCreate - MainActivity initialization complete");
+    }
+
+    private void checkAndClearWebViewCacheOnUpgrade() {
+        try {
+            int currentVersionCode = BuildConfig.VERSION_CODE;
+            android.content.SharedPreferences prefs = getSharedPreferences("g9_version_prefs", MODE_PRIVATE);
+            int lastVersionCode = prefs.getInt("last_version_code", -1);
+
+            if (lastVersionCode != -1 && currentVersionCode > lastVersionCode) {
+                Log.d(TAG, "🔄 App upgraded from versionCode " + lastVersionCode + " to " + currentVersionCode + ". Clearing WebView HTTP cache.");
+                if (getBridge() != null && getBridge().getWebView() != null) {
+                    getBridge().getWebView().clearCache(true);
+                }
+            }
+            prefs.edit().putInt("last_version_code", currentVersionCode).apply();
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking version code for cache clear", e);
+        }
     }
 
     private void setupImeInsetDetector() {

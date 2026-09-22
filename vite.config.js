@@ -59,8 +59,25 @@ export default defineConfig(({ mode }) => {
     env.VITE_PROXY_TARGET ||
     "http://localhost:5000";
 
+  const BUILD_ID = mode === "production" ? `build_${Date.now()}` : "dev";
+
+  const versionJsonPlugin = () => ({
+    name: "g9-version-json-plugin",
+    generateBundle() {
+      this.emitFile({
+        type: "asset",
+        fileName: "version.json",
+        source: JSON.stringify({ buildId: BUILD_ID, timestamp: new Date().toISOString() }, null, 2),
+      });
+    },
+  });
+
   return {
-    plugins: [react(), devRobotsPlugin()],
+    define: {
+      __G9_BUILD_ID__: JSON.stringify(BUILD_ID),
+    },
+
+    plugins: [react(), devRobotsPlugin(), versionJsonPlugin()],
 
     esbuild: {
       drop: mode === "production" ? ["console", "debugger"] : [],

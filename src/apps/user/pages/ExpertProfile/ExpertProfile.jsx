@@ -45,6 +45,7 @@ import { FaWhatsapp, FaTelegramPlane, FaTwitter } from "react-icons/fa";
 import { APP_CONFIG } from "../../../../config/appConfig";
 import InquiryModal from "./InquiryModal";
 import PostDetailModal from "../../../../shared/components/PostDetailModal/PostDetailModal";
+import SEOHead from "../../../../shared/components/SEO/SEOHead";
 
 import {
   PageWrap,
@@ -1433,6 +1434,12 @@ const ExpertProfilePage = () => {
 
   return (
     <PageWrap className="expert-profile-page-container">
+      <SEOHead
+        title={`${profile?.name || expertData?.name || 'Expert'} – ${profile?.position || expertData?.position || 'Consultant'} | G9Expert`}
+        description={profile?.bio || `Consult with ${profile?.name || 'expert'} online on G9Expert. Verified ratings, instant calls & chat.`}
+        canonicalUrl={`https://g9expert.com/user/experts/${slug || profile?.slug || ''}`}
+        ogImage={profile?.profile_photo ? (profile.profile_photo.startsWith('http') ? profile.profile_photo : `https://softmaxs.com/uploads/${profile.profile_photo}`) : ''}
+      />
       {/* MAIN LAYOUT GRID (DESKTOP 12-COLUMN: LEFT 8 COLS, RIGHT 4 COLS) */}
       <div className="profile-page-layout-grid">
         

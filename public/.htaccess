@@ -10,7 +10,8 @@
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
-    # React Router fallback
+    # React Router fallback (Excluding /assets/ so missing hashed JS/CSS chunks return a true 404 instead of HTML)
+    RewriteCond %{REQUEST_URI} !^/assets/
     RewriteRule . /index.html [L]
 </IfModule>
 
@@ -24,9 +25,9 @@
 <IfModule mod_headers.c>
 
     # -------------------------------------------------
-    # Never cache index.html (always fetch latest app shell)
+    # Never cache index.html and version.json (always fetch latest app shell)
     # -------------------------------------------------
-    <FilesMatch "^index\.html$">
+    <FilesMatch "^(index\.html|version\.json)$">
         Header set Cache-Control "no-cache, no-store, must-revalidate"
         Header set Pragma "no-cache"
         Header set Expires "0"

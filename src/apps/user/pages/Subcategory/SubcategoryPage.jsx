@@ -8,6 +8,7 @@ import { useCategory } from "../../../../shared/context/CategoryContext";
 import { useAuth } from "../../../../shared/context/UserAuthContext";
 import NeedHelpForm from "../../components/NeedHelpForm/NeedHelpForm";
 import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
+import SEOHead from "../../../../shared/components/SEO/SEOHead";
 import { useSeo } from "../../../../shared/seo/useSeo";
 import { buildTrackingPayload, trackLeadEvent } from "../../../../shared/utils/leadTracking";
 import {
@@ -234,6 +235,11 @@ export default function SubcategoryPage() {
 
   return (
     <PageContainer className="subcategory-page">
+      <SEOHead
+        title={`${matchedCategory?.name || 'Category'} Experts & Services | G9Expert`}
+        description={matchedCategory?.description || `Book top verified ${matchedCategory?.name || 'consultant'} experts online on G9Expert.`}
+        canonicalUrl={`https://g9expert.com/category/${matchedCategory?.slug || slug || ''}`}
+      />
       <CategoryDetailHero>
         <CategoryHeroCopy>
           <CategoryKicker>Expert Category</CategoryKicker>

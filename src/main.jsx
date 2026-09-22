@@ -18,6 +18,13 @@ import { LegalProvider } from "./shared/context/LegalContext";
 import GlobalStyles from "./shared/styles/GlobalStyles";
 import { theme } from "./shared/styles/theme";
 
+import { updateRecovery, getCurrentBuildId } from "./utils/updateRecovery";
+import { versionChecker } from "./utils/versionChecker";
+
+if (typeof window !== "undefined") {
+  window.__G9_BUILD_ID__ = typeof __G9_BUILD_ID__ !== "undefined" ? __G9_BUILD_ID__ : "dev";
+}
+
 const kbPkg = "@capacitor/keyboard";
 const appPkg = "@capacitor/app";
 const capPkg = "@capacitor/core";
@@ -28,7 +35,12 @@ try {
   Capacitor = capModule?.Capacitor || null;
 } catch (e) {}
 
-const isNativeApp = Capacitor && typeof Capacitor.isNativePlatform === "function" && Capacitor.isNativePlatform();
+const isNativeAppSync = typeof window !== "undefined" && (
+  (window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform()) ||
+  Boolean(window.G9_APP_TYPE === "user" || window.G9_APP_TYPE === "expert" || window.NativeBridgeManager_Native || window.NativeBridgeManager)
+);
+
+const isNativeApp = isNativeAppSync || (Capacitor && typeof Capacitor.isNativePlatform === "function" && Capacitor.isNativePlatform());
 
 soundManager.preload();
 startReact();
@@ -36,6 +48,18 @@ startReact();
 /* ================= NATIVE APP ONLY ================= */
 
 if (isNativeApp) {
+  // Purge any legacy Service Worker registrations inside Capacitor WebView
+  if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) {
+        console.log("🧹 [Native WebView] Unregistering legacy Service Worker:", registration.scope);
+        registration.unregister().catch(() => {});
+      }
+    }).catch((err) => {
+      console.warn("Native WebView SW cleanup warning:", err);
+    });
+  }
+
   Promise.all([
     import(/* @vite-ignore */ kbPkg).catch(() => null),
     import(/* @vite-ignore */ appPkg).catch(() => null)
@@ -60,6 +84,9 @@ if (isNativeApp) {
 /* ================= WEB / PWA ONLY ================= */
 
 if (!isNativeApp && "serviceWorker" in navigator) {
+  // Initialize runtime version checking for Web/PWA
+  versionChecker.startVersionChecker();
+
   window.addEventListener("load", async () => {
     try {
       let registration = await navigator.serviceWorker.getRegistration();
@@ -103,17 +130,15 @@ if (!isNativeApp && "serviceWorker" in navigator) {
         });
       });
 
-      // Reload only once after new SW becomes active
+      // Controlled single reload after new SW becomes active
       let refreshing = false;
 
       navigator.serviceWorker.addEventListener("controllerchange", () => {
         if (refreshing) return;
-
         refreshing = true;
 
-        console.log("♻️ Service Worker updated. Reloading...");
-
-        window.location.reload();
+        const buildId = getCurrentBuildId();
+        updateRecovery.performControlledReload("sw", buildId);
       });
 
     } catch (err) {

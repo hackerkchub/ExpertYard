@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import SEOHead from "../../../../shared/components/SEO/SEOHead";
 import {
   Bell,
   BriefcaseBusiness,
@@ -595,6 +596,11 @@ export default function Home() {
 
   return (
     <main className="home-feed-page home-page-container g9-home-page">
+      <SEOHead
+        title="Verified Experts for Online Consultation | G9EXPERT"
+        description="Connect with verified experts online for legal, health, finance, career, astrology, property, and tax services on G9EXPERT."
+        canonicalUrl="https://g9expert.com/"
+      />
       <HomeHeader
         isLoggedIn={isLoggedIn}
         user={user}

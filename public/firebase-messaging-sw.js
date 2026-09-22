@@ -289,6 +289,8 @@ workbox.routing.registerRoute(
 );
 
 // ---------- STATIC FILES (JS, CSS) ----------
+// Use NetworkFirst (networkTimeout 3s) for JS/CSS so new deployment chunks are always fetched directly from network,
+// avoiding stale cross-build chunk mismatches caused by StaleWhileRevalidate.
 workbox.routing.registerRoute(
   ({ request, url }) => {
     if (
@@ -303,12 +305,16 @@ workbox.routing.registerRoute(
       request.destination === 'style'
     );
   },
-  new workbox.strategies.StaleWhileRevalidate({
+  new workbox.strategies.NetworkFirst({
     cacheName: STATIC_CACHE,
+    networkTimeoutSeconds: 3,
     plugins: [
       new workbox.expiration.ExpirationPlugin({
-        maxEntries: 30,
+        maxEntries: 50,
         maxAgeSeconds: 24 * 60 * 60, // 1 day
+      }),
+      new workbox.cacheableResponse.CacheableResponsePlugin({
+        statuses: [0, 200],
       }),
     ],
   })

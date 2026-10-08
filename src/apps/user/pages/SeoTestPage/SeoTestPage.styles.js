@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { Link } from "react-router-dom";
 
 const colors = {
   primary: "#000080",
@@ -294,7 +295,7 @@ export const ExpertDesc = styled.p`
   flex-grow: 1;
 `;
 
-export const ExpertCardCta = styled.a`
+export const ExpertCardCta = styled(Link)`
   display: block;
   text-align: center;
   background: ${colors.primary};

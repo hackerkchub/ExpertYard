@@ -76,7 +76,7 @@ const SEO_TEST_PAGES_CONFIG = {
         experience: "16 years",
         specialization: "Property Disputes",
         city: "Indore",
-        profileUrl: "/experts/288"
+        profileUrl: "/user/experts/chandan-kumar"
       },
       {
         id: 209,
@@ -85,7 +85,7 @@ const SEO_TEST_PAGES_CONFIG = {
         education: "BA, LLB",
         specialization: "Divorce Consultation",
         city: "Indore",
-        profileUrl: "/experts/209"
+        profileUrl: "/user/experts/sonu-verma"
       },
       {
         id: 218,
@@ -95,7 +95,7 @@ const SEO_TEST_PAGES_CONFIG = {
         experience: "5 years",
         specialization: "Divorce Consultation",
         city: "Indore",
-        profileUrl: "/experts/218"
+        profileUrl: "/user/experts/mohit-upadhyay"
       },
       {
         id: 254,
@@ -105,7 +105,7 @@ const SEO_TEST_PAGES_CONFIG = {
         experience: "4 years",
         specialization: "Property Disputes",
         city: "Indore",
-        profileUrl: "/experts/254"
+        profileUrl: "/user/experts/anil-vyas"
       },
       {
         id: 214,
@@ -115,7 +115,7 @@ const SEO_TEST_PAGES_CONFIG = {
         experience: "2.5 years",
         specialization: "Criminal Law",
         city: "Indore",
-        profileUrl: "/experts/214"
+        profileUrl: "/user/experts/archana-kushwah"
       },
       {
         id: 217,
@@ -125,7 +125,7 @@ const SEO_TEST_PAGES_CONFIG = {
         experience: "5 years",
         specialization: "Consumer Complaints",
         city: "Indore",
-        profileUrl: "/experts/217"
+        profileUrl: "/user/experts/alok-saxena"
       }
     ],
     ctaTitle: "Looking for a Lawyer in Indore?",
@@ -194,7 +194,7 @@ const SEO_TEST_PAGES_CONFIG = {
         specialization: "Criminal Law & Dispute Resolution",
         city: "Bhopal",
         profilePhoto: "1784281359397-qvb2lo.webp",
-        profileUrl: "/experts/229"
+        profileUrl: "/user/experts/debasis-mitra"
       },
       {
         id: 230,
@@ -205,7 +205,7 @@ const SEO_TEST_PAGES_CONFIG = {
         specialization: "Criminal & Matrimonial Law",
         city: "Bhopal",
         profilePhoto: "1784280713172-450hvo.webp",
-        profileUrl: "/experts/230"
+        profileUrl: "/user/experts/adv-k-prasoon-ranjan"
       },
       {
         id: 206,
@@ -213,7 +213,7 @@ const SEO_TEST_PAGES_CONFIG = {
         position: "Advocates & Legal Consultants",
         specialization: "Divorce Consultation",
         city: "Bhopal",
-        profileUrl: "/experts/206"
+        profileUrl: "/user/experts/satyendra-singh-batham"
       }
     ],
     ctaTitle: "Need Legal Advice in Bhopal?",
@@ -340,7 +340,7 @@ const SEO_TEST_PAGES_CONFIG = {
         position: "Advocates & Legal Consultants",
         specialization: "Criminal Law & Court Practice",
         city: "Gwalior",
-        profileUrl: "/experts/202"
+        profileUrl: "/user/experts/anurudh-singh-kaurav"
       }
     ],
     ctaTitle: "Looking for Legal Counsel in Gwalior?",
@@ -407,7 +407,7 @@ const SEO_TEST_PAGES_CONFIG = {
         education: "BA, LLB",
         specialization: "Divorce & Matrimonial Consultation",
         city: "Indore",
-        profileUrl: "/experts/209"
+        profileUrl: "/user/experts/sonu-verma"
       },
       {
         id: 218,
@@ -417,7 +417,7 @@ const SEO_TEST_PAGES_CONFIG = {
         experience: "5 years",
         specialization: "Divorce & Family Law",
         city: "Indore",
-        profileUrl: "/experts/218"
+        profileUrl: "/user/experts/mohit-upadhyay"
       }
     ],
     ctaTitle: "Need Confidential Family Legal Consultation in Indore?",
@@ -550,7 +550,7 @@ export default function SeoTestPage() {
                   </div>
 
                   <div>
-                    <ExpertCardCta href={exp.profileUrl}>
+                    <ExpertCardCta to={exp.profileUrl}>
                       View Profile →
                     </ExpertCardCta>
                   </div>

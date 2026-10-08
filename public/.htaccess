@@ -5,17 +5,22 @@
     # Don't rewrite existing index.html
     RewriteRule ^index\.html$ - [L]
 
-    # Serve existing files/folders directly
+    # Serve existing physical files/folders directly (e.g. sitemap.xml, sitemap-static.xml)
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Exclude all sitemap XML files from SPA fallback rewrite
+    RewriteCond %{REQUEST_URI} ^/sitemap.*\.xml$ [NC]
     RewriteRule ^ - [L]
 
     # Serve static Privacy Policy directly without requiring JavaScript
     RewriteRule ^privacy-policy/?$ /privacy-policy.html [L]
     RewriteRule ^user/privacy/?$ /privacy-policy [R=301,L]
 
-    # React Router fallback (Excluding /assets/ so missing hashed JS/CSS chunks return a true 404 instead of HTML)
+    # React Router SPA fallback (Excluding /assets/ and sitemaps so missing hashed JS/CSS chunks or XML sitemaps return 404/XML instead of index.html)
     RewriteCond %{REQUEST_URI} !^/assets/
+    RewriteCond %{REQUEST_URI} !^/sitemap.*\.xml$ [NC]
     RewriteRule . /index.html [L]
 </IfModule>
 
@@ -24,9 +29,19 @@
     AddType text/css .css
     AddType application/json .json
     AddType image/svg+xml .svg
+    AddType application/xml .xml
+    AddType text/xml .xml
 </IfModule>
 
 <IfModule mod_headers.c>
+
+    # -------------------------------------------------
+    # Always serve sitemaps with correct XML header
+    # -------------------------------------------------
+    <FilesMatch "\.xml$">
+        Header set Content-Type "application/xml; charset=UTF-8"
+        Header set Cache-Control "public, max-age=3600"
+    </FilesMatch>
 
     # -------------------------------------------------
     # Never cache index.html and version.json (always fetch latest app shell)

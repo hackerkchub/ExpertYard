@@ -1,0 +1,220 @@
+/* G9Expert Production Success Stories / Articles Styling */
+
+.g9-stories-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+  box-sizing: border-box;
+}
+
+/* Hero Section */
+.g9-stories-hero {
+  text-align: center;
+  margin-bottom: 36px;
+  padding: 36px 20px;
+  background: linear-gradient(135deg, #0b132b 0%, #1c2541 50%, #000080 100%);
+  border-radius: 20px;
+  color: #ffffff;
+  box-shadow: 0 10px 30px rgba(0, 0, 128, 0.15);
+}
+
+.g9-stories-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fbbf24;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.g9-stories-hero-title {
+  font-size: 2.3rem;
+  font-weight: 800;
+  margin: 0 0 12px 0;
+  line-height: 1.25;
+}
+
+.g9-stories-hero-desc {
+  font-size: 1.05rem;
+  color: #cbd5e1;
+  max-width: 680px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Timeline Journey Cards */
+.g9-journey-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin: 32px 0;
+  position: relative;
+}
+
+.g9-journey-timeline::before {
+  content: "";
+  position: absolute;
+  top: 20px;
+  bottom: 20px;
+  left: 23px;
+  width: 3px;
+  background: #cbd5e1;
+  z-index: 1;
+}
+
+.g9-journey-step {
+  display: flex;
+  gap: 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.g9-journey-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #000080;
+  color: #ffffff;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 128, 0.25);
+  font-size: 1rem;
+}
+
+.g9-journey-card {
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+.g9-journey-step-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 8px 0;
+}
+
+.g9-journey-step-desc {
+  font-size: 0.98rem;
+  color: #475569;
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* Key Takeaways Box */
+.g9-takeaways-box {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 16px;
+  padding: 24px;
+  margin: 36px 0;
+}
+
+.g9-takeaways-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #166534;
+  margin: 0 0 14px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.g9-takeaways-list {
+  margin: 0;
+  padding-left: 20px;
+  color: #15803d;
+  font-size: 0.98rem;
+  line-height: 1.7;
+}
+
+/* Expert Spotlight Card */
+.g9-expert-spotlight-card {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin: 36px 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.g9-expert-spotlight-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #000080;
+}
+
+.g9-expert-spotlight-info {
+  flex: 1;
+}
+
+.g9-expert-spotlight-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.g9-expert-spotlight-cat {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.g9-expert-spotlight-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.g9-expert-consult-btn {
+  background: #000080;
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  transition: background 0.2s ease;
+}
+
+.g9-expert-consult-btn:hover {
+  background: #1e3a8a;
+}
+
+@media (max-width: 640px) {
+  .g9-expert-spotlight-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  .g9-journey-timeline::before {
+    left: 19px;
+  }
+  .g9-journey-badge {
+    width: 40px;
+    height: 40px;
+    font-size: 0.88rem;
+  }
+}

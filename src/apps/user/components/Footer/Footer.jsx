@@ -33,8 +33,8 @@ const COMPANY_LINKS = [
 ];
 
 const CUSTOMER_LINKS = [
-  { label: "My Orders", path: "/user/my-services" },
-  { labelKey: "footer.findExperts", path: "/user/find-experts" },
+  { label: "Blog", path: "/blog" },
+  { label: "Success Stories", path: "/articles" },
   { labelKey: "footer.reviews", path: "/user/reviews" },
   { labelKey: "footer.howItWorks", path: "/user/how-it-works" },
   { labelKey: "footer.faq", path: "/user/faq" },

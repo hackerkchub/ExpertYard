@@ -18,8 +18,8 @@ export const autocompleteLocation = (q, signal) =>
 export const reverseGeocode = (lat, lng, signal) =>
   api.get("/locations/reverse", requestOptions({ lat, lng }, signal));
 
-export const getSeoLocationPage = ({ category, city, area, pincode, signal } = {}) =>
-  api.get("/seo/location-page", requestOptions({ category, city, area, pincode }, signal));
+export const getSeoLocationPage = ({ signal, ...params } = {}) =>
+  api.get("/seo/location-page", requestOptions(params, signal));
 
 export const getExpertLocations = (expertId) =>
   api.get(`/experts/location/${expertId}`);

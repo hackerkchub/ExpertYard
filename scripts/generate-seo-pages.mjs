@@ -1,9 +1,10 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { APP_CONFIG } from "../src/config/appConfig.js";
+import { BLOG_POSTS } from "../src/data/blog/blogPosts.js";
+import { SUCCESS_STORIES } from "../src/data/articles/successStories.js";
 
 const siteUrl = "https://g9expert.com";
-const apiUrl = APP_CONFIG.API_BASE_URL;
+const apiUrl = process.env.VITE_API_BASE_URL || "https://g9expert.com/api";
 const distDir = path.resolve("dist");
 const publicDir = path.resolve("public");
 
@@ -151,6 +152,8 @@ async function generateSitemap() {
   pushUrl(urls, "/", "1.0", "daily");
   pushUrl(urls, "/user", "1.0", "daily");
   pushUrl(urls, "/categories", "0.9", "weekly");
+  pushUrl(urls, "/blog", "0.8", "daily");
+  pushUrl(urls, "/articles", "0.8", "daily");
   pushUrl(urls, "/user/categories", "0.9", "weekly");
   pushUrl(urls, "/user/all-services", "0.9", "weekly");
   pushUrl(urls, "/user/call-chat?page=1", "0.8", "daily");
@@ -160,10 +163,23 @@ async function generateSitemap() {
   pushUrl(urls, "/user/terms", "0.4", "yearly");
   pushUrl(urls, "/user/faq", "0.6", "monthly");
 
+  for (const post of BLOG_POSTS) {
+    if (post?.slug) {
+      pushUrl(urls, `/blog/${post.slug}`, "0.7", "weekly");
+    }
+  }
+
+  for (const story of SUCCESS_STORIES) {
+    if (story?.slug) {
+      pushUrl(urls, `/articles/${story.slug}`, "0.7", "weekly");
+    }
+  }
+
   for (const category of categories) {
     const slug = toCategorySlug(category);
     if (slug) {
       pushUrl(urls, `/category/${slug}`, "0.8", "weekly");
+      pushUrl(urls, `/experts/${slug}`, "0.8", "weekly");
     }
   }
 
@@ -178,6 +194,17 @@ async function generateSitemap() {
     const slug = toExpertSlug(expert);
     if (slug) {
       pushUrl(urls, `/user/experts/${slug}`, "0.6", "weekly");
+    }
+
+    const catSlug = toSeoSlug(expert?.category_slug || expert?.category || expert?.category_name || "");
+    const citySlug = toSeoSlug(expert?.city_slug || expert?.city || expert?.location || "");
+    const subSlug = toSeoSlug(expert?.subcategory_slug || expert?.subcategory || expert?.subcategory_name || "");
+
+    if (catSlug && citySlug) {
+      pushUrl(urls, `/experts/${catSlug}/${citySlug}`, "0.8", "weekly");
+      if (subSlug) {
+        pushUrl(urls, `/experts/${catSlug}/${subSlug}/${citySlug}`, "0.8", "weekly");
+      }
     }
   }
 

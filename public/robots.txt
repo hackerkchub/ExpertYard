@@ -4,6 +4,10 @@ Allow: /service/
 Allow: /category/
 Allow: /user/experts/
 Allow: /user/all-services
+Allow: /indore/
+Allow: /bhopal/
+Allow: /jabalpur/
+Allow: /gwalior/
 Disallow: /admin/
 Disallow: /expert/
 Disallow: /user/dashboard

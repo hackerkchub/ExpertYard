@@ -18,6 +18,8 @@ import {
   Phone,
   MessageSquare,
   Package,
+  BookOpen,
+  Award,
 } from "lucide-react";
 import logo from "../../../../../assets/logo.webp";
 import { APP_CONFIG } from "../../../../../config/appConfig";

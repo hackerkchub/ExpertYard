@@ -56,7 +56,7 @@ const useQuery = () => {
 const ExpertListPage = () => {
   const query = useQuery();
   const navigate = useNavigate();
-  const { categorySlug, citySlug, areaSlug, pincode } = useParams();
+  const rawParams = useParams();
   const trackedListRef = useRef("");
 
   const categoryId = query.get("category");
@@ -73,17 +73,36 @@ const ExpertListPage = () => {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("rating-high");
 
+  /* ---------------- PARAMETER RESOLUTION ---------------- */
+  const { categorySlug, subcategorySlug, citySlug, areaSlug, pincode } = useMemo(() => {
+    const cat = rawParams.categorySlug;
+    const p2 = rawParams.subcategorySlug || rawParams.citySlug;
+    const p3 = rawParams.areaSlug || (rawParams.subcategorySlug ? rawParams.citySlug : undefined);
+    const pin = rawParams.pincode;
+
+    return {
+      categorySlug: cat,
+      subcategorySlug: rawParams.subcategorySlug,
+      citySlug: rawParams.citySlug || (rawParams.subcategorySlug ? undefined : p2),
+      areaSlug: rawParams.areaSlug || p3,
+      pincode: pin
+    };
+  }, [rawParams]);
+
   /* ---------------- LOAD SEO DATA ---------------- */
   useEffect(() => {
-    if (!categorySlug) return;
-
+    setSeoData(null);
     const loadSeo = async () => {
       try {
         const res = await getSeoLocationPage({
-          category: categorySlug,
-          city: citySlug,
-          area: areaSlug,
-          pincode
+          p1: rawParams.categorySlug,
+          p2: rawParams.subcategorySlug || rawParams.citySlug,
+          p3: rawParams.citySlug && rawParams.subcategorySlug ? rawParams.citySlug : rawParams.areaSlug,
+          category_slug: rawParams.categorySlug,
+          subcategory_slug: rawParams.subcategorySlug,
+          city: rawParams.citySlug,
+          area: rawParams.areaSlug,
+          pincode: rawParams.pincode
         });
         if (res.data?.success) {
           setSeoData(res.data.data);
@@ -93,15 +112,74 @@ const ExpertListPage = () => {
       }
     };
     loadSeo();
-  }, [categorySlug, citySlug, areaSlug, pincode]);
+  }, [rawParams]);
+
+  /* ---------------- DERIVED BREADCRUMBS ---------------- */
+  const activeBreadcrumbs = useMemo(() => {
+    if (seoData?.breadcrumbs && seoData.breadcrumbs.length > 0) {
+      return seoData.breadcrumbs;
+    }
+    const crumbs = [
+      { name: "Home", url: "/" },
+      { name: "Experts", url: "/experts" }
+    ];
+    if (categorySlug) {
+      const catTitle = categorySlug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      crumbs.push({ name: catTitle, url: `/experts/${categorySlug}` });
+    }
+    if (subcategorySlug) {
+      const subTitle = subcategorySlug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      crumbs.push({ name: subTitle, url: `/experts/${categorySlug}/${subcategorySlug}` });
+    }
+    if (citySlug) {
+      const cityTitle = citySlug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      const cityUrl = subcategorySlug
+        ? `/experts/${categorySlug}/${subcategorySlug}/${citySlug}`
+        : `/experts/${categorySlug}/${citySlug}`;
+      crumbs.push({ name: cityTitle, url: cityUrl });
+    }
+    return crumbs;
+  }, [seoData, categorySlug, subcategorySlug, citySlug]);
+
+  /* ---------------- CANONICAL PATH ---------------- */
+  const canonicalPath = useMemo(() => {
+    if (seoData?.canonical_url) {
+      try {
+        const parsed = new URL(seoData.canonical_url);
+        return parsed.pathname;
+      } catch (e) {
+        // Fallback
+      }
+    }
+    if (!rawParams.categorySlug) return "/experts";
+    if (rawParams.pincode) return `/experts/${rawParams.categorySlug}/pincode/${rawParams.pincode}`;
+    if (rawParams.subcategorySlug && rawParams.citySlug && rawParams.areaSlug) return `/experts/${rawParams.categorySlug}/${rawParams.subcategorySlug}/${rawParams.citySlug}/${rawParams.areaSlug}`;
+    if (rawParams.subcategorySlug && rawParams.citySlug) return `/experts/${rawParams.categorySlug}/${rawParams.subcategorySlug}/${rawParams.citySlug}`;
+    if (rawParams.citySlug) return `/experts/${rawParams.categorySlug}/${rawParams.citySlug}`;
+    return `/experts/${rawParams.categorySlug}`;
+  }, [seoData, rawParams]);
 
   /* ---------------- INJECT SEO METADATA ---------------- */
+  const defaultPageTitle = useMemo(() => {
+    if (seoData?.title) return seoData.title;
+    if (categorySlug && citySlug) return `Best ${categorySlug.replace(/-/g, " ")} Experts in ${citySlug.replace(/-/g, " ")} | G9Expert`;
+    if (categorySlug) return `Best ${categorySlug.replace(/-/g, " ")} Experts | G9Expert`;
+    return "Expert Consultation | G9Expert";
+  }, [seoData, categorySlug, citySlug]);
+
+  const defaultMetaDesc = useMemo(() => {
+    if (seoData?.meta_description) return seoData.meta_description;
+    if (categorySlug && citySlug) return `Find best ${categorySlug.replace(/-/g, " ")} experts in ${citySlug.replace(/-/g, " ")} on G9Expert for 1-on-1 consultation.`;
+    return "Compare and connect with verified experts on G9Expert for instant voice, video, and chat consultations.";
+  }, [seoData, categorySlug, citySlug]);
+
+  const [isInvalidTaxonomy, setIsInvalidTaxonomy] = useState(false);
+
   useSeo({
-    title: seoData?.title || "G9 Experts",
-    description: seoData?.meta_description || "Compare and connect with verified G9 Experts.",
-    canonicalPath: categorySlug 
-      ? `/experts/${categorySlug}/${citySlug ? (areaSlug ? citySlug + '/' + areaSlug : citySlug) : 'pincode/' + pincode}`
-      : undefined
+    title: defaultPageTitle,
+    description: defaultMetaDesc,
+    canonicalPath,
+    noindex: (!loading && experts.length === 0) || isInvalidTaxonomy || seoData?.is_indexable === 0
   });
 
   /* ---------------- LOAD SUBCATEGORIES ---------------- */
@@ -111,16 +189,21 @@ const ExpertListPage = () => {
 
   /* ---------------- LOAD EXPERTS ---------------- */
   const loadExperts = useCallback(async () => {
-    if (categorySlug) {
+    if (!subCategoryId) {
       try {
         setLoading(true);
         const res = await discoverExperts({
-          category_slug: categorySlug,
-          city: citySlug,
-          area: areaSlug,
-          pincode
+          p1: rawParams.categorySlug,
+          p2: rawParams.subcategorySlug || rawParams.citySlug,
+          p3: rawParams.citySlug && rawParams.subcategorySlug ? rawParams.citySlug : rawParams.areaSlug,
+          category_slug: rawParams.categorySlug,
+          subcategory_slug: rawParams.subcategorySlug,
+          city: rawParams.citySlug,
+          area: rawParams.areaSlug,
+          pincode: rawParams.pincode
         });
         if (res.data?.success) {
+          setIsInvalidTaxonomy(Boolean(res.data.is_invalid_taxonomy));
           const rawData = res.data.data || [];
           const seen = new Set();
           const unique = [];
@@ -140,13 +223,12 @@ const ExpertListPage = () => {
       } catch (err) {
         console.error("Discovery failed:", err);
         setExperts([]);
+        setIsInvalidTaxonomy(false);
       } finally {
         setLoading(false);
       }
       return;
     }
-
-    if (!subCategoryId) return;
 
     try {
       setLoading(true);
@@ -169,7 +251,7 @@ const ExpertListPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [categorySlug, citySlug, areaSlug, pincode, subCategoryId]);
+  }, [rawParams, subCategoryId]);
 
   useEffect(() => {
     loadExperts();
@@ -244,19 +326,91 @@ const ExpertListPage = () => {
   }, [experts, search, sortBy]);
 
   /* ---------------- SUGGESTED ---------------- */
-  const suggestedSubCategories = subCategories.filter(
-    (s) => s.id != subCategoryId
-  );
+  const hasRelatedCategories = Boolean(seoData?.related_categories && seoData.related_categories.length > 0);
+  const hasRelatedSubcats = Boolean(seoData?.related_subcategories && seoData.related_subcategories.length > 0);
+  const hasRelatedCities = Boolean(seoData?.related_cities && seoData.related_cities.length > 0);
+  const hasOtherExperts = Boolean(seoData?.other_experts && seoData.other_experts.length > 0);
+  const hasAnyRelated = hasRelatedCategories || hasRelatedSubcats || hasRelatedCities || hasOtherExperts;
 
   return (
     <PageWrap className="expert-listing-page">
+      {/* ================= BREADCRUMBS & STRUCTURED DATA ================= */}
+      {activeBreadcrumbs && activeBreadcrumbs.length > 0 && (
+        <>
+          <nav aria-label="Breadcrumb" style={{ marginBottom: "16px", fontSize: "14px", color: "#64748b" }}>
+            <ol style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px" }}>
+              {activeBreadcrumbs.map((crumb, idx) => {
+                const isLast = idx === activeBreadcrumbs.length - 1;
+                return (
+                  <li key={idx} style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                    {idx > 0 && <span style={{ color: "#94a3b8" }}>/</span>}
+                    {isLast ? (
+                      <span style={{ color: "#0f172a", fontWeight: 600 }}>{crumb.name}</span>
+                    ) : (
+                      <a href={crumb.url} onClick={(e) => { e.preventDefault(); navigate(crumb.url); }} style={{ color: "#2563eb", textDecoration: "none" }}>
+                        {crumb.name}
+                      </a>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          </nav>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                itemListElement: activeBreadcrumbs.map((crumb, idx) => ({
+                  "@type": "ListItem",
+                  position: idx + 1,
+                  name: crumb.name,
+                  item: `https://g9expert.com${crumb.url}`
+                }))
+              })
+            }}
+          />
+        </>
+      )}
+
+      {filteredExperts.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "ItemList",
+              itemListElement: filteredExperts.map((exp, idx) => ({
+                "@type": "ListItem",
+                position: idx + 1,
+                name: exp.expert_name || exp.name,
+                url: `https://g9expert.com/user/experts/${exp.slug || exp.expert_slug || exp.expert_id}`
+              }))
+            })
+          }}
+        />
+      )}
+
       {/* ================= HEADER ================= */}
       <HeaderWrap>
         <PageTitle>
-          {seoData?.h1 || `Top ${subCategoryName || categoryName} Experts`}
+          {seoData?.h1 || (
+            categorySlug
+              ? (citySlug
+                  ? `Best ${categoryName} Experts in ${citySlug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}`
+                  : `Best ${categoryName} Experts`)
+              : "Expert Consultation on G9Expert"
+          )}
         </PageTitle>
         <PageSubtitle>
-          Verified experts • Real-time availability • Trusted guidance
+          {seoData?.intro || (
+            categorySlug
+              ? (citySlug
+                  ? `Find ${categoryName.toLowerCase()} experts in ${citySlug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())} for personalized guidance and consultation needs.`
+                  : `Find top ${categoryName.toLowerCase()} experts on G9Expert for instant 1-on-1 consultations.`)
+              : "Find experts across multiple categories on G9Expert and compare their specializations, availability, consultation options and reviews before connecting for a 1-on-1 consultation."
+          )}
         </PageSubtitle>
       </HeaderWrap>
 
@@ -387,6 +541,7 @@ const ExpertListPage = () => {
         />
       )}
 
+      {/* ================= DYNAMIC ABOUT SECTION ================= */}
       {seoData?.seo_text && (
         <section style={{
           padding: "24px 32px",
@@ -399,35 +554,153 @@ const ExpertListPage = () => {
           boxShadow: "0 4px 12px rgba(15, 23, 42, 0.03)",
           margin: "24px 0"
         }}>
-          <h3 style={{ margin: "0 0 10px", color: "#0f172a" }}>About {seoData.h1}</h3>
+          <h3 style={{ margin: "0 0 10px", color: "#0f172a" }}>{seoData.about_title || `About ${seoData.h1}`}</h3>
           <p style={{ margin: 0 }}>{seoData.seo_text}</p>
         </section>
       )}
 
-      {/* ================= SUGGESTED ================= */}
-      <SuggestedSection>
-        <SuggestedHeader>
-          <SuggestedTitle>
-            Explore other {categoryName} experts
-          </SuggestedTitle>
-        </SuggestedHeader>
+      {/* ================= RELATED DISCOVERY SECTION ================= */}
+      {hasAnyRelated && (
+        <section style={{ marginTop: "32px", marginBottom: "32px" }}>
+          {/* Block 0: Related Categories (for /experts ROOT page) */}
+          {hasRelatedCategories && (
+            <div style={{ marginBottom: "24px" }}>
+              <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#0f172a", marginBottom: "14px" }}>
+                {seoData.related_categories_title || "Explore Expert Categories"}
+              </h3>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+                {seoData.related_categories.map((catItem) => (
+                  <a
+                    key={catItem.slug}
+                    href={catItem.url}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(catItem.url);
+                    }}
+                    style={{
+                      padding: "10px 18px",
+                      borderRadius: "12px",
+                      background: "#ffffff",
+                      border: "1px solid #cbd5e1",
+                      color: "#0f172a",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      textDecoration: "none",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.03)",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    {catItem.name}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
 
-        <SuggestedStrip>
-          {suggestedSubCategories.map((sc) => (
-            <SuggestedCard
-              key={sc.id}
-              onClick={() =>
-                navigate(`/user/experts?category=${categoryId}&sub_category=${sc.id}`)
-              }
-            >
-              <SuggestedName>{sc.name}</SuggestedName>
-              <SuggestedMeta>View experts</SuggestedMeta>
-            </SuggestedCard>
-          ))}
-        </SuggestedStrip>
-      </SuggestedSection>
+          {/* Block A: Other Experts */}
+          {hasOtherExperts && (
+            <div style={{ marginBottom: "24px" }}>
+              <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#334155", marginBottom: "12px" }}>
+                {seoData.other_experts_title || (citySlug ? `More Experts in ${citySlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}` : `Other ${categoryName} Experts`)}
+              </h3>
+              <SuggestedStrip>
+                {seoData.other_experts.map((exp) => (
+                  <SuggestedCard
+                    key={exp.expert_id}
+                    onClick={() => navigate(`/user/experts/${exp.slug || exp.expert_slug || exp.expert_id}`)}
+                  >
+                    <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "8px" }}>
+                      <img
+                        src={exp.profile_image || "https://via.placeholder.com/40"}
+                        alt={exp.expert_name}
+                        style={{ width: "40px", height: "40px", borderRadius: "10px", objectFit: "cover" }}
+                      />
+                      <div>
+                        <SuggestedName style={{ marginTop: 0, fontSize: "14px" }}>{exp.expert_name}</SuggestedName>
+                        <span style={{ fontSize: "11px", color: "#facc15", fontWeight: "600" }}>★ {exp.rating}</span>
+                      </div>
+                    </div>
+                    <SuggestedMeta>{exp.subcategory_name || exp.location}</SuggestedMeta>
+                  </SuggestedCard>
+                ))}
+              </SuggestedStrip>
+            </div>
+          )}
+
+          {/* Block B: Related Subcategories */}
+          {hasRelatedSubcats && (
+            <div style={{ marginBottom: "24px" }}>
+              <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#334155", marginBottom: "12px" }}>
+                {seoData.related_subcategories_title || `Explore ${categoryName} Specializations`}
+              </h3>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+                {seoData.related_subcategories.map((sc) => (
+                  <a
+                    key={sc.slug}
+                    href={sc.url}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(sc.url);
+                    }}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "12px",
+                      background: "#ffffff",
+                      border: "1px solid #cbd5e1",
+                      color: "#1e293b",
+                      fontSize: "13px",
+                      fontWeight: "500",
+                      textDecoration: "none",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    {sc.name}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Block C: Related Cities */}
+          {hasRelatedCities && (
+            <div style={{ marginBottom: "24px" }}>
+              <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#334155", marginBottom: "12px" }}>
+                {seoData.related_cities_title || `${categoryName} Experts by City`}
+              </h3>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+                {seoData.related_cities.map((ct) => (
+                  <a
+                    key={ct.slug}
+                    href={ct.url}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(ct.url);
+                    }}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "12px",
+                      background: "#f8fafc",
+                      border: "1px solid #e2e8f0",
+                      color: "#2563eb",
+                      fontSize: "13px",
+                      fontWeight: "500",
+                      textDecoration: "none",
+                      transition: "all 0.15s ease"
+                    }}
+                  >
+                    📍 {ct.name}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
     </PageWrap>
   );
 };
 
 export default ExpertListPage;
+
+

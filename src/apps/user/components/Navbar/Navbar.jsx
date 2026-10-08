@@ -58,6 +58,8 @@ import {
   FiSliders,
   FiMail,
   FiPackage,
+  FiBook,
+  FiAward,
 } from "react-icons/fi";
 import { FaWallet } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -72,6 +74,10 @@ import GlobalSearchBar from "../search/GlobalSearchBar";
 import { LocationSelector } from "../../../../shared/components";
 
 const getMobileHeaderTitle = (pathname) => {
+  if (pathname === "/blog" || pathname.startsWith("/blog")) return "Blog";
+  if (pathname === "/articles" || pathname.startsWith("/articles")) return "Success Stories";
+  if (pathname === "/user/blog" || pathname.startsWith("/user/blog")) return "Blog";
+  if (pathname === "/user/articles" || pathname.startsWith("/user/articles")) return "Success Stories";
   if (pathname === "/user/notifications" || pathname.startsWith("/user/notifications")) return "Notification";
   if (pathname === "/user/search") return "Search";
   if (pathname === "/user/all-services") return "Services";
@@ -258,6 +264,8 @@ const Navbar = () => {
 
   const primaryMenuItems = [
     { label: t("common.home"), path: "/user", icon: FiHome },
+    { label: "Blog", path: "/blog", icon: FiBook },
+    { label: "Success Stories", path: "/articles", icon: FiAward },
     { label: "My Orders", path: "/user/my-services", icon: FiPackage },
     { label: t("common.offers"), path: "/user/all-services", icon: FiGift },
     { label: t("common.categories"), path: "/user/categories", icon: FiGrid, mobileOnly: true },

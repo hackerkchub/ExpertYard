@@ -46,6 +46,11 @@ const PublicCategoriesPage = lazyWithRetry(() => import("../apps/user/pages/Cate
 const PublicCategoryPage = lazyWithRetry(() => import("../apps/user/pages/Subcategory/SubcategoryPage"));
 const PublicExpertListPage = lazyWithRetry(() => import("../apps/user/pages/ExpertList/ExpertList"));
 const PublicPrivacyPolicyPage = lazyWithRetry(() => import("../apps/user/pages/Privacy-Policy/PrivacyPolicy"));
+const PublicBlogListingPage = lazyWithRetry(() => import("../apps/user/pages/Blog/BlogListingPage"));
+const PublicBlogDetailPage = lazyWithRetry(() => import("../apps/user/pages/Blog/BlogDetailPage"));
+const PublicArticleListingPage = lazyWithRetry(() => import("../apps/user/pages/Articles/ArticleListingPage"));
+const PublicArticleDetailPage = lazyWithRetry(() => import("../apps/user/pages/Articles/ArticleDetailPage"));
+const PublicSeoTestPage = lazyWithRetry(() => import("../apps/user/pages/SeoTestPage/SeoTestPage"));
 
 const APP_SHELL_STYLE = {
   width: "100%",
@@ -253,6 +258,46 @@ export default function AppRouter() {
             <Route element={<UserRouteBoundary />}>
               <Route element={<MainLayout />}>
                 <Route
+                  path="/indore/lawyers"
+                  element={
+                    <LazyRoute>
+                      <PublicSeoTestPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/bhopal/lawyers"
+                  element={
+                    <LazyRoute>
+                      <PublicSeoTestPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/jabalpur/lawyers"
+                  element={
+                    <LazyRoute>
+                      <PublicSeoTestPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/gwalior/lawyers"
+                  element={
+                    <LazyRoute>
+                      <PublicSeoTestPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/indore/divorce-lawyers"
+                  element={
+                    <LazyRoute>
+                      <PublicSeoTestPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
                   path="/privacy-policy"
                   element={
                     <LazyRoute>
@@ -293,7 +338,47 @@ export default function AppRouter() {
                   }
                 />
                 <Route
+                  path="/experts"
+                  element={
+                    <LazyRoute>
+                      <PublicExpertListPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/experts/:categorySlug"
+                  element={
+                    <LazyRoute>
+                      <PublicExpertListPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/experts/:categorySlug/pincode/:pincode"
+                  element={
+                    <LazyRoute>
+                      <PublicExpertListPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
                   path="/experts/:categorySlug/:citySlug"
+                  element={
+                    <LazyRoute>
+                      <PublicExpertListPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/experts/:categorySlug/:subcategorySlug/:citySlug"
+                  element={
+                    <LazyRoute>
+                      <PublicExpertListPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/experts/:categorySlug/:subcategorySlug/:citySlug/:areaSlug"
                   element={
                     <LazyRoute>
                       <PublicExpertListPage />
@@ -309,10 +394,34 @@ export default function AppRouter() {
                   }
                 />
                 <Route
-                  path="/experts/:categorySlug/pincode/:pincode"
+                  path="/blog"
                   element={
                     <LazyRoute>
-                      <PublicExpertListPage />
+                      <PublicBlogListingPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/blog/:slug"
+                  element={
+                    <LazyRoute>
+                      <PublicBlogDetailPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/articles"
+                  element={
+                    <LazyRoute>
+                      <PublicArticleListingPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/articles/:slug"
+                  element={
+                    <LazyRoute>
+                      <PublicArticleDetailPage />
                     </LazyRoute>
                   }
                 />

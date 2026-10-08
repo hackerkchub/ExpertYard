@@ -1,5 +1,5 @@
 import lazyWithRetry from "../../../utils/lazyWithRetry";
-import { Route, Routes, Navigate } from "react-router-dom";
+import { Route, Routes, Navigate, useParams } from "react-router-dom";
 
 import AppNotFound from "../../../routes/AppNotFound";
 import LazyRoute from "../../../routes/LazyRoute";
@@ -8,6 +8,16 @@ import MainLayout from "../layouts/MainLayout";
 import UserRouteBoundary from "../layouts/UserRouteBoundary";
 import ScrollToTop from "../components/ScrollToTop";
 import ProtectedRoute from "./ProtectedRoute";
+
+function UserBlogSlugRedirect() {
+  const { slug } = useParams();
+  return <Navigate to={`/blog/${slug}`} replace />;
+}
+
+function UserArticleSlugRedirect() {
+  const { slug } = useParams();
+  return <Navigate to={`/articles/${slug}`} replace />;
+}
 
 const HomePage = lazyWithRetry(() => import("../pages/Home/Home"));
 const SearchResultsPage = lazyWithRetry(() => import("../pages/Search/SearchResultsPage"));
@@ -51,6 +61,10 @@ const DynamicBookingWizard = lazyWithRetry(() => import("../pages/Booking/Dynami
 const UserWorkspacePage = lazyWithRetry(() => import("../pages/Workspace/UserWorkspacePage"));
 const MasterServiceDetailPage = lazyWithRetry(() => import("../pages/MasterService/MasterServiceDetailPage"));
 const MasterServiceSlugPage = lazyWithRetry(() => import("../pages/MasterService/MasterServiceSlugPage"));
+const BlogListingPage = lazyWithRetry(() => import("../pages/Blog/BlogListingPage"));
+const BlogDetailPage = lazyWithRetry(() => import("../pages/Blog/BlogDetailPage"));
+const ArticleListingPage = lazyWithRetry(() => import("../pages/Articles/ArticleListingPage"));
+const ArticleDetailPage = lazyWithRetry(() => import("../pages/Articles/ArticleDetailPage"));
 
 const withLazyRoute = (node) => <LazyRoute>{node}</LazyRoute>;
 
@@ -92,6 +106,10 @@ export default function UserAppRoutes() {
             <Route path="earnings-model" element={withLazyRoute(<EarningsModelPage />)} />
             <Route path="support" element={withLazyRoute(<SupportPage />)} />
             <Route path="marketing" element={withLazyRoute(<MarketingPage />)} />
+            <Route path="blog" element={<Navigate to="/blog" replace />} />
+            <Route path="blog/:slug" element={<UserBlogSlugRedirect />} />
+            <Route path="articles" element={<Navigate to="/articles" replace />} />
+            <Route path="articles/:slug" element={<UserArticleSlugRedirect />} />
             <Route path="all-services" element={withLazyRoute(<MasterServicesCatalogPage />)} />
             <Route path="all-master-services" element={withLazyRoute(<MasterServicesCatalogPage />)} />
             <Route path="service/:slug" element={withLazyRoute(<MasterServiceSlugPage />)} />

@@ -9,6 +9,9 @@
   gap: var(--g9-card-gap, 10px);
   overflow-x: auto;
   overflow-y: hidden;
+  padding: 6px 4px 10px 4px;
+  margin-top: -3px;
+  margin-bottom: -3px;
   scroll-behavior: smooth;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;

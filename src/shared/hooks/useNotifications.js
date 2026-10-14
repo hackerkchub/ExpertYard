@@ -24,46 +24,96 @@ const normalizeNotification = (notification) => {
   };
 };
 
+const UNREAD_SYNC_EVENT = "g9-notification-unread-sync";
+
+const broadcastUnread = (count, uid, pnl) => {
+  if (typeof window !== "undefined") {
+    try {
+      window.dispatchEvent(
+        new CustomEvent(UNREAD_SYNC_EVENT, {
+          detail: { unread: count, userId: uid, panel: pnl },
+        })
+      );
+    } catch {
+      // Ignore if event dispatch fails in test or background environments
+    }
+  }
+};
+
 export const useNotifications = ({ panel, userId }) => {
   const [notifications, setNotifications] = useState([]);
   const [unread, setUnread] = useState(0);
 
-  useEffect(() => {
+  const updateUnread = (valOrUpdater) => {
+    setUnread((prev) => {
+      const next = typeof valOrUpdater === "function" ? valOrUpdater(prev) : valOrUpdater;
+      const safeVal = Math.max(0, Number(next) || 0);
+      broadcastUnread(safeVal, userId, panel);
+      return safeVal;
+    });
+  };
+
+  const load = async () => {
     if (!userId) return;
+    try {
+      const res = await getNotifications({
+        userId,
+        panel,
+      });
 
-    const load = async () => {
-      try {
-        const res = await getNotifications({
-          userId,
-          panel,
-        });
+      const list = Array.isArray(res.data?.data)
+        ? res.data.data
+        : Array.isArray(res.data)
+          ? res.data
+          : [];
 
-        const list = Array.isArray(res.data?.data)
-          ? res.data.data
-          : Array.isArray(res.data)
-            ? res.data
-            : [];
+      const terminalChatTypes = new Set([
+        "chat_cancelled",
+        "chat_rejected",
+        "chat_timeout",
+        "chat_ended",
+        "chat_missed"
+      ]);
 
-        const terminalChatTypes = new Set([
-          "chat_cancelled",
-          "chat_rejected",
-          "chat_timeout",
-          "chat_ended",
-          "chat_missed"
-        ]);
+      const filteredList = list.filter((n) => !terminalChatTypes.has(String(n.type || "").toLowerCase()));
 
-        const filteredList = list.filter((n) => !terminalChatTypes.has(String(n.type || "").toLowerCase()));
+      setNotifications(filteredList.map(normalizeNotification));
 
-        setNotifications(filteredList.map(normalizeNotification));
+      const count = await getUnreadCount({ userId, panel });
+      const safeCount = Math.max(0, Number(count.data?.count ?? count.data ?? 0));
+      setUnread(safeCount);
+      broadcastUnread(safeCount, userId, panel);
+    } catch (err) {
+      console.log("notif load error", err);
+    }
+  };
 
-        const count = await getUnreadCount({ userId });
-        setUnread(Number(count.data?.count || 0));
-      } catch (err) {
-        console.log("notif load error", err);
+  useEffect(() => {
+    if (!userId) {
+      setNotifications([]);
+      setUnread(0);
+      return;
+    }
+
+    load();
+  }, [panel, userId]);
+
+  useEffect(() => {
+    if (!userId) return undefined;
+
+    const handleSync = (e) => {
+      const detail = e?.detail;
+      if (!detail) return;
+      if (detail.userId && String(detail.userId) !== String(userId)) return;
+      if (detail.panel && panel && detail.panel !== panel) return;
+
+      if (typeof detail.unread === "number") {
+        setUnread(Math.max(0, detail.unread));
       }
     };
 
-    load();
+    window.addEventListener(UNREAD_SYNC_EVENT, handleSync);
+    return () => window.removeEventListener(UNREAD_SYNC_EVENT, handleSync);
   }, [panel, userId]);
 
   useEffect(() => {
@@ -119,7 +169,7 @@ export const useNotifications = ({ panel, userId }) => {
       }
 
       setNotifications((prev) => [normalizeNotification(notif), ...prev]);
-      setUnread((c) => c + 1);
+      updateUnread((c) => c + 1);
     };
 
     const handleUpdate = (data = {}) => {
@@ -164,7 +214,8 @@ export const useNotifications = ({ panel, userId }) => {
   return {
     notifications,
     unread,
-    setUnread,
+    setUnread: updateUnread,
     setNotifications,
+    refreshUnread: load,
   };
 };

@@ -270,9 +270,40 @@ workbox.routing.registerRoute(
 
 // ---------- API CALLS (NetworkFirst) ----------
 workbox.routing.registerRoute(
-  ({ url }) =>
-    (url.origin === self.location.origin || url.hostname.includes("softmaxs.com")) &&
-    url.pathname.startsWith("/api"),
+  ({ url, request }) => {
+    // Only intercept GET requests
+    if (request && request.method && request.method !== "GET") {
+      return false;
+    }
+
+    const isApiHost =
+      url.origin === self.location.origin ||
+      url.hostname === "api.g9expert.com" ||
+      url.hostname.includes("softmaxs.com");
+
+    if (!isApiHost || !url.pathname.startsWith("/api")) {
+      return false;
+    }
+
+    // Do NOT cache sensitive authenticated or user-state routes
+    const sensitiveSegments = [
+      "/wallet",
+      "/payment",
+      "/booking",
+      "/bookings",
+      "/chat",
+      "/auth",
+      "/call",
+      "/agora",
+      "/admin",
+    ];
+
+    const isSensitive = sensitiveSegments.some((seg) =>
+      url.pathname.includes(seg)
+    );
+
+    return !isSensitive;
+  },
   new workbox.strategies.NetworkFirst({
     cacheName: API_CACHE,
     networkTimeoutSeconds: 5,

@@ -59,6 +59,7 @@ import {
   resetExpertTrialApi,
   manualCreditExpertWalletApi
 } from "../../../shared/api/admin/expert.api";
+import { APP_CONFIG, buildUploadUrl } from "../../../config/appConfig";
 
 import {
   PageContainer,
@@ -333,11 +334,7 @@ try {
 
   const resolveImageUrl = (value) => {
     if (!value) return DEFAULT_EXPERT_IMAGE;
-    const text = String(value);
-    if (/^https?:\/\//i.test(text)) return text;
-    const clean = text.replace(/^\/+/, "");
-    if (clean.startsWith("uploads/")) return `https://softmaxs.com/${clean}`;
-    return `https://softmaxs.com/uploads/${clean}`;
+    return buildUploadUrl(value) || DEFAULT_EXPERT_IMAGE;
   };
 
   const normalizePricingModes = (value) => {

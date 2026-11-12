@@ -21,7 +21,6 @@ import {
   BookOpen,
   Award,
 } from "lucide-react";
-import logo from "../../../../../assets/logo.webp";
 import { APP_CONFIG } from "../../../../../config/appConfig";
 
 // Helper function to get initials from name
@@ -71,11 +70,6 @@ export function HomeLeftSidebar({ isLoggedIn = false, user, balance = 0, onLogin
 
   return (
     <aside className={`home-left-sidebar ${isNearFooter ? "sidebar-near-footer" : ""}`} aria-label="Home navigation">
-      {/* LOGO - Fixed at Top */}
-      <Link className="home-sidebar-logo" to="/user" aria-label="G9Expert home">
-        <img src={logo} alt="G9Expert" />
-      </Link>
-
       {/* SCROLLABLE MIDDLE SECTION */}
       <div className="home-sidebar-scrollable">
         <div className="home-sidebar-account">

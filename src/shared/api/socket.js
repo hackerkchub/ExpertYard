@@ -18,13 +18,20 @@ const getAuthToken = (role) => {
 
 const getSocketBaseUrl = () => {
   try {
+    if (APP_CONFIG.SOCKET_URL) {
+      const socketUrl = new URL(APP_CONFIG.SOCKET_URL);
+      socketUrl.pathname = socketUrl.pathname.replace(/\/api\/?$/, "").replace(/\/+$/, "") || "/";
+      socketUrl.search = "";
+      socketUrl.hash = "";
+      return socketUrl.origin;
+    }
     const apiUrl = new URL(APP_CONFIG.API_BASE_URL);
     apiUrl.pathname = apiUrl.pathname.replace(/\/api\/?$/, "") || "/";
     apiUrl.search = "";
     apiUrl.hash = "";
     return apiUrl.origin;
   } catch {
-    return "https://softmaxs.com";
+    return "https://api.g9expert.com";
   }
 };
 

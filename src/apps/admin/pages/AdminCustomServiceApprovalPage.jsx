@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { apiFetch } from "../../../config/appConfig";
 
 export default function AdminCustomServiceApprovalPage() {
   const [requests, setRequests] = useState([]);
@@ -7,7 +8,7 @@ export default function AdminCustomServiceApprovalPage() {
   const fetchCustomRequests = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/master-services/custom-requests", {
+      const res = await apiFetch("/api/master-services/custom-requests", {
         headers: { Authorization: `Bearer ${localStorage.getItem("admin_token") || localStorage.getItem("token") || ""}` },
       });
       const data = await res.json();
@@ -27,7 +28,7 @@ export default function AdminCustomServiceApprovalPage() {
 
   const handleAction = async (id, status) => {
     try {
-      const res = await fetch(`/api/master-services/custom-requests/${id}`, {
+      const res = await apiFetch(`/api/master-services/custom-requests/${id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

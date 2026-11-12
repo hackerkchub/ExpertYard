@@ -7,6 +7,7 @@ import HomeHeader from "../pages/Home/components/HomeHeader";
 import { HomeLeftSidebar, HomeRightSidebar } from "../pages/Home/components/HomeSidebars";
 import { useAuth } from "../../../shared/context/UserAuthContext";
 import { useWallet } from "../../../shared/context/WalletContext";
+import { useNotifications } from "../../../shared/hooks/useNotifications";
 import "../pages/Home/Home.css"; // Ensure layouts and sidebars styles are loaded globally
 
 function useIsDesktop() {
@@ -35,6 +36,12 @@ export default function MainLayout() {
   const { isLoggedIn, user, logout } = useAuth();
   const { balance } = useWallet();
   const isDesktop = useIsDesktop();
+
+  const currentUserId = user?.id || user?.user_id;
+  const { unread: notificationCount } = useNotifications({
+    panel: "user",
+    userId: isLoggedIn && currentUserId ? currentUserId : null,
+  });
 
   // Step 1: Home page check
   const isUserHome = location.pathname === "/user" || location.pathname === "/user/";
@@ -152,6 +159,7 @@ export default function MainLayout() {
             onLogin={openLogin}
             onLogout={logout}
             balance={balance}
+            notificationCount={notificationCount}
             isLoggedIn={isLoggedIn}
             user={user}
           />

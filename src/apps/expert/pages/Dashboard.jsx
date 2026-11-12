@@ -7,6 +7,7 @@ import { useWebPush } from "../../../shared/hooks/useWebPush";
 import StatsCard from "../components/StatsCard";
 import QueueCard from "../components/QueueCard";
 import { getExpertLeadStatsApi } from "../../../shared/api/expertapi/leads.api";
+import { apiFetch } from "../../../config/appConfig";
 
 import {
   ContentInner,
@@ -68,7 +69,7 @@ const isLimited = !hasActivePlan;
     const token = localStorage.getItem("expert_token") || localStorage.getItem("token") || "";
     if (!token) return;
 
-    fetch("/api/expert/master-services/available", {
+    apiFetch("/api/expert/master-services/available", {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then((res) => res.json())

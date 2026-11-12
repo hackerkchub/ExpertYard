@@ -14,6 +14,7 @@ import MainLayout from "../apps/user/layouts/MainLayout";
 import UserRouteBoundary from "../apps/user/layouts/UserRouteBoundary";
 import LazyRoute from "./LazyRoute";
 import RootRedirect from "./RootRedirect";
+import AppNotFound from "./AppNotFound";
 import { shouldShowBottomNavbar } from "./routeShells";
 
 import AppGuard from "../core/AppGuard";
@@ -51,6 +52,7 @@ const PublicBlogDetailPage = lazyWithRetry(() => import("../apps/user/pages/Blog
 const PublicArticleListingPage = lazyWithRetry(() => import("../apps/user/pages/Articles/ArticleListingPage"));
 const PublicArticleDetailPage = lazyWithRetry(() => import("../apps/user/pages/Articles/ArticleDetailPage"));
 const PublicSeoTestPage = lazyWithRetry(() => import("../apps/user/pages/SeoTestPage/SeoTestPage"));
+const PublicExpertProfilePage = lazyWithRetry(() => import("../apps/user/pages/ExpertProfile/ExpertProfile"));
 
 const APP_SHELL_STYLE = {
   width: "100%",
@@ -68,6 +70,14 @@ const isCallScreenPath = (pathname = "") => {
     normalizedPath.startsWith("/expert/video-call")
   );
 };
+
+function CityLawyerRedirect() {
+  const { citySlug } = useParams();
+  if (!citySlug) {
+    return <Navigate to="/lawyers" replace />;
+  }
+  return <Navigate to={`/${citySlug}/lawyers`} replace />;
+}
 
 export default function AppRouter() {
   useNativeIncomingCall();
@@ -298,6 +308,39 @@ export default function AppRouter() {
                   }
                 />
                 <Route
+                  path="/lawyers"
+                  element={
+                    <LazyRoute>
+                      <PublicSeoTestPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/lawyer"
+                  element={<Navigate to="/lawyers" replace />}
+                />
+                <Route
+                  path="/:citySlug/lawyers"
+                  element={
+                    <LazyRoute>
+                      <PublicSeoTestPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/:citySlug/lawyer"
+                  element={<CityLawyerRedirect />}
+                />
+                <Route
+                  path="/404"
+                  element={
+                    <AppNotFound
+                      title="Page Not Found"
+                      description="The requested legal directory or page does not exist."
+                    />
+                  }
+                />
+                <Route
                   path="/privacy-policy"
                   element={
                     <LazyRoute>
@@ -342,6 +385,22 @@ export default function AppRouter() {
                   element={
                     <LazyRoute>
                       <PublicExpertListPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/experts/id/:id"
+                  element={
+                    <LazyRoute>
+                      <PublicExpertProfilePage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/experts/profile/:slug"
+                  element={
+                    <LazyRoute>
+                      <PublicExpertProfilePage />
                     </LazyRoute>
                   }
                 />

@@ -74,6 +74,7 @@ import {
   deleteCategoryApi,
   updateCategoryStatusApi
 } from "../../../shared/api/admin/category.api";
+import { APP_CONFIG, buildUploadUrl } from "../../../config/appConfig";
 
 export default function CategoryManagement() {
   const [categories, setCategories] = useState([]);
@@ -95,7 +96,9 @@ export default function CategoryManagement() {
   const [imageLoading, setImageLoading] = useState({});
 
   // Backend image URL base
-  const BASE_IMAGE_URL = "https://softmaxs.com/";
+  const BASE_IMAGE_URL = (APP_CONFIG.UPLOAD_BASE_URL || "").endsWith("/")
+    ? APP_CONFIG.UPLOAD_BASE_URL
+    : `${APP_CONFIG.UPLOAD_BASE_URL || ""}/`;
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -147,7 +150,7 @@ export default function CategoryManagement() {
     if (isFile) {
       finalSrc = URL.createObjectURL(imageData);
     } else if (imageData) {
-      finalSrc = imageData.startsWith('http') ? imageData : `${BASE_IMAGE_URL}${imageData}`;
+      finalSrc = buildUploadUrl(imageData);
     }
 
     if (!finalSrc || hasError) {

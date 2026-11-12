@@ -42,7 +42,7 @@ import {
 } from "react-icons/fi";
 import { FaWhatsapp, FaTelegramPlane, FaTwitter } from "react-icons/fa";
 
-import { APP_CONFIG } from "../../../../config/appConfig";
+import { APP_CONFIG, buildUploadUrl } from "../../../../config/appConfig";
 import InquiryModal from "./InquiryModal";
 import PostDetailModal from "../../../../shared/components/PostDetailModal/PostDetailModal";
 import SEOHead from "../../../../shared/components/SEO/SEOHead";
@@ -338,7 +338,8 @@ const ExpertProfilePage = () => {
     }
   }, [routerLocation.search]);
 
-  const { slug } = useParams();
+  const { slug, id } = useParams();
+  const expertIdentifier = slug || id;
   const navigate = useNavigate();
 
   const { t } = useTranslation();
@@ -1023,10 +1024,10 @@ const ExpertProfilePage = () => {
   }, [numericExpertId]);
 
   useEffect(() => {
-    if (slug) {
-      fetchProfile(slug);
+    if (expertIdentifier) {
+      fetchProfile(expertIdentifier);
     }
-  }, [slug, fetchProfile]);
+  }, [expertIdentifier, fetchProfile]);
 
   useEffect(() => {
     if (numericExpertId) {
@@ -1055,7 +1056,7 @@ const ExpertProfilePage = () => {
   }, [loadFollowersAndReviews]);
 
   useNetworkReconnect(() => {
-    if (slug) fetchProfile(slug);
+    if (expertIdentifier) fetchProfile(expertIdentifier);
     if (numericExpertId) {
       fetchPrice(numericExpertId);
       fetchExperience();
@@ -1066,7 +1067,7 @@ const ExpertProfilePage = () => {
       if (isLoggedIn) fetchActiveSubscription();
     }
   }, {
-    enabled: Boolean(slug || numericExpertId),
+    enabled: Boolean(expertIdentifier || numericExpertId),
   });
 
   useEffect(() => {
@@ -1438,7 +1439,7 @@ const ExpertProfilePage = () => {
         title={`${profile?.name || expertData?.name || 'Expert'} – ${profile?.position || expertData?.position || 'Consultant'} | G9Expert`}
         description={profile?.bio || `Consult with ${profile?.name || 'expert'} online on G9Expert. Verified ratings, instant calls & chat.`}
         canonicalUrl={`https://g9expert.com/user/experts/${slug || profile?.slug || ''}`}
-        ogImage={profile?.profile_photo ? (profile.profile_photo.startsWith('http') ? profile.profile_photo : `https://softmaxs.com/uploads/${profile.profile_photo}`) : ''}
+        ogImage={profile?.profile_photo ? buildUploadUrl(profile.profile_photo) : ''}
       />
       {/* MAIN LAYOUT GRID (DESKTOP 12-COLUMN: LEFT 8 COLS, RIGHT 4 COLS) */}
       <div className="profile-page-layout-grid">

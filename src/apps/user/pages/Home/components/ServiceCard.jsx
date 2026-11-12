@@ -35,17 +35,17 @@ export default function ServiceCard({ service }) {
     .map((p) => Number(p))
     .filter((p) => !isNaN(p) && p > 0);
 
-  const displayPrice = validPrices.length > 0 ? Math.min(...validPrices) : 130;
-  const shortTitle = truncateTitle(title) || "Pan Card";
-  const rawId = master_service_id || (typeof id === "string" ? id.replace("ms-", "") : id) || "36920";
+  const displayPrice = validPrices.length > 0 ? Math.min(...validPrices) : 499;
+  const shortTitle = truncateTitle(title) || "Expert Service";
+  const rawId = master_service_id || (typeof id === "string" ? id.replace("ms-", "") : id) || "1001";
   const numMatches = String(rawId).match(/\d+/g);
-  const reqNum = numMatches ? numMatches.join("").slice(-5) : "36920";
-  const formattedReq = `REQ / ${reqNum || "36920"}`;
+  const reqNum = numMatches ? numMatches.join("").slice(-5) : "1001";
+  const formattedReq = `REQ / ${reqNum || "1001"}`;
   const detailLink = slug ? `/user/service-details/${slug}` : `/user/service-details/${rawId}`;
   const bookLink = `${detailLink}?action=book`;
 
-  const categoryLabel = category_name || "Community Partner";
-  const providerLabel = provider_name || expert_name || "Himanshu Dhote";
+  const categoryLabel = category_name || "Verified Service";
+  const providerLabel = provider_name || expert_name || "G9Expert Partner";
 
   const coverImage = service.cover_image || service.image || service.image_url || "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&auto=format&fit=crop&q=80";
 

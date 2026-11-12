@@ -9,6 +9,6 @@ export const searchExpertsApi = async (params) => {
 
 // ✅ Expert name se ID get karne ke liye
 export const searchExpertsByNameApi = (name) => {
-  return fetch(`/api/user/experts/search?q=${encodeURIComponent(name)}&limit=1`)
-    .then(res => res.json());
+  return api.get("/user/experts/search", { params: { q: name, limit: 1 } })
+    .then(res => res.data);
 };

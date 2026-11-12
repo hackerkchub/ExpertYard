@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FiArrowLeft, FiPlus, FiEdit2, FiTrash2, FiPackage, FiFolder, FiCheckCircle, FiPauseCircle, FiPlayCircle, FiFileText, FiLayers, FiDollarSign, FiList, FiPhone, FiVideo, FiMessageSquare, FiUser } from "react-icons/fi";
 import { useExpert } from "../../../../shared/context/ExpertContext";
-import APP_CONFIG from "../../../../config/appConfig";
+import APP_CONFIG, { buildUploadUrl } from "../../../../config/appConfig";
 import * as S from "./MyServices.style";
 
 const authHeaders = () => {
@@ -154,9 +154,7 @@ export default function MyServices() {
 
   // Helper function to get correct image URL
   const getImageUrl = (img) => {
-    if (!img) return "https://via.placeholder.com/200x150?text=No+Image";
-    if (img.startsWith("http")) return img;
-    return `https://softmaxs.com/${img}`;
+    return buildUploadUrl(img) || "https://via.placeholder.com/200x150?text=No+Image";
   };
 
   // Helper function to render deliverables

@@ -22,6 +22,7 @@ import {
 import AddBalancePopup from "../../components/AddBalancePopup/AddBalancePopup";
 import { uploadWorkspaceFile } from "../../../../shared/api/workspace.api";
 import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
+import { apiFetch } from "../../../../config/appConfig";
 
 const WIZARD_CANVAS_STYLES = `
   @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -251,7 +252,7 @@ export default function DynamicBookingWizard() {
     try {
       setWalletLoading(true);
       const token = localStorage.getItem("user_token") || localStorage.getItem("userToken") || localStorage.getItem("token") || "";
-      const res = await fetch("/api/wallet", {
+      const res = await apiFetch("/api/wallet", {
         headers: { Authorization: token ? `Bearer ${token}` : "" }
       });
       const data = await res.json();
@@ -290,7 +291,7 @@ export default function DynamicBookingWizard() {
         setLoading(true);
         setBookingError("");
 
-        const svcRes = await fetch(`/api/services/master/${slug}`);
+        const svcRes = await apiFetch(`/api/services/master/${slug}`);
         const svcData = await svcRes.json();
 
         if (svcData.success && svcData.data) {
@@ -299,7 +300,7 @@ export default function DynamicBookingWizard() {
 
           // Fetch Experts for this master service
           const serviceId = masterSvc.id;
-          const expRes = await fetch(`/api/expert-activations/master-service/${serviceId}/experts`);
+          const expRes = await apiFetch(`/api/expert-activations/master-service/${serviceId}/experts`);
           const expData = await expRes.json();
           const activeExperts = expData.success ? (expData.data || []) : (svcData.data.experts || []);
 
@@ -404,7 +405,7 @@ export default function DynamicBookingWizard() {
   // Wallet Top up Order handlers for AddBalancePopup
   const handleCreateRechargeOrder = async (amount) => {
     const token = localStorage.getItem("user_token") || localStorage.getItem("userToken") || localStorage.getItem("token") || "";
-    const res = await fetch("/api/wallet/create-order", {
+    const res = await apiFetch("/api/wallet/create-order", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -417,7 +418,7 @@ export default function DynamicBookingWizard() {
 
   const handleConfirmRecharge = async (paymentDetails) => {
     const token = localStorage.getItem("user_token") || localStorage.getItem("userToken") || localStorage.getItem("token") || "";
-    const res = await fetch("/api/wallet/add", {
+    const res = await apiFetch("/api/wallet/add", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -494,7 +495,7 @@ export default function DynamicBookingWizard() {
         initial_documents: processedDocs
       };
 
-      const res = await fetch("/api/bookings/initiate", {
+      const res = await apiFetch("/api/bookings/initiate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

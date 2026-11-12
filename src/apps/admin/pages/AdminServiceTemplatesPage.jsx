@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { apiFetch } from "../../../config/appConfig";
 
 export default function AdminServiceTemplatesPage() {
   const [services, setServices] = useState([]);
@@ -8,7 +9,7 @@ export default function AdminServiceTemplatesPage() {
 
   const loadTemplates = () => {
     setLoading(true);
-    fetch("/api/master-services", {
+    apiFetch("/api/master-services", {
       headers: { Authorization: `Bearer ${localStorage.getItem("admin_token") || localStorage.getItem("token") || ""}` }
     })
       .then((res) => res.json())
@@ -27,7 +28,7 @@ export default function AdminServiceTemplatesPage() {
 
   const handleClone = async (id) => {
     try {
-      const res = await fetch(`/api/master-services/${id}/clone`, {
+      const res = await apiFetch(`/api/master-services/${id}/clone`, {
         method: "POST",
         headers: { Authorization: `Bearer ${localStorage.getItem("admin_token") || localStorage.getItem("token") || ""}` }
       });
@@ -45,7 +46,7 @@ export default function AdminServiceTemplatesPage() {
 
   const handleToggleStatus = async (id, currentStatus) => {
     try {
-      const res = await fetch(`/api/master-services/${id}/status`, {
+      const res = await apiFetch(`/api/master-services/${id}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

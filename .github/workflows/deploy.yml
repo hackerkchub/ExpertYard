@@ -71,9 +71,9 @@ jobs:
       - name: Deploy to Production
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.G9EXPERT_PROD_FTP_SERVER }}
-          username: ${{ secrets.G9EXPERT_PROD_FTP_USERNAME }}
-          password: ${{ secrets.G9EXPERT_PROD_FTP_PASSWORD }}
+          server: ${{ secrets.GUIDEXA_FTP_SERVER }}
+          username: ${{ secrets.GUIDEXA_FTP_USERNAME }}
+          password: ${{ secrets.GUIDEXA_FTP_PASSWORD }}
           local-dir: dist/
           server-dir: public_html/
           dangerous-clean-slate: false

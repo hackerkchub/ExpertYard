@@ -13,8 +13,8 @@ import {
   TrustMessage,
 } from "./SplashScreen.styles";
 
-const SPLASH_DURATION_MS = 3000;
-const FADE_OUT_MS = 220;
+const SPLASH_DURATION_MS = 0;
+const FADE_OUT_MS = 0;
 
 const isMobileViewport = () => {
   if (typeof window === "undefined" || !window.matchMedia) return false;

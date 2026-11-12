@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import SEOHead from "../../../../shared/components/SEO/SEOHead";
 import PremiumCenterLoader from "../../../../shared/components/Loader/PremiumCenterLoader";
+import { apiFetch } from "../../../../config/appConfig";
 
 const asArray = (value) => {
   if (Array.isArray(value)) return value;
@@ -38,14 +39,14 @@ export default function MasterServiceDetailPage() {
     setError(null);
 
     const load = async () => {
-      const detailRes = await fetch(`/api/master-services/public/${encodeURIComponent(slug)}`, {
+      const detailRes = await apiFetch(`/api/master-services/public/${encodeURIComponent(slug)}`, {
         signal: controller.signal,
       });
       let detailData = await detailRes.json();
       let svc = detailData?.success ? detailData.data : null;
 
       if (!svc) {
-        const searchRes = await fetch(`/api/master-services/search?slug=${encodeURIComponent(slug)}`, {
+        const searchRes = await apiFetch(`/api/master-services/search?slug=${encodeURIComponent(slug)}`, {
           signal: controller.signal,
         });
         const searchData = await searchRes.json();
@@ -56,7 +57,7 @@ export default function MasterServiceDetailPage() {
 
       setService(svc);
 
-      const expertRes = await fetch(`/api/expert-activations/master-service/${svc.id}/experts`, {
+      const expertRes = await apiFetch(`/api/expert-activations/master-service/${svc.id}/experts`, {
         signal: controller.signal,
       });
       const expertData = await expertRes.json();

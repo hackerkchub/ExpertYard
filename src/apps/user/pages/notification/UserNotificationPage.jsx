@@ -21,6 +21,7 @@ import {
   deleteNotification,
 } from "../../../../shared/api/notification.api";
 import * as S from "./UserNotificationPage.style";
+import { buildUploadUrl } from "../../../../config/appConfig";
 
 const timeAgo = (time) => {
   const value = typeof time === "number" ? time : new Date(time).getTime();
@@ -270,7 +271,7 @@ export default function UserNotificationPage() {
                 <S.AvatarWrapper>
                   {avatar ? (
                     <img
-                      src={avatar.startsWith("http") ? avatar : `https://softmaxs.com/${avatar}`}
+                      src={buildUploadUrl(avatar)}
                       alt=""
                       onError={(e) => {
                         e.target.onerror = null;

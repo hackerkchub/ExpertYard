@@ -163,11 +163,12 @@ body {
   height: 64px;
   display: flex !important;
   align-items: center !important;
-  justify-content: flex-start !important;
+  justify-content: space-between !important;
   padding: 0 24px;
   box-sizing: border-box;
   gap: 16px;
   overflow: visible !important;
+  flex-wrap: nowrap !important;
 }
 
 /* LOGO WITH BREATHING ROOM */
@@ -543,14 +544,18 @@ body {
 .home-header-right-actions {
   display: flex !important;
   align-items: center !important;
-  gap: 16px !important;
+  gap: 14px !important;
   flex-shrink: 0 !important;
+  margin-left: auto !important;
+  flex-wrap: nowrap !important;
 }
 
 /* LOCATION SELECTOR */
 .home-feed-location {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
+  margin: 0 !important;
 }
 
 .home-feed-location .g9-location-selector-container {
@@ -843,7 +848,7 @@ body {
 .home-sidebar-scrollable {
   flex: 1 !important;
   overflow-y: auto !important;
-  padding: 6px 12px 10px 12px !important;
+  padding: 14px 12px 10px 12px !important;
   scroll-behavior: smooth !important;
   overscroll-behavior-y: contain !important;
   scrollbar-width: thin !important;
@@ -8762,7 +8767,7 @@ img {
   .home-feed-header.desktop-header-only .home-header-inner-container {
     display: flex !important;
     align-items: center !important;
-    justify-content: flex-start !important;
+    justify-content: space-between !important;
     width: 100% !important;
     max-width: 1600px !important;
     margin: 0 auto !important;
@@ -8770,6 +8775,7 @@ img {
     padding: 0 24px !important;
     gap: 12px !important;
     overflow: visible !important;
+    flex-wrap: nowrap !important;
   }
 
   .home-feed-header.desktop-header-only .home-feed-logo {
@@ -8859,16 +8865,17 @@ img {
     flex-shrink: 0 !important;
     margin-left: auto !important;
     white-space: nowrap !important;
+    flex-wrap: nowrap !important;
   }
 
   .home-feed-header.desktop-header-only .home-feed-location {
     flex: 0 0 auto !important;
     flex-shrink: 0 !important;
-    min-width: 140px !important;
+    min-width: 130px !important;
     max-width: 220px !important;
     display: flex !important;
     align-items: center !important;
-    margin-right: 8px !important;
+    margin-right: 0 !important;
   }
 
   .home-feed-header.desktop-header-only .home-header-notification {

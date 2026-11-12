@@ -2,8 +2,8 @@
   "environment": "production",
 
   "api": {
-    "baseUrl": "https://softmaxs.com/api",
-    "socketUrl": "https://softmaxs.com/api"
+    "baseUrl": "https://api.g9expert.com/api",
+    "socketUrl": "https://api.g9expert.com"
   },
 
   "network": {

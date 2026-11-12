@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { apiFetch } from "../../../config/appConfig";
 
 export default function AdminServiceAnalyticsPage() {
   const [metrics, setMetrics] = useState({
@@ -11,7 +12,7 @@ export default function AdminServiceAnalyticsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/admin/finance/summary", {
+    apiFetch("/api/admin/finance/summary", {
       headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` },
     })
       .then((res) => res.json())

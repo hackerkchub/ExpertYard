@@ -2,7 +2,13 @@ import { useEffect } from "react";
 
 import { getCurrentHostname, getEnvironmentRobots, SITE_CONFIG, toAbsoluteUrl } from "./siteConfig";
 
+/**
+ * Defensive DOM query & attribute setter compatible with SSG / Prerendering environments.
+ * Guarded against Node.js / non-browser execution where `document` or `document.head` is undefined.
+ */
 function ensureMeta(selector, attributes) {
+  if (typeof document === "undefined" || !document.head) return;
+
   let node = document.head.querySelector(selector);
 
   if (!node) {
@@ -11,11 +17,15 @@ function ensureMeta(selector, attributes) {
   }
 
   Object.entries(attributes).forEach(([key, value]) => {
-    node.setAttribute(key, value);
+    if (value !== undefined && value !== null) {
+      node.setAttribute(key, value);
+    }
   });
 }
 
 function ensureLink(selector, attributes) {
+  if (typeof document === "undefined" || !document.head) return;
+
   let node = document.head.querySelector(selector);
 
   if (!node) {
@@ -24,11 +34,15 @@ function ensureLink(selector, attributes) {
   }
 
   Object.entries(attributes).forEach(([key, value]) => {
-    node.setAttribute(key, value);
+    if (value !== undefined && value !== null) {
+      node.setAttribute(key, value);
+    }
   });
 }
 
 function ensureScript(id, json) {
+  if (typeof document === "undefined" || !document.head) return;
+
   let node = document.head.querySelector(`#${id}`);
 
   if (!node) {
@@ -50,15 +64,25 @@ export function useSeo({
   og = {},
   twitter = {},
   structuredData = [],
+  breadcrumbs = null,
 }) {
   const structuredDataKey = JSON.stringify(structuredData);
+  const breadcrumbsKey = JSON.stringify(breadcrumbs);
 
   useEffect(() => {
-    const canonicalUrl = toAbsoluteUrl(canonicalPath || window.location.pathname);
+    // Immediate early-exit if running in a non-browser environment
+    if (typeof window === "undefined" || typeof document === "undefined" || !document.head) {
+      return;
+    }
+
+    const currentPath = typeof window !== "undefined" ? window.location.pathname : "/";
+    const canonicalUrl = toAbsoluteUrl(canonicalPath || currentPath);
     const ogImage = og.image || toAbsoluteUrl(SITE_CONFIG.defaultOgImage);
     const robotsContent = getEnvironmentRobots(robots, getCurrentHostname());
 
-    document.title = title;
+    if (title) {
+      document.title = title;
+    }
 
     ensureMeta('meta[name="description"]', {
       name: "description",
@@ -121,20 +145,46 @@ export function useSeo({
       content: twitter.url ? toAbsoluteUrl(twitter.url) : canonicalUrl,
     });
 
-    document.head
-      .querySelectorAll('script[id^="seo-structured-data-"]')
-      .forEach((node) => node.remove());
+    // Clean previous structured data nodes before mounting new schemas
+    if (document.head) {
+      document.head
+        .querySelectorAll('script[id^="seo-structured-data-"]')
+        .forEach((node) => node.remove());
+    }
 
-    structuredData.forEach((item, index) => {
+    const combinedSchemas = [
+      ...(Array.isArray(structuredData) ? structuredData : structuredData ? [structuredData] : [])
+    ];
+
+    if (Array.isArray(breadcrumbs) && breadcrumbs.length > 0) {
+      const hasBreadcrumbSchema = combinedSchemas.some((s) => s?.["@type"] === "BreadcrumbList");
+      if (!hasBreadcrumbSchema) {
+        combinedSchemas.push({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: breadcrumbs.map((b, idx) => ({
+            "@type": "ListItem",
+            position: idx + 1,
+            name: b.name,
+            item: toAbsoluteUrl(b.url || b.path || "/"),
+          })),
+        });
+      }
+    }
+
+    combinedSchemas.forEach((item, index) => {
       ensureScript(`seo-structured-data-${index}`, item);
     });
 
     return () => {
-      document.head
-        .querySelectorAll('script[id^="seo-structured-data-"]')
-        .forEach((node) => node.remove());
+      if (typeof document !== "undefined" && document.head) {
+        document.head
+          .querySelectorAll('script[id^="seo-structured-data-"]')
+          .forEach((node) => node.remove());
+      }
     };
   }, [
+    breadcrumbsKey,
     canonicalPath,
     description,
     keywords,

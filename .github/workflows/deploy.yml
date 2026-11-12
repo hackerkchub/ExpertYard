@@ -62,17 +62,13 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Download Sitemap
-        run: |
-          mkdir -p public
-          curl -L http://softmaxs.com/sitemap.xml -o public/sitemap.xml
-
-      - name: Build Softmaxs
+      - name: Build Production
         env:
-          VITE_API_BASE_URL: ${{ secrets.SOFTMAXS_API_URL }}
+          VITE_API_BASE_URL: ${{ secrets.PRODUCTION_API_URL }}
+          VITE_SOCKET_URL: ${{ secrets.PRODUCTION_SOCKET_URL }}
         run: npm run build
 
-      - name: Deploy to Softmaxs
+      - name: Deploy to Production
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -80,7 +76,7 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: dist/
           server-dir: public_html/
-          dangerous-clean-slate: true
+          dangerous-clean-slate: false
           exclude: |
             **/.git*
             **/node_modules/**

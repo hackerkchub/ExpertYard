@@ -53,18 +53,11 @@ const HomeHeader = React.memo(function HomeHeader({
             <img src={logo} alt="G9Expert" />
           </Link>
 
-          {/* 2. Next: Location Selector */}
-          <div className="home-feed-location">
-            <LocationSelector onLocationSelect={onLocationSelect} />
-          </div>
-
-          {/* 3. Center/Available Space: Global Search Bar */}
-          <div className="home-header-search">
-            <GlobalSearchBar placeholder="Search doctors, lawyers, CA, astrologers, services..." />
-          </div>
-
-          {/* 4. Right Side: Wallet Balance, Notification Bell, Profile/Login */}
+          {/* 2. Right Side: Location Selector, Wallet Balance, Notification Bell, Profile/Login */}
           <div className="home-header-right-actions">
+            <div className="home-feed-location">
+              <LocationSelector onLocationSelect={onLocationSelect} />
+            </div>
             {isLoggedIn ? (
               <button type="button" className="home-wallet-pill" onClick={onWalletOpen} aria-label="Open wallet">
                 <Wallet size={16} className="wallet-icon" />
